@@ -50,8 +50,12 @@ package lu.fisch.structorizer.generators;
 *      Kay Gürtzig     2021-10-26/29   Bugfix #1003: Undue memory reservation for all variables;
 *                                      bugfix #1004: implicit address assignments for array element access,
 *                                      element type retrieval accomplished, name clashes with v_# variables avoided,
-*                                      new plugin-specific modes adjustArrays, transformIndices;
+*                                      new plugin-specific mode adjustArrays;
 *                                      bugfix #1005: Wrong implementation of FOR loops
+*      Kay Gürtzig     2021-10-29/30   Bugfix #1004 update: Defective index register transformation mended;
+*                                      bugfix #1007: methods getVariables and variablesToRegisters rewritten,
+*                                      processing of strings and character assignments revised;
+*                                      bugfix #1008 (array access via explicit address assignment).
 *
 ******************************************************************************************************
 *
@@ -96,6 +100,7 @@ public class ArmGenerator extends Generator {
     private static final String supportedOperationsPattern = "(-|\\+|\\*|and|or|&|\\||&&|\\|\\|)";
     private static final String registerVariableNumberHex = String.format("(%s|%s|%s|%s)", registerPattern, variablePattern, numberPattern, hexNumberPattern);
     private static final String negativeNumberPattern = "-[0-9]+";
+    private static final String escapeCharacterPattern = "\\\\['\"bfnt\\\\]";
 
     private static final Pattern assignment = Pattern.compile(String.format("(%s|%s) *%s *%s", registerPattern, variablePattern, assignmentOperators, registerVariableNumberHex));
     private static final Pattern expression = Pattern.compile(String.format("(%s|%s) *%s *%s *%s *%s", registerPattern, variablePattern, assignmentOperators, registerVariableNumberHex, supportedOperationsPattern, registerVariableNumberHex));
@@ -111,11 +116,12 @@ public class ArmGenerator extends Generator {
     //private static final Pattern address = Pattern.compile(String.format("%s *%s *(indirizzo|address)\\((%s|%s)\\)", registerPattern, assignmentOperators, registerPattern, variablePattern));
     private static final Pattern address = Pattern.compile(String.format("%s *%s *(indirizzo|address)\\((%s)\\)", registerPattern, assignmentOperators, variablePattern));
     // END KGU#1000 2021-10-27
-    // FIXME KGU#968: Why isn't an empty string allowed? Why are only identifier characters supported as content?
-    private static final Pattern stringInitialization = Pattern.compile(String.format("(%s|%s) *%s *\"[\\w]{2,}\"", registerPattern, variablePattern, assignmentOperators));
-    // START KGU#968 2021-10-11: Issue #967 Single quotes shall also be supported (preferrably even!)
+    // START KGU#1002 2021-10-30: Issue #1007 We may allow more than just identifier characters
+    //private static final Pattern stringInitialization = Pattern.compile(String.format("(%s|%s) *%s *\"[\\w]{2,}\"", registerPattern, variablePattern, assignmentOperators));
     //private static final Pattern charInitialization = Pattern.compile(String.format("(%s|%s) *%s *\"[\\w]\"", registerPattern, variablePattern, assignmentOperators));
-    private static final Pattern charInitialization = Pattern.compile(String.format("(%s|%s) *%s *(\"[\\w]\"|'[\\w]')", registerPattern, variablePattern, assignmentOperators));
+    private static final Pattern stringInitialization = Pattern.compile(String.format("(%s|%s) *%s *\"([^\"\\\\]|%s)+?\"", registerPattern, variablePattern, assignmentOperators, escapeCharacterPattern));
+    private static final Pattern charInitialization = Pattern.compile(String.format("(%s|%s) *%s *('([^\'\\\\]|%s)')", registerPattern, variablePattern, assignmentOperators, escapeCharacterPattern));
+    // END KGU#1002 2021-10-30
     // END KGU#968 2021-10-11
     private static final Pattern booleanAssignmentPattern = Pattern.compile(String.format("(%s|%s) *%s *(true|false)", registerPattern, variablePattern, assignmentOperators));
     // START KGU#968 2021-05-02: More general variable syntax - might this cause trouble?
@@ -172,7 +178,9 @@ public class ArmGenerator extends Generator {
     }
 
     // Reserved words that can't be used as variables
-    private static final String[] reservedWords = {"and", "or", "memoria", "memory", "indirizzo", "address", "true", "false", "word", "hword", "bytes", "quad", "octa"/*, "input", "output", "INPUT", "OUTPUT"*/};
+    private static final StringList RESERVED_WORDS = StringList.explode(
+            "and,or,memoria,memory,indirizzo,address,true,false,word,hword,bytes,quad,octa"/* + ",input,output,INPUT,OUTPUT"*/,
+            ",");
     /**
      * HashMap used for available registers and already assigned variables
      * Value {@link #USER_REGISTER_TAG} stands for registers explicitly employed
@@ -258,11 +266,6 @@ public class ArmGenerator extends Generator {
     private boolean gnuEnabled = false;
     // END KGU#968 2021-04-15
     // START KGU#1000 2021-10-29: Bugfix #1004
-    /**
-     * Shall we multipy array index literals by the array element width and insert code to
-     * do the same for array indices given as expression (register name)?
-     */
-    private boolean transformIndices = true;
     /**
      * Shall we insert space reservations after array declarations in order to fill up to
      * the next word address?
@@ -369,10 +372,6 @@ public class ArmGenerator extends Generator {
         // START KGU#1000 2021-10-29: Issue #1004
         if (topLevel) {
             appendComment("Generated with Structorizer " + Element.E_VERSION + " on " + new Date(), "");
-            option = this.getPluginOption("index2offset", transformIndices);
-            if (option instanceof Boolean) {
-                transformIndices = (Boolean) option;
-            }
             option = this.getPluginOption("alignArrays", alignArrays);
             if (option instanceof Boolean) {
                 alignArrays = (Boolean) option;
@@ -1263,8 +1262,17 @@ public class ArmGenerator extends Generator {
             generateString(newline, isDisabled, elem);
             break;
         case CHAR_ARRAY_INITIALIZATION:
-            newline = variablesToRegisters(line);
-            generateAssignment(newline.replace("\"", "'"), isDisabled);
+            // START KGU#1002 2021-10-30: Issue #1007 Care for special characters
+            //newline = variablesToRegisters(line);
+            //generateAssignment(newline.replace("\"", "'"), isDisabled);
+            {
+                StringList tokens = Element.splitLexically(line, true);
+                tokens.removeAll(" ");
+                StringBuilder charRepr = stringContentToList(tokens.get(2));
+                newline = variablesToRegisters(tokens.get(0)) + "<-" + charRepr.toString();
+                generateAssignment(newline, isDisabled);
+            }
+            // END KGU#1002 2021-10-30
             break;
         case INSTRUCTION:
             newline = variablesToRegisters(line);
@@ -1714,12 +1722,7 @@ public class ArmGenerator extends Generator {
         if (!arr[1].contains("R")) { //R0[1], R2
             int index = Integer.parseInt(arr[1].replace("]", "").replace(" ", ""));
             if (dim >= 0) {
-                // START KGU#1000 2021-10-29: Bugfix #1004
-                //index = index * (1 << dim);
-                if (transformIndices) {
-                    index = index * (1 << dim);
-                }
-                // END KGU#1000 2021-10-29
+                index = index * (1 << dim);
                 c = opCode + " " + expr + ", [" + arName + ", #" + index + "]";
             } else {
                 appendComment("The array " + arName + " is not initialized", getIndent());
@@ -1730,8 +1733,8 @@ public class ArmGenerator extends Generator {
             //c = opCode + " " + expr + ", [" + arName + ", " + arr[1].trim();
             String index = arr[1].replace("]", "").trim();
             if (dim > 0) {
-                // Get a temporary register and multiply the index
-                index = generateIndexAdjustment(index, dim, isDisabled);
+                // multiply the index (using the barrel shifter)
+                index = index += ", LSL #" + dim;
             }
             // END KGU#1000/KGU#1001 2021-10-28
             c = opCode + " " + expr + ", [" + arName + ", " + index + "]";
@@ -1785,19 +1788,14 @@ public class ArmGenerator extends Generator {
             // If the index is not a register
             if (!index.matches(registerPattern0)) {
                 int ind = Integer.parseInt(index);
-                // START KGU#1000 2021-10-29: Bugfix #1004
-                //ind = ind * (1 << dim);
-                if (transformIndices) {
-                    ind = ind * (1 << dim);
-                }
-                // END KGU#1000 2021-10-29
+                ind = ind * (1 << dim);
                 c += "#" + ind + "]";
             }
             // We use the register as index
             else {
                 // START KGU#1000 2021-10-28: Bugfix #1004
-                // Get a temporary register and multiply the index
-                index = generateIndexAdjustment(index, dim, isDisabled);
+                // multiply the index (using the barrel shifter)
+                index += ", LSL #" + dim;
                 // END KGU#1000 2021-10-28
                 c += index + "]";
             }
@@ -1918,17 +1916,20 @@ public class ArmGenerator extends Generator {
             // if the second member of the expression is a number
             if (expression[2].matches(numberPattern)) {
                 int value = Integer.parseInt(expression[2]);
-                int shift;
+                int shift = 0;
 
                 // if the value is a power of two
                 if (isPowerOfTwo(value)) {
-                    shift = (int) (Math.log(value) / Math.log(2));
+                    //shift = (int) (Math.log(value) / Math.log(2));
+                    while ((value >>= 1) > 0) shift++;
                     operation = "LSL";
                     thirdOperator = "#" + shift;
                 }
                 // if the previous value number is a power of two
                 else if (isPowerOfTwo(value - 1)) {
-                    shift = (int) (Math.log(value - 1) / Math.log(2));
+                    //shift = (int) (Math.log(value - 1) / Math.log(2));
+                    value --;
+                    while ((value >>= 1) > 0) shift++;
                     operation = "ADD";
                     thirdOperator = String.format("LSL #%s", shift);
                 }
@@ -2029,23 +2030,94 @@ public class ArmGenerator extends Generator {
      */
     private void generateString(String line, boolean isDisabled, Instruction elem) {
 
-        String[] split = line.split("<- ?|:= ?");
-        // FIXME: The string literal might contain escaped quotes in future!
-        split[1] = split[1].replace("\"", "");
-        String c = "word %s<-{%s}";	// FIXME indeed a word (= 4 Byte) for each character?
-        StringBuilder array = new StringBuilder();
-
-        for (int i = 0; i < split[1].length(); i++) {
-            array.append("'").append(split[1].charAt(i)).append("'");
-            if (i != split[1].length() - 1) {
-                array.append(", ");
-            }
-        }
-
-        generateArrayInitialization(String.format(c, split[0], array), isDisabled, elem);
+        // START KGU#1003 2021-10-30: Issue #1009 We should handle non-ascii characters as well
+        //String[] split = line.split("<- ?|:= ?");
+        //split[1] = split[1].replace("\"", "");
+        // END KGU#1003 2021-10-30
+        
+        String format = "word %s <- {%s}";
+        // START KGU#1003 2021-10-30: Issue #1009 We should handle non-ascii characters as well
+        //StringBuilder array = new StringBuilder();
+        //for (int i = 0; i < split[1].length(); i++) {
+        //    array.append("'").append(split[1].charAt(i)).append("'");
+        //    if (i != split[1].length() - 1) {
+        //        array.append(", ");
+        //    }
+        //}
+        //generateArrayInitialization(String.format(format, split[0], array), isDisabled, elem);
+        StringList tokens = Element.splitLexically(line, true);
+        tokens.removeAll(" ");
+        String literal = tokens.get(2);
+        StringBuilder array = stringContentToList(literal);
+        generateArrayInitialization(String.format(format, tokens.get(0), array), isDisabled, elem);
+        // END KGU#1003 2021-10-30
     }
 
     /*----START OF UTILITIES----*/
+
+    /**
+     * Converts a string or character literal to a comma-separated list of character literals
+     * or integer literals, depending on their code point (most Ascii characters are represented
+     * as character literal). Escape sequences will be handled appropriately.
+     * 
+     * @param literal - a string or character literal (with delimiters!)
+     * @return a {@link StringBuilder} containing the list representation
+     */
+    private StringBuilder stringContentToList(String literal) {
+        int[] codePoints = literal.substring(1, literal.length()-1).codePoints().toArray();
+        StringBuilder array = new StringBuilder();
+        boolean esc = false;
+        boolean firstChar = true;
+        for (int cp: codePoints) {
+            if (!firstChar && !esc) {
+                array.append(",");
+            } else {
+                firstChar = false;
+            }
+            if (esc) {
+                esc = false;
+                switch (cp) {
+                case '"':
+                    array.append("0x22");
+                    break;
+                case '\'':
+                    array.append("0x27");
+                    break;
+                case '\\':
+                    array.append("0x5C");
+                    break;
+                case 'b':
+                    array.append("0x08");
+                    break;
+                case 'f':
+                    array.append("0x0C");
+                    break;
+                case 'n':
+                    array.append("0x0A");
+                    break;
+                case 't':
+                    array.append("0x09");
+                    break;
+                }
+            }
+            else if (cp == '\\') {
+                esc = true;
+            }
+            else if (cp == '\"') {	// Might occur unescaped in a char literal
+                array.append("0x22");
+            }
+            else if (cp == '\'') {	// Might occur unescaped in a string literal
+                array.append("0x27");
+            }
+            else if (cp >= ' ' && cp < 0x7F) {
+                array.append("'").append((char)cp).append("'");
+            }
+            else {
+                array.append("0x").append(Integer.toHexString(cp));
+            }
+        }
+        return array;
+    }
 
     /**
      * This method translates and splits and, or conditions
@@ -2097,33 +2169,6 @@ public class ArmGenerator extends Generator {
         return c.toString();
     }
 
-    // START KGU#1000 2021-10-28: Inserted for bugfix #1004
-    /**
-     * Tries to insert an offset adjustment for the passed-in index register
-     * and the array element size 2^dim if {@link #transformIndices} id {@code true}.
-     * This means to use an auxiliary register that obtains the value of
-     * {@code index * (1 << dim)}. If this fails then a comment is inserted instead.
-     * 
-     * @param index - name of an index register
-     * @param dim   - {@code ld(element_size)}
-     * @param isDisabled - whether the inducing element is disabled
-     * @return the register name for the memory offset
-     */
-    private String generateIndexAdjustment(String index, int dim, boolean isDisabled) {
-        if (transformIndices) {
-            String tempReg = this.getAvailableRegister();
-            if (!tempReg.isEmpty()) {
-                addCode("MUL " + tempReg + ", " + index + ", #" + (1 << dim), getIndent(), isDisabled);
-                index = tempReg;
-            }
-            else {
-                appendComment("WARNING: " + index + " may need multiplying by " + (1 << dim) + "!", getIndent());
-            }
-        }
-        return index;
-    }
-    // END KGU#1000 2021-10-28
-
     /**
      * Retrieves the element type of the array associated to the register with
      * given name<br/>
@@ -2137,10 +2182,14 @@ public class ArmGenerator extends Generator {
         String type = "";
         // START KGU#1000 2021-10-27: Bugfix #1004 We need more flexibility here
         //String arName = null;
-        String addrPattern = "\tADR " + register + ",";
-        if (!this.gnuEnabled) {
-            addrPattern = "\tLDR " + register + ", =";
-        }
+        // START KGU#1003 2021-10-29: Bugix #1008 Lacking retrieval in GNU mode
+        //String addrPattern = "\tADR " + register + ",";
+        //if (!this.gnuEnabled) {
+        //    addrPattern = "\tLDR " + register + ", =";
+        //}
+        String addrPattern1 = "\tLDR " + register + ", =";
+        String addrPattern2 = "\tADR " + register + ", =";
+        // END KGU#1003 2021-10-29
         String declPattern = null;
         /* Try the quicker way to get the array name, which may be the only one for
          * an array that has not been declared with a register name, as the address
@@ -2174,7 +2223,11 @@ public class ArmGenerator extends Generator {
             //    type = line.split("\\.")[1].split(" ")[0];
             //    return type;
             //}
-            if (declPattern == null && line.contains(addrPattern)) {
+            // START KGU#1003 2021-10-29: Bugix #1008 Lacking retrieval in GNU mode
+            //if (declPattern == null && line.contains(addrPattern)) {
+            if (declPattern == null && (line.contains(addrPattern1)
+                    || gnuEnabled && line.contains(addrPattern2))) {
+            // END KGU#1003 2021-10-29
                 StringList tokens = Element.splitLexically(line, true);
                 tokens.removeAll(" ");
                 arName = tokens.get(tokens.count()-1);
@@ -2381,8 +2434,8 @@ public class ArmGenerator extends Generator {
         for (Tuple<String, Integer> tuple : variables) {
             register = getRegister(tuple.variable);
 
-            int end = tuple.position + differenceLength + 1;
-            int start = end - tuple.variable.length();
+            int start = tuple.position + differenceLength;
+            int end = start + tuple.variable.length();
 
             replacedLine.replace(start, end, register);
             differenceLength += register.length() - tuple.variable.length();
@@ -2398,54 +2451,82 @@ public class ArmGenerator extends Generator {
      * @return the ArrayList that contains all variables and the respective positions in the string
      */
     private ArrayList<Tuple<String, Integer>> getVariables(String line) {
-        // we need the space so if we have an ending variable it gets into the while loop
-        line += " \0";
-        String[] split = line.split("");
+        // START KGU#1002 2021-10-29: Redesigned on occasion of bugfix #1007
+//        // we need the space so if we have an ending variable it gets into the while loop
+//        line += " \0";
+//        String[] split = line.split("");
+//
+//        // the tuple arraylist is useful to rebuild the string later
+//        ArrayList<Tuple<String, Integer>> stringPositions = new ArrayList<>();
+//
+//        int i = 1;
+//        StringBuilder item = new StringBuilder();
+//        item.append(split[0]);
+//
+//        while (i < split.length) {
+//            if (split[i].equals("\"")) {
+//                i++;
+//                while (!split[i].equals("\"") && i < split.length) {
+//                    i++;
+//                }
+//            }
+//
+//            if (item.toString().matches(hexNumberPattern)) {
+//                item.append(split[i]);
+//            }
+//            // we check that the item is not a variable
+//            else if (!item.toString().matches(variablePattern)) {
+//                // as soon as it's not we remove the last non matching character
+//                String variable = item.substring(0, item.length() - 1);
+//                // if it's a register we add it as not available and, if it's already assigned to a variable, we warn the user
+//                if (variable.matches(registerPattern)) {
+//                    // START KGU#968 2021-10-11: Bugfix #967 case matters here! (Caused NullPointerExceptions)
+//                    variable = variable.toUpperCase();
+//                    // END KGU#968 2021-10-11
+//                    if ("".equals(mVariables.get(variable))) {
+//                        mVariables.put(variable, USER_REGISTER_TAG);
+//                    } else if (!mVariables.get(variable).equals(USER_REGISTER_TAG)) {
+//                        appendComment(String.format("Register: %s is already assigned to variable: %s. Be careful!\n", variable, mVariables.get(variable)), getIndent());
+//                    }
+//                }
+//
+//                // if it's not a register and it's not empty and it's not in the reservedWords list we add it to the arraylist
+//                else if (!variable.equals("") && !RESERVED_WORDS.contains(variable) && !variable.matches(hexNumberPattern)) {
+//                    stringPositions.add(new Tuple<>(variable, i - 2));
+//                }
+//                item = new StringBuilder(split[i]);
+//            } else {
+//                item.append(split[i]);
+//            }
+//            i++;
+//        }
 
         // the tuple arraylist is useful to rebuild the string later
         ArrayList<Tuple<String, Integer>> stringPositions = new ArrayList<>();
-
-        int i = 1;
-        StringBuilder item = new StringBuilder();
-        item.append(split[0]);
-
-        while (i < split.length) {
-            if (split[i].equals("\"")) {
-                i++;
-                while (!split[i].equals("\"") && i < split.length) {
-                    i++;
-                }
-            }
-
-            if (item.toString().matches(hexNumberPattern)) {
-                item.append(split[i]);
-            }
-            // we check that the item is not a variable
-            else if (!item.toString().matches(variablePattern)) {
-                // as soon as it's not we remove the last non matching character
-                String variable = item.substring(0, item.length() - 1);
-                // if it's a register we add it as not available and, if it's already assigned to a variable, we warn the user
-                if (variable.matches(registerPattern)) {
-                    // START KGU#968 2021-10-11: Bugfix #967 case matters here! (Caused NullPointerExceptions)
-                    variable = variable.toUpperCase();
-                    // END KGU#968 2021-10-11
-                    if ("".equals(mVariables.get(variable))) {
-                        mVariables.put(variable, USER_REGISTER_TAG);
-                    } else if (!mVariables.get(variable).equals(USER_REGISTER_TAG)) {
-                        appendComment(String.format("Register: %s is already assigned to variable: %s. Be careful!\n", variable, mVariables.get(variable)), getIndent());
+        
+        StringList tokens = Element.splitLexically(line, true);
+        int position = 0;
+        for (int i = 0; i < tokens.count(); i++) {
+            String token = tokens.get(i);
+            if (token.matches(variablePattern)) {
+                if (token.matches(registerPattern)) {
+                    token = token.toUpperCase();
+                    String mapped = mVariables.get(token);
+                    if ("".equals(mapped)) {
+                        // Unlikely to happen since we reserve all occurring variables at start
+                        mVariables.put(token, USER_REGISTER_TAG);
+                    } else if (!mapped.equals(USER_REGISTER_TAG) && !mapped.equals(TEMP_REGISTER_TAG)) {
+                        // Unlikely to happen as well now
+                        appendComment(String.format("Register %s is already assigned to variable %s. Be careful!\n", token, mapped), getIndent());
                     }
                 }
-
-                // if it's not a register and it's not empty and it's not in the reservedWords list we add it to the arraylist
-                else if (!variable.equals("") && !Arrays.asList(reservedWords).contains(variable) && !variable.matches(hexNumberPattern)) {
-                    stringPositions.add(new Tuple<>(variable, i - 2));
+                else if (!RESERVED_WORDS.contains(token)) {
+                    stringPositions.add(new Tuple<>(token, position));
                 }
-                item = new StringBuilder(split[i]);
-            } else {
-                item.append(split[i]);
             }
-            i++;
+            position += token.length();
         }
+        // END KGU#1002 2021-10-29
 
         return stringPositions;
     }
