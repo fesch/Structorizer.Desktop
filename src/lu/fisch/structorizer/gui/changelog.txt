@@ -23,7 +23,7 @@ Known issues:
 - ARM export is still experimental and relies on a specific and very restricted
   syntax for the element contents in order to produce meaningful results.
 
-Current development version 3.32-04 (2021-10-30)
+Current development version 3.32-04 (2021-10-31)
 - 01: Bugfix #987: Duplicate subroutine comment export by Pascal generator <2>
 - 01: Bugfix #988: Syntax error in Structorizer.bat and Arranger.bat fixed <2>
 - 01: Bugfix #989: Expressions in EXIT elements (e.g. return) were forgotten
@@ -47,10 +47,13 @@ Current development version 3.32-04 (2021-10-30)
 - 03: Bugfix #1004: Several flaws on exporting array statements to ARM code,
       two new ARM-specific export options <2>
 - 03: Bugfix #1005: Wrong ARM export of FOR and FOR-IN loops <2>
+- 04: Issue #967: ARM export now places a "_start" label if in GNU mode <2>
 - 04: Bugfix #1004 revised (defective index transformation), export option
-      "Transform array index to memory offset" withdrawn <2>
+      "Transform array index to memory offset" withdrawn, new memory alignment
+      mechanism (.align directive instead of .space) <2>
 - 04: Bugfix #1007: ARM export: Character literals were not properly recognized
-      and string/character literal content support was too restricted <2>
+      and string/character literal content support was too restricted, new
+      export option to append a 0 termination on storing strings <2>
 - 04: Bugfix #1008: ARM export: Address assignment defective in GNU mode <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer

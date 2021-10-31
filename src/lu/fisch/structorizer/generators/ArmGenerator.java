@@ -56,13 +56,16 @@ package lu.fisch.structorizer.generators;
 *                                      bugfix #1007: methods getVariables and variablesToRegisters rewritten,
 *                                      processing of strings and character assignments revised;
 *                                      bugfix #1008 (array access via explicit address assignment).
+*      Kay Gürtzig     2021-10-31      Constant `difference' renamed to `syntaxDiffs', alignment revised (#1004)
 *
 ******************************************************************************************************
 *
 *      Comment:
-*      TODO: - Register recycling (e.g. via LRU) -> all variables need an address in memory/stack then
+*      TODO: - Register recycling (e.g. via LRU) -> some (non-register) variables may need an address
+*              memory/stack for temporary caching.
 *            - Compilation of more complex expressions
-*            - How to return to the OS (or to prevent main from running into the subroutines?)
+*            - Is there a better way to return to the OS (i.e. to prevent main from running into the
+*              subroutines) than to place an endless loop at the end? Load PC from stack?
 *
 ******************************************************************************************************///
 
@@ -267,11 +270,18 @@ public class ArmGenerator extends Generator {
     // END KGU#968 2021-04-15
     // START KGU#1000 2021-10-29: Bugfix #1004
     /**
-     * Shall we insert space reservations after array declarations in order to fill up to
-     * the next word address?
+     * Shall we insert appropriate .align directives before any array declaration and the text
+     * section in GNU mode (see {@link #gnuEnabled})?
      */
-    private boolean alignArrays = false;
+    private boolean alignArrays = true;
     // END KGU#1000 2021-10-29
+    // START KGU#1002 2021-10-31 Issue #1007
+    /**
+     * Shall we append 0 termination after the character code points of string contents on
+     * allocating strng literals in memory?
+     */
+    private boolean terminateStrings = false;
+    // END KGU#1002 2021-10-31
 
     /**
      * Variable used for naming arrays (v_0, v_1...)
@@ -291,7 +301,7 @@ public class ArmGenerator extends Generator {
     // END KGU#1000 2021-10-27
 
     /**
-     * Stores the difference between GNU and Keil compilers<br/>
+     * Stores differing directives or syntax between GNU and Keil compilers<br/>
      * First index:<br/>
      * [0] - Gnu phrases<br/>
      * [1] - KEIL phrases<br/>
@@ -301,7 +311,7 @@ public class ArmGenerator extends Generator {
      * [2] - data area header<br/>
      * [3] - text area header<br/>
      */
-    private final String[][] difference = {
+    private final String[][] syntaxDiffs = {
             {":", "#", ".data", ".text"},
             {"", "", ";AREA data, DATA, READWRITE", ";AREA text, CODE, READONLY"}
     };
@@ -369,13 +379,22 @@ public class ArmGenerator extends Generator {
             gnuEnabled = (Boolean) option;
         }
         // END KGU#968 2021-04-15
-        // START KGU#1000 2021-10-29: Issue #1004
+        // START KGU#1000 2021-10-29: Issues #967, #1004
         if (topLevel) {
             appendComment("Generated with Structorizer " + Element.E_VERSION + " on " + new Date(), "");
+            if (gnuEnabled) {
+                addCode(".global _start", "", false);
+            }
             option = this.getPluginOption("alignArrays", alignArrays);
             if (option instanceof Boolean) {
                 alignArrays = (Boolean) option;
             }
+            // START KGU#1002 2021-10-31: Issue #1007
+            option = this.getPluginOption("terminateStrings", terminateStrings);
+            if (option instanceof Boolean) {
+                terminateStrings = (Boolean) option;
+            }
+            // END KGU#1002 2021-10-31
         }
         // END KGU#1000 2021-10-29
         // START KGU#968 2021-04-24: Enh. #967 - prepare correct keyword comparison
@@ -405,14 +424,20 @@ public class ArmGenerator extends Generator {
         }
         int variant = gnuEnabled ? 0 : 1;
         if (topLevel) {
-            addCode(difference[variant][2], "", false);
+            addCode(syntaxDiffs[variant][2], "", false);	// data section header
             // START KGU#1000 2021-10-27: Issue #1004
             this.dataInsertionLine = code.count();
             // END KGU#100 2021-10-27
-            addCode(difference[variant][3], "", false);
-            addCode("", "", false);	// Just a newline
+            addCode(syntaxDiffs[variant][3], "", false);	// text section header
+            // START KGU#1000c 2021-10-31: Issue #967
+            //addCode("", "", false);	// Just a newline
+            if (gnuEnabled && alignArrays) {
+                addCode(".align 2", "", false);
+            }
+            addCode(gnuEnabled ? "_start:" : "", "", false);
+            // END KGU#1000c 2021-10-31
         }
-        String colon = difference[variant][0];
+        String colon = syntaxDiffs[variant][0];
         // END KGU#705 2021-04-14
 
         for (Map.Entry<String, String> entry : mVariables.entrySet()) {
@@ -540,7 +565,7 @@ public class ArmGenerator extends Generator {
 
     @Override
     protected void generateCode(Alternative _alt, String _indent) {
-        String colon = difference[gnuEnabled ? 0 : 1][0];
+        String colon = syntaxDiffs[gnuEnabled ? 0 : 1][0];
         
         // the local caching of the COUNTER variable is essential
         boolean isDisabled = _alt.isDisabled(true);
@@ -599,7 +624,7 @@ public class ArmGenerator extends Generator {
     protected void generateCode(Case _case, String _indent) {
         appendComment(_case, _indent + getIndent());
 
-        String colon = difference[gnuEnabled ? 0 : 1][0];
+        String colon = syntaxDiffs[gnuEnabled ? 0 : 1][0];
 
         boolean isDisabled = _case.isDisabled(true);
         int counter = COUNTER;
@@ -674,7 +699,7 @@ public class ArmGenerator extends Generator {
 
         // Check if option gnuEnabled is set on GNU or Keil.
         int variant = gnuEnabled ? 0 : 1;
-        String colon = difference[variant][0];
+        String colon = syntaxDiffs[variant][0];
 
         // START KGU 2021-04-14 Argument was wrong
         //boolean isDisabled = _for.isDisabled(true);
@@ -865,7 +890,7 @@ public class ArmGenerator extends Generator {
 
     @Override
     protected void generateCode(While _while, String _indent) {
-        String colon = difference[gnuEnabled ? 0 : 1][0];
+        String colon = syntaxDiffs[gnuEnabled ? 0 : 1][0];
 
         boolean isDisabled = _while.isDisabled(true);
         appendComment(_while, _indent + getIndent());
@@ -904,7 +929,7 @@ public class ArmGenerator extends Generator {
 
     @Override
     protected void generateCode(Repeat _repeat, String _indent) {
-        String colon = difference[gnuEnabled ? 0 : 1][0];
+        String colon = syntaxDiffs[gnuEnabled ? 0 : 1][0];
 
         boolean isDisabled = _repeat.isDisabled(true);
 
@@ -941,7 +966,7 @@ public class ArmGenerator extends Generator {
 
     @Override
     protected void generateCode(Forever _forever, String _indent) {
-        String colon = difference[gnuEnabled? 0 : 1][0];
+        String colon = syntaxDiffs[gnuEnabled? 0 : 1][0];
 
         boolean isDisabled = _forever.isDisabled(true);
         appendComment(_forever, _indent + getIndent());
@@ -1072,7 +1097,7 @@ public class ArmGenerator extends Generator {
     @Override
     protected void generateCode(Jump _jump, String _indent) {
         // FIXME Implement a subroutine return, a loop exit
-        String colon = difference[gnuEnabled? 0 : 1][0];
+        String colon = syntaxDiffs[gnuEnabled? 0 : 1][0];
         if (!appendAsComment(_jump, _indent)) {
             boolean isDisabled = _jump.isDisabled(false);
             appendComment(_jump, _indent);
@@ -1638,14 +1663,7 @@ public class ArmGenerator extends Generator {
         rhSide.remove(0);
         String expr = rhSide.concatenate();
         int[] codeMapEntry = this.codeMap.get(elem);
-        int space = 0;	// Number of bytes to fill for alignment
-        if (alignArrays && sizeLd < 2) {
-            space = 4 - (elemCount * (1 << sizeLd)) % 4;
-        }
-        if (space > 0) {
-            addToDataSection(getIndent() + (gnuEnabled ? ".space\t" : "SPACE ") + space);
-            codeMapEntry[1]--;
-        }
+        boolean insertAlign = gnuEnabled && alignArrays && sizeLd > 0;
         // END KGU#1000 2021-10-29
         if (varName.matches(registerPattern0)) {
             // END KGU#1000 2021-10-27
@@ -1657,7 +1675,7 @@ public class ArmGenerator extends Generator {
             }
             // END KGU#1000 2021-10-27
             if (gnuEnabled) {
-                addToDataSection("v_" + arrayCounter + difference[0][0] + "\t." + type + "\t" + expr);
+                addToDataSection("v_" + arrayCounter + syntaxDiffs[0][0] + "\t." + type + "\t" + expr);
                 addCode("ADR " + varName + ", v_" + arrayCounter, getIndent(), isDisabled);
             } else {
                 // START KGU#1000 2021-10-27: Issue #1004 We can do better than to ignore the type
@@ -1667,7 +1685,10 @@ public class ArmGenerator extends Generator {
                 addCode("LDR " + varName + ", =V_" + arrayCounter, getIndent(), isDisabled);
             }
             // START KGU#1000 2021-10-29: Bugfix #1004 
-            codeMapEntry[1] = codeMapEntry[0] - (space > 0 ? 2 : 1); // Compensate the insertion at start
+            if (insertAlign) {
+                addToDataSection(".align " + sizeLd);
+            }
+            codeMapEntry[1] = codeMapEntry[0] - (insertAlign ? 2 : 1); // Compensate the insertion at start
             // END KGU#1000 2021-10-29
             
             // Remark: mVariables will already contain a mapping of varName to USER_REGISER_TAG
@@ -1684,12 +1705,15 @@ public class ArmGenerator extends Generator {
 
             // GNU compiler
             if (gnuEnabled) {
-                addToDataSection(varName + difference[0][0] + "\t." + type + "\t" + expr);
+                addToDataSection(varName + syntaxDiffs[0][0] + "\t." + type + "\t" + expr);
             } else {
                 // START KGU#1000 2021-10-27: Issue #1004 We can do better than to ignore the type
                 //addToDataSection(varName + "\tDCD " + expr);
                 addToDataSection(varName + "\t" + type + " " + expr);
                 // END KGU#1000 2021-10-27
+            }
+            if (insertAlign) {
+                addToDataSection(".align " + sizeLd);
             }
             // START KGU#1000 2021-10-27: Bugfix #1004 Adjust code mapping
             codeMapEntry[0] = this.dataInsertionLine;	// where addToDataSection inserted
@@ -1850,7 +1874,7 @@ public class ArmGenerator extends Generator {
         line = line.replace(" ", "");
         String[] tokens = line.split(assignmentOperators);
 
-        String hashtag = difference[gnuEnabled ? 0 : 1][1];
+        String hashtag = syntaxDiffs[gnuEnabled ? 0 : 1][1];
 
         String firstOperator = tokens[0]; // firstOperator must be a register or a variable
         String secondOperator = tokens[1]; // secondOperator can be a register, a variable or a hex number
@@ -2030,13 +2054,13 @@ public class ArmGenerator extends Generator {
      */
     private void generateString(String line, boolean isDisabled, Instruction elem) {
 
-        // START KGU#1003 2021-10-30: Issue #1009 We should handle non-ascii characters as well
+        // START KGU#1002 2021-10-30: Issue #1007 We should handle non-ascii characters as well
         //String[] split = line.split("<- ?|:= ?");
         //split[1] = split[1].replace("\"", "");
-        // END KGU#1003 2021-10-30
+        // END KGU#1002 2021-10-30
         
         String format = "word %s <- {%s}";
-        // START KGU#1003 2021-10-30: Issue #1009 We should handle non-ascii characters as well
+        // START KGU#1002 2021-10-30: Issue #1007 We should handle non-ascii characters as well
         //StringBuilder array = new StringBuilder();
         //for (int i = 0; i < split[1].length(); i++) {
         //    array.append("'").append(split[1].charAt(i)).append("'");
@@ -2049,8 +2073,11 @@ public class ArmGenerator extends Generator {
         tokens.removeAll(" ");
         String literal = tokens.get(2);
         StringBuilder array = stringContentToList(literal);
+        if (terminateStrings) {
+            array.append(",0");
+        }
         generateArrayInitialization(String.format(format, tokens.get(0), array), isDisabled, elem);
-        // END KGU#1003 2021-10-30
+        // END KGU#1002 2021-10-30
     }
 
     /*----START OF UTILITIES----*/
