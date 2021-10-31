@@ -58,6 +58,7 @@ package lu.fisch.structorizer.generators;
 *                                      bugfix #1008 (array access via explicit address assignment).
 *      Kay Gürtzig     2021-10-31      Constant `difference' renamed to `syntaxDiffs', alignment revised (#1004),
 *                                      bugfix #1010: REPEAT loop was exported as if it were a do while loop
+*                                      bugfix #1011: CASE elements without default branch caused defective code
 *
 ******************************************************************************************************
 *
@@ -656,14 +657,14 @@ public class ArmGenerator extends Generator {
         // For each line we extract it and then translate the code
         for (int i = 0; i < _case.qs.size() - 1; i++) {
             String[] split = lines.get(i + 1).split(",");
-            for (String line : split) {
+            for (String selector : split) {
                 count = "" + counter + "_" + i + "";
 
-                String operator = line;
-                if (!operator.startsWith("#") && !operator.startsWith("R"))
-                    operator = "#" + operator;
+                String operand = selector;
+                if (!operand.startsWith("#") && !operand.startsWith("R"))
+                    operand = "#" + operand;
 
-                String cmp = "CMP " + variable + ", " + operator;
+                String cmp = "CMP " + variable + ", " + operand;
                 String branch = "BEQ block_" + count;
 
                 // add it
@@ -674,7 +675,15 @@ public class ArmGenerator extends Generator {
 
         }
 
-        addCode("B default_" + counter, getIndent(), isDisabled);
+        // START KGU#1006 2021-10-31: Bugfix #1011 target label may not exist
+        //addCode("B default_" + counter, getIndent(), isDisabled);
+        if (lines.get(_case.qs.size()).trim().equals("%")) {
+            addCode("B end_" + counter, getIndent(), isDisabled);
+        }
+        else {
+            addCode("B default_" + counter, getIndent(), isDisabled);
+        }
+        // END KGU#1006 2021-10-31
 
         // Now we need to add the labels for the block
         for (int i = 0; i < _case.qs.size() - 1; i++) {
@@ -1697,7 +1706,6 @@ public class ArmGenerator extends Generator {
             if (insertAlign) {
                 addToDataSection(".align " + sizeLd);
             }
-            codeMapEntry[1] = codeMapEntry[0] - (insertAlign ? 2 : 1); // Compensate the insertion at start
             // END KGU#1000 2021-10-29
             
             // Remark: mVariables will already contain a mapping of varName to USER_REGISER_TAG

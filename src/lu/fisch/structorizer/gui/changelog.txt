@@ -56,6 +56,8 @@ Current development version 3.32-04 (2021-10-31)
       export option to append a 0 termination on storing strings <2>
 - 04: Bugfix #1008: ARM export: Address assignment defective in GNU mode <2>
 - 04: Bugfix #1010: ARM export: The logic of REPEAT loops was inverted <2>
+- 04: Bugfix #1011: ARM export: Bad code for CASE elements without default <2>
+- 04: Bugfix #1012: Compromised Code Preview highlighting after insertions <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>
