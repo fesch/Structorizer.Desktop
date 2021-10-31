@@ -56,7 +56,8 @@ package lu.fisch.structorizer.generators;
 *                                      bugfix #1007: methods getVariables and variablesToRegisters rewritten,
 *                                      processing of strings and character assignments revised;
 *                                      bugfix #1008 (array access via explicit address assignment).
-*      Kay Gürtzig     2021-10-31      Constant `difference' renamed to `syntaxDiffs', alignment revised (#1004)
+*      Kay Gürtzig     2021-10-31      Constant `difference' renamed to `syntaxDiffs', alignment revised (#1004),
+*                                      bugfix #1010: REPEAT loop was exported as if it were a do while loop
 *
 ******************************************************************************************************
 *
@@ -949,7 +950,10 @@ public class ArmGenerator extends Generator {
         }
         // END KGU#968 2021-05-02
 
-        String c = processCondition(_repeat, "until", keys, false);
+        // START KGU#1005 2021-10-31: Bugfix #1010 The condition must be inverted (not "do while" logic!)
+        //String c = processCondition(_repeat, "until", keys, false);
+        String c = processCondition(_repeat, "until", keys, true);
+        // END KGU#1005 2021-10-31
         if (c == null) {
             return;
         }
