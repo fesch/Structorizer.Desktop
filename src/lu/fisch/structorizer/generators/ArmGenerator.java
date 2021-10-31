@@ -2381,7 +2381,7 @@ public class ArmGenerator extends Generator {
 
     /**
      * Adds the given line between the data section header and the text
-     * section header.
+     * section header, more precisely before line {@link #dataInsertionLine}.
      * 
      * @param line - the line to be inserted
      */
