@@ -58,7 +58,8 @@ package lu.fisch.structorizer.generators;
 *                                      bugfix #1008 (array access via explicit address assignment).
 *      Kay Gürtzig     2021-10-31      Constant `difference' renamed to `syntaxDiffs', alignment revised (#1004),
 *                                      bugfix #1010: REPEAT loop was exported as if it were a do while loop
-*                                      bugfix #1011: CASE elements without default branch caused defective code
+*                                      bugfix #1011: CASE elements without default branch caused defective code.
+*                                      Pattern redundancy reduced since variablePattern subsumed registerPattern[1]
 *
 ******************************************************************************************************
 *
@@ -94,8 +95,9 @@ public class ArmGenerator extends Generator {
     //private static final String registerPattern = " ?[Rr]([0-9]|1[0-4]) ?";
     //private static final String variablePattern = "[a-zA-Z]+[0-9]*";
     private static final String registerPattern0 = "[Rr]([0-9]|1[0-4])";
-    private static final String registerPattern1 = "[Rr]([0-9]|1[0-5])";	// Includes PC
+    //private static final String registerPattern1 = "[Rr]([0-9]|1[0-5])";	// Includes PC
     private static final String registerPattern = " ?" + registerPattern0 + " ?";
+    // Note that variablePattern subsumes all registerPatterns
     private static final String variablePattern = "[a-zA-Z][a-zA-Z0-9_]*";
     // END KGU#968 2021-05-02
     private static final String numberPattern = "-?[0-9]+";
@@ -110,15 +112,15 @@ public class ArmGenerator extends Generator {
     private static final String negativeNumberPattern = "-[0-9]+";
     private static final String escapeCharacterPattern = "\\\\['\"0bfnt\\\\]";
 
-    private static final Pattern assignment = Pattern.compile(String.format("(%s|%s) *%s *%s", registerPattern, variablePattern, assignmentOperators, registerVariableNumberHex));
-    private static final Pattern expression = Pattern.compile(String.format("(%s|%s) *%s *%s *%s *%s", registerPattern, variablePattern, assignmentOperators, registerVariableNumberHex, supportedOperationsPattern, registerVariableNumberHex));
-    private static final Pattern memoryAccess = Pattern.compile(String.format("(%s|%s) *%s *(memoria|memory)\\[(%s|%s)( *\\+ *%s)?\\]", registerPattern, variablePattern, assignmentOperators, registerPattern, variablePattern, registerVariableNumberHex));
-    private static final Pattern memoryStore = Pattern.compile(String.format("(memoria|memory)\\[(%s|%s|%s)( *\\+ *%s)?\\] *%s *(%s|%s)", registerPattern, variablePattern, numberPattern, registerVariableNumberHex, assignmentOperators, registerPattern, variablePattern));
-    private static final Pattern arrayExpression = Pattern.compile(String.format("(%s|%s) *%s *(%s|%s)\\[(%s|%s|%s)\\]", registerPattern, variablePattern, assignmentOperators, registerPattern, variablePattern, registerPattern, variablePattern, numberPattern));
-    private static final Pattern arrayAssignment = Pattern.compile(String.format("(%s|%s) *\\[ *(%s|%s|%s)( *\\+ *%s)?\\] *%s *(%s|%s)", registerPattern, variablePattern, registerPattern, variablePattern, numberPattern, registerVariableNumberHex, assignmentOperators, registerPattern, variablePattern));
+    private static final Pattern assignment = Pattern.compile(String.format("%s *%s *%s", variablePattern, assignmentOperators, registerVariableNumberHex));
+    private static final Pattern expression = Pattern.compile(String.format("%s *%s *%s *%s *%s", variablePattern, assignmentOperators, registerVariableNumberHex, supportedOperationsPattern, registerVariableNumberHex));
+    private static final Pattern memoryAccess = Pattern.compile(String.format("%s *%s *(memoria|memory)\\[ *%s( *\\+ *%s)?\\]", variablePattern, assignmentOperators, variablePattern, registerVariableNumberHex));
+    private static final Pattern memoryStore = Pattern.compile(String.format("(memoria|memory)\\[ *(%s|%s)( *\\+ *%s)?\\] *%s *%s", variablePattern, numberPattern, registerVariableNumberHex, assignmentOperators, variablePattern));
+    private static final Pattern arrayExpression = Pattern.compile(String.format("%s *%s *%s *\\[ *(%s|%s) *\\]", variablePattern, assignmentOperators, variablePattern, variablePattern, numberPattern));
+    private static final Pattern arrayAssignment = Pattern.compile(String.format("%s *\\[ *(%s|%s)( *\\+ *%s)?\\] *%s *%s", variablePattern, variablePattern, numberPattern, registerVariableNumberHex, assignmentOperators, variablePattern));
     // START KGU#968 2021-10-11: Issue #967 it can hardly make sense to have a number on the left-hand side, we also allow word as default
     //private static final Pattern arrayInitialization = Pattern.compile(String.format("(word|hword|byte|octa|quad) *(%s|%s|%s) *%s *\\{(%s|%s)(, *(%s|%s))*\\}", registerPattern, variablePattern, numberPattern, assignmentOperators, numberPattern, hexNumberPattern, numberPattern, hexNumberPattern));
-    private static final Pattern arrayInitialization = Pattern.compile(String.format("((word|hword|byte|octa|quad) +)?(%s|%s) *%s *\\{(%s|%s)(, *(%s|%s))*\\}", registerPattern, variablePattern, assignmentOperators, numberPattern, hexNumberPattern, numberPattern, hexNumberPattern));
+    private static final Pattern arrayInitialization = Pattern.compile(String.format("((word|hword|byte|octa|quad) +)?%s *%s *\\{ *(%s|%s)( *, *(%s|%s))* *\\}", variablePattern, assignmentOperators, numberPattern, hexNumberPattern, numberPattern, hexNumberPattern));
     // END KGU#968 2021-10-11
     // START KGU#1000 2021-10-27: Bugfix #1004 it does not make sense to allow registers as argument
     //private static final Pattern address = Pattern.compile(String.format("%s *%s *(indirizzo|address)\\((%s|%s)\\)", registerPattern, assignmentOperators, registerPattern, variablePattern));
@@ -127,25 +129,24 @@ public class ArmGenerator extends Generator {
     // START KGU#1002 2021-10-30: Issue #1007 We may allow more than just identifier characters
     //private static final Pattern stringInitialization = Pattern.compile(String.format("(%s|%s) *%s *\"[\\w]{2,}\"", registerPattern, variablePattern, assignmentOperators));
     //private static final Pattern charInitialization = Pattern.compile(String.format("(%s|%s) *%s *\"[\\w]\"", registerPattern, variablePattern, assignmentOperators));
-    private static final Pattern stringInitialization = Pattern.compile(String.format("(%s|%s) *%s *\"([^\"\\\\]|%s)+?\"", registerPattern, variablePattern, assignmentOperators, escapeCharacterPattern));
-    private static final Pattern charInitialization = Pattern.compile(String.format("(%s|%s) *%s *('([^\'\\\\]|%s)')", registerPattern, variablePattern, assignmentOperators, escapeCharacterPattern));
+    private static final Pattern stringInitialization = Pattern.compile(String.format("%s *%s *\"([^\"\\\\]|%s)+?\"", variablePattern, assignmentOperators, escapeCharacterPattern));
+    private static final Pattern charInitialization = Pattern.compile(String.format("%s *%s *('([^\'\\\\]|%s)')", variablePattern, assignmentOperators, escapeCharacterPattern));
     // END KGU#1002 2021-10-30
     // END KGU#968 2021-10-11
-    private static final Pattern booleanAssignmentPattern = Pattern.compile(String.format("(%s|%s) *%s *(true|false)", registerPattern, variablePattern, assignmentOperators));
+    private static final Pattern booleanAssignmentPattern = Pattern.compile(String.format("%s *%s *(true|false)", variablePattern, assignmentOperators));
     // START KGU#968 2021-05-02: More general variable syntax - might this cause trouble?
     //private final Pattern conditionPattern = Pattern.compile("(while)?\\((R([0-9]|1[0-5])|[a-zA-Z]+)(==|!=|<|>|<=|>=|=)(R([0-9]|1[0-5])|[0-9]+|[a-zA-Z]+|0x([0-9]|[a-fA-F])+|'([a-zA-Z]|[0-9])')((and|AND|or|OR|&&|\\|\\|)(R([0-9]|1[0-5])|[a-zA-Z]+)(==|!=|<|>|<=|>=|=)(R([0-9]|1[0-5])|[0-9]+|[a-zA-Z]+|0x([0-9]|[a-fA-F])+|'([a-zA-Z]|[0-9])'))*\\)");
-    private static final String comparisonPattern = String.format("(%s|%s) *%s *(%s|[0-9]+|%s|0x[0-9a-fA-F]+|'[a-zA-Z0-9]')",
-            registerPattern1, variablePattern,
+    private static final String comparisonPattern = String.format("%s *%s *(%s|[0-9]+|0x[0-9a-fA-F]+|'[a-zA-Z0-9]')",
+            variablePattern,
             relationOperators,
-            registerPattern1, variablePattern);
+            variablePattern);
     private static final Pattern conditionPattern = Pattern.compile(
             String.format("\\(%s( *(&&|\\|\\|) *%s)*\\)",
                     comparisonPattern, comparisonPattern));
     // END KGU#968 2021-05-02
     // START KGU#968 2021-10-05: Special support for [negated] registers or variables as conditions
     private static final Pattern atomicCondPattern = Pattern.compile(
-            String.format("\\( *!? *(%s|%s) *\\)",
-                    registerPattern1, variablePattern));
+            String.format("\\( *!? *%s *\\)", variablePattern));
     // END KGU#968 2021-10-05
     // START KGU#968 2021-04-24: Enh. #967 - correct keyword comparison; patterns will be set when code generation is started
     private static Pattern inputPattern = null;
@@ -1497,7 +1498,7 @@ public class ArmGenerator extends Generator {
      *
      * @param condition - the condition expression string
      * @param inverse   - is the condition inverted by a {@code not} operator?
-     * @return an array that contains the first operator, arm instruction, and the second operator
+     * @return an array that contains the first operand, arm instruction, and the second operand
      */
     private String[] getCondition(String condition, boolean inverse) {
         // FIXME Is it certain that the expression contains only one relation operator? Otherwise trouble is ahead...
@@ -1893,24 +1894,24 @@ public class ArmGenerator extends Generator {
 
         String hashtag = syntaxDiffs[gnuEnabled ? 0 : 1][1];
 
-        String firstOperator = tokens[0]; // firstOperator must be a register or a variable
-        String secondOperator = tokens[1]; // secondOperator can be a register, a variable or a hex number
+        String firstOperand = tokens[0]; // firstOperand must be a register or a variable
+        String secondOperand = tokens[1]; // secondOperand can be a register, a variable or a hex number
 
-        // if secondOperator is a negative number then we need to use MVN and convert the number to a hex number
-        if (secondOperator.matches(negativeNumberPattern)) {
-            int n = Integer.parseInt(secondOperator);
-            secondOperator = Integer.toHexString(n);
+        // if secondOperand is a negative number then we need to use MVN and convert the number to a hex number
+        if (secondOperand.matches(negativeNumberPattern)) {
+            int n = Integer.parseInt(secondOperand);
+            secondOperand = Integer.toHexString(n);
             code = "MVN %s, %s0x%s";
         }
-        // if secondOperator is a register then we don't need to prepend the #
-        else if (secondOperator.matches(registerPattern)) {
+        // if secondOperand is a register then we don't need to prepend the #
+        else if (secondOperand.matches(registerPattern)) {
             hashtag = "";
             code = "MOV %s, %s%s";
         } else {
-            code = getInstructionConstant(firstOperator, secondOperator);
+            code = getInstructionConstant(firstOperand, secondOperand);
         }
 
-        addCode(String.format(code, firstOperator, hashtag, secondOperator), getIndent(), isDisabled);
+        addCode(String.format(code, firstOperand, hashtag, secondOperand), getIndent(), isDisabled);
     }
 
     /**
@@ -1924,15 +1925,15 @@ public class ArmGenerator extends Generator {
         line = line.replace(" ", "");
         String[] tokens = line.split(assignmentOperators);
 
-        String firstOperator = tokens[0]; // firstOperator must be a register or a variable
-        String secondOperator = tokens[1]; // secondOperator is the simple expression R0 <- 1 + 1 ->> [1, +, 1]
-        secondOperator = secondOperator.replace("and", "&").replace("or", "|");
+        String firstOperand = tokens[0]; // firstOperand must be a register or a variable
+        String secondOperand = tokens[1]; // secondOperand is the simple expression R0 <- 1 + 1 ->> [1, +, 1]
+        secondOperand = secondOperand.replace("and", "&").replace("or", "|");
 
         String operation = ""; // ARM operation
 
-        String[] expression = parseExpression(secondOperator); // expression must be a simple expression: [R0, +, 1], [x, +, y], [x, and, y]
+        String[] expression = parseExpression(secondOperand); // expression must be a simple expression: [R0, +, 1], [x, +, y], [x, and, y]
 
-        String thirdOperator; // third value in the arm operation, (ADD R0, R1, #1)
+        String thirdOperand; // third value in the arm operation, (ADD R0, R1, #1)
 
         if ("+".equals(expression[1])) {
             operation = "ADD";
@@ -1947,10 +1948,10 @@ public class ArmGenerator extends Generator {
         }
 
         // if expression[0] is a register then we don't need to prepend the #
-        secondOperator = expression[0].matches(registerPattern) ? expression[0] : "#" + expression[0];
+        secondOperand = expression[0].matches(registerPattern) ? expression[0] : "#" + expression[0];
 
         // if expression[2] is a register then we don't need to prepend the #
-        thirdOperator = expression[2].matches(registerPattern) ? expression[2] : "#" + expression[2];
+        thirdOperand = expression[2].matches(registerPattern) ? expression[2] : "#" + expression[2];
 
         // replace MUL with LSL where possible
         if (operation.equals("MUL") && expression[0].matches(registerPattern)) {
@@ -1964,7 +1965,7 @@ public class ArmGenerator extends Generator {
                     //shift = (int) (Math.log(value) / Math.log(2));
                     while ((value >>= 1) > 0) shift++;
                     operation = "LSL";
-                    thirdOperator = "#" + shift;
+                    thirdOperand = "#" + shift;
                 }
                 // if the previous value number is a power of two
                 else if (isPowerOfTwo(value - 1)) {
@@ -1972,7 +1973,7 @@ public class ArmGenerator extends Generator {
                     value --;
                     while ((value >>= 1) > 0) shift++;
                     operation = "ADD";
-                    thirdOperator = String.format("LSL #%s", shift);
+                    thirdOperand = String.format("LSL #%s", shift);
                 }
             }
             // if it's a register KGU: This seemed to be nonsense
@@ -1981,7 +1982,7 @@ public class ArmGenerator extends Generator {
             //}
         }
 
-        addCode(String.format(code, operation, firstOperator, secondOperator, thirdOperator), getIndent(), isDisabled);
+        addCode(String.format(code, operation, firstOperand, secondOperand, thirdOperand), getIndent(), isDisabled);
     }
 
     /**
@@ -2026,39 +2027,39 @@ public class ArmGenerator extends Generator {
         line = line.replace(" ", "");
         String[] tokens = line.split(assignmentOperators);
 
-        String expressionOperator; // string containing the memory expression
-        String registerOperator; // string containing the register
+        String expressionOperand; // string containing the memory expression
+        String registerOperand; // string containing the register
         String operation; // the ARM operation to do (LDR or STR)
 
         // if the square brackets come before the assignment operator then we're in this case memory[R0] <- R1 so it's a STR operation
         if (line.indexOf("[") < line.indexOf("<-") || line.indexOf("[") < line.indexOf(":=")) {
             operation = "STR";
-            expressionOperator = tokens[0];
-            registerOperator = tokens[1];
+            expressionOperand = tokens[0];
+            registerOperand = tokens[1];
         }
         // else we're in this case R1 <- memory[R0] so it's a LDR operation
         else {
             operation = "LDR";
-            expressionOperator = tokens[1];
-            registerOperator = tokens[0];
+            expressionOperand = tokens[1];
+            registerOperand = tokens[0];
         }
 
         // get everything between the square brackets and parse the expression
-        String[] expression = parseExpression(expressionOperator.substring(expressionOperator.indexOf("[") + 1, expressionOperator.indexOf("]")));
+        String[] expression = parseExpression(expressionOperand.substring(expressionOperand.indexOf("[") + 1, expressionOperand.indexOf("]")));
 
-        StringBuilder secondOperator = new StringBuilder();
+        StringBuilder secondOperand = new StringBuilder();
 
         for (int i = 0; i < expression.length; i++) {
             if (!expression[i].matches(supportedOperationsPattern)) {
-                secondOperator.append(expression[i]);
+                secondOperand.append(expression[i]);
 
                 if (i < expression.length - 1) {
-                    secondOperator.append(", ");
+                    secondOperand.append(", ");
                 }
             }
         }
 
-        addCode(String.format(codeLine, operation, registerOperator, secondOperator), getIndent(), isDisabled);
+        addCode(String.format(codeLine, operation, registerOperand, secondOperand), getIndent(), isDisabled);
     }
 
     /**
@@ -2448,7 +2449,7 @@ public class ArmGenerator extends Generator {
             }
         } catch (NumberFormatException e) {
             //FIXME What if it does not comply with a hex literal, either?
-            //inside generateAssignment this method should be called only if secondOperator is a number (decimal or hex)
+            //inside generateAssignment this method should be called only if secondOperand is a number (decimal or hex)
             value = value.replace("0x", "");
             int hexValue = Integer.parseInt(value, 16);
             if (hexValue < UINT12MAX) {
@@ -2679,8 +2680,8 @@ public class ArmGenerator extends Generator {
     }
 
     /**
-     * This method splits the current expression into a format where the second item of the array contains the operation,
-     * the first and third items contain the operators
+     * This method splits the current expression into a format where the second item of the array
+     * contains the operation, the first and third items contain the operands
      *
      * @param expression represents the simple expression
      * @return an array containing the split expression
