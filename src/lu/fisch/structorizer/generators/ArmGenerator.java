@@ -97,7 +97,10 @@ public class ArmGenerator extends Generator {
     private static final String variablePattern = "[a-zA-Z][a-zA-Z0-9_]*";
     // END KGU#968 2021-05-02
     private static final String numberPattern = "-?[0-9]+";
-    private static final String hexNumberPattern = "(0|0x|0x([0-9]|[a-fA-F])+)";
+    // START KGU 2021-10-31: Redundancy / ambiguity removed
+    //private static final String hexNumberPattern = "(0|0x|0x([0-9]|[a-fA-F])+)";
+    private static final String hexNumberPattern = "(0x([0-9]|[a-fA-F])+)";
+    // END KGU 2021-10-31
     private static final String assignmentOperators = "(<-|:=)";
     private static final String relationOperators = "(==|!=|<|>|<=|>=|=)";
     private static final String supportedOperationsPattern = "(-|\\+|\\*|and|or|&|\\||&&|\\|\\|)";
@@ -110,10 +113,10 @@ public class ArmGenerator extends Generator {
     private static final Pattern memoryAccess = Pattern.compile(String.format("(%s|%s) *%s *(memoria|memory)\\[(%s|%s)( *\\+ *%s)?\\]", registerPattern, variablePattern, assignmentOperators, registerPattern, variablePattern, registerVariableNumberHex));
     private static final Pattern memoryStore = Pattern.compile(String.format("(memoria|memory)\\[(%s|%s|%s)( *\\+ *%s)?\\] *%s *(%s|%s)", registerPattern, variablePattern, numberPattern, registerVariableNumberHex, assignmentOperators, registerPattern, variablePattern));
     private static final Pattern arrayExpression = Pattern.compile(String.format("(%s|%s) *%s *(%s|%s)\\[(%s|%s|%s)\\]", registerPattern, variablePattern, assignmentOperators, registerPattern, variablePattern, registerPattern, variablePattern, numberPattern));
-    private static final Pattern arrayAssignment = Pattern.compile(String.format("(%s|%s)\\[(%s|%s|%s)( *\\+ *%s)?\\] *%s *(%s|%s)", registerPattern, variablePattern, registerPattern, variablePattern, numberPattern, registerVariableNumberHex, assignmentOperators, registerPattern, variablePattern));
+    private static final Pattern arrayAssignment = Pattern.compile(String.format("(%s|%s) *\\[ *(%s|%s|%s)( *\\+ *%s)?\\] *%s *(%s|%s)", registerPattern, variablePattern, registerPattern, variablePattern, numberPattern, registerVariableNumberHex, assignmentOperators, registerPattern, variablePattern));
     // START KGU#968 2021-10-11: Issue #967 it can hardly make sense to have a number on the left-hand side, we also allow word as default
-    //private static final Pattern arrayInitialization = Pattern.compile(String.format("(word|hword|byte|octa|quad) +(%s|%s) *%s *\\{(%s|%s)(, *(%s|%s))*\\}", registerPattern, variablePattern, assignmentOperators, numberPattern, hexNumberPattern, numberPattern, hexNumberPattern));
-    private static final Pattern arrayInitialization = Pattern.compile(String.format("(word|hword|byte|octa|quad)? *(%s|%s|%s) *%s *\\{(%s|%s)(, *(%s|%s))*\\}", registerPattern, variablePattern, numberPattern, assignmentOperators, numberPattern, hexNumberPattern, numberPattern, hexNumberPattern));
+    //private static final Pattern arrayInitialization = Pattern.compile(String.format("(word|hword|byte|octa|quad) *(%s|%s|%s) *%s *\\{(%s|%s)(, *(%s|%s))*\\}", registerPattern, variablePattern, numberPattern, assignmentOperators, numberPattern, hexNumberPattern, numberPattern, hexNumberPattern));
+    private static final Pattern arrayInitialization = Pattern.compile(String.format("((word|hword|byte|octa|quad) +)?(%s|%s) *%s *\\{(%s|%s)(, *(%s|%s))*\\}", registerPattern, variablePattern, assignmentOperators, numberPattern, hexNumberPattern, numberPattern, hexNumberPattern));
     // END KGU#968 2021-10-11
     // START KGU#1000 2021-10-27: Bugfix #1004 it does not make sense to allow registers as argument
     //private static final Pattern address = Pattern.compile(String.format("%s *%s *(indirizzo|address)\\((%s|%s)\\)", registerPattern, assignmentOperators, registerPattern, variablePattern));
@@ -129,17 +132,17 @@ public class ArmGenerator extends Generator {
     private static final Pattern booleanAssignmentPattern = Pattern.compile(String.format("(%s|%s) *%s *(true|false)", registerPattern, variablePattern, assignmentOperators));
     // START KGU#968 2021-05-02: More general variable syntax - might this cause trouble?
     //private final Pattern conditionPattern = Pattern.compile("(while)?\\((R([0-9]|1[0-5])|[a-zA-Z]+)(==|!=|<|>|<=|>=|=)(R([0-9]|1[0-5])|[0-9]+|[a-zA-Z]+|0x([0-9]|[a-fA-F])+|'([a-zA-Z]|[0-9])')((and|AND|or|OR|&&|\\|\\|)(R([0-9]|1[0-5])|[a-zA-Z]+)(==|!=|<|>|<=|>=|=)(R([0-9]|1[0-5])|[0-9]+|[a-zA-Z]+|0x([0-9]|[a-fA-F])+|'([a-zA-Z]|[0-9])'))*\\)");
-    private static final String comparisonPattern = String.format("(%s|%s)%s(%s|[0-9]+|%s|0x[0-9a-fA-F]+|'[a-zA-Z0-9]')",
+    private static final String comparisonPattern = String.format("(%s|%s) *%s *(%s|[0-9]+|%s|0x[0-9a-fA-F]+|'[a-zA-Z0-9]')",
             registerPattern1, variablePattern,
             relationOperators,
             registerPattern1, variablePattern);
     private static final Pattern conditionPattern = Pattern.compile(
-            String.format("\\(%s((&&|\\|\\|)%s)*\\)",
+            String.format("\\(%s( *(&&|\\|\\|) *%s)*\\)",
                     comparisonPattern, comparisonPattern));
     // END KGU#968 2021-05-02
     // START KGU#968 2021-10-05: Special support for [negated] registers or variables as conditions
     private static final Pattern atomicCondPattern = Pattern.compile(
-            String.format("\\(!?(%s|%s)\\)",
+            String.format("\\( *!? *(%s|%s) *\\)",
                     registerPattern1, variablePattern));
     // END KGU#968 2021-10-05
     // START KGU#968 2021-04-24: Enh. #967 - correct keyword comparison; patterns will be set when code generation is started
@@ -1391,9 +1394,11 @@ public class ArmGenerator extends Generator {
         // START KGU#968 2021-04-24: Enh. #967 - correct keyword comparison
         boolean isInput = inputPattern != null && inputPattern.matcher(line1).matches();
         boolean isOutput = outputPattern != null && outputPattern.matcher(line1).matches();
-        
         // END KGU#968 2021-04-24
-        String line = line1.replace(" ", "");
+        // START KGU#1004 2021-10-31: We must not remove all spaces, the patterns all cope with blanks now
+        //String line = line1.replace(" ", "");
+        String line = line1.trim();
+        // END KGU#1004 2021-10-31
         ARM_OPERATIONS mode = ARM_OPERATIONS.NOT_IMPLEMENTED;
 
         if (booleanAssignmentPattern.matcher(line).matches()) {
@@ -1589,7 +1594,8 @@ public class ArmGenerator extends Generator {
     
     /**
      * Converts an atomic condition, i.e., a pure or negated register or variable name
-     * into a comparison against 0. Other expressions remain untouched.<br/>
+     * enclosed in parentheses into a comparison against 0. Other expressions remain
+     * untouched.<br/>
      * Examples:<ul>
      * <li>{@code (R4)} &rarr; {@code (R4!=0)} </li>
      * <li>{@code (!isBool)} &rarr; {@code (isBool==0)} </li>
@@ -2211,14 +2217,14 @@ public class ArmGenerator extends Generator {
         String type = "";
         // START KGU#1000 2021-10-27: Bugfix #1004 We need more flexibility here
         //String arName = null;
-        // START KGU#1003 2021-10-29: Bugix #1008 Lacking retrieval in GNU mode
+        // START KGU#1003 2021-10-31: Bugix #1008 Lacking retrieval in GNU mode
         //String addrPattern = "\tADR " + register + ",";
         //if (!this.gnuEnabled) {
         //    addrPattern = "\tLDR " + register + ", =";
         //}
         String addrPattern1 = "\tLDR " + register + ", =";
-        String addrPattern2 = "\tADR " + register + ", =";
-        // END KGU#1003 2021-10-29
+        String addrPattern2 = "\tADR " + register + ",";
+        // END KGU#1003 2021-10-31
         String declPattern = null;
         /* Try the quicker way to get the array name, which may be the only one for
          * an array that has not been declared with a register name, as the address
