@@ -103,7 +103,7 @@ public class ArmGenerator extends Generator {
     private static final String supportedOperationsPattern = "(-|\\+|\\*|and|or|&|\\||&&|\\|\\|)";
     private static final String registerVariableNumberHex = String.format("(%s|%s|%s|%s)", registerPattern, variablePattern, numberPattern, hexNumberPattern);
     private static final String negativeNumberPattern = "-[0-9]+";
-    private static final String escapeCharacterPattern = "\\\\['\"bfnt\\\\]";
+    private static final String escapeCharacterPattern = "\\\\['\"0bfnt\\\\]";
 
     private static final Pattern assignment = Pattern.compile(String.format("(%s|%s) *%s *%s", registerPattern, variablePattern, assignmentOperators, registerVariableNumberHex));
     private static final Pattern expression = Pattern.compile(String.format("(%s|%s) *%s *%s *%s *%s", registerPattern, variablePattern, assignmentOperators, registerVariableNumberHex, supportedOperationsPattern, registerVariableNumberHex));
@@ -1649,7 +1649,6 @@ public class ArmGenerator extends Generator {
         if (lhSide.count() > 1) {
             type = lhSide.get(0);
         }
-        int elemCount = rhSide.count(",") + 1;
         int sizeLd = TYPES.indexOf(type);
         if (type.isEmpty()) {
             type = "word";
@@ -2112,6 +2111,9 @@ public class ArmGenerator extends Generator {
                     break;
                 case '\\':
                     array.append("0x5C");
+                    break;
+                case '0':
+                    array.append("0");
                     break;
                 case 'b':
                     array.append("0x08");
