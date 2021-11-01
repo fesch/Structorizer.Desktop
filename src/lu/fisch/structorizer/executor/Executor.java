@@ -208,6 +208,8 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2021-02-24      Enh. #410: Additional namespace filter applied for callees and includables
  *      Kay Gürtzig     2021-02-28      Bugfix #947: Detection of cyclic inclusion added.
  *      Kay Gürtzig     2021-04-14      Bugfix #969: Precaution against relative currentDirectory (caused NPE)
+ *      Kay Gürtzig     2021-11-01      Bugfix #1013: Eternal loop in setVar(...) on array access after some extraordinary
+ *                                      array initialisation.
  *
  ******************************************************************************************************
  *
@@ -3655,6 +3657,9 @@ public class Executor implements Runnable
 			 * (possibly indexed or qualified or both).
 			 * A Java type may be qualified itself (package + member class).
 			 */
+			// START KGU#1008 2021-11-01: Bugfx #1013 trouble with case c)
+			boolean mayBeUnknownType = true;
+			// END KGU#1008 2021-11-01
 			// Now we check for all cases except e) and f)
 			boolean isVariable = context.variables.contains(token0);
 			// In case of an existing variable this should be its type
@@ -3675,6 +3680,9 @@ public class Executor implements Runnable
 			String token2 = "";
 			while (posDot+1 < nTokens && tokens.get(posDot).equals(".")
 					&& Function.testIdentifier(token2 = tokens.get(posDot+1), false, null)) {
+				// START KGU#1008 2021-11-01: Bugfx #1013 trouble with case c)
+				mayBeUnknownType = false;
+				// END KGU#1008 2021-11-01
 				declType = null;	// Can't be a declared user type anymore
 				isStandardType = false;	// ... neither a primitive type
 				if (isVariable && targetType != null && targetType.isRecord()) {
@@ -3696,7 +3704,11 @@ public class Executor implements Runnable
 			/* Now either an identifier might follow (which makes it an
 			 * initialisation of C or Java style) or some access path
 			 */
-			if ((declType != null || isJavaType || isStandardType) && posDot < nTokens
+			// START KGU#1008 2021-11-01: Bugfx #1013 trouble with case c)
+			//if ((declType != null || isJavaType || isStandardType) && posDot < nTokens
+			if ((declType != null || isJavaType || isStandardType || mayBeUnknownType)
+					&& posDot < nTokens
+			// END KGU#1008 2021-11-01
 					&& Function.testIdentifier(token1 = tokens.get(posDot), false, "")) {
 				/* it is a either a non-array Java declaration or a C declaration
 				 * with a possible array specification still to come
@@ -3744,10 +3756,13 @@ public class Executor implements Runnable
 						 * The variable existence check is not so good an idea
 						 * while we don't support block-local variables - it
 						 * might be a declaration in a loop.
-						 * FIXME: But is is generally too restrictive to require
+						 * FIXME: But is it generally too restrictive to require
 						 * an actual type here?
 						 */
-						if ((isJavaType || declType != null) /*&& !isVariable*/) {
+						// START KGU#1008 2021-11-01: Bugfix #1013 - Java style over unknown base?
+						//if ((isJavaType || declType != null) /*&& !isVariable*/) {
+						if ((isJavaType || declType != null || mayBeUnknownType) /*&& !isVariable*/) {
+						// END KGU#1008 2021-11-01
 							// check for what is coming
 							typeDescr = tokens.subSequence(0, posDot);
 							/* The following "dimension counting" routine
@@ -3838,6 +3853,16 @@ public class Executor implements Runnable
 						tokens.remove(posDot);	// drop the leading "]"
 						nTokens = tokens.count();
 					}
+					// START KGU#1008 2021-11-01: Bugfix #1013: Avoid an eternal loop here!
+					else {
+						tokens.insert("►", posDot);
+						throw new EvalError(control.msgInvalidArrayAccess.getText()
+								.replace("%1", tokens.concatenate(null))
+								.replace("%2", "???"),
+								null, null);
+// <========================================
+					}
+					// END KGU#1008 2021-11-01
 				}
 				/* Because of the prerequisites only a "." is to be expected,
 				 * but at least one index access must have been in the path
@@ -4489,7 +4514,8 @@ public class Executor implements Runnable
 	/**
 	 * Checks the number of dimensions for a Java type specification. Will
 	 * associate the identified type to the target variable.
-	 * @param tokens - the lexically split declaration - will not be modified here!
+	 * @param tokens - part of the lexically split declaration, starting with a bracket
+	 *  pair - will not be modified here!
 	 * @param typeDescr - a {@link StringList} containing the element type description so far
 	 * @return the name of the declared target variable
 	 * @throws EvalError
@@ -4500,16 +4526,28 @@ public class Executor implements Runnable
 		String target = null;
 		int nTokens = tokens.count();
 		int nDims = 1;
-		while (nDims * 2 + 2 < nTokens
-				&& tokens.get(nDims * 2 + 1).equals("[")
-				&& tokens.get(nDims * 2 + 2).equals("]")) {
+		// START KGU#1008 2021-11-01: Bugfix #1013 Wrong index calculations
+		//while (nDims * 2 + 2 < nTokens
+		//		&& tokens.get(nDims * 2 + 1).equals("[")
+		//		&& tokens.get(nDims * 2 + 2).equals("]")) {
+		//	nDims++;
+		//}
+		//if (nDims * 2 + 2 != nTokens ||
+		//		!Function.testIdentifier(target = tokens.get(nDims*2+1), false, null)) {
+		//	throw new EvalError(control.msgInvalidExpr.getText()
+		//			.replace("%1", tokens.concatenate(null)), null, null);
+		//}
+		while (nDims * 2 + 1 < nTokens
+				&& tokens.get(nDims * 2).equals("[")
+				&& tokens.get(nDims * 2 + 1).equals("]")) {
 			nDims++;
 		}
-		if (nDims * 2 + 2 != nTokens ||
-				!Function.testIdentifier(target = tokens.get(nDims*2+1), false, null)) {
+		if (nDims * 2 + 1 != nTokens ||
+				!Function.testIdentifier(target = tokens.get(nDims*2), false, null)) {
 			throw new EvalError(control.msgInvalidExpr.getText()
 					.replace("%1", tokens.concatenate(null)), null, null);
 		}
+		// END KGU#1008 2021-11-01
 		// FIXME
 		for (int d = 0; d < nDims; d++) {
 			typeDescr.insert("of", 0);
