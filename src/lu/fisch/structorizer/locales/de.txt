@@ -133,7 +133,8 @@
  *      Kay Gürtzig         2021-01-25  Enh. #915: New class InputBoxCase added
  *      Kay Gürtzig         2021-02-07  Enh. #915: New messages and tooltips for InputBoxCase
  *      Kay Gürtzig         2021-03-07  KGU#961: Translations for known plugin options added.
- *      Kay Gürtzig         2021-10-05      Enh. #992: Messages for Analyser brackets check
+ *      Kay Gürtzig         2021-10-05  Enh. #992: Messages for Analyser brackets check
+ *      Kay Gürtzig         2021-10-31  Enh. #967, #1007 Texts for ARM-specific export options added
  *
  ******************************************************************************************************
  *
@@ -1213,6 +1214,11 @@ PluginOptionDialog.optionLabels.package.text=Zu verwendendes LaTeX-Package
 PluginOptionDialog.optionComponents.package.tooltip=Bitte bevorzugtes Algorithmen-Package auswählen
 PluginOptionDialog.optionComponents.appendSemicolon.text=Anweisungen mit Semikolon abschließen
 PluginOptionDialog.optionComponents.appendSemicolon.tooltip=Falls aktiviert, wird hinter jede Anweisung ein ';' angefügt.
+PluginOptionDialog.optionComponents.gnuCode.text=Code für GNU compiler (statt KEIL) erzeugen
+PluginOptionDialog.optionComponents.alignArrays.text=Speicherausrichtung für Daten und Code sicherstellen
+PluginOptionDialog.optionComponents.alignArrays.tooltip=Fügt passende .align-Direktiven vor Daten-Deklarationen und am Anfang des Text-Bereichs ein (nur im GNU-Modus).
+PluginOptionDialog.optionComponents.terminateStrings.text=Zeichenketten mit Abschlusszeichen versehen
+PluginOptionDialog.optionComponents.terminateStrings.tooltip=Normalerweise werden Zeichenketten einfach als Array ihrer enthaltenen Zeichencodes generiert. Diese Option sorgt für das Anhängen eines NUL-Zeichens (wie in C).
 
 -----[ ElementNamePreferences ]-----
 ElementNamePreferences.title=Elementnamen einstellen
