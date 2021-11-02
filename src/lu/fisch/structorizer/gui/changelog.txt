@@ -61,6 +61,7 @@ Current development version 3.32-04 (2021-11-02)
 - 04: Bugfix #1012: Compromised Code Preview highlighting after insertions <2>
 - 04: Bugfix #1013: Executor happened to get stuck in an eternal loop <2>
 - 04: Bugfix #1014: Defective export of java-style array declarations <2>
+- 04: Bugfix #1015: ARM export to file caused a NullPointerException <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>

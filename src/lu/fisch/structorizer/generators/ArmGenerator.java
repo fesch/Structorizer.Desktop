@@ -60,8 +60,9 @@ package lu.fisch.structorizer.generators;
  *                                      bugfix #1010: REPEAT loop was exported as if it were a do while loop
  *                                      bugfix #1011: CASE elements without default branch caused defective code.
  *                                      Pattern redundancy reduced since variablePattern subsumed registerPattern[1]
- *      Kay Gürtzig     2021-11-01      Array initialisation syntax modified: Now a bracket pair must follow to
- *                                      the type (on occasion of bugfix #1013)
+ *      Kay Gürtzig     2021-11-01/02   Array initialisation syntax modified: Now a bracket pair must follow to
+ *                                      the type (on occasion of bugfix #1013);
+ *                                      bugfix #1015: NullPointerException on exporting to a file (codeMap reference)
  *
  ******************************************************************************************************
  *
@@ -1683,7 +1684,9 @@ public class ArmGenerator extends Generator {
         rhSide.remove(rhSide.count()-1);
         rhSide.remove(0);
         String expr = rhSide.concatenate();
-        int[] codeMapEntry = this.codeMap.get(elem);
+        // START KGU#1010 2021-11-02: Bugix #1015
+        //int[] codeMapEntry = this.codeMap.get(elem);
+        // END KGU#1010 2021-11-02
         boolean insertAlign = gnuEnabled && alignArrays && sizeLd > 0;
         // END KGU#1000 2021-10-29
         if (varName.matches(registerPattern0)) {
@@ -1735,10 +1738,13 @@ public class ArmGenerator extends Generator {
             if (insertAlign) {
                 addToDataSection(".align " + sizeLd);
             }
-            // START KGU#1000 2021-10-27: Bugfix #1004 Adjust code mapping
-            codeMapEntry[0] = this.dataInsertionLine;	// where addToDataSection inserted
-            codeMapEntry[1] = this.dataInsertionLine;	// where addToDataSection inserted
-            codeMapEntry[2] = 0;	// Indentation
+            // START KGU#1000/KGU#1010 2021-10-27/2021-11-02: Bugfix #1004, #1015 Adjust code mapping
+            if (codeMap != null) {
+                int[] codeMapEntry = this.codeMap.get(elem);	
+                codeMapEntry[0] = this.dataInsertionLine;	// where addToDataSection inserted
+                codeMapEntry[1] = this.dataInsertionLine;	// where addToDataSection inserted
+                codeMapEntry[2] = 0;	// Indentation
+            }
             // END KGU#1000 2021-10-27
         }
     }
