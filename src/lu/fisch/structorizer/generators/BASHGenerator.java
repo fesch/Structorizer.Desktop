@@ -95,6 +95,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2020-03-27/29   Enh. #828: Modifications tpo supporet group export
  *      Kay Gürtzig         2021-02-03      Issue #920: Transformation for "Infinity" literal
  *      Kay Gürtzig         2021-10-03      Issue #990: Precautions against wrong result type associations
+ *      Kay Gürtzig         2021-11-02      Bugfix #1014: Declarations in C and Java style hadn't been processed correctly
  *
  ******************************************************************************************************
  *
@@ -569,6 +570,28 @@ public class BASHGenerator extends Generator {
 				tokens.remove(posColon, posAsgnOpr);
 				posAsgnOpr = posColon;
 			}
+			// START KGU#1009 2021-11-02: Bugfix #1014 We must consider C-/Java-style declarations
+			else {
+				/* Assumption: the type description ends with a name or a closing bracket
+				 * followed by an identifier
+				 */
+				int posVar = posAsgnOpr - 1;
+				boolean wasId = false;
+				while (posVar >= 0) {
+					String token = tokens.get(posVar);
+					if (!token.trim().isEmpty()) {
+						boolean isId = Function.testIdentifier(token, false, null);
+						if (wasId && (isId || token.equals("]"))) {
+							tokens.remove(0, posVar+1);
+							posAsgnOpr -= posVar + 1;
+							break;
+						}
+						wasId = isId;
+					}
+					posVar--;
+				}
+			}
+			// END KGU#1009 2021-10-02
 			// START KGU#388 2017-10-05: Enh. #423
 			int posDot = -1;
 			while ((posDot = tokens.indexOf(".", posDot+1)) > 0 && posDot + 1 < posAsgnOpr) {
@@ -1114,7 +1137,7 @@ public class BASHGenerator extends Generator {
 	
 	protected void generateCode(Instruction _inst, String _indent) {
 		
-		if(!appendAsComment(_inst, _indent)) {
+		if (!appendAsComment(_inst, _indent)) {
 			// START KGU 2014-11-16
 			appendComment(_inst, _indent);
 			boolean disabled = _inst.isDisabled(false);
@@ -1124,8 +1147,7 @@ public class BASHGenerator extends Generator {
 			String preReturn = CodeParser.getKeywordOrDefault("preReturn","return").trim();
 			// END KGU#803 2020-02-16
 			int nLines = text.count();
-			for (int i = 0; i < nLines; i++)
-			{
+			for (int i = 0; i < nLines; i++) {
 				// START KGU#277/KGU#284 2016-10-13/16: Enh. #270 + Enh. #274
 				//code.add(_indent + transform(_inst.getText().get(i)));
 				String line = text.get(i);

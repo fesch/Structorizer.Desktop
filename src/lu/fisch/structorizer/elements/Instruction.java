@@ -72,6 +72,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2021-01-02      Enh. #905: Mechanism to draw a warning symbol on related DetectedError
  *      Kay Gürtzig     2021-02-04      Enh. #905, #926: Warning symbol for hidden declarations, support for backlink
  *      Kay Gürtzig     2021-02-26      Bugfix #946: Endless loop in getAssignedVarname()
+ *      Kay Gürtzig     2021-11-02      Bugfix #1014: Detection of java array declarations was flawed
  *
  ******************************************************************************************************
  *
@@ -838,9 +839,22 @@ public class Instruction extends Element {
 		if (posAsgn > 1) {
 			tokens = tokens.subSequence(0, posAsgn);
 			int posLBrack = tokens.indexOf("[");
-			if (posLBrack > 0 && posLBrack < tokens.lastIndexOf("]")) {
-				tokens = tokens.subSequence(0, posLBrack);
+			// START KGU#1009 2021-11-02: Bugfix #1014: We must handle java array types, too
+			//if (posLBrack > 0 && posLBrack < tokens.lastIndexOf("]")) {
+			//	tokens = tokens.subSequence(0, posLBrack);
+			//}
+			int posRBrack = tokens.lastIndexOf("]");
+			if (posLBrack > 0 && posLBrack < posRBrack) {
+				if (posRBrack < posAsgn-1
+						&& tokens.concatenate(null, posLBrack+1, posRBrack).trim().isEmpty()
+						&& Function.testIdentifier(tokens.concatenate(null, posRBrack+1).trim(), true, null)) {
+					tokens.remove(posLBrack, posRBrack+1);
+				}
+				else {
+					tokens = tokens.subSequence(0, posLBrack);
+				}
 			}
+			// END KGU#1009 2021-11-02
 			tokens.removeAll(" ");
 			// START KGU#388 2017-09-27: Enh. #423 there might be a qualified name
 			if (tokens.contains(".")) {

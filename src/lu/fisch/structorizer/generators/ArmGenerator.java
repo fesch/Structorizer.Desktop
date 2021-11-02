@@ -22,55 +22,57 @@
 package lu.fisch.structorizer.generators;
 
 /******************************************************************************************************
-*
-*      Author:         Alessandro Simonetta et al.
-*
-*      Description:    Generator class for ARM code
-*
-******************************************************************************************************
-*
-*      Revision List
-*
-*      Author          Date            Description
-*      ------          ----            -----------
-*      See @author     2021-03-25      Provided per Pull request on Enh. #967
-*      A. Simonetta    2021-04-02      Several revisions as requested
-*      Kay Gürtzig     2021-04-09      Syntax correction, some adaptations to fit into Structorizer environment
-*      Kay Gürtzig     2021-04-14      Issue #738: Highlighting map faults mended
-*      Kay Gürtzig     2021-04-15      Gnu mode now obtained from plugin option rather than Element field
-*      A. Simonetta    2021-04-23      Input and output and some parsing flaws fixed
-*      Kay Gürtzig     2021-04-24/26   Some corrections to the fixes of A. Simonetta
-*      Kay Gürtzig     2021-04-30      Problem with too many variables fixed.
-*      Kay Gürtzig     2021-05-02      Mechanisms added to support EXIT instructions, subroutines, CALLs
-*      Kay Gürtzig     2021-05-11      Appended an endless loop to the end of a program
-*      Kay Gürtzig     2021-10-05      Condition handling for Alternative, While, and Repeat unified and delegated
-*      Kay Gürtzig     2021-10-06      Arm Instruction detection revised.
-*      Kay Gürtzig     2021-10-11      Risk of NullPointerException in getVariables() averted, some
-*                                      code revisions in the variable and statement detection.
-*      Kay Gürtzig     2021-10-26/29   Bugfix #1003: Undue memory reservation for all variables;
-*                                      bugfix #1004: implicit address assignments for array element access,
-*                                      element type retrieval accomplished, name clashes with v_# variables avoided,
-*                                      new plugin-specific mode adjustArrays;
-*                                      bugfix #1005: Wrong implementation of FOR loops
-*      Kay Gürtzig     2021-10-29/30   Bugfix #1004 update: Defective index register transformation mended;
-*                                      bugfix #1007: methods getVariables and variablesToRegisters rewritten,
-*                                      processing of strings and character assignments revised;
-*                                      bugfix #1008 (array access via explicit address assignment).
-*      Kay Gürtzig     2021-10-31      Constant `difference' renamed to `syntaxDiffs', alignment revised (#1004),
-*                                      bugfix #1010: REPEAT loop was exported as if it were a do while loop
-*                                      bugfix #1011: CASE elements without default branch caused defective code.
-*                                      Pattern redundancy reduced since variablePattern subsumed registerPattern[1]
-*
-******************************************************************************************************
-*
-*      Comment:
-*      TODO: - Register recycling (e.g. via LRU) -> some (non-register) variables may need an address
-*              memory/stack for temporary caching.
-*            - Compilation of more complex expressions
-*            - Is there a better way to return to the OS (i.e. to prevent main from running into the
-*              subroutines) than to place an endless loop at the end? Load PC from stack?
-*
-******************************************************************************************************///
+ *
+ *      Author:         Alessandro Simonetta et al.
+ *
+ *      Description:    Generator class for ARM code
+ *
+ ******************************************************************************************************
+ *
+ *      Revision List
+ *
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      See @author     2021-03-25      Provided per Pull request on Enh. #967
+ *      A. Simonetta    2021-04-02      Several revisions as requested
+ *      Kay Gürtzig     2021-04-09      Syntax correction, some adaptations to fit into Structorizer environment
+ *      Kay Gürtzig     2021-04-14      Issue #738: Highlighting map faults mended
+ *      Kay Gürtzig     2021-04-15      Gnu mode now obtained from plugin option rather than Element field
+ *      A. Simonetta    2021-04-23      Input and output and some parsing flaws fixed
+ *      Kay Gürtzig     2021-04-24/26   Some corrections to the fixes of A. Simonetta
+ *      Kay Gürtzig     2021-04-30      Problem with too many variables fixed.
+ *      Kay Gürtzig     2021-05-02      Mechanisms added to support EXIT instructions, subroutines, CALLs
+ *      Kay Gürtzig     2021-05-11      Appended an endless loop to the end of a program
+ *      Kay Gürtzig     2021-10-05      Condition handling for Alternative, While, and Repeat unified and delegated
+ *      Kay Gürtzig     2021-10-06      Arm Instruction detection revised.
+ *      Kay Gürtzig     2021-10-11      Risk of NullPointerException in getVariables() averted, some
+ *                                      code revisions in the variable and statement detection.
+ *      Kay Gürtzig     2021-10-26/29   Bugfix #1003: Undue memory reservation for all variables;
+ *                                      bugfix #1004: implicit address assignments for array element access,
+ *                                      element type retrieval accomplished, name clashes with v_# variables avoided,
+ *                                      new plugin-specific mode adjustArrays;
+ *                                      bugfix #1005: Wrong implementation of FOR loops
+ *      Kay Gürtzig     2021-10-29/30   Bugfix #1004 update: Defective index register transformation mended;
+ *                                      bugfix #1007: methods getVariables and variablesToRegisters rewritten,
+ *                                      processing of strings and character assignments revised;
+ *                                      bugfix #1008 (array access via explicit address assignment).
+ *      Kay Gürtzig     2021-10-31      Constant `difference' renamed to `syntaxDiffs', alignment revised (#1004),
+ *                                      bugfix #1010: REPEAT loop was exported as if it were a do while loop
+ *                                      bugfix #1011: CASE elements without default branch caused defective code.
+ *                                      Pattern redundancy reduced since variablePattern subsumed registerPattern[1]
+ *      Kay Gürtzig     2021-11-01      Array initialisation syntax modified: Now a bracket pair must follow to
+ *                                      the type (on occasion of bugfix #1013)
+ *
+ ******************************************************************************************************
+ *
+ *      Comment:
+ *      TODO: - Register recycling (e.g. via LRU) -> some (non-register) variables may need an address
+ *              memory/stack for temporary caching.
+ *            - Compilation of more complex expressions
+ *            - Is there a better way to return to the OS (i.e. to prevent main from running into the
+ *              subroutines) than to place an endless loop at the end? Load PC from stack?
+ *
+ ******************************************************************************************************///
 
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Function;
@@ -120,7 +122,7 @@ public class ArmGenerator extends Generator {
     private static final Pattern arrayAssignment = Pattern.compile(String.format("%s *\\[ *(%s|%s)( *\\+ *%s)?\\] *%s *%s", variablePattern, variablePattern, numberPattern, registerVariableNumberHex, assignmentOperators, variablePattern));
     // START KGU#968 2021-10-11: Issue #967 it can hardly make sense to have a number on the left-hand side, we also allow word as default
     //private static final Pattern arrayInitialization = Pattern.compile(String.format("(word|hword|byte|octa|quad) *(%s|%s|%s) *%s *\\{(%s|%s)(, *(%s|%s))*\\}", registerPattern, variablePattern, numberPattern, assignmentOperators, numberPattern, hexNumberPattern, numberPattern, hexNumberPattern));
-    private static final Pattern arrayInitialization = Pattern.compile(String.format("((word|hword|byte|octa|quad) +)?%s *%s *\\{ *(%s|%s)( *, *(%s|%s))* *\\}", variablePattern, assignmentOperators, numberPattern, hexNumberPattern, numberPattern, hexNumberPattern));
+    private static final Pattern arrayInitialization = Pattern.compile(String.format("((word|hword|byte|octa|quad) *\\[\\] +)?%s *%s *\\{ *(%s|%s)( *, *(%s|%s))* *\\}", variablePattern, assignmentOperators, numberPattern, hexNumberPattern, numberPattern, hexNumberPattern));
     // END KGU#968 2021-10-11
     // START KGU#1000 2021-10-27: Bugfix #1004 it does not make sense to allow registers as argument
     //private static final Pattern address = Pattern.compile(String.format("%s *%s *(indirizzo|address)\\((%s|%s)\\)", registerPattern, assignmentOperators, registerPattern, variablePattern));
@@ -2077,7 +2079,10 @@ public class ArmGenerator extends Generator {
         //split[1] = split[1].replace("\"", "");
         // END KGU#1002 2021-10-30
         
-        String format = "word %s <- {%s}";
+        // START KGU#1008 2021-11-01: Issue #1013: New syntax
+        //String format = "word %s <- {%s}";
+        String format = "word[] %s <- {%s}";
+        // END KGU#1008 2021-11-01
         // START KGU#1002 2021-10-30: Issue #1007 We should handle non-ascii characters as well
         //StringBuilder array = new StringBuilder();
         //for (int i = 0; i < split[1].length(); i++) {
