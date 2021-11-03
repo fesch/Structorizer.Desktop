@@ -25,20 +25,20 @@
 \STATE \COMMENT{ loop passage at least one element (the largest one out of the }
 \STATE \COMMENT{ processed subrange) finds its final place at the end of the }
 \STATE \COMMENT{ subrange. }
-  \STATE \(ende\gets\ length(values)-2\)
+  \STATE \(ende\gets\ length(values)-2\);
   \REPEAT
-    \STATE \(posSwapped\gets-1\)
+    \STATE \(posSwapped\gets-1\);
     \COMMENT{The index of the most recent swapping (-1 means no swapping done).}
     \FOR{\(i \gets 0\) \TO \(ende\) \textbf{by} \(1\)}
       \IF{\(values[i]>values[i+1]\)}
-        \STATE \(temp\gets\ values[i]\)
-        \STATE \(values[i]\gets\ values[i+1]\)
-        \STATE \(values[i+1]\gets\ temp\)
-        \STATE \(posSwapped\gets\ i\)
+        \STATE \(temp\gets\ values[i]\);
+        \STATE \(values[i]\gets\ values[i+1]\);
+        \STATE \(values[i+1]\gets\ temp\);
+        \STATE \(posSwapped\gets\ i\);
       \ENDIF
     \ENDFOR
-    \STATE \(ende\gets\ posSwapped-1\)
-  \UNTIL{\(posSwapped<0\)}
+    \STATE \(ende\gets\ posSwapped-1\);
+  \UNTIL{\(posSwapped<0\)};
 
 \end{algorithmic}
 \end{algorithm}
@@ -53,22 +53,22 @@
 \STATE \COMMENT{ violating the heap property wrt. its subtree upto and including }
 \STATE \COMMENT{ index range-1, restores heap property in the subtree at index i }
 \STATE \COMMENT{ again. }
-  \STATE \(right\gets(i+1)*2\)
+  \STATE \(right\gets(i+1)*2\);
   \COMMENT{Indices of left and right child of node i}
-  \STATE \(left\gets\ right-1\)
-  \STATE \(max\gets\ i\)
+  \STATE \(left\gets\ right-1\);
+  \STATE \(max\gets\ i\);
   \COMMENT{Index of the (local) maximum}
   \IF{\(left<range\ \AND\ heap[left]>heap[i]\)}
-    \STATE \(max\gets\ left\)
+    \STATE \(max\gets\ left\);
   \ENDIF
   \IF{\(right<range\ \AND\ heap[right]>heap[max]\)}
-    \STATE \(max\gets\ right\)
+    \STATE \(max\gets\ right\);
   \ENDIF
   \IF{\(max\neq\ i\)}
-    \STATE \(temp\gets\ heap[i]\)
-    \STATE \(heap[i]\gets\ heap[max]\)
-    \STATE \(heap[max]\gets\ temp\)
-    \STATE \(maxHeapify(heap,max,range)\)
+    \STATE \(temp\gets\ heap[i]\);
+    \STATE \(heap[i]\gets\ heap[max]\);
+    \STATE \(heap[max]\gets\ temp\);
+    \STATE \(maxHeapify(heap,max,range)\);
   \ENDIF
 
 \end{algorithmic}
@@ -88,15 +88,15 @@
 \STATE \COMMENT{ of greater elements). }
 \STATE \COMMENT{ This is not the most efficient algorithm (about half the swapping }
 \STATE \COMMENT{ might still be avoided) but it is pretty clear. }
-  \STATE \(pivot\gets\ values[p]\)
+  \STATE \(pivot\gets\ values[p]\);
   \COMMENT{Cache the pivot element}
-  \STATE \(values[p]\gets\ values[start]\)
+  \STATE \(values[p]\gets\ values[start]\);
   \COMMENT{Exchange the pivot element with the start element}
-  \STATE \(values[start]\gets\ pivot\)
-  \STATE \(p\gets\ start\)
-  \STATE \(start\gets\ start+1\)
+  \STATE \(values[start]\gets\ pivot\);
+  \STATE \(p\gets\ start\);
+  \STATE \(start\gets\ start+1\);
   \COMMENT{Beginning and end of the remaining undiscovered range}
-  \STATE \(stop\gets\ stop-1\)
+  \STATE \(stop\gets\ stop-1\);
   \STATE \COMMENT{ Still unseen elements? }
   \STATE \COMMENT{ Loop invariants: }
   \STATE \COMMENT{ 1. p = start - 1 }
@@ -104,25 +104,25 @@
   \STATE \COMMENT{ 3. i \textless start \textrightarrow{} values[i] ≤ pivot }
   \STATE \COMMENT{ 4. stop \textless i \textrightarrow{} pivot \textless values[i] }
   \WHILE{\(start\leq\ stop\)}
-    \STATE \(seen\gets\ values[start]\)
+    \STATE \(seen\gets\ values[start]\);
     \COMMENT{Fetch the first element of the undiscovered area}
     \IF{\(seen\leq\ pivot\)}[Does the checked element belong to the smaller area?]
-      \STATE \(values[p]\gets\ seen\)
+      \STATE \(values[p]\gets\ seen\);
       \COMMENT{Insert the seen element between smaller area and pivot element}
-      \STATE \(values[start]\gets\ pivot\)
+      \STATE \(values[start]\gets\ pivot\);
       \STATE \COMMENT{ Shift the border between lower and undicovered area, }
       \STATE \COMMENT{ update pivot position. }
-      \STATE \(p\gets\ p+1\)
-      \STATE \(start\gets\ start+1\)
+      \STATE \(p\gets\ p+1\);
+      \STATE \(start\gets\ start+1\);
     \ELSE
-      \STATE \(values[start]\gets\ values[stop]\)
+      \STATE \(values[start]\gets\ values[stop]\);
       \COMMENT{Insert the checked element between undiscovered and larger area}
-      \STATE \(values[stop]\gets\ seen\)
-      \STATE \(stop\gets\ stop-1\)
+      \STATE \(values[stop]\gets\ seen\);
+      \STATE \(stop\gets\ stop-1\);
       \COMMENT{Shift the border between undiscovered and larger area}
     \ENDIF
   \ENDWHILE
-  \RETURN\(p\)
+  \RETURN\(p\);
 
 \end{algorithmic}
 \end{algorithm}
@@ -134,16 +134,16 @@
 \begin{algorithmic}[5]
 
 \STATE \COMMENT{ Checks whether or not the passed-in array is (ascendingly) sorted. }
-  \STATE \(isSorted\gets\TRUE\)
-  \STATE \(i\gets\ 0\)
+  \STATE \(isSorted\gets\TRUE\);
+  \STATE \(i\gets\ 0\);
   \WHILE{\(isSorted\ \AND(i\leq\ length(numbers)-2)\)}[As we compare with the following element, we must stop at the penultimate index]
     \IF{\(numbers[i]>numbers[i+1]\)}[Is there an inversion?]
-      \STATE \(isSorted\gets\FALSE\)
+      \STATE \(isSorted\gets\FALSE\);
     \ELSE
-      \STATE \(i\gets\ i+1\)
+      \STATE \(i\gets\ i+1\);
     \ENDIF
   \ENDWHILE
-  \RETURN\(isSorted\)
+  \RETURN\(isSorted\);
 
 \end{algorithmic}
 \end{algorithm}
@@ -158,9 +158,9 @@
 \STATE \COMMENT{ in a bottom-up manner, i.e. starts above the "{}leaf"{} level }
 \STATE \COMMENT{ (index \textgreater= length(heap) div 2) and goes then up towards }
 \STATE \COMMENT{ the root. }
-  \STATE \(lgth\gets\ length(heap)\)
+  \STATE \(lgth\gets\ length(heap)\);
   \FOR{\(k \gets lgth\oprdiv\ 2-1\) \TO \(0\) \textbf{by} \(-1\)}
-    \STATE \(maxHeapify(heap,k,lgth)\)
+    \STATE \(maxHeapify(heap,k,lgth)\);
   \ENDFOR
 
 \end{algorithmic}
@@ -178,17 +178,17 @@
   \IF{\(stop\geq\ start+2\)}[At least 2 elements? (Less don'{}t make sense.)]
     \STATE \COMMENT{ Select a pivot element, be p its index. }
     \STATE \COMMENT{ (here: randomly chosen element out of start ... stop-1) }
-    \STATE \(p\gets\ random(stop-start)+start\)
+    \STATE \(p\gets\ random(stop-start)+start\);
     \STATE \COMMENT{ Partition the array into smaller and greater elements }
     \STATE \COMMENT{ Get the resulting (and final) position of the pivot element }
-    \STATE \(p\gets\ partition(values,start,stop,p)\)
+    \STATE \(p\gets\ partition(values,start,stop,p)\);
     \STATE \textbf{parallel} \COMMENT{Sort subsequances separately and independently ...} \BODY
       \STATE \textbf{thread} 1 \BODY
-        \STATE \(quickSort(values,start,p)\)
+        \STATE \(quickSort(values,start,p)\);
         \COMMENT{Sort left (lower) array part}
       \ENDBODY \STATE \textbf{end thread} 1
       \STATE \textbf{thread} 2 \BODY
-        \STATE \(quickSort(values,p+1,stop)\)
+        \STATE \(quickSort(values,p+1,stop)\);
         \COMMENT{Sort right (higher) array part}
       \ENDBODY \STATE \textbf{end thread} 2
     \ENDBODY \STATE \textbf{end parallel}
@@ -205,15 +205,15 @@
 
 \STATE \COMMENT{ Sorts the array '{}values\textasciiacute{} of numbers according to he heap sort }
 \STATE \COMMENT{ algorithm }
-  \STATE \(buildMaxHeap(values)\)
-  \STATE \(heapRange\gets\ length(values)\)
+  \STATE \(buildMaxHeap(values)\);
+  \STATE \(heapRange\gets\ length(values)\);
   \FOR{\(k \gets heapRange-1\) \TO \(1\) \textbf{by} \(-1\)}
-    \STATE \(heapRange\gets\ heapRange-1\)
-    \STATE \(maximum\gets\ values[0]\)
+    \STATE \(heapRange\gets\ heapRange-1\);
+    \STATE \(maximum\gets\ values[0]\);
     \COMMENT{Swap the maximum value (root of the heap) to the heap end}
-    \STATE \(values[0]\gets\ values[heapRange]\)
-    \STATE \(values[heapRange]\gets\ maximum\)
-    \STATE \(maxHeapify(values,0,heapRange)\)
+    \STATE \(values[0]\gets\ values[heapRange]\);
+    \STATE \(values[heapRange]\gets\ maximum\);
+    \STATE \(maxHeapify(values,0,heapRange)\);
   \ENDFOR
 
 \end{algorithmic}
@@ -230,51 +230,51 @@
 \STATE \COMMENT{ sensibly be switched on). }
 \STATE \COMMENT{ Requested input data are: Number of elements (size) and filing mode. }
   \REPEAT
-    \STATE\ \textbf{input}\ \(elementCount\)
-  \UNTIL{\(elementCount\geq\ 1\)}
+    \STATE\ \textbf{input}\ \(elementCount\);
+  \UNTIL{\(elementCount\geq\ 1\)};
   \REPEAT
-    \STATE\ \textbf{input}\ \(\)"{}Filling:\ 1\ =\ random,\ 2\ =\ increasing,\ 3\ =\ decreasing"{}\(,modus\)
-  \UNTIL{\(modus=1\ \OR\ modus=2\ \OR\ modus=3\)}
+    \STATE\ \textbf{input}\ \(\)"{}Filling:\ 1\ =\ random,\ 2\ =\ increasing,\ 3\ =\ decreasing"{}\(,modus\);
+  \UNTIL{\(modus=1\ \OR\ modus=2\ \OR\ modus=3\)};
   \FOR{\(i \gets 0\) \TO \(elementCount-1\) \textbf{by} \(1\)}
     \IF{\(modus=1\)}
-      \STATE \(values1[i]\gets\ random(10000)\)
+      \STATE \(values1[i]\gets\ random(10000)\);
     \ELSIF{\(modus=2\)}
-      \STATE \(values1[i]\gets\ i\)
+      \STATE \(values1[i]\gets\ i\);
     \ELSIF{\(modus=3\)}
-      \STATE \(values1[i]\gets-i\)
+      \STATE \(values1[i]\gets-i\);
     \ENDIF
   \ENDFOR
   \FOR{\(i \gets 0\) \TO \(elementCount-1\) \textbf{by} \(1\)}
-    \STATE \(values2[i]\gets\ values1[i]\)
-    \STATE \(values3[i]\gets\ values1[i]\)
+    \STATE \(values2[i]\gets\ values1[i]\);
+    \STATE \(values3[i]\gets\ values1[i]\);
   \ENDFOR
   \STATE \textbf{parallel}  \BODY
     \STATE \textbf{thread} 1 \BODY
-      \STATE \(bubbleSort(values1)\)
+      \STATE \(bubbleSort(values1)\);
     \ENDBODY \STATE \textbf{end thread} 1
     \STATE \textbf{thread} 2 \BODY
-      \STATE \(quickSort(values2,0,elementCount)\)
+      \STATE \(quickSort(values2,0,elementCount)\);
     \ENDBODY \STATE \textbf{end thread} 2
     \STATE \textbf{thread} 3 \BODY
-      \STATE \(heapSort(values3)\)
+      \STATE \(heapSort(values3)\);
     \ENDBODY \STATE \textbf{end thread} 3
   \ENDBODY \STATE \textbf{end parallel}
-  \STATE \(ok1\gets\ testSorted(values1)\)
-  \STATE \(ok2\gets\ testSorted(values2)\)
-  \STATE \(ok3\gets\ testSorted(values3)\)
+  \STATE \(ok1\gets\ testSorted(values1)\);
+  \STATE \(ok2\gets\ testSorted(values2)\);
+  \STATE \(ok3\gets\ testSorted(values3)\);
   \IF{\(\NOT\ ok1\ \OR\ \NOT\ ok2\ \OR\ \NOT\ ok3\)}
     \FOR{\(i \gets 0\) \TO \(elementCount-1\) \textbf{by} \(1\)}
       \IF{\(values1[i]\neq\ values2[i]\ \OR\ values1[i]\neq\ values3[i]\)}
-        \PRINT\(\)"{}Difference\ at\ ["{}\(,i,\)"{}]:\ "{}\(,values1[i],\)"{}\ \textless-\textgreater\ "{}\(,values2[i],\)"{}\ \textless-\textgreater\ "{}\(,values3[i]\)
+        \PRINT\(\)"{}Difference\ at\ ["{}\(,i,\)"{}]:\ "{}\(,values1[i],\)"{}\ \textless-\textgreater\ "{}\(,values2[i],\)"{}\ \textless-\textgreater\ "{}\(,values3[i]\);
       \ENDIF
     \ENDFOR
   \ENDIF
   \REPEAT
-    \STATE\ \textbf{input}\ \(\)"{}Show\ arrays\ (yes/no)?"{}\(,show\)
-  \UNTIL{\(show=\)"{}yes"{}\(\ \OR\ show=\)"{}no"{}\(\)}
+    \STATE\ \textbf{input}\ \(\)"{}Show\ arrays\ (yes/no)?"{}\(,show\);
+  \UNTIL{\(show=\)"{}yes"{}\(\ \OR\ show=\)"{}no"{}\(\)};
   \IF{\(show=\)"{}yes"{}\(\)}
     \FOR{\(i \gets 0\) \TO \(elementCount-1\) \textbf{by} \(1\)}
-      \PRINT\(\)"{}["{}\(,i,\)"{}]:\textbackslash{}t"{}\(,values1[i],\)"{}\textbackslash{}t"{}\(,values2[i],\)"{}\textbackslash{}t"{}\(,values3[i]\)
+      \PRINT\(\)"{}["{}\(,i,\)"{}]:\textbackslash{}t"{}\(,values1[i],\)"{}\textbackslash{}t"{}\(,values2[i],\)"{}\textbackslash{}t"{}\(,values3[i]\);
     \ENDFOR
   \ENDIF
 

@@ -1,0 +1,352 @@
+// Generated with Structorizer 3.32-04 on Tue Nov 02 18:02:13 CET 2021 
+.global _start
+.data
+.text
+.align 2
+_start:
+do_0:
+		LDR R2, =0xFF200050
+		LDR R2, [R2]
+		CMP R2, #1
+		BLT do_0
+do_1:
+		LDR R3, =0xFF200050
+		LDR R3, [R3]
+		CMP R3, #1
+		BEQ continue_1
+		CMP modus, #2
+		BEQ continue_1
+		CMP modus, #3
+		BNE do_1
+		MOV R4, #0
+for_2:
+		// WARNING: End value expression too complex 
+		CMP R4, R2-1
+		BGT end_2
+		CMP R3, #1
+		BEQ block_3_0
+		CMP R3, #2
+		BEQ block_3_1
+		CMP R3, #3
+		BEQ block_3_2
+		B end_3
+block_3_0:		
+		// ERROR: Not implemented yet 
+		// values1[i] <- random(10000) 
+		B end_3
+block_3_1:		
+		ADR R5, values1
+		STR R4, [R5, R4]
+		B end_3
+block_3_2:		
+		// ERROR: Not implemented yet 
+		// values1[i] <- -i 
+		B end_3
+end_3:
+		ADD R4, R4, #1
+		B for_2
+end_2:
+		// Copy the array for exact comparability 
+		MOV R4, #0
+for_4:
+		// WARNING: End value expression too complex 
+		CMP R4, R2-1
+		BGT end_4
+		// ERROR: Not implemented yet 
+		// values2[i] <- values1[i] 
+		// ERROR: Not implemented yet 
+		// values3[i] <- values1[i] 
+		ADD R4, R4, #1
+		B for_4
+end_4:
+		// ========================================================== 
+		// ========= START PARALLEL SECTION (NOT SUPPORTED) ========= 
+		// ========================================================== 
+		// ---------------- START THREAD 0 ----------------- 
+		STMFD SP!, {LR}
+		STR R5, [SP,#-4]!
+		STR R0, [SP,#-1,LSL #2]
+		SUB SP, #4
+		MOV R0, #0
+		SWP R0, R0, [SP]
+		BL bubbleSort
+		ADD SP, #8
+		LDMFD SP!, {LR}
+		// ----------------- END THREAD 0 ------------------ 
+		// ---------------- START THREAD 1 ----------------- 
+		STMFD SP!, {LR}
+		STR R4, [SP,#-4]!
+		MOV R6, #0
+		STR R6, [SP,#-4]!
+		STR R2, [SP,#-4]!
+		STR R0, [SP,#-1,LSL #2]
+		SUB SP, #4
+		MOV R0, #0
+		SWP R0, R0, [SP]
+		BL quickSort
+		ADD SP, #16
+		LDMFD SP!, {LR}
+		// ----------------- END THREAD 1 ------------------ 
+		// ---------------- START THREAD 2 ----------------- 
+		STMFD SP!, {LR}
+		STR R6, [SP,#-4]!
+		STR R0, [SP,#-1,LSL #2]
+		SUB SP, #4
+		MOV R0, #0
+		SWP R0, R0, [SP]
+		BL heapSort
+		ADD SP, #8
+		LDMFD SP!, {LR}
+		// ----------------- END THREAD 2 ------------------ 
+		// ========================================================== 
+		// ========== END PARALLEL SECTION (NOT SUPPORTED) ========== 
+		// ========================================================== 
+		STMFD SP!, {LR}
+		STR R5, [SP,#-4]!
+		STR R0, [SP,#-1,LSL #2]
+		SUB SP, #4
+		MOV R0, #0
+		SWP R0, R0, [SP]
+		BL testSorted
+		// Subroutine result: 
+		LDR R7, [SP]
+		ADD SP, #8
+		LDMFD SP!, {LR}
+		STMFD SP!, {LR}
+		STR R4, [SP,#-4]!
+		STR R0, [SP,#-1,LSL #2]
+		SUB SP, #4
+		MOV R0, #0
+		SWP R0, R0, [SP]
+		BL testSorted
+		// Subroutine result: 
+		LDR R8, [SP]
+		ADD SP, #8
+		LDMFD SP!, {LR}
+		STMFD SP!, {LR}
+		STR R6, [SP,#-4]!
+		STR R0, [SP,#-1,LSL #2]
+		SUB SP, #4
+		MOV R0, #0
+		SWP R0, R0, [SP]
+		BL testSorted
+		// Subroutine result: 
+		LDR R9, [SP]
+		ADD SP, #8
+		LDMFD SP!, {LR}
+		// ERROR: Unsupported condition syntax - Alternative skipped! 
+		// if (!ok1||!ok2||!ok3) 
+		// ERROR: Unsupported condition syntax - Repeat skipped! 
+		// until (show=="yes"||show=="no") 
+		// ERROR: Unsupported condition syntax - Alternative skipped! 
+		// if (show=="yes") 
+
+		// Endless loop generated at the end of program 
+stopSORTING_TEST_MAIN:
+		B stopSORTING_TEST_MAIN
+bubbleSort:
+		STMFD SP!, {R0-R12}
+		LDR R2, [SP,#15,LSL #2]
+		// ERROR: Not implemented yet 
+		// ende <- length(values) - 2 
+do_5:
+		// The index of the most recent swapping (-1 means no swapping done). 
+		MVN R3, #0xffffffff
+		MOV R4, #0
+for_6:
+		CMP R4, R5
+		BGT end_6
+		// ERROR: Unsupported condition syntax - Alternative skipped! 
+		// if (values[i]>values[i+1]) 
+		ADD R4, R4, #1
+		B for_6
+end_6:
+		SUB R5, R3, #1
+		CMP R3, #0
+		BGE do_5
+		LDMFD SP!, {R0-R12}
+		MOVS PC, LR
+
+maxHeapify:
+		STMFD SP!, {R0-R12}
+		LDR R2, [SP,#15,LSL #2]
+		LDR R3, [SP,#16,LSL #2]
+		LDR R4, [SP,#17,LSL #2]
+		// Indices of left and right child of node i 
+		// ERROR: Not implemented yet 
+		// right <- (i+1) * 2 
+		SUB R5, R6, #1
+		// Index of the (local) maximum 
+		MOV R7, R3
+		// ERROR: Unsupported condition syntax - Alternative skipped! 
+		// if (left<range&&heap[left]>heap[i]) 
+		// ERROR: Unsupported condition syntax - Alternative skipped! 
+		// if (right<range&&heap[right]>heap[max]) 
+		CMP R7, R3
+		BEQ end_7
+then_7:
+		// The array is not initialized 
+		// ERROR: Not implemented yet 
+		// heap[i] <- heap[max] 
+		ADR R4, heap
+		STR R8, [R4, R7]
+		STMFD SP!, {LR}
+		STR R4, [SP,#-4]!
+		STR R7, [SP,#-4]!
+		STR R2, [SP,#-4]!
+		STR R0, [SP,#-1,LSL #2]
+		SUB SP, #4
+		MOV R0, #0
+		SWP R0, R0, [SP]
+		BL maxHeapify
+		ADD SP, #16
+		LDMFD SP!, {LR}
+end_7:
+		LDMFD SP!, {R0-R12}
+		MOVS PC, LR
+
+partition:
+		STMFD SP!, {R0-R12}
+		LDR R2, [SP,#15,LSL #2]
+		LDR R3, [SP,#16,LSL #2]
+		LDR R4, [SP,#17,LSL #2]
+		LDR R5, [SP,#18,LSL #2]
+		// Cache the pivot element 
+		// The array is not initialized 
+		// Exchange the pivot element with the start element 
+		// ERROR: Not implemented yet 
+		// values[p] <- values[start] 
+		ADR R5, values
+		STR R6, [R5, R4]
+		MOV R2, R4
+		// Beginning and end of the remaining undiscovered range 
+		ADD R4, R4, #1
+		SUB R3, R3, #1
+		// Still unseen elements? 
+		// Loop invariants: 
+		// 1. p = start - 1 
+		// 2. pivot = values[p] 
+		// 3. i < start → values[i] ≤ pivot 
+		// 4. stop < i → pivot < values[i] 
+while_8:
+		CMP R4, R3
+		BGT end_8
+		// Fetch the first element of the undiscovered area 
+		// The array is not initialized 
+		// Does the checked element belong to the smaller area? 
+		CMP R7, R6
+		BGT else_9
+then_9:
+		// Insert the seen element between smaller area and pivot element 
+		STR R7, [R5, R2]
+		STR R6, [R5, R4]
+		// Shift the border between lower and undicovered area, 
+		// update pivot position. 
+		ADD R2, R2, #1
+		ADD R4, R4, #1
+		B end_9
+else_9:
+		// Insert the checked element between undiscovered and larger area 
+		// ERROR: Not implemented yet 
+		// values[start] <- values[stop] 
+		STR R7, [R5, R3]
+		// Shift the border between undiscovered and larger area 
+		SUB R3, R3, #1
+end_9:
+		B while_8
+end_8:
+		// ERROR: Not implemented yet 
+		// return p 
+
+testSorted:
+		STMFD SP!, {R0-R12}
+		LDR R2, [SP,#15,LSL #2]
+		MOV R3, #1
+		MOV R4, #0
+		// As we compare with the following element, we must stop at the penultimate index 
+		// ERROR: Unsupported condition syntax - While skipped! 
+		// while (isSorted&&(i<=length(numbers)-2)) 
+		// ERROR: Not implemented yet 
+		// return isSorted 
+
+buildMaxHeap:
+		STMFD SP!, {R0-R12}
+		LDR R2, [SP,#15,LSL #2]
+		// ERROR: Not implemented yet 
+		// lgth <- length(heap) 
+		// WARNING: Start value expression too complex 
+		MOV R3, R4 R5 2 - 1
+for_10:
+		CMP R3, #0
+		BLT end_10
+		STMFD SP!, {LR}
+		STR R2, [SP,#-4]!
+		STR R3, [SP,#-4]!
+		STR R4, [SP,#-4]!
+		STR R0, [SP,#-1,LSL #2]
+		SUB SP, #4
+		MOV R0, #0
+		SWP R0, R0, [SP]
+		BL maxHeapify
+		ADD SP, #16
+		LDMFD SP!, {LR}
+		SUB R3, R3, #1
+		B for_10
+end_10:
+		LDMFD SP!, {R0-R12}
+		MOVS PC, LR
+
+quickSort:
+		STMFD SP!, {R0-R12}
+		LDR R2, [SP,#15,LSL #2]
+		LDR R3, [SP,#16,LSL #2]
+		LDR R4, [SP,#17,LSL #2]
+		// At least 2 elements? (Less don't make sense.) 
+		// ERROR: Unsupported condition syntax - Alternative skipped! 
+		// if (stop>=start+2) 
+		LDMFD SP!, {R0-R12}
+		MOVS PC, LR
+
+heapSort:
+		STMFD SP!, {R0-R12}
+		LDR R2, [SP,#15,LSL #2]
+		STMFD SP!, {LR}
+		STR R2, [SP,#-4]!
+		STR R0, [SP,#-1,LSL #2]
+		SUB SP, #4
+		MOV R0, #0
+		SWP R0, R0, [SP]
+		BL buildMaxHeap
+		ADD SP, #8
+		LDMFD SP!, {LR}
+		// ERROR: Not implemented yet 
+		// heapRange <- length(values) 
+		// WARNING: Start value expression too complex 
+		MOV R3, R4 - 1
+for_11:
+		CMP R3, #1
+		BLT end_11
+		SUB R4, R4, #1
+		// Swap the maximum value (root of the heap) to the heap end 
+		// The array is not initialized 
+		// ERROR: Not implemented yet 
+		// values[0] <- values[heapRange] 
+		ADR R2, values
+		STR R5, [R2, R4]
+		STMFD SP!, {LR}
+		STR R2, [SP,#-4]!
+		MOV R6, #0
+		STR R6, [SP,#-4]!
+		STR R4, [SP,#-4]!
+		STR R0, [SP,#-1,LSL #2]
+		SUB SP, #4
+		MOV R0, #0
+		SWP R0, R0, [SP]
+		BL maxHeapify
+		ADD SP, #16
+		LDMFD SP!, {LR}
+		SUB R3, R3, #1
+		B for_11
+end_11:
+		LDMFD SP!, {R0-R12}
+		MOVS PC, LR

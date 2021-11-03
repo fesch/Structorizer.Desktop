@@ -135,6 +135,7 @@
  *      Kay Gürtzig     2021-01-25  Enh. #915: Messages for new class InputBoxCase added
  *      Kay Gürtzig     2021-03-07  KGU#961: Translations for known plugin options added.
  *      Kay Gürtzig     2021-06-07  Enh. #953: Translations for new generator plugin options added
+ *      Kay Gürtzig     2021-10-31  Enh. #967, #1007 Texts for ARM-specific export options added
  *
  ******************************************************************************************************
  *
@@ -1214,6 +1215,11 @@ PluginOptionDialog.optionLabels.package.text=Paquete destino de LaTeX
 PluginOptionDialog.optionComponents.package.tooltip=Escoge su paquete preferido para expresar algoritmos
 PluginOptionDialog.optionComponents.appendSemicolon.text=Poner punto y coma detrás de cada instrucción
 PluginOptionDialog.optionComponents.appendSemicolon.tooltip=Activa esta opción si las instrucciones deben ser seguidas por ';'
+PluginOptionDialog.optionComponents.gnuCode.text=Código para GNU compilador (en lugar de KEIL)
+PluginOptionDialog.optionComponents.alignArrays.text=Ajustar direcciones de datos y código
+PluginOptionDialog.optionComponents.alignArrays.tooltip=Inserta directivas .align ante cada asignación de datos y antes del inicio de la región de código (para modo GNU).
+PluginOptionDialog.optionComponents.terminateStrings.text=Terminar cadenas con signo NUL (0)
+PluginOptionDialog.optionComponents.terminateStrings.tooltip=Normálmente una cadena estará generado como un campo de sólamente sus caracteres miembros. Esta opción va a apender un signo NUL (código 0) como en C.
 
 -----[ ElementNamePreferences ]-----
 ElementNamePreferences.title=Preferidos nombres de elementos

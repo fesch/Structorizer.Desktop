@@ -22,45 +22,58 @@
 package lu.fisch.structorizer.generators;
 
 /******************************************************************************************************
-*
-*      Author:         Alessandro Simonetta et al.
-*
-*      Description:    Generator class for ARM code
-*
-******************************************************************************************************
-*
-*      Revision List
-*
-*      Author          Date            Description
-*      ------          ----            -----------
-*      See @author     2021-03-25      Provided per Pull request on Enh. #967
-*      A. Simonetta    2021-04-02      Several revisions as requested
-*      Kay Gürtzig     2021-04-09      Syntax correction, some adaptations to fit into Structorizer environment
-*      Kay Gürtzig     2021-04-14      Issue #738: Highlighting map faults mended
-*      Kay Gürtzig     2021-04-15      Gnu mode now obtained from plugin option rather than Element field
-*      A. Simonetta    2021-04-23      Input and output and some parsing flaws fixed
-*      Kay Gürtzig     2021-04-24/26   Some corrections to the fixes of A. Simonetta
-*      Kay Gürtzig     2021-04-30      Problem with too many variables fixed.
-*      Kay Gürtzig     2021-05-02      Mechanisms added to support EXIT instructions, subroutines, CALLs
-*      Kay Gürtzig     2021-05-11      Appended an endless loop to the end of a program
-*      Kay Gürtzig     2021-10-05      Condition handling for Alternative, While, and Repeat unified and delegated
-*      Kay Gürtzig     2021-10-06      Arm Instruction detection revised.
-*      Kay Gürtzig     2021-10-11      Risk of NullPointerException in getVariables() averted, some
-*                                      code revisions in the variable and statement detection.
-*      Kay Gürtzig     2021-10-26/29   Bugfix #1003: Undue memory reservation for all variables;
-*                                      bugfix #1004: implicit address assignments for array element access,
-*                                      element type retrieval accomplished, name clashes with v_# variables avoided,
-*                                      new plugin-specific modes adjustArrays, transformIndices;
-*                                      bugfix #1005: Wrong implementation of FOR loops
-*
-******************************************************************************************************
-*
-*      Comment:
-*      TODO: - Register recycling (e.g. via LRU) -> all variables need an address in memory/stack then
-*            - Compilation of more complex expressions
-*            - How to return to the OS (or to prevent main from running into the subroutines?)
-*
-******************************************************************************************************///
+ *
+ *      Author:         Alessandro Simonetta et al.
+ *
+ *      Description:    Generator class for ARM code
+ *
+ ******************************************************************************************************
+ *
+ *      Revision List
+ *
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      See @author     2021-03-25      Provided per Pull request on Enh. #967
+ *      A. Simonetta    2021-04-02      Several revisions as requested
+ *      Kay Gürtzig     2021-04-09      Syntax correction, some adaptations to fit into Structorizer environment
+ *      Kay Gürtzig     2021-04-14      Issue #738: Highlighting map faults mended
+ *      Kay Gürtzig     2021-04-15      Gnu mode now obtained from plugin option rather than Element field
+ *      A. Simonetta    2021-04-23      Input and output and some parsing flaws fixed
+ *      Kay Gürtzig     2021-04-24/26   Some corrections to the fixes of A. Simonetta
+ *      Kay Gürtzig     2021-04-30      Problem with too many variables fixed.
+ *      Kay Gürtzig     2021-05-02      Mechanisms added to support EXIT instructions, subroutines, CALLs
+ *      Kay Gürtzig     2021-05-11      Appended an endless loop to the end of a program
+ *      Kay Gürtzig     2021-10-05      Condition handling for Alternative, While, and Repeat unified and delegated
+ *      Kay Gürtzig     2021-10-06      Arm Instruction detection revised.
+ *      Kay Gürtzig     2021-10-11      Risk of NullPointerException in getVariables() averted, some
+ *                                      code revisions in the variable and statement detection.
+ *      Kay Gürtzig     2021-10-26/29   Bugfix #1003: Undue memory reservation for all variables;
+ *                                      bugfix #1004: implicit address assignments for array element access,
+ *                                      element type retrieval accomplished, name clashes with v_# variables avoided,
+ *                                      new plugin-specific mode adjustArrays;
+ *                                      bugfix #1005: Wrong implementation of FOR loops
+ *      Kay Gürtzig     2021-10-29/30   Bugfix #1004 update: Defective index register transformation mended;
+ *                                      bugfix #1007: methods getVariables and variablesToRegisters rewritten,
+ *                                      processing of strings and character assignments revised;
+ *                                      bugfix #1008 (array access via explicit address assignment).
+ *      Kay Gürtzig     2021-10-31      Constant `difference' renamed to `syntaxDiffs', alignment revised (#1004),
+ *                                      bugfix #1010: REPEAT loop was exported as if it were a do while loop
+ *                                      bugfix #1011: CASE elements without default branch caused defective code.
+ *                                      Pattern redundancy reduced since variablePattern subsumed registerPattern[1]
+ *      Kay Gürtzig     2021-11-01/02   Array initialisation syntax modified: Now a bracket pair must follow to
+ *                                      the type (on occasion of bugfix #1013);
+ *                                      bugfix #1015: NullPointerException on exporting to a file (codeMap reference)
+ *
+ ******************************************************************************************************
+ *
+ *      Comment:
+ *      TODO: - Register recycling (e.g. via LRU) -> some (non-register) variables may need an address
+ *              memory/stack for temporary caching.
+ *            - Compilation of more complex expressions
+ *            - Is there a better way to return to the OS (i.e. to prevent main from running into the
+ *              subroutines) than to place an endless loop at the end? Load PC from stack?
+ *
+ ******************************************************************************************************///
 
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Function;
@@ -85,53 +98,58 @@ public class ArmGenerator extends Generator {
     //private static final String registerPattern = " ?[Rr]([0-9]|1[0-4]) ?";
     //private static final String variablePattern = "[a-zA-Z]+[0-9]*";
     private static final String registerPattern0 = "[Rr]([0-9]|1[0-4])";
-    private static final String registerPattern1 = "[Rr]([0-9]|1[0-5])";	// Includes PC
+    //private static final String registerPattern1 = "[Rr]([0-9]|1[0-5])";	// Includes PC
     private static final String registerPattern = " ?" + registerPattern0 + " ?";
+    // Note that variablePattern subsumes all registerPatterns
     private static final String variablePattern = "[a-zA-Z][a-zA-Z0-9_]*";
     // END KGU#968 2021-05-02
     private static final String numberPattern = "-?[0-9]+";
-    private static final String hexNumberPattern = "(0|0x|0x([0-9]|[a-fA-F])+)";
+    // START KGU 2021-10-31: Redundancy / ambiguity removed
+    //private static final String hexNumberPattern = "(0|0x|0x([0-9]|[a-fA-F])+)";
+    private static final String hexNumberPattern = "(0x([0-9]|[a-fA-F])+)";
+    // END KGU 2021-10-31
     private static final String assignmentOperators = "(<-|:=)";
     private static final String relationOperators = "(==|!=|<|>|<=|>=|=)";
     private static final String supportedOperationsPattern = "(-|\\+|\\*|and|or|&|\\||&&|\\|\\|)";
     private static final String registerVariableNumberHex = String.format("(%s|%s|%s|%s)", registerPattern, variablePattern, numberPattern, hexNumberPattern);
     private static final String negativeNumberPattern = "-[0-9]+";
+    private static final String escapeCharacterPattern = "\\\\['\"0bfnt\\\\]";
 
-    private static final Pattern assignment = Pattern.compile(String.format("(%s|%s) *%s *%s", registerPattern, variablePattern, assignmentOperators, registerVariableNumberHex));
-    private static final Pattern expression = Pattern.compile(String.format("(%s|%s) *%s *%s *%s *%s", registerPattern, variablePattern, assignmentOperators, registerVariableNumberHex, supportedOperationsPattern, registerVariableNumberHex));
-    private static final Pattern memoryAccess = Pattern.compile(String.format("(%s|%s) *%s *(memoria|memory)\\[(%s|%s)( *\\+ *%s)?\\]", registerPattern, variablePattern, assignmentOperators, registerPattern, variablePattern, registerVariableNumberHex));
-    private static final Pattern memoryStore = Pattern.compile(String.format("(memoria|memory)\\[(%s|%s|%s)( *\\+ *%s)?\\] *%s *(%s|%s)", registerPattern, variablePattern, numberPattern, registerVariableNumberHex, assignmentOperators, registerPattern, variablePattern));
-    private static final Pattern arrayExpression = Pattern.compile(String.format("(%s|%s) *%s *(%s|%s)\\[(%s|%s|%s)\\]", registerPattern, variablePattern, assignmentOperators, registerPattern, variablePattern, registerPattern, variablePattern, numberPattern));
-    private static final Pattern arrayAssignment = Pattern.compile(String.format("(%s|%s)\\[(%s|%s|%s)( *\\+ *%s)?\\] *%s *(%s|%s)", registerPattern, variablePattern, registerPattern, variablePattern, numberPattern, registerVariableNumberHex, assignmentOperators, registerPattern, variablePattern));
+    private static final Pattern assignment = Pattern.compile(String.format("%s *%s *%s", variablePattern, assignmentOperators, registerVariableNumberHex));
+    private static final Pattern expression = Pattern.compile(String.format("%s *%s *%s *%s *%s", variablePattern, assignmentOperators, registerVariableNumberHex, supportedOperationsPattern, registerVariableNumberHex));
+    private static final Pattern memoryAccess = Pattern.compile(String.format("%s *%s *(memoria|memory)\\[ *%s( *\\+ *%s)?\\]", variablePattern, assignmentOperators, variablePattern, registerVariableNumberHex));
+    private static final Pattern memoryStore = Pattern.compile(String.format("(memoria|memory)\\[ *(%s|%s)( *\\+ *%s)?\\] *%s *%s", variablePattern, numberPattern, registerVariableNumberHex, assignmentOperators, variablePattern));
+    private static final Pattern arrayExpression = Pattern.compile(String.format("%s *%s *%s *\\[ *(%s|%s) *\\]", variablePattern, assignmentOperators, variablePattern, variablePattern, numberPattern));
+    private static final Pattern arrayAssignment = Pattern.compile(String.format("%s *\\[ *(%s|%s)( *\\+ *%s)?\\] *%s *%s", variablePattern, variablePattern, numberPattern, registerVariableNumberHex, assignmentOperators, variablePattern));
     // START KGU#968 2021-10-11: Issue #967 it can hardly make sense to have a number on the left-hand side, we also allow word as default
-    //private static final Pattern arrayInitialization = Pattern.compile(String.format("(word|hword|byte|octa|quad) +(%s|%s) *%s *\\{(%s|%s)(, *(%s|%s))*\\}", registerPattern, variablePattern, assignmentOperators, numberPattern, hexNumberPattern, numberPattern, hexNumberPattern));
-    private static final Pattern arrayInitialization = Pattern.compile(String.format("(word|hword|byte|octa|quad)? *(%s|%s|%s) *%s *\\{(%s|%s)(, *(%s|%s))*\\}", registerPattern, variablePattern, numberPattern, assignmentOperators, numberPattern, hexNumberPattern, numberPattern, hexNumberPattern));
+    //private static final Pattern arrayInitialization = Pattern.compile(String.format("(word|hword|byte|octa|quad) *(%s|%s|%s) *%s *\\{(%s|%s)(, *(%s|%s))*\\}", registerPattern, variablePattern, numberPattern, assignmentOperators, numberPattern, hexNumberPattern, numberPattern, hexNumberPattern));
+    private static final Pattern arrayInitialization = Pattern.compile(String.format("((word|hword|byte|octa|quad) *\\[\\] +)?%s *%s *\\{ *(%s|%s)( *, *(%s|%s))* *\\}", variablePattern, assignmentOperators, numberPattern, hexNumberPattern, numberPattern, hexNumberPattern));
     // END KGU#968 2021-10-11
     // START KGU#1000 2021-10-27: Bugfix #1004 it does not make sense to allow registers as argument
     //private static final Pattern address = Pattern.compile(String.format("%s *%s *(indirizzo|address)\\((%s|%s)\\)", registerPattern, assignmentOperators, registerPattern, variablePattern));
     private static final Pattern address = Pattern.compile(String.format("%s *%s *(indirizzo|address)\\((%s)\\)", registerPattern, assignmentOperators, variablePattern));
     // END KGU#1000 2021-10-27
-    // FIXME KGU#968: Why isn't an empty string allowed? Why are only identifier characters supported as content?
-    private static final Pattern stringInitialization = Pattern.compile(String.format("(%s|%s) *%s *\"[\\w]{2,}\"", registerPattern, variablePattern, assignmentOperators));
-    // START KGU#968 2021-10-11: Issue #967 Single quotes shall also be supported (preferrably even!)
+    // START KGU#1002 2021-10-30: Issue #1007 We may allow more than just identifier characters
+    //private static final Pattern stringInitialization = Pattern.compile(String.format("(%s|%s) *%s *\"[\\w]{2,}\"", registerPattern, variablePattern, assignmentOperators));
     //private static final Pattern charInitialization = Pattern.compile(String.format("(%s|%s) *%s *\"[\\w]\"", registerPattern, variablePattern, assignmentOperators));
-    private static final Pattern charInitialization = Pattern.compile(String.format("(%s|%s) *%s *(\"[\\w]\"|'[\\w]')", registerPattern, variablePattern, assignmentOperators));
+    private static final Pattern stringInitialization = Pattern.compile(String.format("%s *%s *\"([^\"\\\\]|%s)+?\"", variablePattern, assignmentOperators, escapeCharacterPattern));
+    private static final Pattern charInitialization = Pattern.compile(String.format("%s *%s *('([^\'\\\\]|%s)')", variablePattern, assignmentOperators, escapeCharacterPattern));
+    // END KGU#1002 2021-10-30
     // END KGU#968 2021-10-11
-    private static final Pattern booleanAssignmentPattern = Pattern.compile(String.format("(%s|%s) *%s *(true|false)", registerPattern, variablePattern, assignmentOperators));
+    private static final Pattern booleanAssignmentPattern = Pattern.compile(String.format("%s *%s *(true|false)", variablePattern, assignmentOperators));
     // START KGU#968 2021-05-02: More general variable syntax - might this cause trouble?
     //private final Pattern conditionPattern = Pattern.compile("(while)?\\((R([0-9]|1[0-5])|[a-zA-Z]+)(==|!=|<|>|<=|>=|=)(R([0-9]|1[0-5])|[0-9]+|[a-zA-Z]+|0x([0-9]|[a-fA-F])+|'([a-zA-Z]|[0-9])')((and|AND|or|OR|&&|\\|\\|)(R([0-9]|1[0-5])|[a-zA-Z]+)(==|!=|<|>|<=|>=|=)(R([0-9]|1[0-5])|[0-9]+|[a-zA-Z]+|0x([0-9]|[a-fA-F])+|'([a-zA-Z]|[0-9])'))*\\)");
-    private static final String comparisonPattern = String.format("(%s|%s)%s(%s|[0-9]+|%s|0x[0-9a-fA-F]+|'[a-zA-Z0-9]')",
-            registerPattern1, variablePattern,
+    private static final String comparisonPattern = String.format("%s *%s *(%s|[0-9]+|0x[0-9a-fA-F]+|'[a-zA-Z0-9]')",
+            variablePattern,
             relationOperators,
-            registerPattern1, variablePattern);
+            variablePattern);
     private static final Pattern conditionPattern = Pattern.compile(
-            String.format("\\(%s((&&|\\|\\|)%s)*\\)",
+            String.format("\\(%s( *(&&|\\|\\|) *%s)*\\)",
                     comparisonPattern, comparisonPattern));
     // END KGU#968 2021-05-02
     // START KGU#968 2021-10-05: Special support for [negated] registers or variables as conditions
     private static final Pattern atomicCondPattern = Pattern.compile(
-            String.format("\\(!?(%s|%s)\\)",
-                    registerPattern1, variablePattern));
+            String.format("\\( *!? *%s *\\)", variablePattern));
     // END KGU#968 2021-10-05
     // START KGU#968 2021-04-24: Enh. #967 - correct keyword comparison; patterns will be set when code generation is started
     private static Pattern inputPattern = null;
@@ -172,7 +190,9 @@ public class ArmGenerator extends Generator {
     }
 
     // Reserved words that can't be used as variables
-    private static final String[] reservedWords = {"and", "or", "memoria", "memory", "indirizzo", "address", "true", "false", "word", "hword", "bytes", "quad", "octa"/*, "input", "output", "INPUT", "OUTPUT"*/};
+    private static final StringList RESERVED_WORDS = StringList.explode(
+            "and,or,memoria,memory,indirizzo,address,true,false,word,hword,bytes,quad,octa"/* + ",input,output,INPUT,OUTPUT"*/,
+            ",");
     /**
      * HashMap used for available registers and already assigned variables
      * Value {@link #USER_REGISTER_TAG} stands for registers explicitly employed
@@ -259,16 +279,18 @@ public class ArmGenerator extends Generator {
     // END KGU#968 2021-04-15
     // START KGU#1000 2021-10-29: Bugfix #1004
     /**
-     * Shall we multipy array index literals by the array element width and insert code to
-     * do the same for array indices given as expression (register name)?
+     * Shall we insert appropriate .align directives before any array declaration and the text
+     * section in GNU mode (see {@link #gnuEnabled})?
      */
-    private boolean transformIndices = true;
-    /**
-     * Shall we insert space reservations after array declarations in order to fill up to
-     * the next word address?
-     */
-    private boolean alignArrays = false;
+    private boolean alignArrays = true;
     // END KGU#1000 2021-10-29
+    // START KGU#1002 2021-10-31 Issue #1007
+    /**
+     * Shall we append 0 termination after the character code points of string contents on
+     * allocating strng literals in memory?
+     */
+    private boolean terminateStrings = false;
+    // END KGU#1002 2021-10-31
 
     /**
      * Variable used for naming arrays (v_0, v_1...)
@@ -288,7 +310,7 @@ public class ArmGenerator extends Generator {
     // END KGU#1000 2021-10-27
 
     /**
-     * Stores the difference between GNU and Keil compilers<br/>
+     * Stores differing directives or syntax between GNU and Keil compilers<br/>
      * First index:<br/>
      * [0] - Gnu phrases<br/>
      * [1] - KEIL phrases<br/>
@@ -298,7 +320,7 @@ public class ArmGenerator extends Generator {
      * [2] - data area header<br/>
      * [3] - text area header<br/>
      */
-    private final String[][] difference = {
+    private final String[][] syntaxDiffs = {
             {":", "#", ".data", ".text"},
             {"", "", ";AREA data, DATA, READWRITE", ";AREA text, CODE, READONLY"}
     };
@@ -366,17 +388,22 @@ public class ArmGenerator extends Generator {
             gnuEnabled = (Boolean) option;
         }
         // END KGU#968 2021-04-15
-        // START KGU#1000 2021-10-29: Issue #1004
+        // START KGU#1000 2021-10-29: Issues #967, #1004
         if (topLevel) {
             appendComment("Generated with Structorizer " + Element.E_VERSION + " on " + new Date(), "");
-            option = this.getPluginOption("index2offset", transformIndices);
-            if (option instanceof Boolean) {
-                transformIndices = (Boolean) option;
+            if (gnuEnabled) {
+                addCode(".global _start", "", false);
             }
             option = this.getPluginOption("alignArrays", alignArrays);
             if (option instanceof Boolean) {
                 alignArrays = (Boolean) option;
             }
+            // START KGU#1002 2021-10-31: Issue #1007
+            option = this.getPluginOption("terminateStrings", terminateStrings);
+            if (option instanceof Boolean) {
+                terminateStrings = (Boolean) option;
+            }
+            // END KGU#1002 2021-10-31
         }
         // END KGU#1000 2021-10-29
         // START KGU#968 2021-04-24: Enh. #967 - prepare correct keyword comparison
@@ -406,14 +433,20 @@ public class ArmGenerator extends Generator {
         }
         int variant = gnuEnabled ? 0 : 1;
         if (topLevel) {
-            addCode(difference[variant][2], "", false);
+            addCode(syntaxDiffs[variant][2], "", false);	// data section header
             // START KGU#1000 2021-10-27: Issue #1004
             this.dataInsertionLine = code.count();
             // END KGU#100 2021-10-27
-            addCode(difference[variant][3], "", false);
-            addCode("", "", false);	// Just a newline
+            addCode(syntaxDiffs[variant][3], "", false);	// text section header
+            // START KGU#1000c 2021-10-31: Issue #967
+            //addCode("", "", false);	// Just a newline
+            if (gnuEnabled && alignArrays) {
+                addCode(".align 2", "", false);
+            }
+            addCode(gnuEnabled ? "_start:" : "", "", false);
+            // END KGU#1000c 2021-10-31
         }
-        String colon = difference[variant][0];
+        String colon = syntaxDiffs[variant][0];
         // END KGU#705 2021-04-14
 
         for (Map.Entry<String, String> entry : mVariables.entrySet()) {
@@ -541,7 +574,7 @@ public class ArmGenerator extends Generator {
 
     @Override
     protected void generateCode(Alternative _alt, String _indent) {
-        String colon = difference[gnuEnabled ? 0 : 1][0];
+        String colon = syntaxDiffs[gnuEnabled ? 0 : 1][0];
         
         // the local caching of the COUNTER variable is essential
         boolean isDisabled = _alt.isDisabled(true);
@@ -600,7 +633,7 @@ public class ArmGenerator extends Generator {
     protected void generateCode(Case _case, String _indent) {
         appendComment(_case, _indent + getIndent());
 
-        String colon = difference[gnuEnabled ? 0 : 1][0];
+        String colon = syntaxDiffs[gnuEnabled ? 0 : 1][0];
 
         boolean isDisabled = _case.isDisabled(true);
         int counter = COUNTER;
@@ -628,14 +661,14 @@ public class ArmGenerator extends Generator {
         // For each line we extract it and then translate the code
         for (int i = 0; i < _case.qs.size() - 1; i++) {
             String[] split = lines.get(i + 1).split(",");
-            for (String line : split) {
+            for (String selector : split) {
                 count = "" + counter + "_" + i + "";
 
-                String operator = line;
-                if (!operator.startsWith("#") && !operator.startsWith("R"))
-                    operator = "#" + operator;
+                String operand = selector;
+                if (!operand.startsWith("#") && !operand.startsWith("R"))
+                    operand = "#" + operand;
 
-                String cmp = "CMP " + variable + ", " + operator;
+                String cmp = "CMP " + variable + ", " + operand;
                 String branch = "BEQ block_" + count;
 
                 // add it
@@ -646,7 +679,15 @@ public class ArmGenerator extends Generator {
 
         }
 
-        addCode("B default_" + counter, getIndent(), isDisabled);
+        // START KGU#1006 2021-10-31: Bugfix #1011 target label may not exist
+        //addCode("B default_" + counter, getIndent(), isDisabled);
+        if (lines.get(_case.qs.size()).trim().equals("%")) {
+            addCode("B end_" + counter, getIndent(), isDisabled);
+        }
+        else {
+            addCode("B default_" + counter, getIndent(), isDisabled);
+        }
+        // END KGU#1006 2021-10-31
 
         // Now we need to add the labels for the block
         for (int i = 0; i < _case.qs.size() - 1; i++) {
@@ -675,7 +716,7 @@ public class ArmGenerator extends Generator {
 
         // Check if option gnuEnabled is set on GNU or Keil.
         int variant = gnuEnabled ? 0 : 1;
-        String colon = difference[variant][0];
+        String colon = syntaxDiffs[variant][0];
 
         // START KGU 2021-04-14 Argument was wrong
         //boolean isDisabled = _for.isDisabled(true);
@@ -866,7 +907,7 @@ public class ArmGenerator extends Generator {
 
     @Override
     protected void generateCode(While _while, String _indent) {
-        String colon = difference[gnuEnabled ? 0 : 1][0];
+        String colon = syntaxDiffs[gnuEnabled ? 0 : 1][0];
 
         boolean isDisabled = _while.isDisabled(true);
         appendComment(_while, _indent + getIndent());
@@ -905,7 +946,7 @@ public class ArmGenerator extends Generator {
 
     @Override
     protected void generateCode(Repeat _repeat, String _indent) {
-        String colon = difference[gnuEnabled ? 0 : 1][0];
+        String colon = syntaxDiffs[gnuEnabled ? 0 : 1][0];
 
         boolean isDisabled = _repeat.isDisabled(true);
 
@@ -922,7 +963,10 @@ public class ArmGenerator extends Generator {
         }
         // END KGU#968 2021-05-02
 
-        String c = processCondition(_repeat, "until", keys, false);
+        // START KGU#1005 2021-10-31: Bugfix #1010 The condition must be inverted (not "do while" logic!)
+        //String c = processCondition(_repeat, "until", keys, false);
+        String c = processCondition(_repeat, "until", keys, true);
+        // END KGU#1005 2021-10-31
         if (c == null) {
             return;
         }
@@ -942,7 +986,7 @@ public class ArmGenerator extends Generator {
 
     @Override
     protected void generateCode(Forever _forever, String _indent) {
-        String colon = difference[gnuEnabled? 0 : 1][0];
+        String colon = syntaxDiffs[gnuEnabled? 0 : 1][0];
 
         boolean isDisabled = _forever.isDisabled(true);
         appendComment(_forever, _indent + getIndent());
@@ -1073,7 +1117,7 @@ public class ArmGenerator extends Generator {
     @Override
     protected void generateCode(Jump _jump, String _indent) {
         // FIXME Implement a subroutine return, a loop exit
-        String colon = difference[gnuEnabled? 0 : 1][0];
+        String colon = syntaxDiffs[gnuEnabled? 0 : 1][0];
         if (!appendAsComment(_jump, _indent)) {
             boolean isDisabled = _jump.isDisabled(false);
             appendComment(_jump, _indent);
@@ -1263,8 +1307,17 @@ public class ArmGenerator extends Generator {
             generateString(newline, isDisabled, elem);
             break;
         case CHAR_ARRAY_INITIALIZATION:
-            newline = variablesToRegisters(line);
-            generateAssignment(newline.replace("\"", "'"), isDisabled);
+            // START KGU#1002 2021-10-30: Issue #1007 Care for special characters
+            //newline = variablesToRegisters(line);
+            //generateAssignment(newline.replace("\"", "'"), isDisabled);
+            {
+                StringList tokens = Element.splitLexically(line, true);
+                tokens.removeAll(" ");
+                StringBuilder charRepr = stringContentToList(tokens.get(2));
+                newline = variablesToRegisters(tokens.get(0)) + "<-" + charRepr.toString();
+                generateAssignment(newline, isDisabled);
+            }
+            // END KGU#1002 2021-10-30
             break;
         case INSTRUCTION:
             newline = variablesToRegisters(line);
@@ -1358,9 +1411,11 @@ public class ArmGenerator extends Generator {
         // START KGU#968 2021-04-24: Enh. #967 - correct keyword comparison
         boolean isInput = inputPattern != null && inputPattern.matcher(line1).matches();
         boolean isOutput = outputPattern != null && outputPattern.matcher(line1).matches();
-        
         // END KGU#968 2021-04-24
-        String line = line1.replace(" ", "");
+        // START KGU#1004 2021-10-31: We must not remove all spaces, the patterns all cope with blanks now
+        //String line = line1.replace(" ", "");
+        String line = line1.trim();
+        // END KGU#1004 2021-10-31
         ARM_OPERATIONS mode = ARM_OPERATIONS.NOT_IMPLEMENTED;
 
         if (booleanAssignmentPattern.matcher(line).matches()) {
@@ -1446,7 +1501,7 @@ public class ArmGenerator extends Generator {
      *
      * @param condition - the condition expression string
      * @param inverse   - is the condition inverted by a {@code not} operator?
-     * @return an array that contains the first operator, arm instruction, and the second operator
+     * @return an array that contains the first operand, arm instruction, and the second operand
      */
     private String[] getCondition(String condition, boolean inverse) {
         // FIXME Is it certain that the expression contains only one relation operator? Otherwise trouble is ahead...
@@ -1556,7 +1611,8 @@ public class ArmGenerator extends Generator {
     
     /**
      * Converts an atomic condition, i.e., a pure or negated register or variable name
-     * into a comparison against 0. Other expressions remain untouched.<br/>
+     * enclosed in parentheses into a comparison against 0. Other expressions remain
+     * untouched.<br/>
      * Examples:<ul>
      * <li>{@code (R4)} &rarr; {@code (R4!=0)} </li>
      * <li>{@code (!isBool)} &rarr; {@code (isBool==0)} </li>
@@ -1616,7 +1672,6 @@ public class ArmGenerator extends Generator {
         if (lhSide.count() > 1) {
             type = lhSide.get(0);
         }
-        int elemCount = rhSide.count(",") + 1;
         int sizeLd = TYPES.indexOf(type);
         if (type.isEmpty()) {
             type = "word";
@@ -1629,15 +1684,10 @@ public class ArmGenerator extends Generator {
         rhSide.remove(rhSide.count()-1);
         rhSide.remove(0);
         String expr = rhSide.concatenate();
-        int[] codeMapEntry = this.codeMap.get(elem);
-        int space = 0;	// Number of bytes to fill for alignment
-        if (alignArrays && sizeLd < 2) {
-            space = 4 - (elemCount * (1 << sizeLd)) % 4;
-        }
-        if (space > 0) {
-            addToDataSection(getIndent() + (gnuEnabled ? ".space\t" : "SPACE ") + space);
-            codeMapEntry[1]--;
-        }
+        // START KGU#1010 2021-11-02: Bugix #1015
+        //int[] codeMapEntry = this.codeMap.get(elem);
+        // END KGU#1010 2021-11-02
+        boolean insertAlign = gnuEnabled && alignArrays && sizeLd > 0;
         // END KGU#1000 2021-10-29
         if (varName.matches(registerPattern0)) {
             // END KGU#1000 2021-10-27
@@ -1649,7 +1699,7 @@ public class ArmGenerator extends Generator {
             }
             // END KGU#1000 2021-10-27
             if (gnuEnabled) {
-                addToDataSection("v_" + arrayCounter + difference[0][0] + "\t." + type + "\t" + expr);
+                addToDataSection("v_" + arrayCounter + syntaxDiffs[0][0] + "\t." + type + "\t" + expr);
                 addCode("ADR " + varName + ", v_" + arrayCounter, getIndent(), isDisabled);
             } else {
                 // START KGU#1000 2021-10-27: Issue #1004 We can do better than to ignore the type
@@ -1659,7 +1709,9 @@ public class ArmGenerator extends Generator {
                 addCode("LDR " + varName + ", =V_" + arrayCounter, getIndent(), isDisabled);
             }
             // START KGU#1000 2021-10-29: Bugfix #1004 
-            codeMapEntry[1] = codeMapEntry[0] - (space > 0 ? 2 : 1); // Compensate the insertion at start
+            if (insertAlign) {
+                addToDataSection(".align " + sizeLd);
+            }
             // END KGU#1000 2021-10-29
             
             // Remark: mVariables will already contain a mapping of varName to USER_REGISER_TAG
@@ -1676,17 +1728,23 @@ public class ArmGenerator extends Generator {
 
             // GNU compiler
             if (gnuEnabled) {
-                addToDataSection(varName + difference[0][0] + "\t." + type + "\t" + expr);
+                addToDataSection(varName + syntaxDiffs[0][0] + "\t." + type + "\t" + expr);
             } else {
                 // START KGU#1000 2021-10-27: Issue #1004 We can do better than to ignore the type
                 //addToDataSection(varName + "\tDCD " + expr);
                 addToDataSection(varName + "\t" + type + " " + expr);
                 // END KGU#1000 2021-10-27
             }
-            // START KGU#1000 2021-10-27: Bugfix #1004 Adjust code mapping
-            codeMapEntry[0] = this.dataInsertionLine;	// where addToDataSection inserted
-            codeMapEntry[1] = this.dataInsertionLine;	// where addToDataSection inserted
-            codeMapEntry[2] = 0;	// Indentation
+            if (insertAlign) {
+                addToDataSection(".align " + sizeLd);
+            }
+            // START KGU#1000/KGU#1010 2021-10-27/2021-11-02: Bugfix #1004, #1015 Adjust code mapping
+            if (codeMap != null) {
+                int[] codeMapEntry = this.codeMap.get(elem);	
+                codeMapEntry[0] = this.dataInsertionLine;	// where addToDataSection inserted
+                codeMapEntry[1] = this.dataInsertionLine;	// where addToDataSection inserted
+                codeMapEntry[2] = 0;	// Indentation
+            }
             // END KGU#1000 2021-10-27
         }
     }
@@ -1714,12 +1772,7 @@ public class ArmGenerator extends Generator {
         if (!arr[1].contains("R")) { //R0[1], R2
             int index = Integer.parseInt(arr[1].replace("]", "").replace(" ", ""));
             if (dim >= 0) {
-                // START KGU#1000 2021-10-29: Bugfix #1004
-                //index = index * (1 << dim);
-                if (transformIndices) {
-                    index = index * (1 << dim);
-                }
-                // END KGU#1000 2021-10-29
+                index = index * (1 << dim);
                 c = opCode + " " + expr + ", [" + arName + ", #" + index + "]";
             } else {
                 appendComment("The array " + arName + " is not initialized", getIndent());
@@ -1730,8 +1783,8 @@ public class ArmGenerator extends Generator {
             //c = opCode + " " + expr + ", [" + arName + ", " + arr[1].trim();
             String index = arr[1].replace("]", "").trim();
             if (dim > 0) {
-                // Get a temporary register and multiply the index
-                index = generateIndexAdjustment(index, dim, isDisabled);
+                // multiply the index (using the barrel shifter)
+                index = index += ", LSL #" + dim;
             }
             // END KGU#1000/KGU#1001 2021-10-28
             c = opCode + " " + expr + ", [" + arName + ", " + index + "]";
@@ -1785,19 +1838,14 @@ public class ArmGenerator extends Generator {
             // If the index is not a register
             if (!index.matches(registerPattern0)) {
                 int ind = Integer.parseInt(index);
-                // START KGU#1000 2021-10-29: Bugfix #1004
-                //ind = ind * (1 << dim);
-                if (transformIndices) {
-                    ind = ind * (1 << dim);
-                }
-                // END KGU#1000 2021-10-29
+                ind = ind * (1 << dim);
                 c += "#" + ind + "]";
             }
             // We use the register as index
             else {
                 // START KGU#1000 2021-10-28: Bugfix #1004
-                // Get a temporary register and multiply the index
-                index = generateIndexAdjustment(index, dim, isDisabled);
+                // multiply the index (using the barrel shifter)
+                index += ", LSL #" + dim;
                 // END KGU#1000 2021-10-28
                 c += index + "]";
             }
@@ -1852,26 +1900,26 @@ public class ArmGenerator extends Generator {
         line = line.replace(" ", "");
         String[] tokens = line.split(assignmentOperators);
 
-        String hashtag = difference[gnuEnabled ? 0 : 1][1];
+        String hashtag = syntaxDiffs[gnuEnabled ? 0 : 1][1];
 
-        String firstOperator = tokens[0]; // firstOperator must be a register or a variable
-        String secondOperator = tokens[1]; // secondOperator can be a register, a variable or a hex number
+        String firstOperand = tokens[0]; // firstOperand must be a register or a variable
+        String secondOperand = tokens[1]; // secondOperand can be a register, a variable or a hex number
 
-        // if secondOperator is a negative number then we need to use MVN and convert the number to a hex number
-        if (secondOperator.matches(negativeNumberPattern)) {
-            int n = Integer.parseInt(secondOperator);
-            secondOperator = Integer.toHexString(n);
+        // if secondOperand is a negative number then we need to use MVN and convert the number to a hex number
+        if (secondOperand.matches(negativeNumberPattern)) {
+            int n = Integer.parseInt(secondOperand);
+            secondOperand = Integer.toHexString(n);
             code = "MVN %s, %s0x%s";
         }
-        // if secondOperator is a register then we don't need to prepend the #
-        else if (secondOperator.matches(registerPattern)) {
+        // if secondOperand is a register then we don't need to prepend the #
+        else if (secondOperand.matches(registerPattern)) {
             hashtag = "";
             code = "MOV %s, %s%s";
         } else {
-            code = getInstructionConstant(firstOperator, secondOperator);
+            code = getInstructionConstant(firstOperand, secondOperand);
         }
 
-        addCode(String.format(code, firstOperator, hashtag, secondOperator), getIndent(), isDisabled);
+        addCode(String.format(code, firstOperand, hashtag, secondOperand), getIndent(), isDisabled);
     }
 
     /**
@@ -1885,15 +1933,15 @@ public class ArmGenerator extends Generator {
         line = line.replace(" ", "");
         String[] tokens = line.split(assignmentOperators);
 
-        String firstOperator = tokens[0]; // firstOperator must be a register or a variable
-        String secondOperator = tokens[1]; // secondOperator is the simple expression R0 <- 1 + 1 ->> [1, +, 1]
-        secondOperator = secondOperator.replace("and", "&").replace("or", "|");
+        String firstOperand = tokens[0]; // firstOperand must be a register or a variable
+        String secondOperand = tokens[1]; // secondOperand is the simple expression R0 <- 1 + 1 ->> [1, +, 1]
+        secondOperand = secondOperand.replace("and", "&").replace("or", "|");
 
         String operation = ""; // ARM operation
 
-        String[] expression = parseExpression(secondOperator); // expression must be a simple expression: [R0, +, 1], [x, +, y], [x, and, y]
+        String[] expression = parseExpression(secondOperand); // expression must be a simple expression: [R0, +, 1], [x, +, y], [x, and, y]
 
-        String thirdOperator; // third value in the arm operation, (ADD R0, R1, #1)
+        String thirdOperand; // third value in the arm operation, (ADD R0, R1, #1)
 
         if ("+".equals(expression[1])) {
             operation = "ADD";
@@ -1908,29 +1956,32 @@ public class ArmGenerator extends Generator {
         }
 
         // if expression[0] is a register then we don't need to prepend the #
-        secondOperator = expression[0].matches(registerPattern) ? expression[0] : "#" + expression[0];
+        secondOperand = expression[0].matches(registerPattern) ? expression[0] : "#" + expression[0];
 
         // if expression[2] is a register then we don't need to prepend the #
-        thirdOperator = expression[2].matches(registerPattern) ? expression[2] : "#" + expression[2];
+        thirdOperand = expression[2].matches(registerPattern) ? expression[2] : "#" + expression[2];
 
         // replace MUL with LSL where possible
         if (operation.equals("MUL") && expression[0].matches(registerPattern)) {
             // if the second member of the expression is a number
             if (expression[2].matches(numberPattern)) {
                 int value = Integer.parseInt(expression[2]);
-                int shift;
+                int shift = 0;
 
                 // if the value is a power of two
                 if (isPowerOfTwo(value)) {
-                    shift = (int) (Math.log(value) / Math.log(2));
+                    //shift = (int) (Math.log(value) / Math.log(2));
+                    while ((value >>= 1) > 0) shift++;
                     operation = "LSL";
-                    thirdOperator = "#" + shift;
+                    thirdOperand = "#" + shift;
                 }
                 // if the previous value number is a power of two
                 else if (isPowerOfTwo(value - 1)) {
-                    shift = (int) (Math.log(value - 1) / Math.log(2));
+                    //shift = (int) (Math.log(value - 1) / Math.log(2));
+                    value --;
+                    while ((value >>= 1) > 0) shift++;
                     operation = "ADD";
-                    thirdOperator = String.format("LSL #%s", shift);
+                    thirdOperand = String.format("LSL #%s", shift);
                 }
             }
             // if it's a register KGU: This seemed to be nonsense
@@ -1939,7 +1990,7 @@ public class ArmGenerator extends Generator {
             //}
         }
 
-        addCode(String.format(code, operation, firstOperator, secondOperator, thirdOperator), getIndent(), isDisabled);
+        addCode(String.format(code, operation, firstOperand, secondOperand, thirdOperand), getIndent(), isDisabled);
     }
 
     /**
@@ -1984,39 +2035,39 @@ public class ArmGenerator extends Generator {
         line = line.replace(" ", "");
         String[] tokens = line.split(assignmentOperators);
 
-        String expressionOperator; // string containing the memory expression
-        String registerOperator; // string containing the register
+        String expressionOperand; // string containing the memory expression
+        String registerOperand; // string containing the register
         String operation; // the ARM operation to do (LDR or STR)
 
         // if the square brackets come before the assignment operator then we're in this case memory[R0] <- R1 so it's a STR operation
         if (line.indexOf("[") < line.indexOf("<-") || line.indexOf("[") < line.indexOf(":=")) {
             operation = "STR";
-            expressionOperator = tokens[0];
-            registerOperator = tokens[1];
+            expressionOperand = tokens[0];
+            registerOperand = tokens[1];
         }
         // else we're in this case R1 <- memory[R0] so it's a LDR operation
         else {
             operation = "LDR";
-            expressionOperator = tokens[1];
-            registerOperator = tokens[0];
+            expressionOperand = tokens[1];
+            registerOperand = tokens[0];
         }
 
         // get everything between the square brackets and parse the expression
-        String[] expression = parseExpression(expressionOperator.substring(expressionOperator.indexOf("[") + 1, expressionOperator.indexOf("]")));
+        String[] expression = parseExpression(expressionOperand.substring(expressionOperand.indexOf("[") + 1, expressionOperand.indexOf("]")));
 
-        StringBuilder secondOperator = new StringBuilder();
+        StringBuilder secondOperand = new StringBuilder();
 
         for (int i = 0; i < expression.length; i++) {
             if (!expression[i].matches(supportedOperationsPattern)) {
-                secondOperator.append(expression[i]);
+                secondOperand.append(expression[i]);
 
                 if (i < expression.length - 1) {
-                    secondOperator.append(", ");
+                    secondOperand.append(", ");
                 }
             }
         }
 
-        addCode(String.format(codeLine, operation, registerOperator, secondOperator), getIndent(), isDisabled);
+        addCode(String.format(codeLine, operation, registerOperand, secondOperand), getIndent(), isDisabled);
     }
 
     /**
@@ -2029,23 +2080,103 @@ public class ArmGenerator extends Generator {
      */
     private void generateString(String line, boolean isDisabled, Instruction elem) {
 
-        String[] split = line.split("<- ?|:= ?");
-        // FIXME: The string literal might contain escaped quotes in future!
-        split[1] = split[1].replace("\"", "");
-        String c = "word %s<-{%s}";	// FIXME indeed a word (= 4 Byte) for each character?
-        StringBuilder array = new StringBuilder();
-
-        for (int i = 0; i < split[1].length(); i++) {
-            array.append("'").append(split[1].charAt(i)).append("'");
-            if (i != split[1].length() - 1) {
-                array.append(", ");
-            }
+        // START KGU#1002 2021-10-30: Issue #1007 We should handle non-ascii characters as well
+        //String[] split = line.split("<- ?|:= ?");
+        //split[1] = split[1].replace("\"", "");
+        // END KGU#1002 2021-10-30
+        
+        // START KGU#1008 2021-11-01: Issue #1013: New syntax
+        //String format = "word %s <- {%s}";
+        String format = "word[] %s <- {%s}";
+        // END KGU#1008 2021-11-01
+        // START KGU#1002 2021-10-30: Issue #1007 We should handle non-ascii characters as well
+        //StringBuilder array = new StringBuilder();
+        //for (int i = 0; i < split[1].length(); i++) {
+        //    array.append("'").append(split[1].charAt(i)).append("'");
+        //    if (i != split[1].length() - 1) {
+        //        array.append(", ");
+        //    }
+        //}
+        //generateArrayInitialization(String.format(format, split[0], array), isDisabled, elem);
+        StringList tokens = Element.splitLexically(line, true);
+        tokens.removeAll(" ");
+        String literal = tokens.get(2);
+        StringBuilder array = stringContentToList(literal);
+        if (terminateStrings) {
+            array.append(",0");
         }
-
-        generateArrayInitialization(String.format(c, split[0], array), isDisabled, elem);
+        generateArrayInitialization(String.format(format, tokens.get(0), array), isDisabled, elem);
+        // END KGU#1002 2021-10-30
     }
 
     /*----START OF UTILITIES----*/
+
+    /**
+     * Converts a string or character literal to a comma-separated list of character literals
+     * or integer literals, depending on their code point (most Ascii characters are represented
+     * as character literal). Escape sequences will be handled appropriately.
+     * 
+     * @param literal - a string or character literal (with delimiters!)
+     * @return a {@link StringBuilder} containing the list representation
+     */
+    private StringBuilder stringContentToList(String literal) {
+        int[] codePoints = literal.substring(1, literal.length()-1).codePoints().toArray();
+        StringBuilder array = new StringBuilder();
+        boolean esc = false;
+        boolean firstChar = true;
+        for (int cp: codePoints) {
+            if (!firstChar && !esc) {
+                array.append(",");
+            } else {
+                firstChar = false;
+            }
+            if (esc) {
+                esc = false;
+                switch (cp) {
+                case '"':
+                    array.append("0x22");
+                    break;
+                case '\'':
+                    array.append("0x27");
+                    break;
+                case '\\':
+                    array.append("0x5C");
+                    break;
+                case '0':
+                    array.append("0");
+                    break;
+                case 'b':
+                    array.append("0x08");
+                    break;
+                case 'f':
+                    array.append("0x0C");
+                    break;
+                case 'n':
+                    array.append("0x0A");
+                    break;
+                case 't':
+                    array.append("0x09");
+                    break;
+                }
+            }
+            else if (cp == '\\') {
+                esc = true;
+            }
+            else if (cp == '\"') {	// Might occur unescaped in a char literal
+                array.append("0x22");
+            }
+            else if (cp == '\'') {	// Might occur unescaped in a string literal
+                array.append("0x27");
+            }
+            else if (cp >= ' ' && cp < 0x7F) {
+                array.append("'").append((char)cp).append("'");
+            }
+            else {
+                array.append("0x").append(Integer.toHexString(cp));
+            }
+        }
+        return array;
+    }
 
     /**
      * This method translates and splits and, or conditions
@@ -2097,33 +2228,6 @@ public class ArmGenerator extends Generator {
         return c.toString();
     }
 
-    // START KGU#1000 2021-10-28: Inserted for bugfix #1004
-    /**
-     * Tries to insert an offset adjustment for the passed-in index register
-     * and the array element size 2^dim if {@link #transformIndices} id {@code true}.
-     * This means to use an auxiliary register that obtains the value of
-     * {@code index * (1 << dim)}. If this fails then a comment is inserted instead.
-     * 
-     * @param index - name of an index register
-     * @param dim   - {@code ld(element_size)}
-     * @param isDisabled - whether the inducing element is disabled
-     * @return the register name for the memory offset
-     */
-    private String generateIndexAdjustment(String index, int dim, boolean isDisabled) {
-        if (transformIndices) {
-            String tempReg = this.getAvailableRegister();
-            if (!tempReg.isEmpty()) {
-                addCode("MUL " + tempReg + ", " + index + ", #" + (1 << dim), getIndent(), isDisabled);
-                index = tempReg;
-            }
-            else {
-                appendComment("WARNING: " + index + " may need multiplying by " + (1 << dim) + "!", getIndent());
-            }
-        }
-        return index;
-    }
-    // END KGU#1000 2021-10-28
-
     /**
      * Retrieves the element type of the array associated to the register with
      * given name<br/>
@@ -2137,10 +2241,14 @@ public class ArmGenerator extends Generator {
         String type = "";
         // START KGU#1000 2021-10-27: Bugfix #1004 We need more flexibility here
         //String arName = null;
-        String addrPattern = "\tADR " + register + ",";
-        if (!this.gnuEnabled) {
-            addrPattern = "\tLDR " + register + ", =";
-        }
+        // START KGU#1003 2021-10-31: Bugix #1008 Lacking retrieval in GNU mode
+        //String addrPattern = "\tADR " + register + ",";
+        //if (!this.gnuEnabled) {
+        //    addrPattern = "\tLDR " + register + ", =";
+        //}
+        String addrPattern1 = "\tLDR " + register + ", =";
+        String addrPattern2 = "\tADR " + register + ",";
+        // END KGU#1003 2021-10-31
         String declPattern = null;
         /* Try the quicker way to get the array name, which may be the only one for
          * an array that has not been declared with a register name, as the address
@@ -2174,7 +2282,11 @@ public class ArmGenerator extends Generator {
             //    type = line.split("\\.")[1].split(" ")[0];
             //    return type;
             //}
-            if (declPattern == null && line.contains(addrPattern)) {
+            // START KGU#1003 2021-10-29: Bugix #1008 Lacking retrieval in GNU mode
+            //if (declPattern == null && line.contains(addrPattern)) {
+            if (declPattern == null && (line.contains(addrPattern1)
+                    || gnuEnabled && line.contains(addrPattern2))) {
+            // END KGU#1003 2021-10-29
                 StringList tokens = Element.splitLexically(line, true);
                 tokens.removeAll(" ");
                 arName = tokens.get(tokens.count()-1);
@@ -2301,7 +2413,7 @@ public class ArmGenerator extends Generator {
 
     /**
      * Adds the given line between the data section header and the text
-     * section header.
+     * section header, more precisely before line {@link #dataInsertionLine}.
      * 
      * @param line - the line to be inserted
      */
@@ -2348,7 +2460,7 @@ public class ArmGenerator extends Generator {
             }
         } catch (NumberFormatException e) {
             //FIXME What if it does not comply with a hex literal, either?
-            //inside generateAssignment this method should be called only if secondOperator is a number (decimal or hex)
+            //inside generateAssignment this method should be called only if secondOperand is a number (decimal or hex)
             value = value.replace("0x", "");
             int hexValue = Integer.parseInt(value, 16);
             if (hexValue < UINT12MAX) {
@@ -2381,8 +2493,8 @@ public class ArmGenerator extends Generator {
         for (Tuple<String, Integer> tuple : variables) {
             register = getRegister(tuple.variable);
 
-            int end = tuple.position + differenceLength + 1;
-            int start = end - tuple.variable.length();
+            int start = tuple.position + differenceLength;
+            int end = start + tuple.variable.length();
 
             replacedLine.replace(start, end, register);
             differenceLength += register.length() - tuple.variable.length();
@@ -2398,54 +2510,82 @@ public class ArmGenerator extends Generator {
      * @return the ArrayList that contains all variables and the respective positions in the string
      */
     private ArrayList<Tuple<String, Integer>> getVariables(String line) {
-        // we need the space so if we have an ending variable it gets into the while loop
-        line += " \0";
-        String[] split = line.split("");
+        // START KGU#1002 2021-10-29: Redesigned on occasion of bugfix #1007
+//        // we need the space so if we have an ending variable it gets into the while loop
+//        line += " \0";
+//        String[] split = line.split("");
+//
+//        // the tuple arraylist is useful to rebuild the string later
+//        ArrayList<Tuple<String, Integer>> stringPositions = new ArrayList<>();
+//
+//        int i = 1;
+//        StringBuilder item = new StringBuilder();
+//        item.append(split[0]);
+//
+//        while (i < split.length) {
+//            if (split[i].equals("\"")) {
+//                i++;
+//                while (!split[i].equals("\"") && i < split.length) {
+//                    i++;
+//                }
+//            }
+//
+//            if (item.toString().matches(hexNumberPattern)) {
+//                item.append(split[i]);
+//            }
+//            // we check that the item is not a variable
+//            else if (!item.toString().matches(variablePattern)) {
+//                // as soon as it's not we remove the last non matching character
+//                String variable = item.substring(0, item.length() - 1);
+//                // if it's a register we add it as not available and, if it's already assigned to a variable, we warn the user
+//                if (variable.matches(registerPattern)) {
+//                    // START KGU#968 2021-10-11: Bugfix #967 case matters here! (Caused NullPointerExceptions)
+//                    variable = variable.toUpperCase();
+//                    // END KGU#968 2021-10-11
+//                    if ("".equals(mVariables.get(variable))) {
+//                        mVariables.put(variable, USER_REGISTER_TAG);
+//                    } else if (!mVariables.get(variable).equals(USER_REGISTER_TAG)) {
+//                        appendComment(String.format("Register: %s is already assigned to variable: %s. Be careful!\n", variable, mVariables.get(variable)), getIndent());
+//                    }
+//                }
+//
+//                // if it's not a register and it's not empty and it's not in the reservedWords list we add it to the arraylist
+//                else if (!variable.equals("") && !RESERVED_WORDS.contains(variable) && !variable.matches(hexNumberPattern)) {
+//                    stringPositions.add(new Tuple<>(variable, i - 2));
+//                }
+//                item = new StringBuilder(split[i]);
+//            } else {
+//                item.append(split[i]);
+//            }
+//            i++;
+//        }
 
         // the tuple arraylist is useful to rebuild the string later
         ArrayList<Tuple<String, Integer>> stringPositions = new ArrayList<>();
-
-        int i = 1;
-        StringBuilder item = new StringBuilder();
-        item.append(split[0]);
-
-        while (i < split.length) {
-            if (split[i].equals("\"")) {
-                i++;
-                while (!split[i].equals("\"") && i < split.length) {
-                    i++;
-                }
-            }
-
-            if (item.toString().matches(hexNumberPattern)) {
-                item.append(split[i]);
-            }
-            // we check that the item is not a variable
-            else if (!item.toString().matches(variablePattern)) {
-                // as soon as it's not we remove the last non matching character
-                String variable = item.substring(0, item.length() - 1);
-                // if it's a register we add it as not available and, if it's already assigned to a variable, we warn the user
-                if (variable.matches(registerPattern)) {
-                    // START KGU#968 2021-10-11: Bugfix #967 case matters here! (Caused NullPointerExceptions)
-                    variable = variable.toUpperCase();
-                    // END KGU#968 2021-10-11
-                    if ("".equals(mVariables.get(variable))) {
-                        mVariables.put(variable, USER_REGISTER_TAG);
-                    } else if (!mVariables.get(variable).equals(USER_REGISTER_TAG)) {
-                        appendComment(String.format("Register: %s is already assigned to variable: %s. Be careful!\n", variable, mVariables.get(variable)), getIndent());
+        
+        StringList tokens = Element.splitLexically(line, true);
+        int position = 0;
+        for (int i = 0; i < tokens.count(); i++) {
+            String token = tokens.get(i);
+            if (token.matches(variablePattern)) {
+                if (token.matches(registerPattern)) {
+                    token = token.toUpperCase();
+                    String mapped = mVariables.get(token);
+                    if ("".equals(mapped)) {
+                        // Unlikely to happen since we reserve all occurring variables at start
+                        mVariables.put(token, USER_REGISTER_TAG);
+                    } else if (!mapped.equals(USER_REGISTER_TAG) && !mapped.equals(TEMP_REGISTER_TAG)) {
+                        // Unlikely to happen as well now
+                        appendComment(String.format("Register %s is already assigned to variable %s. Be careful!\n", token, mapped), getIndent());
                     }
                 }
-
-                // if it's not a register and it's not empty and it's not in the reservedWords list we add it to the arraylist
-                else if (!variable.equals("") && !Arrays.asList(reservedWords).contains(variable) && !variable.matches(hexNumberPattern)) {
-                    stringPositions.add(new Tuple<>(variable, i - 2));
+                else if (!RESERVED_WORDS.contains(token)) {
+                    stringPositions.add(new Tuple<>(token, position));
                 }
-                item = new StringBuilder(split[i]);
-            } else {
-                item.append(split[i]);
             }
-            i++;
+            position += token.length();
         }
+        // END KGU#1002 2021-10-29
 
         return stringPositions;
     }
@@ -2551,8 +2691,8 @@ public class ArmGenerator extends Generator {
     }
 
     /**
-     * This method splits the current expression into a format where the second item of the array contains the operation,
-     * the first and third items contain the operators
+     * This method splits the current expression into a format where the second item of the array
+     * contains the operation, the first and third items contain the operands
      *
      * @param expression represents the simple expression
      * @return an array containing the split expression

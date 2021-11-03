@@ -115,6 +115,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2021-06-08      Enh. #953: Export option adaptations for LaTeX algorithm export
  *      Kay Gürtzig     2021-10-03      Issue #990: Precaution against fake result type associations
  *      Kay Gürtzig     2021-10-05      Method comment revision
+ *      Kay Gürtzig     2021-10-31      Bugfix #1012 in method generateCode(Element, String)
  *
  ******************************************************************************************************
  *
@@ -3241,7 +3242,15 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		// START KGU#705 2019-09-23: Enh. #738
 		if (codeMap!= null) {
 			// Update the end line no relative to the start line no
-			codeMap.get(_ele)[1] += (code.count() - line0);
+			// START KGU#1007 2021-10-31: Bugfix #1012 - something might have been inserted...
+			//codeMap.get(_ele)[1] += (code.count() - line0);
+			int[] codeMapEntry = codeMap.get(_ele);
+			if (codeMapEntry[0] > line0) {
+				// The element code was moved due to some insertions, update line0
+				line0 = codeMap.get(_ele)[0];
+			}
+			codeMapEntry[1] += (code.count() - line0);
+			// END KGU#1007 2021-10-31
 		}
 		// END KGU#705 2019-09-23
 	}
