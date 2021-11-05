@@ -1047,7 +1047,7 @@ ExportOptionDialoge.chkExportLicenseInfo.text=Esporta l'autore e l'attributo del
 ExportOptionDialoge.lbPrefGenerator.text=Export Code preferito:
 ExportOptionDialoge.lbCharset.text=Set dei caratteri:
 ExportOptionDialoge.chkCharsetAll.text=Elenca tutto?
-ExportOptionDialoge.btnPluginOptions.text=Opzioni specifichi per:
+ExportOptionDialoge.btnPluginOptions.text=Opzioni specifiche per:
 ExportOptionDialoge.msgOptionsForPlugin.text=Opzioni per il generatore %
 ExportOptionDialoge.jLabel1.text=Per favore seleziona le opzioni che vuoi attivare ...
 ExportOptionDialoge.jButton1.text=OK
@@ -1061,7 +1061,7 @@ ExportOptionDialoge.chkStringLen.text=
 
 -----[ ImportOptionDialog ]-----
 ImportOptionDialog.title=Impostazioni d'importazione
-ImportOptionDialog.lbIntro.text=
+ImportOptionDialog.lbIntro.text=Per favore seleziona le opzioni che vuoi attivare ...
 ImportOptionDialog.pnlCode.border=
 ImportOptionDialog.pnlNSD.border=File NSD
 ImportOptionDialog.pnlPreference.border=
@@ -1084,14 +1084,14 @@ ImportOptionDialog.btnLogDir.tooltip=
 ImportOptionDialog.lblMaxLen.text=
 ImportOptionDialog.spnMaxLen.tooltip=
 ImportOptionDialog.lblLimit.text=
-ImportOptionDialog.btnPluginOptions.text=
+ImportOptionDialog.btnPluginOptions.text=Opzioni specifiche per:
 ImportOptionDialog.msgOptionsForPlugin.text=
-ImportOptionDialog.btnOk.text=
+ImportOptionDialog.btnOk.text=OK
 ImportOptionDialog.btnOk.tooltip=Salva queste modifiche
 
 -----[ SaveOptionDialog ]-----
 SaveOptionDialog.title=Opzioni di salvataggio dei diagrammi
-SaveOptionDialog.lbIntro.text=
+SaveOptionDialog.lbIntro.text=Per favore seleziona le opzioni che vuoi attivare ...
 SaveOptionDialog.pnlAutoSave.border=Opzioni di salvataggio automatico
 SaveOptionDialog.pnlBackup.border=Opzioni di backup
 SaveOptionDialog.pnlFileInfo.border=
@@ -1112,7 +1112,7 @@ SaveOptionDialog.lblSeparator.tooltip=
 SaveOptionDialog.msgNoFile.text=
 SaveOptionDialog.msgCantEdit.text=Non è possibile aprire un editor per il file selezionato
 SaveOptionDialog.msgRiskOfNameClash.text=
-SaveOptionDialog.btnOk.text=
+SaveOptionDialog.btnOk.text=OK
 SaveOptionDialog.btnOk.tooltip=Conferma queste impostazioni
 
 -----[ PluginOptionDialog ]-----
@@ -1121,7 +1121,7 @@ PluginOptionDialog.msgNoValidUnsigned.text=Il valore per '%' deve essere un nume
 PluginOptionDialog.msgNoValidCharacter.text=Il valore per '%' deve essere un singolo carattere!
 PluginOptionDialog.msgNoValidDouble.text=Il valore per '%' deve essere un numero
 PluginOptionDialog.msgVerificationError.text=Verifica dell'input fallita
-PluginOptionDialog.btnOk.text=
+PluginOptionDialog.btnOk.text=OK
 PluginOptionDialog.btnCancel.text=Cancella
 PluginOptionDialog.optionComponents.lineNumbering.text=Genera numeri di riga
 
