@@ -17,7 +17,7 @@
 		<option type="Boolean" name="lineNumbering" title="Generate code line numbers" help="This option also modifies the entire syntax towards Vintage BASIC." />
 	</plugin>
 	<plugin title="ARM"				class="lu.fisch.structorizer.generators.ArmGenerator"       icon="" case_matters="0" reserved_words="">
-		<option type="Boolean" name="gnuCode" title="Code for GNU compiler (instead of KEIL)" />
+		<option type="Boolean" name="gnuCode" title="GNU compiler syntax (instead of KEIL)" />
 		<option type="Boolean" name="alignArrays" title="Ensure memory alignment of data and code" help="Inserts .align directives before any data allocation and at the beginning of the text area (GNU mode only)." default="true" />
 		<option type="Boolean" name="terminateStrings" title="Store strings with 0-termination" help="Normally strings will be stored as arrays of only the contained characters. This option will add a terminating NUL character" />
 	</plugin>
