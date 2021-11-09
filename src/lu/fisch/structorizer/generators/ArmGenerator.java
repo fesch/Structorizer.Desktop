@@ -63,6 +63,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2021-11-01/02   Array initialisation syntax modified: Now a bracket pair must follow to
  *                                      the type (on occasion of bugfix #1013);
  *                                      bugfix #1015: NullPointerException on exporting to a file (codeMap reference)
+ *      Kay Gürtzig     2021-11-09      Bugfix #1017: Several flaws in processing assignments and arithmetic
+ *                                      expressions.
  *
  ******************************************************************************************************
  *
@@ -106,12 +108,13 @@ public class ArmGenerator extends Generator {
     private static final String numberPattern = "-?[0-9]+";
     // START KGU 2021-10-31: Redundancy / ambiguity removed
     //private static final String hexNumberPattern = "(0|0x|0x([0-9]|[a-fA-F])+)";
-    private static final String hexNumberPattern = "(0x([0-9]|[a-fA-F])+)";
+    private static final String hexNumberPattern = "(0x[0-9a-fA-F]+)";
+    private static final String binNumberPattern = "(0b[01]+)";
     // END KGU 2021-10-31
     private static final String assignmentOperators = "(<-|:=)";
     private static final String relationOperators = "(==|!=|<|>|<=|>=|=)";
     private static final String supportedOperationsPattern = "(-|\\+|\\*|and|or|&|\\||&&|\\|\\|)";
-    private static final String registerVariableNumberHex = String.format("(%s|%s|%s|%s)", registerPattern, variablePattern, numberPattern, hexNumberPattern);
+    private static final String registerVariableNumberHex = String.format("(%s|%s|%s)", variablePattern, numberPattern, hexNumberPattern);
     private static final String negativeNumberPattern = "-[0-9]+";
     private static final String escapeCharacterPattern = "\\\\['\"0bfnt\\\\]";
 
@@ -1908,8 +1911,17 @@ public class ArmGenerator extends Generator {
         // if secondOperand is a negative number then we need to use MVN and convert the number to a hex number
         if (secondOperand.matches(negativeNumberPattern)) {
             int n = Integer.parseInt(secondOperand);
-            secondOperand = Integer.toHexString(n);
-            code = "MVN %s, %s0x%s";
+            // START KGU#1014 2021-11-09: Bugfix #1017: We must check eligibility and negate then
+            //secondOperand = Integer.toHexString(n);
+            //code = "MVN %s, %s0x%s";
+            if (mayBeDirectOperand(Integer.toString(-n-1))) {
+                code = "MVN %s, %s0x%s";
+                secondOperand = Integer.toHexString(-n-1);
+            }
+            else {
+                code = getInstructionConstant(firstOperand, "0x" + Integer.toHexString(n));
+            }
+            // END KGU#1014 2021-11-09
         }
         // if secondOperand is a register then we don't need to prepend the #
         else if (secondOperand.matches(registerPattern)) {
@@ -1933,13 +1945,14 @@ public class ArmGenerator extends Generator {
         line = line.replace(" ", "");
         String[] tokens = line.split(assignmentOperators);
 
-        String firstOperand = tokens[0]; // firstOperand must be a register or a variable
+        String firstOperand = tokens[0]; // target must be a register or a variable
         String secondOperand = tokens[1]; // secondOperand is the simple expression R0 <- 1 + 1 ->> [1, +, 1]
         secondOperand = secondOperand.replace("and", "&").replace("or", "|");
 
         String operation = ""; // ARM operation
 
-        String[] expression = parseExpression(secondOperand); // expression must be a simple expression: [R0, +, 1], [x, +, y], [x, and, y]
+        // Decompose the simple expression into e.g: [R0, +, 1], [x, +, y], [x, and, y]
+        String[] expression = parseExpression(secondOperand);
 
         String thirdOperand; // third value in the arm operation, (ADD R0, R1, #1)
 
@@ -1955,40 +1968,122 @@ public class ArmGenerator extends Generator {
             operation = "ORR";
         }
 
+        // START KGU#1014 2021-11-09: Bugfix #1017 we must handle direct operands more sensibly
         // if expression[0] is a register then we don't need to prepend the #
-        secondOperand = expression[0].matches(registerPattern) ? expression[0] : "#" + expression[0];
-
+        //secondOperand = expression[0].matches(registerPattern) ? expression[0] : "#" + expression[0];
         // if expression[2] is a register then we don't need to prepend the #
-        thirdOperand = expression[2].matches(registerPattern) ? expression[2] : "#" + expression[2];
-
+        //thirdOperand = expression[2].matches(registerPattern) ? expression[2] : "#" + expression[2];
+        secondOperand = expression[0];
+        thirdOperand = expression[2];
+        boolean isDirect2 = !expression[0].matches(registerPattern);
+        boolean isDirect3 = !expression[2].matches(registerPattern);
+        if (isDirect2 && isDirect3) {
+            /*
+             * Instead of generating bullshit like "ADD R0, #1, #2" decompose it:
+             * MOV R0, #1
+             * ADD R0, R0, #2
+             */
+            generateAssignment(String.format("%s <- %s", firstOperand, secondOperand), isDisabled);
+            secondOperand = firstOperand;
+        }
+        else if (isDirect2) {
+            // Simply swap operands (thirdOperand must now be a register)
+            secondOperand = thirdOperand;
+            thirdOperand = expression[0];
+            isDirect3 = true;
+        }
+        if (isDirect3) {
+        // END KGU#1014 2021-11-09
+        
         // replace MUL with LSL where possible
-        if (operation.equals("MUL") && expression[0].matches(registerPattern)) {
-            // if the second member of the expression is a number
-            if (expression[2].matches(numberPattern)) {
-                int value = Integer.parseInt(expression[2]);
-                int shift = 0;
-
-                // if the value is a power of two
-                if (isPowerOfTwo(value)) {
-                    //shift = (int) (Math.log(value) / Math.log(2));
-                    while ((value >>= 1) > 0) shift++;
-                    operation = "LSL";
-                    thirdOperand = "#" + shift;
+            if (operation.equals("MUL")) {
+                // START KGU#1014 2021-11-09: Bugfix #1017
+                //int value = Integer.parseInt(thirdOperand);
+                
+                int radix = 0;
+                if (thirdOperand.matches(numberPattern)) {
+                    radix = 10;
                 }
-                // if the previous value number is a power of two
-                else if (isPowerOfTwo(value - 1)) {
-                    //shift = (int) (Math.log(value - 1) / Math.log(2));
-                    value --;
-                    while ((value >>= 1) > 0) shift++;
-                    operation = "ADD";
-                    thirdOperand = String.format("LSL #%s", shift);
+                else if (thirdOperand.matches(hexNumberPattern)) {
+                    radix = 16;
+                }
+                else if (thirdOperand.matches(binNumberPattern)) {
+                    radix = 2;
+                }
+                boolean solved = false;
+                if (radix > 1) {
+                    int value = Integer.parseInt(thirdOperand, radix);
+                // END KGU#1014 2021-11-09
+                    int shift = 0;
+
+                    // if the value is a power of two
+                    if (isPowerOfTwo(value)) {
+                        //shift = (int) (Math.log(value) / Math.log(2));
+                        while ((value >>= 1) > 0) shift++;
+                        operation = "LSL";
+                        thirdOperand = "#" + shift;
+                        solved = true;
+                    }
+                    // if the previous value number is a power of two
+                    else if (isPowerOfTwo(value - 1)) {
+                        //shift = (int) (Math.log(value - 1) / Math.log(2));
+                        value --;
+                        while ((value >>= 1) > 0) shift++;
+                        operation = "ADD";
+                        // START KGU#1014 2021-11-09: Bugfix #1017
+                        //thirdOperand = String.format("LSL #%s", shift);
+                        thirdOperand = String.format("%s, LSL #%s", secondOperand, shift);
+                        // END KGU#1014 2021-11-09
+                        solved = true;
+                    }
+                // START KGU#1014 2021-11-09: Bugfix #1017
+                }
+                if (!solved) {
+                    // There is no MUL instruction with direct operand!
+                    String tempReg = getAvailableRegister();
+                    if (!tempReg.isEmpty()) {
+                        // Okay, assign the operand to a register and multiply that
+                        generateAssignment(String.format("%s <- %s", tempReg, thirdOperand), isDisabled);
+                        thirdOperand = tempReg;
+                    }
+                    else {
+                        appendComment("WARNING: This is illegal but we ran out of registers...", getIndent());
+                    }
+                }
+                // END KGU#1014 2021-11-09
+            }
+            // START KGU#1014 2021-11-09: Bugfix #1017 - we may have to go a detour
+            else if (!mayBeDirectOperand(thirdOperand)) {
+                String tempReg = getAvailableRegister();
+                if (!tempReg.isEmpty()) {
+                    // Okay, assign the operand to a register and use that in the operation
+                    generateAssignment(String.format("%s <- %s", tempReg, thirdOperand), isDisabled);
+                    thirdOperand = tempReg;
+                }
+                else {
+                    appendComment("WARNING: This is illegal but we ran out of registers...", getIndent());
                 }
             }
-            // if it's a register KGU: This seemed to be nonsense
-            //else if (expression[2].matches(registerPattern)) {
-            //    operation = "LSL";
-            //}
+            else {
+                thirdOperand = "#" + thirdOperand;
+            }
         }
+        if (operation.equals("MUL") && firstOperand.equals(secondOperand)) {
+            // First and second operand must not be identical!
+            if (!secondOperand.equals(thirdOperand)) {
+                secondOperand = thirdOperand;
+                thirdOperand = firstOperand;
+            }
+            else {
+                // All three registers are identical - so they can't be temporary here
+                String tempReg = getAvailableRegister();
+                if (!tempReg.isEmpty()) {
+                    generateAssignment(String.format("%s <- %s", tempReg, secondOperand), isDisabled);
+                    secondOperand = tempReg;
+                }
+            }
+        }
+        // END KGU#1014 2021-11-09
 
         addCode(String.format(code, operation, firstOperand, secondOperand, thirdOperand), getIndent(), isDisabled);
     }
@@ -2443,34 +2538,81 @@ public class ArmGenerator extends Generator {
     /**
      * This method translates number assignments that are too big for a register
      *
-     * @param register - string that contains the register
-     * @param value - string that contains the value
+     * @param register - string naming the register
+     * @param value - direct value (as string)
      * @return translated assignment as string
      */
     private String getInstructionConstant(String register, String value) {
-        final int UINT12MAX = 4096;
-        String c;
+        // START KGU#1014 2021-11-09: Bugfix #1017 Wrong detection
+        //final int UINT12MAX = 4096;
+        //String c;
+        //try {
+        //    if (value.contains("'")) {	// FIXME seems to be a check for char literal
+        //        c = "MOV " + register + ", #" + value;
+        //    } else if (Integer.parseInt(value) >= UINT12MAX) {	// FIXME what about negative values?
+        //        c = "LDR " + register + ", =" + value;
+        //    } else {
+        //        c = "MOV " + register + ", #" + value;
+        //    }
+        //} catch (NumberFormatException e) {
+        //    //FIXME What if it does not comply with a hex literal, either?
+        //    //inside generateAssignment this method should be called only if secondOperand is a number (decimal or hex)
+        //    value = value.replace("0x", "");
+        //    int hexValue = Integer.parseInt(value, 16);
+        //    if (hexValue < UINT12MAX) {
+        //        c = "MOV " + register + ", #0x" + value;
+        //    } else {
+        //        c = "LDR " + register + ", =0x" + value;
+        //    }
+        //}
+        // return c;
+        String instr = "MOV";
+        char prefix = '#';
+        if (!value.trim().startsWith("'") && !mayBeDirectOperand(value)) {
+            instr = "LDR";
+            prefix = '=';
+        }
+        // FIXME We might also consider using MVN if -value is eligible as direct operand
+        return String.format("%s %s, %c%s", instr, register, prefix, value);
+        // END KGU#1014 2021-11-09
+    }
+    
+    // START KGU#1014 2021-11-09: New for bugfix #1017
+    /**
+     * Checks if the given integer literal is suited to be a direct operand for ARM
+     * instructions (i.e. it represents a shiftable 8 bit sequence).
+     * @param value - the literal to be checked (might be a decimal or hex literal)
+     * @return {@code true} if the operand is eligible as direct operand
+     */
+    private boolean mayBeDirectOperand(String intLiteral) {
+        int base = 10;
+        if (intLiteral.startsWith("0x")) {
+            base = 16;
+        }
+        else if (intLiteral.startsWith("0b")) {	// Preparing later enhancement
+            base = 2;
+        }
+        if (base != 10) {
+            intLiteral = intLiteral.substring(2);
+        }
         try {
-            if (value.contains("'")) {	// FIXME seems to be a check for char literal
-                c = "MOV " + register + ", #" + value;
-            } else if (Integer.parseInt(value) >= UINT12MAX) {	// FIXME what about negative values?
-                c = "LDR " + register + ", =" + value;
-            } else {
-                c = "MOV " + register + ", #" + value;
-            }
-        } catch (NumberFormatException e) {
-            //FIXME What if it does not comply with a hex literal, either?
-            //inside generateAssignment this method should be called only if secondOperand is a number (decimal or hex)
-            value = value.replace("0x", "");
-            int hexValue = Integer.parseInt(value, 16);
-            if (hexValue < UINT12MAX) {
-                c = "MOV " + register + ", #0x" + value;
-            } else {
-                c = "LDR " + register + ", =0x" + value;
+            int value = Integer.parseInt(intLiteral, base);
+            if (value < 0) {
+                return false;
+            }	
+            for (int i = 0; i < 16; i++) {
+                if ((value & 0xffffff00) == 0) {
+                    return true;
+                }
+                int lastBits = value | 0x11;
+                value >>= 2;
+                value |= lastBits << 30;
             }
         }
-        return c;
+        catch (NumberFormatException ex) {}
+        return false;
     }
+    // END KGU#1014 2021-11-09
 
     /**
      * This method replaces variables with already associated register names
