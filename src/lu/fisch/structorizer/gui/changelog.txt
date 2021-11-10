@@ -63,6 +63,8 @@ Current development version 3.32-05 (2021-11-09)
 - 04: Bugfix #1014: Defective export of java-style array declarations <2>
 - 04: Bugfix #1015: ARM export to file caused a NullPointerException <2>
 - 05: Typos in captions and messages corrected, Italian translations added.
+- 05: Bugfix #1005 ARM export: FOREACH loops referring to an array name were
+      faulty, the LDR/STR impact on the base register was not factored in <2>
 - 05: Bugfix #1017: Several flaws on exporting arithmetic expressions and
       assignments as ARM code <2>
 

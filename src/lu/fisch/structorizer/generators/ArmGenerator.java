@@ -17,7 +17,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-// VERSION 2.1
+// VERSION 2.5
 
 package lu.fisch.structorizer.generators;
 
@@ -63,8 +63,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2021-11-01/02   Array initialisation syntax modified: Now a bracket pair must follow to
  *                                      the type (on occasion of bugfix #1013);
  *                                      bugfix #1015: NullPointerException on exporting to a file (codeMap reference)
- *      Kay Gürtzig     2021-11-09      Bugfix #1017: Several flaws in processing assignments and arithmetic
- *                                      expressions.
+ *      Kay Gürtzig     2021-11-09/10   Bugfix #1017: Several flaws in processing assignments and arithmetic
+ *                                      expressions; bugfix #1005: flaws in FOREACH loops and array access mended.
  *
  ******************************************************************************************************
  *
@@ -227,7 +227,8 @@ public class ArmGenerator extends Generator {
     
     /**
      * Flag set for registers R0 ... R12 whether they have already been assigned
-     * the address of the associated array variable
+     * the address of the associated array variable (unfortunately we may not rely
+     * on no instruction having modified it in the mean time...)
      */
     private static final boolean[] addressAssigned = {
             false, false, false, false,
@@ -765,6 +766,20 @@ public class ArmGenerator extends Generator {
         // END KGU#1001 2021-10-28
         if (_for.isForInLoop()) {
             valList = _for.getValueList();
+            // START KGU#1001 2021-11-10: Bugfix #1005 Precaution for array reference
+            if (valList != null && valList.matches(variablePattern)) {
+                String reg = valList;
+                if (!reg.matches(registerPattern0)) {
+                    reg = this.getRegister(valList);
+                }
+                int[] dim = this.returnDim(reg);
+                if (dim[1] >= 0) {
+                    endValueStr = "#" + Integer.toString(dim[1] - 1);
+                    endValueComplex = false;
+                    valList = reg;
+                }
+            }
+            // END KGU#1001 2021-11-10
             StringList items = this.extractForInListItems(_for);
             if (items != null) {
                 // START KGU#1001 2021-10-28: Bugfix #1005
@@ -792,7 +807,7 @@ public class ArmGenerator extends Generator {
             stepValueStr = "#1";	// We assume word as element type...
             // END KGU#1001 2021-10-28
         } else {
-            // START KGU#1001 2021-10-28: Bugix #1005 We don't cope with complex expressions
+            // START KGU#1001 2021-10-28: Bugfix #1005 We don't cope with complex expressions
             //String startValueStr = _for.getStartValue();
             //String endValueStr = _for.getEndValue();
             //String stepValueStr = _for.getStepString();
@@ -1768,7 +1783,7 @@ public class ArmGenerator extends Generator {
 
         String c = "";	// The code line to be produced
         String opCode = "STR";
-        int dim = returnDim(arName);
+        int dim = returnDim(arName)[0];
         if (dim == 0) {
             opCode += "B";
         }
@@ -1799,10 +1814,22 @@ public class ArmGenerator extends Generator {
             // START KGU#1000 2021-10-27: Bugfix #1004 Ensure the address assignment to the mapped register
             String arNameOrig = mVariables.get(arName.toUpperCase());
             if (arNameOrig != null && !arNameOrig.isEmpty()
-                    && !arNameOrig.equals(USER_REGISTER_TAG)
+                    //&& !arNameOrig.equals(USER_REGISTER_TAG)
                     && !arNameOrig.equals(TEMP_REGISTER_TAG)) {
                 int rIndex = Integer.parseInt(arName.substring(1));
-                if (!addressAssigned[rIndex]) {
+                // START KGU#1001 2021-11-10: Bugfix #1005 An access/assignment may have modified it
+                //if (!addressAssigned[rIndex]) {
+                if (arNameOrig.equals(USER_REGISTER_TAG)) {
+                    String decl = findArrayDeclaration(arName);
+                    if (decl != null) {
+                        StringList declTokens = Element.splitLexically(decl, true);
+                        // Fetch the label
+                        if (declTokens.count() >= 1) {
+                            arNameOrig = declTokens.get(0);
+                        }
+                    }
+                }
+                // END KGU#1001 2021-11-10
                     if (gnuEnabled) {
                         addCode("ADR " + arName + ", " + arNameOrig, getIndent(), isDisabled);
                     } else {
@@ -1810,7 +1837,9 @@ public class ArmGenerator extends Generator {
                         addCode("LDR " + arName + ", =" + arNameOrig, getIndent(), isDisabled);
                     }
                     addressAssigned[rIndex] = true;
-                }
+                // START KGU#1001 2021-11-10: Bugfix #1005
+                //}
+                // END KGU#1001 2021-11-10
             }
             // END KGU#1000 2021-10-27
             addCode(c, getIndent(), isDisabled);
@@ -1834,7 +1863,7 @@ public class ArmGenerator extends Generator {
         String index = tokens[1].split("\\[")[1].replace("]", "");
         String c = " " + varName + ", [" + arName + ", ";
         // Array element size (dual exponent)
-        int dim = returnDim(arName);
+        int dim = returnDim(arName)[0];
         String opCode = "LDR";
         // if the array is initialized
         if (dim > 0) {
@@ -1873,10 +1902,22 @@ public class ArmGenerator extends Generator {
             //addCode(c, getIndent(), isDisabled);
             String arNameOrig = mVariables.get(arName.toUpperCase());
             if (arNameOrig != null && !arNameOrig.isEmpty()
-                    && !arNameOrig.equals(USER_REGISTER_TAG)
+                    //&& !arNameOrig.equals(USER_REGISTER_TAG)
                     && !arNameOrig.equals(TEMP_REGISTER_TAG)) {
                 int rIndex = Integer.parseInt(arName.substring(1));
-                if (!addressAssigned[rIndex]) {
+                // START KGU#1001 2021-11-10: Bugfix #1005 An access/assignment may have modified it
+                //if (!addressAssigned[rIndex]) {
+                if (arNameOrig.equals(USER_REGISTER_TAG)) {
+                    String decl = findArrayDeclaration(arName);
+                    if (decl != null) {
+                        StringList declTokens = Element.splitLexically(decl, true);
+                        // Fetch the label
+                        if (declTokens.count() >= 1) {
+                            arNameOrig = declTokens.get(0);
+                        }
+                    }
+                }
+                // END KGU#1001 2021-11-10
                     if (gnuEnabled) {
                         addCode("ADR " + arName + ", " + arNameOrig, getIndent(), isDisabled);
                     } else {
@@ -1884,7 +1925,9 @@ public class ArmGenerator extends Generator {
                         addCode("LDR " + arName + ", =" + arNameOrig, getIndent(), isDisabled);
                     }
                     addressAssigned[rIndex] = true;
-                }
+                // START KGU#1001 2021-11-10: Bugfix #1005
+                //}
+                // END KGU#1001 2021-11-10
             }
             addCode(opCode + c, getIndent(), isDisabled);
             // END KGU#1000 2021-10-27
@@ -2324,16 +2367,15 @@ public class ArmGenerator extends Generator {
     }
 
     /**
-     * Retrieves the element type of the array associated to the register with
+     * Retrieves the declaration line of the array associated to the register with
      * given name<br/>
      * Note: Very time-consuming as it scans the code generated so far backwards
      * and then "disassembles" relevant lines. And this works only in GNU mode!
      *
      * @param register - name of the register representing an array
-     * @return string that represents the array's element type
+     * @return declaration line if found, {@code null} otherwise
      */
-    private String findArrayType(String register) {
-        String type = "";
+    private String findArrayDeclaration(String register) {
         // START KGU#1000 2021-10-27: Bugfix #1004 We need more flexibility here
         //String arName = null;
         // START KGU#1003 2021-10-31: Bugix #1008 Lacking retrieval in GNU mode
@@ -2393,27 +2435,14 @@ public class ArmGenerator extends Generator {
                 }
             }
             /* If the row contains the declaration pattern then we found the array declaration
-             * and may extract the element type
+             * and may return it
              */
             if (declPattern != null && line.startsWith(declPattern)) {
-                StringList tokens = Element.splitLexically(line.replace("\t", " "), true);
-                tokens.removeAll(" ");
-                if (gnuEnabled) {
-                    type = tokens.get(tokens.indexOf(".")+1);
-                } else {
-                    type = tokens.get(1);
-                    for (Map.Entry<String, String> entry: TYPE2KEIL.entrySet()) {
-                        if (entry.getValue().equals(type)) {
-                            type = entry.getKey();
-                            break;
-                        }
-                    }
-                }
-                return type;
+                return line;
             }
-            // END KGU#1000 2021-10
+            // END KGU#1000 2021-10-27
         }
-        return type;
+        return null;
     }
 
     /**
@@ -2422,28 +2451,55 @@ public class ArmGenerator extends Generator {
      * Note: This is time-consuming as it scans the so far generated code
      * 
      * @param register - name of the register that represents the array
-     * @return binary exponent of the array element size (in byte), or -1
-     * (if no identifiable type was found, e.g. in Keil mode.)
+     * @return an integer array containing<ul>
+     *  <li>[0]: the binary exponent of the array element size (in byte), or -1
+     * (if no identifiable type was found, e.g. in Keil mode.)</li>
+     *  <li>[1]: the number of elements if identifiable, otherwise -1</li>
+     *  </ul>
      */
-    private int returnDim(String register) {
+    // START KGU#1001 2021-11-10: Bugfix #1005 extended signature to obtain element number too
+    //private int returnDim(String register) {
+    //    // FIXME find a more efficient way of retrieval
+    //    String r = findArrayType(register);
+    //    return TYPES.indexOf(r);
+    //}
+    private int[] returnDim(String register) {
+        int[] dim = {-1, -1};
         // FIXME find a more efficient way of retrieval
-        String r = findArrayType(register);
-        // START KGU#1000 2021-10-29: Issue #1004
-        //if (r.contains("byte")) {
-        //    return 0;
-        //} else if (r.contains("hword")) {
-        //    return 1;
-        //} else if (r.contains("word")) {
-        //    return 2;
-        //} else if (r.contains("quad")) {
-        //    return 3;
-        //} else if (r.contains("octa")) {
-        //    return 4;
-        //}
-        //return -1;
-        return TYPES.indexOf(r);
-        // END KGU#1000 2021-10-29
+        String decl = findArrayDeclaration(register);
+        if (decl != null) {
+            String type = "";
+            StringList tokens = Element.splitLexically(decl.replace("\t", " "), true);
+            tokens.removeAll(" ");
+            int dotPos = -1;
+            if (gnuEnabled && (dotPos = tokens.indexOf(".")) >= 0) {
+                type = tokens.get(dotPos + 1);
+            } else {
+                type = tokens.get(1);
+                for (Map.Entry<String, String> entry: TYPE2KEIL.entrySet()) {
+                    if (entry.getValue().equals(type)) {
+                        type = entry.getKey();
+                        break;
+                    }
+                }
+            }
+            dim[0] = TYPES.indexOf(type);
+            if (dotPos >= 0) {
+                // Must have found it with GNU syntax
+                dotPos += 2;
+            }
+            else if (!type.isEmpty()) {
+                // Must have found it with KEIL syntax
+                dotPos = 2;
+            }
+            if (dotPos > 0 && tokens.count() > dotPos) {
+                tokens.remove(0, dotPos);
+                dim[1] = tokens.count(",") + 1;
+            }
+        }
+        return dim;
     }
+    // END KGU#1001 2021-11-10
 
     /**
      * This method checks if n is a power of two (i.e. contains exactly one set bit).
