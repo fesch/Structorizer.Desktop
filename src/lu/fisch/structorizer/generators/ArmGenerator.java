@@ -93,6 +93,7 @@ import java.util.regex.Pattern;
  * @author Alessandro Simonetta,
  * @author Giulio Palumbo
  * @author Maurizio Fiusco
+ * @author Kay Gürtzig
  */
 public class ArmGenerator extends Generator {
 

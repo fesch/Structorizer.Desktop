@@ -39,7 +39,14 @@ import lu.fisch.structorizer.elements.Element;
  ******************************************************************************************************
  *
  *      Comment:
- *      
+ *      2021-11-15 (Kay Gürtzig)
+ *      - The general idea here is that a generator may not be capable of converting all diagram content
+ *        So if a user designs an algorithm specifically for a certain export language then they might
+ *        want to be warned in advance that some construct may not be translatable. Of course they might
+ *        simply watch the code preview but an Analyser complaint is way more of an eye catcher.
+ *        So if a syntax checker implemeting this interface is registered in generators.xml then it will
+ *        automatically be available as optional plugin-specific syntax check in the Analyser preferences
+ *        dialog.
  *
  ******************************************************************************************************///
 
