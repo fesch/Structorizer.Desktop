@@ -34,7 +34,7 @@ import lu.fisch.structorizer.elements.Element;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2021-11-11      First Issue
+ *      Kay Gürtzig     2021-11-11      First Issue for #967 (KGU#1012)
  *
  ******************************************************************************************************
  *

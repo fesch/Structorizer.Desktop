@@ -147,10 +147,10 @@ public class AnalyserPreferences extends LangDialog {
 		// START KGU#992 2021-10-05: Enh. #992
 		checkboxTabs.put("General Syntax", new int[]{
 				30,
-				// START KGU#968 2021-11-14: Enh. #967: New plugin-specific syntax checks
+				// START KGU#1012 2021-11-14: Enh. #967: New plugin-specific syntax checks
 				0,// plugin-specific syntax checks
 				-2
-				// END KGU#968 2021-11-14
+				// END KGU#1012 2021-11-14
 		});
 		checkboxTabs.put("Naming / Conventions", new int[]{
 				// identifiers and naming conventions
@@ -183,10 +183,10 @@ public class AnalyserPreferences extends LangDialog {
 	//public JCheckBox[] checkboxes = new JCheckBox[checkCaptions.length];
 	public JCheckBox[] checkboxes = new JCheckBox[checkCaptions.length+1];
 	// END KGU 2016-09-22
-	// START KGU#968 2021-11-14: Enh. #967 plugin-specific checks
+	// START KGU#1012 2021-11-14: Enh. #967 plugin-specific checks
 	public JCheckBox[] pluginCheckboxes;
 	private String[] pluginChecks;
-	// END KGU#968 2021-11-14
+	// END KGU#1012 2021-11-14
 	private JPanel buttonBar;
 	protected JButton okButton;
 	// START KGU#906 2021-01-02: Enh. #905
@@ -201,7 +201,7 @@ public class AnalyserPreferences extends LangDialog {
 		initComponents();
 	}*/
 
-	// START KGU#968 2021-11-14: Issue #967 new argument
+	// START KGU#1012 2021-11-14: Issue #967 new argument
 	//public AnalyserPreferences(Frame owner) {
 	//	super(owner);
 	//	setModal(true);
@@ -213,7 +213,7 @@ public class AnalyserPreferences extends LangDialog {
 		pluginChecks = pluginCheckTitles;
 		initComponents();
 	}
-
+	// END KGU#1012 2021-11-14
 
 	/*public AnalyserPreferences(Dialog owner) {
 		super(owner);
@@ -236,13 +236,13 @@ public class AnalyserPreferences extends LangDialog {
 			checkboxes[i].setText(checkCaptions[i-1]);
 			// END KGU 2016-09-22
 		}
-		// START KGU#968 2021-11-14: Issue #967
+		// START KGU#1012 2021-11-14: Issue #967
 		pluginCheckboxes = new JCheckBox[pluginChecks.length];
 		for (int i = 0; i < pluginChecks.length; i++) {
 			pluginCheckboxes[i] = new JCheckBox();
 			pluginCheckboxes[i].setText(pluginChecks[i]);
 		}
-		// END KGU#968 2021-11-14
+		// END KGU#1012 2021-11-14
 		buttonBar = new JPanel();
 		okButton = new JButton();
 		// START KGU#906 2021-01-02: Enh. #905, modified on 2021-02-04
@@ -313,14 +313,14 @@ public class AnalyserPreferences extends LangDialog {
 						if (checkIndex == 0) {
 							panel.add(new JLabel(""));
 						}
-						// START KGU#968 2021-11-14: Issue #967
+						// START KGU#1012 2021-11-14: Issue #967
 						else if (checkIndex == -2) {
 							for (int j = 0; j < pluginCheckboxes.length; j++) {
 								panel.add(pluginCheckboxes[j]);
 								pluginCheckboxes[j].addKeyListener(keyListener);
 							}
 						}
-						// END KGU#968 2021-11-14
+						// END KGU#1012 2021-11-14
 						else {
 							panel.add(checkboxes[checkIndex]);
 							// START KGU#

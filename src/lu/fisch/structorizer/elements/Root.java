@@ -798,7 +798,7 @@ public class Root extends Element {
 	}
 	// END KGU#239 2016-08-12
 	
-	// START KGU#968 2021-11-12: Enh. #967 New plugin-specific checks
+	// START KGU#1012 2021-11-12: Enh. #967 New plugin-specific checks
 	/**
 	 * Maps plugin-specific syntax checker descriptions to their
 	 * respective activation status
@@ -822,7 +822,7 @@ public class Root extends Element {
 		pluginChecks.put(pluginCheck, enable);
 	}
 	private static HashMap<String, GeneratorSyntaxChecker> pluginSyntaxCheckers = null;
-	// END KGU#968 2021-11-12
+	// END KGU#1012 2021-11-12
 	
 	// START KGU#456 2017-11-05: Issue #452
 	/** Current state of analyser guides */
@@ -3609,7 +3609,7 @@ public class Root extends Element {
     		// get all set variables from actual instruction (just this level, no substructre)
     		StringList myVars = getVarNames(ele);
 
-    		// START KGU#968 2021-11-14: Enh. #967
+    		// START KGU#1012 2021-11-14: Enh. #967
     		if (pluginSyntaxCheckers != null && !eleClassName.equals("Root") && !eleClassName.equals("Parallel")) {
     			for (Map.Entry<String, GeneratorSyntaxChecker> chkEntry: pluginSyntaxCheckers.entrySet()) {
     				if (pluginChecks.get(chkEntry.getKey()) == true) {
@@ -3635,7 +3635,7 @@ public class Root extends Element {
     				}
     			}
     		}
-    		// END KGU#968 2021-11-14
+    		// END KGU#1012 2021-11-14
     		
     		// CHECK: assignment in condition (#8)
     		if (eleClassName.equals("While")
@@ -6334,7 +6334,7 @@ public class Root extends Element {
         for (String keyword: CodeParser.getAllProperties()) {
             structorizerKeywords.add(keyword);
         }
-        // START KGU#968 2021-11-14: Enh. #967 plugin-specific syntax checks
+        // START KGU#1012 2021-11-14: Enh. #967 plugin-specific syntax checks
         if (pluginSyntaxCheckers == null && !pluginChecks.isEmpty()) {
             pluginSyntaxCheckers = new HashMap<String, GeneratorSyntaxChecker>();
             for (String checkSpec: pluginChecks.keySet()) {
@@ -6352,7 +6352,7 @@ public class Root extends Element {
                 }
             }
         }
-        // END KGU#968 2021-11-14
+        // END KGU#1012 2021-11-14
 
         this.retrieveVarNames();	// also fills this.constants if not already done
         //System.out.println(this.variables);
@@ -6700,14 +6700,14 @@ public class Root extends Element {
 	{
 		// START KGU#906 2021-01-02: Enh. #905
 		//String[] prefKeys = new String[analyserChecks.length];
-		// START KGU#968 2021-11-14: Enh. #967 inclde plugin-specific keys
+		// START KGU#1012 2021-11-14: Enh. #967 inclde plugin-specific keys
 		//String[] prefKeys = new String[analyserChecks.length + 1];
 		String[] prefKeys = new String[analyserChecks.length + 1 + pluginChecks.size()];
 		int ix = analyserChecks.length + 1;
 		for (String prefKey: pluginChecks.keySet()) {
 			prefKeys[ix++] = prefKey;
 		}
-		// END KGU#968 2021-11-14
+		// END KGU#1012 2021-11-14
 		// END KGU#906 2021-01-02
 		for (int i = 0; i < analyserChecks.length; i++) {
 			prefKeys[i] = "check" + (i+1);
@@ -6732,11 +6732,11 @@ public class Root extends Element {
                 ini.setProperty("check" + (i+1), (check(i+1) ? "1" : "0"));
             }
             // END KGU#239 2016-08-12
-            // START KGU#968 2021-11-12: Enh. #967 additional check category
+            // START KGU#1012 2021-11-12: Enh. #967 additional check category
             for (Entry<String, Boolean> entry: pluginChecks.entrySet()) {
                 ini.setProperty(entry.getKey(), (entry.getValue() ? "1" : "0"));
             }
-            // END KGU#968 2021-11-12
+            // END KGU#1012 2021-11-12
             // START KGU#906 2021-01-02: Enh. #905
             ini.setProperty("drawAnalyserMarks", E_ANALYSER_MARKER ? "1" : "0");
             // END KGU#906 2021-01-02

@@ -8635,7 +8635,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * Opens the Arranger Preferences dialog and processes configuration changes
 	 */
 	public void analyserNSD() {
-		// START KGU#968 2021-11-14: Enh. #967
+		// START KGU#1012 2021-11-14: Enh. #967
 		//AnalyserPreferences analyserPreferences = new AnalyserPreferences(NSDControl.getFrame());
 		StringList pluginCheckKeys = new StringList();
 		StringList pluginCheckTitles = new StringList();
@@ -8656,7 +8656,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		AnalyserPreferences analyserPreferences = new AnalyserPreferences(
 				NSDControl.getFrame(), 
 				pluginCheckTitles.toArray());
-		// END KGU#968 2021-11-14
+		// END KGU#1012 2021-11-14
 		Point p = getLocationOnScreen();
 		analyserPreferences.setLocation(Math.round(p.x + (getVisibleRect().width - analyserPreferences.getWidth()) / 2 + this.getVisibleRect().x),
 				Math.round(p.y + (getVisibleRect().height - analyserPreferences.getHeight()) / 2 + this.getVisibleRect().y));
@@ -8667,12 +8667,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			analyserPreferences.checkboxes[i].setSelected(Root.check(i));
 		}
 		// END KGU#239 2016-08-12
-		// START KGU#968 2021-11-14: Issue #967
+		// START KGU#1012 2021-11-14: Issue #967
 		for (int i = 0; i < pluginCheckKeys.count(); i++) {
 			analyserPreferences.pluginCheckboxes[i].setSelected(
 					Root.check(pluginCheckKeys.get(i)) == true);
 		}
-		// END KGU#968 2021-11-14
+		// END KGU#1012 2021-11-14
 		// START KGU#906 2021-01-02: Enh. #905
 		analyserPreferences.chkDrawWarningSign.setSelected(Element.E_ANALYSER_MARKER);
 		// END KGU#906 2021-01-02
@@ -8697,13 +8697,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				Root.setCheck(i, analyserPreferences.checkboxes[i].isSelected());
 			}
 			// END KGU#239 2016-08-12
-			// START KGU#968 2021-11-14: Issue #967
+			// START KGU#1012 2021-11-14: Issue #967
 			for (int i = 0; i < pluginCheckKeys.count(); i++) {
 				Root.setCheck(
 						pluginCheckKeys.get(i),
 						analyserPreferences.pluginCheckboxes[i].isSelected());
 			}
-			// END KGU#968 2021-11-14
+			// END KGU#1012 2021-11-14
 			// START KGU#906 2021-01-02: Enh. #905
 			boolean markersWereOn = Element.E_ANALYSER_MARKER;
 			Element.E_ANALYSER_MARKER = analyserPreferences.chkDrawWarningSign.isSelected();

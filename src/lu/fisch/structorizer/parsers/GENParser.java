@@ -184,7 +184,7 @@ public class GENParser extends DefaultHandler {
 			}
 		}
 		// END KGU#416 2017-06-20
-		// START KGU#968 2021-11-12: Enh. #967
+		// START KGU#1012 2021-11-12: Enh. #967
 		else if (qualifiedName.equals("syntax")) {
 			// This is supposed to be a syntax check specification for the last plugin
 			if (!plugins.isEmpty()) {
@@ -214,7 +214,7 @@ public class GENParser extends DefaultHandler {
 				}
 			}
 		}
-		// END KGU#968 2021-11-12
+		// END KGU#1012 2021-11-12
 	}	
 
 	public void endElement(String namespaceUri, String localName, String qualifiedName) throws SAXException 

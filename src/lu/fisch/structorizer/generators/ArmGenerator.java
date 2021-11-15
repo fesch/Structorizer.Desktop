@@ -163,10 +163,10 @@ public class ArmGenerator extends Generator {
     private static Pattern outputPattern = null;
     // END KGU#968 2021-04-24
     
-    // START KGU#968 2021-11-14: Restrictive mode
+    // START KGU#1012 2021-11-14: Restrictive mode
     /** May hold a restricting line parser */
     private ArmLineParser checker = null;
-    // END KGU#968 2021-11-14
+    // END KGU#1012 2021-11-14
     
     // START KGU#968 2021-10-06: Revised from a local variable in isArmInstruction()
     private static final String[] ARM_INSTRUCTIONS = {
@@ -417,7 +417,7 @@ public class ArmGenerator extends Generator {
                 terminateStrings = (Boolean) option;
             }
             // END KGU#1002 2021-10-31
-            // START KGU#968 2021-11-14: Issue #967 restricting syntax policy
+            // START KGU#1012 2021-11-14: Issue #967 restricting syntax policy
             option = this.getPluginOption("restrictedSyntax", terminateStrings);
             if (option instanceof Boolean) {
                 if ((Boolean)option) {
@@ -427,7 +427,7 @@ public class ArmGenerator extends Generator {
                     this.checker = null;
                 }
             }
-            // END KGU#1002 2021-10-31
+            // END KGU#1012 2021-11-14
         }
         // END KGU#1000 2021-10-29
         // START KGU#968 2021-04-24: Enh. #967 - prepare correct keyword comparison
@@ -593,7 +593,7 @@ public class ArmGenerator extends Generator {
             StringList lines = _inst.getUnbrokenText();
             for (int i = 0; i < lines.count(); i++) {
                 String line = lines.get(i);
-                // START KGU#968 2021-11-14: Syntax restrictions
+                // START KGU#1012 2021-11-14: Syntax restrictions
                 if (checker != null && !isDisabled) {
                     String problem = checker.checkSyntax(line, _inst, i);
                     if (problem != null) {
@@ -601,7 +601,7 @@ public class ArmGenerator extends Generator {
                         continue;
                     }
                 }
-                // END KGU#968 2021-11-14
+                // END KGU#1012 2021-11-14
                 // START KGU#968 2021-10-06: skip type definitions and declarations
                 //generateInstructionLine(line, isDisabled);
                 if (!Instruction.isMereDeclaration(line)) {
@@ -619,7 +619,7 @@ public class ArmGenerator extends Generator {
         // the local caching of the COUNTER variable is essential
         boolean isDisabled = _alt.isDisabled(true);
         appendComment(_alt, _indent + getIndent());
-        // START KGU#968 2021-11-14: Syntax restrictions
+        // START KGU#1012 2021-11-14: Issue #967 Syntax restrictions
         if (checker != null && !isDisabled) {
             String problem = checker.checkSyntax(_alt.getUnbrokenText().get(0), _alt, 0);
             if (problem != null) {
@@ -627,7 +627,7 @@ public class ArmGenerator extends Generator {
                 return;
             }
         }
-        // END KGU#968 2021-11-14
+        // END KGU#1012 2021-11-14
         // The local caching of COUNTER is essential here because multiCondition will update it
         int counter = COUNTER;
 
@@ -688,7 +688,7 @@ public class ArmGenerator extends Generator {
 
         // Extract the text in the block
         StringList lines = _case.getUnbrokenText();
-        // START KGU#968 2021-11-14: Syntax restrictions
+        // START KGU#1012 2021-11-14: Issue #967 Syntax restrictions
         if (checker != null && !isDisabled) {
             for (int i = 0; i < lines.count()-1; i++) {
                 String problem = checker.checkSyntax(_case.getUnbrokenText().get(i), _case, i);
@@ -698,7 +698,7 @@ public class ArmGenerator extends Generator {
                 }
             }
         }
-        // END KGU#968 2021-11-14
+        // END KGU#1012 2021-11-14
         int counter = COUNTER;
         COUNTER++;
         String variable = lines.get(0);	// FIXME the discriminator expression might be more complex
@@ -783,7 +783,7 @@ public class ArmGenerator extends Generator {
         boolean isDisabled = _for.isDisabled(false);
         // END KGU 2021-04-14
 
-        // START KGU#968 2021-11-14: Syntax restrictions
+        // START KGU#1012 2021-11-14: Issue #967 Syntax restrictions
         if (checker != null && !isDisabled) {
             String problem = checker.checkSyntax(_for.getUnbrokenText().get(0), _for, 0);
             if (problem != null) {
@@ -791,7 +791,7 @@ public class ArmGenerator extends Generator {
                 return;
             }
         }
-        // END KGU#968 2021-11-14
+        // END KGU#1012 2021-11-14
         // Extract all the text from the block.
         String counterStr = _for.getCounterVar();
         // START KGU#968 2021-05-02: This had to be replaced by a register
@@ -994,7 +994,7 @@ public class ArmGenerator extends Generator {
 
         boolean isDisabled = _while.isDisabled(true);
         appendComment(_while, _indent + getIndent());
-        // START KGU#968 2021-11-14: Syntax restrictions
+        // START KGU#1012 2021-11-14: Issue #967 Syntax restrictions
         if (checker != null && !isDisabled) {
             String problem = checker.checkSyntax(_while.getUnbrokenText().get(0), _while, 0);
             if (problem != null) {
@@ -1002,7 +1002,7 @@ public class ArmGenerator extends Generator {
                 return;
             }
         }
-        // END KGU#968 2021-11-14
+        // END KGU#1012 2021-11-14
         int counter = COUNTER;
 
         String[] keys = {"end", "code"};
@@ -1043,7 +1043,7 @@ public class ArmGenerator extends Generator {
         boolean isDisabled = _repeat.isDisabled(true);
 
         appendComment(_repeat, _indent + getIndent());
-        // START KGU#968 2021-11-14: Syntax restrictions
+        // START KGU#1012 2021-11-14: Issue #967 Syntax restrictions
         if (checker != null && !isDisabled) {
             String problem = checker.checkSyntax(_repeat.getUnbrokenText().get(0), _repeat, 0);
             if (problem != null) {
@@ -1051,7 +1051,7 @@ public class ArmGenerator extends Generator {
                 return;
             }
         }
-        // END KGU#968 2021-11-14
+        // END KGU#1012 2021-11-14
 
         int counter = COUNTER;
 
@@ -1118,7 +1118,7 @@ public class ArmGenerator extends Generator {
             boolean isDisabled = _call.isDisabled(true);
             appendComment(_call, _indent + getIndent());
             StringList lines = _call.getUnbrokenText();
-            // START KGU#968 2021-11-14: Syntax restrictions
+            // START KGU#1012 2021-11-14: Issue #967 Syntax restrictions
             if (checker != null && !isDisabled) {
                 String problem = checker.checkSyntax(lines.get(0), _call, 0);
                 if (problem != null) {
@@ -1126,7 +1126,7 @@ public class ArmGenerator extends Generator {
                     return;
                 }
             }
-            // END KGU#968 2021-11-14
+            // END KGU#1012 2021-11-14
 
             // START KGU#968 2021-05-02: We must pass the arguments in order of occurrence
             //String line = lines.get(0);
@@ -1255,7 +1255,7 @@ public class ArmGenerator extends Generator {
                 //String preThrow  = CodeParser.getKeywordOrDefault("preThrow", "throw");
                 for (int i = 0; isEmpty && i < lines.count(); i++) {
                     String line = transform(lines.get(i)).trim();
-                    // START KGU#968 2021-11-14: Syntax restrictions
+                    // START KGU#1012 2021-11-14: Issue #967 Syntax restrictions
                     if (checker != null && !isDisabled) {
                         String problem = checker.checkSyntax(line, _jump, i);
                         if (problem != null) {
@@ -1263,7 +1263,7 @@ public class ArmGenerator extends Generator {
                             continue;
                         }
                     }
-                    // END KGU#968 2021-11-14
+                    // END KGU#1012 2021-11-14
                     if (!line.isEmpty())
                     {
                         isEmpty = false;

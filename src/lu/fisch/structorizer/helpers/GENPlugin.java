@@ -36,7 +36,7 @@ package lu.fisch.structorizer.helpers;
  *      Kay Gürtzig     2017-04-23      Enh. #231 configuration of reserved words in the target language
  *      Kay Gürtzig     2017-05-11      Enh. #354/#357: field for class-specific options added
  *      Kay Gürtzig     2017-06-20      Enh. #354/#357: Structure of options field modified, method getKey() added
- *      Kay Gürtzig     2021-11-12      Enh. #967: New field syntaxChecks
+ *      Kay Gürtzig     2021-11-14      Enh. #967: New field syntaxChecks
  *
  ******************************************************************************************************
  *
@@ -74,7 +74,7 @@ public class GENPlugin
 	public Vector<HashMap<String, String>> options = new Vector<HashMap<String, String>>();
 	// END KGU#354/KGU#395 2017-05-11
 	
-	// START KGU#968 2021-11-12: Enh. #967
+	// START KGU#1012 2021-11-14: Enh. #967
 	/**
 	 * Optional syntax check specification (suited for Analyser and the plugin itself)
 	 * @author Kay Gürtzig
@@ -103,7 +103,7 @@ public class GENPlugin
 	 * a method type selection and possible default messages
 	 */
 	public Vector<SyntaxCheck> syntaxChecks = null;
-	// END KGU#968 2021-11-12
+	// END KGU#1012 2021-11-14
 	
 	// START KGU#416 2017-06-20
 	/**
