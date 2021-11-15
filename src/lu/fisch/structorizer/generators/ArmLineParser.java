@@ -54,9 +54,9 @@ import lu.fisch.structorizer.parsers.CodeParser;
 import lu.fisch.utils.StringList;
 
 /**
- * Code import parser class of Structorizer 3.27, based on GOLDParser 5.0 for the StructorizerArmLine language.
- * This file contains grammar-specific constants and individual routines to build
- * structograms (Nassi-Shneiderman diagrams) from the parsing tree. 
+ * Syntax checker class for ArmGenerator, based on GOLDParser 5.0 for the StructorizerArmLine
+ * language, which represents a deliberate subset of the language ArmGenerator actually copes
+ * with.
  * @author Kay Gürtzig
  */
 public class ArmLineParser implements GeneratorSyntaxChecker
@@ -339,7 +339,7 @@ public class ArmLineParser implements GeneratorSyntaxChecker
 //		final int PROD_INPUTINSTRUCTION_INPUTKEY                                  =  85;  // <InputInstruction> ::= InputKey
 //		final int PROD_INPUTINSTRUCTION_INPUTKEY2                                 =  86;  // <InputInstruction> ::= InputKey <VariableNameR>
 //		final int PROD_OUTPUTINSTRUCTION_OUTPUTKEY                                =  87;  // <OutputInstruction> ::= OutputKey
-//		final int PROD_OUTPUTINSTRUCTION_OUTPUTKEY2                               =  88;  // <OutputInstruction> ::= OutputKey <Operand>
+//		final int PROD_OUTPUTINSTRUCTION_OUTPUTKEY2                               =  88;  // <OutputInstruction> ::= OutputKey <VariableNameR>
 //		final int PROD_ARRAYINITIALISATION_LBRACKET_RBRACKET                      =  89;  // <ArrayInitialisation> ::= <BaseType> '[' ']' <VariableNameR> <AssignmentOperator> <ArrayInitializer>
 //		final int PROD_BASETYPE_BYTE                                              =  90;  // <BaseType> ::= byte
 //		final int PROD_BASETYPE_HWORD                                             =  91;  // <BaseType> ::= hword

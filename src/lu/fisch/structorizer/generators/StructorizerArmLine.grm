@@ -23,10 +23,12 @@
 !                                       the StructorizerLine.grm and the
 !                                       ArmGenerator regular expressions.
 ! V 0.2     2021-11-10  Kay Gürtzig     Fundamental revision -> LALR
+! V 0.3     2021-11-15  Kay Gürtzig     Output instruction modified, 
+!                                       String content set widened
 ! -----------------------------------------------------------------------
 
 "Name"    = 'StructorizerArmLine'
-"Version" = '0.1'
+"Version" = '0.3'
 "Author"  = 'Kay Gürtzig'
 "About"   = 'LALR(1) grammar for ARM-specific Structorizer element lines'
 
@@ -34,7 +36,7 @@
 ! Character Sets
 ! -------------------------------------------------
 
-{String Char} = {Printable} - ["]
+{String Char} = {all printable} - ["]
 {Quote} = ['']
 {IdLetter} = {Letter} + [_]
 {IdAlphaNumeric} = {Alphanumeric} + [_]
@@ -56,7 +58,8 @@
 
 Identifier     = {IdLetter}{IdAlphaNumeric}*
 !Register       = ('R'|'r')({Digit}|('1'('0'|'1'|'2'|'3'|'4')))
-StringLiteral  = '"'{String Char}*'"'
+!StringLiteral  = '"'{String Char}*'"'
+StringLiteral  = '"'({CharSign1}|'\'{CharSign})+'"'
 !FloatingPointLiteral   = {Digit}+'.'{Digit}+{FloatTypeSuffix}? | {Digit}+{FloatTypeSuffix} | '.'{Digit}+{FloatTypeSuffix}?
 !FloatingPointLiteralExponent = {Digit}+'.'{Digit}+{ExponentPartIndicator}{Sign}?{Digit}+{FloatTypeSuffix}? | {Digit}+{ExponentPartIndicator}{Sign}?{Digit}+{FloatTypeSuffix}? | '.'{Digit}+{ExponentPartIndicator}{Sign}?{Digit}+{FloatTypeSuffix}?
 BooleanLiteral = 'true' | 'false'
@@ -263,7 +266,7 @@ SelectorPrefix = '§SELECT§'
          
 <OutputInstruction>
         ::= OutputKey
-         |  OutputKey <Operand>
+         |  OutputKey <VariableNameR>
 
 <ArrayInitialisation>
         ::= <BaseType> '[' ']' <VariableNameR> <AssignmentOperator> <ArrayInitializer>
