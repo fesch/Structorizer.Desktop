@@ -65,6 +65,7 @@ package lu.fisch.structorizer.generators;
  *                                      bugfix #1015: NullPointerException on exporting to a file (codeMap reference)
  *      Kay Gürtzig     2021-11-09/10   Bugfix #1017: Several flaws in processing assignments and arithmetic
  *                                      expressions; bugfix #1005: flaws in FOREACH loops and array access mended.
+ *      Kay Gürtzig     2021-11-14/15   input instructions now cope with several variables, patterns sharpened
  *
  ******************************************************************************************************
  *
@@ -117,6 +118,9 @@ public class ArmGenerator extends Generator {
     private static final String registerVariableNumberHex = String.format("(%s|%s|%s)", variablePattern, numberPattern, hexNumberPattern);
     private static final String negativeNumberPattern = "-[0-9]+";
     private static final String escapeCharacterPattern = "\\\\['\"0bfnt\\\\]";
+    private static final String characterLiteralPattern = String.format("'([^'\\\\]|%s)'", escapeCharacterPattern);
+    private static final String stringLiteral1Pattern = String.format("'([^'\\\\]|%s)+?'", escapeCharacterPattern);
+    private static final String stringLiteral2Pattern = String.format("\"([^\"\\\\]|%s)+?\"", escapeCharacterPattern);
 
     private static final Pattern assignment = Pattern.compile(String.format("%s *%s *%s", variablePattern, assignmentOperators, registerVariableNumberHex));
     private static final Pattern expression = Pattern.compile(String.format("%s *%s *%s *%s *%s", variablePattern, assignmentOperators, registerVariableNumberHex, supportedOperationsPattern, registerVariableNumberHex));
@@ -135,8 +139,8 @@ public class ArmGenerator extends Generator {
     // START KGU#1002 2021-10-30: Issue #1007 We may allow more than just identifier characters
     //private static final Pattern stringInitialization = Pattern.compile(String.format("(%s|%s) *%s *\"[\\w]{2,}\"", registerPattern, variablePattern, assignmentOperators));
     //private static final Pattern charInitialization = Pattern.compile(String.format("(%s|%s) *%s *\"[\\w]\"", registerPattern, variablePattern, assignmentOperators));
-    private static final Pattern stringInitialization = Pattern.compile(String.format("%s *%s *\"([^\"\\\\]|%s)+?\"", variablePattern, assignmentOperators, escapeCharacterPattern));
-    private static final Pattern charInitialization = Pattern.compile(String.format("%s *%s *('([^\'\\\\]|%s)')", variablePattern, assignmentOperators, escapeCharacterPattern));
+    private static final Pattern stringInitialization = Pattern.compile(String.format("%s *%s *%s", variablePattern, assignmentOperators, stringLiteral2Pattern));
+    private static final Pattern charInitialization = Pattern.compile(String.format("%s *%s *%s", variablePattern, assignmentOperators, characterLiteralPattern));
     // END KGU#1002 2021-10-30
     // END KGU#968 2021-10-11
     private static final Pattern booleanAssignmentPattern = Pattern.compile(String.format("%s *%s *(true|false)", variablePattern, assignmentOperators));
@@ -158,6 +162,11 @@ public class ArmGenerator extends Generator {
     private static Pattern inputPattern = null;
     private static Pattern outputPattern = null;
     // END KGU#968 2021-04-24
+    
+    // START KGU#968 2021-11-14: Restrictive mode
+    /** May hold a restricting line parser */
+    private ArmLineParser checker = null;
+    // END KGU#968 2021-11-14
     
     // START KGU#968 2021-10-06: Revised from a local variable in isArmInstruction()
     private static final String[] ARM_INSTRUCTIONS = {
@@ -408,14 +417,32 @@ public class ArmGenerator extends Generator {
                 terminateStrings = (Boolean) option;
             }
             // END KGU#1002 2021-10-31
+            // START KGU#968 2021-11-14: Issue #967 restricting syntax policy
+            option = this.getPluginOption("restrictedSyntax", terminateStrings);
+            if (option instanceof Boolean) {
+                if ((Boolean)option) {
+                    this.checker = new ArmLineParser();
+                }
+                else {
+                    this.checker = null;
+                }
+            }
+            // END KGU#1002 2021-10-31
         }
         // END KGU#1000 2021-10-29
         // START KGU#968 2021-04-24: Enh. #967 - prepare correct keyword comparison
         String inputKeyword = CodeParser.getKeywordOrDefault("input", "input");
         String outputKeyword = CodeParser.getKeywordOrDefault("output", "output");
         String procName = _root.getMethodName();
-        inputPattern = Pattern.compile(getKeywordPattern(inputKeyword) + "([\\W].*|$)");
-        outputPattern = Pattern.compile(getKeywordPattern(outputKeyword) + "([\\W].*|$)");
+        // START KGU#968 2021-11-14: More precise pattern
+        //inputPattern = Pattern.compile(getKeywordPattern(inputKeyword) + "([\\W].*|$)");
+        //outputPattern = Pattern.compile(getKeywordPattern(outputKeyword) + "([\\W].*|$)");
+        inputPattern = Pattern.compile(getKeywordPattern(inputKeyword)
+                + String.format("( *((%s|%s) *,?)? *%s( *, *%s)*|$)",
+                        stringLiteral2Pattern, stringLiteral1Pattern, variablePattern, variablePattern));
+        outputPattern = Pattern.compile(getKeywordPattern(outputKeyword)
+                + String.format("( *%s( *, *%s)*|$)", variablePattern, variablePattern));
+        // END KGU#968 2021-11-14
         alwaysReturns = mapJumps(_root.children);
         this.varNames = _root.retrieveVarNames().copy();
         this.isResultSet = varNames.contains("result", false);
@@ -566,6 +593,15 @@ public class ArmGenerator extends Generator {
             StringList lines = _inst.getUnbrokenText();
             for (int i = 0; i < lines.count(); i++) {
                 String line = lines.get(i);
+                // START KGU#968 2021-11-14: Syntax restrictions
+                if (checker != null && !isDisabled) {
+                    String problem = checker.checkSyntax(line, _inst, i);
+                    if (problem != null) {
+                        appendComment(problem.replace("error.syntax", "Syntax rejected"), getIndent());
+                        continue;
+                    }
+                }
+                // END KGU#968 2021-11-14
                 // START KGU#968 2021-10-06: skip type definitions and declarations
                 //generateInstructionLine(line, isDisabled);
                 if (!Instruction.isMereDeclaration(line)) {
@@ -583,6 +619,15 @@ public class ArmGenerator extends Generator {
         // the local caching of the COUNTER variable is essential
         boolean isDisabled = _alt.isDisabled(true);
         appendComment(_alt, _indent + getIndent());
+        // START KGU#968 2021-11-14: Syntax restrictions
+        if (checker != null && !isDisabled) {
+            String problem = checker.checkSyntax(_alt.getUnbrokenText().get(0), _alt, 0);
+            if (problem != null) {
+                appendComment(problem.replace("error.syntax", "Syntax rejected"), getIndent());
+                return;
+            }
+        }
+        // END KGU#968 2021-11-14
         // The local caching of COUNTER is essential here because multiCondition will update it
         int counter = COUNTER;
 
@@ -640,11 +685,22 @@ public class ArmGenerator extends Generator {
         String colon = syntaxDiffs[gnuEnabled ? 0 : 1][0];
 
         boolean isDisabled = _case.isDisabled(true);
-        int counter = COUNTER;
-        COUNTER++;
 
         // Extract the text in the block
         StringList lines = _case.getUnbrokenText();
+        // START KGU#968 2021-11-14: Syntax restrictions
+        if (checker != null && !isDisabled) {
+            for (int i = 0; i < lines.count()-1; i++) {
+                String problem = checker.checkSyntax(_case.getUnbrokenText().get(i), _case, i);
+                if (problem != null) {
+                    appendComment(problem.replace("error.syntax", "Syntax rejected"), getIndent());
+                    return;
+                }
+            }
+        }
+        // END KGU#968 2021-11-14
+        int counter = COUNTER;
+        COUNTER++;
         String variable = lines.get(0);	// FIXME the discriminator expression might be more complex
         // START KGU#968 2021-04-25: Issue #967 Keep structure preferences in mind
         // FIXME The discriminator expression has to be compiled...
@@ -727,6 +783,15 @@ public class ArmGenerator extends Generator {
         boolean isDisabled = _for.isDisabled(false);
         // END KGU 2021-04-14
 
+        // START KGU#968 2021-11-14: Syntax restrictions
+        if (checker != null && !isDisabled) {
+            String problem = checker.checkSyntax(_for.getUnbrokenText().get(0), _for, 0);
+            if (problem != null) {
+                appendComment(problem.replace("error.syntax", "Syntax rejected"), getIndent());
+                return;
+            }
+        }
+        // END KGU#968 2021-11-14
         // Extract all the text from the block.
         String counterStr = _for.getCounterVar();
         // START KGU#968 2021-05-02: This had to be replaced by a register
@@ -929,6 +994,15 @@ public class ArmGenerator extends Generator {
 
         boolean isDisabled = _while.isDisabled(true);
         appendComment(_while, _indent + getIndent());
+        // START KGU#968 2021-11-14: Syntax restrictions
+        if (checker != null && !isDisabled) {
+            String problem = checker.checkSyntax(_while.getUnbrokenText().get(0), _while, 0);
+            if (problem != null) {
+                appendComment(problem.replace("error.syntax", "Syntax rejected"), getIndent());
+                return;
+            }
+        }
+        // END KGU#968 2021-11-14
         int counter = COUNTER;
 
         String[] keys = {"end", "code"};
@@ -969,6 +1043,15 @@ public class ArmGenerator extends Generator {
         boolean isDisabled = _repeat.isDisabled(true);
 
         appendComment(_repeat, _indent + getIndent());
+        // START KGU#968 2021-11-14: Syntax restrictions
+        if (checker != null && !isDisabled) {
+            String problem = checker.checkSyntax(_repeat.getUnbrokenText().get(0), _repeat, 0);
+            if (problem != null) {
+                appendComment(problem.replace("error.syntax", "Syntax rejected"), getIndent());
+                return;
+            }
+        }
+        // END KGU#968 2021-11-14
 
         int counter = COUNTER;
 
@@ -1035,6 +1118,15 @@ public class ArmGenerator extends Generator {
             boolean isDisabled = _call.isDisabled(true);
             appendComment(_call, _indent + getIndent());
             StringList lines = _call.getUnbrokenText();
+            // START KGU#968 2021-11-14: Syntax restrictions
+            if (checker != null && !isDisabled) {
+                String problem = checker.checkSyntax(lines.get(0), _call, 0);
+                if (problem != null) {
+                    appendComment(problem.replace("error.syntax", "Syntax rejected"), getIndent());
+                    return;
+                }
+            }
+            // END KGU#968 2021-11-14
 
             // START KGU#968 2021-05-02: We must pass the arguments in order of occurrence
             //String line = lines.get(0);
@@ -1163,6 +1255,15 @@ public class ArmGenerator extends Generator {
                 //String preThrow  = CodeParser.getKeywordOrDefault("preThrow", "throw");
                 for (int i = 0; isEmpty && i < lines.count(); i++) {
                     String line = transform(lines.get(i)).trim();
+                    // START KGU#968 2021-11-14: Syntax restrictions
+                    if (checker != null && !isDisabled) {
+                        String problem = checker.checkSyntax(line, _jump, i);
+                        if (problem != null) {
+                            appendComment(problem.replace("error.syntax", "Syntax rejected"), getIndent());
+                            continue;
+                        }
+                    }
+                    // END KGU#968 2021-11-14
                     if (!line.isEmpty())
                     {
                         isEmpty = false;
@@ -1342,30 +1443,35 @@ public class ArmGenerator extends Generator {
             addCode(newline, getIndent(), isDisabled);
         case INPUT:
             if (gnuEnabled) {
-                // START KGU#968 2021-04-25: Remove the keyword and a possible prompt string
+                // START KGU#968 2021-04-25/2021-11-14: Remove the keyword and a possible prompt string
                 //newline = variablesToRegisters(line);
                 //String register = newline.split(" ")[1];
                 StringList tokens = Element.splitLexically(line, true);
                 StringList inputTokens = Element.splitLexically(CodeParser.getKeywordOrDefault("input", "input"), true);
                 // Check for a prompt string literal and remove it (plus a possible comma)
                 int ix = inputTokens.count();
-                while (ix < tokens.count() && tokens.get(ix).trim().isEmpty()) {
-                    ix++;
+                tokens.remove(0, ix);
+                tokens.removeAll(" ");
+                if (!tokens.isEmpty() && (tokens.get(0).startsWith("\"") || tokens.get(0).startsWith("'"))) {
+                    tokens.remove(0);
+                    appendComment("Prompt string of input instruction ignored", getIndent());
                 }
-                if (ix < tokens.count() && (tokens.get(ix).startsWith("\"") || tokens.get(ix).startsWith("'"))) {
-                    tokens.remove(ix);
-                }
-                while (ix < tokens.count() && (tokens.get(ix).trim().isEmpty() || tokens.get(ix).equals(","))) {
-                    ix++;
-                }
-                newline = variablesToRegisters(tokens.concatenate(null, ix));
-                String register = newline.split(" ")[0];
-                // END KGU#968 2021-04-25
-                // START KGU#968 2021-04-24: We must not add two lines via a single call (for correct line counting)
-                //addCode(String.format("LDR %s, =0xFF200050\n%sLDR %s, [%s]", register, getIndent(), register, register), getIndent(), isDisabled);
-                addCode(String.format("LDR %s, =0xFF200050", register), getIndent(), isDisabled);
-                addCode(String.format("LDR %s, [%s]", register, register), getIndent(), isDisabled);
-                // END KGU#968 2021-04-24
+                newline = variablesToRegisters(tokens.concatenate(null));
+                tokens = Element.splitLexically(newline, true);
+                tokens.removeAll(",");
+                if (!tokens.isEmpty()) {
+                    // Use the last register for the input address as it is overwritten last
+                    String registerIO = tokens.get(tokens.count()-1);
+                    addCode(String.format("LDR %s, =0xFF200050", registerIO), getIndent(), isDisabled);
+                    for (int i = 0; i < tokens.count(); i++) {
+                        String register = tokens.get(i);
+                        // START KGU#968 2021-04-24: We must not add two lines via a single call (for correct line counting)
+                        //addCode(String.format("LDR %s, =0xFF200050\n%sLDR %s, [%s]", register, getIndent(), register, register), getIndent(), isDisabled);
+                        addCode(String.format("LDR %s, [%s]", register, registerIO), getIndent(), isDisabled);
+                        // END KGU#968 2021-04-24
+                    }
+                    }
+                // END KGU#968 2021-04-25/2021-11-14
             } else {
                 appendComment("ERROR: INPUT operation only supported with GNU code\n" + line, getIndent());
             }

@@ -56,10 +56,16 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-02-04      Enh. #905: Decomposed checkbox/label in order to provide an icon
  *      Kay Gürtzig     2021-02-08      Enh. #928: New CASE check 29 (unstructured discriminator expression)
  *      Kay Gürtzig     2021-10-05      Enh. #992: New tab with check 30 for parentheses, brackets, and braces.
+ *      Kay Gürtzig     2021-11-14      Enh. #967: Mechanism for new plugin-specific analyser checks added
  *
  ******************************************************************************************************
  *
- *      Comment:		
+ *      Comment:
+ *      2021-11-14: Kay Gürtzig
+ *      - Regular checks are defined by checkCaptions and numbered from 1 on.
+ *      - In addition, plugin-specific checks are dynamically added via constructor argument
+ *        pluginCheckCaptions and associated with check number -2
+ *      - check number -1 is reserved for a grammar-based general syntax check (issue #800)
  *
  ******************************************************************************************************///
 
@@ -140,7 +146,11 @@ public class AnalyserPreferences extends LangDialog {
 		});
 		// START KGU#992 2021-10-05: Enh. #992
 		checkboxTabs.put("General Syntax", new int[]{
-				30
+				30,
+				// START KGU#968 2021-11-14: Enh. #967: New plugin-specific syntax checks
+				0,// plugin-specific syntax checks
+				-2
+				// END KGU#968 2021-11-14
 		});
 		checkboxTabs.put("Naming / Conventions", new int[]{
 				// identifiers and naming conventions
@@ -173,6 +183,10 @@ public class AnalyserPreferences extends LangDialog {
 	//public JCheckBox[] checkboxes = new JCheckBox[checkCaptions.length];
 	public JCheckBox[] checkboxes = new JCheckBox[checkCaptions.length+1];
 	// END KGU 2016-09-22
+	// START KGU#968 2021-11-14: Enh. #967 plugin-specific checks
+	public JCheckBox[] pluginCheckboxes;
+	private String[] pluginChecks;
+	// END KGU#968 2021-11-14
 	private JPanel buttonBar;
 	protected JButton okButton;
 	// START KGU#906 2021-01-02: Enh. #905
@@ -187,11 +201,19 @@ public class AnalyserPreferences extends LangDialog {
 		initComponents();
 	}*/
 
-	public AnalyserPreferences(Frame owner) {
+	// START KGU#968 2021-11-14: Issue #967 new argument
+	//public AnalyserPreferences(Frame owner) {
+	//	super(owner);
+	//	setModal(true);
+	//	initComponents();
+	//}
+	public AnalyserPreferences(Frame owner, String[] pluginCheckTitles) {
 		super(owner);
 		setModal(true);
+		pluginChecks = pluginCheckTitles;
 		initComponents();
 	}
+
 
 	/*public AnalyserPreferences(Dialog owner) {
 		super(owner);
@@ -214,6 +236,13 @@ public class AnalyserPreferences extends LangDialog {
 			checkboxes[i].setText(checkCaptions[i-1]);
 			// END KGU 2016-09-22
 		}
+		// START KGU#968 2021-11-14: Issue #967
+		pluginCheckboxes = new JCheckBox[pluginChecks.length];
+		for (int i = 0; i < pluginChecks.length; i++) {
+			pluginCheckboxes[i] = new JCheckBox();
+			pluginCheckboxes[i].setText(pluginChecks[i]);
+		}
+		// END KGU#968 2021-11-14
 		buttonBar = new JPanel();
 		okButton = new JButton();
 		// START KGU#906 2021-01-02: Enh. #905, modified on 2021-02-04
@@ -284,6 +313,14 @@ public class AnalyserPreferences extends LangDialog {
 						if (checkIndex == 0) {
 							panel.add(new JLabel(""));
 						}
+						// START KGU#968 2021-11-14: Issue #967
+						else if (checkIndex == -2) {
+							for (int j = 0; j < pluginCheckboxes.length; j++) {
+								panel.add(pluginCheckboxes[j]);
+								pluginCheckboxes[j].addKeyListener(keyListener);
+							}
+						}
+						// END KGU#968 2021-11-14
 						else {
 							panel.add(checkboxes[checkIndex]);
 							// START KGU#

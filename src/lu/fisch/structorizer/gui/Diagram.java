@@ -235,6 +235,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-06-10/11   Enh. #926, #979: Analyser report tooltip on the Analyser marker driehoekje (#905)
  *      Kay Gürtzig     2021-09-18      Bugfix #983: Summoning a subroutine to an editor unduly turned it 'changed'
  *      Kay Gürtzig     2021-10-29      Issue #1004: Export/import option dialogs now respect plugin-specific option defaults
+ *      Kay Gürtzig     2021-11-14      Enh. #967: Analyser preferences enhanced by plugin-specific checks
  *
  ******************************************************************************************************
  *
@@ -8634,7 +8635,28 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * Opens the Arranger Preferences dialog and processes configuration changes
 	 */
 	public void analyserNSD() {
-		AnalyserPreferences analyserPreferences = new AnalyserPreferences(NSDControl.getFrame());
+		// START KGU#968 2021-11-14: Enh. #967
+		//AnalyserPreferences analyserPreferences = new AnalyserPreferences(NSDControl.getFrame());
+		StringList pluginCheckKeys = new StringList();
+		StringList pluginCheckTitles = new StringList();
+		for (GENPlugin plugin: Menu.generatorPlugins) {
+			if (plugin.syntaxChecks != null) {
+				for (int i = 0; i < plugin.syntaxChecks.size(); i++) {
+					GENPlugin.SyntaxCheck spec = plugin.syntaxChecks.get(i);
+					String key = spec.className + ":" + spec.source.name();
+					String title = spec.title;
+					if (title == null || title.isEmpty()) {
+						title = "Syntax check for " + plugin.getKey();
+					}
+					pluginCheckKeys.add(key);
+					pluginCheckTitles.add(title);
+				}
+			}
+		}
+		AnalyserPreferences analyserPreferences = new AnalyserPreferences(
+				NSDControl.getFrame(), 
+				pluginCheckTitles.toArray());
+		// END KGU#968 2021-11-14
 		Point p = getLocationOnScreen();
 		analyserPreferences.setLocation(Math.round(p.x + (getVisibleRect().width - analyserPreferences.getWidth()) / 2 + this.getVisibleRect().x),
 				Math.round(p.y + (getVisibleRect().height - analyserPreferences.getHeight()) / 2 + this.getVisibleRect().y));
@@ -8645,6 +8667,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			analyserPreferences.checkboxes[i].setSelected(Root.check(i));
 		}
 		// END KGU#239 2016-08-12
+		// START KGU#968 2021-11-14: Issue #967
+		for (int i = 0; i < pluginCheckKeys.count(); i++) {
+			analyserPreferences.pluginCheckboxes[i].setSelected(
+					Root.check(pluginCheckKeys.get(i)) == true);
+		}
+		// END KGU#968 2021-11-14
 		// START KGU#906 2021-01-02: Enh. #905
 		analyserPreferences.chkDrawWarningSign.setSelected(Element.E_ANALYSER_MARKER);
 		// END KGU#906 2021-01-02
@@ -8669,6 +8697,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				Root.setCheck(i, analyserPreferences.checkboxes[i].isSelected());
 			}
 			// END KGU#239 2016-08-12
+			// START KGU#968 2021-11-14: Issue #967
+			for (int i = 0; i < pluginCheckKeys.count(); i++) {
+				Root.setCheck(
+						pluginCheckKeys.get(i),
+						analyserPreferences.pluginCheckboxes[i].isSelected());
+			}
+			// END KGU#968 2021-11-14
 			// START KGU#906 2021-01-02: Enh. #905
 			boolean markersWereOn = Element.E_ANALYSER_MARKER;
 			Element.E_ANALYSER_MARKER = analyserPreferences.chkDrawWarningSign.isSelected();

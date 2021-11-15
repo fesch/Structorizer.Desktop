@@ -174,6 +174,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2021-10-03      Issue #991: Inconsistent Analyser check for result mechanism (case-ignorant)
  *      Kay Gürtzig     2021-10-05      Enh. #992: New Analyser check 30 against bracket faults
  *      Kay Gürtzig     2021-10-07      Bugfix #995: False Analyser accusations about insecure initialization status
+ *      Kay Gürtzig     2021-11-12/14   Enh. #967 New plugin-specific Analyser syntax checks
  *      
  ******************************************************************************************************
  *
@@ -201,6 +202,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
@@ -251,7 +253,7 @@ import lu.fisch.structorizer.locales.Locales;
 import lu.fisch.structorizer.archivar.IRoutinePool;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.executor.Function;
-//import lu.fisch.structorizer.generators.Generator;
+import lu.fisch.structorizer.generators.GeneratorSyntaxChecker;
 import lu.fisch.structorizer.gui.*;
 
 /**
@@ -777,7 +779,7 @@ public class Root extends Element {
 		return analyserChecks.length;
 	}
 	/**
-	 * Returns whether the Analyser CHECK #checkNo is enabled
+	 * Returns whether the Analyser check #{@code checkNo} is enabled
 	 * @param checkNo - an official Analyser check number 
 	 * @return true if the check is enabled, false otherwise
 	 */
@@ -795,6 +797,33 @@ public class Root extends Element {
 		}
 	}
 	// END KGU#239 2016-08-12
+	
+	// START KGU#968 2021-11-12: Enh. #967 New plugin-specific checks
+	/**
+	 * Maps plugin-specific syntax checker descriptions to their
+	 * respective activation status
+	 * 
+	 * @see lu.fisch.structorizer.helpers.GENPlugin#syntaxCheck
+	 * @see lu.fisch.structorizer.generators.GeneratorSyntaxChecker#checkSyntax(String, Element, int)
+	 */
+	private static final HashMap<String, Boolean> pluginChecks = new HashMap<String, Boolean>();
+	/**
+	 * Returns whether the plugin-specific syntax check {@code pluginCheck} is
+	 * configured and enabled
+	 * @param pluginCheck - the plugin check specifier (class name : check type code)
+	 * @return true if the check is enabled, false otherwise
+	 */
+	public static boolean check(String pluginCheck)
+	{
+		return pluginChecks.containsKey(pluginCheck) && pluginChecks.get(pluginCheck);
+	}
+	public static void setCheck(String pluginCheck, boolean enable)
+	{
+		pluginChecks.put(pluginCheck, enable);
+	}
+	private static HashMap<String, GeneratorSyntaxChecker> pluginSyntaxCheckers = null;
+	// END KGU#968 2021-11-12
+	
 	// START KGU#456 2017-11-05: Issue #452
 	/** Current state of analyser guides */
 	private Queue<Integer> tutorialQueue = new LinkedList<Integer>();
@@ -3580,6 +3609,34 @@ public class Root extends Element {
     		// get all set variables from actual instruction (just this level, no substructre)
     		StringList myVars = getVarNames(ele);
 
+    		// START KGU#968 2021-11-14: Enh. #967
+    		if (pluginSyntaxCheckers != null && !eleClassName.equals("Root") && !eleClassName.equals("Parallel")) {
+    			for (Map.Entry<String, GeneratorSyntaxChecker> chkEntry: pluginSyntaxCheckers.entrySet()) {
+    				if (pluginChecks.get(chkEntry.getKey()) == true) {
+    					GeneratorSyntaxChecker checker = chkEntry.getValue();
+    					StringList lines = ele.getUnbrokenText();
+    					GENPlugin.SyntaxCheck.Source testType = 
+    							GENPlugin.SyntaxCheck.Source.valueOf(chkEntry.getKey().split(":")[1]);
+    					switch (testType) {
+    					case STRING:
+    						for (int l = 0; l < lines.count(); l++) {
+    							String line = lines.get(l);
+    							String error = checker.checkSyntax(line, ele, l);
+    							if (error != null) {
+    								// FIXME: Fetch the plugin-configured message
+    								addError(_errors, new DetectedError(error.replace("error.syntax", "ARM syntax violation"), ele), -2);
+    							}
+    						}
+    						break;
+    					case TREE:
+    						// FIXME not implemented yet: iterate over parsed lines
+    						break;
+    					}
+    				}
+    			}
+    		}
+    		// END KGU#968 2021-11-14
+    		
     		// CHECK: assignment in condition (#8)
     		if (eleClassName.equals("While")
     				|| eleClassName.equals("Repeat")
@@ -5650,6 +5707,13 @@ public class Root extends Element {
 	}
 	// END KGU#456 2017-11-04
 
+    /**
+     * Checks whether Analyser errors of category {@code errorNo} are enabled and if so adds
+     * the passed-in problem entry {@code error} to the Analyser report list {@code errors}
+     * @param errors - the list of element-specific or general Analyser reports
+     * @param error - a report list entry with description and {@link Element} reference
+     * @param errorNo - coded category of errors, warnings, or hints
+     */
     private void addError(Vector<DetectedError> errors, DetectedError error, int errorNo)
     {
         // START KGU#239 2016-08-12: Enh. #231 + Code revision
@@ -5660,6 +5724,18 @@ public class Root extends Element {
         // END KGU#239 2016-08-12
     }
 
+    /**
+     * Retrieves the names of the declared parameters in case this is a routine diagram,
+     * otherwise an empty {@link StringList}
+     * 
+     * @return the list of parameter names in order of declaration (may be empty)
+     * 
+     * @see #getParameterTypes()
+     * @see #getParameterDefaults()
+     * @see #collectParameters(StringList, StringList, StringList)
+     * @see #getMethodName()
+     * @see #getResultType()
+     */
     public StringList getParameterNames()
     {
     	// this.getVarNames();
@@ -5672,6 +5748,19 @@ public class Root extends Element {
     }
 
     // START KGU 2015-11-29
+    /**
+     * Retrieves the names of the types associated to the declared parameters in 
+     * ase this is a routine diagram, otherwise an empty {@link StringList}.
+     * 
+     * @return the list of parameter type names in order of parameter declaration
+     * (may be empty)
+     * 
+     * @see #getParameterNames()
+     * @see #getParameterDefaults()
+     * @see #collectParameters(StringList, StringList, StringList)
+     * @see #getMethodName()
+     * @see #getResultType()
+     */
     public StringList getParameterTypes()
     {
     	StringList types = new StringList();
@@ -5681,6 +5770,21 @@ public class Root extends Element {
     // END KGU 2015-11-29
     
     // START KGU#371 2019-03-07: Enh. #385 - Allow parameter defaults
+    /**
+     * Retrieves the default value literals for the declared parameters (in case
+     * this is a routine diagram with parameter defaults), otherwise an empty
+     * {@link StringList}
+     * 
+     * @return the list of parameter default literals in order of definition.
+     * <b>Note:</b> the list contains a {@code null} element where the respective
+     * parameter hasn't got a default value!
+     * 
+     * @see #getParameterNames()
+     * @see #getParameterTypes()
+     * @see #collectParameters(StringList, StringList, StringList)
+     * @see #getMethodName()
+     * @see #getResultType()
+     */
     public StringList getParameterDefaults()
     {
     	StringList defaults = new StringList();
@@ -5689,7 +5793,14 @@ public class Root extends Element {
     }
     
     /**
+     * Counts the number of mandatory parameters (i.e. parameters without default
+     * value) where optional parameters are only detected as far they are either
+     * the last parameter or only followed by optional parameters.
+     * 
      * @return the minimum number of arguments this subroutine must obtain to be called.
+     * 
+     * @see #getParameterDefaults()
+     * @see #acceptsArgCount(int)
      */
     public int getMinParameterCount()
     {
@@ -5712,8 +5823,13 @@ public class Root extends Element {
      * Checks whether a call with {@code nArgs} arguments may use this routine diagram. If so,
      * returns the number of default values needed to fill all parameters (0 in case o an exact
      * match), otherwise returns a negative number.
+     * 
      * @param nArgs - the number of given argument values
-     * @return number of available defaults to be used in order to satisfy all parameters or a negative number
+     * @return number of available defaults to be used in order to satisfy all parameters, or a
+     * negative number
+     * 
+     * @see #getMinParameterCount()
+     * @see #getParameterNames()
      */
     public int acceptsArgCount(int nArgs)
     {
@@ -5726,7 +5842,7 @@ public class Root extends Element {
     			nDefaults--;
     		}
     		else {
-    			nDefaults = -1;
+    			nDefaults = -1; // leaves the loop
     		}
     	}
     	return nDefaults;
@@ -5735,12 +5851,15 @@ public class Root extends Element {
     
     /**
      * Extracts the diagram name from the Root text. Contained blanks are replaced with underscores.
+     * 
      * @return the program/subroutine name
+     * 
      * @see #getMethodName(boolean)
      * @see #getQualifiedName()
      * @see #getSignatureString(boolean, boolean)
      * @see #getParameterNames()
      * @see #getParameterTypes()
+     * @see #getParameterDefaults()
      * @see #getResultType()
      * @see #isProgram()
      * @see #isSubroutine()
@@ -5754,14 +5873,17 @@ public class Root extends Element {
     
     /**
      * Extracts the diagram name from the Root text.
+     * 
      * @param _replaceBlanks - specifies whether contained blanks are to be replaced with underscores.
      * @return the program/subroutine name
+     * 
      * @see #getMethodName()
      * @see #getMethodName(String, DiagramType, boolean)
      * @see #getQualifiedName(boolean)
      * @see #getSignatureString(boolean, boolean)
      * @see #getParameterNames()
      * @see #getParameterTypes()
+     * @see #getParameterDefaults()
      * @see #getResultType()
      * @see #isProgram()
      * @see #isSubroutine()
@@ -5776,10 +5898,12 @@ public class Root extends Element {
     /**
      * Extracts the diagram name from the given Root text {@code rootText}, regarding
      * the assumed {@link DiagramType} {@code rootType}.
+     * 
      * @param rootText - the header of a diagram as long (unbroken) text
      * @param rootType - the assumed diagram type (main, subroutine, includable etc.)
      * @param _replaceBlanks - specifies whether contained blanks are to be replaced with underscores.
      * @return the program/subroutine name
+     * 
      * @see #extractMethodParamDecls(String, StringList, StringList, StringList)
      */
     public static String getMethodName(String rootText, DiagramType rootType, boolean _replaceBlanks)
@@ -5860,12 +5984,15 @@ public class Root extends Element {
     /**
      * Extracts the diagram name from the Root text and applies the {@link #namespace} as
      * prefix if specified. Contained blanks are replaced with underscores.
+     * 
      * @return the (possibly qualified) program/subroutine name
+     * 
      * @see #getMethodName()
      * @see #getQualifiedName(boolean)
      * @see #getSignatureString(boolean, boolean)
      * @see #getParameterNames()
      * @see #getParameterTypes()
+     * @see #getParameterDefaults()
      * @see #getResultType()
      * @see #isProgram()
      * @see #isSubroutine()
@@ -5886,6 +6013,7 @@ public class Root extends Element {
      * @see #getSignatureString(boolean, boolean)
      * @see #getParameterNames()
      * @see #getParameterTypes()
+     * @see #getParameterDefaults()
      * @see #getResultType()
      * @see #isProgram()
      * @see #isSubroutine()
@@ -5903,10 +6031,13 @@ public class Root extends Element {
     
     // START KGU#78 2015-11-25: Extracted from analyse() and rewritten
     /**
-     * Returns a string representing a detected result type if this is a subroutine diagram. 
+     * Returns a string representing a detected result type if this is a subroutine diagram.
+     * 
      * @return null or a string possibly representing some data type
+     * 
      * @see #getParameterNames()
      * @see #getParameterTypes()
+     * @see #getParameterDefaults()
      * @see #getMethodName()
      * @see #isSubroutine()
      */
@@ -5963,12 +6094,15 @@ public class Root extends Element {
     /**
      * Extracts parameter names and types from the parenthesis content of the Root text
      * and adds them synchronously to {@code paramNames} and {@code paramTypes} (if not null).
+     * 
      * @param paramNames - {@link StringList} to be expanded by the found parameter names
      * @param paramTypes - {@link StringList} to be expanded by the found parameter types, or null
      * @param paramDefaults - {@link StringList} to be expanded by possible default literals, or null
      * @return {@code true} iff the text contains a parameter list at all
+     * 
      * @see #getParameterNames()
      * @see #getParameterTypes()
+     * @see #getParameterDefaults()
      * @see #getResultType()
      * @see #getMethodName()
      * @see #getSignatureString(boolean, boolean)
@@ -6050,11 +6184,16 @@ public class Root extends Element {
 	 * Extracts the parameter declarations from the given routine declaration text
 	 * {@code rootText} and puts them to the passed {@link StringList}s as fa as not
 	 * being {@code null}.
+	 * 
 	 * @param rootText - the unbroken text of the method declaration
-	 * @param paramNames - list to add the names of the parameters (in order of occurrence), or {@code null}
-	 * @param paramTypes - list to add the types of the parameters (in order of occurrence), or {@code null}
-	 * @param paramDefaults- list to add the literals of the parameter defaults (in oder of occurrence), or {@code null}
+	 * @param paramNames - list to add the names of the parameters (in order of occurrence),
+	 *        or {@code null}
+	 * @param paramTypes - list to add the types of the parameters (in order of occurrence),
+	 *        or {@code null}
+	 * @param paramDefaults - list to add the literals of the parameter defaults (in oder of
+	 *        occurrence where some elements may be {@code null}), or {@code null}
 	 * @return {@code true} iff the text contains a parameter list at all
+	 * 
 	 * @see #getMethodName(String, DiagramType, boolean)
 	 */
 	protected static boolean extractMethodParamDecls(String rootText, StringList paramNames, StringList paramTypes,
@@ -6092,15 +6231,19 @@ public class Root extends Element {
     /**
      * Returns a string of the form &lt;method_name&gt;[(&lt;n_args&gt;)][: &lt;file_path&gt;].
      * The parenthesized argument number (&lt;n_args&gt;) is only included if this is not a program,
-     * the file path appendix is only added if _addPath is true 
+     * the file path appendix is only added if _addPath is true
+     * 
      * @param _addPath - whether or not the file path is to be aded t the signature string
      * @param _qualified - if {@code true} and the {@link #namespace} attribute is set then
      * the qualified name ({@code <namespace>.<name>}) is used in the result.
      * @return the composed string
+     * 
      * @see #getMethodName()
      * @see #getParameterNames()
      * @see #getParameterTypes()
+     * @see #getParameterDefaults()
      * @see #getResultType()
+     * @see #getMinParameterCount()
      */
     public String getSignatureString(boolean _addPath, boolean _qualified) {
     	String presentation = this.getMethodName();
@@ -6137,7 +6280,9 @@ public class Root extends Element {
      * the result will also be "DEMO". If the diagram is a function diagram, however,
      * and the text contains "func(x, name)" or "int func(double x, String name)" or
      * "func(x: REAL; name: STRING): INTEGER" then the result would be "func-2".
+     * 
      * @return a file base name (i.e. without path and extension)
+     * 
      * @see #getSignatureString(boolean, boolean)
      * @see #getMethodName()
      */
@@ -6169,6 +6314,14 @@ public class Root extends Element {
     }
     // END KGU#205 2016-07-19
     
+    /**
+     * Main Analyser method - controls and performs all static analysis for this diagram.
+     * 
+     * @return a vector of detected errors
+     * 
+     * @see #check(int)
+     * @see #check(String)
+     */
     public Vector<DetectedError> analyse()
     {
         structorizerKeywords.clear();
@@ -6181,6 +6334,25 @@ public class Root extends Element {
         for (String keyword: CodeParser.getAllProperties()) {
             structorizerKeywords.add(keyword);
         }
+        // START KGU#968 2021-11-14: Enh. #967 plugin-specific syntax checks
+        if (pluginSyntaxCheckers == null && !pluginChecks.isEmpty()) {
+            pluginSyntaxCheckers = new HashMap<String, GeneratorSyntaxChecker>();
+            for (String checkSpec: pluginChecks.keySet()) {
+                String[] parts = checkSpec.split(":");
+                if (parts.length >= 1) {
+                    try {
+                        Class<?> chkClass = Class.forName(parts[0]);
+                        GeneratorSyntaxChecker checker = 
+                                (GeneratorSyntaxChecker) chkClass.getDeclaredConstructor().newInstance();
+                        pluginSyntaxCheckers.put(checkSpec, checker);
+                    }
+                    catch (Exception ex) {
+                        ex.printStackTrace();
+                    };
+                }
+            }
+        }
+        // END KGU#968 2021-11-14
 
         this.retrieveVarNames();	// also fills this.constants if not already done
         //System.out.println(this.variables);
@@ -6528,7 +6700,14 @@ public class Root extends Element {
 	{
 		// START KGU#906 2021-01-02: Enh. #905
 		//String[] prefKeys = new String[analyserChecks.length];
-		String[] prefKeys = new String[analyserChecks.length + 1];
+		// START KGU#968 2021-11-14: Enh. #967 inclde plugin-specific keys
+		//String[] prefKeys = new String[analyserChecks.length + 1];
+		String[] prefKeys = new String[analyserChecks.length + 1 + pluginChecks.size()];
+		int ix = analyserChecks.length + 1;
+		for (String prefKey: pluginChecks.keySet()) {
+			prefKeys[ix++] = prefKey;
+		}
+		// END KGU#968 2021-11-14
 		// END KGU#906 2021-01-02
 		for (int i = 0; i < analyserChecks.length; i++) {
 			prefKeys[i] = "check" + (i+1);
@@ -6553,9 +6732,15 @@ public class Root extends Element {
                 ini.setProperty("check" + (i+1), (check(i+1) ? "1" : "0"));
             }
             // END KGU#239 2016-08-12
+            // START KGU#968 2021-11-12: Enh. #967 additional check category
+            for (Entry<String, Boolean> entry: pluginChecks.entrySet()) {
+                ini.setProperty(entry.getKey(), (entry.getValue() ? "1" : "0"));
+            }
+            // END KGU#968 2021-11-12
             // START KGU#906 2021-01-02: Enh. #905
             ini.setProperty("drawAnalyserMarks", E_ANALYSER_MARKER ? "1" : "0");
             // END KGU#906 2021-01-02
+            
             ini.save();
         }
         catch (Exception e)

@@ -101,6 +101,7 @@ package lu.fisch.structorizer.gui;
  *      Bob Fisch       2021-02-17      Attempt to solve issue #912 (Opening Structorizer via file doubleclick on OS X)
  *      Kay Gürtzig     2021-02-18      Bugfix #940: Workaround for java version sensitivity of #912 fix via reflection
  *      Kay Gürtzig     2021-06-13      Issue #944: Code adapted for Java 11 (begun)
+ *      Kay Gürtzig     2021-11-14      Issue #967: Ini support for plugin-specific Analyser checks
  *
  ******************************************************************************************************
  *
@@ -131,6 +132,7 @@ import java.lang.reflect.InvocationTargetException;
 //import java.lang.reflect.Method;
 //import java.lang.reflect.Proxy;
 import java.util.LinkedList;
+import java.util.Vector;
 //import java.util.List;
 import java.util.Map.Entry;
 import java.util.logging.Level;
@@ -153,6 +155,7 @@ import lu.fisch.structorizer.archivar.IRoutinePoolListener;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Executor;
+import lu.fisch.structorizer.helpers.GENPlugin;
 import lu.fisch.structorizer.locales.LangFrame;
 import lu.fisch.structorizer.locales.Locales;
 
@@ -756,6 +759,23 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 				// END KGU#456 2017-11-05
 			}
 			// END KGU#2/KGU#78 2016-08-12
+			// START KGU#968 2021-11-12: 2021-11-12: Enh. #967 plugin-specific Analyser checks
+			try (BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream("generators.xml"))) {
+				GENParser genp = new GENParser();
+				Vector<GENPlugin> plugins = genp.parse(buff);
+				for (int i = 0; i < plugins.size(); i++)
+				{
+					GENPlugin plugin = plugins.get(i);
+					if (plugin.syntaxChecks != null) {
+						for (GENPlugin.SyntaxCheck spec: plugin.syntaxChecks) {
+							String key = spec.className + ":" + spec.source.name();
+							String prop = ini.getProperty(key, "0");
+							Root.setCheck(key, prop.equals("1"));
+						}
+					}
+				}
+			} catch (IOException e) {}
+			// END KGU#968 2021-11-12
 			// START KGU#906 2021-01-02: Enh. #905
 			Element.E_ANALYSER_MARKER = ini.getProperty("drawAnalyserMarks", "1").equals("1");
 			// END KGU#906 2021-01-02

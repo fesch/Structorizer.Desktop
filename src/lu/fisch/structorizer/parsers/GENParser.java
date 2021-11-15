@@ -39,6 +39,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2018-03-22      Issue #463: Standard logging mechanism instead of console messages
  *      Simon Sobisch   2018-09-17      Issue #595: Fix NullPointerException for missing/broken schema
  *      Kay Gürtzig     2021-10-29      Issue #1004: default attribute in option specifications supported
+ *      Kay Gürtzig     2021-11-12      Enh. #967: New <syntax> nodes introduced (corresponding to field syntaxChecks)
  *
  ******************************************************************************************************
  *
@@ -114,14 +115,24 @@ public class GENParser extends DefaultHandler {
 		{
 			GENPlugin plugin = new GENPlugin();
 			
-			if(attributes.getIndex("class")!=-1)  {plugin.className=attributes.getValue("class");}
-			if(attributes.getIndex("title")!=-1)  {plugin.title=attributes.getValue("title");}
-			if(attributes.getIndex("icon")!=-1)  {plugin.icon=attributes.getValue("icon");}
+			if(attributes.getIndex("class") != -1) {
+				plugin.className=attributes.getValue("class");
+			}
+			if(attributes.getIndex("title") != -1) {
+				plugin.title=attributes.getValue("title");
+			}
+			if(attributes.getIndex("icon") != -1) {
+				plugin.icon=attributes.getValue("icon");
+			}
 			// START KGU#386 2017-04-28: Enh.
-			if(attributes.getIndex("info")!=-1)  {plugin.info=attributes.getValue("info");}
+			if(attributes.getIndex("info") != -1) {
+				plugin.info=attributes.getValue("info");
+			}
 			// END KGU#386 2017-04-28
 			// START KGU#239 2017-04-23: Enh. #231
-			if(attributes.getIndex("case_matters")!=-1)  {plugin.caseMatters=!attributes.getValue("case_matters").equals("0");}
+			if(attributes.getIndex("case_matters") != -1) {
+				plugin.caseMatters=!attributes.getValue("case_matters").equals("0");
+			}
 			if(attributes.getIndex("reserved_words") != -1) {
 				plugin.reservedWords = attributes.getValue("reserved_words").split(",");
 			}
@@ -173,6 +184,37 @@ public class GENParser extends DefaultHandler {
 			}
 		}
 		// END KGU#416 2017-06-20
+		// START KGU#968 2021-11-12: Enh. #967
+		else if (qualifiedName.equals("syntax")) {
+			// This is supposed to be a syntax check specification for the last plugin
+			if (!plugins.isEmpty()) {
+				GENPlugin plugin = plugins.lastElement();
+				GENPlugin.SyntaxCheck spec = new GENPlugin.SyntaxCheck();
+				if (attributes.getIndex("class") != -1)  {
+					spec.className = attributes.getValue("class");
+				}
+				if (attributes.getIndex("source") != -1) {
+					try {
+						String type = attributes.getValue("source");
+						spec.source = GENPlugin.SyntaxCheck.Source.valueOf(type);
+					}
+					catch (Exception ex) {};
+				}
+				if (attributes.getIndex("title") != -1) {
+					spec.title = attributes.getValue("title");
+				}
+				if (attributes.getIndex("message") != -1) {
+					spec.message = attributes.getValue("message");
+				}
+				if (spec.className != null) {
+					if (plugin.syntaxChecks == null) {
+						plugin.syntaxChecks = new Vector<GENPlugin.SyntaxCheck>();
+					}
+					plugin.syntaxChecks.add(spec);
+				}
+			}
+		}
+		// END KGU#968 2021-11-12
 	}	
 
 	public void endElement(String namespaceUri, String localName, String qualifiedName) throws SAXException 

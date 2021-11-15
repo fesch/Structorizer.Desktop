@@ -1,0 +1,346 @@
+﻿! -----------------------------------------------------------------------
+! Structorizer ARM line grammar
+! -----------------------------------------------------------------------
+!
+! This grammar is a simplified LALR(1) grammar approach for GOLDParser
+! to parse element lines of Nassi-Shneiderman diagrams in Structorizer
+! (http://structorizer.fisch.lu) intended for the check of an ARM-code-
+! specific subset (with some extensions as well, though).
+! To avoid several intersecting grammars for the different kinds of
+! expected Element text content, some Element-type-specific "keywords"
+! will be inserted as line prefix before sending the text to the parser,
+! serving to unambiguously fork the parsing from start (as if there were
+! different start symbols in the grammar).
+! The lines to be parsed are expected already to have been unified with
+! respect to operators such that no verbose operator are expected.
+! As there is no possibility of some dynamic symbol table feedback during
+! parsing, the rules are usually too generous in all conflict-prone cases.
+!
+! -----------------------------------------------------------------------
+! Version history:                                       
+! Version   Date        Author          Description
+! V 0.1     2021-11-10  Kay Gürtzig     Initial approach derived from
+!                                       the StructorizerLine.grm and the
+!                                       ArmGenerator regular expressions.
+! V 0.2     2021-11-10  Kay Gürtzig     Fundamental revision -> LALR
+! -----------------------------------------------------------------------
+
+"Name"    = 'StructorizerArmLine'
+"Version" = '0.1'
+"Author"  = 'Kay Gürtzig'
+"About"   = 'LALR(1) grammar for ARM-specific Structorizer element lines'
+
+! -------------------------------------------------
+! Character Sets
+! -------------------------------------------------
+
+{String Char} = {Printable} - ["]
+{Quote} = ['']
+{IdLetter} = {Letter} + [_]
+{IdAlphaNumeric} = {Alphanumeric} + [_]
+{HexDigit} = {Digit} + [abcdefABCDEF]
+{OctalCharSet} = [01234567]
+{BinaryCharSet} = [01]
+{NoZeroDigit} = [123456789]
+{LongTypeSuffix} =[lL]
+{FloatTypeSuffix} =[dfDF]
+{ExponentPartIndicator} = [eE]
+{Sign} = [-+]
+{CharSign} = [abtnfr"\] + {Quote}
+{CharSign1} = {String Char} - [\]
+{HexEscapeSign} =[uUxX]
+
+! -------------------------------------------------
+! Terminals
+! -------------------------------------------------
+
+Identifier     = {IdLetter}{IdAlphaNumeric}*
+!Register       = ('R'|'r')({Digit}|('1'('0'|'1'|'2'|'3'|'4')))
+StringLiteral  = '"'{String Char}*'"'
+!FloatingPointLiteral   = {Digit}+'.'{Digit}+{FloatTypeSuffix}? | {Digit}+{FloatTypeSuffix} | '.'{Digit}+{FloatTypeSuffix}?
+!FloatingPointLiteralExponent = {Digit}+'.'{Digit}+{ExponentPartIndicator}{Sign}?{Digit}+{FloatTypeSuffix}? | {Digit}+{ExponentPartIndicator}{Sign}?{Digit}+{FloatTypeSuffix}? | '.'{Digit}+{ExponentPartIndicator}{Sign}?{Digit}+{FloatTypeSuffix}?
+BooleanLiteral = 'true' | 'false'
+IndirectCharLiteral = {Quote}{CharSign1}{Quote}
+StandardEscapeCharLiteral = {Quote}'\'{CharSign}{Quote}
+OctalEscapeCharLiteral ={Quote}'\'{OctalCharSet}+{Quote}
+HexEscapeCharLiteral ={Quote}'\'{HexEscapeSign}{HexDigit}+{Quote}
+!NullLiteral = 'null'
+StartWithNoZeroDecimalIntegerLiteral = {NoZeroDigit}{Digit}*
+StartWithZeroDecimalIntegerLiteral = '0'
+HexIntegerLiteral = '0'('x'|'X'){HexDigit}+{LongTypeSuffix}?
+OctalIntegerLiteral = '0'{OctalCharSet}+{LongTypeSuffix}?
+BinaryIntegerLiteral = '0'('b'|'B'){BinaryCharSet}+{LongTypeSuffix}?
+
+! Discriminating generic keywords and artificially inserted prefixes for the types of Element line
+CondPrefix = '§COND§'
+InputKey = '§INPUT§'
+OutputKey = '§OUTPUT§'
+ForKey = '§FOR§'
+ToKey = '§TO§'
+StepKey = '§STEP§'
+ForInKey = '§FOREACH§'
+InKey = '§IN§'
+ReturnKey = '§RETURN§'
+LeaveKey = '§LEAVE§'
+ExitKey = '§EXIT§'
+ThrowKey = '§THROW§'
+CatchPrefix = '§CATCH§'
+CallPrefix = '§CALL§'
+CasePrefix = '§CASE§'
+SelectorPrefix = '§SELECT§'
+
+"Case Sensitive" = 'True'
+"Start Symbol"   = <ElementLine>
+
+! ===================================================================
+! Rules
+! ===================================================================
+
+! -------------------------------------------------------------------
+! Line types
+! -------------------------------------------------------------------
+
+<ElementLine>
+        ::= <Assignment>
+         |  <InputInstruction>
+         |  <OutputInstruction>
+         |  <ArrayInitialisation>
+         |  <ForHeader>
+         |  <ForInHeader>
+         |  <Jump>
+         |  <Call>
+         |  <CatchClause>
+         |  <CaseDiscriminator>
+         |  <CaseSelectors>
+         |  <Condition>
+         !|  <RoutineHeader>    ! Too ambiguous - will be parsed in the traditional way 
+
+! -------------------------------------------------------------------
+! Expressions
+! -------------------------------------------------------------------
+
+<CharacterLiteral> 
+        ::= IndirectCharLiteral
+         |  StandardEscapeCharLiteral
+         |  OctalEscapeCharLiteral
+         |  HexEscapeCharLiteral
+
+<DecimalIntegerLiteral> 
+        ::= StartWithZeroDecimalIntegerLiteral
+         |  StartWithNoZeroDecimalIntegerLiteral
+
+!<FloatPointLiteral> 
+!        ::= FloatingPointLiteral
+!         |  FloatingPointLiteralExponent
+
+<NegativeDecimalLiteral>
+        ::= '-' <DecimalIntegerLiteral>
+         
+<IntegerLiteral> 
+        ::= <DecimalIntegerLiteral>
+         |  HexIntegerLiteral  
+         |  OctalIntegerLiteral
+         |  BinaryIntegerLiteral
+
+<ScalarLiteral> 
+        ::= <IntegerLiteral>
+!         |  <FloatPointLiteral>
+         |  BooleanLiteral
+         |  <CharacterLiteral>
+!         |  StringLiteral
+!         |  NullLiteral
+
+<ScalarLiteralList>
+        ::= <ScalarLiteral>
+         |  <NegativeDecimalLiteral>
+         |  <ScalarLiteralList> ',' <ScalarLiteral>
+         |  <ScalarLiteralList> ',' <NegativeDecimalLiteral>
+
+<VariableNameR>         ! variable name (including register name)
+        ::= Identifier
+
+<RelationalExpression>
+        ::= <VariableNameR>
+         |  '!' <VariableNameR>
+         |  <VariableNameR> <ComparisonOperator> <Operand>
+
+<ConditionalExpression>
+        ::= <RelationalExpression>
+         |  <RelationalExpression> <AndExtension>
+         |  <RelationalExpression> <OrExtension>
+
+<AndExtension>
+        ::= '&&' <RelationalExpression>
+         |  '&&' <RelationalExpression> <AndExtension>
+
+<OrExtension> 
+        ::= '||' <RelationalExpression>
+         |  '||' <RelationalExpression> <OrExtension>         
+
+<Operand>
+        ::= <VariableNameR>
+         |  <ScalarLiteral>
+
+<OperandList>
+        ::= <Operand>
+         |  <OperandList> ',' <Operand>
+
+<RoutineInvocation>
+        ::= Identifier '(' ')'
+         |  Identifier '(' <OperandList> ')'
+         
+<AddressFunction>
+        ::= <AddressKey> '(' <VariableNameR> ')'    ! Register not allowed!
+         
+<AddressKey>
+        ::= 'address'
+         |  'indirizzo'     ! Should be eliminated -> configuration
+
+<MemoryAccess>
+        ::= <MemoryKey> '[' <VariableNameR> <OffsetOpt> ']'
+         
+<MemoryKey>
+        ::= 'memory'
+         |  'memoria'       ! Should be eliminated -> configuration
+         
+<OffsetOpt>
+        ::= '+' <Operand>
+         |
+           
+<ArrayAccess>
+        ::= <VariableNameR> '[' <Operand> ']'
+         
+<BinaryOperationOpt>
+        ::= <BinaryOperator> <Operand>
+         |
+         
+<BinaryOperator>
+        ::= '-'
+         |  '+'
+         |  '*'
+         |  '&'
+         |  '|'
+         |  '&&'
+         |  '||'
+
+<AssignmentOperator> 
+        ::= '<-'
+
+<ComparisonOperator>
+        ::= '=='
+         |  '!='
+         |  '<'
+         |  '>'
+         |  '<='
+         |  '>='
+         
+<ArrayInitializer>
+        ::= '{' '}'
+         |  '{' <ScalarLiteralList> '}'
+
+! -------------------------------------------------------------------
+! Instructions
+! -------------------------------------------------------------------
+
+<Assignment>
+        ::= <VariableNameR> <AssignmentOperator> <RightHandSide>
+         |  <ArrayAssignment>
+         |  <MemoryStore>
+
+<RightHandSide>
+        ::= <ScalarLiteral>
+         |  <NegativeDecimalLiteral>
+         |  StringLiteral
+         |  <VariableNameR> <BinaryOperationOpt>
+         |  <AddressFunction>
+         |  <MemoryAccess>
+         |  <ArrayAccess>
+         |  <ArrayInitializer>
+         
+<InputInstruction>
+        ::= InputKey
+         |  InputKey <VariableNameR>
+         
+<OutputInstruction>
+        ::= OutputKey
+         |  OutputKey <Operand>
+
+<ArrayInitialisation>
+        ::= <BaseType> '[' ']' <VariableNameR> <AssignmentOperator> <ArrayInitializer>
+         
+<BaseType>
+        ::= 'byte'
+         |  'hword'
+         |  'word'
+         |  'quad'
+         |  'octa'
+
+<ArrayAssignment>
+        ::= <ArrayAccess> <AssignmentOperator>  <VariableNameR>
+
+<MemoryStore>
+        ::= <MemoryAccess> <AssignmentOperator> <VariableNameR>
+         
+! -------------------------------------------------------------------
+! Alternatives and loops
+! -------------------------------------------------------------------
+
+<Condition>
+        ::= CondPrefix <ConditionalExpression>
+         
+! -------------------------------------------------------------------
+! FOR loops
+! -------------------------------------------------------------------
+
+<ForHeader>
+        ::= ForKey <VariableNameR> <AssignmentOperator> <Operand> ToKey <Operand> <StepClause>
+         
+<StepClause>
+        ::= StepKey <IntegerLiteral>
+         |  StepKey <NegativeDecimalLiteral>
+         |
+         
+<ForInHeader>
+        ::= ForInKey <VariableNameR> InKey <ValueList>
+         
+<ValueList>
+        ::= <ArrayInitializer>
+         |  <VariableNameR>
+
+! -------------------------------------------------------------------
+! JUMPs
+! -------------------------------------------------------------------
+
+<Jump>  ::= ReturnKey
+         |  ReturnKey <Operand>
+         |  ExitKey
+         |  ExitKey <Operand>
+         |  LeaveKey
+         |  LeaveKey <DecimalIntegerLiteral>
+         |  ThrowKey StringLiteral
+         |  ThrowKey <VariableNameR>
+         
+! -------------------------------------------------------------------
+! CALLs
+! -------------------------------------------------------------------
+
+<Call>  ::= CallPrefix <RoutineInvocation>
+         |  CallPrefix <VariableNameR> <AssignmentOperator> <RoutineInvocation>
+         
+! -------------------------------------------------------------------
+! TRY blocks
+! -------------------------------------------------------------------
+
+<CatchClause>
+        ::= CatchPrefix <VariableNameR>
+         
+! -------------------------------------------------------------------
+! CASE
+! -------------------------------------------------------------------
+
+<CaseDiscriminator>
+        ::= CasePrefix <VariableNameR> <BinaryOperationOpt>
+         
+<CaseSelectors>
+        ::= SelectorPrefix <ScalarLiteralList>    ! Should be a constant expression list
+         
