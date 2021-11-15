@@ -1,7 +1,7 @@
-; Generated with Structorizer 3.32-05 on Mon Nov 15 15:27:11 CET 2021 
+; Generated with Structorizer 3.32-05 on Mon Nov 15 16:13:56 CET 2021 
 ;AREA data, DATA, READWRITE
-V_2	DCD '.',',',';','!','?'
 result	DCD -1,0
+V_2	DCD '.',',',';','!','?'
 V_1	DCD " i "," i\'"
 V_0	DCD 'P','l','e','a','s','e',' ','d','o','n',0x27,'t',' ','r','e','p','e','a','t',' ','y','o','u','r','s','e','l','f','!'
 ;AREA text, CODE, READONLY
@@ -243,16 +243,6 @@ end_7
 		; ERROR: Not implemented yet 
 		; return false 
 
-checkRepetition
-		STMFD SP!, {R0-R12}
-		LDR R2, [SP,#15,LSL #2]
-		LDR R3, [SP,#16,LSL #2]
-		MOV R4, #0
-		; ERROR: Unsupported condition syntax - Alternative skipped! 
-		; if (length(newInput)>4) 
-		; ERROR: Not implemented yet 
-		; return hasOccurred 
-
 conjugateStrings
 		STMFD SP!, {R0-R12}
 		LDR R2, [SP,#15,LSL #2]
@@ -303,18 +293,6 @@ end_10
 		LDMFD SP!, {R0-R12}
 		MOVS PC, LR
 
-findKeyword
-		STMFD SP!, {R0-R12}
-		LDR R2, [SP,#15,LSL #2]
-		LDR R3, [SP,#16,LSL #2]
-		; Contains the index of the keyword and its position in sentence 
-		MOV R4, #0
-		; ERROR: Unsupported condition syntax - While skipped! 
-		; while (result[0]<0)&&(i<length(keyMap)) 
-		STR R5, [SP,#13,#2]
-		LDMFD SP!, {R0-R12}
-		MOVS PC, LR
-
 normalizeInput
 		STMFD SP!, {R0-R12}
 		LDR R2, [SP,#15,LSL #2]
@@ -354,92 +332,6 @@ setupGoodByePhrases
 		; phrases[1] <- {"bye", "Well, let\'s end our talk for now. See you later. Bye."} 
 		; ERROR: Not implemented yet 
 		; return phrases 
-
-setupKeywords
-		STMFD SP!, {R0-R12}
-		; The empty key string (last entry) is the default clause - will always be found 
-		; ERROR: Not implemented yet 
-		; keywords[39] <- KeyMapEntry{"", 29} 
-		; ERROR: Not implemented yet 
-		; keywords[0] <- KeyMapEntry{"can you ", 0} 
-		; ERROR: Not implemented yet 
-		; keywords[1] <- KeyMapEntry{"can i ", 1} 
-		; ERROR: Not implemented yet 
-		; keywords[2] <- KeyMapEntry{"you are ", 2} 
-		; ERROR: Not implemented yet 
-		; keywords[3] <- KeyMapEntry{"you\'re ", 2} 
-		; ERROR: Not implemented yet 
-		; keywords[4] <- KeyMapEntry{"i don't ", 3} 
-		; ERROR: Not implemented yet 
-		; keywords[5] <- KeyMapEntry{"i feel ", 4} 
-		; ERROR: Not implemented yet 
-		; keywords[6] <- KeyMapEntry{"why don\'t you ", 5} 
-		; ERROR: Not implemented yet 
-		; keywords[7] <- KeyMapEntry{"why can\'t i ", 6} 
-		; ERROR: Not implemented yet 
-		; keywords[8] <- KeyMapEntry{"are you ", 7} 
-		; ERROR: Not implemented yet 
-		; keywords[9] <- KeyMapEntry{"i can\'t ", 8} 
-		; ERROR: Not implemented yet 
-		; keywords[10] <- KeyMapEntry{"i am ", 9} 
-		; ERROR: Not implemented yet 
-		; keywords[11] <- KeyMapEntry{"i\'m ", 9} 
-		; ERROR: Not implemented yet 
-		; keywords[12] <- KeyMapEntry{"you ", 10} 
-		; ERROR: Not implemented yet 
-		; keywords[13] <- KeyMapEntry{"i want ", 11} 
-		; ERROR: Not implemented yet 
-		; keywords[14] <- KeyMapEntry{"what ", 12} 
-		; ERROR: Not implemented yet 
-		; keywords[15] <- KeyMapEntry{"how ", 12} 
-		; ERROR: Not implemented yet 
-		; keywords[16] <- KeyMapEntry{"who ", 12} 
-		; ERROR: Not implemented yet 
-		; keywords[17] <- KeyMapEntry{"where ", 12} 
-		; ERROR: Not implemented yet 
-		; keywords[18] <- KeyMapEntry{"when ", 12} 
-		; ERROR: Not implemented yet 
-		; keywords[19] <- KeyMapEntry{"why ", 12} 
-		; ERROR: Not implemented yet 
-		; keywords[20] <- KeyMapEntry{"name ", 13} 
-		; ERROR: Not implemented yet 
-		; keywords[21] <- KeyMapEntry{"cause ", 14} 
-		; ERROR: Not implemented yet 
-		; keywords[22] <- KeyMapEntry{"sorry ", 15} 
-		; ERROR: Not implemented yet 
-		; keywords[23] <- KeyMapEntry{"dream ", 16} 
-		; ERROR: Not implemented yet 
-		; keywords[24] <- KeyMapEntry{"hello ", 17} 
-		; ERROR: Not implemented yet 
-		; keywords[25] <- KeyMapEntry{"hi ", 17} 
-		; ERROR: Not implemented yet 
-		; keywords[26] <- KeyMapEntry{"maybe ", 18} 
-		; ERROR: Not implemented yet 
-		; keywords[27] <- KeyMapEntry{" no", 19} 
-		; ERROR: Not implemented yet 
-		; keywords[28] <- KeyMapEntry{"your ", 20} 
-		; ERROR: Not implemented yet 
-		; keywords[29] <- KeyMapEntry{"always ", 21} 
-		; ERROR: Not implemented yet 
-		; keywords[30] <- KeyMapEntry{"think ", 22} 
-		; ERROR: Not implemented yet 
-		; keywords[31] <- KeyMapEntry{"alike ", 23} 
-		; ERROR: Not implemented yet 
-		; keywords[32] <- KeyMapEntry{"yes ", 24} 
-		; ERROR: Not implemented yet 
-		; keywords[33] <- KeyMapEntry{"friend ", 25} 
-		; ERROR: Not implemented yet 
-		; keywords[34] <- KeyMapEntry{"computer", 26} 
-		; ERROR: Not implemented yet 
-		; keywords[35] <- KeyMapEntry{"bot ", 26} 
-		; ERROR: Not implemented yet 
-		; keywords[36] <- KeyMapEntry{"smartphone", 27} 
-		; ERROR: Not implemented yet 
-		; keywords[37] <- KeyMapEntry{"father ", 28} 
-		; ERROR: Not implemented yet 
-		; keywords[38] <- KeyMapEntry{"mother ", 28} 
-		; ERROR: Not implemented yet 
-		; return keywords 
 
 setupReflexions
 		STMFD SP!, {R0-R12}
@@ -534,3 +426,111 @@ setupReplies
 		STR R2, [SP,#13,#2]
 		LDMFD SP!, {R0-R12}
 		MOVS PC, LR
+
+checkRepetition
+		STMFD SP!, {R0-R12}
+		LDR R2, [SP,#15,LSL #2]
+		LDR R3, [SP,#16,LSL #2]
+		MOV R4, #0
+		; ERROR: Unsupported condition syntax - Alternative skipped! 
+		; if (length(newInput)>4) 
+		; ERROR: Not implemented yet 
+		; return hasOccurred 
+
+findKeyword
+		STMFD SP!, {R0-R12}
+		LDR R2, [SP,#15,LSL #2]
+		LDR R3, [SP,#16,LSL #2]
+		; Contains the index of the keyword and its position in sentence 
+		MOV R4, #0
+		; ERROR: Unsupported condition syntax - While skipped! 
+		; while (result[0]<0)&&(i<length(keyMap)) 
+		STR R5, [SP,#13,#2]
+		LDMFD SP!, {R0-R12}
+		MOVS PC, LR
+
+setupKeywords
+		STMFD SP!, {R0-R12}
+		; The empty key string (last entry) is the default clause - will always be found 
+		; ERROR: Not implemented yet 
+		; keywords[39] <- KeyMapEntry{"", 29} 
+		; ERROR: Not implemented yet 
+		; keywords[0] <- KeyMapEntry{"can you ", 0} 
+		; ERROR: Not implemented yet 
+		; keywords[1] <- KeyMapEntry{"can i ", 1} 
+		; ERROR: Not implemented yet 
+		; keywords[2] <- KeyMapEntry{"you are ", 2} 
+		; ERROR: Not implemented yet 
+		; keywords[3] <- KeyMapEntry{"you\'re ", 2} 
+		; ERROR: Not implemented yet 
+		; keywords[4] <- KeyMapEntry{"i don't ", 3} 
+		; ERROR: Not implemented yet 
+		; keywords[5] <- KeyMapEntry{"i feel ", 4} 
+		; ERROR: Not implemented yet 
+		; keywords[6] <- KeyMapEntry{"why don\'t you ", 5} 
+		; ERROR: Not implemented yet 
+		; keywords[7] <- KeyMapEntry{"why can\'t i ", 6} 
+		; ERROR: Not implemented yet 
+		; keywords[8] <- KeyMapEntry{"are you ", 7} 
+		; ERROR: Not implemented yet 
+		; keywords[9] <- KeyMapEntry{"i can\'t ", 8} 
+		; ERROR: Not implemented yet 
+		; keywords[10] <- KeyMapEntry{"i am ", 9} 
+		; ERROR: Not implemented yet 
+		; keywords[11] <- KeyMapEntry{"i\'m ", 9} 
+		; ERROR: Not implemented yet 
+		; keywords[12] <- KeyMapEntry{"you ", 10} 
+		; ERROR: Not implemented yet 
+		; keywords[13] <- KeyMapEntry{"i want ", 11} 
+		; ERROR: Not implemented yet 
+		; keywords[14] <- KeyMapEntry{"what ", 12} 
+		; ERROR: Not implemented yet 
+		; keywords[15] <- KeyMapEntry{"how ", 12} 
+		; ERROR: Not implemented yet 
+		; keywords[16] <- KeyMapEntry{"who ", 12} 
+		; ERROR: Not implemented yet 
+		; keywords[17] <- KeyMapEntry{"where ", 12} 
+		; ERROR: Not implemented yet 
+		; keywords[18] <- KeyMapEntry{"when ", 12} 
+		; ERROR: Not implemented yet 
+		; keywords[19] <- KeyMapEntry{"why ", 12} 
+		; ERROR: Not implemented yet 
+		; keywords[20] <- KeyMapEntry{"name ", 13} 
+		; ERROR: Not implemented yet 
+		; keywords[21] <- KeyMapEntry{"cause ", 14} 
+		; ERROR: Not implemented yet 
+		; keywords[22] <- KeyMapEntry{"sorry ", 15} 
+		; ERROR: Not implemented yet 
+		; keywords[23] <- KeyMapEntry{"dream ", 16} 
+		; ERROR: Not implemented yet 
+		; keywords[24] <- KeyMapEntry{"hello ", 17} 
+		; ERROR: Not implemented yet 
+		; keywords[25] <- KeyMapEntry{"hi ", 17} 
+		; ERROR: Not implemented yet 
+		; keywords[26] <- KeyMapEntry{"maybe ", 18} 
+		; ERROR: Not implemented yet 
+		; keywords[27] <- KeyMapEntry{" no", 19} 
+		; ERROR: Not implemented yet 
+		; keywords[28] <- KeyMapEntry{"your ", 20} 
+		; ERROR: Not implemented yet 
+		; keywords[29] <- KeyMapEntry{"always ", 21} 
+		; ERROR: Not implemented yet 
+		; keywords[30] <- KeyMapEntry{"think ", 22} 
+		; ERROR: Not implemented yet 
+		; keywords[31] <- KeyMapEntry{"alike ", 23} 
+		; ERROR: Not implemented yet 
+		; keywords[32] <- KeyMapEntry{"yes ", 24} 
+		; ERROR: Not implemented yet 
+		; keywords[33] <- KeyMapEntry{"friend ", 25} 
+		; ERROR: Not implemented yet 
+		; keywords[34] <- KeyMapEntry{"computer", 26} 
+		; ERROR: Not implemented yet 
+		; keywords[35] <- KeyMapEntry{"bot ", 26} 
+		; ERROR: Not implemented yet 
+		; keywords[36] <- KeyMapEntry{"smartphone", 27} 
+		; ERROR: Not implemented yet 
+		; keywords[37] <- KeyMapEntry{"father ", 28} 
+		; ERROR: Not implemented yet 
+		; keywords[38] <- KeyMapEntry{"mother ", 28} 
+		; ERROR: Not implemented yet 
+		; return keywords 
