@@ -242,9 +242,11 @@ public class ArmLineParser implements GeneratorSyntaxChecker
 //		final int SYM_ROUTINEINVOCATION                    = 100;  // <RoutineInvocation>
 //		final int SYM_SCALARLITERAL                        = 101;  // <ScalarLiteral>
 //		final int SYM_SCALARLITERALLIST                    = 102;  // <ScalarLiteralList>
-//		final int SYM_STEPCLAUSE                           = 103;  // <StepClause>
-//		final int SYM_VALUELIST                            = 104;  // <ValueList>
-//		final int SYM_VARIABLENAMER                        = 105;  // <VariableNameR>
+//		final int SYM_SIGNEDOPERAND                        = 103;  // <SignedOperand>
+//		final int SYM_STEPCLAUSE                           = 104;  // <StepClause>
+//		final int SYM_VALUELIST                            = 105;  // <ValueList>
+//		final int SYM_VARIABLENAMELIST                     = 106;  // <VariableNameList>
+//		final int SYM_VARIABLENAMER                        = 107;  // <VariableNameR>
 //	};
 
 	// Symbolic constants naming the table indices of the grammar rules
@@ -282,93 +284,95 @@ public class ArmLineParser implements GeneratorSyntaxChecker
 //		final int PROD_SCALARLITERALLIST_COMMA                                    =  28;  // <ScalarLiteralList> ::= <ScalarLiteralList> ',' <ScalarLiteral>
 //		final int PROD_SCALARLITERALLIST_COMMA2                                   =  29;  // <ScalarLiteralList> ::= <ScalarLiteralList> ',' <NegativeDecimalLiteral>
 //		final int PROD_VARIABLENAMER_IDENTIFIER                                   =  30;  // <VariableNameR> ::= Identifier
-//		final int PROD_RELATIONALEXPRESSION                                       =  31;  // <RelationalExpression> ::= <VariableNameR>
-//		final int PROD_RELATIONALEXPRESSION_EXCLAM                                =  32;  // <RelationalExpression> ::= '!' <VariableNameR>
-//		final int PROD_RELATIONALEXPRESSION2                                      =  33;  // <RelationalExpression> ::= <VariableNameR> <ComparisonOperator> <Operand>
-//		final int PROD_CONDITIONALEXPRESSION                                      =  34;  // <ConditionalExpression> ::= <RelationalExpression>
-//		final int PROD_CONDITIONALEXPRESSION2                                     =  35;  // <ConditionalExpression> ::= <RelationalExpression> <AndExtension>
-//		final int PROD_CONDITIONALEXPRESSION3                                     =  36;  // <ConditionalExpression> ::= <RelationalExpression> <OrExtension>
-//		final int PROD_ANDEXTENSION_AMPAMP                                        =  37;  // <AndExtension> ::= '&&' <RelationalExpression>
-//		final int PROD_ANDEXTENSION_AMPAMP2                                       =  38;  // <AndExtension> ::= '&&' <RelationalExpression> <AndExtension>
-//		final int PROD_OREXTENSION_PIPEPIPE                                       =  39;  // <OrExtension> ::= '||' <RelationalExpression>
-//		final int PROD_OREXTENSION_PIPEPIPE2                                      =  40;  // <OrExtension> ::= '||' <RelationalExpression> <OrExtension>
-//		final int PROD_OPERAND                                                    =  41;  // <Operand> ::= <VariableNameR>
-//		final int PROD_OPERAND2                                                   =  42;  // <Operand> ::= <ScalarLiteral>
-//		final int PROD_OPERANDLIST                                                =  43;  // <OperandList> ::= <Operand>
-//		final int PROD_OPERANDLIST_COMMA                                          =  44;  // <OperandList> ::= <OperandList> ',' <Operand>
-//		final int PROD_ROUTINEINVOCATION_IDENTIFIER_LPAREN_RPAREN                 =  45;  // <RoutineInvocation> ::= Identifier '(' ')'
-//		final int PROD_ROUTINEINVOCATION_IDENTIFIER_LPAREN_RPAREN2                =  46;  // <RoutineInvocation> ::= Identifier '(' <OperandList> ')'
-//		final int PROD_ADDRESSFUNCTION_LPAREN_RPAREN                              =  47;  // <AddressFunction> ::= <AddressKey> '(' <VariableNameR> ')'
-//		final int PROD_ADDRESSKEY_ADDRESS                                         =  48;  // <AddressKey> ::= address
-//		final int PROD_ADDRESSKEY_INDIRIZZO                                       =  49;  // <AddressKey> ::= indirizzo
-//		final int PROD_MEMORYACCESS_LBRACKET_RBRACKET                             =  50;  // <MemoryAccess> ::= <MemoryKey> '[' <VariableNameR> <OffsetOpt> ']'
-//		final int PROD_MEMORYKEY_MEMORY                                           =  51;  // <MemoryKey> ::= memory
-//		final int PROD_MEMORYKEY_MEMORIA                                          =  52;  // <MemoryKey> ::= memoria
-//		final int PROD_OFFSETOPT_PLUS                                             =  53;  // <OffsetOpt> ::= '+' <Operand>
-//		final int PROD_OFFSETOPT                                                  =  54;  // <OffsetOpt> ::= 
-//		final int PROD_ARRAYACCESS_LBRACKET_RBRACKET                              =  55;  // <ArrayAccess> ::= <VariableNameR> '[' <Operand> ']'
-//		final int PROD_BINARYOPERATIONOPT                                         =  56;  // <BinaryOperationOpt> ::= <BinaryOperator> <Operand>
-//		final int PROD_BINARYOPERATIONOPT2                                        =  57;  // <BinaryOperationOpt> ::= 
-//		final int PROD_BINARYOPERATOR_MINUS                                       =  58;  // <BinaryOperator> ::= '-'
-//		final int PROD_BINARYOPERATOR_PLUS                                        =  59;  // <BinaryOperator> ::= '+'
-//		final int PROD_BINARYOPERATOR_TIMES                                       =  60;  // <BinaryOperator> ::= '*'
-//		final int PROD_BINARYOPERATOR_AMP                                         =  61;  // <BinaryOperator> ::= '&'
-//		final int PROD_BINARYOPERATOR_PIPE                                        =  62;  // <BinaryOperator> ::= '|'
-//		final int PROD_BINARYOPERATOR_AMPAMP                                      =  63;  // <BinaryOperator> ::= '&&'
-//		final int PROD_BINARYOPERATOR_PIPEPIPE                                    =  64;  // <BinaryOperator> ::= '||'
-//		final int PROD_ASSIGNMENTOPERATOR_LTMINUS                                 =  65;  // <AssignmentOperator> ::= '<-'
-//		final int PROD_COMPARISONOPERATOR_EQEQ                                    =  66;  // <ComparisonOperator> ::= '=='
-//		final int PROD_COMPARISONOPERATOR_EXCLAMEQ                                =  67;  // <ComparisonOperator> ::= '!='
-//		final int PROD_COMPARISONOPERATOR_LT                                      =  68;  // <ComparisonOperator> ::= '<'
-//		final int PROD_COMPARISONOPERATOR_GT                                      =  69;  // <ComparisonOperator> ::= '>'
-//		final int PROD_COMPARISONOPERATOR_LTEQ                                    =  70;  // <ComparisonOperator> ::= '<='
-//		final int PROD_COMPARISONOPERATOR_GTEQ                                    =  71;  // <ComparisonOperator> ::= '>='
-//		final int PROD_ARRAYINITIALIZER_LBRACE_RBRACE                             =  72;  // <ArrayInitializer> ::= '{' '}'
-//		final int PROD_ARRAYINITIALIZER_LBRACE_RBRACE2                            =  73;  // <ArrayInitializer> ::= '{' <ScalarLiteralList> '}'
-//		final int PROD_ASSIGNMENT                                                 =  74;  // <Assignment> ::= <VariableNameR> <AssignmentOperator> <RightHandSide>
-//		final int PROD_ASSIGNMENT2                                                =  75;  // <Assignment> ::= <ArrayAssignment>
-//		final int PROD_ASSIGNMENT3                                                =  76;  // <Assignment> ::= <MemoryStore>
-//		final int PROD_RIGHTHANDSIDE                                              =  77;  // <RightHandSide> ::= <ScalarLiteral>
-//		final int PROD_RIGHTHANDSIDE2                                             =  78;  // <RightHandSide> ::= <NegativeDecimalLiteral>
-//		final int PROD_RIGHTHANDSIDE_STRINGLITERAL                                =  79;  // <RightHandSide> ::= StringLiteral
-//		final int PROD_RIGHTHANDSIDE3                                             =  80;  // <RightHandSide> ::= <VariableNameR> <BinaryOperationOpt>
-//		final int PROD_RIGHTHANDSIDE4                                             =  81;  // <RightHandSide> ::= <AddressFunction>
-//		final int PROD_RIGHTHANDSIDE5                                             =  82;  // <RightHandSide> ::= <MemoryAccess>
-//		final int PROD_RIGHTHANDSIDE6                                             =  83;  // <RightHandSide> ::= <ArrayAccess>
-//		final int PROD_RIGHTHANDSIDE7                                             =  84;  // <RightHandSide> ::= <ArrayInitializer>
-//		final int PROD_INPUTINSTRUCTION_INPUTKEY                                  =  85;  // <InputInstruction> ::= InputKey
-//		final int PROD_INPUTINSTRUCTION_INPUTKEY2                                 =  86;  // <InputInstruction> ::= InputKey <VariableNameR>
-//		final int PROD_OUTPUTINSTRUCTION_OUTPUTKEY                                =  87;  // <OutputInstruction> ::= OutputKey
-//		final int PROD_OUTPUTINSTRUCTION_OUTPUTKEY2                               =  88;  // <OutputInstruction> ::= OutputKey <VariableNameR>
-//		final int PROD_ARRAYINITIALISATION_LBRACKET_RBRACKET                      =  89;  // <ArrayInitialisation> ::= <BaseType> '[' ']' <VariableNameR> <AssignmentOperator> <ArrayInitializer>
-//		final int PROD_BASETYPE_BYTE                                              =  90;  // <BaseType> ::= byte
-//		final int PROD_BASETYPE_HWORD                                             =  91;  // <BaseType> ::= hword
-//		final int PROD_BASETYPE_WORD                                              =  92;  // <BaseType> ::= word
-//		final int PROD_BASETYPE_QUAD                                              =  93;  // <BaseType> ::= quad
-//		final int PROD_BASETYPE_OCTA                                              =  94;  // <BaseType> ::= octa
-//		final int PROD_ARRAYASSIGNMENT                                            =  95;  // <ArrayAssignment> ::= <ArrayAccess> <AssignmentOperator> <VariableNameR>
-//		final int PROD_MEMORYSTORE                                                =  96;  // <MemoryStore> ::= <MemoryAccess> <AssignmentOperator> <VariableNameR>
-//		final int PROD_CONDITION_CONDPREFIX                                       =  97;  // <Condition> ::= CondPrefix <ConditionalExpression>
-//		final int PROD_FORHEADER_FORKEY_TOKEY                                     =  98;  // <ForHeader> ::= ForKey <VariableNameR> <AssignmentOperator> <Operand> ToKey <Operand> <StepClause>
-//		final int PROD_STEPCLAUSE_STEPKEY                                         =  99;  // <StepClause> ::= StepKey <IntegerLiteral>
-//		final int PROD_STEPCLAUSE_STEPKEY2                                        = 100;  // <StepClause> ::= StepKey <NegativeDecimalLiteral>
-//		final int PROD_STEPCLAUSE                                                 = 101;  // <StepClause> ::= 
-//		final int PROD_FORINHEADER_FORINKEY_INKEY                                 = 102;  // <ForInHeader> ::= ForInKey <VariableNameR> InKey <ValueList>
-//		final int PROD_VALUELIST                                                  = 103;  // <ValueList> ::= <ArrayInitializer>
-//		final int PROD_VALUELIST2                                                 = 104;  // <ValueList> ::= <VariableNameR>
-//		final int PROD_JUMP_RETURNKEY                                             = 105;  // <Jump> ::= ReturnKey
-//		final int PROD_JUMP_RETURNKEY2                                            = 106;  // <Jump> ::= ReturnKey <Operand>
-//		final int PROD_JUMP_EXITKEY                                               = 107;  // <Jump> ::= ExitKey
-//		final int PROD_JUMP_EXITKEY2                                              = 108;  // <Jump> ::= ExitKey <Operand>
-//		final int PROD_JUMP_LEAVEKEY                                              = 109;  // <Jump> ::= LeaveKey
-//		final int PROD_JUMP_LEAVEKEY2                                             = 110;  // <Jump> ::= LeaveKey <DecimalIntegerLiteral>
-//		final int PROD_JUMP_THROWKEY_STRINGLITERAL                                = 111;  // <Jump> ::= ThrowKey StringLiteral
-//		final int PROD_JUMP_THROWKEY                                              = 112;  // <Jump> ::= ThrowKey <VariableNameR>
-//		final int PROD_CALL_CALLPREFIX                                            = 113;  // <Call> ::= CallPrefix <RoutineInvocation>
-//		final int PROD_CALL_CALLPREFIX2                                           = 114;  // <Call> ::= CallPrefix <VariableNameR> <AssignmentOperator> <RoutineInvocation>
-//		final int PROD_CATCHCLAUSE_CATCHPREFIX                                    = 115;  // <CatchClause> ::= CatchPrefix <VariableNameR>
-//		final int PROD_CASEDISCRIMINATOR_CASEPREFIX                               = 116;  // <CaseDiscriminator> ::= CasePrefix <VariableNameR> <BinaryOperationOpt>
-//		final int PROD_CASESELECTORS_SELECTORPREFIX                               = 117;  // <CaseSelectors> ::= SelectorPrefix <ScalarLiteralList>
+//		final int PROD_VARIABLENAMELIST                                           =  31;  // <VariableNameList> ::= <VariableNameR>
+//		final int PROD_VARIABLENAMELIST_COMMA                                     =  32;  // <VariableNameList> ::= <VariableNameList> ',' <VariableNameR>
+//		final int PROD_RELATIONALEXPRESSION                                       =  33;  // <RelationalExpression> ::= <VariableNameR>
+//		final int PROD_RELATIONALEXPRESSION_EXCLAM                                =  34;  // <RelationalExpression> ::= '!' <VariableNameR>
+//		final int PROD_RELATIONALEXPRESSION2                                      =  35;  // <RelationalExpression> ::= <VariableNameR> <ComparisonOperator> <Operand>
+//		final int PROD_CONDITIONALEXPRESSION                                      =  36;  // <ConditionalExpression> ::= <RelationalExpression>
+//		final int PROD_CONDITIONALEXPRESSION2                                     =  37;  // <ConditionalExpression> ::= <RelationalExpression> <AndExtension>
+//		final int PROD_CONDITIONALEXPRESSION3                                     =  38;  // <ConditionalExpression> ::= <RelationalExpression> <OrExtension>
+//		final int PROD_ANDEXTENSION_AMPAMP                                        =  39;  // <AndExtension> ::= '&&' <RelationalExpression>
+//		final int PROD_ANDEXTENSION_AMPAMP2                                       =  40;  // <AndExtension> ::= '&&' <RelationalExpression> <AndExtension>
+//		final int PROD_OREXTENSION_PIPEPIPE                                       =  41;  // <OrExtension> ::= '||' <RelationalExpression>
+//		final int PROD_OREXTENSION_PIPEPIPE2                                      =  42;  // <OrExtension> ::= '||' <RelationalExpression> <OrExtension>
+//		final int PROD_OPERAND                                                    =  43;  // <Operand> ::= <VariableNameR>
+//		final int PROD_OPERAND2                                                   =  44;  // <Operand> ::= <ScalarLiteral>
+//		final int PROD_SIGNEDOPERAND                                              =  45;  // <SignedOperand> ::= <Operand>
+//		final int PROD_SIGNEDOPERAND2                                             =  46;  // <SignedOperand> ::= <NegativeDecimalLiteral>
+//		final int PROD_OPERANDLIST                                                =  47;  // <OperandList> ::= <SignedOperand>
+//		final int PROD_OPERANDLIST_COMMA                                          =  48;  // <OperandList> ::= <OperandList> ',' <SignedOperand>
+//		final int PROD_ROUTINEINVOCATION_IDENTIFIER_LPAREN_RPAREN                 =  49;  // <RoutineInvocation> ::= Identifier '(' ')'
+//		final int PROD_ROUTINEINVOCATION_IDENTIFIER_LPAREN_RPAREN2                =  50;  // <RoutineInvocation> ::= Identifier '(' <OperandList> ')'
+//		final int PROD_ADDRESSFUNCTION_LPAREN_RPAREN                              =  51;  // <AddressFunction> ::= <AddressKey> '(' <VariableNameR> ')'
+//		final int PROD_ADDRESSKEY_ADDRESS                                         =  52;  // <AddressKey> ::= address
+//		final int PROD_ADDRESSKEY_INDIRIZZO                                       =  53;  // <AddressKey> ::= indirizzo
+//		final int PROD_MEMORYACCESS_LBRACKET_RBRACKET                             =  54;  // <MemoryAccess> ::= <MemoryKey> '[' <VariableNameR> <OffsetOpt> ']'
+//		final int PROD_MEMORYKEY_MEMORY                                           =  55;  // <MemoryKey> ::= memory
+//		final int PROD_MEMORYKEY_MEMORIA                                          =  56;  // <MemoryKey> ::= memoria
+//		final int PROD_OFFSETOPT_PLUS                                             =  57;  // <OffsetOpt> ::= '+' <Operand>
+//		final int PROD_OFFSETOPT                                                  =  58;  // <OffsetOpt> ::= 
+//		final int PROD_ARRAYACCESS_LBRACKET_RBRACKET                              =  59;  // <ArrayAccess> ::= <VariableNameR> '[' <Operand> ']'
+//		final int PROD_BINARYOPERATIONOPT                                         =  60;  // <BinaryOperationOpt> ::= <BinaryOperator> <Operand>
+//		final int PROD_BINARYOPERATIONOPT2                                        =  61;  // <BinaryOperationOpt> ::= 
+//		final int PROD_BINARYOPERATOR_MINUS                                       =  62;  // <BinaryOperator> ::= '-'
+//		final int PROD_BINARYOPERATOR_PLUS                                        =  63;  // <BinaryOperator> ::= '+'
+//		final int PROD_BINARYOPERATOR_TIMES                                       =  64;  // <BinaryOperator> ::= '*'
+//		final int PROD_BINARYOPERATOR_AMP                                         =  65;  // <BinaryOperator> ::= '&'
+//		final int PROD_BINARYOPERATOR_PIPE                                        =  66;  // <BinaryOperator> ::= '|'
+//		final int PROD_BINARYOPERATOR_AMPAMP                                      =  67;  // <BinaryOperator> ::= '&&'
+//		final int PROD_BINARYOPERATOR_PIPEPIPE                                    =  68;  // <BinaryOperator> ::= '||'
+//		final int PROD_ASSIGNMENTOPERATOR_LTMINUS                                 =  69;  // <AssignmentOperator> ::= '<-'
+//		final int PROD_COMPARISONOPERATOR_EQEQ                                    =  70;  // <ComparisonOperator> ::= '=='
+//		final int PROD_COMPARISONOPERATOR_EXCLAMEQ                                =  71;  // <ComparisonOperator> ::= '!='
+//		final int PROD_COMPARISONOPERATOR_LT                                      =  72;  // <ComparisonOperator> ::= '<'
+//		final int PROD_COMPARISONOPERATOR_GT                                      =  73;  // <ComparisonOperator> ::= '>'
+//		final int PROD_COMPARISONOPERATOR_LTEQ                                    =  74;  // <ComparisonOperator> ::= '<='
+//		final int PROD_COMPARISONOPERATOR_GTEQ                                    =  75;  // <ComparisonOperator> ::= '>='
+//		final int PROD_ARRAYINITIALIZER_LBRACE_RBRACE                             =  76;  // <ArrayInitializer> ::= '{' '}'
+//		final int PROD_ARRAYINITIALIZER_LBRACE_RBRACE2                            =  77;  // <ArrayInitializer> ::= '{' <ScalarLiteralList> '}'
+//		final int PROD_ASSIGNMENT                                                 =  78;  // <Assignment> ::= <VariableNameR> <AssignmentOperator> <RightHandSide>
+//		final int PROD_ASSIGNMENT2                                                =  79;  // <Assignment> ::= <ArrayAssignment>
+//		final int PROD_ASSIGNMENT3                                                =  80;  // <Assignment> ::= <MemoryStore>
+//		final int PROD_RIGHTHANDSIDE                                              =  81;  // <RightHandSide> ::= <ScalarLiteral>
+//		final int PROD_RIGHTHANDSIDE2                                             =  82;  // <RightHandSide> ::= <NegativeDecimalLiteral>
+//		final int PROD_RIGHTHANDSIDE_STRINGLITERAL                                =  83;  // <RightHandSide> ::= StringLiteral
+//		final int PROD_RIGHTHANDSIDE3                                             =  84;  // <RightHandSide> ::= <VariableNameR> <BinaryOperationOpt>
+//		final int PROD_RIGHTHANDSIDE4                                             =  85;  // <RightHandSide> ::= <AddressFunction>
+//		final int PROD_RIGHTHANDSIDE5                                             =  86;  // <RightHandSide> ::= <MemoryAccess>
+//		final int PROD_RIGHTHANDSIDE6                                             =  87;  // <RightHandSide> ::= <ArrayAccess>
+//		final int PROD_RIGHTHANDSIDE7                                             =  88;  // <RightHandSide> ::= <ArrayInitializer>
+//		final int PROD_INPUTINSTRUCTION_INPUTKEY                                  =  89;  // <InputInstruction> ::= InputKey <VariableNameList>
+//		final int PROD_OUTPUTINSTRUCTION_OUTPUTKEY                                =  90;  // <OutputInstruction> ::= OutputKey <OperandList>
+//		final int PROD_ARRAYINITIALISATION_LBRACKET_RBRACKET                      =  91;  // <ArrayInitialisation> ::= <BaseType> '[' ']' <VariableNameR> <AssignmentOperator> <ArrayInitializer>
+//		final int PROD_BASETYPE_BYTE                                              =  92;  // <BaseType> ::= byte
+//		final int PROD_BASETYPE_HWORD                                             =  93;  // <BaseType> ::= hword
+//		final int PROD_BASETYPE_WORD                                              =  94;  // <BaseType> ::= word
+//		final int PROD_BASETYPE_QUAD                                              =  95;  // <BaseType> ::= quad
+//		final int PROD_BASETYPE_OCTA                                              =  96;  // <BaseType> ::= octa
+//		final int PROD_ARRAYASSIGNMENT                                            =  97;  // <ArrayAssignment> ::= <ArrayAccess> <AssignmentOperator> <VariableNameR>
+//		final int PROD_MEMORYSTORE                                                =  98;  // <MemoryStore> ::= <MemoryAccess> <AssignmentOperator> <VariableNameR>
+//		final int PROD_CONDITION_CONDPREFIX                                       =  99;  // <Condition> ::= CondPrefix <ConditionalExpression>
+//		final int PROD_FORHEADER_FORKEY_TOKEY                                     = 100;  // <ForHeader> ::= ForKey <VariableNameR> <AssignmentOperator> <Operand> ToKey <Operand> <StepClause>
+//		final int PROD_STEPCLAUSE_STEPKEY                                         = 101;  // <StepClause> ::= StepKey <IntegerLiteral>
+//		final int PROD_STEPCLAUSE_STEPKEY2                                        = 102;  // <StepClause> ::= StepKey <NegativeDecimalLiteral>
+//		final int PROD_STEPCLAUSE                                                 = 103;  // <StepClause> ::= 
+//		final int PROD_FORINHEADER_FORINKEY_INKEY                                 = 104;  // <ForInHeader> ::= ForInKey <VariableNameR> InKey <ValueList>
+//		final int PROD_VALUELIST                                                  = 105;  // <ValueList> ::= <ArrayInitializer>
+//		final int PROD_VALUELIST2                                                 = 106;  // <ValueList> ::= <VariableNameR>
+//		final int PROD_JUMP_RETURNKEY                                             = 107;  // <Jump> ::= ReturnKey
+//		final int PROD_JUMP_RETURNKEY2                                            = 108;  // <Jump> ::= ReturnKey <Operand>
+//		final int PROD_JUMP_EXITKEY                                               = 109;  // <Jump> ::= ExitKey
+//		final int PROD_JUMP_EXITKEY2                                              = 110;  // <Jump> ::= ExitKey <Operand>
+//		final int PROD_JUMP_LEAVEKEY                                              = 111;  // <Jump> ::= LeaveKey
+//		final int PROD_JUMP_LEAVEKEY2                                             = 112;  // <Jump> ::= LeaveKey <DecimalIntegerLiteral>
+//		final int PROD_JUMP_THROWKEY_STRINGLITERAL                                = 113;  // <Jump> ::= ThrowKey StringLiteral
+//		final int PROD_JUMP_THROWKEY                                              = 114;  // <Jump> ::= ThrowKey <VariableNameR>
+//		final int PROD_CALL_CALLPREFIX                                            = 115;  // <Call> ::= CallPrefix <RoutineInvocation>
+//		final int PROD_CALL_CALLPREFIX2                                           = 116;  // <Call> ::= CallPrefix <VariableNameR> <AssignmentOperator> <RoutineInvocation>
+//		final int PROD_CATCHCLAUSE_CATCHPREFIX                                    = 117;  // <CatchClause> ::= CatchPrefix <VariableNameR>
+//		final int PROD_CASEDISCRIMINATOR_CASEPREFIX                               = 118;  // <CaseDiscriminator> ::= CasePrefix <VariableNameR> <BinaryOperationOpt>
+//		final int PROD_CASESELECTORS_SELECTORPREFIX                               = 119;  // <CaseSelectors> ::= SelectorPrefix <ScalarLiteralList>
 //	};
 
 	//----------------------------- Preprocessor -----------------------------

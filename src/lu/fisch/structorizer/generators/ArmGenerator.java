@@ -441,7 +441,7 @@ public class ArmGenerator extends Generator {
                 + String.format("( *((%s|%s) *,?)? *%s( *, *%s)*|$)",
                         stringLiteral2Pattern, stringLiteral1Pattern, variablePattern, variablePattern));
         outputPattern = Pattern.compile(getKeywordPattern(outputKeyword)
-                + String.format("( *%s( *, *%s)*|$)", variablePattern, variablePattern));
+                + String.format("( *%s( *, *%s)*|$)", registerVariableNumberHex, registerVariableNumberHex));
         // END KGU#968 2021-11-14
         alwaysReturns = mapJumps(_root.children);
         this.varNames = _root.retrieveVarNames().copy();
@@ -1461,16 +1461,16 @@ public class ArmGenerator extends Generator {
                 tokens.removeAll(",");
                 if (!tokens.isEmpty()) {
                     // Use the last register for the input address as it is overwritten last
-                    String registerIO = tokens.get(tokens.count()-1);
-                    addCode(String.format("LDR %s, =0xFF200050", registerIO), getIndent(), isDisabled);
+                    String addrRegister = tokens.get(tokens.count()-1);
+                    addCode(String.format("LDR %s, =0xFF200050", addrRegister), getIndent(), isDisabled);
                     for (int i = 0; i < tokens.count(); i++) {
                         String register = tokens.get(i);
                         // START KGU#968 2021-04-24: We must not add two lines via a single call (for correct line counting)
                         //addCode(String.format("LDR %s, =0xFF200050\n%sLDR %s, [%s]", register, getIndent(), register, register), getIndent(), isDisabled);
-                        addCode(String.format("LDR %s, [%s]", register, registerIO), getIndent(), isDisabled);
+                        addCode(String.format("LDR %s, [%s]", register, addrRegister), getIndent(), isDisabled);
                         // END KGU#968 2021-04-24
                     }
-                    }
+                }
                 // END KGU#968 2021-04-25/2021-11-14
             } else {
                 appendComment("ERROR: INPUT operation only supported with GNU code\n" + line, getIndent());
@@ -1497,14 +1497,26 @@ public class ArmGenerator extends Generator {
                     addCode(String.format("LDR %s, =0xFF201000", addrRegister), getIndent(), isDisabled);
                     for (int i = 0; i < exprs.count() - 1; i++) {
                         String expr = exprs.get(i);
-                        String register = getAvailableRegister();
+                        // START KGU#968 2021-11-15: Issue #967 Don't reserve a register without need
+                        //String register = getAvailableRegister();
+                        String register = "";
+                        // END KGU#968 2021-11-15
                         if (expr.matches(variablePattern)) {
                             register = variablesToRegisters(expr);
                         }
                         else {
-                            generateInstructionLine(String.format("%s <- %s", register, expr), isDisabled, elem);
+                            // START KGU#968 2021-11-15: Issue #967 Don't reserve a register without need
+                            //generateInstructionLine(String.format("%s <- %s", register, expr), isDisabled, elem);
+                            register = getAvailableRegister();
+                            // END KGU#968 2021-11-15
                             if (!register.isEmpty()) {
+                                // START KGU#968 2021-11-15: Issue #967 Don't reserve a register without need
+                                generateInstructionLine(String.format("%s <- %s", register, expr), isDisabled, elem);
+                                // END KGU#968 2021-11-15
                                 mVariables.put(register, "");
+                            }
+                            else {
+                                appendComment("ERROR: No available register for output of " + expr, getIndent());
                             }
                         }
                         addCode(String.format("STR %s, [%s]", register, addrRegister), getIndent(), isDisabled);

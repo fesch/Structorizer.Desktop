@@ -161,6 +161,10 @@ SelectorPrefix = '§SELECT§'
 
 <VariableNameR>         ! variable name (including register name)
         ::= Identifier
+         
+<VariableNameList>
+        ::= <VariableNameR>
+         |  <VariableNameList> ',' <VariableNameR>
 
 <RelationalExpression>
         ::= <VariableNameR>
@@ -183,10 +187,14 @@ SelectorPrefix = '§SELECT§'
 <Operand>
         ::= <VariableNameR>
          |  <ScalarLiteral>
+         
+<SignedOperand>
+        ::= <Operand>
+         |  <NegativeDecimalLiteral>
 
 <OperandList>
-        ::= <Operand>
-         |  <OperandList> ',' <Operand>
+        ::= <SignedOperand>
+         |  <OperandList> ',' <SignedOperand>
 
 <RoutineInvocation>
         ::= Identifier '(' ')'
@@ -261,12 +269,10 @@ SelectorPrefix = '§SELECT§'
          |  <ArrayInitializer>
          
 <InputInstruction>
-        ::= InputKey
-         |  InputKey <VariableNameR>
+        ::= InputKey <VariableNameList>
          
 <OutputInstruction>
-        ::= OutputKey
-         |  OutputKey <VariableNameR>
+        ::= OutputKey <OperandList>
 
 <ArrayInitialisation>
         ::= <BaseType> '[' ']' <VariableNameR> <AssignmentOperator> <ArrayInitializer>
