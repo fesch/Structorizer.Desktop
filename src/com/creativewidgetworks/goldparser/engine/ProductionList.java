@@ -30,5 +30,5 @@ public class ProductionList extends ArrayList<Production> {
         for (int i = 0; i < size; i++) {
             add(null);
         }
-    }    
+    }
 }

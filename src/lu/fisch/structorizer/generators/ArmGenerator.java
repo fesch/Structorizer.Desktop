@@ -17,7 +17,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-// VERSION 2.1
+// VERSION 2.5
 
 package lu.fisch.structorizer.generators;
 
@@ -63,6 +63,9 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2021-11-01/02   Array initialisation syntax modified: Now a bracket pair must follow to
  *                                      the type (on occasion of bugfix #1013);
  *                                      bugfix #1015: NullPointerException on exporting to a file (codeMap reference)
+ *      Kay Gürtzig     2021-11-09/10   Bugfix #1017: Several flaws in processing assignments and arithmetic
+ *                                      expressions; bugfix #1005: flaws in FOREACH loops and array access mended.
+ *      Kay Gürtzig     2021-11-14/15   input instructions now cope with several variables, patterns sharpened
  *
  ******************************************************************************************************
  *
@@ -90,6 +93,7 @@ import java.util.regex.Pattern;
  * @author Alessandro Simonetta,
  * @author Giulio Palumbo
  * @author Maurizio Fiusco
+ * @author Kay Gürtzig
  */
 public class ArmGenerator extends Generator {
 
@@ -106,14 +110,18 @@ public class ArmGenerator extends Generator {
     private static final String numberPattern = "-?[0-9]+";
     // START KGU 2021-10-31: Redundancy / ambiguity removed
     //private static final String hexNumberPattern = "(0|0x|0x([0-9]|[a-fA-F])+)";
-    private static final String hexNumberPattern = "(0x([0-9]|[a-fA-F])+)";
+    private static final String hexNumberPattern = "(0x[0-9a-fA-F]+)";
+    private static final String binNumberPattern = "(0b[01]+)";
     // END KGU 2021-10-31
     private static final String assignmentOperators = "(<-|:=)";
     private static final String relationOperators = "(==|!=|<|>|<=|>=|=)";
     private static final String supportedOperationsPattern = "(-|\\+|\\*|and|or|&|\\||&&|\\|\\|)";
-    private static final String registerVariableNumberHex = String.format("(%s|%s|%s|%s)", registerPattern, variablePattern, numberPattern, hexNumberPattern);
+    private static final String registerVariableNumberHex = String.format("(%s|%s|%s)", variablePattern, numberPattern, hexNumberPattern);
     private static final String negativeNumberPattern = "-[0-9]+";
     private static final String escapeCharacterPattern = "\\\\['\"0bfnt\\\\]";
+    private static final String characterLiteralPattern = String.format("'([^'\\\\]|%s)'", escapeCharacterPattern);
+    private static final String stringLiteral1Pattern = String.format("'([^'\\\\]|%s)+?'", escapeCharacterPattern);
+    private static final String stringLiteral2Pattern = String.format("\"([^\"\\\\]|%s)+?\"", escapeCharacterPattern);
 
     private static final Pattern assignment = Pattern.compile(String.format("%s *%s *%s", variablePattern, assignmentOperators, registerVariableNumberHex));
     private static final Pattern expression = Pattern.compile(String.format("%s *%s *%s *%s *%s", variablePattern, assignmentOperators, registerVariableNumberHex, supportedOperationsPattern, registerVariableNumberHex));
@@ -132,8 +140,8 @@ public class ArmGenerator extends Generator {
     // START KGU#1002 2021-10-30: Issue #1007 We may allow more than just identifier characters
     //private static final Pattern stringInitialization = Pattern.compile(String.format("(%s|%s) *%s *\"[\\w]{2,}\"", registerPattern, variablePattern, assignmentOperators));
     //private static final Pattern charInitialization = Pattern.compile(String.format("(%s|%s) *%s *\"[\\w]\"", registerPattern, variablePattern, assignmentOperators));
-    private static final Pattern stringInitialization = Pattern.compile(String.format("%s *%s *\"([^\"\\\\]|%s)+?\"", variablePattern, assignmentOperators, escapeCharacterPattern));
-    private static final Pattern charInitialization = Pattern.compile(String.format("%s *%s *('([^\'\\\\]|%s)')", variablePattern, assignmentOperators, escapeCharacterPattern));
+    private static final Pattern stringInitialization = Pattern.compile(String.format("%s *%s *%s", variablePattern, assignmentOperators, stringLiteral2Pattern));
+    private static final Pattern charInitialization = Pattern.compile(String.format("%s *%s *%s", variablePattern, assignmentOperators, characterLiteralPattern));
     // END KGU#1002 2021-10-30
     // END KGU#968 2021-10-11
     private static final Pattern booleanAssignmentPattern = Pattern.compile(String.format("%s *%s *(true|false)", variablePattern, assignmentOperators));
@@ -155,6 +163,11 @@ public class ArmGenerator extends Generator {
     private static Pattern inputPattern = null;
     private static Pattern outputPattern = null;
     // END KGU#968 2021-04-24
+    
+    // START KGU#1012 2021-11-14: Restrictive mode
+    /** May hold a restricting line parser */
+    private ArmLineParser checker = null;
+    // END KGU#1012 2021-11-14
     
     // START KGU#968 2021-10-06: Revised from a local variable in isArmInstruction()
     private static final String[] ARM_INSTRUCTIONS = {
@@ -224,7 +237,8 @@ public class ArmGenerator extends Generator {
     
     /**
      * Flag set for registers R0 ... R12 whether they have already been assigned
-     * the address of the associated array variable
+     * the address of the associated array variable (unfortunately we may not rely
+     * on no instruction having modified it in the mean time...)
      */
     private static final boolean[] addressAssigned = {
             false, false, false, false,
@@ -404,14 +418,32 @@ public class ArmGenerator extends Generator {
                 terminateStrings = (Boolean) option;
             }
             // END KGU#1002 2021-10-31
+            // START KGU#1012 2021-11-14: Issue #967 restricting syntax policy
+            option = this.getPluginOption("restrictedSyntax", terminateStrings);
+            if (option instanceof Boolean) {
+                if ((Boolean)option) {
+                    this.checker = new ArmLineParser();
+                }
+                else {
+                    this.checker = null;
+                }
+            }
+            // END KGU#1012 2021-11-14
         }
         // END KGU#1000 2021-10-29
         // START KGU#968 2021-04-24: Enh. #967 - prepare correct keyword comparison
         String inputKeyword = CodeParser.getKeywordOrDefault("input", "input");
         String outputKeyword = CodeParser.getKeywordOrDefault("output", "output");
         String procName = _root.getMethodName();
-        inputPattern = Pattern.compile(getKeywordPattern(inputKeyword) + "([\\W].*|$)");
-        outputPattern = Pattern.compile(getKeywordPattern(outputKeyword) + "([\\W].*|$)");
+        // START KGU#968 2021-11-14: More precise pattern
+        //inputPattern = Pattern.compile(getKeywordPattern(inputKeyword) + "([\\W].*|$)");
+        //outputPattern = Pattern.compile(getKeywordPattern(outputKeyword) + "([\\W].*|$)");
+        inputPattern = Pattern.compile(getKeywordPattern(inputKeyword)
+                + String.format("( *((%s|%s) *,?)? *%s( *, *%s)*|$)",
+                        stringLiteral2Pattern, stringLiteral1Pattern, variablePattern, variablePattern));
+        outputPattern = Pattern.compile(getKeywordPattern(outputKeyword)
+                + String.format("( *%s( *, *%s)*|$)", registerVariableNumberHex, registerVariableNumberHex));
+        // END KGU#968 2021-11-14
         alwaysReturns = mapJumps(_root.children);
         this.varNames = _root.retrieveVarNames().copy();
         this.isResultSet = varNames.contains("result", false);
@@ -562,6 +594,15 @@ public class ArmGenerator extends Generator {
             StringList lines = _inst.getUnbrokenText();
             for (int i = 0; i < lines.count(); i++) {
                 String line = lines.get(i);
+                // START KGU#1012 2021-11-14: Syntax restrictions
+                if (checker != null && !isDisabled) {
+                    String problem = checker.checkSyntax(line, _inst, i);
+                    if (problem != null) {
+                        appendComment(problem.replace("error.syntax", "Syntax rejected"), getIndent());
+                        continue;
+                    }
+                }
+                // END KGU#1012 2021-11-14
                 // START KGU#968 2021-10-06: skip type definitions and declarations
                 //generateInstructionLine(line, isDisabled);
                 if (!Instruction.isMereDeclaration(line)) {
@@ -579,6 +620,15 @@ public class ArmGenerator extends Generator {
         // the local caching of the COUNTER variable is essential
         boolean isDisabled = _alt.isDisabled(true);
         appendComment(_alt, _indent + getIndent());
+        // START KGU#1012 2021-11-14: Issue #967 Syntax restrictions
+        if (checker != null && !isDisabled) {
+            String problem = checker.checkSyntax(_alt.getUnbrokenText().get(0), _alt, 0);
+            if (problem != null) {
+                appendComment(problem.replace("error.syntax", "Syntax rejected"), getIndent());
+                return;
+            }
+        }
+        // END KGU#1012 2021-11-14
         // The local caching of COUNTER is essential here because multiCondition will update it
         int counter = COUNTER;
 
@@ -636,11 +686,22 @@ public class ArmGenerator extends Generator {
         String colon = syntaxDiffs[gnuEnabled ? 0 : 1][0];
 
         boolean isDisabled = _case.isDisabled(true);
-        int counter = COUNTER;
-        COUNTER++;
 
         // Extract the text in the block
         StringList lines = _case.getUnbrokenText();
+        // START KGU#1012 2021-11-14: Issue #967 Syntax restrictions
+        if (checker != null && !isDisabled) {
+            for (int i = 0; i < lines.count()-1; i++) {
+                String problem = checker.checkSyntax(_case.getUnbrokenText().get(i), _case, i);
+                if (problem != null) {
+                    appendComment(problem.replace("error.syntax", "Syntax rejected"), getIndent());
+                    return;
+                }
+            }
+        }
+        // END KGU#1012 2021-11-14
+        int counter = COUNTER;
+        COUNTER++;
         String variable = lines.get(0);	// FIXME the discriminator expression might be more complex
         // START KGU#968 2021-04-25: Issue #967 Keep structure preferences in mind
         // FIXME The discriminator expression has to be compiled...
@@ -723,6 +784,15 @@ public class ArmGenerator extends Generator {
         boolean isDisabled = _for.isDisabled(false);
         // END KGU 2021-04-14
 
+        // START KGU#1012 2021-11-14: Issue #967 Syntax restrictions
+        if (checker != null && !isDisabled) {
+            String problem = checker.checkSyntax(_for.getUnbrokenText().get(0), _for, 0);
+            if (problem != null) {
+                appendComment(problem.replace("error.syntax", "Syntax rejected"), getIndent());
+                return;
+            }
+        }
+        // END KGU#1012 2021-11-14
         // Extract all the text from the block.
         String counterStr = _for.getCounterVar();
         // START KGU#968 2021-05-02: This had to be replaced by a register
@@ -762,6 +832,20 @@ public class ArmGenerator extends Generator {
         // END KGU#1001 2021-10-28
         if (_for.isForInLoop()) {
             valList = _for.getValueList();
+            // START KGU#1001 2021-11-10: Bugfix #1005 Precaution for array reference
+            if (valList != null && valList.matches(variablePattern)) {
+                String reg = valList;
+                if (!reg.matches(registerPattern0)) {
+                    reg = this.getRegister(valList);
+                }
+                int[] dim = this.returnDim(reg);
+                if (dim[1] >= 0) {
+                    endValueStr = "#" + Integer.toString(dim[1] - 1);
+                    endValueComplex = false;
+                    valList = reg;
+                }
+            }
+            // END KGU#1001 2021-11-10
             StringList items = this.extractForInListItems(_for);
             if (items != null) {
                 // START KGU#1001 2021-10-28: Bugfix #1005
@@ -789,7 +873,7 @@ public class ArmGenerator extends Generator {
             stepValueStr = "#1";	// We assume word as element type...
             // END KGU#1001 2021-10-28
         } else {
-            // START KGU#1001 2021-10-28: Bugix #1005 We don't cope with complex expressions
+            // START KGU#1001 2021-10-28: Bugfix #1005 We don't cope with complex expressions
             //String startValueStr = _for.getStartValue();
             //String endValueStr = _for.getEndValue();
             //String stepValueStr = _for.getStepString();
@@ -911,6 +995,15 @@ public class ArmGenerator extends Generator {
 
         boolean isDisabled = _while.isDisabled(true);
         appendComment(_while, _indent + getIndent());
+        // START KGU#1012 2021-11-14: Issue #967 Syntax restrictions
+        if (checker != null && !isDisabled) {
+            String problem = checker.checkSyntax(_while.getUnbrokenText().get(0), _while, 0);
+            if (problem != null) {
+                appendComment(problem.replace("error.syntax", "Syntax rejected"), getIndent());
+                return;
+            }
+        }
+        // END KGU#1012 2021-11-14
         int counter = COUNTER;
 
         String[] keys = {"end", "code"};
@@ -951,6 +1044,15 @@ public class ArmGenerator extends Generator {
         boolean isDisabled = _repeat.isDisabled(true);
 
         appendComment(_repeat, _indent + getIndent());
+        // START KGU#1012 2021-11-14: Issue #967 Syntax restrictions
+        if (checker != null && !isDisabled) {
+            String problem = checker.checkSyntax(_repeat.getUnbrokenText().get(0), _repeat, 0);
+            if (problem != null) {
+                appendComment(problem.replace("error.syntax", "Syntax rejected"), getIndent());
+                return;
+            }
+        }
+        // END KGU#1012 2021-11-14
 
         int counter = COUNTER;
 
@@ -1017,6 +1119,15 @@ public class ArmGenerator extends Generator {
             boolean isDisabled = _call.isDisabled(true);
             appendComment(_call, _indent + getIndent());
             StringList lines = _call.getUnbrokenText();
+            // START KGU#1012 2021-11-14: Issue #967 Syntax restrictions
+            if (checker != null && !isDisabled) {
+                String problem = checker.checkSyntax(lines.get(0), _call, 0);
+                if (problem != null) {
+                    appendComment(problem.replace("error.syntax", "Syntax rejected"), getIndent());
+                    return;
+                }
+            }
+            // END KGU#1012 2021-11-14
 
             // START KGU#968 2021-05-02: We must pass the arguments in order of occurrence
             //String line = lines.get(0);
@@ -1145,6 +1256,15 @@ public class ArmGenerator extends Generator {
                 //String preThrow  = CodeParser.getKeywordOrDefault("preThrow", "throw");
                 for (int i = 0; isEmpty && i < lines.count(); i++) {
                     String line = transform(lines.get(i)).trim();
+                    // START KGU#1012 2021-11-14: Issue #967 Syntax restrictions
+                    if (checker != null && !isDisabled) {
+                        String problem = checker.checkSyntax(line, _jump, i);
+                        if (problem != null) {
+                            appendComment(problem.replace("error.syntax", "Syntax rejected"), getIndent());
+                            continue;
+                        }
+                    }
+                    // END KGU#1012 2021-11-14
                     if (!line.isEmpty())
                     {
                         isEmpty = false;
@@ -1324,30 +1444,35 @@ public class ArmGenerator extends Generator {
             addCode(newline, getIndent(), isDisabled);
         case INPUT:
             if (gnuEnabled) {
-                // START KGU#968 2021-04-25: Remove the keyword and a possible prompt string
+                // START KGU#968 2021-04-25/2021-11-14: Remove the keyword and a possible prompt string
                 //newline = variablesToRegisters(line);
                 //String register = newline.split(" ")[1];
                 StringList tokens = Element.splitLexically(line, true);
                 StringList inputTokens = Element.splitLexically(CodeParser.getKeywordOrDefault("input", "input"), true);
                 // Check for a prompt string literal and remove it (plus a possible comma)
                 int ix = inputTokens.count();
-                while (ix < tokens.count() && tokens.get(ix).trim().isEmpty()) {
-                    ix++;
+                tokens.remove(0, ix);
+                tokens.removeAll(" ");
+                if (!tokens.isEmpty() && (tokens.get(0).startsWith("\"") || tokens.get(0).startsWith("'"))) {
+                    tokens.remove(0);
+                    appendComment("Prompt string of input instruction ignored", getIndent());
                 }
-                if (ix < tokens.count() && (tokens.get(ix).startsWith("\"") || tokens.get(ix).startsWith("'"))) {
-                    tokens.remove(ix);
+                newline = variablesToRegisters(tokens.concatenate(null));
+                tokens = Element.splitLexically(newline, true);
+                tokens.removeAll(",");
+                if (!tokens.isEmpty()) {
+                    // Use the last register for the input address as it is overwritten last
+                    String addrRegister = tokens.get(tokens.count()-1);
+                    addCode(String.format("LDR %s, =0xFF200050", addrRegister), getIndent(), isDisabled);
+                    for (int i = 0; i < tokens.count(); i++) {
+                        String register = tokens.get(i);
+                        // START KGU#968 2021-04-24: We must not add two lines via a single call (for correct line counting)
+                        //addCode(String.format("LDR %s, =0xFF200050\n%sLDR %s, [%s]", register, getIndent(), register, register), getIndent(), isDisabled);
+                        addCode(String.format("LDR %s, [%s]", register, addrRegister), getIndent(), isDisabled);
+                        // END KGU#968 2021-04-24
+                    }
                 }
-                while (ix < tokens.count() && (tokens.get(ix).trim().isEmpty() || tokens.get(ix).equals(","))) {
-                    ix++;
-                }
-                newline = variablesToRegisters(tokens.concatenate(null, ix));
-                String register = newline.split(" ")[0];
-                // END KGU#968 2021-04-25
-                // START KGU#968 2021-04-24: We must not add two lines via a single call (for correct line counting)
-                //addCode(String.format("LDR %s, =0xFF200050\n%sLDR %s, [%s]", register, getIndent(), register, register), getIndent(), isDisabled);
-                addCode(String.format("LDR %s, =0xFF200050", register), getIndent(), isDisabled);
-                addCode(String.format("LDR %s, [%s]", register, register), getIndent(), isDisabled);
-                // END KGU#968 2021-04-24
+                // END KGU#968 2021-04-25/2021-11-14
             } else {
                 appendComment("ERROR: INPUT operation only supported with GNU code\n" + line, getIndent());
             }
@@ -1373,14 +1498,26 @@ public class ArmGenerator extends Generator {
                     addCode(String.format("LDR %s, =0xFF201000", addrRegister), getIndent(), isDisabled);
                     for (int i = 0; i < exprs.count() - 1; i++) {
                         String expr = exprs.get(i);
-                        String register = getAvailableRegister();
+                        // START KGU#968 2021-11-15: Issue #967 Don't reserve a register without need
+                        //String register = getAvailableRegister();
+                        String register = "";
+                        // END KGU#968 2021-11-15
                         if (expr.matches(variablePattern)) {
                             register = variablesToRegisters(expr);
                         }
                         else {
-                            generateInstructionLine(String.format("%s <- %s", register, expr), isDisabled, elem);
+                            // START KGU#968 2021-11-15: Issue #967 Don't reserve a register without need
+                            //generateInstructionLine(String.format("%s <- %s", register, expr), isDisabled, elem);
+                            register = getAvailableRegister();
+                            // END KGU#968 2021-11-15
                             if (!register.isEmpty()) {
+                                // START KGU#968 2021-11-15: Issue #967 Don't reserve a register without need
+                                generateInstructionLine(String.format("%s <- %s", register, expr), isDisabled, elem);
+                                // END KGU#968 2021-11-15
                                 mVariables.put(register, "");
+                            }
+                            else {
+                                appendComment("ERROR: No available register for output of " + expr, getIndent());
                             }
                         }
                         addCode(String.format("STR %s, [%s]", register, addrRegister), getIndent(), isDisabled);
@@ -1765,7 +1902,7 @@ public class ArmGenerator extends Generator {
 
         String c = "";	// The code line to be produced
         String opCode = "STR";
-        int dim = returnDim(arName);
+        int dim = returnDim(arName)[0];
         if (dim == 0) {
             opCode += "B";
         }
@@ -1796,10 +1933,22 @@ public class ArmGenerator extends Generator {
             // START KGU#1000 2021-10-27: Bugfix #1004 Ensure the address assignment to the mapped register
             String arNameOrig = mVariables.get(arName.toUpperCase());
             if (arNameOrig != null && !arNameOrig.isEmpty()
-                    && !arNameOrig.equals(USER_REGISTER_TAG)
+                    //&& !arNameOrig.equals(USER_REGISTER_TAG)
                     && !arNameOrig.equals(TEMP_REGISTER_TAG)) {
                 int rIndex = Integer.parseInt(arName.substring(1));
-                if (!addressAssigned[rIndex]) {
+                // START KGU#1001 2021-11-10: Bugfix #1005 An access/assignment may have modified it
+                //if (!addressAssigned[rIndex]) {
+                if (arNameOrig.equals(USER_REGISTER_TAG)) {
+                    String decl = findArrayDeclaration(arName);
+                    if (decl != null) {
+                        StringList declTokens = Element.splitLexically(decl, true);
+                        // Fetch the label
+                        if (declTokens.count() >= 1) {
+                            arNameOrig = declTokens.get(0);
+                        }
+                    }
+                }
+                // END KGU#1001 2021-11-10
                     if (gnuEnabled) {
                         addCode("ADR " + arName + ", " + arNameOrig, getIndent(), isDisabled);
                     } else {
@@ -1807,7 +1956,9 @@ public class ArmGenerator extends Generator {
                         addCode("LDR " + arName + ", =" + arNameOrig, getIndent(), isDisabled);
                     }
                     addressAssigned[rIndex] = true;
-                }
+                // START KGU#1001 2021-11-10: Bugfix #1005
+                //}
+                // END KGU#1001 2021-11-10
             }
             // END KGU#1000 2021-10-27
             addCode(c, getIndent(), isDisabled);
@@ -1831,7 +1982,7 @@ public class ArmGenerator extends Generator {
         String index = tokens[1].split("\\[")[1].replace("]", "");
         String c = " " + varName + ", [" + arName + ", ";
         // Array element size (dual exponent)
-        int dim = returnDim(arName);
+        int dim = returnDim(arName)[0];
         String opCode = "LDR";
         // if the array is initialized
         if (dim > 0) {
@@ -1870,10 +2021,22 @@ public class ArmGenerator extends Generator {
             //addCode(c, getIndent(), isDisabled);
             String arNameOrig = mVariables.get(arName.toUpperCase());
             if (arNameOrig != null && !arNameOrig.isEmpty()
-                    && !arNameOrig.equals(USER_REGISTER_TAG)
+                    //&& !arNameOrig.equals(USER_REGISTER_TAG)
                     && !arNameOrig.equals(TEMP_REGISTER_TAG)) {
                 int rIndex = Integer.parseInt(arName.substring(1));
-                if (!addressAssigned[rIndex]) {
+                // START KGU#1001 2021-11-10: Bugfix #1005 An access/assignment may have modified it
+                //if (!addressAssigned[rIndex]) {
+                if (arNameOrig.equals(USER_REGISTER_TAG)) {
+                    String decl = findArrayDeclaration(arName);
+                    if (decl != null) {
+                        StringList declTokens = Element.splitLexically(decl, true);
+                        // Fetch the label
+                        if (declTokens.count() >= 1) {
+                            arNameOrig = declTokens.get(0);
+                        }
+                    }
+                }
+                // END KGU#1001 2021-11-10
                     if (gnuEnabled) {
                         addCode("ADR " + arName + ", " + arNameOrig, getIndent(), isDisabled);
                     } else {
@@ -1881,7 +2044,9 @@ public class ArmGenerator extends Generator {
                         addCode("LDR " + arName + ", =" + arNameOrig, getIndent(), isDisabled);
                     }
                     addressAssigned[rIndex] = true;
-                }
+                // START KGU#1001 2021-11-10: Bugfix #1005
+                //}
+                // END KGU#1001 2021-11-10
             }
             addCode(opCode + c, getIndent(), isDisabled);
             // END KGU#1000 2021-10-27
@@ -1908,8 +2073,17 @@ public class ArmGenerator extends Generator {
         // if secondOperand is a negative number then we need to use MVN and convert the number to a hex number
         if (secondOperand.matches(negativeNumberPattern)) {
             int n = Integer.parseInt(secondOperand);
-            secondOperand = Integer.toHexString(n);
-            code = "MVN %s, %s0x%s";
+            // START KGU#1014 2021-11-09: Bugfix #1017: We must check eligibility and negate then
+            //secondOperand = Integer.toHexString(n);
+            //code = "MVN %s, %s0x%s";
+            if (mayBeDirectOperand(Integer.toString(-n-1))) {
+                code = "MVN %s, %s0x%s";
+                secondOperand = Integer.toHexString(-n-1);
+            }
+            else {
+                code = getInstructionConstant(firstOperand, "0x" + Integer.toHexString(n));
+            }
+            // END KGU#1014 2021-11-09
         }
         // if secondOperand is a register then we don't need to prepend the #
         else if (secondOperand.matches(registerPattern)) {
@@ -1933,13 +2107,14 @@ public class ArmGenerator extends Generator {
         line = line.replace(" ", "");
         String[] tokens = line.split(assignmentOperators);
 
-        String firstOperand = tokens[0]; // firstOperand must be a register or a variable
+        String firstOperand = tokens[0]; // target must be a register or a variable
         String secondOperand = tokens[1]; // secondOperand is the simple expression R0 <- 1 + 1 ->> [1, +, 1]
         secondOperand = secondOperand.replace("and", "&").replace("or", "|");
 
         String operation = ""; // ARM operation
 
-        String[] expression = parseExpression(secondOperand); // expression must be a simple expression: [R0, +, 1], [x, +, y], [x, and, y]
+        // Decompose the simple expression into e.g: [R0, +, 1], [x, +, y], [x, and, y]
+        String[] expression = parseExpression(secondOperand);
 
         String thirdOperand; // third value in the arm operation, (ADD R0, R1, #1)
 
@@ -1955,40 +2130,122 @@ public class ArmGenerator extends Generator {
             operation = "ORR";
         }
 
+        // START KGU#1014 2021-11-09: Bugfix #1017 we must handle direct operands more sensibly
         // if expression[0] is a register then we don't need to prepend the #
-        secondOperand = expression[0].matches(registerPattern) ? expression[0] : "#" + expression[0];
-
+        //secondOperand = expression[0].matches(registerPattern) ? expression[0] : "#" + expression[0];
         // if expression[2] is a register then we don't need to prepend the #
-        thirdOperand = expression[2].matches(registerPattern) ? expression[2] : "#" + expression[2];
-
+        //thirdOperand = expression[2].matches(registerPattern) ? expression[2] : "#" + expression[2];
+        secondOperand = expression[0];
+        thirdOperand = expression[2];
+        boolean isDirect2 = !expression[0].matches(registerPattern);
+        boolean isDirect3 = !expression[2].matches(registerPattern);
+        if (isDirect2 && isDirect3) {
+            /*
+             * Instead of generating bullshit like "ADD R0, #1, #2" decompose it:
+             * MOV R0, #1
+             * ADD R0, R0, #2
+             */
+            generateAssignment(String.format("%s <- %s", firstOperand, secondOperand), isDisabled);
+            secondOperand = firstOperand;
+        }
+        else if (isDirect2) {
+            // Simply swap operands (thirdOperand must now be a register)
+            secondOperand = thirdOperand;
+            thirdOperand = expression[0];
+            isDirect3 = true;
+        }
+        if (isDirect3) {
+        // END KGU#1014 2021-11-09
+        
         // replace MUL with LSL where possible
-        if (operation.equals("MUL") && expression[0].matches(registerPattern)) {
-            // if the second member of the expression is a number
-            if (expression[2].matches(numberPattern)) {
-                int value = Integer.parseInt(expression[2]);
-                int shift = 0;
-
-                // if the value is a power of two
-                if (isPowerOfTwo(value)) {
-                    //shift = (int) (Math.log(value) / Math.log(2));
-                    while ((value >>= 1) > 0) shift++;
-                    operation = "LSL";
-                    thirdOperand = "#" + shift;
+            if (operation.equals("MUL")) {
+                // START KGU#1014 2021-11-09: Bugfix #1017
+                //int value = Integer.parseInt(thirdOperand);
+                
+                int radix = 0;
+                if (thirdOperand.matches(numberPattern)) {
+                    radix = 10;
                 }
-                // if the previous value number is a power of two
-                else if (isPowerOfTwo(value - 1)) {
-                    //shift = (int) (Math.log(value - 1) / Math.log(2));
-                    value --;
-                    while ((value >>= 1) > 0) shift++;
-                    operation = "ADD";
-                    thirdOperand = String.format("LSL #%s", shift);
+                else if (thirdOperand.matches(hexNumberPattern)) {
+                    radix = 16;
+                }
+                else if (thirdOperand.matches(binNumberPattern)) {
+                    radix = 2;
+                }
+                boolean solved = false;
+                if (radix > 1) {
+                    int value = Integer.parseInt(thirdOperand, radix);
+                // END KGU#1014 2021-11-09
+                    int shift = 0;
+
+                    // if the value is a power of two
+                    if (isPowerOfTwo(value)) {
+                        //shift = (int) (Math.log(value) / Math.log(2));
+                        while ((value >>= 1) > 0) shift++;
+                        operation = "LSL";
+                        thirdOperand = "#" + shift;
+                        solved = true;
+                    }
+                    // if the previous value number is a power of two
+                    else if (isPowerOfTwo(value - 1)) {
+                        //shift = (int) (Math.log(value - 1) / Math.log(2));
+                        value --;
+                        while ((value >>= 1) > 0) shift++;
+                        operation = "ADD";
+                        // START KGU#1014 2021-11-09: Bugfix #1017
+                        //thirdOperand = String.format("LSL #%s", shift);
+                        thirdOperand = String.format("%s, LSL #%s", secondOperand, shift);
+                        // END KGU#1014 2021-11-09
+                        solved = true;
+                    }
+                // START KGU#1014 2021-11-09: Bugfix #1017
+                }
+                if (!solved) {
+                    // There is no MUL instruction with direct operand!
+                    String tempReg = getAvailableRegister();
+                    if (!tempReg.isEmpty()) {
+                        // Okay, assign the operand to a register and multiply that
+                        generateAssignment(String.format("%s <- %s", tempReg, thirdOperand), isDisabled);
+                        thirdOperand = tempReg;
+                    }
+                    else {
+                        appendComment("WARNING: This is illegal but we ran out of registers...", getIndent());
+                    }
+                }
+                // END KGU#1014 2021-11-09
+            }
+            // START KGU#1014 2021-11-09: Bugfix #1017 - we may have to go a detour
+            else if (!mayBeDirectOperand(thirdOperand)) {
+                String tempReg = getAvailableRegister();
+                if (!tempReg.isEmpty()) {
+                    // Okay, assign the operand to a register and use that in the operation
+                    generateAssignment(String.format("%s <- %s", tempReg, thirdOperand), isDisabled);
+                    thirdOperand = tempReg;
+                }
+                else {
+                    appendComment("WARNING: This is illegal but we ran out of registers...", getIndent());
                 }
             }
-            // if it's a register KGU: This seemed to be nonsense
-            //else if (expression[2].matches(registerPattern)) {
-            //    operation = "LSL";
-            //}
+            else {
+                thirdOperand = "#" + thirdOperand;
+            }
         }
+        if (operation.equals("MUL") && firstOperand.equals(secondOperand)) {
+            // First and second operand must not be identical!
+            if (!secondOperand.equals(thirdOperand)) {
+                secondOperand = thirdOperand;
+                thirdOperand = firstOperand;
+            }
+            else {
+                // All three registers are identical - so they can't be temporary here
+                String tempReg = getAvailableRegister();
+                if (!tempReg.isEmpty()) {
+                    generateAssignment(String.format("%s <- %s", tempReg, secondOperand), isDisabled);
+                    secondOperand = tempReg;
+                }
+            }
+        }
+        // END KGU#1014 2021-11-09
 
         addCode(String.format(code, operation, firstOperand, secondOperand, thirdOperand), getIndent(), isDisabled);
     }
@@ -2229,16 +2486,15 @@ public class ArmGenerator extends Generator {
     }
 
     /**
-     * Retrieves the element type of the array associated to the register with
+     * Retrieves the declaration line of the array associated to the register with
      * given name<br/>
      * Note: Very time-consuming as it scans the code generated so far backwards
      * and then "disassembles" relevant lines. And this works only in GNU mode!
      *
      * @param register - name of the register representing an array
-     * @return string that represents the array's element type
+     * @return declaration line if found, {@code null} otherwise
      */
-    private String findArrayType(String register) {
-        String type = "";
+    private String findArrayDeclaration(String register) {
         // START KGU#1000 2021-10-27: Bugfix #1004 We need more flexibility here
         //String arName = null;
         // START KGU#1003 2021-10-31: Bugix #1008 Lacking retrieval in GNU mode
@@ -2298,27 +2554,14 @@ public class ArmGenerator extends Generator {
                 }
             }
             /* If the row contains the declaration pattern then we found the array declaration
-             * and may extract the element type
+             * and may return it
              */
             if (declPattern != null && line.startsWith(declPattern)) {
-                StringList tokens = Element.splitLexically(line.replace("\t", " "), true);
-                tokens.removeAll(" ");
-                if (gnuEnabled) {
-                    type = tokens.get(tokens.indexOf(".")+1);
-                } else {
-                    type = tokens.get(1);
-                    for (Map.Entry<String, String> entry: TYPE2KEIL.entrySet()) {
-                        if (entry.getValue().equals(type)) {
-                            type = entry.getKey();
-                            break;
-                        }
-                    }
-                }
-                return type;
+                return line;
             }
-            // END KGU#1000 2021-10
+            // END KGU#1000 2021-10-27
         }
-        return type;
+        return null;
     }
 
     /**
@@ -2327,28 +2570,55 @@ public class ArmGenerator extends Generator {
      * Note: This is time-consuming as it scans the so far generated code
      * 
      * @param register - name of the register that represents the array
-     * @return binary exponent of the array element size (in byte), or -1
-     * (if no identifiable type was found, e.g. in Keil mode.)
+     * @return an integer array containing<ul>
+     *  <li>[0]: the binary exponent of the array element size (in byte), or -1
+     * (if no identifiable type was found, e.g. in Keil mode.)</li>
+     *  <li>[1]: the number of elements if identifiable, otherwise -1</li>
+     *  </ul>
      */
-    private int returnDim(String register) {
+    // START KGU#1001 2021-11-10: Bugfix #1005 extended signature to obtain element number too
+    //private int returnDim(String register) {
+    //    // FIXME find a more efficient way of retrieval
+    //    String r = findArrayType(register);
+    //    return TYPES.indexOf(r);
+    //}
+    private int[] returnDim(String register) {
+        int[] dim = {-1, -1};
         // FIXME find a more efficient way of retrieval
-        String r = findArrayType(register);
-        // START KGU#1000 2021-10-29: Issue #1004
-        //if (r.contains("byte")) {
-        //    return 0;
-        //} else if (r.contains("hword")) {
-        //    return 1;
-        //} else if (r.contains("word")) {
-        //    return 2;
-        //} else if (r.contains("quad")) {
-        //    return 3;
-        //} else if (r.contains("octa")) {
-        //    return 4;
-        //}
-        //return -1;
-        return TYPES.indexOf(r);
-        // END KGU#1000 2021-10-29
+        String decl = findArrayDeclaration(register);
+        if (decl != null) {
+            String type = "";
+            StringList tokens = Element.splitLexically(decl.replace("\t", " "), true);
+            tokens.removeAll(" ");
+            int dotPos = -1;
+            if (gnuEnabled && (dotPos = tokens.indexOf(".")) >= 0) {
+                type = tokens.get(dotPos + 1);
+            } else {
+                type = tokens.get(1);
+                for (Map.Entry<String, String> entry: TYPE2KEIL.entrySet()) {
+                    if (entry.getValue().equals(type)) {
+                        type = entry.getKey();
+                        break;
+                    }
+                }
+            }
+            dim[0] = TYPES.indexOf(type);
+            if (dotPos >= 0) {
+                // Must have found it with GNU syntax
+                dotPos += 2;
+            }
+            else if (!type.isEmpty()) {
+                // Must have found it with KEIL syntax
+                dotPos = 2;
+            }
+            if (dotPos > 0 && tokens.count() > dotPos) {
+                tokens.remove(0, dotPos);
+                dim[1] = tokens.count(",") + 1;
+            }
+        }
+        return dim;
     }
+    // END KGU#1001 2021-11-10
 
     /**
      * This method checks if n is a power of two (i.e. contains exactly one set bit).
@@ -2443,34 +2713,81 @@ public class ArmGenerator extends Generator {
     /**
      * This method translates number assignments that are too big for a register
      *
-     * @param register - string that contains the register
-     * @param value - string that contains the value
+     * @param register - string naming the register
+     * @param value - direct value (as string)
      * @return translated assignment as string
      */
     private String getInstructionConstant(String register, String value) {
-        final int UINT12MAX = 4096;
-        String c;
+        // START KGU#1014 2021-11-09: Bugfix #1017 Wrong detection
+        //final int UINT12MAX = 4096;
+        //String c;
+        //try {
+        //    if (value.contains("'")) {	// FIXME seems to be a check for char literal
+        //        c = "MOV " + register + ", #" + value;
+        //    } else if (Integer.parseInt(value) >= UINT12MAX) {	// FIXME what about negative values?
+        //        c = "LDR " + register + ", =" + value;
+        //    } else {
+        //        c = "MOV " + register + ", #" + value;
+        //    }
+        //} catch (NumberFormatException e) {
+        //    //FIXME What if it does not comply with a hex literal, either?
+        //    //inside generateAssignment this method should be called only if secondOperand is a number (decimal or hex)
+        //    value = value.replace("0x", "");
+        //    int hexValue = Integer.parseInt(value, 16);
+        //    if (hexValue < UINT12MAX) {
+        //        c = "MOV " + register + ", #0x" + value;
+        //    } else {
+        //        c = "LDR " + register + ", =0x" + value;
+        //    }
+        //}
+        // return c;
+        String instr = "MOV";
+        char prefix = '#';
+        if (!value.trim().startsWith("'") && !mayBeDirectOperand(value)) {
+            instr = "LDR";
+            prefix = '=';
+        }
+        // FIXME We might also consider using MVN if -value is eligible as direct operand
+        return String.format("%s %s, %c%s", instr, register, prefix, value);
+        // END KGU#1014 2021-11-09
+    }
+    
+    // START KGU#1014 2021-11-09: New for bugfix #1017
+    /**
+     * Checks if the given integer literal is suited to be a direct operand for ARM
+     * instructions (i.e. it represents a shiftable 8 bit sequence).
+     * @param value - the literal to be checked (might be a decimal or hex literal)
+     * @return {@code true} if the operand is eligible as direct operand
+     */
+    private boolean mayBeDirectOperand(String intLiteral) {
+        int base = 10;
+        if (intLiteral.startsWith("0x")) {
+            base = 16;
+        }
+        else if (intLiteral.startsWith("0b")) {	// Preparing later enhancement
+            base = 2;
+        }
+        if (base != 10) {
+            intLiteral = intLiteral.substring(2);
+        }
         try {
-            if (value.contains("'")) {	// FIXME seems to be a check for char literal
-                c = "MOV " + register + ", #" + value;
-            } else if (Integer.parseInt(value) >= UINT12MAX) {	// FIXME what about negative values?
-                c = "LDR " + register + ", =" + value;
-            } else {
-                c = "MOV " + register + ", #" + value;
-            }
-        } catch (NumberFormatException e) {
-            //FIXME What if it does not comply with a hex literal, either?
-            //inside generateAssignment this method should be called only if secondOperand is a number (decimal or hex)
-            value = value.replace("0x", "");
-            int hexValue = Integer.parseInt(value, 16);
-            if (hexValue < UINT12MAX) {
-                c = "MOV " + register + ", #0x" + value;
-            } else {
-                c = "LDR " + register + ", =0x" + value;
+            int value = Integer.parseInt(intLiteral, base);
+            if (value < 0) {
+                return false;
+            }	
+            for (int i = 0; i < 16; i++) {
+                if ((value & 0xffffff00) == 0) {
+                    return true;
+                }
+                int lastBits = value | 0x11;
+                value >>= 2;
+                value |= lastBits << 30;
             }
         }
-        return c;
+        catch (NumberFormatException ex) {}
+        return false;
     }
+    // END KGU#1014 2021-11-09
 
     /**
      * This method replaces variables with already associated register names

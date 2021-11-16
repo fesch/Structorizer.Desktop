@@ -36,6 +36,7 @@ package lu.fisch.structorizer.helpers;
  *      Kay Gürtzig     2017-04-23      Enh. #231 configuration of reserved words in the target language
  *      Kay Gürtzig     2017-05-11      Enh. #354/#357: field for class-specific options added
  *      Kay Gürtzig     2017-06-20      Enh. #354/#357: Structure of options field modified, method getKey() added
+ *      Kay Gürtzig     2021-11-14      Enh. #967: New field syntaxChecks
  *
  ******************************************************************************************************
  *
@@ -48,7 +49,6 @@ import java.util.Vector;
 
 public class GENPlugin 
 {
-	public static final int STRINGS_PER_OPTION = 4;
 	public String className = null;
 	public String icon = null;
 	public String title = null;
@@ -73,9 +73,42 @@ public class GENPlugin
 	 */
 	public Vector<HashMap<String, String>> options = new Vector<HashMap<String, String>>();
 	// END KGU#354/KGU#395 2017-05-11
+	
+	// START KGU#1012 2021-11-14: Enh. #967
+	/**
+	 * Optional syntax check specification (suited for Analyser and the plugin itself)
+	 * @author Kay Gürtzig
+	 */
+	public static class SyntaxCheck {
+		/**
+		 * Source data type for the syntax check
+		 */
+		public enum Source {
+			/** check of an unbroken Element line with method {@code checkSyntax(String, Element, int)} */
+			STRING,
+			/** check of a Line syntax tree with method {@code checkSyntax(Line, Element, int)} */
+			TREE
+			};
+		/** Fully qualified class name for a plugin-specific syntax checker */
+		public String className = null;
+		/** Source for the syntax check (may be STRING or TREE) */
+		public Source source = Source.STRING;
+		/** Default title e.g. for the Analyser preferences */
+		public String title = null;
+		/** Default message for syntax errors complaints (e.g. replacing "error.syntax") */
+		public String message = null;
+	};
+	/**
+	 * Specification for an optional plugin-specific syntax check, containing a class name,
+	 * a method type selection and possible default messages
+	 */
+	public Vector<SyntaxCheck> syntaxChecks = null;
+	// END KGU#1012 2021-11-14
+	
 	// START KGU#416 2017-06-20
 	/**
 	 * Returns the simplified class name of the associated class
+	 * 
 	 * @return Just the pure class name without package
 	 */
 	public String getKey()
