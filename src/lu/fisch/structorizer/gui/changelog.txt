@@ -23,7 +23,7 @@ Known issues:
 - ARM export is still experimental and relies on a specific and very restricted
   syntax for the element contents in order to produce meaningful results.
 
-Current development version 3.32-05 (2021-11-15)
+Current development version 3.32-06 (2021-11-16)
 - 01: Bugfix #987: Duplicate subroutine comment export by Pascal generator <2>
 - 01: Bugfix #988: Syntax error in Structorizer.bat and Arranger.bat fixed <2>
 - 01: Bugfix #989: Expressions in EXIT elements (e.g. return) were forgotten
@@ -68,6 +68,7 @@ Current development version 3.32-05 (2021-11-15)
       faulty, the LDR/STR impact on the base register was not factored in <2>
 - 05: Bugfix #1017: Several flaws on exporting arithmetic expressions and
       assignments as ARM code <2>
+- 06:
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>
