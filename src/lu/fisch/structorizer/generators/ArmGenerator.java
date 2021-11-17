@@ -680,7 +680,7 @@ public class ArmGenerator extends Generator {
         unifyFlow();
     }
 
-	@Override
+    @Override
     protected void generateCode(Case _case, String _indent) {
         appendComment(_case, _indent + getIndent());
 
@@ -815,7 +815,7 @@ public class ArmGenerator extends Generator {
         int counter = COUNTER;	// label counter
         COUNTER++;
 
-        String endLabel = "end_" + counter;				// This loop's end label
+        String endLabel = "end_" + counter;		// This loop's end label
         Integer labelRef = jumpTable.get(_for);
         if (labelRef != null && labelRef >= 0) {
             this.breakLabels[labelRef] = endLabel;
@@ -1389,7 +1389,7 @@ public class ArmGenerator extends Generator {
      * @return {@code true} iff valid code was generated without trouble
      */
     private boolean generateInstructionLine(String line, boolean isDisabled, Instruction elem) {
-    	boolean done = false;
+        boolean done = false;
         String newline;
         ARM_OPERATIONS mode = getMode(line);
 
@@ -2090,13 +2090,13 @@ public class ArmGenerator extends Generator {
         return done;
     }
 
-	/**
+    /**
      * This method translates variable or register assignments<br/>
      * EXAMPLE: {@code R0 <- 1}
      *
      * @param line       - the string that contains the instruction to translate
      * @param isDisabled - whether this element or one of its ancestors is disabled
-	 * @return {@code true} iff valid code was generated without trouble
+     * @return {@code true} iff valid code was generated without trouble
      */
     private boolean generateAssignment(String line, boolean isDisabled) {
         boolean done = false;
