@@ -409,7 +409,7 @@ public class ArmLineParser implements GeneratorSyntaxChecker
 					// START KGU#1017 2021-11-17: Issue #1020 Consider case and non-tokens
 					//if (line.startsWith(keyWord)) {
 					StringList splitKey = Element.splitLexically(keyWord, false);
-					if (tokens.indexOf(splitKey, 0, CodeParser.ignoreCase) == 0) {
+					if (tokens.indexOf(splitKey, 0, !CodeParser.ignoreCase) == 0) {
 					// END KGU#1017 2021-11-17
 						line = "§" + key.substring(3).toUpperCase() + "§"
 								+ line.substring(keyWord.length());
