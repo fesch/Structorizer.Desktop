@@ -66,6 +66,9 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2021-11-09/10   Bugfix #1017: Several flaws in processing assignments and arithmetic
  *                                      expressions; bugfix #1005: flaws in FOREACH loops and array access mended.
  *      Kay Gürtzig     2021-11-14/15   input instructions now cope with several variables, patterns sharpened
+ *      Kay Gürtzig     2021-11-16/17   Bugfix #1019: Pattern for output instructions widened again;
+ *                                      address associations more consistently tracked (to avoid unnecessary
+ *                                      address assignments), disabled array assignments properly handled
  *
  ******************************************************************************************************
  *
@@ -194,8 +197,8 @@ public class ArmGenerator extends Generator {
         ARRAY_INITIALIZATION,
         ADDRESS,
         BOOLEAN_ASSIGNMENT,
-        STRING_ARRAY_INITIALIZATION,
-        CHAR_ARRAY_INITIALIZATION,
+        STRING_INITIALIZATION,
+        CHAR_INITIALIZATION,
         INSTRUCTION,
         INPUT,
         OUTPUT,
@@ -437,13 +440,11 @@ public class ArmGenerator extends Generator {
         String procName = _root.getMethodName();
         // START KGU#968 2021-11-14: More precise pattern
         //inputPattern = Pattern.compile(getKeywordPattern(inputKeyword) + "([\\W].*|$)");
-        //outputPattern = Pattern.compile(getKeywordPattern(outputKeyword) + "([\\W].*|$)");
         inputPattern = Pattern.compile(getKeywordPattern(inputKeyword)
                 + String.format("( *((%s|%s) *,?)? *%s( *, *%s)*|$)",
                         stringLiteral2Pattern, stringLiteral1Pattern, variablePattern, variablePattern));
-        outputPattern = Pattern.compile(getKeywordPattern(outputKeyword)
-                + String.format("( *%s( *, *%s)*|$)", registerVariableNumberHex, registerVariableNumberHex));
         // END KGU#968 2021-11-14
+        outputPattern = Pattern.compile(getKeywordPattern(outputKeyword) + "([\\W].*|$)");
         alwaysReturns = mapJumps(_root.children);
         this.varNames = _root.retrieveVarNames().copy();
         this.isResultSet = varNames.contains("result", false);
@@ -1385,48 +1386,50 @@ public class ArmGenerator extends Generator {
      * @param line       - the string in the block
      * @param isDisabled - whether this element or one of its ancestors is disabled
      * @param elem       - the inducing Instruction
+     * @return {@code true} iff valid code was generated without trouble
      */
-    private void generateInstructionLine(String line, boolean isDisabled, Instruction elem) {
+    private boolean generateInstructionLine(String line, boolean isDisabled, Instruction elem) {
+    	boolean done = false;
         String newline;
         ARM_OPERATIONS mode = getMode(line);
 
         switch (mode) {
         case ASSIGNMENT:
             newline = variablesToRegisters(line);
-            generateAssignment(newline, isDisabled);
+            done = generateAssignment(newline, isDisabled);
             break;
         case EXPRESSION:
             newline = variablesToRegisters(line);
-            generateExpr(newline, isDisabled);
+            done = generateExpr(newline, isDisabled);
             break;
         case MEMORY:
             newline = variablesToRegisters(line);
-            generateMemoryAssignment(newline, isDisabled);
+            done = generateMemoryAssignment(newline, isDisabled);
             break;
         case ARRAY_EXPRESSION:
             newline = variablesToRegisters(line);
-            generateArrayExpr(newline, isDisabled);
+            done = generateArrayExpr(newline, isDisabled);
             break;
         case ARRAY_ASSIGNMENT:
             // FIXME: This will also replace the array name by a (possibly uninitialised) register
             newline = variablesToRegisters(line);
-            generateArrayAssignment(newline, isDisabled);
+            done = generateArrayAssignment(newline, isDisabled);
             break;
         case ARRAY_INITIALIZATION:
-            generateArrayInitialization(line, isDisabled, elem);
+            done = generateArrayInitialization(line, isDisabled, elem);
             break;
         case ADDRESS:
-            generateAddressAssignment(line, isDisabled);
+            done = generateAddressAssignment(line, isDisabled);
             break;
         case BOOLEAN_ASSIGNMENT:
             newline = variablesToRegisters(line);
-            generateAssignment(newline.replace("true", "1").replace("false", "0"), isDisabled);
+            done = generateAssignment(newline.replace("true", "1").replace("false", "0"), isDisabled);
             break;
-        case STRING_ARRAY_INITIALIZATION:
+        case STRING_INITIALIZATION:
             newline = variablesToRegisters(line);
-            generateString(newline, isDisabled, elem);
+            done = generateString(newline, isDisabled, elem);
             break;
-        case CHAR_ARRAY_INITIALIZATION:
+        case CHAR_INITIALIZATION:
             // START KGU#1002 2021-10-30: Issue #1007 Care for special characters
             //newline = variablesToRegisters(line);
             //generateAssignment(newline.replace("\"", "'"), isDisabled);
@@ -1435,13 +1438,14 @@ public class ArmGenerator extends Generator {
                 tokens.removeAll(" ");
                 StringBuilder charRepr = stringContentToList(tokens.get(2));
                 newline = variablesToRegisters(tokens.get(0)) + "<-" + charRepr.toString();
-                generateAssignment(newline, isDisabled);
+                done = generateAssignment(newline, isDisabled);
             }
             // END KGU#1002 2021-10-30
             break;
         case INSTRUCTION:
             newline = variablesToRegisters(line);
             addCode(newline, getIndent(), isDisabled);
+            done = !isDisabled;
         case INPUT:
             if (gnuEnabled) {
                 // START KGU#968 2021-04-25/2021-11-14: Remove the keyword and a possible prompt string
@@ -1472,6 +1476,7 @@ public class ArmGenerator extends Generator {
                         // END KGU#968 2021-04-24
                     }
                 }
+                done = true;
                 // END KGU#968 2021-04-25/2021-11-14
             } else {
                 appendComment("ERROR: INPUT operation only supported with GNU code\n" + line, getIndent());
@@ -1497,6 +1502,7 @@ public class ArmGenerator extends Generator {
                     }
                     addCode(String.format("LDR %s, =0xFF201000", addrRegister), getIndent(), isDisabled);
                     for (int i = 0; i < exprs.count() - 1; i++) {
+                        boolean itemDone = false;
                         String expr = exprs.get(i);
                         // START KGU#968 2021-11-15: Issue #967 Don't reserve a register without need
                         //String register = getAvailableRegister();
@@ -1504,6 +1510,7 @@ public class ArmGenerator extends Generator {
                         // END KGU#968 2021-11-15
                         if (expr.matches(variablePattern)) {
                             register = variablesToRegisters(expr);
+                            itemDone = true;
                         }
                         else {
                             // START KGU#968 2021-11-15: Issue #967 Don't reserve a register without need
@@ -1512,7 +1519,16 @@ public class ArmGenerator extends Generator {
                             // END KGU#968 2021-11-15
                             if (!register.isEmpty()) {
                                 // START KGU#968 2021-11-15: Issue #967 Don't reserve a register without need
-                                generateInstructionLine(String.format("%s <- %s", register, expr), isDisabled, elem);
+                                String auxLine = String.format("%s <- %s", register, expr);
+                                // START KGU#1015 2021-11-17
+                                ARM_OPERATIONS auxMode = getMode(auxLine);
+                                if (auxMode == ARM_OPERATIONS.ARRAY_INITIALIZATION
+                                        || auxMode == ARM_OPERATIONS.STRING_INITIALIZATION) {
+                                    // FIXME: We might consider a loop over the elements
+                                    appendComment("WARNING: No sensible solution for array output:", getIndent());
+                                }
+                                // END KGU#1015 2021-11-17
+                                itemDone = generateInstructionLine(auxLine, isDisabled, elem);
                                 // END KGU#968 2021-11-15
                                 mVariables.put(register, "");
                             }
@@ -1520,7 +1536,11 @@ public class ArmGenerator extends Generator {
                                 appendComment("ERROR: No available register for output of " + expr, getIndent());
                             }
                         }
-                        addCode(String.format("STR %s, [%s]", register, addrRegister), getIndent(), isDisabled);
+                        addCode(String.format("STR %s, [%s]", register, addrRegister), getIndent(), isDisabled || !itemDone);
+                        if (itemDone) {
+                            // If at least one of the output items could be solved call it a success
+                            done = true;
+                        }
                     }
                     if (!addrRegister.isEmpty()) {
                         // Release the register
@@ -1536,6 +1556,7 @@ public class ArmGenerator extends Generator {
             appendComment("ERROR: Not implemented yet\n" + line, getIndent());
             break;
         }
+        return done;
     }
 
     /**
@@ -1570,9 +1591,9 @@ public class ArmGenerator extends Generator {
         } else if (arrayAssignment.matcher(line).matches()) {
             mode = ARM_OPERATIONS.ARRAY_ASSIGNMENT;
         } else if (stringInitialization.matcher(line).matches()) {
-            mode = ARM_OPERATIONS.STRING_ARRAY_INITIALIZATION;
+            mode = ARM_OPERATIONS.STRING_INITIALIZATION;
         } else if (charInitialization.matcher(line).matches()) {
-            mode = ARM_OPERATIONS.CHAR_ARRAY_INITIALIZATION;
+            mode = ARM_OPERATIONS.CHAR_INITIALIZATION;
         } else if (arrayInitialization.matcher(line).matches()) {
             mode = ARM_OPERATIONS.ARRAY_INITIALIZATION;
         } else if (address.matcher(line).matches()) {
@@ -1778,8 +1799,9 @@ public class ArmGenerator extends Generator {
      * @param line       - the string that contains the instruction to translate
      * @param isDisabled - whether this element or one of its ancestors is disabled
      * @param elem       - the inducing Element (for code mapping purposes)
+     * @return {@code true} iff valid code was generated without trouble
      */
-    private void generateArrayInitialization(String line, boolean isDisabled, Element elem) {
+    private boolean generateArrayInitialization(String line, boolean isDisabled, Element elem) {
 
         // START KGU#1000 2021-10-27: Bugfix #1004 way too simplistic tests
         //String[] tokens = line.split("<-|:=");
@@ -1836,20 +1858,25 @@ public class ArmGenerator extends Generator {
             }
             // END KGU#1000 2021-10-27
             if (gnuEnabled) {
-                addToDataSection("v_" + arrayCounter + syntaxDiffs[0][0] + "\t." + type + "\t" + expr);
+                addToDataSection("v_" + arrayCounter + syntaxDiffs[0][0] + "\t." + type + "\t" + expr, isDisabled);
                 addCode("ADR " + varName + ", v_" + arrayCounter, getIndent(), isDisabled);
             } else {
                 // START KGU#1000 2021-10-27: Issue #1004 We can do better than to ignore the type
                 //addToDataSection("V_" + arrayCounter + "\tDCD " + expr);
-                addToDataSection("V_" + arrayCounter + "\t" + type + " " + expr);
+                addToDataSection("V_" + arrayCounter + "\t" + type + " " + expr, isDisabled);
                 // END KGU#1000 2021-10-27
                 addCode("LDR " + varName + ", =V_" + arrayCounter, getIndent(), isDisabled);
             }
             // START KGU#1000 2021-10-29: Bugfix #1004 
             if (insertAlign) {
-                addToDataSection(".align " + sizeLd);
+                addToDataSection(".align " + sizeLd, isDisabled);
             }
             // END KGU#1000 2021-10-29
+            // START KGU#1016 2021-11-17: Issue #1019 Keep track of address association
+            if (!isDisabled) {
+                recordAddressAssignment(varName, true);
+            }
+            // END KGU#1016 2021-11-17
             
             // Remark: mVariables will already contain a mapping of varName to USER_REGISER_TAG
             arrayCounter++;
@@ -1865,15 +1892,15 @@ public class ArmGenerator extends Generator {
 
             // GNU compiler
             if (gnuEnabled) {
-                addToDataSection(varName + syntaxDiffs[0][0] + "\t." + type + "\t" + expr);
+                addToDataSection(varName + syntaxDiffs[0][0] + "\t." + type + "\t" + expr, isDisabled);
             } else {
                 // START KGU#1000 2021-10-27: Issue #1004 We can do better than to ignore the type
                 //addToDataSection(varName + "\tDCD " + expr);
-                addToDataSection(varName + "\t" + type + " " + expr);
+                addToDataSection(varName + "\t" + type + " " + expr, isDisabled);
                 // END KGU#1000 2021-10-27
             }
             if (insertAlign) {
-                addToDataSection(".align " + sizeLd);
+                addToDataSection(".align " + sizeLd, isDisabled);
             }
             // START KGU#1000/KGU#1010 2021-10-27/2021-11-02: Bugfix #1004, #1015 Adjust code mapping
             if (codeMap != null) {
@@ -1884,6 +1911,7 @@ public class ArmGenerator extends Generator {
             }
             // END KGU#1000 2021-10-27
         }
+        return !isDisabled;
     }
 
     /**
@@ -1892,8 +1920,10 @@ public class ArmGenerator extends Generator {
      *
      * @param line       - the string that contains the instruction to translate
      * @param isDisabled - whether this element or one of its ancestors is disabled
+     * @return {@code true} iff valid code was generated without trouble
      */
-    private void generateArrayAssignment(String line, boolean isDisabled) {
+    private boolean generateArrayAssignment(String line, boolean isDisabled) {
+        boolean done = false;
         String[] tokens = line.split(assignmentOperators); //R0[], R2
 
         String expr = tokens[1].trim();
@@ -1913,6 +1943,7 @@ public class ArmGenerator extends Generator {
                 c = opCode + " " + expr + ", [" + arName + ", #" + index + "]";
             } else {
                 appendComment("The array " + arName + " is not initialized", getIndent());
+                appendComment(line, getIndent());
             }
 
         } else /*if (arr[1].contains("R"))*/ {	// Redundant check
@@ -1936,33 +1967,32 @@ public class ArmGenerator extends Generator {
                     //&& !arNameOrig.equals(USER_REGISTER_TAG)
                     && !arNameOrig.equals(TEMP_REGISTER_TAG)) {
                 int rIndex = Integer.parseInt(arName.substring(1));
-                // START KGU#1001 2021-11-10: Bugfix #1005 An access/assignment may have modified it
-                //if (!addressAssigned[rIndex]) {
-                if (arNameOrig.equals(USER_REGISTER_TAG)) {
-                    String decl = findArrayDeclaration(arName);
-                    if (decl != null) {
-                        StringList declTokens = Element.splitLexically(decl, true);
-                        // Fetch the label
-                        if (declTokens.count() >= 1) {
-                            arNameOrig = declTokens.get(0);
+                if (!addressAssigned[rIndex]) {
+                    // START KGU#1001/KGU#1016 2021-11-10/17: Bugfix #1005,#1019 An access/assignment may have modified it
+                    if (arNameOrig.equals(USER_REGISTER_TAG)) {
+                        String decl = findArrayDeclaration(arName);
+                        if (decl != null) {
+                            StringList declTokens = Element.splitLexically(decl, true);
+                            // Fetch the label
+                            if (declTokens.count() >= 1) {
+                                arNameOrig = declTokens.get(0);
+                            }
                         }
                     }
-                }
-                // END KGU#1001 2021-11-10
+                    // END KGU#1001/KGU#1016 2021-11-10
                     if (gnuEnabled) {
                         addCode("ADR " + arName + ", " + arNameOrig, getIndent(), isDisabled);
                     } else {
-                        // FIXME what about the type/size here?
                         addCode("LDR " + arName + ", =" + arNameOrig, getIndent(), isDisabled);
                     }
                     addressAssigned[rIndex] = true;
-                // START KGU#1001 2021-11-10: Bugfix #1005
-                //}
-                // END KGU#1001 2021-11-10
+                }
             }
             // END KGU#1000 2021-10-27
             addCode(c, getIndent(), isDisabled);
+            done = !isDisabled;
         }
+        return done;
     }
 
     /**
@@ -1971,8 +2001,10 @@ public class ArmGenerator extends Generator {
      *
      * @param line       - the string that contains the instruction to translate
      * @param isDisabled - whether this element or one of its ancestors is disabled
+     * @return {@code true} iff valid code was generated without trouble
      */
-    private void generateArrayExpr(String line, boolean isDisabled) {
+    private boolean generateArrayExpr(String line, boolean isDisabled) {
+        boolean done = false;
         line = line.replace(" ", "");
         String[] tokens = line.split(assignmentOperators);
         String expr = tokens[1];
@@ -2012,7 +2044,8 @@ public class ArmGenerator extends Generator {
         }
         // if the array is not initialized
         else {
-            appendComment("The array is not initialized", getIndent());
+            appendComment("The array " + arName + " is not initialized", getIndent());
+            appendComment(line, getIndent());
             c = "";
         }
 
@@ -2024,43 +2057,49 @@ public class ArmGenerator extends Generator {
                     //&& !arNameOrig.equals(USER_REGISTER_TAG)
                     && !arNameOrig.equals(TEMP_REGISTER_TAG)) {
                 int rIndex = Integer.parseInt(arName.substring(1));
-                // START KGU#1001 2021-11-10: Bugfix #1005 An access/assignment may have modified it
-                //if (!addressAssigned[rIndex]) {
-                if (arNameOrig.equals(USER_REGISTER_TAG)) {
-                    String decl = findArrayDeclaration(arName);
-                    if (decl != null) {
-                        StringList declTokens = Element.splitLexically(decl, true);
-                        // Fetch the label
-                        if (declTokens.count() >= 1) {
-                            arNameOrig = declTokens.get(0);
+                if (!addressAssigned[rIndex]) {
+                    // START KGU#1001/KGU#1016 2021-11-10/17: Bugfix #1005, #1019 An access/assignment may have modified it
+                    if (arNameOrig.equals(USER_REGISTER_TAG)) {
+                        String decl = findArrayDeclaration(arName);
+                        if (decl != null) {
+                            StringList declTokens = Element.splitLexically(decl, true);
+                            // Fetch the label
+                            if (declTokens.count() >= 1) {
+                                arNameOrig = declTokens.get(0);
+                            }
                         }
                     }
-                }
-                // END KGU#1001 2021-11-10
+                    // END KGU#1001/KGU#1016 2021-11-10
                     if (gnuEnabled) {
                         addCode("ADR " + arName + ", " + arNameOrig, getIndent(), isDisabled);
                     } else {
-                        // FIXME what about the type/size here?
                         addCode("LDR " + arName + ", =" + arNameOrig, getIndent(), isDisabled);
                     }
                     addressAssigned[rIndex] = true;
-                // START KGU#1001 2021-11-10: Bugfix #1005
-                //}
-                // END KGU#1001 2021-11-10
+                }
             }
             addCode(opCode + c, getIndent(), isDisabled);
             // END KGU#1000 2021-10-27
+            // START KGU#1016 2021-11-17: Issue #1019 Revoke address association
+            if (!isDisabled) {
+                recordAddressAssignment(varName, false);
+                done = true;
+            }
+            // END KGU#1016 2021-11-17
         }
+        return done;
     }
 
-    /**
+	/**
      * This method translates variable or register assignments<br/>
      * EXAMPLE: {@code R0 <- 1}
      *
      * @param line       - the string that contains the instruction to translate
      * @param isDisabled - whether this element or one of its ancestors is disabled
+	 * @return {@code true} iff valid code was generated without trouble
      */
-    private void generateAssignment(String line, boolean isDisabled) {
+    private boolean generateAssignment(String line, boolean isDisabled) {
+        boolean done = false;
         String code;
         line = line.replace(" ", "");
         String[] tokens = line.split(assignmentOperators);
@@ -2094,6 +2133,13 @@ public class ArmGenerator extends Generator {
         }
 
         addCode(String.format(code, firstOperand, hashtag, secondOperand), getIndent(), isDisabled);
+        // START KGU#1016 2021-11-17: Issue #1019 More precise tracking of address associations
+        if (!isDisabled) {
+            recordAddressAssignment(firstOperand, false);	// firstOperand no longer represents an address
+            done = true;
+        }
+        return done;
+        // END KGU#1016 2021-11-17
     }
 
     /**
@@ -2101,8 +2147,10 @@ public class ArmGenerator extends Generator {
      * EXAMPLE: {@code R0 <- R1 + 1}
      *
      * @param line - the instruction to translate as string
+     * @return {@code true} iff valid code was generated without trouble
      */
-    private void generateExpr(String line, boolean isDisabled) {
+    private boolean generateExpr(String line, boolean isDisabled) {
+        boolean done = true;
         String code = "%s %s, %s, %s";
         line = line.replace(" ", "");
         String[] tokens = line.split(assignmentOperators);
@@ -2145,7 +2193,7 @@ public class ArmGenerator extends Generator {
              * MOV R0, #1
              * ADD R0, R0, #2
              */
-            generateAssignment(String.format("%s <- %s", firstOperand, secondOperand), isDisabled);
+            done = generateAssignment(String.format("%s <- %s", firstOperand, secondOperand), isDisabled);
             secondOperand = firstOperand;
         }
         else if (isDirect2) {
@@ -2205,11 +2253,12 @@ public class ArmGenerator extends Generator {
                     String tempReg = getAvailableRegister();
                     if (!tempReg.isEmpty()) {
                         // Okay, assign the operand to a register and multiply that
-                        generateAssignment(String.format("%s <- %s", tempReg, thirdOperand), isDisabled);
+                        done &= generateAssignment(String.format("%s <- %s", tempReg, thirdOperand), isDisabled);
                         thirdOperand = tempReg;
                     }
                     else {
                         appendComment("WARNING: This is illegal but we ran out of registers...", getIndent());
+                        done = false;
                     }
                 }
                 // END KGU#1014 2021-11-09
@@ -2224,6 +2273,7 @@ public class ArmGenerator extends Generator {
                 }
                 else {
                     appendComment("WARNING: This is illegal but we ran out of registers...", getIndent());
+                    done = false;
                 }
             }
             else {
@@ -2240,7 +2290,7 @@ public class ArmGenerator extends Generator {
                 // All three registers are identical - so they can't be temporary here
                 String tempReg = getAvailableRegister();
                 if (!tempReg.isEmpty()) {
-                    generateAssignment(String.format("%s <- %s", tempReg, secondOperand), isDisabled);
+                    done &= generateAssignment(String.format("%s <- %s", tempReg, secondOperand), isDisabled);
                     secondOperand = tempReg;
                 }
             }
@@ -2248,6 +2298,12 @@ public class ArmGenerator extends Generator {
         // END KGU#1014 2021-11-09
 
         addCode(String.format(code, operation, firstOperand, secondOperand, thirdOperand), getIndent(), isDisabled);
+        // START KGU#1016 2021-11-17: #1019 Revoke address association
+        if (!isDisabled) {
+            recordAddressAssignment(firstOperand, false);
+        }
+        return done && !isDisabled;
+        // END KGU#1016 2021-11-17
     }
 
     /**
@@ -2257,24 +2313,48 @@ public class ArmGenerator extends Generator {
      *
      * @param line       - the instruction to translate as string
      * @param isDisabled - whether this element or one of its ancestors is disabled
+     * @return {@code true} iff valid code was generated without trouble
      */
-    private void generateAddressAssignment(String line, boolean isDisabled) {
+    private boolean generateAddressAssignment(String line, boolean isDisabled) {
+        boolean done = true;
         line = line.replace(" ", "");
         String[] tokens = line.split(assignmentOperators);
 
         // FIXME This condition is redundant as it is part of the checked prerequisite for this method
         if (line.contains("indirizzo") || line.contains("address")) {
+            // expr should be the variable name of an array now
             String expr = tokens[1].replace("indirizzo", "").replace("address", "").replace("(", "").replace(")", "").trim();
             // START KGU#1000 2021-10-27: Bugfix #1004 this does not make sense with a register
             //addCode("LDR " + tokens[0] + ", =" + expr, getIndent(), isDisabled);
             if (!expr.matches(registerPattern0)) {
+                // START KGU#1016 2021-11-17 Bugfix #1019: We should intervene if we can't find the declaration
+                if (!isDisabled) {
+                    // Try to find a declared label expr
+                    String label = expr + syntaxDiffs[gnuEnabled ? 0 : 1][0] + '\t';
+                    boolean declFound = false;
+                    for (int i = code.count() - 1; !declFound && i >= 0; i--) {
+                        declFound = code.get(i).startsWith(label);
+                    }
+                    if (!declFound) {
+                        appendComment("An array " + expr + " was not initialized", getIndent());
+                        isDisabled = true;
+                    }
+                }
+                // END KGU#1016 2021-11-17
                 addCode("LDR " + tokens[0] + ", =" + expr, getIndent(), isDisabled);
+                // START KGU#1016 2021-11-17: Issue #1019 More precise tracking of address associations
+                if (!isDisabled) {
+                    recordAddressAssignment(tokens[0].trim(), true);
+                }
+                // END KGU#1016 2021-11-17
             } else {
                 this.appendComment("WARNING: Nonsense - registers haven't got an address!", getIndent());
                 this.appendComment(line, getIndent());
+                done = false;
             }
             // END KGU#1000 2021-10-27
         }
+        return done && !isDisabled;
     }
 
     /**
@@ -2286,18 +2366,20 @@ public class ArmGenerator extends Generator {
      *
      * @param line       - the instruction to translate as string
      * @param isDisabled - whether this element or one of its ancestors is disabled
+     * @return {@code true} iff valid code was generated without trouble
      */
-    private void generateMemoryAssignment(String line, boolean isDisabled) {
+    private boolean generateMemoryAssignment(String line, boolean isDisabled) {
         String codeLine = "%s %s, [%s]";
         line = line.replace(" ", "");
         String[] tokens = line.split(assignmentOperators);
+        int posAsgn = tokens[0].length();
 
         String expressionOperand; // string containing the memory expression
         String registerOperand; // string containing the register
         String operation; // the ARM operation to do (LDR or STR)
 
         // if the square brackets come before the assignment operator then we're in this case memory[R0] <- R1 so it's a STR operation
-        if (line.indexOf("[") < line.indexOf("<-") || line.indexOf("[") < line.indexOf(":=")) {
+        if (line.indexOf("[") < posAsgn) {
             operation = "STR";
             expressionOperand = tokens[0];
             registerOperand = tokens[1];
@@ -2307,6 +2389,11 @@ public class ArmGenerator extends Generator {
             operation = "LDR";
             expressionOperand = tokens[1];
             registerOperand = tokens[0];
+            // START KGU#1016 2021-11-17: Issue #1019 More precise tracking of address associations
+            if (!isDisabled) {
+                recordAddressAssignment(registerOperand.trim(), false);
+            }
+            // END KGU#1016 2021-11-17
         }
 
         // get everything between the square brackets and parse the expression
@@ -2325,6 +2412,7 @@ public class ArmGenerator extends Generator {
         }
 
         addCode(String.format(codeLine, operation, registerOperand, secondOperand), getIndent(), isDisabled);
+        return !isDisabled;
     }
 
     /**
@@ -2334,8 +2422,9 @@ public class ArmGenerator extends Generator {
      * @param line       - the string that contains the instruction to translate
      * @param isDisabled - whether this element or one of its ancestors is disabled
      * @param elem       - the inducing Instruction
+     * @return {@code true} iff valid code was generated without trouble
      */
-    private void generateString(String line, boolean isDisabled, Instruction elem) {
+    private boolean generateString(String line, boolean isDisabled, Instruction elem) {
 
         // START KGU#1002 2021-10-30: Issue #1007 We should handle non-ascii characters as well
         //String[] split = line.split("<- ?|:= ?");
@@ -2362,7 +2451,7 @@ public class ArmGenerator extends Generator {
         if (terminateStrings) {
             array.append(",0");
         }
-        generateArrayInitialization(String.format(format, tokens.get(0), array), isDisabled, elem);
+        return generateArrayInitialization(String.format(format, tokens.get(0), array), isDisabled, elem);
         // END KGU#1002 2021-10-30
     }
 
@@ -2523,6 +2612,11 @@ public class ArmGenerator extends Generator {
         // END KGU#1000 2021-10-27
         for (int i = code.count() - 1; i >= 0; i--) {
             String line = code.get(i);
+            // START KGU#1016 2021-11-17: Bugfix #1019 We must ignore comment lines
+            if (line.trim().startsWith(this.commentSymbolLeft())) {
+                continue;
+            }
+            // END KGU#1016 2021-11-17
             /* If row i contains register, instruction adr and 'v_'
              * then we found where the array gets assigned to a register.
              */
@@ -2619,6 +2713,22 @@ public class ArmGenerator extends Generator {
         return dim;
     }
     // END KGU#1001 2021-11-10
+    
+    // START KGU#1016 2021-11-17: New for issue #1019
+    /**
+     * Revokes a possible address association for the given assignment target {@code varName}
+     * if it is a register name
+     * @param varName - a variable name supposed to be a register name (will be checked)
+     * @param valid TODO
+     */
+    private void recordAddressAssignment(String varName, boolean valid) {
+        if (varName.matches(registerPattern0)) {
+            int rIndex = Integer.parseInt(varName.substring(1));
+            addressAssigned[rIndex] = valid;
+        }
+
+    }
+    // END KGU#1016 2021-11-17
 
     /**
      * This method checks if n is a power of two (i.e. contains exactly one set bit).
@@ -2686,10 +2796,21 @@ public class ArmGenerator extends Generator {
      * section header, more precisely before line {@link #dataInsertionLine}.
      * 
      * @param line - the line to be inserted
+     * @param asComment - whether the line is to be inserted as comment
      */
-    private void addToDataSection(String line) {
-        insertCode(line, this.dataInsertionLine);
+    // START KGU#1016 2021-11-17: Bugfix #1019 Argument 'asComment´ added
+    //private void addToDataSection(String line) {
+    //    insertCode(line, this.dataInsertionLine);
+    //}
+    private void addToDataSection(String line, boolean asComment) {
+        if (asComment) {
+            insertComment(line, "", this.dataInsertionLine);
+        }
+        else {
+            insertCode(line, this.dataInsertionLine);
+        }
     }
+    // END KGU#1016 2021-11-17
     
 //    /**
 //     * This method gets function's name
