@@ -68,7 +68,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2021-11-14/15   input instructions now cope with several variables, patterns sharpened
  *      Kay Gürtzig     2021-11-16/17   Bugfix #1019: Pattern for output instructions widened again;
  *                                      address associations more consistently tracked (to avoid unnecessary
- *                                      address assignments), disabled array assignments properly handled
+ *                                      address assignments), disabled array assignments properly handled;
+ *                                      Bugfix #1020: terminal return instructions had not been processed
  *
  ******************************************************************************************************
  *
@@ -166,6 +167,9 @@ public class ArmGenerator extends Generator {
     private static Pattern inputPattern = null;
     private static Pattern outputPattern = null;
     // END KGU#968 2021-04-24
+    // START KGU#1017 2021-11-17: Issue #1020
+    private static Pattern returnPattern = null;
+    // END KGU#1017 2021-11-17
     
     // START KGU#1012 2021-11-14: Restrictive mode
     /** May hold a restricting line parser */
@@ -445,6 +449,10 @@ public class ArmGenerator extends Generator {
                         stringLiteral2Pattern, stringLiteral1Pattern, variablePattern, variablePattern));
         // END KGU#968 2021-11-14
         outputPattern = Pattern.compile(getKeywordPattern(outputKeyword) + "([\\W].*|$)");
+        // START KGU#1017 2021-11-17: Issue #1020 Support terminal return instructions
+        String returnKeyword = CodeParser.getKeywordOrDefault("preReturn", "return");
+        returnPattern = Pattern.compile(getKeywordPattern(returnKeyword) + "([\\W].*|$)");
+        // END KGU#1017 2021-11-17
         alwaysReturns = mapJumps(_root.children);
         this.varNames = _root.retrieveVarNames().copy();
         this.isResultSet = varNames.contains("result", false);
@@ -590,6 +598,9 @@ public class ArmGenerator extends Generator {
         appendComment(_inst, _indent + getIndent());
 
         boolean isDisabled = _inst.isDisabled(true);
+        Subqueue sq = (Subqueue)_inst.parent;
+        boolean isLastRoutineElement = sq.parent instanceof Root
+                && _inst == sq.getElement(sq.getSize() - 1);
 
         if (!appendAsComment(_inst, _indent)) {
             StringList lines = _inst.getUnbrokenText();
@@ -607,7 +618,18 @@ public class ArmGenerator extends Generator {
                 // START KGU#968 2021-10-06: skip type definitions and declarations
                 //generateInstructionLine(line, isDisabled);
                 if (!Instruction.isMereDeclaration(line)) {
-                    generateInstructionLine(line, isDisabled, _inst);
+                    // START KGU#1017 2021-11-17: Issue #1020 care for terminal return
+                    //generateInstructionLine(line, isDisabled, _inst);
+                    if (isLastRoutineElement && i == lines.count()-1
+                            && returnPattern.matcher(line).matches()) {
+                        // FIXME there might be a little lower/upper case length bias!
+                        String expr = line.substring(CodeParser.getKeywordOrDefault("preReturn", "return").length());
+                        generateCodeReturn(_inst, expr.trim());
+                    }
+                    else {
+                        generateInstructionLine(line, isDisabled, _inst);
+                    }
+                    // END KGU#1017 2021-11-17
                 }
                 // END KGU#968 2021-10-06
             }
@@ -1228,7 +1250,6 @@ public class ArmGenerator extends Generator {
 
     @Override
     protected void generateCode(Jump _jump, String _indent) {
-        // FIXME Implement a subroutine return, a loop exit
         String colon = syntaxDiffs[gnuEnabled? 0 : 1][0];
         if (!appendAsComment(_jump, _indent)) {
             boolean isDisabled = _jump.isDisabled(false);
@@ -1273,22 +1294,9 @@ public class ArmGenerator extends Generator {
                     if (Jump.isReturn(line))
                     {
                         String argument = line.substring(preReturn.length()).trim();
-                        if (!argument.isEmpty())
-                        {
-                            // FIXME The expression will have to be compiled!
-                            if (argument.matches(variablePattern)) {
-                                argument = this.variablesToRegisters(argument);
-                            }
-                            else {
-                                String reg = getAvailableRegister();
-                                generateInstructionLine(reg + " <- " + argument, isDisabled, _jump);
-                                argument = reg;
-                            }
-                            addCode(String.format("STR %s, [SP,#13,#2]", argument), getIndent(), isDisabled);
-                        }
-                        addCode("LDMFD SP!, {R0-R12}", getIndent(), isDisabled);
-                        addCode("MOVS PC, LR", getIndent(), isDisabled);
-                        addCode("", getIndent(), false);
+                        // START KGU#1017 2021-11-17: Issue #1020 outsourced
+                        generateCodeReturn(_jump, argument);
+                        // END KGU#1017 2021-11-17
                     }
                     else if (Jump.isExit(line))
                     {
@@ -1339,6 +1347,35 @@ public class ArmGenerator extends Generator {
             }
         }
     }
+
+    // START KGU#1017 2021-11-17: Issue #1020 support terminal return instruction
+    /**
+     * Generates the code for a return instruction with given expression
+     * {@code _valueExpr} for the return value
+     * 
+     * @param _jump - the element containing the return instruction line
+     * @param _valueExpr - the expression to compute the return value
+     */
+    private void generateCodeReturn(Instruction _jump, String _valueExpr) {
+        boolean isDisabled = _jump.isDisabled(false);
+        if (!_valueExpr.isEmpty())
+        {
+            // FIXME The expression will have to be compiled!
+            if (_valueExpr.matches(variablePattern)) {
+                _valueExpr = this.variablesToRegisters(_valueExpr);
+            }
+            else {
+                String reg = getAvailableRegister();
+                isDisabled |= !generateInstructionLine(reg + " <- " + _valueExpr, isDisabled, _jump);
+                _valueExpr = reg;
+            }
+            addCode(String.format("STR %s, [SP,#13,#2]", _valueExpr), getIndent(), isDisabled);
+        }
+        addCode("LDMFD SP!, {R0-R12}", getIndent(), isDisabled);
+        addCode("MOVS PC, LR", getIndent(), isDisabled);
+        addCode("", getIndent(), false);
+    }
+    // END KGU#1017 2021-11-17
 
     /**
      * Not actually supported

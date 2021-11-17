@@ -35,6 +35,8 @@ package lu.fisch.structorizer.generators;
  *      Author          Date            Description
  *      ------          ----            -----------
  *      Kay Gürtzig     2021-11-10      First Issue (generated with GOLDprog.exe)
+ *      Kay Gürtzig     2021-11-17      Bugfix #1020: Preparation of Instruction lines with return syntax
+ *                                      ensured, keyword replacement in Jump elements improved
  *
  ******************************************************************************************************
  *
@@ -49,6 +51,9 @@ import com.creativewidgetworks.goldparser.engine.*;
 
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
+import lu.fisch.structorizer.elements.Jump;
+import lu.fisch.structorizer.elements.Root;
+import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.parsers.AuParser;
 import lu.fisch.structorizer.parsers.CodeParser;
 import lu.fisch.utils.StringList;
@@ -377,8 +382,9 @@ public class ArmLineParser implements GeneratorSyntaxChecker
 
 	//----------------------------- Preprocessor -----------------------------
 	
-	private String preprocessLine(String line, Element owner, boolean is1stLine)
+	private String preprocessLine(String line, Element owner, int lineNo)
 	{
+		Subqueue sq;
 		String className = owner.getClass().getSimpleName();
 		if (className.equals("Call")) {
 			line = "§CALL§ " + line;
@@ -389,17 +395,22 @@ public class ArmLineParser implements GeneratorSyntaxChecker
 			line = "§COND§ " + line;
 		}
 		else if (className.equals("Case")) {
-			line = (is1stLine ? "§CASE§ " : "§SELECT§ ") + line;
+			line = (lineNo == 0 ? "§CASE§ " : "§SELECT§ ") + line;
 		}
 		else if (className.equals("Jump")) {
 			if (line.trim().isEmpty()) {
 				line = "§LEAVE§";
 			}
 			else {
+				StringList tokens = Element.splitLexically(line, false);
 				String[] keys = {"preReturn", "preLeave", "preExit", "preThrow"};
 				for (String key: keys) {
 					String keyWord = CodeParser.getKeyword(key);
-					if (line.startsWith(keyWord)) {
+					// START KGU#1017 2021-11-17: Issue #1020 Consider case and non-tokens
+					//if (line.startsWith(keyWord)) {
+					StringList splitKey = Element.splitLexically(keyWord, false);
+					if (tokens.indexOf(splitKey, 0, CodeParser.ignoreCase) == 0) {
+					// END KGU#1017 2021-11-17
 						line = "§" + key.substring(3).toUpperCase() + "§"
 								+ line.substring(keyWord.length());
 						break;
@@ -411,7 +422,7 @@ public class ArmLineParser implements GeneratorSyntaxChecker
 			line = "§CATCH§" + line;
 		}
 		else {
-			StringList tokens = Element.splitLexically(line, true);
+			StringList tokens = Element.splitLexically(line, false);
 			if (owner instanceof For) {
 				String[] keys;
 				String[] markers;
@@ -425,7 +436,7 @@ public class ArmLineParser implements GeneratorSyntaxChecker
 				}
 				for (int i = 0; i < keys.length; i++) {
 					String keyWord = CodeParser.getKeyword(keys[i]);
-					StringList splitKey = Element.splitLexically(keyWord, true);
+					StringList splitKey = Element.splitLexically(keyWord, false);
 					int posKey = tokens.indexOf(splitKey, 0, !CodeParser.ignoreCase);
 					if (posKey >= 0) {
 						tokens.remove(posKey+1, posKey + splitKey.count());
@@ -433,10 +444,22 @@ public class ArmLineParser implements GeneratorSyntaxChecker
 					}
 				}
 			}
+			// START KGU#1017 2021-11-17: Issue #1020 Accept return lines in Instructions
+			else if (className.equals("Instruction") && Jump.isReturn(line)
+					&& lineNo == owner.getUnbrokenText().count()-1
+					&& owner.parent instanceof Subqueue
+					&& (sq = (Subqueue)owner.parent).getElement(sq.getSize()-1) == owner
+					&& sq.parent instanceof Root
+					&& ((Root)sq.parent).isSubroutine()) {
+				StringList splitKey = Element.splitLexically(CodeParser.getKeyword("preReturn"), false);
+				tokens.remove(1, splitKey.count());
+				tokens.set(0, "§RETURN§");
+			}
+			// END KGU#1017 2021-11-17
 			else {
 				String[] keys = {"input", "output"};
 				for (String key: keys) {
-					StringList splitKey = Element.splitLexically(CodeParser.getKeyword(key), true);
+					StringList splitKey = Element.splitLexically(CodeParser.getKeyword(key), false);
 					if (tokens.indexOf(splitKey, 0, !CodeParser.ignoreCase) == 0) {
 						tokens.remove(1, splitKey.count());
 						tokens.set(0, "§" + key.toUpperCase() + "§");
@@ -476,7 +499,7 @@ public class ArmLineParser implements GeneratorSyntaxChecker
 	@Override
 	public String checkSyntax(String _lineToParse, Element _element, int _lineNo) {
 		String trouble = null;
-		_lineToParse = preprocessLine(_lineToParse, _element, _lineNo == 0);
+		_lineToParse = preprocessLine(_lineToParse, _element, _lineNo);
 		
 		if (!parse(_lineToParse)) {
 			trouble = error;

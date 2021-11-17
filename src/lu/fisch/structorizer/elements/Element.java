@@ -128,6 +128,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2021-02-24      Enh. #410: "?" added as lexical delimiter and operator symbol
  *      Kay Gürtzig     2021-03-03      Issue #954: Modified breakpoint behaviour
  *      Kay Gürtzig     2021-06-10      Enh. #926, #979: New method getAnalyserMarkerBounds() to support tooltip
+ *      Kay Gürtzig     2021-11-17      Bugfix #1021 in getHighlightUnits()
  *
  ******************************************************************************************************
  *
@@ -4014,19 +4015,43 @@ public abstract class Element {
 			// END KGU#611/KGU#843 2020-04-12
 			// END KGU#64 2015-11-03
 
+			// START KGU#1018 2021-11-17: Bugfix #1021 We must consider composed keywords
 			// These markers might have changed by configuration, so don't cache them
-			StringList ioSigns = new StringList();
-			ioSigns.add(CodeParser.getKeywordOrDefault("input", "").trim());
-			ioSigns.add(CodeParser.getKeywordOrDefault("output", "").trim());
+			//StringList ioSigns = new StringList();
+			//ioSigns.add(CodeParser.getKeywordOrDefault("input", "").trim());
+			//ioSigns.add(CodeParser.getKeywordOrDefault("output", "").trim());
 			// START KGU#116 2015-12-23: Enh. #75 - highlight jump keywords
-			StringList jumpSigns = new StringList();
-			jumpSigns.add(CodeParser.getKeywordOrDefault("preLeave", "leave").trim());
-			jumpSigns.add(CodeParser.getKeywordOrDefault("preReturn", "return").trim());
-			jumpSigns.add(CodeParser.getKeywordOrDefault("preExit", "exit").trim());
+			//StringList jumpSigns = new StringList();
+			//jumpSigns.add(CodeParser.getKeywordOrDefault("preLeave", "leave").trim());
+			//jumpSigns.add(CodeParser.getKeywordOrDefault("preReturn", "return").trim());
+			//jumpSigns.add(CodeParser.getKeywordOrDefault("preExit", "exit").trim());
 			// START KGU#686 2019-03-18: Enh. #56
-			jumpSigns.add(CodeParser.getKeywordOrDefault("preThrow", "throw").trim());
+			//jumpSigns.add(CodeParser.getKeywordOrDefault("preThrow", "throw").trim());
 			// END KGU#686 2019-03-18
 			// END KGU#116 2015-12-23
+			String ioSign = null;
+			for (String ioKey: new String[] {"input", "output"}) {
+				StringList splitKey = splitLexically(CodeParser.getKeywordOrDefault(ioKey, ioKey), false);
+				if (parts.indexOf(splitKey, 0, CodeParser.ignoreCase) == 0) {
+					ioSign = parts.concatenate("", 0, splitKey.count());
+					parts.remove(1, splitKey.count());
+					parts.set(0, ioSign);
+					break;
+				}
+			}
+			String jumpSign = null;
+			if (ioSign == null) {
+				for (String jumpKey: new String[] {"preLeave", "preReturn", "preExit", "preThrow"}) {
+					StringList splitKey = splitLexically(CodeParser.getKeywordOrDefault(jumpKey, jumpKey.substring(3).toLowerCase()), false);
+					if (parts.indexOf(splitKey, 0, CodeParser.ignoreCase) == 0) {
+						jumpSign = parts.concatenate("", 0, splitKey.count());
+						parts.remove(1, splitKey.count());
+						parts.set(0, jumpSign);
+						break;
+					}
+				}
+			}
+			// END KGU#1018 2021-11-17
 
 			// START KGU#377 2017-03-30: Bugfix #333
 			parts.replaceAll("<-","\u2190");
@@ -4125,7 +4150,10 @@ public abstract class Element {
 						// if this part has to be coloured with io colour
 						// START KGU#165 2016-03-25: consider the new option
 						//else if(ioSigns.contains(display))
-						else if(ioSigns.contains(display, !CodeParser.ignoreCase))
+						// START KGU#1018 2021-11-17: Bugfix #1021
+						//else if(ioSigns.contains(display, !CodeParser.ignoreCase))
+						else if (i == 0 && display.equals(ioSign))
+						// END KGU#1018 2021-11-17
 						// END KGU#165 2016-03-25
 						{
 							// green, bold
@@ -4144,7 +4172,10 @@ public abstract class Element {
 						// START KGU#116 2015-12-23: Enh. #75
 						// START KGU#165 2016-03-25: consider the new case option
 						//else if(jumpSigns.contains(display))
-						else if(jumpSigns.contains(display, !CodeParser.ignoreCase))
+						// START KGU#1018 2021-11-17: Bugfix #1021
+						//else if(jumpSigns.contains(display, !CodeParser.ignoreCase))
+						else if (i == 0 && display.equals(jumpSign))
+						// END KGU#1018 2021-11-17
 						// END KGU#165 2016-03-25
 						{
 							// orange, bold

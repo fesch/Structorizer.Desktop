@@ -3057,7 +3057,7 @@ public class Root extends Element {
     		// Replace all split keywords by the respective configured strings
     		// This replacement will be aware of the case sensitivity preference
     		for (int kw = 0; kw < keywords.length; kw++)
-    		{    				
+    		{
     			if (keywords[kw].trim().length() > 0)
     			{
     				StringList keyTokens = splitKeywords.elementAt(kw);
@@ -3066,10 +3066,7 @@ public class Root extends Element {
     				while ((pos = tokens.indexOf(keyTokens, pos + 1, !CodeParser.ignoreCase)) >= 0)
     				{
     					tokens.set(pos, keywords[kw]);
-    					for (int j=1; j < keyLength; j++)
-    					{
-    						tokens.delete(pos+1);
-    					}
+    					tokens.remove(pos + 1, pos + keyLength);
     				}
     			}
     		}
