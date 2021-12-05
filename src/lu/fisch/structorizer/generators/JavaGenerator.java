@@ -80,6 +80,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2020-04-01      Enh. #348: Parallel code generation refined (result mechanism)
  *      Kay Gürtzig             2021-02-03      Issue #920: Transformation for "Infinity" literal
  *      Kay Gürtzig             2021-10-03      Bugfix #993: Wrong handling of constant parameters
+ *      Kay Gürtzig             2021-12-05      Bugfix #1024: Precautions against defective record initializers
  *
  ******************************************************************************************************
  *
@@ -603,7 +604,13 @@ public class JavaGenerator extends CGenerator
 		for (Entry<String, TypeMapEntry> compEntry: compInfo.entrySet()) {
 			String compName = compEntry.getKey();
 			TypeMapEntry compType = compEntry.getValue();
-			String compVal = comps.get(compName);
+			// START KGU#1021 2021-12-05: Bugfix #1024 Instruction might be defective
+			//String compVal = comps.get(compName);
+			String compVal = null;
+			if (comps != null) {
+				compVal = comps.get(compName);
+			}
+			// END KGU#1021 2021-12-05
 			if (isFirst) {
 				isFirst = false;
 			}

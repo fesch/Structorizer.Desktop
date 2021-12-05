@@ -39,6 +39,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2020-04-03      Enh. #828 - configuration and modifications for group export
  *      Kay Gürtzig     2020-04-22      Bugfix #854: Deterministic topological order of type definitions ensured
  *      Kay Gürtzig     2021-02-03      Issue #920: Transformation for "Infinity" literal, see comment
+ *      Kay Gürtzig     2021-12-05      Bugfix #1024: Precautions against defective record initializers
  *
  ******************************************************************************************************
  *
@@ -257,7 +258,13 @@ public class JsGenerator extends CGenerator {
 		boolean isFirst = true;
 		for (Entry<String, TypeMapEntry> compEntry: compInfo.entrySet()) {
 			String compName = compEntry.getKey();
-			String compVal = comps.get(compName);
+			// START KGU#1021 2021-12-05: Bugfix #1024 Instruction might be defective
+			//String compVal = comps.get(compName);
+			String compVal = null;
+			if (comps != null) {
+				compVal = comps.get(compName);
+			}
+			// END KGU#1021 2021-12-05
 			TypeMapEntry compType = compEntry.getValue();
 			if (!compName.startsWith("§") && compVal != null) {
 				if (isFirst) {

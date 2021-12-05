@@ -74,6 +74,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2020-11-08/09   Issue #882: Correct translation of random function calls,
  *                                              also: randomize -> srand, toDegrees -> rad2deg, toRadians -> deg2rad
  *      Kay Gürtzig             2021-02-03      Issue #920: Transformation for "Infinity" literal
+ *      Kay Gürtzig             2021-12-05      Bugfix #1024: Precautions against defective record initializers
  *
  ******************************************************************************************************
  *
@@ -462,23 +463,29 @@ public class PHPGenerator extends Generator
 		StringList result = new StringList();
 		result.add("array(");
 		HashMap<String, String> comps = Instruction.splitRecordInitializer(_recordValue, _typeEntry, false);
-		for (Entry<String, String> comp: comps.entrySet()) {
-			String compName = comp.getKey();
-			String compVal = comp.getValue();
-			if (!compName.startsWith("§") && compVal != null) {
-				result.add("\"" + compName + "\"");
-				result.add(" "); result.add("=>"); result.add(" ");
-				StringList tokens = Element.splitLexically(compVal, true);
-				if (tokens.contains("{")) {
-					tokens = transformInitializers(tokens);
+		// START KGU#1021 2021-12-05: Bugfix #1024 Instruction might be defective
+		if (comps != null) {
+		// END KGU#1021 2021-12-05
+			for (Entry<String, String> comp: comps.entrySet()) {
+				String compName = comp.getKey();
+				String compVal = comp.getValue();
+				if (!compName.startsWith("§") && compVal != null) {
+					result.add("\"" + compName + "\"");
+					result.add(" "); result.add("=>"); result.add(" ");
+					StringList tokens = Element.splitLexically(compVal, true);
+					if (tokens.contains("{")) {
+						tokens = transformInitializers(tokens);
+					}
+					result.add(tokens);
+					result.add(",");
 				}
-				result.add(tokens);
-				result.add(",");
 			}
+			if (!result.isEmpty() && result.get(result.count()-1).equals(",")) {
+				result.remove(result.count()-1);
+			}
+		// START KGU#1021 2021-12-05: Bugfix #1024
 		}
-		if (!result.isEmpty() && result.get(result.count()-1).equals(",")) {
-			result.remove(result.count()-1);
-		}
+		// END KGU#1021 2021-12-05
 		result.add(")");
 		return result;
 	}

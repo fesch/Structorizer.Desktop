@@ -71,6 +71,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2021-02-03      Issue #920: Attempt to transform "Infinity" literal
  *      Kay Gürtzig         2021-06-07      Issue #67: lineNumering option made plugin-specific
  *      Kay Gürtzig         2021-10-03/04   Bugfix #993: Wrong handling of constant parameters, array types, and mere declarations
+ *      Kay Gürtzig         2021-12-05      Bugfix #1024: Precautions against defective record initializers
  *
  ******************************************************************************************************
  *
@@ -783,6 +784,13 @@ public class BasGenerator extends Generator
 			return;
 		}
 		HashMap<String, String> comps = Instruction.splitRecordInitializer(_recordValue, _typeEntry, false);
+		// START KGU#1021 2021-12-05: Bugfix #1024 Instruction might be defective
+		if (comps == null) {
+			appendComment("ERROR: defective record initializer in diagram:", _indent);
+			appendComment(_recordValue, _indent);
+			return;
+		}
+		// END KGU#1021 2021-12-05
 		for (Entry<String, String> comp: comps.entrySet()) {
 			String compName = comp.getKey();
 			String compVal = comp.getValue();

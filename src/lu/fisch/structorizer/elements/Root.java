@@ -174,7 +174,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2021-10-03      Issue #991: Inconsistent Analyser check for result mechanism (case-ignorant)
  *      Kay Gürtzig     2021-10-05      Enh. #992: New Analyser check 30 against bracket faults
  *      Kay Gürtzig     2021-10-07      Bugfix #995: False Analyser accusations about insecure initialization status
- *      Kay Gürtzig     2021-11-12/14   Enh. #967 New plugin-specific Analyser syntax checks
+ *      Kay Gürtzig     2021-11-12/14   Enh. #967: New plugin-specific Analyser syntax checks
+ *      Kay Gürtzig     2021-12-05      Bugfix #1024: Malformed record initializer killed Analyser in check 24
  *      
  ******************************************************************************************************
  *
@@ -4996,19 +4997,28 @@ public class Root extends Element {
 							//HashMap<String, String> components = Element.splitRecordInitializer(tokens.concatenate("", posBrace));
 							HashMap<String, String> components = Element.splitRecordInitializer(tokens.concatenate("", posBrace), recType, false);
 							// END KGU#559 2018-07-20
-							Set<String> compNames = recType.getComponentInfo(true).keySet();
-							for (String compName: compNames) {
-								if (!compName.startsWith("§") && !components.containsKey(compName)) {
-									//error  = new DetectedError("Record component «"+compName+"» will not be modified/initialized!", _instr);
-									addError(_errors, new DetectedError(errorMsg(Menu.error24_6, compName), _instr), 24);																					
-								}
+							// START KGU#1021 2021-12-05: Bugfix #1024 components may be null!
+							if (components == null) {
+								addError(_errors, new DetectedError(errorMsg(Menu.error24_1, Integer.toString(i+1)), _instr), 24);
 							}
-							for (String compName: components.keySet()) {
-								if (!compName.startsWith("§") && !compNames.contains(compName)) {
-									//error  = new DetectedError("Record type «"+typeName+"» hasn't got a component «"+compName+"»!", _instr);
-									addError(_errors, new DetectedError(errorMsg(Menu.error24_7, new String[]{typeName, compName}), _instr), 24);																					
+							else {
+							// END KGU#1021 2021-12-05
+								Set<String> compNames = recType.getComponentInfo(true).keySet();
+								for (String compName: compNames) {
+									if (!compName.startsWith("§") && !components.containsKey(compName)) {
+										//error  = new DetectedError("Record component «"+compName+"» will not be modified/initialized!", _instr);
+										addError(_errors, new DetectedError(errorMsg(Menu.error24_6, compName), _instr), 24);																					
+									}
 								}
+								for (String compName: components.keySet()) {
+									if (!compName.startsWith("§") && !compNames.contains(compName)) {
+										//error  = new DetectedError("Record type «"+typeName+"» hasn't got a component «"+compName+"»!", _instr);
+										addError(_errors, new DetectedError(errorMsg(Menu.error24_7, new String[]{typeName, compName}), _instr), 24);																					
+									}
+								}
+							// START KGU#1021 2021-12-05: Bugfix #1024
 							}
+							// END KGU#1021 2021-12-05
 						}
 					}
 					// START KGU#388 2017-09-29: Enh. #423 (KGU#514 2018-04-03: extracted for bugfix #528)

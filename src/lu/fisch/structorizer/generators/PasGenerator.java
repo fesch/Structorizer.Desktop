@@ -97,6 +97,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2021-10-03      Bugfix #990: Made-up result types on exported procedures
  *                                          Bugfix #993: Wrong handling of constant parameters
  *                                          Fix KGU#994: Strange array index ranges like [-1..49] could occur
+ *      Kay Gürtzig         2021-12-05      Bugfix #1024: Precautions against defective record initializers
  *
  ******************************************************************************************************
  *
@@ -903,6 +904,13 @@ public class PasGenerator extends Generator
 	{
 		HashMap<String, String> components = Instruction.splitRecordInitializer(_expr, _typeEntry, false);
 	// END KGU#559 2018-07-20
+		// START KGU#1021 2021-12-05: Bugfix #1024 Instruction might be defective
+		if (components == null) {
+			appendComment("ERROR: defective record initializer for " + _varName + " in diagram:", _indent);
+			appendComment(_expr, _indent);
+			return;
+		}
+		// END KGU#1021 2021-12-05
 		if (_forConstant) {
 			String typeName = components.get("§TYPENAME§");
 			String indentPlus1 = _indent + this.getIndent();

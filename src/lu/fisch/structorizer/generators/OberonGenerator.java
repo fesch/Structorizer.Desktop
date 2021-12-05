@@ -91,6 +91,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2020-04-22      Enh. #855: Configurable default array / string size considered
  *      Kay Gürtzig             2020-04-24      Issue #861/1: Comment placement now according to the GNU Pascal Coding Standards
  *      Kay Gürtzig             2020-10-16      Bugfix #874: Nullpointer exception on Calls with non-ASCII letters in name
+ *      Kay Gürtzig             2021-12-05      Bugfix #1024: Precautions against defective record initializers
  *
  ******************************************************************************************************
  *
@@ -907,6 +908,13 @@ public class OberonGenerator extends Generator {
 		if (_forConstant) {
 			appendComment("Note: " + _varName + " was meant to be a record CONSTANT...", _indent);
 		}
+		// START KGU#1021 2021-12-05: Bugfix #1024 Instruction might be defective
+		if (components == null) {
+			appendComment("ERROR: defective record initializer in diagram:", _indent);
+			appendComment(_expr, _indent);
+			return;
+		}
+		// END KGU#1021 2021-12-05
 		for (Entry<String, String> comp: components.entrySet())
 		{
 			String compName = comp.getKey();
