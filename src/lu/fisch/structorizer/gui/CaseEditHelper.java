@@ -35,6 +35,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-02-05      First Issue for #915
  *      Kay Gürtzig     2021-02-10      Method checkValues now does the conversion of broken lines
  *                                      Method evaluateExpression now tries evaluation with Math. prefix
+ *      Kay Gürtzig     2021-12-13      Evaluation of binary literals ensured in evaluateExpression()
  *
  ******************************************************************************************************
  *
@@ -157,6 +158,14 @@ public class CaseEditHelper {
 			}
 			catch (EvalError exc) {}
 		}
+		// START KGU#1022 2021-12-13: Bugfix #1025 intpreter doesn't cop with binary literals
+		else if (expr.startsWith("0b")) {
+			try {
+				value = Integer.parseInt(expr.substring(2), 2);
+			}
+			catch (NumberFormatException nfe) {}
+		}
+		// END KGU#1022 2021-12-13
 		if (value == null) {
 			try {
 				value = interpreter.eval(expr + ";");

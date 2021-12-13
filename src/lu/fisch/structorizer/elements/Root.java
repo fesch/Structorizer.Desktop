@@ -176,6 +176,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2021-10-07      Bugfix #995: False Analyser accusations about insecure initialization status
  *      Kay Gürtzig     2021-11-12/14   Enh. #967: New plugin-specific Analyser syntax checks
  *      Kay Gürtzig     2021-12-05      Bugfix #1024: Malformed record initializer killed Analyser in check 24
+ *      Kay Gürtzig     2021-12-13      Bugfix #1025: Lacking evaluation of binary, octal and hexadecimal literals in check 27
  *      
  ******************************************************************************************************
  *
@@ -5376,7 +5377,21 @@ public class Root extends Element {
 					// Check if it is not a character literal
 					if (!constVal.endsWith("'") || !(constVal.startsWith("'\\") && constVal.length() > 3 || constVal.startsWith("'") && constVal.length() == 3)) {
 						try {
-							val = Integer.parseInt(constVal);
+							// START KGU#1022 2021-12-13: Bugfix #1025
+							//val = Integer.parseInt(constVal);
+							if (constVal.startsWith("0b")) {
+								val = Integer.parseInt(constVal.substring(2), 2);
+							}
+							else if (constVal.startsWith("0x")) {
+								val = Integer.parseInt(constVal.substring(2), 16);
+							}
+							else if (constVal.startsWith("0")) {
+								val = Integer.parseInt(constVal, 8);
+							}
+							else {
+								val = Integer.parseInt(constVal);
+							}
+							// END KGU#1022 2021-12-13
 							if (!values.add(val)) {
 								duplicates.addIfNew(constVal);
 							}
