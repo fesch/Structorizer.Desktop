@@ -68,10 +68,10 @@ Current development version 3.32-06 (2021-12-13)
       faulty, the LDR/STR impact on the base register was not factored in <2>
 - 05: Bugfix #1017: Several flaws on exporting arithmetic expressions and
       assignments as ARM code <2>
-- 06: Issue #1019 Arm export: Unnecessary output expression limitations lifted,
+- 06: Issue #1019 ARM export: Unnecessary output expression limitations lifted,
       superfluous array address assignments avoided, proper care for disabled
       array initializations <2>
-- 06: Bugfix #1020 Arm export did not recognize terminal return instructions
+- 06: Bugfix #1020 ARM export did not recognize terminal return instructions
       unless the element was of Jump type, neither does ARM syntax check <2>
 - 06: Bugfix #1021 Jump elements did not reliably recognize composed return/
       leave/exit/throw keywords, neither did syntax highlighting <2>
