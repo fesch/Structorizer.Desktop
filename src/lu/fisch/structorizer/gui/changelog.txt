@@ -1,4 +1,4 @@
-﻿Legend:
+Legend:
 -------
 [Foo]   -->     idea provided by Foo, coding done by Bob Fisch
 [Foo]2  -->     idea provided by Foo, coding done by Kay Gürtzig
