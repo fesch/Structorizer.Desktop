@@ -82,6 +82,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2020-04-22      Ensured that appendGlobalInitializations() does not eventually overwrite typeMap
  *      Kay Gürtzig             2021-02-03      Issue #920: Transformation for "Infinity" literal
  *      Kay Gürtzig             2021-02-13      Bugfix #935: NullPointerException in generateCode(For...)
+ *      Kay Gürtzig             2021-12-05      Bugfix #1024: Precautions against defective record initializers
  *
  ******************************************************************************************************
  *
@@ -439,17 +440,29 @@ public class PythonGenerator extends Generator
 				// We will now reorder the elements and drop the names
 				// START KGU#559 2018-07-20: Enh. #563 - smarter record initialization
 				//HashMap<String, String> comps = Instruction.splitRecordInitializer(tokens.concatenate("", posLBrace));
-				HashMap<String, String> comps = Instruction.splitRecordInitializer(tokens.concatenate("", posLBrace), typeEntry, false);
+				// START KGU#1021 2021-12-05: Bugfix #1024 Instruction might be defective
+				//HashMap<String, String> comps = Instruction.splitRecordInitializer(tokens.concatenate("", posLBrace), typeEntry, false);
+				String tail = tokens.concatenate("", posLBrace);
+				HashMap<String, String> comps = Instruction.splitRecordInitializer(tail, typeEntry, false);
+				// END KGU#1021 2021-12-05
 				// END KGU#559 2018-07-20
 				LinkedHashMap<String, TypeMapEntry> compDefs = typeEntry.getComponentInfo(true);
-				String tail = comps.get("§TAIL§");	// String part beyond the initializer
+				// START KGU#1021 2021-12-05: Bugfix #1024 Instruction might be defective
+				//String tail = comps.get("§TAIL§");	// String part beyond the initializer
+				if (comps != null) {
+					tail = comps.get("§TAIL§");	// String part beyond the initializer
+				}
+				// END KGU#1021 2021-12-05
 				// START KGU#795 2020-02-12: Issue #807 - we now use directories instead of recordtype lib
 				//String sepa = "(";	// initial "separator" is the opening parenthesis, then it will be comma
 				String sepa = "{";	// initial "separator" is the opening brace, then it will be comma
 				prevToken = "";
 				// END KGU#795 2020-02-12
 				for (String compName: compDefs.keySet()) {
-					if (comps.containsKey(compName)) {
+					// START KGU#1021 2021-12-05: Bugfix #1024 Instruction might be defective
+					//if (comps.containsKey(compName)) {
+					if (comps != null && comps.containsKey(compName)) {
+					// END KGU#1021 2021-12-05
 						// START KGU#795 2020-02-12: Issue #807 - we now use directories instead of recordtype lib
 						//prevToken += sepa + transformTokens(Element.splitLexically(comps.get(compName), true));
 						prevToken += sepa + "'" + compName + "': " + transformTokens(Element.splitLexically(comps.get(compName), true));

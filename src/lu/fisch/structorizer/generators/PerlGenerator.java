@@ -84,6 +84,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2020-03-20  Enh. #828, bugfix #836: Prepared for group and improved batch export
  *      Kay Gürtzig         2020-03-23  Bugfix #840 Conditions for code transformation w.r.t File API modified
  *      Kay Gürtzig         2021-02-03  Issue #920: Transformation for "Infinity" literal
+ *      Kay Gürtzig         2021-12-05  Bugfix #1024: Precautions against defective record initializers
  *
  ******************************************************************************************************
  *
@@ -523,16 +524,25 @@ public class PerlGenerator extends Generator {
 		StringList result = new StringList();
 		result.add(_typeEntry.typeName + "->new(\n");
 		HashMap<String, String> comps = Instruction.splitRecordInitializer(_recordValue, _typeEntry, false);
-		for (Entry<String, String> comp: comps.entrySet()) {
-			String compName = comp.getKey();
-			String compVal = comp.getValue();
-			if (!compName.startsWith("§") && compVal != null) {
-				result.add("\t" + compName);
-				result.add(" => ");
-				result.add(compVal);
-				result.add(",\n");
-			}
+		// START KGU#1021 2021-12-05: Bugfix #1024 Instruction might be defective
+		if (comps == null) {
+			result.add("\t" + this.commentSymbolLeft() + "DEFECTIVE: " + _recordValue + "\n");
 		}
+		else {
+		// END KGU#1021 2021-12-05
+			for (Entry<String, String> comp: comps.entrySet()) {
+				String compName = comp.getKey();
+				String compVal = comp.getValue();
+				if (!compName.startsWith("§") && compVal != null) {
+					result.add("\t" + compName);
+					result.add(" => ");
+					result.add(compVal);
+					result.add(",\n");
+				}
+			}
+		// START KGU#1021 2021-12-05: Bugfix #1024
+		}
+		// END KGU#1021 2021-12-05
 		result.add(");\n");
 		return result;
 	}

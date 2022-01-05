@@ -47,6 +47,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017-06-09      Enh. #416: Adaptations for execution line continuation
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
  *      Kay Gürtzig     2019-03-18      Issue #56: New throw flavour implemented
+ *      Kay Gürtzig     2021-11-17      Bugfix #1021: Keyword detection didn't work if they were not single tokens
  *
  ******************************************************************************************************
  *
@@ -273,17 +274,18 @@ public class Jump extends Instruction {
 	// START KGU#354 2017-03-03: Enh. #354 More consistent support for generators etc.
 	/**
 	 * Checks whether the given line contains a return statement
-	 * @param line the text line to be analysed
-	 * @return true if this has one line and matches the return syntax 
+	 * @param line - the text line to be analysed
+	 * @return {@code true} if {@code line} matches the return syntax 
 	 */
 	public static boolean isReturn(String line)
 	{
-		StringList tokens = Element.splitLexically(line, true);
-		return (tokens.indexOf(CodeParser.getKeyword("preReturn"), !CodeParser.ignoreCase) == 0);
+		StringList tokens = Element.splitLexically(line, false);
+		StringList keyTokens = Element.splitLexically(CodeParser.getKeyword("preReturn"), false);
+		return (tokens.indexOf(keyTokens, 0, !CodeParser.ignoreCase) == 0);
 	}
 	/**
 	 * Checks whether this element contains a return statement
-	 * @return true if this has one line and matches the leave syntax 
+	 * @return {@code true} if this has one line and matches the leave syntax 
 	 */
 	public boolean isReturn()
 	{
@@ -295,17 +297,18 @@ public class Jump extends Instruction {
 	}
 	/**
 	 * Checks whether the given line contains a leave statement
-	 * @param line the text line to be analysed
-	 * @return true if line matches the leave syntax 
+	 * @param line - the text line to be analysed
+	 * @return {@code true} if {@code line} matches the leave syntax 
 	 */
 	public static boolean isLeave(String line)
 	{
-		StringList tokens = Element.splitLexically(line, true);
-		return (tokens.indexOf(CodeParser.getKeyword("preLeave"), !CodeParser.ignoreCase) == 0);
+		StringList tokens = Element.splitLexically(line, false);
+		StringList keyTokens = Element.splitLexically(CodeParser.getKeyword("preLeave"), false);
+		return (tokens.indexOf(keyTokens, 0, !CodeParser.ignoreCase) == 0);
 	}
 	/**
 	 * Checks whether this element contains a leave statement
-	 * @return true if this has one line and matches the leave syntax 
+	 * @return {@code true} if this has one line and matches the leave syntax 
 	 */
 	public boolean isLeave()
 	{
@@ -317,17 +320,18 @@ public class Jump extends Instruction {
 	}
 	/**
 	 * Checks whether this line contains an exit statement
-	 * @param line the text line to be analysed
-	 * @return true if the given line matches the exit syntax 
+	 * @param line - the text line to be analysed
+	 * @return {@code true} if the given {@code line} matches the exit syntax 
 	 */
 	public static boolean isExit(String line)
 	{
-		StringList tokens = Element.splitLexically(line, true);
-		return (tokens.indexOf(CodeParser.getKeyword("preExit"), !CodeParser.ignoreCase) == 0);
+		StringList tokens = Element.splitLexically(line, false);
+		StringList keyTokens = Element.splitLexically(CodeParser.getKeyword("preExit"), false);
+		return (tokens.indexOf(keyTokens, 0, !CodeParser.ignoreCase) == 0);
 	}
 	/**
 	 * Checks whether this element contains an exit statement
-	 * @return true if this has one line and matches the exit syntax 
+	 * @return {@code true} if this has one line and matches the exit syntax 
 	 */
 	public boolean isExit()
 	{
@@ -342,17 +346,18 @@ public class Jump extends Instruction {
 	// START KGU#686 2019-03-18: Enh. #56 Support for try / catch / throw
 	/**
 	 * Checks whether this line contains a throw statement
-	 * @param line the text line to be analysed
-	 * @return true if the given line matches the exit syntax 
+	 * @param line - the text line to be analysed
+	 * @return {@code true} if the given {@code line} matches the throw syntax 
 	 */
 	public static boolean isThrow(String line)
 	{
-		StringList tokens = Element.splitLexically(line, true);
-		return (tokens.indexOf(CodeParser.getKeyword("preThrow"), !CodeParser.ignoreCase) == 0);
+		StringList tokens = Element.splitLexically(line, false);
+		StringList keyTokens = Element.splitLexically(CodeParser.getKeyword("preThrow"), false);
+		return (tokens.indexOf(keyTokens, 0, !CodeParser.ignoreCase) == 0);
 	}
 	/**
-	 * Checks whether this element contains an exit statement
-	 * @return true if this has one line and matches the exit syntax 
+	 * Checks whether this element contains a throw statement
+	 * @return {@code true} if this has one line and matches the throw syntax 
 	 */
 	public boolean isThrow()
 	{

@@ -112,6 +112,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2021-10-01      Bugfix #989: No expression translation in EXIT elements to C, C++, etc.
  *      Kay Gürtzig             2021-10-03      Bugfix #990: Made-up result types on exported procedures
  *                                              Bugfix #993: Wrong handling of constant parameters
+ *      Kay Gürtzig             2021-12-05      Bugfix #1024: Precautions against defective record initializers
  *
  ******************************************************************************************************
  *
@@ -856,7 +857,13 @@ public class CGenerator extends Generator {
 		boolean isFirst = true;
 		for (Entry<String, TypeMapEntry> compEntry: compInfo.entrySet()) {
 			String compName = compEntry.getKey();
-			String compVal = comps.get(compName);
+			// START KGU#1021 2021-12-05: Bugfix #1024 Instruction might be defective
+			//String compVal = comps.get(compName);
+			String compVal = null;
+			if (comps != null) {
+				compVal = comps.get(compName);
+			}
+			// END KGU#1021 2021-12-05
 			if (isFirst) {
 				isFirst = false;
 			}
@@ -2801,6 +2808,13 @@ public class CGenerator extends Generator {
 		// END KGU#771 2019-11-24
 		HashMap<String, String> comps = Instruction.splitRecordInitializer(_recordValue, _typeEntry, false);
 	// END KGU#559 2018-07-20
+		// START KGU#1021 2021-12-05: Bugfix #1024 Instruction might be defective
+		if (comps == null) {
+			appendComment("ERROR: defective record initializer in diagram:", _indent);
+			appendComment(_recordValue, _indent);
+			return;
+		}
+		// END KGU#1021 2021-12-05
 		for (Entry<String, String> comp: comps.entrySet()) {
 			String compName = comp.getKey();
 			String compVal = comp.getValue();
