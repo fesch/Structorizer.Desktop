@@ -16,10 +16,10 @@
 		<option name="fixedColumnText" type="Unsigned" title="Column of ignored text in fixed format" help="Column number where the so-called Program Name Area begins (in fixed format; default: 73)." default="73" />
 	</plugin>
 	<plugin title="Java-SE8" 			class="lu.fisch.structorizer.parsers.JavaParser" icon="">
-		<option name="convert_syntax" type="Boolean" title="Convert declarations etc. to Pascal/Structorizer style" help="This setting slightly raises the chance of executability and re-export in Structorizer " />
+		<option name="convert_syntax" type="Boolean" title="Convert declarations etc. to Pascal/Structorizer style" help="This setting slightly raises the chance of executability and re-export in Structorizer " default="true" />
 	</plugin>
 	<plugin title="Processing" 			class="lu.fisch.structorizer.parsers.ProcessingParser" icon="">
-		<option name="convert_syntax" type="Boolean" title="Convert declarations etc. to Pascal/Structorizer style" help="This setting slightly raises the chance of executability and re-export in Structorizer" />
+		<option name="convert_syntax" type="Boolean" title="Convert declarations etc. to Pascal/Structorizer style" help="This setting slightly raises the chance of executability and re-export in Structorizer" default="true" />
 	</plugin>
     
 </plugins>
