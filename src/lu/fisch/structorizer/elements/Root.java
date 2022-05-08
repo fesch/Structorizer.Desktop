@@ -4284,8 +4284,8 @@ public class Root extends Element {
 			else if (!isReturn && tokens.contains("==") || isReturn && tokens.contains("<-"))
 			// END KGU#297 2016-11-22
 			{
-			        //error  = new DetectedError("You probably made an assignment error. Please check this instruction!",(Element) _node.getElement(i));
-			        addError(_errors, new DetectedError(errorMsg(Menu.error11,""), ele), 11);
+				//error  = new DetectedError("You probably made an assignment error. Please check this instruction!",(Element) _node.getElement(i));
+				addError(_errors, new DetectedError(errorMsg(Menu.error11,""), ele), 11);
 			}
 			
 			// CHECK: wrong multi-line instruction (#10 - new!)	

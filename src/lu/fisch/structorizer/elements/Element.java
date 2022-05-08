@@ -327,6 +327,7 @@ public abstract class Element {
 	" - Processing: Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
 	" - Struktogrammeditor: Kay Gürtzig\n"+
 	" - hus-Struktogrammer: Kay Gürtzig\n"+
+	" - sbide: Kay Gürtzig\n"+
 	"\n"+
 	"License setup and checking done by\n"+
 	" - Marcus Radisch <radischm@googlemail.com>\n"+
@@ -367,6 +368,7 @@ public abstract class Element {
 	" - David Tremain <DTremain@omnisource.com>\n"+
 	" - Rolf Schmidt <rolf.frogs@t-online.de>\n"+
 	" - Benjamin Neuberg (https://github.com/newboerg)\n"+
+	" - Johannes Kässinger <johannes.kaessinger@gmail.com>\n" +
 	" - Simon Sobisch (https://github.com/Gitmensch)\n"+
 	
 	"\n"+

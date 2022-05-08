@@ -236,6 +236,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-09-18      Bugfix #983: Summoning a subroutine to an editor unduly turned it 'changed'
  *      Kay Gürtzig     2021-10-29      Issue #1004: Export/import option dialogs now respect plugin-specific option defaults
  *      Kay Gürtzig     2021-11-14      Enh. #967: Analyser preferences enhanced by plugin-specific checks
+ *      Kay Gürtzig     2022-05-08      Bugfix #1033: Diagram import left a stale Analyser report list.
  *
  ******************************************************************************************************
  *
@@ -6812,6 +6813,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				currentDirectory = dlgOpen.getSelectedFile();
 				redraw();
+				// START KGU#1028 2022-05-08: Bugfix #1033 - Report list got stale
+				analyse();
+				// END KGU#1028 2022-05-08
 			}
 		} catch (Exception ex) {
 			String message = ex.getLocalizedMessage();

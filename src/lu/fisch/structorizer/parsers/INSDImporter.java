@@ -31,7 +31,7 @@ package lu.fisch.structorizer.parsers;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2017.04.26      First Issue
+ *      Kay Gürtzig     2017-04-26      First Issue
  *
  ******************************************************************************************************
  *
@@ -54,28 +54,42 @@ public interface INSDImporter {
 
 	/**
 	 * Returns a title for dialog message references
+	 * 
 	 * @return the importer name for dialog
 	 */
 	public String getDialogTitle();
 
 	/**
 	 * Returns a description of the file type for the file chooser
+	 * 
 	 * @return file description text
 	 */
 	public String getFileDescription();
 
 	/**
-	 * Returns expected file name extensions for the file filter 
-	 * @return list of extensions (without dot!)
+	 * Returns expected file name extensions for the file filter
+	 * 
+	 * @return list of extensions (without dot!) as String array
 	 */
 	public String[] getFileExtensions();
 
 	/**
-	 * Returns a suitable FileFilter matching the parameters provided by
+	 * Returns a suitable {@code FileFilter} matching the parameters provided by
 	 * {@link #getFileDescription()} and {@link #getFileExtensions()}.
-	 * @return
+	 * 
+	 * @return the {@link javax.swing.filechooser.FileFilter} object
 	 */
 	public javax.swing.filechooser.FileFilter getFileFilter();
 	
+	/**
+	 * Parses the file with path {@code _filename} and returns the resulting
+	 * diagram root.
+	 * 
+	 * @param _filename - file path of the text file to be parsed
+	 * @return the {@link Root} object of the NS diagram
+	 * 
+	 * @throws SAXException - in case of an inconsistent XML structure
+	 * @throws IOException - in case of some more general IO error
+	 */
 	public Root parse(String _filename) throws SAXException, IOException;
 }

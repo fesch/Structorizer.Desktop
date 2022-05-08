@@ -1086,7 +1086,7 @@ public class JavaParser extends CodeParser
 				// Filter BOM sequence?
 				boolean first = "UTF-8".equals(_encoding);
 				//Read File Line By Line
-				while ((strLine = br.readLine()) != null)   
+				while ((strLine = br.readLine()) != null)
 				{
 					checkCancelled();
 					
