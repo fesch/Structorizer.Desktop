@@ -744,11 +744,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * preliminary check.
 	 *
 	 * @param root - the new diagram root
-	 * @param askToSave - in case the rcent {@link Root} has unsaved changes,
-	 * ask to save it?
+	 * @param askToSave - in case the recent {@link Root} has unsaved changes,
+	 *     ask to save it?
 	 * @param draw - If true then the work area will be redrawn
-	 * @return true if {@code root} wasn't null and has properly replaced the
-	 * current diagram
+	 * @return {@code true} if {@code root} wasn't {@code null} and has properly replaced the
+	 *     current diagram
+	 *
 	 * @see #setRootIfNotRunning(Root)
 	 */
 	//public boolean setRoot(Root root, boolean askToSave)
@@ -6777,7 +6778,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 */
 	public void importNSD(String _className, Vector<HashMap<String, String>> _specificOptions) {
 		// only save if something has been changed
-		saveNSD(true);
+		// START KGU#1028 2022-05-08: Bugfix #1033 now integrated in setRoot()
+		//saveNSD(true);
+		// END KGU#1028 2022-05-08
 
 		if (!this.checkRunning()) {
 			return;	// Don't proceed if the root is being executed
@@ -6806,15 +6809,20 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if (result == JFileChooser.APPROVE_OPTION) {
 				//boolean hil = root.highlightVars;
 				// FIXME: Replace this with a generalized version of openNSD(String)
-				root = parser.parse(dlgOpen.getSelectedFile().toURI().toString());
-				//root.highlightVars = hil;
-				if (Element.E_VARHIGHLIGHT) {
-					root.retrieveVarNames();	// Initialise the variable table, otherwise the highlighting won't work
-				}
-				currentDirectory = dlgOpen.getSelectedFile();
-				redraw();
 				// START KGU#1028 2022-05-08: Bugfix #1033 - Report list got stale
-				analyse();
+				//root = parser.parse(dlgOpen.getSelectedFile().toURI().toString());
+				Root root = parser.parse(dlgOpen.getSelectedFile().toURI().toString());
+				if (root != null) {
+				// END KGU#1028 2022-05-08
+					//root.highlightVars = hil;
+					if (Element.E_VARHIGHLIGHT) {
+						root.retrieveVarNames();	// Initialise the variable table, otherwise the highlighting won't work
+					}
+					currentDirectory = dlgOpen.getSelectedFile();
+				// START KGU#1028 2022-05-08: Bugfix #1033 - Report list got stale
+				//redraw();
+					this.setRoot(root, true, true);
+				}
 				// END KGU#1028 2022-05-08
 			}
 		} catch (Exception ex) {

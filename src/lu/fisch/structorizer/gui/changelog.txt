@@ -81,8 +81,9 @@ Current development version 3.32-07 (2022-05-08)
       literals in CASE selector consistency checks.
 - 06: Bugfix #1026 Line continuation in Jump elements fooled Analyser <2>
 - 07: Issue #1029: New default value for Processing/Java import option <2>
-- 07: Enh. #1032: New diagram import from sbide files <2>
+- 07: Enh. #1032: New diagram import from www.sbide.de files <2>
 - 07: Bugfix #1033: Analyser refresh was lacking after diagram import <2>
+- 07: Issue #1034: hus-Struktogrammer import deficiencies mended <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>

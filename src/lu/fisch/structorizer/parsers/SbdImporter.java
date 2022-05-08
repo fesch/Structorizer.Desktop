@@ -70,11 +70,14 @@ import lu.fisch.utils.StringList;
 public class SbdImporter implements INSDImporter {
 
 	/**
-	 * StringList of supported sbde file names
+	 * StringList of data type names supported by sbide
 	 */
 	private static final StringList SBIDE_TYPES = StringList.explode("int,float,char,vint,vfloat,vchar", ",");
 	
-	private static final String ARRAY_INDEX_WARNING = "Caution: Indexing of the array may be biased!";
+	/**
+	 * Comment string to be applied to elements containing array element access
+	 */
+	private static final String ARRAY_INDEX_WARNING = "Caution: array index base was adapted!";
 	
 	/**
 	 * Holds the names of variables that were declared as arrays
@@ -82,7 +85,7 @@ public class SbdImporter implements INSDImporter {
 	private StringList arrayVariables = new StringList();
 	
 	/**
-	 * 
+	 * Formal constructor
 	 */
 	public SbdImporter() {
 	}
@@ -206,7 +209,9 @@ public class SbdImporter implements INSDImporter {
 				StringList content = tokens.subSequence(3, posBrace);
 				content.replaceAll("∧", "and");
 				content.replaceAll("∨", "or");
-				content.replaceInElements("↵", "\\n");
+				content.replaceInElements("↵", "\\n");	// Should only occur within String literals
+				content.replaceAll("[", "[(");
+				content.replaceAll("]", ")-1]");
 				content.replaceAllBetween("Ausgabe", CodeParser.getKeyword("output"), true, 0, 1);
 				content.replaceAllBetween("output", CodeParser.getKeyword("output"), true, 0, 1);
 				content.replaceAllBetween("Eingabe", CodeParser.getKeyword("input"), true, 0, 1);
@@ -224,7 +229,9 @@ public class SbdImporter implements INSDImporter {
 				StringList cond = tokens.subSequence(3, posBrace);
 				cond.replaceAll("∧", "and");
 				cond.replaceAll("∨", "or");
-				cond.replaceInElements("↵", "\\n");
+				cond.replaceInElements("↵", "\\n");	// Should only occur within String literals
+				cond.replaceAll("[", "[(");
+				cond.replaceAll("]", ")-1]");
 				Alternative alt = new Alternative(cond.concatenate(""));
 				if (refersToArray(cond)) {
 					alt.setComment(ARRAY_INDEX_WARNING);
@@ -285,7 +292,9 @@ public class SbdImporter implements INSDImporter {
 				StringList cond = tokens.subSequence(3, posBrace);
 				cond.replaceAll("∧", "and");
 				cond.replaceAll("∨", "or");
-				cond.replaceInElements("↵", "\\n");
+				cond.replaceInElements("↵", "\\n");	// Should only occur within String literals
+				cond.replaceAll("[", "[(");
+				cond.replaceAll("]", ")-1]");
 				String condStr = cond.concatenate("");
 				if (typeCode == 4) {
 					loop = new While(condStr);
@@ -330,7 +339,15 @@ public class SbdImporter implements INSDImporter {
 				int typeIx = SBIDE_TYPES.indexOf(typeStr);
 				if (typeIx >= SBIDE_TYPES.count()/2) {
 					// Seems to be a vector, cut off the "v" prefix and get the size
-					typeStr = "array[1 .. " + tokens.get(5) + "] of " + typeStr.substring(1);
+					String sizeStr = tokens.get(5);
+					try {
+						int size = Integer.parseInt(sizeStr);
+						sizeStr = Integer.toString(size-1);
+					}
+					catch (NumberFormatException ex1) {
+						sizeStr += "-1";
+					}
+					typeStr = "array[0 .. " + sizeStr + "] of " + typeStr.substring(1);
 					arrayVariables.addIfNew(tokens.get(3));
 				}
 				sb.append(tokens.get(3));	// Variable name
@@ -357,7 +374,7 @@ public class SbdImporter implements INSDImporter {
 	 * was declared as array or a pair of brackets.
 	 */
 	private boolean refersToArray(StringList tokens) {
-		boolean hasBrackets = tokens.contains("[") && tokens.contains("]");
+		boolean hasBrackets = tokens.contains("[(") && tokens.contains(")-1]");
 		for (int i = 0; i < arrayVariables.count(); i++) {
 			if (tokens.contains(arrayVariables.get(i)) && hasBrackets) {
 				return true;
@@ -371,6 +388,7 @@ public class SbdImporter implements INSDImporter {
 	 * compares the filename extension with the extensions configured in and
 	 * provided by {@link #getFileExtensions()}. Helper method for method 
 	 * {@link #accept(File)}.
+	 * 
 	 * @param _filename
 	 * @return true if the import file is formally welcome. 
 	 */
