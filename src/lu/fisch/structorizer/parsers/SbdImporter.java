@@ -31,6 +31,8 @@ import javax.swing.filechooser.FileFilter;
 
 import org.xml.sax.SAXException;
 
+import bsh.EvalError;
+import bsh.Interpreter;
 import lu.fisch.structorizer.elements.Alternative;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.ILoop;
@@ -54,6 +56,7 @@ import lu.fisch.utils.StringList;
  *      Author          Date            Description
  *      ------          ----            -----------
  *      Kay Gürtzig     2022-05-07      First Issue to implement #1032
+ *      Kay Gürtzig     2022-05-11      More stable array size detection (constant expressions accepted)
  *
  ******************************************************************************************************
  *
@@ -63,7 +66,7 @@ import lu.fisch.utils.StringList;
  ******************************************************************************************************///
 
 /**
- * Importer class for sbd files from editor www.sbide.de
+ * Importer class for sbd files from structogram editor www.sbide.de
  * 
  * @author Kay Gürtzig
  */
@@ -75,14 +78,27 @@ public class SbdImporter implements INSDImporter {
 	private static final StringList SBIDE_TYPES = StringList.explode("int,float,char,vint,vfloat,vchar", ",");
 	
 	/**
+	 * StringList of arithmetic operators supported by sbide and parentheses
+	 */
+	private static final StringList SBIDE_OPERATORS = StringList.explode("+,-,*,/,mod,(,)", ",");
+	/**
 	 * Comment string to be applied to elements containing array element access
 	 */
 	private static final String ARRAY_INDEX_WARNING = "Caution: array index base was adapted!";
+	/**
+	 * Default maximum array index (for not evaluable size expressions)
+	 */
+	private static final String DEFAULT_MAX_INDEX = "99";
 	
 	/**
 	 * Holds the names of variables that were declared as arrays
 	 */
 	private StringList arrayVariables = new StringList();
+	
+	/**
+	 * Bean shell interpreter for constant expression evaluation
+	 */
+	private Interpreter interpreter = null;
 	
 	/**
 	 * Formal constructor
@@ -202,7 +218,9 @@ public class SbdImporter implements INSDImporter {
 		}
 		String typeStr = tokens.get(1);
 		try {
+			// Identify the type of block (declaration / element)
 			int typeCode = Integer.parseInt(typeStr);
+			// typeStr was a number, so it is an element
 			switch (typeCode) {
 			case 1:	// Instruction
 			{
@@ -212,10 +230,10 @@ public class SbdImporter implements INSDImporter {
 				content.replaceInElements("↵", "\\n");	// Should only occur within String literals
 				content.replaceAll("[", "[(");
 				content.replaceAll("]", ")-1]");
-				content.replaceAllBetween("Ausgabe", CodeParser.getKeyword("output"), true, 0, 1);
 				content.replaceAllBetween("output", CodeParser.getKeyword("output"), true, 0, 1);
-				content.replaceAllBetween("Eingabe", CodeParser.getKeyword("input"), true, 0, 1);
+				content.replaceAllBetween("Ausgabe", CodeParser.getKeyword("output"), true, 0, 1);
 				content.replaceAllBetween("input", CodeParser.getKeyword("input"), true, 0, 1);
+				content.replaceAllBetween("Eingabe", CodeParser.getKeyword("input"), true, 0, 1);
 				Instruction instr = new Instruction(content.concatenate(""));
 				if (refersToArray(content)) {
 					instr.setComment(ARRAY_INDEX_WARNING);
@@ -332,20 +350,46 @@ public class SbdImporter implements INSDImporter {
 			tokens.remove(0, posBrace+1);
 		}
 		catch (NumberFormatException ex) {
-			if (posBrace == 6 && tokens.get(2).isBlank() && tokens.get(4).isBlank()) {
+			// typeStr was not a number but a type name, so it's a declaration
+			if (posBrace >= 6 && tokens.get(2).isBlank() && tokens.get(4).isBlank()) {
 				// Seems to be a declaration
 				StringBuilder sb = new StringBuilder();
 				sb.append("var ");
+				// Get the index of the data type
 				int typeIx = SBIDE_TYPES.indexOf(typeStr);
+				String comment = null;
 				if (typeIx >= SBIDE_TYPES.count()/2) {
 					// Seems to be a vector, cut off the "v" prefix and get the size
-					String sizeStr = tokens.get(5);
-					try {
-						int size = Integer.parseInt(sizeStr);
-						sizeStr = Integer.toString(size-1);
+					comment = ARRAY_INDEX_WARNING;
+					// FIXME The size information may be an expression, without blanks
+					StringList sizeTokens = tokens.subSequence(5, posBrace);
+					String sizeStr = sizeTokens.concatenate();
+					if (sizeTokens.count() == 1) {
+						try {
+							int size = Integer.parseInt(sizeStr);
+							sizeStr = Integer.toString(size-1);
+						}
+						catch (NumberFormatException ex1) {
+							comment += "\nDefault size for not evaluable value " + sizeStr;
+							sizeStr = DEFAULT_MAX_INDEX;	// Same default size as in sbide
+						}
 					}
-					catch (NumberFormatException ex1) {
-						sizeStr += "-1";
+					else {
+						if (interpreter == null) {
+							interpreter = new Interpreter();
+						}
+						try {
+							sizeTokens.replaceAll("mod", "%");
+							Object sizeObj = interpreter.eval(sizeTokens.concatenate());
+							if (sizeObj instanceof Integer) {
+								int size = ((Integer)sizeObj);
+								sizeStr = Integer.toString(size - 1);
+							}
+						}
+						catch (EvalError ev) {
+							comment += "\nDefault size for not evaluable value " + sizeStr;
+							sizeStr = DEFAULT_MAX_INDEX;	// Same default size as in sbide
+						}
 					}
 					typeStr = "array[0 .. " + sizeStr + "] of " + typeStr.substring(1);
 					arrayVariables.addIfNew(tokens.get(3));
@@ -353,7 +397,11 @@ public class SbdImporter implements INSDImporter {
 				sb.append(tokens.get(3));	// Variable name
 				sb.append(": ");
 				sb.append(typeStr);			// data type description
-				node.addElement(new Instruction(sb.toString()));
+				Instruction decl = new Instruction(sb.toString());
+				if (comment != null) {
+					decl.setComment(StringList.explode(comment, "\n"));
+				}
+				node.addElement(decl);
 			}
 			else if (posBrace < 0) {
 				// Syntax error
@@ -374,10 +422,11 @@ public class SbdImporter implements INSDImporter {
 	 * was declared as array or a pair of brackets.
 	 */
 	private boolean refersToArray(StringList tokens) {
-		boolean hasBrackets = tokens.contains("[(") && tokens.contains(")-1]");
-		for (int i = 0; i < arrayVariables.count(); i++) {
-			if (tokens.contains(arrayVariables.get(i)) && hasBrackets) {
-				return true;
+		if (tokens.contains("[(") && tokens.contains(")-1]")) {
+			for (int i = 0; i < arrayVariables.count(); i++) {
+				if (tokens.contains(arrayVariables.get(i))) {
+					return true;
+				}
 			}
 		}
 		return false;
