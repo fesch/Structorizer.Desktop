@@ -14,26 +14,27 @@ set -e
 #
 #      Author                         Date         Description
 #      ------                         ----         -----------
-#      Klaus-Peter Reimers            2008.06.04   First Issue
-#      Bob Fisch                      2006.06.06   Script modified to work
+#      Klaus-Peter Reimers            2008-06-04   First Issue
+#      Bob Fisch                      2006-06-06   Script modified to work
 #                                                  within an Eclipse project
-#      Bob Fisch & Philipp Hübner     2009.07.08   Scripting ameliorations
-#      Kay Gürtzig                    2016.12.27   More resource files copied
-#      Simon Sobisch                  2017.03.06   Check for javac
-#      Kay Gürtzig                    2018.01.26   Additional icon directories
+#      Bob Fisch & Philipp Hübner     2009-07-08   Scripting ameliorations
+#      Kay Gürtzig                    2016-12-27   More resource files copied
+#      Simon Sobisch                  2017-03-06   Check for javac
+#      Kay Gürtzig                    2018-01-26   Additional icon directories
 #                                                  copied
-#      Simon Sobisch                  2018.06.08   Create bin directory, if missing
-#      Simon Sobisch                  2018.09.17   added missing ressources;
+#      Simon Sobisch                  2018-06-08   Create bin directory, if missing
+#      Simon Sobisch                  2018-09-17   added missing ressources;
 #                                                  fix msys classpath;
 #                                                  Include Apple extensions if
 #                                                  OS matches;
 #                                                  changed script output
-#      Kay Gürtzig                    2018.09.18   bsh-0.2b4.jar replaced with bsh-0.2b6.jar
-#      Kay Gürtzig                    2018.09.27   Added missing *.cgt and *.egt resources
+#      Kay Gürtzig                    2018-09-18   bsh-2.0b4.jar replaced with bsh-2.0b6.jar
+#      Kay Gürtzig                    2018-09-27   Added missing *.cgt and *.egt resources
 #      Kay Gürtzig                    2019-01-16   Added missing *.nsd resources in parsers (#665)
 #      Simon Sobisch                  2020-01-20   added handling for nostart argument,
 #                                                  default to detached start
 #      Kay Gürtzig                    2020-04-20   Copy command for logging.properties added
+#      Kay Gürtzig                    2022-01-05   bsh-2.0b6.jar replaced with bsh-0.2b6.jar
 #
 ################################################################################
 
@@ -61,7 +62,7 @@ esac
 str_javac_opts="-d ../bin/ -encoding utf8 $*"
 
 # jar list
-jars="bsh-2.0b6                     \
+jars="bsh-2.1.0                     \
       swing-layout-1.0.3            \
       freehep-graphics2d-2.1.1      \
       freehep-graphicsio-2.1.1      \

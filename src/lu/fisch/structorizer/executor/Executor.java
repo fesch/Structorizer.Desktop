@@ -210,6 +210,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2021-04-14      Bugfix #969: Precaution against relative currentDirectory (caused NPE)
  *      Kay Gürtzig     2021-11-01      Bugfix #1013: Eternal loop in setVar(...) on array access after some extraordinary
  *                                      array initialisation.
+ *      Kay Gürtzig     2022-01-05      Adaptations to modified EvalError API on upgrading from bsh-2.0b6.jar to bsh-2.1.0.jar
  *
  ******************************************************************************************************
  *
@@ -289,7 +290,7 @@ package lu.fisch.structorizer.executor;
  *        time estimation. Both count numbers (execution counter / instruction load) are now written
  *        to the upper right corner of any element, and additionally a scaled colouring from deep
  *        blue to hot red is used to visualize the hot spots and the lost places.
- *      2015.12.10 (KGU#97, KGU#99)
+ *      2015-12-10 (KGU#97, KGU#99)
  *          Bug/ER #48: An attached diagramController (usually the TurtleBox) had not immediately been
  *            informed about a delay change, such that e.g. the Turtleizer still crept in slow motion
  *            while the Executor had no delay anymore. Now a suitable diagramController will be informed.
@@ -298,24 +299,24 @@ package lu.fisch.structorizer.executor;
  *            For scalar variables, values are now assigned as primitive type if possible (via
  *            interpreter.eval()). For array elements, in contrast, the comparison expression  will be
  *            converted, such that == and != will be replaced by .equals() calls.
- *      2015.11.23 (KGU#84) Pausing from input and output dialogs enabled (Enhancement issue #36)
+ *      2015-11-23 (KGU#84) Pausing from input and output dialogs enabled (Enhancement issue #36)
  *          On cancelling input now first a warning box opens and after having quit the execution is in pause
  *          mode such that the user may edit values, abort or continue in either run oder step mode.
  *          Output and result message dialogs now provide a Pause button to allow to pause mode (see above).
- *      2015.11.13 (KGU#2) Subroutine call mechanisms introduced
+ *      2015-11-13 (KGU#2) Subroutine call mechanisms introduced
  *          Recursively callable submethod of execute(Root) added plus new call-handling method executeCall()
  *          Error handling in some subroutine level still neither prepared nor tested
- *      2015.11.04 (KGU#65) Input/output execution mended
+ *      2015-11-04 (KGU#65) Input/output execution mended
  *          The configured input / output parser settings triggered input or output action also if found
  *          deep in a line, even within a string literal. This was mended.
- *      2015.10.26/27 (KGU#3) Language conversion (in method convert) partially delegated to Element
+ *      2015-10-26/27 (KGU#3) Language conversion (in method convert) partially delegated to Element
  *          The aim was to share this functionality with generators
  *          Analysis of FOR loop parameters also delegated to the For class instance.
- *      2015.10.21 (KGU#15) Common branch for multiple constants in Case structure enabled
+ *      2015-10-21 (KGU#15) Common branch for multiple constants in Case structure enabled
  *          A modification in stepCase() now allows to test against a comma-separated list of case constants
  *          (though it would fail with complex expressions, accidently containing commas but this would anyway
  *          produce nonsense on code export)
- *      2015.10.17/18 (KGU#2) Two successful (though somewhat makeshift) subroutine retrieval attempts
+ *      2015-10-17/18 (KGU#2) Two successful (though somewhat makeshift) subroutine retrieval attempts
  *          in stepInstruction() via Arranger and by means of Bob's Function class.
  *          We can be glad that Executor is already a Singleton - on the one hand...
  *          Towards an actually working approach several challenges must therefore be addressed:
@@ -329,7 +330,7 @@ package lu.fisch.structorizer.executor;
  *             (in the stack order i.e. top on top).
  *          4. The trouble is going to get really nasty with Parallel elements involved, particularly if
  *             their threads use identical subroutines.   
- *      2015.10.15 (KGU#47) Improved simulation of Parallel execution
+ *      2015-10-15 (KGU#47) Improved simulation of Parallel execution
  *          Instead of running entire "threads" of the parallel section in just random order, the "threads"
  *          will now only progress by one instruction when randomly chosen, so they alternate in an
  *          unpredictable way)
@@ -399,6 +400,11 @@ public class Executor implements Runnable
 	// START KGU 2018-03-21
 	public static final Logger logger = Logger.getLogger(Executor.class.getName());
 	// END KGU 2018-03-21
+	
+	// START KGU#1024 2022-01-05: Upgrade from bsh-2.0b6.jar to bsh-2.1.0.jar
+	// We us a pilcrow character to separate an added message prefix from EvalError base
+	private static final char EVAL_ERR_PREFIX_SEPA = '\u00b6';
+	// END KGU#1024 2022-01-05
 
 	// START KGU#376 2017-04-20: Enh. #389
 	/**
@@ -1434,7 +1440,15 @@ public class Executor implements Runnable
 						}
 						catch (EvalError ex)
 						{
-							logger.log(Level.WARNING, "convertStringComparison(\"{0}\"): {1}", new Object[]{str, ex.getMessage()});
+							// START KGU#1024 2022-01-05: Upgrade bsh-2.0b6.jar to bsh-2.1.0.jar
+							//logger.log(Level.WARNING, "convertStringComparison(\"{0}\"): {1}", new Object[]{str, ex.getMessage()});
+							String msg = ex.getRawMessage();
+							int pilcrowPos = -1;
+							if (msg != null && (pilcrowPos = msg.indexOf(EVAL_ERR_PREFIX_SEPA)) > 0) {
+								msg = msg.substring(0, pilcrowPos);
+							}
+							logger.log(Level.WARNING, "convertStringComparison(\"{0}\"): {1}", new Object[]{str, msg});
+							// END KGU#1024 2022-01-05
 						}
 						catch (Exception ex)
 						{
@@ -1789,7 +1803,15 @@ public class Executor implements Runnable
 					} catch (EvalError ex)
 					{
 						trouble = ex.getLocalizedMessage();
-						if (trouble == null) trouble = ex.getMessage();
+						if (trouble == null) {
+							trouble = ex.getRawMessage();
+						}
+						// START KGU#1024 2022-01-05: Upgrade bsh-2.0b6.jar to bsh-2.1.0.jar
+						int pilcrowPos = -1;
+						if (trouble != null && (pilcrowPos = trouble.indexOf(EVAL_ERR_PREFIX_SEPA)) > 0) {
+							trouble = trouble.substring(0, pilcrowPos);
+						}
+						// END KGU#1024 2022-01-05
 						break;
 					}
 				// START KGU#2 (#9) 2015-11-13: If root was called then just assign the arguments
@@ -1822,7 +1844,15 @@ public class Executor implements Runnable
 					catch (EvalError ex)
 					{
 						trouble = ex.getLocalizedMessage();
-						if (trouble == null) trouble = ex.getMessage();
+						if (trouble == null) {
+							trouble = ex.getRawMessage();
+						}
+						// START KGU#1024 2022-01-05: Upgrade bsh-2.0b6.jar to bsh-2.1.0.jar
+						int pilcrowPos = -1;
+						if (trouble != null && (pilcrowPos = trouble.indexOf(EVAL_ERR_PREFIX_SEPA)) > 0) {
+							trouble = trouble.substring(0, pilcrowPos);
+						}
+						// END KGU#1024 2022-01-05
 						break;
 					}
 				}
@@ -2156,7 +2186,15 @@ public class Executor implements Runnable
 									if (!errorString.isEmpty()) {
 										errorString += "\n";
 									}
-									errorString += e.getMessage();
+									// START KGU#1024 2022-01-05: Upgrade bsh-2.0b6.jar to bsh-2.1.0.jar
+									//errorString += e.getMessage();
+									String trouble = e.getRawMessage();
+									int pilcrowPos = -1;
+									if (trouble != null && (pilcrowPos = trouble.indexOf(EVAL_ERR_PREFIX_SEPA)) > 0) {
+										trouble = trouble.substring(0, pilcrowPos);
+									}
+									errorString += trouble;
+									// END KGU#1024 2022-01-05
 								}
 							}
 						}
@@ -2884,7 +2922,16 @@ public class Executor implements Runnable
 		} catch (EvalError ex)
 		{
 			//java.io.IOException
-			logger.log(Level.SEVERE, ex.getMessage());
+			// START KGU#1024 2022-01-05: Upgrade bsh-2.0b6.jar to bsh-2.1.0.jar
+			//logger.log(Level.SEVERE, ex.getMessage());
+			String msg = ex.getRawMessage();
+			int pilcrowPos = -1;
+			if (msg != null && (pilcrowPos = msg.indexOf(EVAL_ERR_PREFIX_SEPA)) > 0) {
+				msg = msg.substring(0, pilcrowPos);
+			}
+			logger.log(Level.SEVERE, msg);
+			// END KGU#1024 2022-01-05
+
 		}
 	}
 	
@@ -3270,11 +3317,14 @@ public class Executor implements Runnable
 	/**
 	 * Interprets and evaluates the user input string {@code rawInput} and assigns the result to the given
 	 * variable extracted from the "lvalue" {@code target} via {@link #setVar(String, Object, boolean)}.
+	 * 
 	 * @param target - an assignment lvalue, may contain modifiers, type info and access specifiers
 	 * @param rawInput - the raw input string to be interpreted
 	 * @return base name of the assigned variable (or constant)
-	 * @throws EvalError if the interpretation of {@code rawInput} fails, if the {@code target} or the resulting
-	 * value is inappropriate, if both don't match or if a loop variable violation is detected.
+	 * 
+	 * @throws EvalError if the interpretation of {@code rawInput} fails, if the {@code target} or the
+	 *     resulting value is inappropriate, if both don't match or if a loop variable violation is detected.
+	 * 
 	 * @see #setVar(String, Object, boolean) 
 	 */
 	private String setVarRaw(String target, String rawInput) throws EvalError
@@ -3430,9 +3480,11 @@ public class Executor implements Runnable
 	 * but might contain "sharp" escape characters, i.e. sequences like \n but also direct \.
 	 * If some illegal backslash sequence is detected then evaluation with doubled backslashes
 	 * is attempted.
+	 * 
 	 * @param target - string specifying the assignment target (possibly with index or component access)
 	 * @param rawInput - a quoted raw string from input
 	 * @return the base variable name of the assignment target if evaluation succeeded
+	 * 
 	 * @throws EvalError if evaluation failed.
 	 */
 	private String evaluateRawString(String target, String rawInput) throws EvalError {
@@ -3440,7 +3492,14 @@ public class Executor implements Runnable
 			this.evaluateExpression(target + " = " + rawInput, false, false);
 		}
 		catch (EvalError ex) {
-			String msg = ex.getMessage();
+			// START KGU#1024 2022-01-05: Upgrade bsh-2.0b6.jar to bsh-2.1.0.jar
+			//String msg = ex.getMessage();
+			String msg = ex.getRawMessage();
+			int pilcrowPos = -1;
+			if (msg != null && (pilcrowPos = msg.indexOf(EVAL_ERR_PREFIX_SEPA)) > 0) {
+				msg = msg.substring(0, pilcrowPos);
+			}
+			// END KGU#1024 2022-01-05
 			int idx = -1;
 			if (msg != null && (idx = msg.indexOf("Lexical error ")) >= 0 && msg.substring(idx).contains("\\")) {
 				// Apparently the backslash(es) weren't meant to be escape characters.
@@ -3483,12 +3542,15 @@ public class Executor implements Runnable
 	 * &nbsp;&nbsp;&nbsp;&nbsp;{@code <typeid> |}<br/>
 	 * &nbsp;&nbsp;&nbsp;&nbsp;{@code array ['['<range>']'] of <typespec>}<br/>
 	 * {@code <range> ::= <id> | <intliteral> .. <intliteral>}<br/>
+	 * 
 	 * @param target - an assignment lvalue, may contain modifiers, type info and access specifiers
 	 * @param content - the value to be assigned
 	 * @param displayNow TODO
 	 * @return base name of the assigned variable (or constant)
+	 * 
 	 * @throws EvalError if the {@code target} or the {@code content} is inappropriate or if both aren't compatible
 	 * or if a loop variable violation is detected.
+	 * 
 	 * @see #setVarRaw(String, Object)
 	 * @see #setVar(String, Object, int, boolean) 
 	 */
@@ -3505,14 +3567,17 @@ public class Executor implements Runnable
 	 * Assigns the computed value {@code content} to the given variable extracted from the "lvalue"
 	 * {@code target}. Analyses and handles possibly given extra information in order to register and
 	 * declare the target variable or constant.<br/>
-	 * Also ensures that no loop variable manipulation is performed. 
+	 * Also ensures that no loop variable manipulation is performed.
+	 * 
 	 * @param target - an assignment lvalue, may contain modifiers, type info and access specifiers
 	 * @param content - the value to be assigned
 	 * @param ignoreLoopStackLevel - the loop nesting level beyond which loop variables aren't critical.
 	 * @param displayNow - use {@code false} to postpone the display of all variables
 	 * @return base name of the assigned variable (or constant)
+	 * 
 	 * @throws EvalError if the {@code target} or the {@code content} is inappropriate or if both don't
 	 * match or if a loop variable violation is detected.
+	 * 
 	 * @see #setVarRaw(String, Object)
 	 * @see #setVar(String, Object, boolean)
 	 */
@@ -4310,7 +4375,10 @@ public class Executor implements Runnable
 				context.interpreter.set(target, content);
 			}
 			catch (EvalError ex) {
-				if (MTCH_EVAL_ERROR_ARRAY.reset(ex.getMessage()).matches()) {
+				// START KGU#1024 2022-01-05: Upgrade from bsh-2.0b6.jar to bsh-2.1.0.jar
+				//if (MTCH_EVAL_ERROR_ARRAY.reset(ex.getMessage()).matches()) {
+				if (MTCH_EVAL_ERROR_ARRAY.reset(ex.getRawMessage()).matches()) {
+				// END KGU#1024 2022-01-05
 					// Stored array type is an obstacle for re-assignment, so drop it
 					context.interpreter.unset(target);
 					// Now try again
@@ -4390,13 +4458,15 @@ public class Executor implements Runnable
 
 	/**
 	 * Checks compatibility of types between {@code target} (i.e. {@code targetType}
-	 * or {@code typeDescr}) on then one hand and {@code content} on the other hand.<br/>
+	 * or {@code typeDescr}) on then one hand and {@code content} on the other hand.
+	 * 
 	 * @param target - name or path of the target variable or component
 	 * @param targetType - type entry for {@code target}
 	 * @param content - the value to be assigned
 	 * @param typeDescr - a type description in case of a declaration
-	 * @throws EvalError if there is an obvious incompatibility (e.g. record vs. no record
-	 * or different record types)
+	 * 
+	 * @throws EvalError if there is an obvious incompatibility (e.g. record vs. no
+	 *     record or different record types)
 	 */
 	private void checkTypeCompatibility(String target, TypeMapEntry targetType, Object content, StringList typeDescr)
 			throws EvalError {
@@ -4428,9 +4498,10 @@ public class Executor implements Runnable
 	/**
 	 * Recomposes an extracted variable access path being a sequence of component
 	 * names and index values (the latter ones prefixed with "[")
+	 * 
 	 * @param accessPath - the access token list
 	 * @param depth - up to which element of the list the path is to be composed
-	 * @return
+	 * @return the composed variable access path
 	 */
 	private String composeAccessPath(StringList accessPath, int depth)
 	{
@@ -4458,10 +4529,11 @@ public class Executor implements Runnable
 	 * (which is internally used to model arrays).<br/>
 	 * Cannot sensibly check whether the numbers of dimensions coincide or
 	 * whether the index ranges match.
+	 * 
 	 * @param target - the name of the declared array variable
 	 * @param dimensionSpecs - the tokenised index range specifications
 	 * @param content - the value of the expression to be assigned - expected to be
-	 * an {@link ArrayList}
+	 *     an {@link ArrayList}
 	 */
 	private int checkDimensionsC(String target, StringList typeDescr, StringList dimensionSpecs, Object content)
 			throws EvalError
@@ -4514,10 +4586,12 @@ public class Executor implements Runnable
 	/**
 	 * Checks the number of dimensions for a Java type specification. Will
 	 * associate the identified type to the target variable.
+	 * 
 	 * @param tokens - part of the lexically split declaration, starting with a bracket
-	 *  pair - will not be modified here!
+	 *     pair - will not be modified here!
 	 * @param typeDescr - a {@link StringList} containing the element type description so far
 	 * @return the name of the declared target variable
+	 * 
 	 * @throws EvalError
 	 */
 	private String getJavaDimensions(StringList tokens, StringList typeDescr)
@@ -4562,6 +4636,7 @@ public class Executor implements Runnable
 	 * it to the given variable or constant with name {@code target} in
 	 * {@code this.context.dynTypeMap}, otherwise creates a new {@link TypeMapEntry}
 	 * from the {@link StringList} {@code typeDescr} and associates this.
+	 * 
 	 * @param target - a variable or constant identifier
 	 * @param typeDescr - a {@link StringList} comprising a found type description
 	 * @return {@code true} if a new type was created.
@@ -4617,9 +4692,10 @@ public class Executor implements Runnable
 	/**
 	 * Checks if the name described by {@code typeOrVarName} represents a record and if so
 	 * returns the respective TypeMapEntry, otherwise null.
+	 * 
 	 * @param typeOrVarName - a variable or type name ({@code is to specify which of them} 
 	 * @param isTypeName - must be {@code true} for a type name and {@code false} for a
-	 *  var/const name.
+	 *     var/const name.
 	 * @return a TypeMapEntry for a record type or {@code null}
 	 */
 	private TypeMapEntry identifyRecordType(String typeOrVarName, boolean isTypeName)
@@ -4637,8 +4713,9 @@ public class Executor implements Runnable
 	/**
 	 * Prepares an editable variable table and has the Control update the display
 	 * of variables with it
+	 * 
 	 * @param always - if {@code true} then {@link #delay} and {@link #step} won't hinder
-	 * the display, otherwise {@link #delay} 0 and non-step mode will impede it
+	 *     the display, otherwise {@link #delay} 0 and non-step mode will impede it
 	 */
 	// START KGU#910 2021-01-10: Issue #909 centralized control about display opportunity
 	//private void updateVariableDisplay() throws EvalError
@@ -4769,8 +4846,9 @@ public class Executor implements Runnable
 	 * and reports the manipulations to the Output Console Window.
 	 * If errors occur, then the returned {@link StringList} will contain the respective
 	 * messages.
+	 * 
 	 * @param newValues - a {@link HashMap} containing the names and new value strings
-	 * of manipulated variables.
+	 *     of manipulated variables.
 	 * @return a {@link StringList} containing obtained evluation errors.
 	 */
 	@SuppressWarnings("unchecked")
@@ -4886,10 +4964,19 @@ public class Executor implements Runnable
 				// END KGU#388 2017-10-08
 			}
 			catch (EvalError err) {
+				// START KGU#1024 2022-01-05: Upgrade from bsh-2.0b6.jar to bsh-2.1.0.jar
 				// START KGU#441 2017-10-13: Enh. #437
-				errors.add(varName + ": " + err.getMessage());
+				//errors.add(varName + ": " + err.getMessage());
 				// END KGU#441 2017-10-13
-				logger.log(Level.WARNING, "adoptVarChanges({}) on {0}: {1}", new Object[]{newValues, varName, err.getMessage()});
+				//logger.log(Level.WARNING, "adoptVarChanges({}) on {0}: {1}", new Object[]{newValues, varName, err.getMessage()});
+				String msg = err.getRawMessage();
+				int pilcrowPos = -1;
+				if (msg != null && (pilcrowPos = msg.indexOf(EVAL_ERR_PREFIX_SEPA)) > 0) {
+					msg = msg.substring(0, pilcrowPos);
+				}
+				errors.add(varName + ": " + msg);
+				logger.log(Level.WARNING, "adoptVarChanges({}) on {0}: {1}", new Object[]{newValues, varName, msg});
+				// END KGU#1024 2022-01-05
 			}
 		}
 		return errors;
@@ -4900,6 +4987,7 @@ public class Executor implements Runnable
 	/**
 	 * Tries to return the named constant corresponding to the given code
 	 * {@code testVal} in enumeration type {@code varType}.
+	 * 
 	 * @param testVal - the coded value
 	 * @param varType - the identified enumeration type
 	 * @return either the name of the constant or {@code null} if out of range
@@ -4938,8 +5026,9 @@ public class Executor implements Runnable
 	// START KGU#910 2021-01-07: Enh. #909 Also support nested enumerators
 	/**
 	 * Tries to retrieve the type of the given variable access path
+	 * 
 	 * @param varName - an access path - may be a single identifier or some
-	 * recursive application of component access or indices
+	 *     recursive application of component access or indices
 	 * @return the dynamic type map entry for the variable path or {@code null}
 	 */
 	public TypeMapEntry getTypeForVariable(String varName)
@@ -4985,8 +5074,9 @@ public class Executor implements Runnable
 	/**
 	 * Checks if the variable access path {@code varName} represents an
 	 * enumeration type and if so returns the list of declared value names
+	 * 
 	 * @param varName - an access path - may be a single identifier or some
-	 * recursive application of component access or indices
+	 *     recursive application of component access or indices
 	 * @return either the StringList of value names or {@code null}
 	 */
 	public StringList getEnumeratorValuesFor(String varName)
@@ -5391,8 +5481,15 @@ public class Executor implements Runnable
 				// END KGU#569 2018-08-06
 			} catch (EvalError ex)
 			{
-				trouble = ex.getLocalizedMessage();
-				if (trouble == null) trouble = ex.getMessage();
+				// START KGU#1024 2022-01-05: Upgrade from bsh-2.0b6.jar to bsh-2.1.0.jar
+				//trouble = ex.getLocalizedMessage();
+				//if (trouble == null) trouble = ex.getMessage();
+				trouble = ex.getRawMessage();
+				int pilcrowPos = -1;
+				if (trouble != null && (pilcrowPos = trouble.indexOf(EVAL_ERR_PREFIX_SEPA)) > 0) {
+					trouble = trouble.substring(0, pilcrowPos);
+				}
+				// END KGU#1024 2022-01-05
 				if (trouble.endsWith("TargetError")) {
 					String errorText = ex.getErrorText();
 					int leftParPos = errorText.indexOf('(');
@@ -5519,8 +5616,15 @@ public class Executor implements Runnable
 				// END KGU#117 2016-03-08
 			} catch (EvalError ex)
 			{
-				trouble = ex.getLocalizedMessage();
-				if (trouble == null) trouble = ex.getMessage();
+				// START KGU#1024 2022-01-05: Upgrade bsh-2.0b6.jar to bsh-2.1.0.jar
+				//trouble = ex.getLocalizedMessage();
+				//if (trouble == null) trouble = ex.getMessage();
+				trouble = ex.getRawMessage();
+				int pilcrowPos = -1;
+				if (trouble != null && (pilcrowPos  = trouble.indexOf(EVAL_ERR_PREFIX_SEPA)) > 0) {
+					trouble = trouble.substring(0, pilcrowPos);
+				}
+				// END KGU#1024 2022-01-05
 			}
 
 			i++;
@@ -5628,8 +5732,15 @@ public class Executor implements Runnable
 				{
 					// START KGU#197 2016-07-27: More localization support (Updated 32016-09-17)
 					//trouble = "Wrong exit value: " + ex.getMessage();
-					String exMessage = ex.getLocalizedMessage();
-					if (exMessage == null) exMessage = ex.getMessage();
+					// START KGU#1024 2022-01-05: Upgrade bsh-2.0b6.jar to bsh-2.1.0.jar
+					//String exMessage = ex.getLocalizedMessage();
+					//if (exMessage == null) exMessage = ex.getMessage();
+					String exMessage = ex.getRawMessage();
+					int pilcrowPos = -1;
+					if (exMessage != null && (pilcrowPos  = exMessage.indexOf(EVAL_ERR_PREFIX_SEPA)) > 0) {
+						exMessage = exMessage.substring(0, pilcrowPos);
+					}
+					// END KGU#1024 2022-01-05
 					trouble = control.msgWrongExit.getText().replace("%1", exMessage);
 					// END KGU#197 2016-07-27
 				}
@@ -5807,11 +5918,13 @@ public class Executor implements Runnable
 	// START KGU 2015-11-11: Equivalent decomposition of method stepInstruction
 	/**
 	 * Submethod of {@link #stepInstruction(Instruction)}, handling an assignment.
-	 * Also updates the dynamic type map. 
+	 * Also updates the dynamic type map.
+	 * 
 	 * @param cmd - the (assignment) instruction line, may also contain declarative parts
 	 * @param instr - the Instruction element
 	 * @param lineNo - the line number of the current assignment (for the type resgistration)
 	 * @return a possible error message (for errors not thrown as EvalError)
+	 * 
 	 * @throws EvalError
 	 */
 	private String tryAssignment(String cmd, Instruction instr, int lineNo) throws EvalError
@@ -5989,8 +6102,10 @@ public class Executor implements Runnable
 	
 	/**
 	 * Submethod of {@link #stepInstruction(Instruction)}, handling an input instruction
+	 * 
 	 * @param cmd - the instruction line expressing an input operation
 	 * @return a possible error string
+	 * 
 	 * @throws EvalError
 	 */
 	private String tryInput(String cmd) throws EvalError
@@ -6264,8 +6379,10 @@ public class Executor implements Runnable
 
 	/**
 	 * Submethod of {@link #stepInstruction(Instruction)}, handling an output instruction
+	 * 
 	 * @param cmd - the output instruction line
 	 * @return a possible error string
+	 * 
 	 * @throws EvalError
 	 */
 	private String tryOutput(String cmd) throws EvalError
@@ -6494,8 +6611,15 @@ public class Executor implements Runnable
 //					}
 				} catch (EvalError ex)
 				{
-					String exMessage = ex.getLocalizedMessage();
-					if (exMessage == null) exMessage = ex.getMessage();
+					// START KGU#1024 2022-01-05: Upgrade from bsh-2.0b6.jar to bsh-2.1.0.jar
+					//String exMessage = ex.getLocalizedMessage();
+					//if (exMessage == null) exMessage = ex.getMessage();
+					String exMessage = ex.getRawMessage();
+					int pilcrowPos = -1;
+					if (exMessage != null && (pilcrowPos = exMessage.indexOf(EVAL_ERR_PREFIX_SEPA)) > 0) {
+						exMessage = exMessage.substring(0, pilcrowPos);
+					}
+					// END KGU#1024 2022-01-05
 					trouble += (!trouble.isEmpty() ? "\n" : "") +
 							"PARAM " + (p+1) + ": " + exMessage;
 				}
@@ -6746,8 +6870,15 @@ public class Executor implements Runnable
 			}
 		} catch (EvalError ex)
 		{
-			trouble = ex.getLocalizedMessage();
-			if (trouble == null) trouble = ex.getMessage();
+			// START KGU#1024 2022-01-05: Upgrade from bsh-2.0b6.jar to bsh-2.1.0.jar
+			//trouble = ex.getLocalizedMessage();
+			//if (trouble == null) trouble = ex.getMessage();
+			trouble = ex.getRawMessage();
+			int pilcrowPos = -1;
+			if (trouble != null && (pilcrowPos = trouble.indexOf(EVAL_ERR_PREFIX_SEPA)) > 0) {
+				trouble = trouble.substring(0, pilcrowPos);
+			}
+			// END KGU#1024 2022-01-05
 		}
 		
 		return trouble;
@@ -6852,8 +6983,15 @@ public class Executor implements Runnable
 			}
 		} catch (EvalError ex)
 		{
-			trouble = ex.getLocalizedMessage();
-			if (trouble == null) trouble = ex.getMessage();
+			// START KGU#1024 2022-01-05: Upgrade from bsh-2.0b6.jar to bsh-2.1.0.jar
+			//trouble = ex.getLocalizedMessage();
+			//if (trouble == null) trouble = ex.getMessage();
+			trouble = ex.getRawMessage();
+			int pilcrowPos = -1;
+			if (trouble != null && (pilcrowPos = trouble.indexOf(EVAL_ERR_PREFIX_SEPA)) > 0) {
+				trouble = trouble.substring(0, pilcrowPos);
+			}
+			// END KGU#1024 2022-01-05
 		}
 		return trouble;
 	}
@@ -7000,7 +7138,14 @@ public class Executor implements Runnable
 			 */
 		} catch (EvalError ex)
 		{
-			trouble = ex.getMessage();
+			// START KGU#1024 2022-01-05: Upgrade from bsh-2.0b6.jar to bsh-2.1.0.jar
+			//trouble = ex.getMessage();
+			trouble = ex.getRawMessage();
+			int pilcrowPos = -1;
+			if (trouble != null && (pilcrowPos = trouble.indexOf(EVAL_ERR_PREFIX_SEPA)) > 0) {
+				trouble = trouble.substring(0, pilcrowPos);
+			}
+			// END KGU#1024 2022-01-05
 		}
 		return trouble;
 	}
@@ -7140,7 +7285,14 @@ public class Executor implements Runnable
 			 */
 		} catch (EvalError ex)
 		{
-			trouble = ex.getMessage();
+			// START KGU#1024 2022-01-05: Upgrade from bsh-2.0b6.jar to bsh-2.1.0.jar
+			//trouble = ex.getMessage();
+			trouble = ex.getRawMessage();
+			int pilcrowPos = -1;
+			if (trouble != null && (pilcrowPos = trouble.indexOf(EVAL_ERR_PREFIX_SEPA)) > 0) {
+				trouble = trouble.substring(0, pilcrowPos);
+			}
+			// END KGU#1024 2022-01-05
 		}
 		return trouble;
 	}
@@ -7289,7 +7441,14 @@ public class Executor implements Runnable
 			}
 		} catch (EvalError ex)
 		{
-			trouble = ex.getMessage();
+			// START KGU#1024 2022-01-05: Upgrade from bsh-2.0b6.jar to bsh-2.1.0.jar
+			//trouble = ex.getMessage();
+			trouble = ex.getRawMessage();
+			int pilcrowPos = -1;
+			if (trouble != null && (pilcrowPos = trouble.indexOf(EVAL_ERR_PREFIX_SEPA)) > 0) {
+				trouble = trouble.substring(0, pilcrowPos);
+			}
+			// END KGU#1024 2022-01-05
 		}
 		// START KGU#307 2016-12-12: Issue #307 - prepare warnings on loop variable manipulations
 		while (forLoopLevel < context.forLoopVars.count()) {
@@ -7319,7 +7478,15 @@ public class Executor implements Runnable
 		}
 		catch (EvalError ex)
 		{
-			problem += "\n" + ex.getMessage();
+			// START KGU#1024 2022-01-05: Upgrade from bsh-2.0b6.jar to bsh-2.1.0.jar
+			//problem += "\n" + ex.getMessage();
+			String exMessage = ex.getRawMessage();
+			int pilcrowPos = -1;
+			if (exMessage != null && (pilcrowPos = exMessage.indexOf(EVAL_ERR_PREFIX_SEPA)) > 0) {
+				exMessage = exMessage.substring(0, pilcrowPos);
+			}
+			problem += "\n" + exMessage;
+			// END KGU#1024 2022-01-05
 		}
 		// END KGU#417 2017-06-30
 		if (valueListString.startsWith("{") && valueListString.endsWith("}"))
@@ -7335,7 +7502,15 @@ public class Executor implements Runnable
 			}
 			catch (EvalError ex)
 			{
-				problem += "\n" + ex.getMessage();
+				// START KGU#1024 2022-01-05: Upgrade from bsh-2.0b6.jar to bsh-2.1.0.jar
+				//problem += "\n" + ex.getMessage();
+				String exMessage = ex.getRawMessage();
+				int pilcrowPos = -1;
+				if (exMessage != null && (pilcrowPos = exMessage.indexOf(EVAL_ERR_PREFIX_SEPA)) > 0) {
+					exMessage = exMessage.substring(0, pilcrowPos);
+				}
+				problem += "\n" + exMessage;
+				// END KGU#1024 2022-01-05
 			}
 		}
 		
@@ -7370,7 +7545,15 @@ public class Executor implements Runnable
 			}
 			catch (EvalError ex)
 			{
-				problem += "\n" + ex.getMessage();
+				// START KGU#1024 2022-01-05: Upgrade from bsh-2.0b6.jar to bsh-2.1.0.jar
+				//problem += "\n" + ex.getMessage();
+				String exMessage = ex.getRawMessage();
+				int pilcrowPos = -1;
+				if (exMessage != null && (pilcrowPos = exMessage.indexOf(EVAL_ERR_PREFIX_SEPA)) > 0) {
+					exMessage = exMessage.substring(0, pilcrowPos);
+				}
+				problem += "\n" + exMessage;
+				// END KGU#1024 2022-01-05
 			}
 		}
 		// Might be a function or variable otherwise evaluable
@@ -7389,7 +7572,15 @@ public class Executor implements Runnable
 			}
 			catch (EvalError ex)
 			{
-				problem += "\n" + ex.getMessage();
+				// START KGU#1024 2022-01-05: Upgrade from bsh-2.0b6.jar to bsh-2.1.0.jar
+				//problem += "\n" + ex.getMessage();
+				String exMessage = ex.getRawMessage();
+				int pilcrowPos = -1;
+				if (exMessage != null && (pilcrowPos = exMessage.indexOf(EVAL_ERR_PREFIX_SEPA)) > 0) {
+					exMessage = exMessage.substring(0, pilcrowPos);
+				}
+				problem += "\n" + exMessage;
+				// END KGU#1024 2022-01-05
 			}
 		}
 		if (value == null && valueListString.contains(" "))
@@ -7407,7 +7598,15 @@ public class Executor implements Runnable
 			}
 			catch (EvalError ex)
 			{
-				problem += "\n" + ex.getMessage();
+				// START KGU#1024 2022-01-05: Upgrade from bsh-2.0b6.jar to bsh-2.1.0.jar
+				//problem += "\n" + ex.getMessage();
+				String exMessage = ex.getRawMessage();
+				int pilcrowPos = -1;
+				if (exMessage != null && (pilcrowPos = exMessage.indexOf(EVAL_ERR_PREFIX_SEPA)) > 0) {
+					exMessage = exMessage.substring(0, pilcrowPos);
+				}
+				problem += "\n" + exMessage;
+				// END KGU#1024 2022-01-05
 			}
 		}
 		if (value != null)
@@ -7662,7 +7861,14 @@ public class Executor implements Runnable
 					trouble = origTrouble;
 				}
 			} catch (EvalError e) {
-				trouble = e.toString();
+				// START KGU#1024 2022-01-05: Upgrade from bsh-2.0b6.jar to bsh-2.1.0.jar
+				//trouble = e.toString();
+				trouble = e.getRawMessage();
+				int pilcrowPos = -1;
+				if (trouble != null && (pilcrowPos = trouble.indexOf(EVAL_ERR_PREFIX_SEPA)) > 0) {
+					trouble = trouble.substring(0, pilcrowPos);
+				}
+				// END KGU#1024 2022-01-05
 			}
 			// FIXME: We should eliminate all variables introduced within the catch block!
 		}
@@ -7682,9 +7888,23 @@ public class Executor implements Runnable
 				}
 			}
 		} catch (EvalError ex) {
-			if (!isExited && (trouble = ex.getLocalizedMessage()) == null && (trouble = ex.getMessage()) == null || trouble.isEmpty()) {
-				trouble = ex.toString();
+			// START KGU#1024 2022-01-05: Upgrade from bsh-2.0b6.jar to bsh-2.1.0.jar
+			//if (!isExited && (trouble = ex.getLocalizedMessage()) == null && (trouble = ex.getMessage()) == null || trouble.isEmpty()) {
+			//	trouble = ex.toString();
+			//}
+			if (!isExited) {
+				trouble = ex.getRawMessage();
+				if (trouble == null) {
+					trouble = ex.toString();
+				}
+				else {
+					int pilcrowPos = trouble.indexOf(EVAL_ERR_PREFIX_SEPA);
+					if (pilcrowPos > 0) {
+						trouble = trouble.substring(0, pilcrowPos);
+					}
+				}
 			}
+			// END KGU#1024 2022-01-05
 		}
 		
 		if (trouble.isEmpty()) {
@@ -7741,13 +7961,15 @@ public class Executor implements Runnable
 	 * Note: Argument {@code _withInitializers} (and the associated mechanism) was added via
 	 * refactoring afterwards with a default value of {@code false} in order to avoid unwanted
 	 * impact. If there happens to be some place in code where it seems helpful to activate this
-	 * mechanism just go ahead and try.   
+	 * mechanism just go ahead and try.
+	 * 
 	 * @param _expr -the converted expression to be evaluated
 	 * @param _withInitializers - whether an array or record initializer is to be managed here
 	 * @param _preserveBrackets - if true then brackets won't be substituted
-	 * @return the evaluated result if successful 
+	 * @return the evaluated result if successful
+	 * 
 	 * @throws EvalError an exception if something went wrong (may be raised by the interpreter
-	 * or this method itself)
+	 *     or this method itself)
 	 */
 	protected Object evaluateExpression(String _expr, boolean _withInitializers, boolean _preserveBrackets) throws EvalError
 	{
@@ -7817,14 +8039,20 @@ public class Executor implements Runnable
 			//String expr = tokens.concatenate();
 			String expr = tokens.concatenate(null);
 			// END KGU#773 2019-11-28
-			boolean messageAugmented = false;
+			// START KGU#1024 2022-01-05: Upgrade from bsh-2.0b6.jar to bsh-2.1.0.jar
+			//boolean messageAugmented = false;
+			String prefixMessage = null;
+			// END KGU#1024 2022-01-05
 			do {
 				error423 = false;
 				try {
 					value = context.interpreter.eval(expr);
 				}
 				catch (EvalError err) {
-					String error423message = err.getMessage(); 
+					// START KGU#1024 2022-01-05: Upgrade from bsh-2.0b6.jar to bsh-2.1.0.jar
+					//String error423message = err.getMessage();
+					String error423message = err.getRawMessage();
+					// END KGU#1024 2022-01-05
 					if (error423message.contains(ERROR423MESSAGE)) {
 						if (ERROR423MATCHER.reset(error423message).matches()) {
 							// Restore the assumed original attribute access and try again
@@ -7857,22 +8085,32 @@ public class Executor implements Runnable
 							if (potArray instanceof ArrayList && potIndex instanceof Integer) {
 								int index = ((Integer)potIndex).intValue();
 								if (index < 0 || index >= ((ArrayList<?>)potArray).size()) {
-									err.setMessage(control.msgIndexOutOfBounds.getText().
-											// START KGU#677 2019-03-09: Bugfix #527
-											//replace("%1", ERROR527MATCHER.group(2)).
+									// START KGU#1024 2022-01-05: Upgrade from bsh-2.0b6.jar to bsh-2.1.0.jar
+									//err.setMessage(control.msgIndexOutOfBounds.getText().
+									//		// START KGU#677 2019-03-09: Bugfix #527
+									//		//replace("%1", ERROR527MATCHER.group(2)).
+									//		replace("%1", indexExpr).
+									//		// END KGU#677 2019-03-09
+									//		replace("%2", Integer.toString(index)).
+									//		// START KGU#677 2019-03-09: Bugfix #527
+									//		//replace("%3", ERROR527MATCHER.group(4))
+									//		replace("%3", arrayName)
+									//		// END KGU#677 2019-03-09
+									//		);
+									prefixMessage = control.msgIndexOutOfBounds.getText().
 											replace("%1", indexExpr).
-											// END KGU#677 2019-03-09
 											replace("%2", Integer.toString(index)).
-											// START KGU#677 2019-03-09: Bugfix #527
-											//replace("%3", ERROR527MATCHER.group(4))
 											replace("%3", arrayName)
-											// END KGU#677 2019-03-09
-											);
+											+ "\u00b6"; // pilcrow character to cut the rest off
+									// END KGU#1024 2022-01-05
 								}
 								// START KGU#510 2019-02-13: Improvement for issue #527
 								// In more complex expressions it may not be the first index that caused the trouble, so look for other causes
 								else {
-									messageAugmented = addCauseDescription(_expr, err);
+									// START KGU#1024 2022-01-05: Upgrade from bsh-2.0b6.jar to bsh-2.1.0.jar
+									//messageAugmented = addCauseDescription(_expr, err);
+									prefixMessage = _expr;
+									// END KGU#1024 2022-01-05
 								}
 								// END KGU#510 2019-02-13
 							}
@@ -7888,12 +8126,18 @@ public class Executor implements Runnable
 					}
 					// END KGU#615 2018-12-16
 					if (!error423) {
+						// START KGU#1024 2022-01-05: Upgrade bsh-2.0b6.jar to bsh-2.1.0.jar
 						// START KGU#677 2019-03-09: This shouldn't harm, anyway
-						if (!messageAugmented) {
-							addCauseDescription(_expr, err);
-						}
+						//if (!messageAugmented) {
+						//	addCauseDescription(_expr, err);
+						//}
 						// END KGU#677 2019-03-09
-						throw err;
+						//throw err;
+						if (prefixMessage == null) {
+							prefixMessage = deriveCauseDescription(_expr, err);
+						}
+						err.reThrow(prefixMessage);
+						// END KGU#1024 2022-01-05
 					}
 				}
 				// START KGU#756 2019-11-08: Internal interpreter errors may e.g. occur if a type name "Char" is evaluated
@@ -7913,15 +8157,41 @@ public class Executor implements Runnable
 	// END KGU#388 2017-09-16
 
 	// START KGU#677 2019-03-09: Issue #527 (revision)
+	// START KGU#1024 2022-01-05: Workaround to upgrade bsh-2.0b6.jar to bsh-2.1.0.jar
+	///**
+	// * Replaces the top-level EvalError message with the given expression
+	// * and a description of the originating problem, which is often more
+	// * expressive than the message of {@code err}.
+	// * @param _expr - The original expression or element text
+	// * @param err - an {@link EvalError}
+	// * @return true if the message of {@code err} had been augmented or replaced.
+	// */
+	//private boolean addCauseDescription(String _expr, EvalError err) {
+	//	Throwable ex = err;
+	//	String msg = null;
+	//	while (ex.getCause() != null) {
+	//		ex = ex.getCause();
+	//		if (ex.getMessage() != null) {
+	//			msg = ex.getMessage();
+	//		}
+	//	}
+	//	if (msg != null) {
+	//		err.setMessage(_expr + ":\n" + msg);
+	//	}
+	//	return msg != null;
+	//}
 	/**
-	 * Replaces the top-level EvalError message with the given expression
-	 * and a description of the originating problem, which is often more
-	 * expressive than the message of {@code err}.
+	 * Tries to derive a description of the originating problem, which is
+	 * often more expressive than the message of {@code err} the top-level
+	 * EvalError message and combines it with the given expression in this
+	 * case.
+	 * 
 	 * @param _expr - The original expression or element text
 	 * @param err - an {@link EvalError}
-	 * @return true if the message of {@code err} had been augmented or replaced.
+	 * @return the message prefix meant to replace the message of {@code err},
+	 *     or {@code null} (if no cause text was found)
 	 */
-	private boolean addCauseDescription(String _expr, EvalError err) {
+	private String deriveCauseDescription(String _expr, EvalError err) {
 		Throwable ex = err;
 		String msg = null;
 		while (ex.getCause() != null) {
@@ -7931,18 +8201,21 @@ public class Executor implements Runnable
 			}
 		}
 		if (msg != null) {
-			err.setMessage(_expr + ":\n" + msg);
+			msg = _expr + ":\n" + msg + EVAL_ERR_PREFIX_SEPA;
 		}
-		return msg != null;
+		return msg;
 	}
+	// END KGU#1024 2022-01-05
 	// END KGU#677 2019-03-09
 
 	// START KGU#100 2017-10-08: Enh. #84 - accept array assignments with syntax array <- {val1, val2, ..., valN}
 	/**
 	 * Recursively pre-evaluates array initializer expressions
+	 * 
 	 * @param _expr - the initializer as String (just for a possible error message)
 	 * @param tokens - the initializer in precomputed tokenized form
 	 * @return object that should be a ArrayList<Object>
+	 * 
 	 * @throws EvalError
 	 */
 	private Object evaluateArrayInitializer(String _expr, StringList tokens) throws EvalError {
@@ -7966,10 +8239,12 @@ public class Executor implements Runnable
 	// START KGU#388 2017-09-13: Enh. #423 - accept record assignments with syntax recordVar <- typename{comp1: val1, comp2: val2, ..., compN: valN}
 	/**
 	 * Recursively pre-evaluates record initializer expressions
+	 * 
 	 * @param _expr - the expression
 	 * @param tokens - the splitting result
 	 * @param recordType - the identified record type entry
 	 * @return the filled {@link HashMap} of component name - value pairs
+	 * 
 	 * @throws EvalError
 	 */
 	private Object evaluateRecordInitializer(String _expr, StringList tokens, TypeMapEntry recordType) throws EvalError {
@@ -8041,8 +8316,15 @@ public class Executor implements Runnable
 	}
 	
 	// START KGU#33/KGU#34 2014-12-05
-	// Method tries to extract the index value from an expression formed like
-	// an array element access, i.e. "<arrayname>[<expression>]"
+	/**
+	 * Method tries to extract the index value from an expression formed like
+	 * an array element access, i.e. {@code "<arrayname>[<expression>]"}
+	 * 
+	 * @param varname - variable access expression
+	 * @return the evaluated non-negative index (if there is some).
+	 * 
+	 * @throws EvalError if no non-negative integral index can be evaluated
+	 */
 	private int getIndexValue(String varname) throws EvalError
 	{
 		// START KGU#141 2016-01-16: Bugfix #112
@@ -8061,6 +8343,16 @@ public class Executor implements Runnable
 			//index = Integer.parseInt(ind);	// KGU: This was nonsense - usually no literal here
 			index = (Integer) this.evaluateExpression(ind, false, false);
 		}
+		// START KGU#1024 2022-01-05: Upgrade from bsh-2.0b6.jar to bsh-2.1.0.jar
+		catch (EvalError e)
+		{
+			int pilcrowPos = -1;
+			if ((message = e.getRawMessage()) != null
+					&& (pilcrowPos = message.indexOf(EVAL_ERR_PREFIX_SEPA)) > 0) {
+				message = message.substring(0, pilcrowPos);
+			}
+		}
+		// END KGU#1024 2022-01-05
 		catch (Exception e)
 		{
 			//index = (Integer) this.interpreter.get(ind);	// KGU: This didn't work for expressions
@@ -8083,6 +8375,7 @@ public class Executor implements Runnable
 	/**
 	 * Returns an appropriate match string for the given parser preference string
 	 * (where CodeParser.ignoreCase is paid attention to)
+	 * 
 	 * @param keyword - parser preference string
 	 * @return match pattern
 	 */

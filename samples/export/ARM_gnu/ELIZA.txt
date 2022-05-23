@@ -1,0 +1,634 @@
+// Generated with Structorizer 3.32-06 on Tue Feb 08 12:00:35 CET 2022 
+.global _start
+.data
+.align 2
+v_16:	.word	'.',',',';','!','?'
+.align 2
+result:	.word	-1,0
+.align 2
+v_15:	.word	"  ","|"
+.align 2
+v_14:	.word	" i "," i\'"
+.align 2
+v_13:	.word	'P','l','e','a','s','e',' ','d','o','n',0x27,'t',' ','r','e','p','e','a','t',' ','y','o','u','r','s','e','l','f','!'
+.align 2
+v_12:	.word	'H','i','!',' ','I',0x27,'m',' ','y','o','u','r',' ','n','e','w',' ','t','h','e','r','a','p','i','s','t','.',' ','M','y',' ','n','a','m','e',' ','i','s',' ','E','l','i','z','a','.',' ','W','h','a','t',0x27,'s',' ','y','o','u','r',' ','p','r','o','b','l','e','m','?'
+.align 2
+v_11:	.word	'*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*'
+.align 2
+v_10:	.word	'*',' ','(','R','e','q','u','i','r','e','s',' ','a','t',' ','l','e','a','s','t',' ','S','t','r','u','c','t','o','r','i','z','e','r',' ','3','.','3','0','-','0','3',' ','t','o',' ','r','u','n',')'
+.align 2
+v_9:	.word	'*',' ','V','e','r','s','i','o','n',':',' ','2','.','4',' ','(','2','0','2','2','-','0','1','-','1','1',')'
+.align 2
+v_8:	.word	'*',' ','-',' ','K','a','y',' ','G',0xfc,'r','t','z','i','g',' ','/',' ','F','H',' ','E','r','f','u','r','t',' ','2','0','1','6'
+.align 2
+v_7:	.word	'*',' ','A','d','a','p','t','e','d',' ','f','o','r',' ','S','t','r','u','c','t','o','r','i','z','e','r',' ','b','y'
+.align 2
+v_6:	.word	'*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*'
+.align 2
+v_5:	.word	'*',' ','-',' ','P','a','u','l',' ','H','a','s','h','f','i','e','l','d'
+.align 2
+v_4:	.word	'*',' ','-',' ','P','a','t','r','i','c','i','a',' ','D','a','n','i','e','l','s','o','n'
+.align 2
+v_3:	.word	'*',' ','A','d','a','p','t','e','d',' ','f','o','r',' ','B','a','s','i','c',' ','o','n',' ','I','B','M',' ','P','C',' ','b','y'
+.align 2
+v_2:	.word	'*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*'
+.align 2
+v_1:	.word	'*',' ','O','r','i','g','i','n','a','l',' ','d','e','s','i','g','n',' ','b','y',' ','J','.',' ','W','e','i','z','e','n','b','a','u','m'
+.align 2
+v_0:	.word	'*','*','*','*','*','*','*','*','*','*','*','*','*',' ','E','L','I','Z','A',' ','*','*','*','*','*','*','*','*','*','*','*','*','*','*'
+.text
+.align 2
+_start:
+		// Title information 
+		LDR R2, =0xFF201000
+		// WARNING: No sensible solution for array output: 
+		ADR R3, v_0
+		STR R3, [R2]
+		LDR R2, =0xFF201000
+		// WARNING: No sensible solution for array output: 
+		ADR R3, v_1
+		STR R3, [R2]
+		LDR R2, =0xFF201000
+		// WARNING: No sensible solution for array output: 
+		ADR R3, v_2
+		STR R3, [R2]
+		LDR R2, =0xFF201000
+		// WARNING: No sensible solution for array output: 
+		ADR R3, v_3
+		STR R3, [R2]
+		LDR R2, =0xFF201000
+		// WARNING: No sensible solution for array output: 
+		ADR R3, v_4
+		STR R3, [R2]
+		LDR R2, =0xFF201000
+		// WARNING: No sensible solution for array output: 
+		ADR R3, v_5
+		STR R3, [R2]
+		LDR R2, =0xFF201000
+		// WARNING: No sensible solution for array output: 
+		ADR R3, v_6
+		STR R3, [R2]
+		LDR R2, =0xFF201000
+		// WARNING: No sensible solution for array output: 
+		ADR R3, v_7
+		STR R3, [R2]
+		LDR R2, =0xFF201000
+		// WARNING: No sensible solution for array output: 
+		ADR R3, v_8
+		STR R3, [R2]
+		LDR R2, =0xFF201000
+		// WARNING: No sensible solution for array output: 
+		ADR R3, v_9
+		STR R3, [R2]
+		LDR R2, =0xFF201000
+		// WARNING: No sensible solution for array output: 
+		ADR R3, v_10
+		STR R3, [R2]
+		LDR R2, =0xFF201000
+		// WARNING: No sensible solution for array output: 
+		ADR R3, v_11
+		STR R3, [R2]
+		// Stores the last five inputs of the user in a ring buffer, 
+		// the second component is the rolling (over-)write index. 
+		// ERROR: Not implemented yet 
+		// history <- History{{"", "", "", "", ""}, 0} 
+		STMFD SP!, {LR}
+		STR R0, [SP,#-1,LSL #2]
+		SUB SP, #4
+		MOV R0, #0
+		SWP R0, R0, [SP]
+		BL setupReplies
+		// Subroutine result: 
+		LDR R2, [SP]
+		ADD SP, #4
+		LDMFD SP!, {LR}
+		STMFD SP!, {LR}
+		STR R0, [SP,#-1,LSL #2]
+		SUB SP, #4
+		MOV R0, #0
+		SWP R0, R0, [SP]
+		BL setupReflexions
+		// Subroutine result: 
+		LDR R3, [SP]
+		ADD SP, #4
+		LDMFD SP!, {LR}
+		STMFD SP!, {LR}
+		STR R0, [SP,#-1,LSL #2]
+		SUB SP, #4
+		MOV R0, #0
+		SWP R0, R0, [SP]
+		BL setupGoodByePhrases
+		// Subroutine result: 
+		LDR R4, [SP]
+		ADD SP, #4
+		LDMFD SP!, {LR}
+		STMFD SP!, {LR}
+		STR R0, [SP,#-1,LSL #2]
+		SUB SP, #4
+		MOV R0, #0
+		SWP R0, R0, [SP]
+		BL setupKeywords
+		// Subroutine result: 
+		LDR R5, [SP]
+		ADD SP, #4
+		LDMFD SP!, {LR}
+		// ERROR: Not implemented yet 
+		// offsets[length(keyMap)-1] <- 0 
+		MOV R6, #0
+		// Starter 
+		LDR R7, =0xFF201000
+		// WARNING: No sensible solution for array output: 
+		ADR R8, v_12
+		STR R8, [R7]
+do_0:
+		LDR R7, =0xFF200050
+		LDR R7, [R7]
+		// Converts the input to lowercase, cuts out interpunctation 
+		// and pads the string 
+		STMFD SP!, {LR}
+		STR R7, [SP,#-4]!
+		STR R0, [SP,#-1,LSL #2]
+		SUB SP, #4
+		MOV R0, #0
+		SWP R0, R0, [SP]
+		BL normalizeInput
+		// Subroutine result: 
+		LDR R7, [SP]
+		ADD SP, #8
+		LDMFD SP!, {LR}
+		STMFD SP!, {LR}
+		STR R7, [SP,#-4]!
+		STR R4, [SP,#-4]!
+		STR R0, [SP,#-1,LSL #2]
+		SUB SP, #4
+		MOV R0, #0
+		SWP R0, R0, [SP]
+		BL checkGoodBye
+		// Subroutine result: 
+		LDR R6, [SP]
+		ADD SP, #12
+		LDMFD SP!, {LR}
+		CMP R6, #0
+		BNE end_1
+then_1:
+		ADR R8, v_13
+		STMFD SP!, {LR}
+		STR R9, [SP,#-4]!
+		STR R7, [SP,#-4]!
+		STR R0, [SP,#-1,LSL #2]
+		SUB SP, #4
+		MOV R0, #0
+		SWP R0, R0, [SP]
+		BL checkRepetition
+		// Subroutine result: 
+		LDR R10, [SP]
+		ADD SP, #12
+		LDMFD SP!, {LR}
+		CMP R10, #0
+		BNE end_2
+then_2:
+		STMFD SP!, {LR}
+		STR R5, [SP,#-4]!
+		STR R7, [SP,#-4]!
+		STR R0, [SP,#-1,LSL #2]
+		SUB SP, #4
+		MOV R0, #0
+		SWP R0, R0, [SP]
+		BL findKeyword
+		// Subroutine result: 
+		LDR R12, [SP]
+		ADD SP, #12
+		LDMFD SP!, {LR}
+		// The array R12 is not initialized 
+		// R11<-R12[0] 
+		CMP R11, #0
+		BGE end_3
+then_3:
+		// Should never happen... 
+		// ERROR: Not implemented yet 
+		// keyIndex <- length(keyMap)-1 
+end_3:
+		// ERROR: Not implemented yet 
+		// var entry: KeyMapEntry <- keyMap[keyIndex] 
+		// Variable part of the reply 
+		// ERROR: Not implemented yet 
+		// varPart <- "" 
+		// ERROR: Unsupported condition syntax - Alternative skipped! 
+		// if (length(entry.keyword)>0) 
+		// ERROR: Not implemented yet 
+		// replyRing <- replies[entry.index] 
+		// ERROR: Not implemented yet 
+		// reply <- replyRing[offsets[keyIndex]] 
+		// ERROR: Not implemented yet 
+		// offsets[keyIndex] <- (offsets[keyIndex] + 1) mod length(replyRing) 
+		// ERROR: Not implemented yet 
+		// posAster <- pos("*", reply) 
+		CMP R0, #0
+		BLE end_4
+then_4:
+		// ERROR: Unsupported condition syntax - Alternative skipped! 
+		// if (varPart==" ") 
+end_4:
+		STMFD SP!, {LR}
+		STR R8, [SP,#-4]!
+		STR R0, [SP,#-1,LSL #2]
+		SUB SP, #4
+		MOV R0, #0
+		SWP R0, R0, [SP]
+		BL adjustSpelling
+		// Subroutine result: 
+		LDR R8, [SP]
+		ADD SP, #8
+		LDMFD SP!, {LR}
+end_2:
+		LDR R1, =0xFF201000
+		STR R8, [R1]
+end_1:
+		CMP R6, #0
+		BEQ do_0
+
+		// Endless loop generated at the end of program 
+stopELIZA:
+		B stopELIZA
+adjustSpelling:
+		STMFD SP!, {R0-R12}
+		LDR R2, [SP,#15,LSL #2]
+		MOV R3, R2
+		MOV R4, #1
+		// ERROR: Unsupported condition syntax - While skipped! 
+		// while (position<=length(sentence))&&(copy(sentence,position,1)==" ") 
+		// ERROR: Unsupported condition syntax - Alternative skipped! 
+		// if (position<=length(sentence)) 
+		ADR R6, v_14
+		MOV R7, #0
+for_5:
+		CMP R7, #1
+		BGT end_5
+		LDR R5, [R6, R7, LSL #2]
+		// ERROR: Not implemented yet 
+		// position <- pos(word, result) 
+while_6:
+		CMP R4, #0
+		BLE end_6
+		// ERROR: Not implemented yet 
+		// delete(result, position+1, 1) 
+		// ERROR: Not implemented yet 
+		// insert("I", result, position+1) 
+		// ERROR: Not implemented yet 
+		// position <- pos(word, result) 
+		B while_6
+end_6:
+		ADD R7, R7, #1
+		B for_5
+end_5:
+		STR R3, [SP,#13,#2]
+		LDMFD SP!, {R0-R12}
+		MOVS PC, LR
+
+checkGoodBye:
+		STMFD SP!, {R0-R12}
+		LDR R2, [SP,#15,LSL #2]
+		LDR R3, [SP,#16,LSL #2]
+		MOV R5, #0
+for_7:
+		// WARNING: End value expression too complex 
+		CMP R5, 
+		BGT end_7
+		// The array phrases is not initialized 
+		// R4<-phrases[R5] 
+		// ERROR: Unsupported condition syntax - Alternative skipped! 
+		// if (pos(pair[0],text)>0) 
+		ADD R5, R5, #1
+		B for_7
+end_7:
+		STR false, [SP,#13,#2]
+		LDMFD SP!, {R0-R12}
+		MOVS PC, LR
+		
+checkRepetition:
+		STMFD SP!, {R0-R12}
+		LDR R2, [SP,#15,LSL #2]
+		LDR R3, [SP,#16,LSL #2]
+		MOV R4, #0
+		// ERROR: Unsupported condition syntax - Alternative skipped! 
+		// if (length(newInput)>4) 
+		STR R4, [SP,#13,#2]
+		LDMFD SP!, {R0-R12}
+		MOVS PC, LR
+		
+conjugateStrings:
+		STMFD SP!, {R0-R12}
+		LDR R2, [SP,#15,LSL #2]
+		LDR R3, [SP,#16,LSL #2]
+		LDR R4, [SP,#17,LSL #2]
+		LDR R5, [SP,#18,LSL #2]
+		// ERROR: Not implemented yet 
+		// result <- " " + copy(sentence, keyPos + length(key), length(sentence)) + " " 
+		MOV R7, #0
+for_8:
+		// WARNING: End value expression too complex 
+		CMP R7, 
+		BGT end_8
+		// The array flexions is not initialized 
+		// R6<-flexions[R7] 
+		// ERROR: Not implemented yet 
+		// left <- "" 
+		MOV R8, R9
+		// ERROR: Not implemented yet 
+		// pos0 <- pos(pair[0], right) 
+		// ERROR: Not implemented yet 
+		// pos1 <- pos(pair[1], right) 
+while_9:
+		CMP R10, #0
+		BGT code_9
+		CMP pos1, #0
+		BLE end_9
+		// Detect which of the two words of the pair matches first (lest a substitution should be reverted) 
+		MOV R12, #0
+		MOV R11, R10
+		// ERROR: Unsupported condition syntax - Alternative skipped! 
+		// if (pos0==0)||((pos1>0)&&(pos1<pos0)) 
+		// ERROR: Not implemented yet 
+		// left <- left + copy(right, 1, position-1) + pair[1 - which] 
+		// ERROR: Not implemented yet 
+		// right <- copy(right, position + length(pair[which]), length(right)) 
+		// ERROR: Not implemented yet 
+		// pos0 <- pos(pair[0], right) 
+		// ERROR: Not implemented yet 
+		// pos1 <- pos(pair[1], right) 
+		B while_9
+end_9:
+		ADD R9, R0, R8
+		ADD R7, R7, #1
+		B for_8
+end_8:
+		// Eliminate multiple spaces (replaced by single ones) and vertical bars 
+		ADR R7, v_15
+		MOV R1, #0
+for_10:
+		CMP R1, #1
+		BGT end_10
+		LDR R6, [R7, R1, LSL #2]
+		R11 <- (R6, R9)
+		LDR ), =0xFF200050
+		LDR <-, [)]
+		LDR (, [)]
+		LDR R6, [)]
+		LDR R9, [)]
+		LDR ), [)]
+while_11:
+		CMP R11, #0
+		BLE end_11
+		// ERROR: Not implemented yet 
+		// result <- copy(result, 1, position-1) + copy(result, position+1, length(result)) 
+		R11 <- (R6, R9)
+		LDR ), =0xFF200050
+		LDR <-, [)]
+		LDR (, [)]
+		LDR R6, [)]
+		LDR R9, [)]
+		LDR ), [)]
+		B while_11
+end_11:
+		ADD R1, R1, #1
+		B for_10
+end_10:
+		STR R9, [SP,#13,#2]
+		LDMFD SP!, {R0-R12}
+		MOVS PC, LR
+
+findKeyword:
+		STMFD SP!, {R0-R12}
+		LDR R2, [SP,#15,LSL #2]
+		LDR R3, [SP,#16,LSL #2]
+		// Contains the index of the keyword and its position in sentence 
+		MOV R4, #0
+		// ERROR: Unsupported condition syntax - While skipped! 
+		// while (result[0]<0)&&(i<length(keyMap)) 
+		STR R5, [SP,#13,#2]
+		LDMFD SP!, {R0-R12}
+		MOVS PC, LR
+
+normalizeInput:
+		STMFD SP!, {R0-R12}
+		LDR R2, [SP,#15,LSL #2]
+		// ERROR: Not implemented yet 
+		// sentence <- lowercase(sentence) 
+		ADR R4, v_16
+		MOV R5, #0
+for_12:
+		CMP R5, #4
+		BGT end_12
+		LDR R3, [R4, R5, LSL #2]
+		// ERROR: Not implemented yet 
+		// position <- pos(symbol, sentence) 
+while_13:
+		CMP R6, #0
+		BLE end_13
+		// ERROR: Not implemented yet 
+		// sentence <- copy(sentence, 1, position-1) + copy(sentence, position+1, length(sentence)) 
+		// ERROR: Not implemented yet 
+		// position <- pos(symbol, sentence) 
+		B while_13
+end_13:
+		ADD R5, R5, #1
+		B for_12
+end_12:
+		// ERROR: Not implemented yet 
+		// result <- " " + sentence + " " 
+		STR R3, [SP,#13,#2]
+		LDMFD SP!, {R0-R12}
+		MOVS PC, LR
+
+setupGoodByePhrases:
+		STMFD SP!, {R0-R12}
+		// ERROR: Not implemented yet 
+		// phrases[0] <- {" shut", "Okay. If you feel that way I\'ll shut up. ... Your choice."} 
+		// ERROR: Not implemented yet 
+		// phrases[1] <- {"bye", "Well, let\'s end our talk for now. See you later. Bye."} 
+		STR R2, [SP,#13,#2]
+		LDMFD SP!, {R0-R12}
+		MOVS PC, LR
+		
+setupKeywords:
+		STMFD SP!, {R0-R12}
+		// The empty key string (last entry) is the default clause - will always be found 
+		// ERROR: Not implemented yet 
+		// keywords[39] <- KeyMapEntry{"", 29} 
+		// ERROR: Not implemented yet 
+		// keywords[0] <- KeyMapEntry{"can you ", 0} 
+		// ERROR: Not implemented yet 
+		// keywords[1] <- KeyMapEntry{"can i ", 1} 
+		// ERROR: Not implemented yet 
+		// keywords[2] <- KeyMapEntry{"you are ", 2} 
+		// ERROR: Not implemented yet 
+		// keywords[3] <- KeyMapEntry{"you\'re ", 2} 
+		// ERROR: Not implemented yet 
+		// keywords[4] <- KeyMapEntry{"i don't ", 3} 
+		// ERROR: Not implemented yet 
+		// keywords[5] <- KeyMapEntry{"i feel ", 4} 
+		// ERROR: Not implemented yet 
+		// keywords[6] <- KeyMapEntry{"why don\'t you ", 5} 
+		// ERROR: Not implemented yet 
+		// keywords[7] <- KeyMapEntry{"why can\'t i ", 6} 
+		// ERROR: Not implemented yet 
+		// keywords[8] <- KeyMapEntry{"are you ", 7} 
+		// ERROR: Not implemented yet 
+		// keywords[9] <- KeyMapEntry{"i can\'t ", 8} 
+		// ERROR: Not implemented yet 
+		// keywords[10] <- KeyMapEntry{"i am ", 9} 
+		// ERROR: Not implemented yet 
+		// keywords[11] <- KeyMapEntry{"i\'m ", 9} 
+		// ERROR: Not implemented yet 
+		// keywords[12] <- KeyMapEntry{"you ", 10} 
+		// ERROR: Not implemented yet 
+		// keywords[13] <- KeyMapEntry{"i want ", 11} 
+		// ERROR: Not implemented yet 
+		// keywords[14] <- KeyMapEntry{"what ", 12} 
+		// ERROR: Not implemented yet 
+		// keywords[15] <- KeyMapEntry{"how ", 12} 
+		// ERROR: Not implemented yet 
+		// keywords[16] <- KeyMapEntry{"who ", 12} 
+		// ERROR: Not implemented yet 
+		// keywords[17] <- KeyMapEntry{"where ", 12} 
+		// ERROR: Not implemented yet 
+		// keywords[18] <- KeyMapEntry{"when ", 12} 
+		// ERROR: Not implemented yet 
+		// keywords[19] <- KeyMapEntry{"why ", 12} 
+		// ERROR: Not implemented yet 
+		// keywords[20] <- KeyMapEntry{"name ", 13} 
+		// ERROR: Not implemented yet 
+		// keywords[21] <- KeyMapEntry{"cause ", 14} 
+		// ERROR: Not implemented yet 
+		// keywords[22] <- KeyMapEntry{"sorry ", 15} 
+		// ERROR: Not implemented yet 
+		// keywords[23] <- KeyMapEntry{"dream ", 16} 
+		// ERROR: Not implemented yet 
+		// keywords[24] <- KeyMapEntry{"hello ", 17} 
+		// ERROR: Not implemented yet 
+		// keywords[25] <- KeyMapEntry{"hi ", 17} 
+		// ERROR: Not implemented yet 
+		// keywords[26] <- KeyMapEntry{"maybe ", 18} 
+		// ERROR: Not implemented yet 
+		// keywords[27] <- KeyMapEntry{" no", 19} 
+		// ERROR: Not implemented yet 
+		// keywords[28] <- KeyMapEntry{"your ", 20} 
+		// ERROR: Not implemented yet 
+		// keywords[29] <- KeyMapEntry{"always ", 21} 
+		// ERROR: Not implemented yet 
+		// keywords[30] <- KeyMapEntry{"think ", 22} 
+		// ERROR: Not implemented yet 
+		// keywords[31] <- KeyMapEntry{"alike ", 23} 
+		// ERROR: Not implemented yet 
+		// keywords[32] <- KeyMapEntry{"yes ", 24} 
+		// ERROR: Not implemented yet 
+		// keywords[33] <- KeyMapEntry{"friend ", 25} 
+		// ERROR: Not implemented yet 
+		// keywords[34] <- KeyMapEntry{"computer", 26} 
+		// ERROR: Not implemented yet 
+		// keywords[35] <- KeyMapEntry{"bot ", 26} 
+		// ERROR: Not implemented yet 
+		// keywords[36] <- KeyMapEntry{"smartphone", 27} 
+		// ERROR: Not implemented yet 
+		// keywords[37] <- KeyMapEntry{"father ", 28} 
+		// ERROR: Not implemented yet 
+		// keywords[38] <- KeyMapEntry{"mother ", 28} 
+		STR R2, [SP,#13,#2]
+		LDMFD SP!, {R0-R12}
+		MOVS PC, LR
+		
+setupReflexions:
+		STMFD SP!, {R0-R12}
+		// ERROR: Not implemented yet 
+		// reflexions[0] <- {" are ", " am "} 
+		// This is not always helpful (e.g. if it relates to things or third persons) 
+		// ERROR: Not implemented yet 
+		// reflexions[1] <- {" were ", " was "} 
+		// ERROR: Not implemented yet 
+		// reflexions[2] <- {" you ", " i "} 
+		// ERROR: Not implemented yet 
+		// reflexions[3] <- {" yours ", " mine "} 
+		// ERROR: Not implemented yet 
+		// reflexions[4] <- {" yourself ", " myself "} 
+		// ERROR: Not implemented yet 
+		// reflexions[5] <- {" your ", " my "} 
+		// ERROR: Not implemented yet 
+		// reflexions[6] <- {" i\'ve ", " you\'ve "} 
+		// ERROR: Not implemented yet 
+		// reflexions[7] <- {" i\'m ", " you\'re "} 
+		// We must not replace "you" by "me", not in particular after "I" had been replaced by "you". 
+		// ERROR: Not implemented yet 
+		// reflexions[8] <- {" me ", " |you "} 
+		STR R2, [SP,#13,#2]
+		LDMFD SP!, {R0-R12}
+		MOVS PC, LR
+		
+setupReplies:
+		STMFD SP!, {R0-R12}
+		// We start with the highest index for performance reasons 
+		// (is to avoid frequent array resizing) 
+		// ERROR: Not implemented yet 
+		// replies[29] <- { "Say, do you have any psychological problems?", "What does that suggest to you?", "I see.", "I'm not sure I understand you fully.", "Come come elucidate your thoughts.", "Can you elaborate on that?", "That is quite interesting."} 
+		// ERROR: Not implemented yet 
+		// replies[0] <- { "Don't you believe that I can*?", "Perhaps you would like to be like me?", "You want me to be able to*?"} 
+		// ERROR: Not implemented yet 
+		// replies[1] <- { "Perhaps you don't want to*?", "Do you want to be able to*?"} 
+		// ERROR: Not implemented yet 
+		// replies[2] <- { "What makes you think I am*?", "Does it please you to believe I am*?", "Perhaps you would like to be*?", "Do you sometimes wish you were*?"} 
+		// ERROR: Not implemented yet 
+		// replies[3] <- { "Don't you really*?", "Why don't you*?", "Do you wish to be able to*?", "Does that trouble you*?"} 
+		// ERROR: Not implemented yet 
+		// replies[4] <- { "Do you often feel*?", "Are you afraid of feeling*?", "Do you enjoy feeling*?"} 
+		// ERROR: Not implemented yet 
+		// replies[5] <- { "Do you really believe I don't*?", "Perhaps in good time I will*.", "Do you want me to*?"} 
+		// ERROR: Not implemented yet 
+		// replies[6] <- { "Do you think you should be able to*?", "Why can't you*?"} 
+		// ERROR: Not implemented yet 
+		// replies[7] <- { "Why are you interested in whether or not I am*?", "Would you prefer if I were not*?", "Perhaps in your fantasies I am*?"} 
+		// ERROR: Not implemented yet 
+		// replies[8] <- { "How do you know you can't*?", "Have you tried?","Perhaps you can now*."} 
+		// ERROR: Not implemented yet 
+		// replies[9] <- { "Did you come to me because you are*?", "How long have you been*?", "Do you believe it is normal to be*?", "Do you enjoy being*?"} 
+		// ERROR: Not implemented yet 
+		// replies[10] <- { "We were discussing you--not me.", "Oh, I*.", "You're not really talking about me, are you?"} 
+		// ERROR: Not implemented yet 
+		// replies[11] <- { "What would it mean to you if you got*?", "Why do you want*?", "Suppose you soon got*...", "What if you never got*?", "I sometimes also want*."} 
+		// ERROR: Not implemented yet 
+		// replies[12] <- { "Why do you ask?", "Does that question interest you?", "What answer would please you the most?", "What do you think?", "Are such questions on your mind often?", "What is it that you really want to know?", "Have you asked anyone else?", "Have you asked such questions before?", "What else comes to mind when you ask that?"} 
+		// ERROR: Not implemented yet 
+		// replies[13] <- { "Names don't interest me.", "I don't care about names -- please go on."} 
+		// ERROR: Not implemented yet 
+		// replies[14] <- { "Is that the real reason?", "Don't any other reasons come to mind?", "Does that reason explain anything else?", "What other reasons might there be?"} 
+		// ERROR: Not implemented yet 
+		// replies[15] <- { "Please don't apologize!", "Apologies are not necessary.", "What feelings do you have when you apologize?", "Don't be so defensive!"} 
+		// ERROR: Not implemented yet 
+		// replies[16] <- { "What does that dream suggest to you?", "Do you dream often?", "What persons appear in your dreams?", "Are you disturbed by your dreams?"} 
+		// ERROR: Not implemented yet 
+		// replies[17] <- { "How do you do ...please state your problem."} 
+		// ERROR: Not implemented yet 
+		// replies[18] <- { "You don't seem quite certain.", "Why the uncertain tone?", "Can't you be more positive?", "You aren't sure?", "Don't you know?"} 
+		// ERROR: Not implemented yet 
+		// replies[19] <- { "Are you saying no just to be negative?", "You are being a bit negative.", "Why not?", "Are you sure?", "Why no?"} 
+		// ERROR: Not implemented yet 
+		// replies[20] <- { "Why are you concerned about my*?", "What about your own*?"} 
+		// ERROR: Not implemented yet 
+		// replies[21] <- { "Can you think of a specific example?", "When?", "What are you thinking of?", "Really, always?"} 
+		// ERROR: Not implemented yet 
+		// replies[22] <- { "Do you really think so?", "But you are not sure you*?", "Do you doubt you*?"} 
+		// ERROR: Not implemented yet 
+		// replies[23] <- { "In what way?", "What resemblance do you see?", "What does the similarity suggest to you?", "What other connections do you see?", "Could there really be some connection?", "How?", "You seem quite positive."} 
+		// ERROR: Not implemented yet 
+		// replies[24] <- { "Are you sure?", "I see.", "I understand."} 
+		// ERROR: Not implemented yet 
+		// replies[25] <- { "Why do you bring up the topic of friends?", "Do your friends worry you?", "Do your friends pick on you?", "Are you sure you have any friends?", "Do you impose on your friends?", "Perhaps your love for friends worries you."} 
+		// ERROR: Not implemented yet 
+		// replies[26] <- { "Do computers worry you?", "Are you talking about me in particular?", "Are you frightened by machines?", "Why do you mention computers?", "What do you think machines have to do with your problem?", "Don't you think computers can help people?", "What is it about machines that worries you?"} 
+		// ERROR: Not implemented yet 
+		// replies[27] <- { "Do you sometimes feel uneasy without a smartphone?", "Have you had these phantasies before?", "Does the world seem more real for you via apps?"} 
+		// ERROR: Not implemented yet 
+		// replies[28] <- { "Tell me more about your family.", "Who else in your family*?", "What does family relations mean for you?", "Come on, How old are you?"} 
+		MOV R2, R3
+		STR R2, [SP,#13,#2]
+		LDMFD SP!, {R0-R12}
+		MOVS PC, LR

@@ -16,6 +16,6 @@
 	<classpathentry kind="lib" path="lib/freehep-xml-2.1.1.jar"/>
 	<classpathentry kind="lib" path="lib/freehep.jar"/>
 	<classpathentry kind="lib" path="lib/AppleJavaExtensions.jar"/>
-	<classpathentry kind="lib" path="lib/bsh-2.0b6.jar"/>
+	<classpathentry kind="lib" path="lib/bsh-2.1.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

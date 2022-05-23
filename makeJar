@@ -12,10 +12,10 @@ set -e
 #
 #      Author                         Date         Description
 #      ------                         ----         -----------
-#      Bob Fisch                      2008.10.04   First Issue
-#      Bob Fisch & Philipp Hübner     2009.07.08   Scripting ameliorations
-#      Simon Sobisch                  2017.03.06   Check for jar
-#      Simon Sobisch                  2020.01.20   added handling for nostart argument,
+#      Bob Fisch                      2008-10-04   First Issue
+#      Bob Fisch & Philipp Hübner     2009-07-08   Scripting ameliorations
+#      Simon Sobisch                  2017-03-06   Check for jar
+#      Simon Sobisch                  2020-01-20   added handling for nostart argument,
 #                                                  default to detached start
 #
 ################################################################################

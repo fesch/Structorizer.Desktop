@@ -21,7 +21,7 @@ package lu.fisch.structorizer.parsers;
 
 /******************************************************************************************************
  *
- *      Author:         kay
+ *      Author:         Kay Gürtzig
  *
  *      Description:    XML input parser to generate a structogram from a Struktogrammeditor save file.
  *
@@ -64,6 +64,10 @@ import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.elements.For.ForLoopStyle;
 import lu.fisch.structorizer.io.Ini;
 
+/**
+ * XML input parser to derive a structogram from a Struktogrammeditor save file
+ * @author Kay Gürtzig
+ */
 public class StrkParser extends DefaultHandler implements INSDImporter
 {
 	// START KGU#484 2018-03-22: Issue #463 
