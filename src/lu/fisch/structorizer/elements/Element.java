@@ -129,6 +129,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2021-03-03      Issue #954: Modified breakpoint behaviour
  *      Kay Gürtzig     2021-06-10      Enh. #926, #979: New method getAnalyserMarkerBounds() to support tooltip
  *      Kay Gürtzig     2021-11-17      Bugfix #1021 in getHighlightUnits()
+ *      Kay Gürtzig     2022-05-31      Bugfix #1037 in getHighlightUnits()
  *
  ******************************************************************************************************
  *
@@ -299,7 +300,7 @@ public abstract class Element {
 	public static final long E_HELP_FILE_SIZE = 12300000;
 	public static final String E_DOWNLOAD_PAGE = "https://www.fisch.lu/Php/download.php";
 	// END KGU#791 2020-01-20
-	public static final String E_VERSION = "3.32-07";
+	public static final String E_VERSION = "3.32-08";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -4034,7 +4035,10 @@ public abstract class Element {
 			String ioSign = null;
 			for (String ioKey: new String[] {"input", "output"}) {
 				StringList splitKey = splitLexically(CodeParser.getKeywordOrDefault(ioKey, ioKey), false);
-				if (parts.indexOf(splitKey, 0, CodeParser.ignoreCase) == 0) {
+				// START KGU#1031 2022-05-31: Bugfix #1037
+				//if (parts.indexOf(splitKey, 0, CodeParser.ignoreCase) == 0) {
+				if (parts.indexOf(splitKey, 0, !CodeParser.ignoreCase) == 0) {
+				// END KGU#1031 2022-05-31
 					ioSign = parts.concatenate("", 0, splitKey.count());
 					parts.remove(1, splitKey.count());
 					parts.set(0, ioSign);

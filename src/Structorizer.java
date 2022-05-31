@@ -1079,12 +1079,13 @@ public class Structorizer
 	// START KGU#538 2018-07-01: Bugfix #554
 	/**
 	 * Generates the nsd files from the given list of {@link Root}s
+	 * 
 	 * @param newRoots - list of generated {@link Root}s
 	 * @param filename - the base file name for the resulting nsd files (may be
-	 * the source file name or a specified out file name)
+	 *     the source file name or a specified out file name)
 	 * @param fileExts - file name extensions to be replaced (typical extensions of the source file).
 	 * @param overwrite - whether existing files are to be overwritten - otherwise a number
-	 * will be appended to avoid name clashes.
+	 *     will be appended to avoid name clashes.
 	 */
 	private static void writeRootsToFiles(List<Root> newRoots, String filename, StringList fileExts, boolean overwrite)
 	{

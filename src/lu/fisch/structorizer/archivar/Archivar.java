@@ -94,6 +94,11 @@ public class Archivar {
 	
 	private Logger logger;
 	
+	/**
+	 * Archive index entry class, extending {@link ArchiveRecord} by path, name, and argument number information
+	 * 
+	 * @author Kay Gürtzig
+	 */
 	public class ArchiveIndexEntry extends ArchiveRecord {
 		public String path;					// the true file path
 		public String virtPath = null;		// the virtual path (if inside an archive)
@@ -101,8 +106,11 @@ public class Archivar {
 		public int minArgs = -1;			// minimum number of routine arguments, or -1 for a program, or -2 for an includable
 		public int maxArgs = -1;			// maximum number of routine arguments, or -1 for a program, or -2 for an includable
 		
-		/** Derives an entry from an {@link ArchiveRecord}</br>
-		 * @param archiveRecord - the root component must not be null!
+		/**
+		 * Derives an entry from an {@link ArchiveRecord}
+		 * 
+		 * @param archiveRecord - the source {@link ArchiveRecord} (Note: The {@link ArchiveRecord#root} component
+		 *     <b>must not be {@code null}!</b>)
 		 */
 		public ArchiveIndexEntry(ArchiveRecord archiveRecord)
 		{
@@ -110,7 +118,9 @@ public class Archivar {
 			setRoot(this.root);
 		}
 		
-		/** Derives an entry from a {@link Root} and its graphical location {@code point}.
+		/**
+		 * Derives an entry from a {@link Root} and its graphical location {@code point}.
+		 * 
 		 * @param root - The diagram (must not be null!)
 		 * @param point - the graphical location (may be null)
 		 */
@@ -119,9 +129,11 @@ public class Archivar {
 			this(new ArchiveRecord(root, point));
 		}
 		
-		/** Builds an entry from explicitly given values.<br/>
+		/**
+		 * Builds an entry from explicitly given values.<br/>
 		 * Important: At least one of {@code _path} or {@code _virtulalPath} must be given!
-		 * @param _point - graphical location (may be null)
+		 * 
+		 * @param _point - graphical location (may be {@code null})
 		 * @param _path - actual file path of the nsd file
 		 * @param _virtPath - virtual file path inside the source archive
 		 * @param _diagramName - name of the diagram (signature part)
@@ -139,6 +151,7 @@ public class Archivar {
 		}
 		
 		/** Derives an entry from an arranger list file line.
+		 * 
 		 * @param arrangementLine - line of an arrangement file
 		 * @param _fromArchive - originating arrangement archive
 		 * @param _extractDir - extraction directory (for signature retrieval if info isn't part of the line)
@@ -180,6 +193,7 @@ public class Archivar {
 
 		/**
 		 * @return the stored {@link Root}.
+		 * 
 		 * @see #getRoot(Archivar)
 		 * @see #getFile()
 		 */
@@ -191,9 +205,12 @@ public class Archivar {
 		 * Returns the stored {@link Root}. If the {@link Root} hadn't been stored and an
 		 * {@code archivar} is given then the diagram is retrieved and, if successful, 
 		 * cached in this entry.
+		 * 
 		 * @param archivar - optionally an {@link Archivar} for {@link Root} retrieval
 		 * @return the {@link Root} object if already loaded or after having been retrieved.
+		 * 
 		 * @throws Exception if something goes wrong on retrieval
+		 * 
 		 * @see #getRoot()
 		 * @see #getFile()
 		 */
@@ -213,6 +230,7 @@ public class Archivar {
 		
 		/**
 		 * Sets the given {@link Root} object and then updates all related information
+		 * 
 		 * @param root - the diagram to be set
 		 * @return true if the {@code root} was accepted
 		 */
@@ -250,6 +268,7 @@ public class Archivar {
 		
 		/**
 		 * @return either the actual nsd file path or the virtual path within the source archive
+		 * 
 		 * @see #getFile()
 		 */
 		public String getPath()
@@ -262,6 +281,7 @@ public class Archivar {
 		
 		/**
 		 * @return the source file - may be an actual nsd file or a virtual file path inside an archive
+		 * 
 		 * @see #getPath()
 		 */
 		public File getFile()
@@ -296,8 +316,9 @@ public class Archivar {
 		/**
 		 * Compares this entry with other and checks whether the {@link Root} objects or
 		 * the files are equivalent. Signatures are not significant here.
+		 * 
 		 * @param other - another index entry
-		 * @return true if and only if both entries are equivalent
+		 * @return {@code true} iff (= if and only if) both entries are equivalent
 		 */
 		public boolean equals(ArchiveIndexEntry other)
 		{
@@ -326,7 +347,8 @@ public class Archivar {
 	
 	/**
 	 * Effectively a list of {@link ArchiveIndexEntry} objects, also holding the
-	 * corresponding arrangement list file if the index hasn't beem merged wth another.
+	 * corresponding arrangement list file if the index hasn't been merged with another.
+	 * 
 	 * @author Kay Gürtzig
 	 */
 	public class ArchiveIndex
@@ -340,6 +362,15 @@ public class Archivar {
 			this.entries = new LinkedList<ArchiveIndexEntry>();
 		}
 
+		/**
+		 * Constructs an ArchiveIndex object from the given {@link ArchiveIndexEntry} list {@code _entries}
+		 * or the specified arrangement list file {@code _arrFile} if {@code _engtries} is {@code null}.
+		 * 
+		 * @param _arrFile - the arrangement list file from which the entries are to be extracted if
+		 *     {@code _entries} is {@code null}
+		 * @param _entries - the list of {@link ArchiveIndexEntry} objects defining the archive content
+		 * @param _arrzFile - optionally an associated arrangement archive file (path information)
+		 */
 		public ArchiveIndex(File _arrFile, List<ArchiveIndexEntry> _entries, File _arrzFile)
 		{
 			arrFile = _arrFile;
@@ -364,10 +395,11 @@ public class Archivar {
 		
 		/**
 		 * Appends the given {@code entry} to this index, if {@code checkDuplicate}
-		 * is false or there is no equivalent entry.
+		 * is {@code false} or there is no equivalent entry.
+		 * 
 		 * @param entry - the {@link ArchiveIndexEntry} to be added
-		 * @param checkDuplicate - if true then root object or path is compared
-		 * @return true if anything changed (i.e. {@code entry} has been added) 
+		 * @param checkDuplicate - if {@code true} then root object or path is compared
+		 * @return {@code true} if anything changed (i.e. {@code entry} has been added) 
 		 */
 		public boolean add(ArchiveIndexEntry entry, boolean checkDuplicate)
 		{
@@ -381,9 +413,10 @@ public class Archivar {
 		/**
 		 * Appends all of the entries in the specified collection to the end of this list,
 		 * in the order that they are returned by the specified collection's iterator.
+		 * 
 		 * @param entries - collection of {@link ArchiveIndexEntry}
-		 * @param checkDuplicates - if true then root objects or paths are compared
-		 * @return true if anything changed (i.e. {@code entries} wasn't empty) 
+		 * @param checkDuplicates - if {@code true} then root objects or paths are compared
+		 * @return {@code true} if anything changed (i.e. {@code entries} wasn't empty) 
 		 */
 		public boolean addAll(Collection<? extends ArchiveIndexEntry> entries, boolean checkDuplicates)
 		{
@@ -404,8 +437,9 @@ public class Archivar {
 		/**
 		 * Appends all of the entries from the other ArchiveIndex which had no equivalent
 		 * in this archive index. If both arrFiles differ then arrFile entry gets cleared.
-		 * @param other - collection of {@link ArchiveIndexEntry}
-		 * @return true if anything changed 
+		 * 
+		 * @param other - the source {@link ArchiveIndex}
+		 * @return  {@code true} if anything changed 
 		 */
 		public boolean addAll(ArchiveIndex other)
 		{
@@ -419,8 +453,9 @@ public class Archivar {
 		/**
 		 * Adds a new {@link ArchiveIndexEntry} for the given {@link Root} {@code root}
 		 * and {@code point}.
+		 * 
 		 * @param root - The diagram to be added, should ideally have a file representation
-		 * @param point - graphical location (arrangement), may be null
+		 * @param point - graphical location (arrangement), may be {@code null}
 		 * @return true if the addition worked
 		 */
 		public boolean addEntryFor(Root root, Point point)
@@ -528,6 +563,7 @@ public class Archivar {
 	
 	/**
 	 * Finds a directory for temporary files (trying different OS standard environment variables)
+	 * 
 	 * @return path of a temp directory
 	 */
 	public static File findTempDir()
@@ -556,7 +592,8 @@ public class Archivar {
 	}
 	
 	/**
-	 * Creates or provids a directory with name {@link _dirName} in the standard temp directory
+	 * Creates or provides a directory with name {@link _dirName} in the standard temp directory
+	 * 
 	 * @param _dirName - name of the temporary directory to be created or found (no path!).
 	 * @return the {@link File} object for the requested directory
 	 */
@@ -576,6 +613,7 @@ public class Archivar {
 	/**
 	 * Ensures all {@link Root} objects given as {@code _roots} get saved and will be packed into
 	 * a new arrz file {@code _targetFile}.
+	 * 
 	 * @param _archive - the target file
 	 * @param _roots - the diagrams to be archived
 	 * @param _arrangeDiagonally - if true then coordinates with equally growing x and y will be given
@@ -583,6 +621,7 @@ public class Archivar {
 	 * a dynamic arrangement on loading by Arranger.
 	 * @param _troubles - a {@link StringList} the description of possible problems are appended to, or null. 
 	 * @return a temporary archive path if the intended {@code _archive} file had already existed, otherwise null
+	 * 
 	 * @throws ArchivarException if some problem occurred and {@code _troubles} was null
 	 */
 	public String zipArrangement(File _archive, Collection<Root> _roots, boolean _arrangeDiagonally, StringList _troubles) throws ArchivarException
@@ -606,12 +645,14 @@ public class Archivar {
 	}
 
 	/**
-	 * Creates an arrangement archive {@code _targetFile} from the arrangement list file given by {@code _arrFile} 
+	 * Creates an arrangement archive {@code _targetFile} from the arrangement list file given by {@code _arrFile}
+	 *  
 	 * @param _targetFile - {@link File} object holding the path for the arrangement archive
 	 * @param _arrFile - {@link File} object associated with an arrangement list file to be used for archiving
 	 * @param _troubles - a {@link StringList} the ddescription of possible problems are appended to or null. 
 	 * @return the path of the created temporary file if the target file `zipFilename´ had
 	 * existed (otherwise null)
+	 * 
 	 * @throws ArchivarException 
 	 */
 	public String zipArrangement(File _targetFile, File _arrFile, StringList _troubles) throws ArchivarException
@@ -630,15 +671,17 @@ public class Archivar {
 	 * If the creation of an archive is intended (i.e. {@code _archive} is given) then the arranger
 	 * list file will only contain the pure file names (without absolute path) of the nsd files
 	 * of the archive items.
+	 * 
 	 * @param _items - collection of @ArchiveRecord items to form the arrangement list from it
 	 * @param _arrFilePath - path for the arrangement list file to be created
 	 * @param _archive - {@link File} object holding the path for the arrangement archive or null
 	 * @param _virginTargetDir - a target directory where to save new (virgin) diagrams (if null they will be skipped)
-	 * @param _offset - either null or some positive coordinate offset to be subtracted from all locations
-	 * @param _troubles - a {@link StringList} to collect error messages. If null, then ArchivarException will be raised
+	 * @param _offset - either {@code null} or some positive coordinate offset to be subtracted from all locations
+	 * @param _troubles - a {@link StringList} to collect error messages. If {@code null}, then ArchivarException will be raised
 	 * @return the path of the created temporary file if the target file `zipFilename´ had existed
-	 * (otherwise null)
-	 * @throws ArchivarException if {@code _troubles} is null
+	 *     (otherwise {@code null})
+	 * 
+	 * @throws ArchivarException if {@code _troubles} is {@code null}
 	 */
 	public String saveArrangement(Collection<ArchiveRecord> _items, String _arrFilePath, File _archive, File _virginTargetDir, Point _offset, StringList _troubles) throws ArchivarException
 	{
@@ -770,9 +813,10 @@ public class Archivar {
 	 * {@code _targetDir}.<br/>
 	 * Will notify registered {@link Updater}s after successful writing
 	 * attempt and set file path in {@code _root}.
+	 * 
 	 * @param _root - the {@link Root} to be saved (assumed to be the first time).
 	 * @param _targetDir - the target folder for saving {@code _root}
-	 * @return true iff the saving was successful.
+	 * @return {@code true} iff the saving was successful.
 	 */
 	private boolean saveVirginNSD(Root _root, File _targetDir) throws IOException
 	{
@@ -806,10 +850,12 @@ public class Archivar {
 	 * Compresses the files listed in {@code _filePaths} into {@code _archive}. If an archive with this
 	 * name had existed, however, then we will create the archive as "tmpArchivar.zip" in a standard
 	 * temp directory and return the actual path.
+	 * 
 	 * @param _archive - the target file
 	 * @param _filePaths - {@link StringList} of the absolute paths of the files to be compressed 
 	 * @param _itemNames - {@link StringList} of the internal names for the files to be compressed
 	 * @return path of the temporary archive if the specified target file {@link _archive} had existed
+	 * 
 	 * @throws IOException in case some IO operation went wrong.
 	 */
 	// START KGU#874 2020-10-19: Issue #875 - The item names are not necessarily equal to the file names
@@ -882,8 +928,9 @@ public class Archivar {
 	 * at least. If necessary and either {@code _arrFile} is given or the listed path is a virtual path
 	 * into an archive tries to extract the files, either into {@code _tempDir} if given or into a new
 	 * temporary folder.
+	 * 
 	 * @param _arrFile - the arrangement list file containing the names or paths of the diagram files
-	 * @param _fromArchive - the arrangement archive file if the arangement originates in the archive (for extraction)
+	 * @param _fromArchive - the arrangement archive file if the arrangement originates in the archive (for extraction)
 	 * @param _tempDir - the temporary directory where to read the diagram files from if the paths aren't absolute.
 	 * @param _troubles - {@link StringList} to which occurring error messages will be added
 	 * @return a list of {@link ArchiveRecord}s containing a {@link Root} and an arrangement location at least
@@ -964,12 +1011,15 @@ public class Archivar {
 	 * Loads the {@link Root} from the given file {@code _nsdFile}. If the file had been
 	 * exracted from an arrangement archive then the archive file should be provided as
 	 * {@code _fromArchive} to allow attribute inference and the proper setting of the
-	 * virtual and shadow path. 
+	 * virtual and shadow path.
+	 * 
 	 * @param _nsdFile - the NSD file to load
-	 * @param _fromArchive - the archive file {@code _nsdFile} was extracted from, or null.
+	 * @param _fromArchive - the archive file {@code _nsdFile} was extracted from, or {@code null}.
 	 * @param _troubles - a {@link StringList} error messages may be added to.
 	 * @return the loaded {@link Root} or null (in case loading failed for some reason)
-	 * @throws Exception if some problem occurs and {@code _troubles} is null
+	 * 
+	 * @throws Exception if some problem occurs and {@code _troubles} is {@code null}
+	 * 
 	 * @see #extractNSDFrom(File, String, File, StringList)
 	 * @see #unzipArrangement(File, File)
 	 */
@@ -1008,11 +1058,12 @@ public class Archivar {
 	 * Selectively extracts a single NSD file with name {@code _nsdName} (no path!) from the
 	 * arrangement archive {@code _arrzFile} into target directory {@code _targetDir} and loads
 	 * it, returning the resulting {@link Root} if all went well.
+	 * 
 	 * @param _arrzFile - the arrangement archive
 	 * @param _nsdName - the pure file name (without path)
-	 * @param _targetDir - the extraction target folder (if null, a temp folder will be used)
+	 * @param _targetDir - the extraction target folder (if {@code null}, a temp folder will be used)
 	 * @param _troubles - a {@link StringList} collecting possible error messages
-	 * @return - the extracted {@link Root} object, or null if something went wrong.
+	 * @return - the extracted {@link Root} object, or {@code null} if something went wrong.
 	 */
 	public Root extractNSDFrom(File _arrzFile, String _nsdName, File _targetDir, StringList _troubles) {
 		final int BUFSIZE = 2048;
@@ -1073,10 +1124,11 @@ public class Archivar {
 	/**
 	 * Extracts all files contained in the archive file given by {@code _arrzFile} into the
 	 * directory {@code _targetDir} or a temporary directory (if not given).
+	 * 
 	 * @param _arrzFile - path of the arrangement archive file
-	 * @param _targetDir - target directory path for the extraction (may be null)
+	 * @param _targetDir - target directory path for the extraction (may be {@code null})
 	 * @return an {@link ArchiveIndex} object containing the arranger list file (*.arr) and
-	 * its content as found in the extracted archive (or otherwise null). 
+	 *     its content as found in the extracted archive (or otherwise {@code null}). 
 	 */
 	public ArchiveIndex unzipArrangementArchive(File _arrzFile, File _targetDir)
 	{
@@ -1139,10 +1191,11 @@ public class Archivar {
 	 * the arrangement is of legacy format without signature and {@code _targetDir} is given,
 	 * in which case the {@link Root}s will be extracted in order to get the signature info
 	 * of the contained diagrams.
+	 * 
 	 * @param _arrzFile - the archive file to be inspected
-	 * @param _targetDir - an extraction directory: if not null and the arranger list doesn't
-	 * contain the signatures then the arranger list file and the NSD files will be extracted
-	 * there.
+	 * @param _targetDir - an extraction directory: if not {@code null} and the arranger list
+	 *     doesn't contain the signatures then the arranger list file and the NSD files will
+	 *     be extracted there.
 	 * @return the content overview
 	 */
 	public ArchiveIndex getArrangementArchiveContent(File _arrzFile, File _targetDir)
@@ -1205,11 +1258,22 @@ public class Archivar {
 		return archiveIndex;
 	}
 	
+	/**
+	 * Creates a new index from the specified arrangement list file
+	 * 
+	 * @param _arrFile - the file containing the arrangement list
+	 * @return the constructed ArchiveIndex object
+	 */
 	public ArchiveIndex makeNewIndexFor(File _arrFile)
 	{
 		return new ArchiveIndex(_arrFile, null, null);
 	}
 	
+	/**
+	 * Creates a new empty index.
+	 * 
+	 * @return the constructed empty ArchiveIndex object
+	 */
 	public ArchiveIndex makeEmptyIndex() {
 		return new ArchiveIndex();
 	}
