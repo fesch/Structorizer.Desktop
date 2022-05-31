@@ -35,7 +35,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2022-05-08      Issue #1034: default text prefixes eliminated or replaced,
  *                                      correct handling of default branches in CASE structures
  *      Kay Gürtzig     2022-05-30/31   Enh. #1035: Enabled to load project files as arrangements and
- *                                      to cope with code 01 stgr files, function detection added.
+ *                                      to cope with code 01 .stgr files; function detection added.
  *
  ******************************************************************************************************
  *
@@ -100,6 +100,9 @@ public class StgrImporter implements INSDImporter {
 	// END KGU#1029 2022-05-08
 	
 	// START KGU#1030 2022-05-30: Enh. #1035 Accept project files, too
+	/**
+	 * Classifying file format identifiers for stgr/stgp file contents
+	 */
 	private static enum FileFormat {
 		/** Not usable file format */
 		INCORRECT,
@@ -220,8 +223,9 @@ public class StgrImporter implements INSDImporter {
 		return root;
 	}
 
+	// START KGU#1030 2022-05-31: Enh. #1035
 	/**
-	 * Reads an set of diagrams from the *.stgp file represented by the input stream
+	 * Reads a set of diagrams from the *.stgp file represented by the input stream
 	 * {@code is}.
 	 * 
 	 * @param file - {@link File} object providing the source file path.
@@ -280,6 +284,7 @@ public class StgrImporter implements INSDImporter {
 		}
 		return top;
 	}
+	
 	/**
 	 * Reads a single diagram from the *.stgr or *stgp file represented by the input stream
 	 * {@code is}.
@@ -325,6 +330,7 @@ public class StgrImporter implements INSDImporter {
 		}
 		return root;
 	}
+	// END KGU#1030 2022-05-31
 
 	private void importSubqueue(InputStream is, Subqueue sq) throws IOException {
 		byte[] elCnt = new byte[1];
@@ -389,43 +395,6 @@ public class StgrImporter implements INSDImporter {
 		}
 	}
 
-	// START KGU#1029 2022-05-08: Issue #1034
-	/**
-	 * @param text - the multi-line element text to be refactored - will be modified
-	 *     in place!
-	 * @param defaultPrefixes - a StringList of possible default prefixes in
-	 *     hus-Struktogrammer for this element kind
-	 * @param key - a parser preference key for this kind of element (if {@code null}
-	 *     then no insertion will take place but all lines will be processed, otherwise
-	 *     only the first line of {@code text} will be processed and a parser prefix
-	 *     (re)placement may be done if {@link #insertPrefixes} is {@code true} and a
-	 *     non-empty parser preference keyword is configured)
-	 */
-	private void refactorText(StringList text, StringList defaultPrefixes, String key) {
-		if (removePrefixes) {
-			String subst = "";
-			if (insertPrefixes && key != null) {
-				subst = CodeParser.getKeywordOrDefault(key, "");
-				if (!subst.isEmpty() && !subst.substring(subst.length()-1).isBlank()) {
-					subst += " ";
-				}
-			}
-			int jEnd = key == null ? 1 : text.count();
-			for (int j = 0; j < jEnd; j++) {
-				String line = text.get(j);
-				for (int i = 0; i < defaultPrefixes.count(); i++) {
-					String prefix = defaultPrefixes.get(i);
-					if (line.startsWith(prefix)) {
-						// prefix never contains special regex characters, so it's ok
-						text.set(j, line.replaceFirst(prefix, subst));
-						break;
-					}
-				}
-			}
-		}
-	}
-	// END KGU#1029 2022-05-08
-
 	private Element readAlternative(InputStream is, StringList text) throws IOException {
 		Alternative alt = new Alternative(text);
 		readText(is);	// Skip TRUE label
@@ -488,6 +457,53 @@ public class StgrImporter implements INSDImporter {
 		return loop;
 	}
 
+	// START KGU#1029 2022-05-08: Issue #1034
+	/**
+	 * @param text - the multi-line element text to be refactored - will be modified
+	 *     in place!
+	 * @param defaultPrefixes - a StringList of possible default prefixes in
+	 *     hus-Struktogrammer for this element kind
+	 * @param key - a parser preference key for this kind of element (if {@code null}
+	 *     then no insertion will take place but all lines will be processed, otherwise
+	 *     only the first line of {@code text} will be processed and a parser prefix
+	 *     (re)placement may be done if {@link #insertPrefixes} is {@code true} and a
+	 *     non-empty parser preference keyword is configured)
+	 */
+	private void refactorText(StringList text, StringList defaultPrefixes, String key) {
+		if (removePrefixes) {
+			String subst = "";
+			if (insertPrefixes && key != null) {
+				subst = CodeParser.getKeywordOrDefault(key, "");
+				if (!subst.isEmpty() && !subst.substring(subst.length()-1).isBlank()) {
+					subst += " ";
+				}
+			}
+			int jEnd = key == null ? 1 : text.count();
+			for (int j = 0; j < jEnd; j++) {
+				String line = text.get(j);
+				for (int i = 0; i < defaultPrefixes.count(); i++) {
+					String prefix = defaultPrefixes.get(i);
+					if (line.startsWith(prefix)) {
+						// prefix never contains special regex characters, so it's ok
+						text.set(j, line.replaceFirst(prefix, subst));
+						break;
+					}
+				}
+			}
+		}
+	}
+	// END KGU#1029 2022-05-08
+
+	/**
+	 * Reads a byte sequence consisting of a short value expressing the string
+	 * length and the subsequent characters as string content, and splits it by
+	 * newline characters into a {@link StringList}.
+	 * 
+	 * @param is - the binary {@link InputStream} to be read
+	 * @return the string, split into lines
+	 * 
+	 * @throws IOException if e.g. the format is violated
+	 */
 	private StringList readText(InputStream is) throws IOException {
 		StringList strl = null;
 		byte[] txtLen = new byte[2];
@@ -502,6 +518,16 @@ public class StgrImporter implements INSDImporter {
 		return strl;
 	}
 	
+	/**
+	 * Reads the next 4 bytes from input stream {@code is}, interpreting
+	 * them as alpha, red, green, and blue components of a colour, which
+	 * is then returned.
+	 * 
+	 * @param is - the binary {@link InputStream} to be read from
+	 * @return the extracted {@link Color} object.
+	 * 
+	 * @throws IOException e.g. if there are less than 4 bytes left
+	 */
 	private Color readColor(InputStream is) throws IOException
 	{
 		Color col = null;
@@ -512,32 +538,46 @@ public class StgrImporter implements INSDImporter {
 		return col;
 	}
 	
+	/**
+	 * Reads two 4 byte (bigendian) integer values from the input stream,
+	 * interpreting them as x and y position and forms the returned {@link Point}
+	 * from them.
+	 * 
+	 * @param is - the binary {@link InputStream} to be read from from.
+	 * @return the extracted {@link Point} or {@code null}
+	 * 
+	 * @throws IOException if the fileformat is corrupt
+	 */
 	private Point readCoords(InputStream is) throws IOException
 	{
 		Point pt = null;
 		byte[] coordBytes = new byte[8];
 		if (is.read(coordBytes) == coordBytes.length) {
-			int x = uBytesToInt(coordBytes, 0, 4);
-			int y = uBytesToInt(coordBytes, 4, 4);
+			ByteBuffer wrapped = ByteBuffer.wrap(coordBytes); // big-endian by default
+			int x = wrapped.getInt();
+			int y = wrapped.getInt();
 			pt = new Point(x, y);
 		}
 		return pt;
 	}
-	private static int uBytesToInt(byte[] bytes, int startIx, int count)
-	{
-		int val = 0;
-		for (int i = startIx; i < startIx+count; i++) {
-			val = val * 256 + uByteToInt(bytes[i]);
-		}
-		return val;
-	}
 	
+	/**
+	 * Auxiliary method to force an unsigned int value from the given byte
+	 * 
+	 * @param b - the source byte
+	 * @return the value of b as an unsigned int
+	 */
 	private static int uByteToInt(byte b)
 	{
 		return (int)(b & 0xFF);
 	}
 	
-	/** Checks the initial format for a diagram sequence within a stgr/stgp file */
+	/**
+	 * Checks the initial part of the stgr/stgp {@link InputStream} {@code str}
+	 * for a known diagram format sequence and returns a format identifier from
+	 * type {@link FileFormat}. Expects a string length / character sequence
+	 * followed by a single byte code 0x01, 0x02, or 0x03.
+	 */
 	// START KGU#1030 2022-05-30: Enh. #1035 - Acceptance of strgp files
 	//private boolean checkFormat(InputStream str) throws IOException {
 	//	final byte[] format = new byte[]{0x00, 0x04, 'S', 'T', 'G', 'R', 0x02};
@@ -602,6 +642,7 @@ public class StgrImporter implements INSDImporter {
 	 * compares the filename extension with the extensions configured in and
 	 * provided by {@link #getFileExtensions()}. Helper method for method 
 	 * {@link #accept(File)}.
+	 * 
 	 * @param _filename
 	 * @return true if the import file is formally welcome. 
 	 */
