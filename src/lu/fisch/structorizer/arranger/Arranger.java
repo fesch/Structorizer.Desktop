@@ -82,7 +82,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2020-12-14  Adapted to the no longer reverted meaning of surface.getZoom()
  *      Kay Gürtzig     2020-12-28  Slight modifications to the status bar layout (icons, tooltip)
  *      Kay Gürtzig     2021-03-01  Enh. #410: Temporary pool notification suppression introduced
- *      Kay Gürtzig     2022-05-31  Enh. #1035: New public method addToPool(ArchiveIndex fromIndex, String groupName)
+ *      Kay Gürtzig     2022-05-31  Enh. #1035: New public method addToPool(ArchiveIndex, String)
  *
  ******************************************************************************************************
  *
