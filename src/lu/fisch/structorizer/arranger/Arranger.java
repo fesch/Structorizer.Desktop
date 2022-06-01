@@ -200,7 +200,7 @@ implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, Lang
 	public static final LangTextHolder msgActionGroup = new LangTextHolder("group");
 	public static final LangTextHolder msgGroupName = new LangTextHolder("%1Name for the group the %2 selected diagrams are to join:");
 	public static final LangTextHolder msgGroupNameRejected = new LangTextHolder("Group name \"%\" was rejected.");
-	public static final LangTextHolder msgGroupExists = new LangTextHolder("There is already a group with name \"%\". What do want to do?");
+	public static final LangTextHolder msgGroupExists = new LangTextHolder("There is already a group with name \"%\". What do you want to do?");
 	public static final LangTextHolder[] msgGroupingOptions = new LangTextHolder[] {
 			new LangTextHolder("Add diagrams"),
 			new LangTextHolder("Replace group"),
@@ -409,6 +409,14 @@ implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, Lang
         for (ArchiveIndexEntry entry: fromIndex.entries) {
             roots.add(entry.getRoot());
             surface.addDiagram(entry.getRoot(), entry.point);
+        }
+        // Avoid to overwrite a group with unsaved changes
+        String grpName0 = groupName;
+        int count = 1;
+        Group targetGrp;
+        while ((targetGrp = surface.getGroup(groupName)) != null
+                && targetGrp.hasChanged()) {
+            groupName = grpName0 + "_" + count++;
         }
         surface.makeGroup(groupName, null, roots, true, null);
     }

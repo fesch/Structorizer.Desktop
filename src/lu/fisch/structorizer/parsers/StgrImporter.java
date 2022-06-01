@@ -70,7 +70,6 @@ import org.xml.sax.SAXException;
 
 import lu.fisch.structorizer.archivar.Archivar;
 import lu.fisch.structorizer.archivar.Archivar.ArchiveIndex;
-import lu.fisch.structorizer.archivar.Archivar.ArchiveIndexEntry;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.Alternative;
 import lu.fisch.structorizer.elements.Call;
@@ -240,6 +239,7 @@ public class StgrImporter implements INSDImporter {
 	 */
 	private Root readProject(File file, InputStream is) throws IOException
 	{
+		// Register all diagrams without individual element colour (for project colour)
 		ArrayList<Root> rootsToDye = new ArrayList<Root>();
 		Root top = null;
 		byte[] diagrCnt = new byte[] {0};
@@ -266,15 +266,15 @@ public class StgrImporter implements INSDImporter {
 			}
 		}
 		readText(is);	// Project font (ignored)
+		// A 01 byte signals project colour settings
 		if (is.read() == 1) {
-			// A 01 byte signals project colour settings
 			elementColor = readColor(is);	// Element background
-			readColor(is);	// Frame color (not used)
-			readColor(is);	// ???
+			readColor(is);	// Frame colour (not used)
+			readColor(is);	// Line colour (not used)
 			readColor(is);	// Text colour (not used)
-			is.skip(1);	// Skip a 00 byte
+			is.skip(1);		// Skip a 00 byte
 			if (elementColor != Color.WHITE) {
-				// Now we have to dye all elements
+				// Now we have to dye all elements of all Roots without specific colour
 				for (Root root: rootsToDye) {
 					root.traverse(new IElementVisitor() {
 						@Override
@@ -289,8 +289,10 @@ public class StgrImporter implements INSDImporter {
 				}
 			}
 		}
+		// Build an arrangement group if the project has more than one diagram
 		if (nDiagrs > 1) {
-			is.skip(14);
+			is.skip(14);	// width, height, margins, scale, 00 (all ignored)
+			// Use the project title (by default the file name) as group name
 			String groupName = file.getName();
 			StringList projName = readText(is);
 			if (projName != null && !projName.isEmpty() || !projName.get(0).isBlank()) {
@@ -327,12 +329,13 @@ public class StgrImporter implements INSDImporter {
 		// END KGU#1030 2022-05-30
 			is.skip(1);	// Skip a 01 byte
 			elementColor = readColor(is);	// Element background
-			readColor(is);	// Frame color (not used)
-			readColor(is);	// ???
+			readColor(is);	// Frame colour (not used)
+			readColor(is);	// Line colour (not used)
 			readColor(is);	// Text colour (not used)
 			is.skip(1);	// Skip a 00 byte
 		// START KGU#1030 2022-05-30: Bugfix #1035
 		}
+		// Attempt to decide whether it is a routine diagram (pair of parentheses)
 		String rootText = root.getText().getLongString();
 		int posPar1 = rootText.indexOf("(");
 		if (posPar1 >= 0 && rootText.indexOf(")", posPar1+1) >= 0) {
