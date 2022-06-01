@@ -36,6 +36,8 @@ package lu.fisch.structorizer.parsers;
  *                                      correct handling of default branches in CASE structures
  *      Kay Gürtzig     2022-05-30/31   Enh. #1035: Enabled to load project files as arrangements and
  *                                      to cope with code 01 .stgr files; function detection added.
+ *      Kay Gürtzig     2022-06-01      Enh. #1035: Individually coloured diagrams in a project and
+ *                                      projects without colour settings properly considered
  *
  ******************************************************************************************************
  *
@@ -58,6 +60,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -237,6 +240,7 @@ public class StgrImporter implements INSDImporter {
 	 */
 	private Root readProject(File file, InputStream is) throws IOException
 	{
+		ArrayList<Root> rootsToDye = new ArrayList<Root>();
 		Root top = null;
 		byte[] diagrCnt = new byte[] {0};
 		is.read(diagrCnt);
@@ -245,41 +249,53 @@ public class StgrImporter implements INSDImporter {
 		for (int i = 0; i < nDiagrs; i++) {
 			elementColor = Color.WHITE;
 			Point pt = readCoords(is);	// top left position in the arrangement
-			if (identifyFormat(is) != FileFormat.STGR) {
+			FileFormat format = identifyFormat(is);
+			boolean isColoured = format == FileFormat.STGRCOL;
+			if (format != FileFormat.STGR && !isColoured) {
 				throw new IOException("Wrong file format - STGR entry expected");
 			}
-			Root rt = readDiagram(file, is, index, false);
+			Root rt = readDiagram(file, is, index, isColoured);
 			if (rt != null) {
 				index.addEntryFor(rt, pt);
 				if (top == null || !top.isProgram() && rt.isProgram()) {
 					top = rt;
 				}
+				if (!isColoured) {
+					rootsToDye.add(rt);
+				}
 			}
 		}
 		readText(is);	// Project font (ignored)
-		is.skip(1);		// Skip a 01 byte
-		elementColor = readColor(is);	// Element background
-		readColor(is);	// Frame color (not used)
-		readColor(is);	// ???
-		readColor(is);	// Text colour (not used)
-		is.skip(1);		// Skip a 00 byte
-		if (elementColor != Color.WHITE) {
-			// Now we have to dye all elements
-			for (ArchiveIndexEntry entry: index.entries) {
-				entry.root.traverse(new IElementVisitor() {
-					@Override
-					public boolean visitPreOrder(Element _ele) {
-						_ele.setColor(elementColor);
-						return true;
-					}
-					@Override
-					public boolean visitPostOrder(Element _ele) {
-						return true;
-					}});
+		if (is.read() == 1) {
+			// A 01 byte signals project colour settings
+			elementColor = readColor(is);	// Element background
+			readColor(is);	// Frame color (not used)
+			readColor(is);	// ???
+			readColor(is);	// Text colour (not used)
+			is.skip(1);	// Skip a 00 byte
+			if (elementColor != Color.WHITE) {
+				// Now we have to dye all elements
+				for (Root root: rootsToDye) {
+					root.traverse(new IElementVisitor() {
+						@Override
+						public boolean visitPreOrder(Element _ele) {
+							_ele.setColor(elementColor);
+							return true;
+						}
+						@Override
+						public boolean visitPostOrder(Element _ele) {
+							return true;
+						}});
+				}
 			}
 		}
 		if (nDiagrs > 1) {
+			is.skip(14);
 			String groupName = file.getName();
+			StringList projName = readText(is);
+			if (projName != null && !projName.isEmpty() || !projName.get(0).isBlank()) {
+				groupName = projName.get(0);
+			}
 			Arranger.getInstance().addToPool(index, groupName);
 		}
 		return top;
@@ -598,12 +614,8 @@ public class StgrImporter implements INSDImporter {
 		if (formatStrL == null || formatStrL.count() != 1) {
 			return format;
 		}
-		byte[] code = new byte[1];
-		if (str.read(code) < code.length
-				|| uByteToInt(code[0]) >= formats.length) {
-			return format;
-		}
-		format = formats[uByteToInt(code[0])];
+		int code = str.read();
+		format = formats[code];
 		if (!formatStrL.get(0).equals(FORMAT_STRINGS[format.ordinal()-1])) {
 			return FileFormat.INCORRECT;
 		}
