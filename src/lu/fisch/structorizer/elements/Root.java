@@ -1948,6 +1948,7 @@ public class Root extends Element {
 		Root cpy = (Root)this.copy();
 		cpy.filename = this.filename;
 		cpy.shadowFilepath = this.shadowFilepath;
+		return cpy;
 	}
 	// END KGU#749 2019-10-15
 
