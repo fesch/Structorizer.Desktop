@@ -1940,6 +1940,7 @@ public class Root extends Element {
 	/**
 	 * Like {@link #copy()} but also copies the file paths (particularly important
 	 * for recursive execution to avoid eternal saving requests).
+	 * 
 	 * @return the copied {@link Root}
 	 */
 	public Root copyWithFilepaths()
@@ -1947,7 +1948,6 @@ public class Root extends Element {
 		Root cpy = (Root)this.copy();
 		cpy.filename = this.filename;
 		cpy.shadowFilepath = this.shadowFilepath;
-		return cpy;
 	}
 	// END KGU#749 2019-10-15
 
