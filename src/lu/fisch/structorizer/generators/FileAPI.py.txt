@@ -162,7 +162,7 @@ class StructorizerFileAPI:
 			raise IOError("End of File")
 		while (char != "" and char != '\n'):
 			line += char
-            char = fileHandle.read(1)
+			char = fileHandle.read(1)
 		return line
 	
 	@classmethod
