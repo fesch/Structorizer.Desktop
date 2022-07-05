@@ -30,7 +30,8 @@
 #*
 #*      Author          Date            Description
 #*      ------          ----            -----------
-#*      Kay Gürtzig     27.12.2016      First Issue
+#*      Kay Gürtzig     2016-12-27      First Issue
+#*      Kay Gürtzig     2022-07-04      Bugfix #1040 (method readLine was defective)
 #*
 #******************************************************************************************************
 #*
@@ -157,10 +158,11 @@ class StructorizerFileAPI:
 		fileHandle = cls._openFileTable[fileNo]
 		line = ""
 		char = fileHandle.read(1)
-		while (char != "" and char != '\n'):
-			line += char
 		if (char == ""):
 			raise IOError("End of File")
+		while (char != "" and char != '\n'):
+			line += char
+			char = fileHandle.read(1)
 		return line
 	
 	@classmethod

@@ -237,6 +237,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-10-29      Issue #1004: Export/import option dialogs now respect plugin-specific option defaults
  *      Kay Gürtzig     2021-11-14      Enh. #967: Analyser preferences enhanced by plugin-specific checks
  *      Kay Gürtzig     2022-05-08      Bugfix #1033: Diagram import left a stale Analyser report list.
+ *      Kay Gürtzig     2022-06-24      Bugfix #1038: Additional argument for setRoot() to suppress recursive saving requests
  *
  ******************************************************************************************************
  *
@@ -373,7 +374,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * The current Nassi-Shneiderman diagram
 	 *
 	 * @see #getRoot()
-	 * @see #setRoot(Root, boolean, boolean)
+	 * @see #setRoot(Root, boolean, boolean, boolean)
 	 * @see #setIf
 	 */
 	//public Root root = new Root();
@@ -702,7 +703,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#157 2016-03-16
 
 		this.getParent().getParent().requestFocusInWindow();	// It's the JScrollPane (Editor.scrollaraea)
-		return setRoot(root, true, true);
+		return setRoot(root, true, true, true);
 	}
 
 	// START BOB 2019-11-24: Unimozer needs this method
@@ -714,7 +715,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 *
 	 * @param root - The new {@link Root} object (NSD) to be shown.
 	 * @return true (no matter what happened)
-	 * @see #setRoot(Root, boolean, boolean)
+	 * @see #setRoot(Root, boolean, boolean, boolean)
 	 * @see #setRootIfNotRunning(Root)
 	 */
 	public boolean setRootForce(Root root) {
@@ -744,8 +745,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * preliminary check.
 	 *
 	 * @param root - the new diagram root
-	 * @param askToSave - in case the recent {@link Root} has unsaved changes,
-	 *     ask to save it?
+	 * @param allowToSave - whether saving attempts for the recent {@link Root}
+	 *     are allowed at all (should be by default - this is to avoid recursive
+	 *     or repeated requests on recursive execution
+	 * @param askToSave - in case the recent {@link Root} has unsaved changes
+	 *     and {@code allowToSave} is {@code true}, ask to save it (or otherwise
+	 *     simply save it without confirmation)?
 	 * @param draw - If true then the work area will be redrawn
 	 * @return {@code true} if {@code root} wasn't {@code null} and has properly replaced the
 	 *     current diagram
@@ -753,7 +758,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * @see #setRootIfNotRunning(Root)
 	 */
 	//public boolean setRoot(Root root, boolean askToSave)
-	public boolean setRoot(Root root, boolean askToSave, boolean draw)
+	public boolean setRoot(Root root, boolean allowToSave, boolean askToSave, boolean draw)
 	// END KGU#430 2017-10-12
 	{
 		if (root != null) {
@@ -766,7 +771,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			boolean isArranged = Arranger.hasInstance()
 					&& Arranger.getInstance().getAllRoots().contains(this.root);
 			// END KGU#874/KGU#893 2020-12-10
-			if ((!askToSave || !isArranged) && !saveNSD(askToSave))
+			// START KGU#1032 2022-06-22: Bugfix #1038: Avoid recursive saving questions
+			//if ((!askToSave || !isArranged) && !saveNSD(askToSave))
+			if (allowToSave && (!askToSave || !isArranged) && !saveNSD(askToSave))
+			// END KGU#1032 2022-06-22
 			// END KGU#874 2020-10-18
 			{
 				// Abort this if the user cancels the save request
@@ -2714,7 +2722,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					this.getFrame(),
 					Menu.msgRootCloned.getText().replace("%1", this.root.getSignatureString(false, false))
 					.replace("%2", rootToSave.getSignatureString(true, false)));
-			this.setRoot(rootToSave, true, true);
+			this.setRoot(rootToSave, true, true, true);
 		}
 		return done;
 		// END KGU#893 2020-12-20
@@ -3050,16 +3058,19 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 
 	/*========================================
-	 * Save method
+	 * Save methods
 	 *========================================*/
 	/**
-	 * Stores unsaved changes (if any). If {@code _askToSave} is true then the
-	 * user may confirm or deny saving or cancel the inducing request. Otherwise
-	 * unsaved changes will silently be stored.
+	 * Stores unsaved changes (if any) of the current {@link Root} . If
+	 * {@code _askToSave} is {@code true} then the user may confirm or deny saving
+	 * or cancel the inducing request. Otherwise unsaved changes will silently be
+	 * stored.
 	 *
 	 * @param _askToSave - if true and the current root has unsaved changes then
-	 * a user dialog will be popped up first
-	 * @return true if the user did not cancel the save request
+	 *     a user dialog will pop up first
+	 * @return {@code true} if the user did not cancel the save request
+	 * 
+	 * @see #saveNSD(Root, boolean)
 	 */
 	public boolean saveNSD(boolean _askToSave)
 	// START KGU#320 2017-01-04: Bugfix #321 - we need an opportunity to save another Root
@@ -3080,11 +3091,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	/**
 	 * Stores unsaved changes (if any) of the given {@link Root} {@code root}.
 	 * If {@code _askToSave} is {@code true} then the user may confirm or deny
-	 * saving or cancel the inducing request.
+	 * saving or cancel the inducing request. Otherwise unsaved changes will
+	 * silently be stored.
 	 *
 	 * @param root - {@link Root} to be saved
 	 * @param _askToSave - if {@code true} and the given {@code root} has
-	 * unsaved changes then a user dialog will be popped up first.
+	 *     unsaved changes then a user dialog will pop up first.
 	 * @return {@code true} if the user did not cancel the save request
 	 */
 	public boolean saveNSD(Root root, boolean _askToSave)
@@ -6821,7 +6833,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					currentDirectory = dlgOpen.getSelectedFile();
 				// START KGU#1028 2022-05-08: Bugfix #1033 - Report list got stale
 				//redraw();
-					this.setRoot(root, true, true);
+					this.setRoot(root, true, true, true);
 				}
 				// END KGU#1028 2022-05-08
 			}

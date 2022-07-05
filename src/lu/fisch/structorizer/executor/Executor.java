@@ -211,6 +211,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2021-11-01      Bugfix #1013: Eternal loop in setVar(...) on array access after some extraordinary
  *                                      array initialisation.
  *      Kay Gürtzig     2022-01-05      Adaptations to modified EvalError API on upgrading from bsh-2.0b6.jar to bsh-2.1.0.jar
+ *      Kay Gürtzig     2022-06-24      Bugfix #1038: Explicit saving decisions are no longer reiterated
  *
  ******************************************************************************************************
  *
@@ -1011,6 +1012,10 @@ public class Executor implements Runnable
 	/** {@link Call} element currently to be executed (in paused mode) or {@code null} */
 	private Call currentCall;
 	// END KGU#907 2021-01-04
+	// START KGU#1032 2022-06-22: Bugfix #1038 Keep saving decisions
+	/** Set of {@link Root}s for which saving had been handled during this execution */
+	private HashSet<Root> askedToSave = new HashSet<Root>();
+	// END KGU#1032 2022-06-22
 	
 	// Constant set of matchers for unicode literals that cause harm in interpreter
 	// (Concurrent execution of the using method is rather unlikely, so we dare to reuse the Matchers) 
@@ -1535,7 +1540,9 @@ public class Executor implements Runnable
 	// METHOD MODIFIED BY GENNARO DONNARUMMA
 
 	/**
-	 * 
+	 * Global execution entry point, initialises the Executor, wipes all
+	 * remnants of a previous execution, starts the execution of the top
+	 * level root and then consolidates the resulting status.
 	 */
 	public void execute()
 	// START KGU#2 (#9) 2015-11-13: We need a recursively applicable version
@@ -1547,6 +1554,9 @@ public class Executor implements Runnable
 		// START KGU#376 2017-04-22: Enh. #389
 		this.importMap.clear();
 		// END KGU#376 2017-04-22
+		// START KGU#1032 2022-06-22: Bugfix #1038 - clear saving decisions
+		this.askedToSave.clear();
+		// END KGU#1032 2022-06-22
 		// START KGU#307 2016-12-12: Issue #307: Keep track of FOR loop variables
 		//this.forLoopVars.clear();	// KGU#384 2017-04-22 -> new context
 		// END KGU#307 2016-12-12
@@ -2397,13 +2407,32 @@ public class Executor implements Runnable
 //		// loopDepth will be set 0 by the execut(arguments) call below
 		// END KGU#384 2017-04-22
 		
+		// START KGU#1032 2022-06-22: Bugfix #1038 In case of recursion, we must do the saving earlier
+		boolean savingHandled = askedToSave.contains(root);
+		// END KGU#1032 2022-06-22
 		// If the found subroutine is already an active caller, then we need a new instance of it
 		if (root.isCalling)
 		{
+			// START KGU#1032 2022-06-22: Bugfix #1038 In case of recursion, we must do the saving earlier
+			if (root.hasChanged() && !savingHandled) {
+				boolean isArranged = Arranger.hasInstance()
+						&& Arranger.getInstance().getAllRoots().contains(root);
+				if (!isArranged) {
+					diagram.saveNSD(root, !Element.E_AUTO_SAVE_ON_EXECUTE);
+					askedToSave.add(root);
+				}
+				savingHandled = true;
+			}
+			// END KGU#1032 2022-06-22
 			// START KGU#749 2019-10-15: Issue #763 - we must compensate the changes in Diagram.saveNSD(Root, boolean)
 			//root = (Root)root.copy();
 			root = root.copyWithFilepaths();
 			// END KGU#749 2019-10-15
+			// START KGU#1032 2022-06-22: Bugfix #1038 Retain the saving decision for the clone, too
+			if (savingHandled) {
+				askedToSave.add(root);
+			}
+			// END KGU#1032 2022-06-22
 			root.isCalling = false;
 			// Remaining initialisations will be done by this.execute(...).
 			cloned = true;
@@ -2422,7 +2451,11 @@ public class Executor implements Runnable
 		
 		// START KGU#430 2017-10-12: Issue #432 reduce redraw() calls on delay 0
 		//this.diagram.setRoot(root, !Element.E_AUTO_SAVE_ON_EXECUTE);
-		this.diagram.setRoot(root, !Element.E_AUTO_SAVE_ON_EXECUTE, delay > 0);
+		// START KGU#1032 2022-06-22: Bugfix #1038
+		//this.diagram.setRoot(root, !Element.E_AUTO_SAVE_ON_EXECUTE, delay > 0);
+		askedToSave.add(diagram.getRoot());
+		this.diagram.setRoot(root, !savingHandled, !Element.E_AUTO_SAVE_ON_EXECUTE, delay > 0);
+		// END KGU#1032 2022-06-22
 		// END KGU#430 2017-10-12
 		
 		// START KGU#946 2021-02-28: Bugfix #947 - With includables, the stack display wasn't upated
@@ -2551,7 +2584,10 @@ public class Executor implements Runnable
 		
 		// START KGU#430 2017-10-12: Issue #432 reduce redraw() calls on delay 0
 		//this.diagram.setRoot(entry.root, !Element.E_AUTO_SAVE_ON_EXECUTE);
-		this.diagram.setRoot(entry.root, !Element.E_AUTO_SAVE_ON_EXECUTE, delay > 0);
+		// START KGU#1032 2022-06-24: Bugfix #1038 Avid repeated saving requests
+		//this.diagram.setRoot(entry.root, !Element.E_AUTO_SAVE_ON_EXECUTE, delay > 0);
+		this.diagram.setRoot(entry.root, !savingHandled, !Element.E_AUTO_SAVE_ON_EXECUTE, delay > 0);
+		// END KGU#1032 2022-06-24
 		// END KGU#430 2017-10-12
 		entry.root.isCalling = false;
 

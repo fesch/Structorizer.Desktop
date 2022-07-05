@@ -23,7 +23,7 @@ package lu.fisch.structorizer.arranger;
  *
  *      Author:         Kay Gürtzig
  *
- *      Description:    A locale-aware JTree subclass handling the bundling the arranger index features.
+ *      Description:    A locale-aware JTree subclass handling the bundling of arranger index features.
  *
  ******************************************************************************************************
  *
@@ -132,6 +132,7 @@ import lu.fisch.utils.StringList;
 /**
  * A locale-aware JTree subclass presenting all diagrams group by group in a tree, also offering
  * many info and manipulating opportunities for groups and diagrams.
+ * 
  * @author Kay Gürtzig
  */
 @SuppressWarnings("serial")

@@ -83,6 +83,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2021-02-03      Issue #920: Transformation for "Infinity" literal
  *      Kay Gürtzig             2021-02-13      Bugfix #935: NullPointerException in generateCode(For...)
  *      Kay Gürtzig             2021-12-05      Bugfix #1024: Precautions against defective record initializers
+ *      Kay Gürtzig	            2022-07-04      Issue #1041: Unnecessary nesting of try blocks with finally clause
+ *                                              Bugfix #1042: Wrong syntax for catch clauses with variable
  *
  ******************************************************************************************************
  *
@@ -887,7 +889,7 @@ public class PythonGenerator extends Generator
 		addCode("if " + transform(_repeat.getUnbrokenText().getLongString()).trim()+":",
 				_indent + this.getIndent(), isDisabled);
 		addCode("break", _indent+this.getIndent()+this.getIndent(), isDisabled);
-		// START KGU#54 2015-10-19: Add an empty line, but void accumulation of empty lines!
+		// START KGU#54 2015-10-19: Add an empty line, but avoid accumulation of empty lines!
 		if (code.count() > 0 && !code.get(code.count()-1).isEmpty())
 		{
 			addCode("", "", isDisabled);
@@ -1130,35 +1132,51 @@ public class PythonGenerator extends Generator
 	{
 		boolean isDisabled = _try.isDisabled(false);
 		this.appendComment(_try, _indent);
-		
-		// Both try-except and try-finally blocks exist, but not in combination, so we must nest them if necessary
-		String indent0 = _indent;
+
+		// START KGU#1034 2022-07-04: Issue #1041 superfluous nesting
+		//// Both try-except and try-finally blocks exist, but not in combination... (was wrong!)
+		//String indent0 = _indent;
+		String indent1 = _indent + this.getIndent();
+		// END KGU#1034 2022-07-04
 		
 		this.addCode("try:", _indent, isDisabled);
 
-		if (_try.qFinally.getSize() > 0) {
-			indent0 += this.getIndent();
-			// Inner try instruction
-			this.addCode("try:", indent0, isDisabled);
-		}
-		String indent1 = indent0 + this.getIndent();
+		// START KGU#1034 2022-07-04: Issue #1041 superfluous nesting
+		//if (_try.qFinally.getSize() > 0) {
+		//	indent0 += this.getIndent();
+		//	// Inner try instruction
+		//	this.addCode("try:", indent0, isDisabled);
+		//}
+		//String indent1 = indent0 + this.getIndent();
+		// END KGU#1034 2022-07-04
 		
 		this.generateCode(_try.qTry, indent1);
-		
-		if (_try.qFinally.getSize() > 0) {
-			this.addCode("finally:", indent0, isDisabled);			
-			this.generateCode(_try.qFinally, indent1);
-		}
 
-		indent1 = _indent + this.getIndent();
+		// START KGU#1034 2022-07-04: Issue #1041 superfluous nesting
+		//if (_try.qFinally.getSize() > 0) {
+		//	this.addCode("finally:", indent0, isDisabled);
+		//	this.generateCode(_try.qFinally, indent1);
+		//}
+		//indent1 = _indent + this.getIndent();
+		// END KGU#1034 2022-07-04
+
 		String exName = _try.getExceptionVarName();
 		if (exName != null && !exName.isEmpty()) {
-			this.addCode("except Exception, " + exName + ":", _indent, isDisabled);
+			// START KGU#1034 2022-07-04: Bugfix #1042 wrong syntax
+			//this.addCode("except Exception, " + exName + ":", _indent, isDisabled);
+			this.addCode("except Exception as " + exName + ":", _indent, isDisabled);
+			// END KGU#1034 2022-07-04
 		}
 		else {
 			this.addCode("except Exception:", _indent, isDisabled);
 		}
 		generateCode(_try.qCatch, indent1);
+		// START KGU#1034 2022-07-04: Issue #1041 finally can simply be appeded here
+		if (_try.qFinally.getSize() > 0) {
+			this.addCode("finally:", _indent, isDisabled);
+			this.generateCode(_try.qFinally, indent1);
+		}
+		// END KGU#1034 2022-07-04
 		addCode("", _indent, false);
 	}
 	// END KGU#686 2019-03-21

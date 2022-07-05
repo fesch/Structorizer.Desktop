@@ -82,6 +82,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2020-12-14  Adapted to the no longer reverted meaning of surface.getZoom()
  *      Kay Gürtzig     2020-12-28  Slight modifications to the status bar layout (icons, tooltip)
  *      Kay Gürtzig     2021-03-01  Enh. #410: Temporary pool notification suppression introduced
+ *      Kay Gürtzig     2022-05-31  Enh. #1035: New public method addToPool(ArchiveIndex, String)
  *
  ******************************************************************************************************
  *
@@ -124,6 +125,8 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 
 import lu.fisch.graphics.Rect;
+import lu.fisch.structorizer.archivar.Archivar.ArchiveIndex;
+import lu.fisch.structorizer.archivar.Archivar.ArchiveIndexEntry;
 import lu.fisch.structorizer.archivar.IRoutinePool;
 import lu.fisch.structorizer.archivar.IRoutinePoolListener;
 import lu.fisch.structorizer.elements.Element;
@@ -197,7 +200,7 @@ implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, Lang
 	public static final LangTextHolder msgActionGroup = new LangTextHolder("group");
 	public static final LangTextHolder msgGroupName = new LangTextHolder("%1Name for the group the %2 selected diagrams are to join:");
 	public static final LangTextHolder msgGroupNameRejected = new LangTextHolder("Group name \"%\" was rejected.");
-	public static final LangTextHolder msgGroupExists = new LangTextHolder("There is already a group with name \"%\". What do want to do?");
+	public static final LangTextHolder msgGroupExists = new LangTextHolder("There is already a group with name \"%\". What do you want to do?");
 	public static final LangTextHolder[] msgGroupingOptions = new LangTextHolder[] {
 			new LangTextHolder("Add diagrams"),
 			new LangTextHolder("Replace group"),
@@ -389,6 +392,36 @@ implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, Lang
     }
     // END KGU#626 2018-12-28
 
+    // START KGU#1030 2022-05-31: Enh. #1035 - We need an opportunity to place a diagram with position
+    /**
+     * Places the {@link Root}s held by the source {@link ArchiveIndex} {@code fromIndex}
+     * at the respective positions and composes a {@link Group} with name {@code groupName}
+     * around them.<br/>
+     * If there had been a group with name {@code groupName} in this Arranger then it will be replaced
+     * without warning.
+     * 
+     * @param fromIndex - the source ArchiveIndex
+     * @param groupName - the intended group name.
+     */
+    public void addToPool(ArchiveIndex fromIndex, String groupName)
+    {
+        Vector<Root> roots = new Vector<Root>();
+        for (ArchiveIndexEntry entry: fromIndex.entries) {
+            roots.add(entry.getRoot());
+            surface.addDiagram(entry.getRoot(), entry.point);
+        }
+        // Avoid to overwrite a group with unsaved changes
+        String grpName0 = groupName;
+        int count = 1;
+        Group targetGrp;
+        while ((targetGrp = surface.getGroup(groupName)) != null
+                && targetGrp.hasChanged()) {
+            groupName = grpName0 + "_" + count++;
+        }
+        surface.makeGroup(groupName, null, roots, true, null);
+    }
+    // END KGU#1030 2022-05-31
+    
     // START KGU#742 2019-10-04 New method to avoid ConcurrentModificationException during execution
     public void adoptRootIfOrphaned(Root root, Mainform mainform) {
         surface.adoptRootIfOrphaned(root, mainform);

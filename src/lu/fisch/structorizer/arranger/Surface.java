@@ -132,6 +132,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2021-01-13      Enh. #910: Group visibility now also affects the contained diagrams
  *      Kay Gürtzig     2021-02-24      Enh. #410: Root search methods enhanced by namespace similarity ranking
  *      Kay Gürtzig     2021-03-01      Enh. #410: Temporary pool notification suppression introduced
+ *      Kay Gürtzig     2022-06-01      Enh. #1035: New method getGroup(String)
  *
  ******************************************************************************************************
  *
@@ -4984,11 +4985,31 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	}
 	// END KGU#624 2018-12-26
 	
+	// START KGU#1030 2022-06-01: Enh. #1035
+	/**
+	 * Retrieves the group registered with name {@code groupName} if existent,
+	 * otherwise {@code null}
+	 * 
+	 * @param groupName - name of the questioned group
+	 * @return the requested group or {@code null}
+	 * 
+	 * @see #hasGroup(String)
+	 * @see #getGroups()
+	 */
+	protected Group getGroup(String groupName)
+	{
+		return groups.get(groupName);
+	}
+	// END KGU#1030 2022-06-01
+	
 	// START KGU#626 2019-01-01/05: Enh. #657
 	/**
-	 * Simply checks whether there is a registeres group with name {@code codeName}
+	 * Simply checks whether there is a registered group with name {@code groupName}
+	 * 
 	 * @param groupName - name of the questioned group
 	 * @return true if there is a group with this name
+	 * 
+	 * @see #getGroup(String)
 	 */
 	protected boolean hasGroup(String groupName)
 	{
@@ -4997,19 +5018,20 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	
 	/**
 	 * Ensures the existence of a group with name {@code groupName}, fills it either with
-	 * the {@link Diagram}s associated to the given collection {@code roots} of {@link Root}s
-	 * (if not null) or the currently selected diagrams.<br/>
+	 * the {@link Diagram}s associated to the {@link Root}s contained in given collection
+	 * {@code roots} (if not null) or the currently selected diagrams.<br/>
 	 * If for some of the given {@code roots} there hasn't already been a corresponding {@link Diagram}
 	 * object then it will be created.<br/>
 	 * If {@code groupName} is not equal to {@link Group#DEFAULT_GROUP_NAME} then all added diagrams
-	 * that had been member of it will be detached from the default group if 
+	 * that had been member of the default group will be detached from it.
+	 * 
 	 * @param groupName - the name for the new group
 	 * @param form - possible a commanding {@link Mainform} or null
 	 * @param roots - a collection of {@link Root} objects to be associated to the group or null
 	 * @param replaceIfExisting - if true and the group had already existed then it will be emptied before.
 	 * @param arrFileOrNull - if given, sets the group arranger file path to its absolute path
-	 * @return the actually resulting group if it could be created and the specified diagrams could be attached to it,
-	 * null otherwise. 
+	 * @return the actually resulting group if it could be created and the specified diagrams could
+	 *     be attached to it, {@code null} otherwise. 
 	 */
 	protected Group makeGroup(String groupName, Mainform form, Collection<Root> roots, boolean replaceIfExisting, File arrFileOrNull)
 	{
