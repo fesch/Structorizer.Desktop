@@ -20,6 +20,8 @@
 
 package lu.fisch.structorizer.gui;
 
+import lu.fisch.structorizer.elements.Element;
+
 /******************************************************************************************************
  *
  *      Author:         Bob Fisch
@@ -37,6 +39,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017-05-09      Issue #400: commit field OK introduced
  *      Kay Gürtzig     2018-07-02      KGU#245: Code revision - serial controls converted to arrays
  *      Kay Gürtzig     2018-12-20      Enh. #653: defaultColors aligned to those of Element, btnReset added
+ *      Kay Gürtzig     2022-07-07      Issue #653: Consistency with Element.defaultColors ensured
  *
  ******************************************************************************************************
  *
@@ -99,19 +102,21 @@ public class Colors extends LangDialog {
 //	protected JPanel color9;
 	protected final JLabel[] lblColors;
 	protected final JPanel[] colors;
-	// KGU#622 2018-12-20: Issue #653 the following default colors had differed from those of Element...
-	private final static Color[] defaultColors = {
-			Color.white,				// 0
-			new Color(255, 128, 128),	//Color(255, 204, 204),	// 1
-			new Color(255, 255, 128),	//Color(255, 255, 153),	// 2
-			new Color(128, 255, 128),	//Color(153, 255, 153),	// 3
-			new Color(128, 255, 255),	//Color(153, 204, 255),	// 4
-			new Color(  0, 128, 255),	//Color(153, 153, 255),	// 5
-			new Color(255, 128, 192),	//Color(255, 153, 255),	// 6
-			new Color(192, 192, 192),	//Color(204, 204, 204),	// 7
-			new Color(255, 128,   0),	//Color(255, 153, 102),	// 8
-			new Color(128, 128, 255)	//Color(153, 102, 255)	// 9
-	};
+	private final static Color[] defaultColors =
+	// KGU#622 2018-12-20/2022-07-07: Issue #653 consistency with Element.defaultColors ensured
+	//	{
+	//			Color.white,				// 0
+	//			new Color(255, 128, 128),	//Color(255, 204, 204),	// 1
+	//			new Color(255, 255, 128),	//Color(255, 255, 153),	// 2
+	//			new Color(128, 255, 128),	//Color(153, 255, 153),	// 3
+	//			new Color(128, 255, 255),	//Color(153, 204, 255),	// 4
+	//			new Color(  0, 128, 255),	//Color(153, 153, 255),	// 5
+	//			new Color(255, 128, 192),	//Color(255, 153, 255),	// 6
+	//			new Color(192, 192, 192),	//Color(204, 204, 204),	// 7
+	//			new Color(255, 128,   0),	//Color(255, 153, 102),	// 8
+	//			new Color(128, 128, 255)	//Color(153, 102, 255)	// 9
+	//	};
+			 Element.getDefaultColors();
 	// END KGU#245 2018-07-02
 	protected JPanel buttonBar;
 	protected JButton btnOK;
