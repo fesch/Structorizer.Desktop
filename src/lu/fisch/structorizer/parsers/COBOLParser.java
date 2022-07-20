@@ -102,6 +102,7 @@ package lu.fisch.structorizer.parsers;
  *                                      Issue #851/5 Simple solution for PERFORM ... THRU ... call spans
  *      Kay Gürtzig     2021-03-02      Bugfix #851/3: Float literals were torn apart by bugfix #485, index range
  *                                      violation with fix file format fixed (caused by the same flawed workaround).
+ *      Kay Gürtzig     2022-07-20      Enh. #1046: Decoding mechanism for token names to actual symbols
  *
  ******************************************************************************************************
  *
@@ -4121,6 +4122,278 @@ public class COBOLParser extends CodeParser
 			RuleConstants.PROD__SCREEN_SECTION_SCREEN_SECTION_TOK_DOT
 	};
 	// END KGU#407 2017-10-01
+
+	//------------------- Decoding of expected symbols -----------------------
+	
+	// START KGU#1037 2022-07-20: Enh. #1046
+	/** Permanently cashed map for {@link #getTerminalTranslations()} */
+	private static HashMap<String, String> symbolDecodeTable = null;
+	@Override
+	protected HashMap<String, String> getTerminalTranslations()
+	{
+		/* In most cases, we just provide the initial possible lexeme(s) for
+		 * a multi-word token, but in some case the entire sequence is given
+		 * where it helps to understand what's expected (e.g. with END_PROGRAM)
+		 */
+		if (symbolDecodeTable == null) {
+			symbolDecodeTable = new HashMap<String, String>();
+			symbolDecodeTable.put("ALPHABETIC_LOWER", "ALPHABETIC-LOWER");
+			symbolDecodeTable.put("ALPHABETIC_UPPER", "ALPHABETIC-UPPER");
+			symbolDecodeTable.put("ALPHANUMERIC_EDITED", "ALPHANUMERIC-EDITED");
+			symbolDecodeTable.put("ARGUMENT_NUMBER", "ARGUMENT-NUMBER");
+			symbolDecodeTable.put("ARGUMENT_VALUE", "ARGUMENT-VALUE");
+			symbolDecodeTable.put("AUTO", "AUTO | AUTO-SKIP | AUTOTERMINATE");
+			symbolDecodeTable.put("AWAY_FROM_ZERO", "AWAY-FROM-ZERO");
+			symbolDecodeTable.put("BACKGROUND_COLOR", "BACKGROUND-COLOR | BACKGROUND-COLOUR");
+			symbolDecodeTable.put("BELL", "BELL | BEEP");
+			symbolDecodeTable.put("BINARY_C_LONG", "BINARY-C-LONG");
+			symbolDecodeTable.put("BINARY_CHAR", "BINARY-CHAR");
+			symbolDecodeTable.put("BINARY_DOUBLE", "BINARY-DOUBLE | BINARY-LONG-LONG");
+			symbolDecodeTable.put("BINARY_LONG", "BINARY-LONG | BINARY-INT");
+			symbolDecodeTable.put("BINARY_SHORT", "BINARY-SHORT");
+			symbolDecodeTable.put("BYTE_LENGTH", "BYTE-LENGTH");
+			symbolDecodeTable.put("CARD_PUNCH", "CARD-PUNCH");
+			symbolDecodeTable.put("CARD_READER", "CARD-READER");
+			symbolDecodeTable.put("CODE_SET", "CODE-SET");
+			symbolDecodeTable.put("COMMAND_LINE", "COMMAND-LINE");
+			symbolDecodeTable.put("COMP_1", "COMP-1");
+			symbolDecodeTable.put("COMP_2", "COMP-2");
+			symbolDecodeTable.put("COMP_3", "COMP-3");
+			symbolDecodeTable.put("COMP_4", "COMP-4");
+			symbolDecodeTable.put("COMP_5", "COMP-5");
+			symbolDecodeTable.put("COMP_6", "COMP-6");
+			symbolDecodeTable.put("COMP_X", "COMP-X");
+			symbolDecodeTable.put("CORRESPONDING", "CORRESPONDING | CORR");
+			symbolDecodeTable.put("CRT_UNDER", "CRT-UNDER");
+			symbolDecodeTable.put("DAY_OF_WEEK", "DAY-OF-WEEK");
+			symbolDecodeTable.put("DECIMAL_POINT", "DECIMAL-POINT");
+			symbolDecodeTable.put("END_ACCEPT", "END-ACCEPT");
+			symbolDecodeTable.put("END_ADD", "END-ADD");
+			symbolDecodeTable.put("END_CALL", "END-CALL");
+			symbolDecodeTable.put("END_COMPUTE", "END-COMPUTE");
+			symbolDecodeTable.put("END_DELETE", "END-DELETE");
+			symbolDecodeTable.put("END_DISPLAY", "END-DISPLAY");
+			symbolDecodeTable.put("END_DIVIDE", "END-DIVIDE");
+			symbolDecodeTable.put("END_EVALUATE", "END-EVALUATE");
+			symbolDecodeTable.put("END_IF", "END-IF");
+			symbolDecodeTable.put("END_MULTIPLY", "END-MULTIPLY");
+			symbolDecodeTable.put("END_PERFORM", "END-PERFORM");
+			symbolDecodeTable.put("END_READ", "END-READ");
+			symbolDecodeTable.put("END_RECEIVE", "END-RECEIVE");
+			symbolDecodeTable.put("END_RETURN", "END-RETURN");
+			symbolDecodeTable.put("END_REWRITE", "END-REWRITE");
+			symbolDecodeTable.put("END_SEARCH", "END-SEARCH");
+			symbolDecodeTable.put("END_START", "END-START");
+			symbolDecodeTable.put("END_STRING", "END-STRING");
+			symbolDecodeTable.put("END_SUBTRACT", "END-SUBTRACT");
+			symbolDecodeTable.put("END_UNSTRING", "END-UNSTRING");
+			symbolDecodeTable.put("END_WRITE", "END-WRITE");
+			symbolDecodeTable.put("ENTRY_CONVENTION", "ENTRY-CONVENTION");
+			symbolDecodeTable.put("ENVIRONMENT_VALUE", "ENVIRONMENT-VALUE");
+			symbolDecodeTable.put("FILE_CONTROL", "FILE-CONTROL");
+			symbolDecodeTable.put("FILE_ID", "FILE-ID");
+			symbolDecodeTable.put("FLOAT_BINARY_128", "FLOAT-BINARY-128");
+			symbolDecodeTable.put("FLOAT_BINARY_32", "FLOAT-BINARY-32");
+			symbolDecodeTable.put("FLOAT_BINARY_64", "FLOAT-BINARY-64");
+			symbolDecodeTable.put("FLOAT_DECIMAL_16", "FLOAT-DECIMAL-16");
+			symbolDecodeTable.put("FLOAT_DECIMAL_34", "FLOAT-DECIMAL-34");
+			symbolDecodeTable.put("FLOAT_DECIMAL_7", "FLOAT-DECIMAL-7");
+			symbolDecodeTable.put("FLOAT_EXTENDED", "FLOAT-EXTENDED");
+			symbolDecodeTable.put("FLOAT_LONG", "FLOAT-LONG");
+			symbolDecodeTable.put("FLOAT_SHORT", "FLOAT-SHORT");
+			symbolDecodeTable.put("FOREGROUND_COLOR", "FOREGROUND-COLOR | FOREGROUND-COLOUR");
+			symbolDecodeTable.put("FULL", "FULL | LENGTH-CHECK");
+			symbolDecodeTable.put("FUNCTION_ID", "FUNCTION-ID");
+			symbolDecodeTable.put("HIGH_VALUE", "HIGH-VALUE | HIGH-VALUES");
+			symbolDecodeTable.put("INITIALIZE", "INITIALIZE | INITIALISE");
+			symbolDecodeTable.put("INITIALIZED", "INITIALIZED | INITIALISED");
+			symbolDecodeTable.put("INPUT_OUTPUT", "INPUT-OUTPUT");
+			symbolDecodeTable.put("I_O", "I-O");
+			symbolDecodeTable.put("I_O_CONTROL", "I-O-CONTROL");
+			symbolDecodeTable.put("JUSTIFIED", "JUSTIFIED | JUST");
+			symbolDecodeTable.put("LINAGE_COUNTER", "LINAGE-COUNTER");
+			symbolDecodeTable.put("LINE_COUNTER", "LINE-COUNTER");
+			symbolDecodeTable.put("LOCAL_STORAGE", "LOCAL-STORAGE");
+			symbolDecodeTable.put("LOW_VALUE", "LOW-VALUE | LOW-VALUES");
+			symbolDecodeTable.put("MAGNETIC_TAPE", "MAGNETIC-TAPE");
+			symbolDecodeTable.put("NATIONAL_EDITED", "NATIONAL-EDITED");
+			symbolDecodeTable.put("NEAREST_AWAY_FROM_ZERO", "NEAREST-AWAY-FROM-ZERO");
+			symbolDecodeTable.put("NEAREST_EVEN", "NEAREST-EVEN");
+			symbolDecodeTable.put("NEAREST_TOWARD_ZERO", "NEAREST-TOWARD-ZERO");
+			symbolDecodeTable.put("NO_ECHO", "NO-ECHO");
+			symbolDecodeTable.put("NUMERIC_EDITED", "NUMERIC-EDITED");
+			symbolDecodeTable.put("OBJECT_COMPUTER", "OBJECT-COMPUTER");
+			symbolDecodeTable.put("ORGANIZATION", "ORGANIZATION | ORGANISATION");
+			symbolDecodeTable.put("PACKED_DECIMAL", "PACKED-DECIMAL");
+			symbolDecodeTable.put("PAGE_COUNTER", "PAGE-COUNTER");
+			symbolDecodeTable.put("PRINTER_1", "PRINTER-1");
+			symbolDecodeTable.put("PROGRAM_ID", "PROGRAM-ID");
+			symbolDecodeTable.put("PROGRAM_POINTER", "PROGRAM-POINTER");
+			symbolDecodeTable.put("QUOTE", "QUOTE | QUOTES");
+			symbolDecodeTable.put("REQUIRED", "REQUIRED | EMPTY-CHECK");
+			symbolDecodeTable.put("REVERSE_VIDEO", "REVERSE-VIDEO");
+			symbolDecodeTable.put("SEGMENT_LIMIT", "SEGMENT-LIMIT");
+			symbolDecodeTable.put("SEMI_COLON", "';'");
+			symbolDecodeTable.put("SIGNED_INT", "SIGNED-INT");
+			symbolDecodeTable.put("SIGNED_LONG", "SIGNED-LONG");
+			symbolDecodeTable.put("SIGNED_SHORT", "SIGNED-SHORT");
+			symbolDecodeTable.put("SORT_MERGE", "SORT-MERGE");
+			symbolDecodeTable.put("SOURCE_COMPUTER", "SOURCE-COMPUTER");
+			symbolDecodeTable.put("SPACE", "SPACE | SPACES");
+			symbolDecodeTable.put("SPECIAL_NAMES", "SPECIAL-NAMES");
+			symbolDecodeTable.put("STANDARD_1", "STANDARD-1");
+			symbolDecodeTable.put("STANDARD_2", "STANDARD-2");
+			symbolDecodeTable.put("SUB_QUEUE_1", "SUB-QUEUE-1");
+			symbolDecodeTable.put("SUB_QUEUE_2", "SUB-QUEUE-2");
+			symbolDecodeTable.put("SUB_QUEUE_3", "SUB-QUEUE-3");
+			symbolDecodeTable.put("SYNCHRONIZED", "SYNCHRONIZED | SYNCHRONISED");
+			symbolDecodeTable.put("SYSTEM_DEFAULT", "SYSTEM-DEFAULT");
+			symbolDecodeTable.put("SYSTEM_OFFSET", "SYSTEM-OFFSET");
+			symbolDecodeTable.put("THRU", "THRU | THROUGH");
+			symbolDecodeTable.put("TIME_OUT", "TIME-OUT | TIMEOUT");
+			symbolDecodeTable.put("TOK_EXTERN", "EXTERN");
+			symbolDecodeTable.put("TOK_FALSE", "FALSE");
+			symbolDecodeTable.put("TOK_FILE", "FILE");
+			symbolDecodeTable.put("TOK_INITIAL", "INITIAL");
+			symbolDecodeTable.put("TOK_NULL", "NULL");
+			symbolDecodeTable.put("TOK_TRUE", "TRUE");
+			symbolDecodeTable.put("TOWARD_GREATER", "TOWARD-GREATER");
+			symbolDecodeTable.put("TOWARD_LESSER", "TOWARD-LESSER");
+			symbolDecodeTable.put("UNSIGNED_INT", "UNSIGNED-INT");
+			symbolDecodeTable.put("UNSIGNED_LONG", "UNSIGNED-LONG");
+			symbolDecodeTable.put("UNSIGNED_SHORT", "UNSIGNED-SHORT");
+			symbolDecodeTable.put("USER_DEFAULT", "USER-DEFAULT");
+			symbolDecodeTable.put("VALUE", "VALUE | VALUES");
+			symbolDecodeTable.put("WORKING_STORAGE", "WORKING-STORAGE");
+			symbolDecodeTable.put("ZERO", "ZERO | ZEROS | ZEROES");
+			symbolDecodeTable.put("SIXTY_SIX", "66");
+			symbolDecodeTable.put("SEVENTY_EIGHT", "78");
+			symbolDecodeTable.put("EIGHTY_EIGHT", "88");
+			symbolDecodeTable.put("TOK_OPEN_PAREN", "'('");
+			symbolDecodeTable.put("TOK_CLOSE_PAREN", "')'");
+			symbolDecodeTable.put("NOT_EQUAL", "'<>'");
+			symbolDecodeTable.put("EXPONENTIATION", "'**'");
+			symbolDecodeTable.put("TOK_DOT", "'.'");
+			symbolDecodeTable.put("TOK_AMPER", "'&'");
+			symbolDecodeTable.put("TOK_COLON", "':'");
+			symbolDecodeTable.put("TOK_EQUAL", "'='");
+			symbolDecodeTable.put("TOK_DIV", "'/'");
+			symbolDecodeTable.put("TOK_MUL", "'*'");
+			symbolDecodeTable.put("TOK_PLUS", "'+'");
+			symbolDecodeTable.put("TOK_MINUS", "'-'");
+			symbolDecodeTable.put("TOK_LESS", "'<'");
+			symbolDecodeTable.put("TOK_GREATER", "'>'");
+			symbolDecodeTable.put("COMMA_DELIM", "','");
+			symbolDecodeTable.put("END_PROGRAM", "END PROGRAM");
+			symbolDecodeTable.put("END_FUNCTION", "END FUNCTION");
+			symbolDecodeTable.put("PICTURE_SYMBOL", "PICTURE SYMBOL");
+			symbolDecodeTable.put("FROM_CRT", "FROM CRT");
+			symbolDecodeTable.put("SCREEN_CONTROL", "SCREEN CONTROL");
+			symbolDecodeTable.put("EVENT_STATUS", "EVENT STATUS");
+			symbolDecodeTable.put("READY_TRACE", "READY TRACE");
+			symbolDecodeTable.put("RESET_TRACE", "RESET TRACE");
+			symbolDecodeTable.put("GREATER_OR_EQUAL", "GREATER | '>='");
+			symbolDecodeTable.put("GREATER", "GREATER");
+			symbolDecodeTable.put("LESS_OR_EQUAL", "LESS | '<='");
+			symbolDecodeTable.put("LESS", "LESS");
+			symbolDecodeTable.put("EQUAL", "EQUAL | EQUALS");
+			symbolDecodeTable.put("TOP", "LINES");
+			symbolDecodeTable.put("BOTTOM", "LINES");
+			symbolDecodeTable.put("NO_ADVANCING", "NO");
+			symbolDecodeTable.put("NEXT_PAGE", "NEXT");
+			symbolDecodeTable.put("NOT_SIZE_ERROR", "ON | NOT");
+			symbolDecodeTable.put("SIZE_ERROR", "ON | SIZE");
+			symbolDecodeTable.put("NOT_ESCAPE", "NOT");
+			symbolDecodeTable.put("NOT_EXCEPTION", "NOT");
+			symbolDecodeTable.put("ESCAPE", "ON");
+			symbolDecodeTable.put("EXCEPTION", "ON");
+			symbolDecodeTable.put("NOT_OVERFLOW", "NOT");
+			symbolDecodeTable.put("NOT_END", "NOT");
+			symbolDecodeTable.put("END", "AT | END");
+			symbolDecodeTable.put("TOK_OVERFLOW", "ON | OVERFLOW");
+			symbolDecodeTable.put("NOT_EOP", "NOT");
+			symbolDecodeTable.put("EOP", "AT | END-OF-PAGE | EOP");
+			symbolDecodeTable.put("NOT_INVALID_KEY", "NOT");
+			symbolDecodeTable.put("INVALID_KEY", "INVALID");
+			symbolDecodeTable.put("NO_DATA", "NO");
+			symbolDecodeTable.put("WITH_DATA", "WITH");
+			symbolDecodeTable.put("UPON_ENVIRONMENT_NAME", "UPON");
+			symbolDecodeTable.put("UPON_ENVIRONMENT_VALUE", "UPON");
+			symbolDecodeTable.put("UPON_ARGUMENT_NUMBER", "UPON");
+			symbolDecodeTable.put("UPON_COMMAND_LINE", "UPON");
+			symbolDecodeTable.put("EXCEPTION_CONDITION", "AFTER | EXCEPTION");
+			symbolDecodeTable.put("EC", "AFTER | EC");
+			symbolDecodeTable.put("LENGTH_OF", "LENGTH");
+			symbolDecodeTable.put("CURRENT_DATE", "CURRENT-DATE");
+			symbolDecodeTable.put("DISPLAY_OF", "DISPLAY-OF");
+			symbolDecodeTable.put("FORMATTED_DATE", "FORMATTED-DATE");
+			symbolDecodeTable.put("FORMATTED_DATETIME", "FORMATTED-DATETIME");
+			symbolDecodeTable.put("FORMATTED_TIME", "FORMATTED-TIME");
+			symbolDecodeTable.put("LOCALE_DATE", "LOCALE-DATE");
+			symbolDecodeTable.put("LOCALE_TIME", "LOCALE-TIME");
+			symbolDecodeTable.put("LOCALE_TIME_FROM_SECONDS", "LOCALE-TIME-FROM-SECONDS");
+			symbolDecodeTable.put("LOWER_CASE", "LOWER-CASE");
+			symbolDecodeTable.put("NATIONAL_OF", "NATIONAL-OF");
+			symbolDecodeTable.put("NUMVAL_C", "NUMVAL-C");
+			symbolDecodeTable.put("SUBSTITUTE_CASE", "SUBSTITUTE-CASE");
+			symbolDecodeTable.put("UPPER_CASE", "UPPER-CASE");
+			symbolDecodeTable.put("WHEN_COMPILED", "WHEN-COMPILED");
+			symbolDecodeTable.put("BOOLEAN_OF_INTEGER", "BOOLEAN-OF-INTEGER");
+			symbolDecodeTable.put("CHAR_NATIONAL", "CHAR-NATIONAL");
+			symbolDecodeTable.put("COMBINED_DATETIME", "COMBINED-DATETIME");
+			symbolDecodeTable.put("CURRENCY_SYMBOL", "CURRENCY-SYMBOL");
+			symbolDecodeTable.put("DATE_OF_INTEGER", "DATE-OF-INTEGER");
+			symbolDecodeTable.put("DATE_TO_YYYYMMDD", "DATE-TO-YYYYMMDD");
+			symbolDecodeTable.put("DAY_OF_INTEGER", "DAY-OF-INTEGER");
+			symbolDecodeTable.put("DAY_TO_YYYYDDD", "DAY-TO-YYYYDDD");
+			symbolDecodeTable.put("EXCEPTION_FILE", "EXCEPTION-FILE");
+			symbolDecodeTable.put("EXCEPTION_FILE_N", "EXCEPTION-FILE-N");
+			symbolDecodeTable.put("EXCEPTION_LOCATION", "EXCEPTION-LOCATION");
+			symbolDecodeTable.put("EXCEPTION_LOCATION_N", "EXCEPTION-LOCATION-N");
+			symbolDecodeTable.put("EXCEPTION_STATEMENT", "EXCEPTION-STATEMENT");
+			symbolDecodeTable.put("EXCEPTION_STATUS", "EXCEPTION-STATUS");
+			symbolDecodeTable.put("FORMATTED_CURRENT_DATE", "FORMATTED-CURRENT-DATE");
+			symbolDecodeTable.put("FRACTION_PART", "FRACTION-PART");
+			symbolDecodeTable.put("HIGHEST_ALGEBRAIC", "HIGHEST-ALGEBRAIC");
+			symbolDecodeTable.put("INTEGER_OF_BOOLEAN", "INTEGER-OF-BOOLEAN");
+			symbolDecodeTable.put("INTEGER_OF_DATE", "INTEGER-OF-DATE");
+			symbolDecodeTable.put("INTEGER_OF_DAY", "INTEGER-OF-DAY");
+			symbolDecodeTable.put("INTEGER_OF_FORMATTED_DATE", "INTEGER-OF-FORMATTED-DATE");
+			symbolDecodeTable.put("INTEGER_PART", "INTEGER-PART");
+			symbolDecodeTable.put("LOCALE_COMPARE", "LOCALE-COMPARE");
+			symbolDecodeTable.put("LOWEST_ALGEBRAIC", "LOWEST-ALGEBRAIC");
+			symbolDecodeTable.put("MODULE_CALLER_ID", "MODULE-CALLER-ID");
+			symbolDecodeTable.put("MODULE_DATE", "MODULE-DATE");
+			symbolDecodeTable.put("MODULE_FORMATTED_DATE", "MODULE-FORMATTED-DATE");
+			symbolDecodeTable.put("MODULE_ID", "MODULE-ID");
+			symbolDecodeTable.put("MODULE_PATH", "MODULE-PATH");
+			symbolDecodeTable.put("MODULE_SOURCE", "MODULE-SOURCE");
+			symbolDecodeTable.put("MODULE_TIME", "MODULE-TIME");
+			symbolDecodeTable.put("MONETARY_DECIMAL_POINT", "MONETARY-DECIMAL-POINT");
+			symbolDecodeTable.put("MONETARY_THOUSANDS_SEPARATOR", "MONETARY-THOUSANDS-SEPARATOR");
+			symbolDecodeTable.put("NUMERIC_DECIMAL_POINT", "NUMERIC-DECIMAL-POINT");
+			symbolDecodeTable.put("NUMERIC_THOUSANDS_SEPARATOR", "NUMERIC-THOUSANDS-SEPARATOR");
+			symbolDecodeTable.put("NUMVAL_F", "NUMVAL-F");
+			symbolDecodeTable.put("ORD_MAX", "ORD-MAX");
+			symbolDecodeTable.put("ORD_MIN", "ORD-MIN");
+			symbolDecodeTable.put("PRESENT_VALUE", "PRESENT-VALUE");
+			symbolDecodeTable.put("SECONDS_FROM_FORMATTED_TIME", "SECONDS-FROM-FORMATTED-TIME");
+			symbolDecodeTable.put("SECONDS_PAST_MIDNIGHT", "SECONDS-PAST-MIDNIGHT");
+			symbolDecodeTable.put("STANDARD_COMPARE", "STANDARD-COMPARE");
+			symbolDecodeTable.put("STANDARD_DEVIATION", "STANDARD-DEVIATION");
+			symbolDecodeTable.put("STORED_CHAR_LENGTH", "STORED-CHAR-LENGTH");
+			symbolDecodeTable.put("TEST_DATE_YYYYMMDD", "TEST-DATE-YYYYMMDD");
+			symbolDecodeTable.put("TEST_DAY_YYYYDDD", "TEST-DAY-YYYYDDD");
+			symbolDecodeTable.put("TEST_FORMATTED_DATETIME", "TEST-FORMATTED-DATETIME");
+			symbolDecodeTable.put("TEST_NUMVAL", "TEST-NUMVAL");
+			symbolDecodeTable.put("TEST_NUMVAL_F", "TEST-NUMVAL-F");
+			symbolDecodeTable.put("YEAR_TO_YYYY", "YEAR-TO-YYYY");
+			symbolDecodeTable.put("DATE_WRITTEN", "DATE-WRITTEN");
+			symbolDecodeTable.put("DATE_COMPILED", "DATE-COMPILED");
+		}
+		return symbolDecodeTable;
+	}
+	// END KGU#1037 2022-07-20
 
 	//----------------------- Local helper functions -------------------------
 

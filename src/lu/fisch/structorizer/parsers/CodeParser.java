@@ -52,6 +52,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2020-03-08      Issue #833: Modified API for new mechanism to get rid of superfluous roots
  *      Kay Gürtzig     2020-03-09      Issue #835: New import option and method for insertion of structure preference keywords
  *      Kay Gürtzig     2020-04-24      Method cleanComment() improved (indentation trimmed, empty lines dropped)
+ *      Kay Gürtzig     2022-07-20      Enh. #1046: Decoding mechanism for token names to actual symbols
  *
  ******************************************************************************************************
  *
@@ -447,6 +448,26 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 		return done;
 	}
 	// END KGU#537 2018-06-29
+	
+	// START KGU#1037 2022-07-20: Enh. #1046 translation option for defined "terminals"
+	/**
+	 * @return either a hash map for the replacement of token keywords for terminal
+	 *     symbol sequences by the actually expected symbols, or {@code null} if no such
+	 *     translation is necessary or intended.<br/>
+	 *     Usually the value will just be the first lexeme in case of symbol sequences.
+	 *     If a token keyword may represent several differing symbols (or sequences) then
+	 *     these should be separated by  {@code" | "}.<br/>
+	 *     Examples:
+	 *     <ul>
+	 *     <li> {@code "AUTO"} &rarr; {@code "AUTO | AUTO-SKIP | AUTOTERMINATE"} </li>
+	 *     <li> {@code "LESS_OR_EQUAL"} &rarr; {@code "LESS | '<='"}</li>
+	 *     </ul>
+	 */
+	protected HashMap<String, String> getTerminalTranslations()
+	{
+		return null;
+	}
+	// END KGU#1037 2022-07-20
 
 	/************ Abstract Methods *************/
 
@@ -765,9 +786,31 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 				error += "\n\nExpected: ";
 				String sepa = "";
 				String exp = "";
+				// START KGU#1037 2022-07-20: Enh. #1046 Decoding of symbolic terminals
+				HashMap<String, String> decodeTab = this.getTerminalTranslations();
+				HashSet<String> listedSymbols = new HashSet<String>();
+				// END KGU#1037 2022-07-20
 				for (Symbol sym: sl) {
-					exp += sepa + sym.toString();
-					sepa = " | ";
+					// START KGU#1037 2022-07-20: Enh. #1046 Decoding of symbolic terminals
+					//exp += sepa + sym.toString();
+					//sepa = " | ";
+					String symStr = sym.toString();
+					StringList symbols = null;
+					if (decodeTab != null && decodeTab.containsKey(symStr)) {
+						symbols = StringList.explode(decodeTab.get(symStr), " | ");
+					}
+					else {
+						symbols = StringList.getNew(symStr);
+					}
+					for (int i = 0; i < symbols.count(); i++) {
+						symStr = symbols.get(i);
+						if (!listedSymbols.contains(symStr)) {
+							listedSymbols.add(symStr);
+							exp += sepa + symStr;
+							sepa = " | ";
+						}
+					}
+					// END KGU#1037 2022-07-20
 					if (exp.length() > DLG_STR_WIDTH) {
 						error += exp;
 						exp = "";
