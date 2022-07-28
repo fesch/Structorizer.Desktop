@@ -103,6 +103,8 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2021-03-02      Bugfix #851/3: Float literals were torn apart by bugfix #485, index range
  *                                      violation with fix file format fixed (caused by the same flawed workaround).
  *      Kay Gürtzig     2022-07-20      Enh. #1046: Decoding mechanism for token names to actual symbols
+ *      Kay Gürtzig     2022-07-27/28   Bugfix #1044/#1048: CORRESPONDING clauses had caused NullPointerException,
+ *                                      import of file record declarations and their mapping had failed.
  *
  ******************************************************************************************************
  *
@@ -2880,7 +2882,7 @@ public class COBOLParser extends CodeParser
 		final int PROD_ADD_STATEMENT_ADD                                                     = 1063;  // <add_statement> ::= ADD <add_body> <end_add>
 		final int PROD_ADD_BODY_TO                                                           = 1064;  // <add_body> ::= <x_list> TO <arithmetic_x_list> <on_size_error_phrases>
 		final int PROD_ADD_BODY_GIVING                                                       = 1065;  // <add_body> ::= <x_list> <_add_to> GIVING <arithmetic_x_list> <on_size_error_phrases>
-//		final int PROD_ADD_BODY_CORRESPONDING_TO                                             = 1066;  // <add_body> ::= CORRESPONDING <identifier> TO <identifier> <flag_rounded> <on_size_error_phrases>
+		final int PROD_ADD_BODY_CORRESPONDING_TO                                             = 1066;  // <add_body> ::= CORRESPONDING <identifier> TO <identifier> <flag_rounded> <on_size_error_phrases>
 //		final int PROD_ADD_BODY_TABLE_TO                                                     = 1067;  // <add_body> ::= TABLE <table_identifier> TO <table_identifier> <flag_rounded> <_from_idx_to_idx> <_dest_index> <on_size_error_phrases>
 //		final int PROD__ADD_TO                                                               = 1068;  // <_add_to> ::=
 //		final int PROD__ADD_TO_TO                                                            = 1069;  // <_add_to> ::= TO <x>
@@ -3144,7 +3146,7 @@ public class COBOLParser extends CodeParser
 //		final int PROD_MERGE_STATEMENT_MERGE                                                 = 1327;  // <merge_statement> ::= MERGE <sort_body>
 		final int PROD_MOVE_STATEMENT_MOVE                                                   = 1328;  // <move_statement> ::= MOVE <move_body>
 //		final int PROD_MOVE_BODY_TO                                                          = 1329;  // <move_body> ::= <x> TO <target_x_list>
-//		final int PROD_MOVE_BODY_CORRESPONDING_TO                                            = 1330;  // <move_body> ::= CORRESPONDING <x> TO <target_x_list>
+		final int PROD_MOVE_BODY_CORRESPONDING_TO                                            = 1330;  // <move_body> ::= CORRESPONDING <x> TO <target_x_list>
 		final int PROD_MULTIPLY_STATEMENT_MULTIPLY                                           = 1331;  // <multiply_statement> ::= MULTIPLY <multiply_body> <end_multiply>
 //		final int PROD_MULTIPLY_BODY_BY                                                      = 1332;  // <multiply_body> ::= <x> BY <arithmetic_x_list> <on_size_error_phrases>
 		final int PROD_MULTIPLY_BODY_BY_GIVING                                               = 1333;  // <multiply_body> ::= <x> BY <x> GIVING <arithmetic_x_list> <on_size_error_phrases>
@@ -3371,7 +3373,7 @@ public class COBOLParser extends CodeParser
 		final int PROD_SUBTRACT_STATEMENT_SUBTRACT                                           = 1554;  // <subtract_statement> ::= SUBTRACT <subtract_body> <end_subtract>
 //		final int PROD_SUBTRACT_BODY_FROM                                                    = 1555;  // <subtract_body> ::= <x_list> FROM <arithmetic_x_list> <on_size_error_phrases>
 		final int PROD_SUBTRACT_BODY_FROM_GIVING                                             = 1556;  // <subtract_body> ::= <x_list> FROM <x> GIVING <arithmetic_x_list> <on_size_error_phrases>
-//		final int PROD_SUBTRACT_BODY_CORRESPONDING_FROM                                      = 1557;  // <subtract_body> ::= CORRESPONDING <identifier> FROM <identifier> <flag_rounded> <on_size_error_phrases>
+		final int PROD_SUBTRACT_BODY_CORRESPONDING_FROM                                      = 1557;  // <subtract_body> ::= CORRESPONDING <identifier> FROM <identifier> <flag_rounded> <on_size_error_phrases>
 //		final int PROD_SUBTRACT_BODY_TABLE_FROM                                              = 1558;  // <subtract_body> ::= TABLE <table_identifier> FROM <table_identifier> <flag_rounded> <_from_idx_to_idx> <_dest_index> <on_size_error_phrases>
 //		final int PROD_END_SUBTRACT                                                          = 1559;  // <end_subtract> ::=
 //		final int PROD_END_SUBTRACT_END_SUBTRACT                                             = 1560;  // <end_subtract> ::= 'END_SUBTRACT'
@@ -6026,24 +6028,36 @@ public class COBOLParser extends CodeParser
 					&& reclRed.getParent().getTableIndex() != RuleConstants.PROD__RECORD_DESCRIPTION_LIST) {
 				String fdName = this.getContent_R(fdRed.get(1).asReduction(), "").trim();
 				// The file descriptor should have been declared with the SELECT clause
-				do {
-					Reduction datRed = reclRed.get(0).asReduction();
-					if (reclRed.getParent().getTableIndex() == RuleConstants.PROD_RECORD_DESCRIPTION_LIST_TOK_DOT2) {
-						datRed = reclRed.get(1).asReduction();
-						reclRed = reclRed.get(0).asReduction();
-					}
-					else {
-						reclRed = null;
-					}
-					HashMap<String, String> typeMap = new HashMap<String, String>();
-					// START KGU 2017-05-24: We do not only want the type info here but also create declarations
-					//this.processDataDescriptions(datRed, null, typeMap);
-					this.processDataDescriptions(datRed, typeMap);
-					// END KGU 2017-05-24
-					for (String recName: typeMap.keySet()) {
-						currentProg.fileRecordMap.put(recName, fdName);
-					}
-				} while (reclRed != null);
+				// START KGU#1039 2022-07-28: Bugfix #1044/#1048 wrong way to process record definitions
+				//do {
+				//	Reduction datRed = reclRed.get(0).asReduction();
+				//	if (reclRed.getParent().getTableIndex() == RuleConstants.PROD_RECORD_DESCRIPTION_LIST_TOK_DOT2) {
+				//		// <record_description_list> ::= <record_description_list> <data_description> 'TOK_DOT'
+				//		datRed = reclRed.get(1).asReduction();
+				//		reclRed = reclRed.get(0).asReduction();
+				//	}
+				//	else {
+				//		// <record_description_list> ::= <data_description> 'TOK_DOT'
+				//		reclRed = null;
+				//	}
+				//	HashMap<String, String> typeMap = new HashMap<String, String>();
+				//	// START KGU 2017-05-24: We do not only want the type info here but also create declarations
+				//	//this.processDataDescriptions(datRed, null, typeMap);
+				//	this.processDataDescriptions(datRed, typeMap);
+				//	// END KGU 2017-05-24
+				//	for (String recName: typeMap.keySet()) {
+				//		currentProg.fileRecordMap.put(recName, fdName);
+				//	}
+				//} while (reclRed != null);
+				this.processDataDescriptions(reclRed, null);
+				this.buildDataSection(currentProg.getFileStorage(), _parentNode);
+				CobVar rec = currentProg.getFileStorage();
+				while (rec != null) {
+					currentProg.fileRecordMap.put(rec.getName(), fdName);
+					rec = rec.getSister();
+				}
+				currentProg.clearFileStorage();
+				// END KGU#1039 2022-07-28
 			}
 		}
 		break;
@@ -7241,7 +7255,14 @@ public class COBOLParser extends CodeParser
 
 	private void importMove(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
 		Reduction secRed = _reduction.get(1).asReduction();
-		String expr = this.getContent_R(secRed.get(0).asReduction(), "");
+		int ixExpr = 0;
+		// START KGU#1038 2022-07-28: Bugfix #1044/#1048
+		boolean isCorresponding = secRed.getParent().getTableIndex() == RuleConstants.PROD_MOVE_BODY_CORRESPONDING_TO;
+		if (isCorresponding) {
+			ixExpr++;
+		}
+		// END KGU#1038 2022-07-28
+		String expr = this.getContent_R(secRed.get(ixExpr).asReduction(), "");
 		// FIXME: This doesn't work for array elements - we need an expression list splitter
 		// but what exactly is an expression in a space-separated list looking like "A (I) B (J)"?
 		//String targetString = this.getContent_R(secRed.get(2).asReduction(), "");
@@ -7255,14 +7276,20 @@ public class COBOLParser extends CodeParser
 		//	targets = targetString.split(" ");
 		//}
 		//if (targets.length > 0) {
-		StringList targets = this.getExpressionList(secRed.get(2).asReduction(), "<target_x_list>", RuleConstants.PROD_TARGET_X_COMMA_DELIM);
+		StringList targets = this.getExpressionList(secRed.get(ixExpr+2).asReduction(), "<target_x_list>", RuleConstants.PROD_TARGET_X_COMMA_DELIM);
 		if (targets.count() > 0)
 		{
 			StringList assignments = new StringList();
 			for (int i = 0; i < targets.count(); i++) {
 				String target = targets.get(i).trim();
+				// START KGU#1038 2022-07-28: Bugfix #1044/#1048
+				//if (mCopyFunction.reset(target).matches()) {
+				if (isCorresponding) {
+					addCorrespondingAssignments(expr, target, assignments);
+				}
 				// We must do something to avoid copy() calls on the left-hand side
-				if (mCopyFunction.reset(target).matches()) {
+				else if (mCopyFunction.reset(target).matches()) {
+				// END KGU#1038 2022-07-28
 					assignments.add(mCopyFunction.replaceFirst("delete($1, $2, $3)"));
 					assignments.add(mCopyFunction.replaceFirst(Matcher.quoteReplacement("insert(" + expr) + ", $1, $2)"));
 				}
@@ -7274,6 +7301,26 @@ public class COBOLParser extends CodeParser
 				}
 			}
 			_parentNode.addElement(this.equipWithSourceComment(new Instruction(assignments), _reduction));
+		}
+	}
+
+	// START KGU#1037 2022-07-28: Bugfix #1044/#1048
+	/**
+	 * Special conversion treatment for MOVE CORRESPONDING statements, these must
+	 * be resolved into assignments per component.
+	 * 
+	 * @param source - name of the source record (maybe partially qualified?)
+	 * @param target - name of the target record (maybe partially qualified?)
+	 * @param asgmts - the sequence of assignment lines to be expanded
+	 */
+	private void addCorrespondingAssignments(String source, String target, StringList asgmts) {
+		CobVar srcRec = currentProg.getCobVar(source);
+		CobVar tgtRec = currentProg.getCobVar(target);
+		if (srcRec != null && tgtRec != null) {
+			ArrayList<String[]> compPairs = srcRec.findComponentPairs(tgtRec, false);
+			for (String[] pair: compPairs) {
+				asgmts.add(pair[1] + " <- " + pair[0]);
+			}
 		}
 	}
 
@@ -7721,7 +7768,32 @@ public class COBOLParser extends CodeParser
 			summands1 = this.getExpressionList(secRed.get(0).asReduction(), "<x_list>", RuleConstants.PROD_X_COMMA_DELIM).concatenate(" + ");
 			targetIx = 2;
 			break;
-			// FIXME: There is no idea how to import the remaining ADD statement varieties
+		// START KGU#1038 2022-07-27: Bugfix #1044/#1048 We must handle et least the CORRESPONDING stuff
+		case RuleConstants.PROD_ADD_BODY_CORRESPONDING_TO:
+			/* We will have to construct a kind of sequence over components with corresponding names
+			 * To achieve this, we must identify the record structures of both identifiers.
+			 */
+			summands1 = this.getContent_R(secRed.get(1).asReduction(), "");	// source record id
+			summand2 = this.getContent_R(secRed.get(3).asReduction(), "");	// target record id
+			{
+				CobVar rec1 = currentProg.getCobVar(summands1);
+				CobVar rec2 = currentProg.getCobVar(summand2);
+				if (rec1 != null && rec2 != null) {
+					ArrayList<String[]> compPairs = rec1.findComponentPairs(rec2, true);
+					if (!compPairs.isEmpty()) {
+						StringList content = new StringList();
+						for (String[] qnames: compPairs) {
+							content.add(qnames[1] + " <- " + qnames[1] + " + " + qnames[0]);
+						}
+						_parentNode.addElement(this.equipWithSourceComment(
+								new Instruction(content), _reduction));
+						return;
+					}
+				}
+			}
+			break;
+		// END KGU#1038 2022-07-27
+		// FIXME: There is no idea how to import the remaining ADD statement varieties
 		}
 		StringList targets = null;
 		if (targetIx >= 0) {
@@ -7761,10 +7833,42 @@ public class COBOLParser extends CodeParser
 		int targetIx = 2;
 		String summands1 = this.getExpressionList(secRed.get(0).asReduction(), "<x_list>", RuleConstants.PROD_X_COMMA_DELIM).concatenate(" + ");
 		String summand2 = null;
-		if (secRuleId == RuleConstants.PROD_SUBTRACT_BODY_FROM_GIVING) {
+		// START KGU#1038 2022-07-27: Bugfix #1044/#1048 We must handle et least the CORRESPONDING stuff
+		//if (secRuleId == RuleConstants.PROD_SUBTRACT_BODY_FROM_GIVING) {
+		//	targetIx = 4;
+		//	summand2 = this.getContent_R(secRed.get(2).asReduction(), "");
+		//}
+		switch (secRuleId) {
+		case RuleConstants.PROD_SUBTRACT_BODY_FROM_GIVING: 
 			targetIx = 4;
 			summand2 = this.getContent_R(secRed.get(2).asReduction(), "");
+			break;
+		case RuleConstants.PROD_SUBTRACT_BODY_CORRESPONDING_FROM:
+			/* We will have to construct a kind of sequence over components with corresponding names
+			 * To achieve this, we must identify the record structures of both identifiers.
+			 */
+			summands1 = this.getContent_R(secRed.get(1).asReduction(), "");	// source record id
+			summand2 = this.getContent_R(secRed.get(3).asReduction(), "");	// target record id
+			{
+				CobVar rec1 = currentProg.getCobVar(summands1);
+				CobVar rec2 = currentProg.getCobVar(summand2);
+				if (rec1 != null && rec2 != null) {
+					ArrayList<String[]> compPairs = rec1.findComponentPairs(rec2, true);
+					if (!compPairs.isEmpty()) {
+						StringList content = new StringList();
+						for (String[] qnames: compPairs) {
+							content.add(qnames[1] + " <- " + qnames[1] + " - " + qnames[0]);
+						}
+						_parentNode.addElement(this.equipWithSourceComment(
+								new Instruction(content), _reduction));
+						return;
+					}
+				}
+			}
+			break;
+			// FIXME: Consider further variants
 		}
+		// END KGU#1038 2022-07-27
 		StringList targets = this.getExpressionList(secRed.get(targetIx).asReduction(), "<arithmetic_x_list>", RuleConstants.PROD_TARGET_X_COMMA_DELIM);
 		if (targets.count() > 0) {
 			String lastResult = null;
@@ -9720,10 +9824,10 @@ public class COBOLParser extends CodeParser
 
 	// START KGU#388 2017-10-03: Enh.#423
 	/**
-	 * Generates the necessary tye definitions, constant definitions and variable declarations (initialization
-	 * inclusive if available) for the variables link with {@code varRoot}, which is supposed to be the first
+	 * Generates the necessary type definitions, constant definitions and variable declarations (initialization
+	 * inclusive if available) for the variables linked with {@code varRoot}, which is supposed to be the first
 	 * top-level variable of a {@link CobProg} context.
-	 * @param varRoot - the root of the varaible tree
+	 * @param varRoot - the root of the variable tree
 	 * @param localNode - the insertion node for internal definitions (supposedly in {@link COBOLParser#root})
 	 */
 	private void buildDataSection(CobVar varRoot, Subqueue localNode)
@@ -10491,6 +10595,9 @@ class CobTools {
 		private CobVar linkageStorage = null;
 		private CobVar screenStorage = null;
 		private CobVar reportStorage = null;
+		// START KGU#1039 2022-07-28: Bugfix #1044/#1048
+		private CobVar fileStorage = null;
+		// END KGU#1039 2022-07-28
 
 		private Storage currentStorage = Storage.STORAGE_UNKNOWN;
 
@@ -10515,6 +10622,16 @@ class CobTools {
 			lastVar = null;
 		}
 
+		/**
+		 * Adds {@code variable} to the current storage partition and updates the {@link #varNames}
+		 * look-up table accordingly.
+		 * 
+		 * @param variable - the new {@link CobVar} entity to be added
+		 * 
+		 * @see #currentStorage
+		 * @see #setCurrentStorage(Storage)
+		 * @see #getCobVar(String)
+		 */
 		public void insertVar(CobVar variable) {
 
 			/* store first entry in current storage enabling iterations later */
@@ -10549,7 +10666,11 @@ class CobTools {
 				}
 				break;
 			case STORAGE_FILE:
-				// TODO add handling - per file
+				// START KGU#1039 2022-07-28: Bugfix #1044/#1048
+				if (fileStorage == null) {
+					fileStorage = variable;
+				}
+				// END KGU#1039 2022-07-28
 				break;
 			}
 
@@ -10574,10 +10695,12 @@ class CobTools {
 		}
 
 		/**
-		 * @param name
-		 * @param extName
-		 * @param isFunction
-		 * @param parent
+		 * Produces a new program entity with name {@code name} and external name {@code extName}
+		 * 
+		 * @param name - internal (true) name
+		 * @param extName - external name
+		 * @param isFunction - whether this procedural entity is a function
+		 * @param parent - the parent program entity, or {@code null} if there isn't any
 		 */
 		public CobProg(String name, String extName, boolean isFunction, CobProg parent) {
 			this.name = name;
@@ -10595,59 +10718,99 @@ class CobTools {
 		}
 
 		/**
-		 * @return the child
+		 * @return the child program entity if there is any (may be {@code null})
+		 * 
+		 * @see #getSister()
+		 * @see #setChild(CobProg)
 		 */
 		public CobProg getChild() {
 			return child;
 		}
 		/**
-		 * @param child the child to set
+		 * @param child - the child program entity to be set
+		 * 
+		 * @see #getChild()
 		 */
 		public void setChild(CobProg child) {
 			this.child = child;
 		}
 		/**
-		 * @return the sister
+		 * @return the sibling program entity if there is any (may be {@code null})
+		 * 
+		 * @see #getChild()
+		 * @see #setSister(CobProg)
 		 */
 		public CobProg getSister() {
 			return sister;
 		}
 		/**
-		 * @param sister the sister to set
+		 * @param sister - the sibling program entity to be set
+		 * 
+		 * @see #getSister()
 		 */
 		public void setSister(CobProg sister) {
 			this.sister = sister;
 		}
 		/**
-		 * @return the workingStorage
+		 * @return the workingStorage (i.e., its root {@link CobVar} node)
+		 * 
+		 * @see #setCurrentStorage(Storage)
 		 */
 		public CobVar getWorkingStorage() {
 			return workingStorage;
 		}
 		/**
-		 * @return the localStorage
+		 * @return the localStorage (i.e., its root {@link CobVar} node)
+		 * 
+		 * @see #setCurrentStorage(Storage)
 		 */
 		public CobVar getLocalStorage() {
 			return localStorage;
 		}
 		/**
-		 * @return the linkageStorage
+		 * @return the linkageStorage (i.e., its root {@link CobVar} node)
+		 * 
+		 * @see #setCurrentStorage(Storage)
 		 */
 		public CobVar getLinkageStorage() {
 			return linkageStorage;
 		}
 		/**
-		 * @return the screenStorage
+		 * @return the screenStorage (i.e., its root {@link CobVar} node)
+		 * 
+		 * @see #setCurrentStorage(Storage)
 		 */
 		public CobVar getScreenStorage() {
 			return screenStorage;
 		}
 		/**
-		 * @return the reportStorage
+		 * @return the reportStorage (i.e., its root {@link CobVar} node)
+		 * 
+		 * @see #setCurrentStorage(Storage)
 		 */
 		public CobVar getReportStorage() {
 			return reportStorage;
 		}
+		// START KGU#1039 2022-07-28: Bugfix #1044/#1048
+		/**
+		 * @return the reportStorage (i.e., its root {@link CobVar} node)
+		 * 
+		 * @see #setCurrentStorage(Storage)
+		 * @see #clearFileStorage()
+		 */
+		public CobVar getFileStorage() {
+			return fileStorage;
+		}
+		/**
+		 * Empties the fileStorage (which is only used on a file declaration base)
+		 * 
+		 * @see #getFileStorage()
+		 */
+		public void clearFileStorage() {
+			fileStorage = null;
+		}
+		// END KGU#1039 2022-07-28
+		
 		/**
 		 * @return the name
 		 */
@@ -10655,13 +10818,13 @@ class CobTools {
 			return name;
 		}
 		/**
-		 * @return the extName
+		 * @return the external name
 		 */
 		public String getExtName() {
 			return extName;
 		}
 		/**
-		 * @return true if this represents a function, false otherwies
+		 * @return {@code true} if this represents a function, {@code false} otherwise
 		 */
 		public boolean isFunction() {
 			return isFunction;
@@ -10673,6 +10836,14 @@ class CobTools {
 			return parent;
 		}
 
+		/**
+		 * Retrieves the {@link CobVar} referred to by the given {@code nameOfVar} if
+		 * unambiguous in this program entity
+		 * 
+		 * @param nameOfVar - the variable name (may be partially qualified)
+		 * @return the corresponding {@link CobVar} object if found, or {@code null} (if
+		 *     unknown or ambiguous)
+		 */
 		public CobVar getCobVar(String nameOfVar) {
 
 			if (varNames == null || nameOfVar == null || nameOfVar.isEmpty()) {
@@ -10703,7 +10874,7 @@ class CobTools {
 			// search for List of variables with the given (unqualified) name
 			ArrayList<CobVar> varList = varNames.get(names[0]);
 
-			// if the entry exists check for neccessary qualification
+			// if the entry exists then check for neccessary qualification
 			if (varList == null) {
 				return null;
 			}
@@ -10757,7 +10928,12 @@ class CobTools {
 	//private static CobVar lastRealVar;
 	private int fillerCount = 0;
 
-
+	/**
+	 * Represents a node in a recursively defined COBOL data structure, this may be a variable,
+	 * a record component, eithar scalar or an array.<br/>
+	 * It is named, holds its COBOL structure level, and (as far as existent) references to the
+	 * parent node, the first child node, and the next sibling node as well as type information.
+	 */
 	class CobVar {
 
 		/** level of COBOL field */
@@ -10857,8 +11033,12 @@ class CobTools {
 
 		/**
 		 * In case of a condition name returns a Boolean expression suited for comparison
-		 * @param fullyQualified TODO
-		 * @return the valuesAsExpression
+		 * (which will also be cached in {@link #valuesAsExpression} if it hadn't been before),
+		 * otherwie an empty string.
+		 * 
+		 * @param fullyQualified - whether the variable access is to be fully qualified in the
+		 *     expression
+		 * @return the resulting content of {@link #valuesAsExpression}, may be empty
 		 */
 		public String getValuesAsExpression(boolean fullyQualified) {
 			if (this.valuesAsExpression == null) {
@@ -10988,9 +11168,10 @@ class CobTools {
 		 * null.
 		 * @param separator - the separator string to be put between two value strings
 		 * @param defaultString - a string that is to be placed for unset element values. If null then
-		 * missing values at the end (less value stored than elements declared) will be omitted, missing
-		 * value inbetween will produce an empty item.		 *
+		 *     missing values at the end (less value stored than elements declared) will be omitted, missing
+		 *     value inbetween will produce an empty item.		 *
 		 * @return a String composed of the value strings separated by {@code searator} or null!
+		 * 
 		 * @see #isArray()
 		 * @see #getValueFirst()
 		 * @see #getValuesAsExpression()
@@ -11133,15 +11314,15 @@ class CobTools {
 
 		/**
 		 * General constructor<br/>
-		 * Use {@link #setIndexedBy(CobVar)} afterwards to if in case of a table (array) an index variable was specified
-		 * @param level COBOL level number
-		 * @param name
-		 * @param picture
-		 * @param usage
+		 * Use {@link #setIndexedBy(CobVar)} afterwards if in case of a table (array) an index variable was specified
+		 * @param level - COBOL level number
+		 * @param name - Variable or component name (may be {@code null} in case of a filler
+		 * @param picture - the PIC definition (if declared this way, {@code null} or empty othewise)
+		 * @param usage - a usage type
 		 * @param redefines
 		 * @param isGlobal
 		 * @param isExternal
-		 * @param anyLength
+		 * @param anyLength - the number of elements in case of an array
 		 * @param times - the maximum number of occurrences of this component (array elements)
 		 * @param timesString - the (transformed) expression from which the {@code times} value was computed
 		 */
@@ -11172,6 +11353,9 @@ class CobTools {
 				// this.name += "_$" + fillerCount;
 				this.name += "_" + String.format("%1$02d", CobTools.this.fillerCount);
 				// END KGU#388_2017-10-04
+				// START KGU#1038 2022-07-28: Bugfix #1044/#1048
+				this.isFiller = true;
+				// END KGU#1038 2022-07-28
 			}
 			if (picture != null && !picture.isEmpty()) {
 				this.picture = picture.trim();
@@ -11512,14 +11696,14 @@ class CobTools {
 		// END KGU 2017-06-26
 
 		/**
-		 * @return the parent
+		 * @return the parent (if there is any, otherwise {@code null})
 		 */
 		public CobVar getParent() {
 			return this.parent;
 		}
 
 		/**
-		 * @return the redefines
+		 * @return the redefines for this if theer is any
 		 */
 		public CobVar getRedefines() {
 			return this.redefines;
@@ -11550,6 +11734,81 @@ class CobTools {
 		public boolean isAnyNumeric() {
 			return (this.anyLength == 2);
 		}
+
+		// START KGU#1038 2022-07-27: Bugfix #1044/#1048 Find corresponding subcomponents
+		/**
+		 * Finds corresponding (sub-)compoonents between this and the passed-in second ConVar
+		 * and returns their path pairs (qualified names) as Strings.
+		 * 
+		 * @param var2 - the second variable supposed to be of record type (i.e. structured)
+		 * @param numericOnly - if {@code true} then only scalar numeric components will be
+		 *     yielded (otherwise simply the types must be assignment-compatible
+		 * @return an {@link ArrayList} of pairs of quaified component names
+		 */
+		public ArrayList<String[]> findComponentPairs(CobVar var2, boolean numericOnly) {
+			ArrayList<String[]> pathPairs = new ArrayList<String[]>();
+			addComponentPairs(var2, pathPairs, numericOnly, true);
+			return pathPairs;
+		}
+		
+		/**
+		 * Recursive subroutine for {@link #findComponentPairs(CobVar, boolean)}
+		 * @param var2 -the second variable supposed to be of record type (i.e. structured)
+		 * @param paths - The list of path pairs recursively to be filled
+		 * @param numericOnly - if {@code true} then only scalar numeric components will be
+		 *     yielded (otherwise simply the types must be assignment-compatible
+		 * @param atTop - if {@code true} then the given {@link CobVar}s themselves will not
+		 *     be considered as corresponding components.
+		 */
+		private void addComponentPairs(CobVar var2, ArrayList<String[]> paths, boolean numericOnly, boolean atTop) {
+			/* In case of numericOnly we add the paths of all numeric components with
+			 * same name it this level and recursively delve into the subtrees for all
+			 * structured components.
+			 * Otherwise we check whether all homonym child pairs have same type / structure
+			 * and if so, we return the path of the root CobVars themselves instead of
+			 * the children and don't descend.
+			 */
+			if (this.level == 88 || var2.level == 88 /* only condition names */
+					|| var2.level == 78 /* target is constant */) {
+				return;
+			}
+			CobVar child1 = this.child;
+			if (child1 == null && !var2.hasChild()) {
+				if (!this.isFiller() && !var2.isFiller()) {
+					if (numericOnly) {
+						if (!atTop && this.isNumeric() && var2.isNumeric()) {
+							paths.add(new String[] {this.getQualifiedName(), var2.getQualifiedName()});
+						}
+					}
+					// The following does not make sense as different CobVars can't have a comon type name
+					//String typeName1 = this.deriveTypeName();
+					//String typeName2 = var2.deriveTypeName();
+					//if (typeName1.equals(typeName2)) {
+					//	// Rather unlikely in COBOL...
+					//	paths.add(new String[] {this.getQualifiedName(), var2.getQualifiedName()});
+					//	return;
+					//}
+					else if (this.usage == var2.usage) {
+						paths.add(new String[] {this.getQualifiedName(), var2.getQualifiedName()});
+					}
+				}
+				return;
+			}
+			else {
+				while (child1 != null) {
+					String cname = child1.getName();
+					CobVar child2 = var2.getChild();
+					while (child2 != null) {
+						if (cname.equals(child2.getName())) {
+							child1.addComponentPairs(child2, paths, numericOnly, false);
+						}
+						child2 = child2.getSister();
+					}
+					child1 = child1.getSister();
+				}
+			}
+		}
+		// END KGU#1038 2022-07-27
 
 	}
 
@@ -11829,5 +12088,7 @@ class CobTools {
 		return typeName;
 	}
 	// END KGU#465 2017-12-04
+	
+
 
 }
