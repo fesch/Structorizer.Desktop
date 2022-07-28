@@ -106,6 +106,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2022-07-27/28   Bugfix #1044/#1048: CORRESPONDING clauses had caused NullPointerException,
  *                                      import of file record declarations and their mapping had failed.
  *                                      Bugfix #1049: Condition name resolution reliabilit improved
+ *      Kay Gürtzig     2022-07-29      Bugfix #1051 (conc. #851/5) NullPointerExceptions with wide-span PERFORM THRU
  *
  ******************************************************************************************************
  *
@@ -2378,7 +2379,7 @@ public class COBOLParser extends CodeParser
 		final int PROD__RECORD_DESCRIPTION_LIST                                              =  558;  // <_record_description_list> ::=
 //		final int PROD__RECORD_DESCRIPTION_LIST2                                             =  559;  // <_record_description_list> ::= <record_description_list>
 //		final int PROD_RECORD_DESCRIPTION_LIST_TOK_DOT                                       =  560;  // <record_description_list> ::= <data_description> 'TOK_DOT'
-		final int PROD_RECORD_DESCRIPTION_LIST_TOK_DOT2                                      =  561;  // <record_description_list> ::= <record_description_list> <data_description> 'TOK_DOT'
+//		final int PROD_RECORD_DESCRIPTION_LIST_TOK_DOT2                                      =  561;  // <record_description_list> ::= <record_description_list> <data_description> 'TOK_DOT'
 //		final int PROD_DATA_DESCRIPTION                                                      =  562;  // <data_description> ::= <constant_entry>
 //		final int PROD_DATA_DESCRIPTION2                                                     =  563;  // <data_description> ::= <renames_entry>
 //		final int PROD_DATA_DESCRIPTION3                                                     =  564;  // <data_description> ::= <condition_name_entry>
@@ -5609,6 +5610,15 @@ public class COBOLParser extends CodeParser
 	private static final String fileStatusCaseText = "fileDescr\n0, -1\n-2\n-3\ndefault";
 	private static final String[] fileStatusCodes = {"39", "35", "37", "00"};
 	private static final String[] fileStatusComments = {"General failure", "File not found", "File access denied", "Ok"};
+	// START KGU#1043 2022-07-28: Issues #851/5, #1048/3, #1051
+	private static final String[] PERFORM_PROC_COMMENT = {"This was a call of an internal section or paragraph"};
+	private static final String[] PERFORM_THRU_COMMENT = {
+			"NOTE: This combined call was derived from a PERFORM THRU statement.",
+			"Split it (i.e. transmutate it via ctrl-t) and then check the following:",
+			"1. Does it contain calls to all sections/procedures in the source span?",
+			"2. Are there calls to effectively empty routines you might delete?"
+	};
+	// END KGU#1043 2022-07-28
 
 //	/**
 //	 * Used to combine nested declarations within one element
@@ -8094,6 +8104,7 @@ public class COBOLParser extends CodeParser
 
 	/**
 	 * Builds a loop or Call element from the PERFORM statement represented by {@code _reduction}.
+	 * 
 	 * @param _reduction - the top Reduction of the parsed PERFORM statement
 	 * @param _parentNode - the Subqueue to append the built elements to
 	 * @throws ParserCancelled
@@ -8258,9 +8269,11 @@ public class COBOLParser extends CodeParser
 	/**
 	 * Builds a Call element from the PERFORM statement for {@link RuleConstants#PROD_PERFORM_BODY}
 	 * represented by {@code _reduction}.
+	 * 
 	 * @param _reduction - the top {@link Reduction} of a parsed PERFORM statement
 	 * @param _parentNode - the Subqueue to append the built elements to
 	 * @throws ParserCancelled
+	 * 
 	 * @see {@link #buildPerformCall1(Reduction, Subqueue)}
 	 */
 	private final void buildPerformCall(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
@@ -8271,9 +8284,16 @@ public class COBOLParser extends CodeParser
 		
 	/**
 	 * Builds a Call element for an internal procedure call represented by {@code _reduction}.
+	 * Expected is one of these:
+	 * <ul>
+	 * <li>{@code <perform_procedure> ::= <procedure_name>}</li>
+	 * <li>{@code <perform_procedure> ::= <procedure_name> THRU <procedure_name>}</li>
+	 * </ul>
+	 * 
 	 * @param _reduction - a {@link Reduction} with head {@code <perform_procedure>}
 	 * @param _parentNode - the Subqueue to append the built elements to
 	 * @throws ParserCancelled
+	 * 
 	 * @see {@link #buildPerformCall(Reduction, Subqueue)}
 	 */
 	private final Call buildPerformCall1(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
@@ -8288,10 +8308,12 @@ public class COBOLParser extends CodeParser
 		// export it to a new NSD.
 		StringList content = new StringList();
 		StringList names = new StringList();
+		String[] comment = PERFORM_PROC_COMMENT;
 		if (_reduction.getParent().getTableIndex() == RuleConstants.PROD_PERFORM_PROCEDURE_THRU) {
 			// First get the second name
 			names.add(this.getContent_R(_reduction.get(2).asReduction(), "").trim());
 			_reduction = _reduction.get(0).asReduction();
+			comment = PERFORM_THRU_COMMENT;
 		}
 		names.add(this.getContent_R(_reduction, "").trim());
 		for (int i = 0; i < names.count(); i++) {
@@ -8304,7 +8326,7 @@ public class COBOLParser extends CodeParser
 		}
 		Call dummyCall = new Call(content.reverse());
 		dummyCall.setColor(Color.RED);
-		dummyCall.getComment().add("This was a call of an internal section or paragraph");
+		dummyCall.getComment().add(new StringList(comment));
 		_parentNode.addElement(dummyCall);
 		// Now we register the call(s) for later linking
 		for (int i = names.count() - 1; i >= 0; i--) {
@@ -8338,7 +8360,7 @@ public class COBOLParser extends CodeParser
 		if (subjlRuleId == RuleConstants.PROD_EVALUATE_SUBJECT_LIST_ALSO) {
 			// TODO: merge this with the subsequent case!
 			// This can only be represented by nested alternatives
-			//System.out.println("EVALUATE: PROD_EVALUATE_SUBJECT_LIST_ALSO");
+			//System.o(tj=rWW)2)fRut.println("EVALUATE: PROD_EVALUATE_SUBJECT_LIST_ALSO");
 			StringList subjects = this.getExpressionList(subjlRed, "<evaluate_subject_list>", -1);
 			Reduction otherRed = null;
 			Element elseBranch = null;
@@ -10256,6 +10278,11 @@ public class COBOLParser extends CodeParser
 					// END KGU#849 2020-04-20
 					// Both the original proc text (now overwritten) and the replacingCall text contain
 					// no arguments anymore, so we don't need to check whether we got all declarations
+					// START KGU#1043 2022-07-28: Bugfix #1051
+					if (clients == null) {
+						clients = new LinkedList<Call>();
+					}
+					// END KGU#1043 2022-07-28
 					for (Call client: clients) {
 						// We may have to care for an includable Root that defines all necessary variables
 						// START KGU#849 2020-04-20: Issue #851/5
