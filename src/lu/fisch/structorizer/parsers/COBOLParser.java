@@ -105,6 +105,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2022-07-20      Enh. #1046: Decoding mechanism for token names to actual symbols
  *      Kay Gürtzig     2022-07-27/28   Bugfix #1044/#1048: CORRESPONDING clauses had caused NullPointerException,
  *                                      import of file record declarations and their mapping had failed.
+ *                                      Bugfix #1049: Condition name resolution reliabilit improved
  *
  ******************************************************************************************************
  *
@@ -1821,7 +1822,7 @@ public class COBOLParser extends CodeParser
 //		final int PROD_MNEMONIC_NAME_TOK_MNEMONIC_NAME                                       =    2;  // <MNEMONIC_NAME_TOK> ::= 'MNEMONIC_NAME'
 //		final int PROD_PROGRAM_NAME_COBOLWORD                                                =    3;  // <PROGRAM_NAME> ::= COBOLWord
 //		final int PROD_USER_FUNCTION_NAME_FUNCTION_COBOLWORD                                 =    4;  // <USER_FUNCTION_NAME> ::= FUNCTION COBOLWord
-//		final int PROD_WORD_COBOLWORD                                                        =    5;  // <WORD> ::= COBOLWord
+		final int PROD_WORD_COBOLWORD                                                        =    5;  // <WORD> ::= COBOLWord
 //		final int PROD_LITERAL_TOK_STRINGLITERAL                                             =    6;  // <LITERAL_TOK> ::= StringLiteral
 //		final int PROD_LITERAL_TOK_HEXLITERAL                                                =    7;  // <LITERAL_TOK> ::= HexLiteral
 //		final int PROD_LITERAL_TOK_ZLITERAL                                                  =    8;  // <LITERAL_TOK> ::= ZLiteral
@@ -9094,16 +9095,35 @@ public class COBOLParser extends CodeParser
 		// to inspect the prefix of the composed string.)
 		String thruExpr = "";
 		int ruleId = _reduction.getParent().getTableIndex();
-		// If the condition consists of just a qualified name then this may be the result ...
-		if (ruleId == RuleConstants.PROD_QUALIFIED_WORD2 && (_lastSubject == null || _lastSubject.isEmpty())) {
+		// If the condition consists of just a (qualified) name then this may be the result ...
+		// START KGU#1041 2022-07-28: Bugfix #1049 Unreliable conversion of condition names
+		//if (ruleId == RuleConstants.PROD_QUALIFIED_WORD2 && (_lastSubject == null || _lastSubject.isEmpty())) {
+		//	String qualName = this.getContent_R(_reduction, "");
+		//	CobVar var = currentProg.getCobVar(qualName);
+		//	// in case of a condition name resolve the comparison
+		//	if (var != null && var.isConditionName()) {
+		//		qualName = var.getValuesAsExpression(true);
+		//	}
+		//	return qualName;
+		//}
+		if (_lastSubject == null || _lastSubject.isEmpty() 
+				&& (ruleId == RuleConstants.PROD_QUALIFIED_WORD2 
+				|| ruleId == RuleConstants.PROD_WORD_COBOLWORD)) {
 			String qualName = this.getContent_R(_reduction, "");
 			CobVar var = currentProg.getCobVar(qualName);
-			// in case of a condition name resolve the comparison
-			if (var != null && var.isConditionName()) {
-				qualName = var.getValuesAsExpression(true);
+			if (var != null) {
+				if (var.isConditionName()) {
+					qualName = var.getValuesAsExpression(true);
+				}
+				else {
+					qualName = var.getQualifiedName();
+				}
+				if (!qualName.isEmpty()) {
+					return qualName;
+				}
 			}
-			return qualName;
 		}
+		// END KGU#1041 2022-07-28
 
 		if (ruleId == RuleConstants.PROD_EVALUATE_OBJECT) {
 			Reduction thruRed = _reduction.get(1).asReduction();
@@ -9140,6 +9160,7 @@ public class COBOLParser extends CodeParser
 						CobVar var = currentProg.getCobVar(_lastSubject);
 						if (var != null) {
 							if (var.isConditionName()) {
+								// May we actually ignore the associated expression?
 								_lastSubject = var.getParent().getQualifiedName();
 							}
 							else {
@@ -11667,9 +11688,9 @@ class CobTools {
 		 * Returns a fully qualified variable name for this CobVar (i.e. the complete
 		 * dot-separated path for a component of a record). This is needed for Structorizer.
 		 * For levels representing a table (array) there will be a placeholder "[%i]" next
-		 * the the respective component name (where i = 1...n is the index level from top
+		 * to the respective component name (where i = 1...n is the index level from top
 		 * to bottom), such that "%i" can be replaced by the respective i-th index expression.
-		 * @return fully qualified name (e.g. "top.foo.bar").
+		 * @return fully qualified name (e.g. "top.foo.bar" or "top.foo[%0].bar").
 		 */
 		public String getQualifiedName() {
 			String qualName = this.forceName();
