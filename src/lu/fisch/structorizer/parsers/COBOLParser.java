@@ -107,6 +107,7 @@ package lu.fisch.structorizer.parsers;
  *                                      import of file record declarations and their mapping had failed.
  *                                      Bugfix #1049: Condition name resolution reliabilit improved
  *      Kay Gürtzig     2022-07-29      Bugfix #1051 (conc. #851/5) NullPointerExceptions with wide-span PERFORM THRU,
+ *                                      new import option for tidying multi-line calls from PERFORM THRU; 
  *                                      bugfix #1050 import of READ with AT END or NOT AT END clauses now results in a
  *                                      handling Alternative with the fileRead() instruction in the no-EOF branch 
  *
@@ -153,6 +154,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Level;
@@ -5615,7 +5617,7 @@ public class COBOLParser extends CodeParser
 	// START KGU#1043 2022-07-28: Issues #851/5, #1048/3, #1051
 	private static final String[] PERFORM_PROC_COMMENT = {"This was a call of an internal section or paragraph"};
 	private static final String[] PERFORM_THRU_COMMENT = {
-			"NOTE: This combined call was derived from a PERFORM THRU statement.",
+			"NOTE: This (combined) call was derived from a PERFORM THRU statement.",
 			"Split it (i.e. transmutate it via ctrl-t) and then check the following:",
 			"1. Does it contain calls to all sections/procedures in the source span?",
 			"2. Are there calls to effectively empty routines you might delete?"
@@ -10204,6 +10206,28 @@ public class COBOLParser extends CodeParser
 
 	//------------------------- Postprocessor ---------------------------
 
+	final static class ExpendabilityVisitor implements IElementVisitor {
+
+		private boolean canWork = false;
+		
+		@Override
+		public boolean visitPreOrder(Element _ele) {
+			if (!(_ele instanceof Subqueue) && !_ele.isDisabled(false)) {
+				canWork = true;
+			}
+			return !canWork;
+		}
+
+		@Override
+		public boolean visitPostOrder(Element _ele) {
+			return !canWork;
+		}
+		
+		public boolean isExpendable() {
+			return !canWork;
+		}
+	}
+	
 	// TODO Use this subclassable hook if some postprocessing for the generated roots is necessary
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.parsers.CodeParser#subclassUpdateRoot(lu.fisch.structorizer.elements.Root, java.lang.String)
@@ -10324,10 +10348,16 @@ public class COBOLParser extends CodeParser
 					}
 					// END KGU#464 2017-12-03
 					// START KGU#849 2020-04-20: Issue #851/5 add the proc call to all open span calls
-					for (StringList procList: thruCallMap.values()) {
+					// START KGU#1043 2022-07-29: Issue #1051 Preparation for cleanup
+					//for (StringList procList: thruCallMap.values()) {
+					//	// FIXME: Possibly this should be reduced to certain sop level?
+					//	procList.add(callText);
+					//}
+					for (Map.Entry<Call, StringList> entry: thruCallMap.entrySet()) {
 						// FIXME: Possibly this should be reduced to certain sop level?
-						procList.add(callText);
+						entry.getValue().add(callText);
 					}
+					// END KGU#1043 2022-07-29
 					// END KGU#849 2020-04-20
 					// Both the original proc text (now overwritten) and the replacingCall text contain
 					// no arguments anymore, so we don't need to check whether we got all declarations
@@ -10422,8 +10452,89 @@ public class COBOLParser extends CodeParser
 			this.addAllRoots(declaredGlobals.keySet());
 		}
 		// END KGU#376 2017-10-19
+		
+		// START KGU#1043 2022-07-29: Issue #1051 Tidy up?
+		tidyUpMultilineCalls();
+		// END KGU#1043 2022-07-29
+	}
+
+	// START KGU#1043 2022-07-29: Issue #1051 Tidy up?
+	/**
+	 * Checks via option"tidyupPerformThru" whether multi-line calls resulting e.g. from
+	 * PERFORM THRU statements may be tidied up and if so tries it. May remove routine
+	 * diagrams from the subRoot list.
+	 */
+	private void tidyUpMultilineCalls() {
+		String tidyMode = (String)this.getPluginOption("tidyupPerformThru", "tidy calls and routines");
+		if (!tidyMode.equals("don't tidy")) {
+			HashSet<Root> expendableSubs = new HashSet<Root>();
+			boolean tidySubs = tidyMode.equals("tidy calls and routines");
+			HashSet<Call> thruCalls = new HashSet<Call>();
+			for (SectionOrParagraph sop: this.procedureList) {
+				//System.out.println("Routine " + sop.name + ":");
+				LinkedList<Call> clients = this.internalCalls.get(sop.name.toLowerCase());
+				if (clients != null) {
+					thruCalls.addAll(clients);
+				}
+			}
+			StringList thruComment = new StringList(PERFORM_THRU_COMMENT);
+			for (Call call: thruCalls) {
+				Element parent = call.parent;
+				if (parent instanceof Subqueue) {
+					Subqueue sq = (Subqueue)parent;
+					int pos = sq.getIndexOf(call);
+					int lineNo = call.comment.indexOf(thruComment, 0, true);
+					if (lineNo >= 0) {
+						call.comment.remove(lineNo + 1, lineNo + thruComment.count());
+					}
+					StringList callLines = call.getUnbrokenText();
+					Color elCol = call.getColor();
+					//System.out.println("Tidying call " + callLines.concatenate(" / "));
+					call.setText(callLines.get(0));
+					for (int i = callLines.count()-1; i > 0; i--) {
+						String line = callLines.get(i);
+						Root sub = getSubRoot(line);
+						if (sub != null && sub.isSubroutine() && !isExpendable(sub)) {
+							Call partCall = new Call(line);
+							partCall.setColor(elCol);
+							sq.insertElementAt(partCall, pos+1);
+						}
+						else if (sub != null && tidySubs) {
+							expendableSubs.add(sub);
+						}
+					}
+					Root sub = getSubRoot(callLines.get(0));
+					if (sub == null || isExpendable(sub)) {
+						((Subqueue)parent).removeElement(pos);
+						if (sub != null && tidySubs) {
+							expendableSubs.add(sub);
+						}
+					}
+				}
+			}
+			for (Root sub: expendableSubs) {
+				if (removeRoot(sub)) {
+					//System.out.println("Subroutine " + sub.getSignatureString(false, false) + " removed.");
+				}
+			}
+		}
 	}
 	// END KGU 2017-05-28
+	
+	// START KGU#1043 2022-07-29: Issue #1051
+	/**
+	 * Checks whether the given Root does not contain any executable element
+	 * @param root - the diagram to be checked
+	 * @return {@code true} if the routine can't do anything substantial
+	 */
+	public boolean isExpendable(Root root)
+	{
+		// FIXME this is a somewhat rough approach, just checks disabled status
+		ExpendabilityVisitor visitor = new ExpendabilityVisitor();
+		root.children.traverse(visitor);
+		return visitor.isExpendable();
+	}
+	// END KGU#1043 2022-07-29
 
 	/**
 	 * Extracts the COBOL section or paragraph comprised by {@code sop} from its {@link Subqueue}

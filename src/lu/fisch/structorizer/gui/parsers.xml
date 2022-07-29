@@ -14,6 +14,11 @@
 		<option name="fixedForm" type="Boolean" title="Fixed-form format" help="Select this if the source file is in fixed-form reference format, otherwise free-form will be assumed."/>
 		<option name="fixedColumnIndicator" type="Unsigned" title="Indicator column in fixed format" help="Number of the indicator column (in fixed format; default: 7)." default="7" />
 		<option name="fixedColumnText" type="Unsigned" title="Column of ignored text in fixed format" help="Column number where the so-called Program Name Area begins (in fixed format; default: 73)." default="73" />
+		<option type="Enum" name="tidyupPerformThru" title="Tidy up routine call chains (after PERFORM THRU)" help="Chain calls resulting from PERFORM THRU will usually be parted, expendable calls and routines discarded. Change this e.g. for import forensics." default="tidy calls and routines">
+			<item value="tidy calls and routines" />
+			<item value="tidy calls only" />
+			<item value="don't tidy" />
+		</option>
 	</plugin>
 	<plugin title="Java-SE8" 			class="lu.fisch.structorizer.parsers.JavaParser" icon="">
 		<option name="convert_syntax" type="Boolean" title="Convert declarations etc. to Pascal/Structorizer style" help="This setting slightly raises the chance of executability and re-export in Structorizer " default="true" />

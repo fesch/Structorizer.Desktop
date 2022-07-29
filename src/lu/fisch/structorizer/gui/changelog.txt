@@ -96,7 +96,8 @@ Current development version 3.32-09 (2022-07-29)
       errors, file-record declarations and associations failed [Gábor Márkon]2
 - 09: Bugfix #1049: COBOL condition name resolution reliability improved <2>
 - 09: Bugfix #1050: Sensible import implementation for COBOL READ AT <2>
-- 09: Bugfix #1051: Error in last COBOL import phase with some PERFORM THRU <2>
+- 09: Bugfix #1051: Error in last COBOL import phase with certain PERFORM THRU
+      statements, new import option for tidying sequential paragraph calls <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>
