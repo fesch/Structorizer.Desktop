@@ -106,7 +106,9 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2022-07-27/28   Bugfix #1044/#1048: CORRESPONDING clauses had caused NullPointerException,
  *                                      import of file record declarations and their mapping had failed.
  *                                      Bugfix #1049: Condition name resolution reliabilit improved
- *      Kay Gürtzig     2022-07-29      Bugfix #1051 (conc. #851/5) NullPointerExceptions with wide-span PERFORM THRU
+ *      Kay Gürtzig     2022-07-29      Bugfix #1051 (conc. #851/5) NullPointerExceptions with wide-span PERFORM THRU,
+ *                                      bugfix #1050 import of READ with AT END or NOT AT END clauses now results in a
+ *                                      handling Alternative with the fileRead() instruction in the no-EOF branch 
  *
  ******************************************************************************************************
  *
@@ -3496,8 +3498,8 @@ public class COBOLParser extends CodeParser
 //		final int PROD_NOT_ON_OVERFLOW_NOT_OVERFLOW                                          = 1675;  // <not_on_overflow> ::= 'NOT_OVERFLOW' <statement_list>
 //		final int PROD_RETURN_AT_END                                                         = 1676;  // <return_at_end> ::= <at_end_clause> <_not_at_end_clause>
 //		final int PROD_RETURN_AT_END2                                                        = 1677;  // <return_at_end> ::= <not_at_end_clause> <at_end_clause>
-//		final int PROD_AT_END                                                                = 1678;  // <at_end> ::= <at_end_clause> <_not_at_end_clause>
-//		final int PROD_AT_END2                                                               = 1679;  // <at_end> ::= <not_at_end_clause> <_at_end_clause>
+		final int PROD_AT_END                                                                = 1678;  // <at_end> ::= <at_end_clause> <_not_at_end_clause>
+		final int PROD_AT_END2                                                               = 1679;  // <at_end> ::= <not_at_end_clause> <_at_end_clause>
 //		final int PROD__AT_END_CLAUSE                                                        = 1680;  // <_at_end_clause> ::=
 //		final int PROD__AT_END_CLAUSE2                                                       = 1681;  // <_at_end_clause> ::= <at_end_clause>
 //		final int PROD_AT_END_CLAUSE_END                                                     = 1682;  // <at_end_clause> ::= END <statement_list>
@@ -7662,7 +7664,7 @@ public class COBOLParser extends CodeParser
 		}
 		if (target != null) {
 			String fnName = "fileRead";	// The default function name
-			// In order to find the best fileRead function we try to get the typ info from root
+			// In order to find the best fileRead function we try to get the type info from root
 			TypeMapEntry typeInfo = root.getTypeInfo().get(target);
 			if (typeInfo != null && typeInfo.isConflictFree()) {
 				String type = typeInfo.getTypes().get(0);
@@ -7680,10 +7682,61 @@ public class COBOLParser extends CodeParser
 				}
 			}
 			// we just ignore the lock clause
+			// START KGU#1042 2022-07-29: Issue #1050 Convert AT END clauses to an alternative
 			Instruction instr = new Instruction(target + " <- " + fnName + "(" + fdName + ")");
-			_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
-			instr.getComment().add(this.getOriginalText(_reduction, ""));
-			addStatusAssignment(_parentNode, fdName);
+			//_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
+			//instr.getComment().add(this.getOriginalText(_reduction, ""));
+			//addStatusAssignment(_parentNode, fdName);
+			Reduction endRed = bodyRed.get(6).asReduction();
+			int endRedId = endRed.getParent().getTableIndex();
+			if (endRedId == RuleConstants.PROD_AT_END || endRedId == RuleConstants.PROD_AT_END2) {
+				// There is an EOF handling - use an Alternative with prior fileEof() test
+				// <at_end> ::= <at_end_clause> <_not_at_end_clause>
+				// <at_end> ::= <not_at_end_clause> <_at_end_clause>
+				int endIx = endRedId == RuleConstants.PROD_AT_END ? 0 : 1;
+				Token atEnd = endRed.get(endIx);
+				Token notEnd = endRed.get(1 - endIx);
+				String cond = "fileEof(" + fdName + ")";
+				if (endIx != 0) {
+					cond = "not " + cond;
+				}
+				Alternative alt = new Alternative(cond);
+				// FIXME: Consider a line breaking
+				alt.getComment().add(this.getOriginalText(_reduction, ""));
+				_parentNode.addElement(alt);
+				if (endIx == 0) {
+					// Place the handling instructions for the EOF case in left (true) branch
+					this.buildNSD_R(atEnd.asReduction().get(1).asReduction(), alt.qTrue);
+					// Place the read instruction(s) into the right (false) branch
+					alt.qFalse.addElement(this.equipWithSourceComment(instr, _reduction));
+					addStatusAssignment(alt.qFalse, fdName);	// or belongs this behind alt?
+					// The second handling of the clause (not EOF) may be empty
+					if (notEnd.asReduction().size() > 0) {
+						// Place the handling instructions for the not-EOF case in right (false) branch
+						this.buildNSD_R(notEnd.asReduction().get(1).asReduction(), alt.qFalse);
+					}
+				}
+				else {
+					// Place the read instruction(s) into the left (not EOF) branch
+					alt.qTrue.addElement(this.equipWithSourceComment(instr, _reduction));
+					addStatusAssignment(alt.qTrue, fdName);	// or belongs this behind alt?
+					// Place the handling instructions for the not-EOF case in left (true) branch
+					this.buildNSD_R(notEnd.asReduction().get(1).asReduction(), alt.qTrue);
+					// The second handling of the clause (EOF) may be empty
+					if (atEnd.asReduction().size() > 0) {
+						// Place the handling instructions for the EOF case in right (false) branch
+						this.buildNSD_R(atEnd.asReduction().get(1).asReduction(), alt.qFalse);
+					}
+				}
+			}
+			else {
+				// No AT END or NOT AT END handling -> Just add the read instruction
+				_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
+				// FIXME: Consider a line breaking
+				instr.getComment().add(this.getOriginalText(_reduction, ""));
+				addStatusAssignment(_parentNode, fdName);
+			}
+			// END KGU#1042 2022-07-29
 			done = true;
 		}
 		return done;
