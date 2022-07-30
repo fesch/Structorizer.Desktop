@@ -181,6 +181,7 @@ import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.structorizer.elements.While;
+import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.parsers.CobTools.CobProg;
 import lu.fisch.structorizer.parsers.CobTools.CobVar;
 import lu.fisch.structorizer.parsers.CobTools.Usage;
@@ -5601,6 +5602,12 @@ public class COBOLParser extends CodeParser
 	// START KGU#476 2017-12-05: Try to distinguish superfluous paragraph labels
 	private LinkedHashMap< String, HashSet<Root> > internalGotos = new LinkedHashMap< String, HashSet<Root> >();
 	// END KGU#476 2017-12-05
+	// START KGU#1043 2022-07-30: Issue #1051 Preparation for cleanup
+	/** Set of {@link Roots} without executable elements (reachability is not checked) */
+	private HashSet<Root> expendableSubs = new HashSet<Root>();
+	/** General register of generated {@link Call}s all over the {@link Root}s */
+	private HashMap< String, LinkedList<Call> > totalCallMap = new HashMap< String, LinkedList<Call> >();
+	// END KGU#1043 2022-07-30
 
 	/**
 	 * Associates the name of the result variable to the respective function Root
@@ -5622,6 +5629,7 @@ public class COBOLParser extends CodeParser
 			"1. Does it contain calls to all sections/procedures in the source span?",
 			"2. Are there calls to effectively empty routines you might delete?"
 	};
+	private static final String WAS_REDUNDANT_CALL = "Called redundant routine was removed!";
 	// END KGU#1043 2022-07-28
 
 //	/**
@@ -6407,7 +6415,7 @@ public class COBOLParser extends CodeParser
 		if (inpProcRed != null) {
 			this.buildPerformCall1(inpProcRed, _parentNode);
 		}
-		Call call = new Call(proc);
+		Call call = new Call(proc);	// No need to register this in totalCallMap
 		call.setColor(Color.RED);
 		this.equipWithSourceComment(call, _reduction);
 		call.getComment().add("PROVISIONALLY IMPORTED FROM:");
@@ -6530,7 +6538,7 @@ public class COBOLParser extends CodeParser
 		}
 		int nClauses = counters.count();
 		if (nClauses == modes.count() && nClauses == subjects.count() && nClauses == afters.count() && nClauses == befores.count()) {
-			Call call = new Call("");
+			Call call = new Call("");	// No need to register this in totalCallMap
 			String hash = Integer.toHexString(call.hashCode());
 			String counter = "counts_" + hash;
 			StringList content = new StringList();
@@ -6661,7 +6669,7 @@ public class COBOLParser extends CodeParser
 			content.add("{" + replacers.reverse().concatenate(", ") + "},\\");
 			content.add("{" + afters.reverse().concatenate(", ") + "},\\");
 			content.add("{" + befores.reverse().concatenate(", ") + "})");
-			Call call = new Call(content);
+			Call call = new Call(content);	// No need to register this in totalCallMap
 			call.setColor(colorMisc);
 			_parentNode.addElement(this.equipWithSourceComment(call, _redInspect));
 			isDone = true;
@@ -6708,7 +6716,7 @@ public class COBOLParser extends CodeParser
 		content.add(replacers + ",\\");
 		content.add(afters.get(0) + ",\\");
 		content.add(befores.get(0) + ")");
-		Call call = new Call(content);
+		Call call = new Call(content);	// No need to register this in totalCallMap
 		call.setColor(colorMisc);
 		_parentNode.addElement(this.equipWithSourceComment(call, _redInspect));
 		isDone = true;
@@ -7526,6 +7534,13 @@ public class COBOLParser extends CodeParser
 			content = this.getContent_R(retRed.get(2).asReduction(), "") + " <- " + content;
 		}
 		Call ele = new Call(content);
+		// START KGU#1043 2022-07-30: Issue #1051
+		String signature = name + "(" + args.count() + ")";
+		if (!this.totalCallMap.containsKey(signature)) {
+			this.totalCallMap.put(signature, new LinkedList<Call>());
+		}
+		this.totalCallMap.get(signature).add(ele);
+		// END KGU#1051 2022-07-30
 		String comment = this.getOriginalText(_reduction, "");
 		if (!callOk) {
 			ele.setColor(Color.RED);
@@ -7582,6 +7597,7 @@ public class COBOLParser extends CodeParser
 		Call statusCheck = null;
 		if (statName != null && currentProg.getCobVar(statName) != null) {
 			statusCheck = new Call(statName + " <- fileStatusToCobol(" + fdName + ")");
+			// There is no need to register this in totalCallMap
 			_parentNode.addElement(statusCheck);
 			if (!this.fileStatusFctAdded) {
 				Root fileStatusFct = new Root();
@@ -10206,13 +10222,19 @@ public class COBOLParser extends CodeParser
 
 	//------------------------- Postprocessor ---------------------------
 
+	// START KGU#1043 2022-07-29: Issue #1051
+	/**
+	 * Internal Element visitor class for the detection of diagrams (or subtrees)
+	 * without executable elements.
+	 * @author Kay Gürtzig
+	 */
 	final static class ExpendabilityVisitor implements IElementVisitor {
 
 		private boolean canWork = false;
 		
 		@Override
 		public boolean visitPreOrder(Element _ele) {
-			if (!(_ele instanceof Subqueue) && !_ele.isDisabled(false)) {
+			if (!(_ele instanceof Root) && !(_ele instanceof Subqueue) && !_ele.isDisabled(false)) {
 				canWork = true;
 			}
 			return !canWork;
@@ -10223,10 +10245,58 @@ public class COBOLParser extends CodeParser
 			return !canWork;
 		}
 		
+		/**
+		 * @return the decision result of the traversal ({@code true} if no undisabled
+		 * executable element was found).
+		 */
 		public boolean isExpendable() {
 			return !canWork;
 		}
 	}
+	
+	// The need for the following class was avoided by registering on creation
+//	/**
+//	 * Internal Element visitor class for the mapping of Calls contained in a diagram
+//	 * to their signature, allowing to find al Call elements for certain signature.
+//	 * @author Kay Gürtzig
+//	 */
+//	final static class CallFinder implements IElementVisitor {
+//		
+//		private HashMap<String, LinkedList<Call>> callMap = new HashMap<String, LinkedList<Call>>();
+//
+//		@Override
+//		public boolean visitPreOrder(Element _ele) {
+//			if (_ele instanceof Call) {
+//				int nLines = _ele.getUnbrokenText().count();
+//				for (int i = 0; i < nLines; i++) {
+//					Function fn = ((Call)_ele).getCalledRoutine(i);
+//					if (fn != null && fn.isFunction()) {
+//						String signature = fn.getSignatureString();
+//						if (!callMap.containsKey(signature)) {
+//							callMap.put(signature, new LinkedList<Call>());
+//						}
+//						callMap.get(signature).add((Call)_ele);
+//					}
+//				}
+//			}
+//			return true;
+//		}
+//
+//		@Override
+//		public boolean visitPostOrder(Element _ele) {
+//			return true;
+//		}
+//		
+//		/**
+//		 * @return the map of procedure signatures to Calls contained in the
+//		 * traversed diagram subtree.
+//		 */
+//		public HashMap<String, LinkedList<Call>> getCallMap() {
+//			return callMap;
+//		}
+//		
+//	}
+	// END KGU#1043 2022-07-29
 	
 	// TODO Use this subclassable hook if some postprocessing for the generated roots is necessary
 	/* (non-Javadoc)
@@ -10256,6 +10326,12 @@ public class COBOLParser extends CodeParser
 //				aRoot.addToIncludeList(externalRoot);
 //			}
 		}
+		// START KGU#1043 2022-07-30: Issue #1051 register void subroutines
+		if (aRoot.isSubroutine() && this.isExpendable(aRoot)) {
+			System.out.println(aRoot + " added to expendable roots.");
+			expendableSubs.add(aRoot);
+		}
+		// END KGU#1043 2022-07-30
 		// Force returning of the specified result
 		if (this.returnMap.containsKey(aRoot)) {
 			String resultVar = this.returnMap.get(aRoot);
@@ -10467,7 +10543,6 @@ public class COBOLParser extends CodeParser
 	private void tidyUpMultilineCalls() {
 		String tidyMode = (String)this.getPluginOption("tidyupPerformThru", "tidy calls and routines");
 		if (!tidyMode.equals("don't tidy")) {
-			HashSet<Root> expendableSubs = new HashSet<Root>();
 			boolean tidySubs = tidyMode.equals("tidy calls and routines");
 			HashSet<Call> thruCalls = new HashSet<Call>();
 			for (SectionOrParagraph sop: this.procedureList) {
@@ -10498,23 +10573,96 @@ public class COBOLParser extends CodeParser
 							Call partCall = new Call(line);
 							partCall.setColor(elCol);
 							sq.insertElementAt(partCall, pos+1);
+							// Register the call for potential tidying of routines
+							String signature = partCall.getSignatureString();
+							LinkedList<Call> callList = this.totalCallMap.get(signature);
+							if (callList == null) {
+								this.totalCallMap.put(signature, callList = new LinkedList<Call>());
+							}
+							else {
+								callList.remove(call);
+							}
+							callList.add(partCall);
 						}
-						else if (sub != null && tidySubs) {
+						else if (sub != null) {
 							expendableSubs.add(sub);
 						}
 					}
 					Root sub = getSubRoot(callLines.get(0));
 					if (sub == null || isExpendable(sub)) {
 						((Subqueue)parent).removeElement(pos);
-						if (sub != null && tidySubs) {
+						if (sub != null) {
 							expendableSubs.add(sub);
 						}
 					}
 				}
 			}
 			for (Root sub: expendableSubs) {
-				if (removeRoot(sub)) {
+				if (!tidySubs || removeRoot(sub)) {
 					//System.out.println("Subroutine " + sub.getSignatureString(false, false) + " removed.");
+					String subName = sub.getMethodName();
+					String signature = sub.getSignatureString(false, false);
+					/* First we check calls registered as internal calls (this may be redundant because
+					 * the subsequent loop over the total Call map subsumes it, but we don't know for sure)
+					 */
+					LinkedList<Call> calls = this.internalCalls.get(subName.toLowerCase());
+					if (calls != null) {
+						// These calls don't refer to the removed root but to the start of the actual procedure
+						for (Call call: calls) {
+							// So we look fo the matching Call among the next elements on the same level
+							Subqueue sq = (Subqueue)call.parent;
+							int pos = sq.getIndexOf(call) + 1;
+							for (; pos < sq.getSize(); pos++) {
+								Element el = sq.getElement(pos);
+								Function fn = null;
+								if (el instanceof Call
+									&& (fn = ((Call)el).getCalledRoutine()) != null
+									&& fn.isFunction()
+									&& signature.equals(fn.getSignatureString())) {
+									//System.out.println("\tDisabling call " + el + " in " + Element.getRoot(call));
+									el.setDisabled(true);
+									el.getComment().add(WAS_REDUNDANT_CALL);
+									break;
+								}
+							}
+						}
+					}
+					calls = this.totalCallMap.get(signature);
+					if (calls != null) {
+						for (Call call: calls) {
+							StringList brokenText = call.getBrokenText();
+							if (!call.isDisabled(true) && brokenText.count() > 1) {
+								// Multi-line call (unlikely!): find the line and remove it
+								for (int i = 0; i < brokenText.count(); i++) {
+									Function fn = call.getCalledRoutine(i);
+									if (fn != null && fn.isFunction() && signature.equals(fn.getSignatureString())) {
+										int lineNo = 0; // True line number
+										for (int j = 0; j < i; j++) {
+											lineNo += brokenText.get(j).split("\\n", -1).length;
+										}
+										call.getText().remove(lineNo, lineNo + brokenText.get(i).split("\n", -1).length);
+										call.getComment().add(WAS_REDUNDANT_CALL);
+									}
+								}
+							}
+							else if (signature.matches(".*exit.*") && tidySubs) {
+								/* Routines with name containing "exit" are usually
+								 * the dummy result of a labelled EXIT statement.
+								 * They can be removed without trace.
+								 */
+								Subqueue sq = (Subqueue)call.parent;
+								if (sq.removeElement(call)) {
+									//System.out.println("\tCall " + call + " in " + Element.getRoot(call) + " removed.");
+								}
+							}
+							else if (!call.isDisabled(true)) {
+								// Better only disable it such that the user gets a clue what happened
+								//System.out.println("\tDisabling call " + call + " in " + Element.getRoot(call));
+								call.setDisabled(true);
+								call.getComment().add(WAS_REDUNDANT_CALL);
+							}
+						}
+					}
 				}
 			}
 		}
@@ -10569,6 +10717,13 @@ public class COBOLParser extends CodeParser
 		Call replacingCall = new Call(callText);
 		sop.parent.insertElementAt(replacingCall, sop.startsAt);
 		sop.endsBefore++;
+		// START KGU#1043 2022-07-30: Issue #1051
+		String signature = replacingCall.getSignatureString();
+		if (!this.totalCallMap.containsKey(signature)) {
+			this.totalCallMap.put(signature, new LinkedList<Call>());
+		}
+		this.totalCallMap.get(signature).add(replacingCall);
+		// END KGU#1051 2022-07-30
 		// Has the owner Root still shareable data at its beginning? Then outsource them...
 		extractShareableData(owner);
 		// If the owner has a mapped includable let the new proc include it as well

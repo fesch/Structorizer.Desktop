@@ -60,6 +60,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018.10.26      Enh. #619: Method getMaxLineLength() implemented
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
  *      Kay Gürtzig     2021-01-06      Enh. #905: draw() method enhanced to ensure markers during tutorials be shown
+ *      Kay Gürtzig     2022-07-30      Result type of removeElement(Element) changed from void to boolean
  *
  ******************************************************************************************************
  *
@@ -319,12 +320,15 @@ public class Subqueue extends Element implements IElementSequence {
 	// END KGU#87 2015-11-22
 	
 	
-	public void removeElement(Element _element)
+	public boolean removeElement(Element _element)
 	{
-		children.removeElement(_element);
+		boolean done = children.removeElement(_element);
 		// START KGU#136 2016-07-06: Bugfix #97
-		this.resetDrawingInfoUp();
+		if (done) {
+			this.resetDrawingInfoUp();
+		}
 		// END KGU#136 2016-07-06
+		return done;
 	}
 	
 	public void removeElement(int _index)

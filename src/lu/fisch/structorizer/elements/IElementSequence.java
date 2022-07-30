@@ -39,6 +39,7 @@ package lu.fisch.structorizer.elements;
 *      Kay Gürtzig      2019-03-17      Enh. #56: New element class Try integrated
 *      Kay Gürtzig      2019-10-12      Bugfix #705/2: Retrieval mistake for CASE, PARALLEL branches in getNext(boolean)
 *      Kay Gürtzig      2020-05-02      Javadoc completed on occasion of issue #866
+*      Kay Gürtzig      2022-07-30      Result type of removeElement(Element) changed from void to boolean
 *
 ******************************************************************************************************
 *
@@ -453,8 +454,17 @@ public interface IElementSequence {
 	 */
 	public abstract void removeElements();
 	
-	public abstract void removeElement(Element _element);
+	/**
+	 * Removes the given {@link Element} {@code _element} if it was contained
+	 * @param _element - the element to be removed
+	 * @return {@code true} if the Element was a component of this sequence, {@code false} otherwise
+	 */
+	public abstract boolean removeElement(Element _element);
 	
+	/**
+	 * Removes the {@link Element} at position {@code _index}
+	 * @param _index - index of the {@link Element} to be removed
+	 */
 	public abstract void removeElement(int _index);
 	
 	/**
