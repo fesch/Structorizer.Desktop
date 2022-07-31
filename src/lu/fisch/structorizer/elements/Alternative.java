@@ -62,6 +62,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
  *      Kay Gürtzig     2019-03-28      Enh. #128: comment block height slightly enlarged
  *      Kay Gürtzig     2021-01-02      Enh. #905: Mechanism to draw a warning symbol on related DetectedError
+ *      Kay Gürtzig     2022-07-31      Bugfix #1054: Element width did not always respect comment width
  *
  ******************************************************************************************************
  *
@@ -288,14 +289,14 @@ public class Alternative extends Element implements IFork {
 			//double x = y/coeff + ax - ay/coeff;
 			//logger.debug(i+" => "+coeff+" --> "+String.valueOf(x));
 
-			if (coeff<lowest && coeff>0)
+			if (coeff < lowest && coeff > 0)
 			{
 				// remember it
 				lowest = coeff;
 				//choice = i;
 			}
 		}
-		if (lowest!=100000)
+		if (lowest != 100000)
 		{
 			// the point height we need
 			// START KGU#227 2016-07-31: Enh. #128 - withdrawn KGU#435 2017-10-22
@@ -326,6 +327,11 @@ public class Alternative extends Element implements IFork {
 		rect0.right = Math.max(rect0.right, rTrue.right + rFalse.right);
 		rect0.bottom += Math.max(rTrue.bottom, rFalse.bottom);
 		pt0Parting.x = rTrue.right;
+		// START KGU#1047 2022-07-31: Bugfix #1054 Comment exceeded the element width
+		if (commentRect.right > rect0.right) {
+			rect0.right = commentRect.right;
+		}
+		// END KGU#1047 2022-07-31
 
 		// START KGU#516 2018-04-04: Issue #529 - reduced critical section
 		//rect0.top = 0;
