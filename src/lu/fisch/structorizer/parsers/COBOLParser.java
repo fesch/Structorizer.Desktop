@@ -112,6 +112,7 @@ package lu.fisch.structorizer.parsers;
  *                                      handling Alternative with the fileRead() instruction in the no-EOF branch
  *      Kay Gürtzig     2022-07-31      Bugfix #1052: DISPLAY statements with screen display clauses caused nonsense,
  *                                      bugfix #1053: Array declaration mechanism revised (fix #695 was defective)
+ *                                      bugfix #1049 revised (condition name resolution).
  *
  ******************************************************************************************************
  *
@@ -9257,20 +9258,23 @@ public class COBOLParser extends CodeParser
 	 * Derives an expression that makes some sense as Boolean condition from the given
 	 * {@link Reduction} {@code _reduction}. Tries to handle incomplete expressions,
 	 * condition names as variable attributes etc.
+	 * 
 	 * @param _reduction - the top rule for the condition
 	 * @param _lastSubject - a comparison subject in case of an incomplete expression
 	 * (e.g. the discriminator in a CASE structure)
 	 * @return the derived expression in Structorizer-compatible syntax
+	 * 
 	 * @throws ParserCancelled
 	 */
 	private final String transformCondition(Reduction _reduction, String _lastSubject) throws ParserCancelled {
-		// We must resolve expressions like "expr1 = expr2 or > expr3" or "expr1 = expr2 or expr3".
-		// Unfortunately the <condition> node is not defined as hierarchical expression
-		// tree dominated by operator nodes but as left-recursive "list".
-		// We should transform the left-recursive <expr_tokens> list into a linear
-		// list of <expr_token> we can analyse from left to right, such that we can
-		// identify the first token as comparison operator. (It seems rather simpler
-		// to inspect the prefix of the composed string.)
+		/* We must resolve expressions like "expr1 = expr2 or > expr3" or "expr1 = expr2 or expr3".
+		 * Unfortunately the <condition> node is not defined as hierarchical expression
+		 * tree dominated by operator nodes but as left-recursive "list".
+		 * We should transform the left-recursive <expr_tokens> list into a linear
+		 * list of <expr_token> we can analyse from left to right, such that we can
+		 * identify the first token as comparison operator. (It seems rather simpler
+		 * to inspect the prefix of the composed string.)
+		 */
 		String thruExpr = "";
 		int ruleId = _reduction.getParent().getTableIndex();
 		// If the condition consists of just a (qualified) name then this may be the result ...
@@ -9284,9 +9288,9 @@ public class COBOLParser extends CodeParser
 		//	}
 		//	return qualName;
 		//}
-		if (_lastSubject == null || _lastSubject.isEmpty() 
-				&& (ruleId == RuleConstants.PROD_QUALIFIED_WORD2 
-				|| ruleId == RuleConstants.PROD_WORD_COBOLWORD)) {
+		if ((_lastSubject == null || _lastSubject.isEmpty())
+				&& ((ruleId == RuleConstants.PROD_QUALIFIED_WORD2 
+				|| ruleId == RuleConstants.PROD_WORD_COBOLWORD))) {
 			String qualName = this.getContent_R(_reduction, "");
 			CobVar var = currentProg.getCobVar(qualName);
 			if (var != null) {
@@ -9304,6 +9308,7 @@ public class COBOLParser extends CodeParser
 		// END KGU#1041 2022-07-28
 
 		if (ruleId == RuleConstants.PROD_EVALUATE_OBJECT) {
+			// <evaluate_object> ::= <partial_expr> <_evaluate_thru_expr>
 			Reduction thruRed = _reduction.get(1).asReduction();
 			if (thruRed.getParent().getTableIndex() == RuleConstants.PROD__EVALUATE_THRU_EXPR_THRU) {
 				thruExpr = this.getContent_R(thruRed.get(1).asReduction(), " .. ");
@@ -9340,6 +9345,14 @@ public class COBOLParser extends CodeParser
 							if (var.isConditionName()) {
 								// May we actually ignore the associated expression?
 								_lastSubject = var.getParent().getQualifiedName();
+								// START KGU#1041 2022-07-28: Bugfix #1049 Unreliable conversion of condition names
+								if (expr_tokens.size() == 1 && thruExpr.isEmpty()) {
+									String cmp = var.getValuesAsExpression(true);
+									if (!cmp.isEmpty()) {
+										return cmp;
+									}
+								}
+								// END KGU#1041 2022-07-28
 							}
 							else {
 								_lastSubject = var.getQualifiedName();
