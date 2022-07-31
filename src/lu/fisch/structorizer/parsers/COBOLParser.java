@@ -109,7 +109,8 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2022-07-29      Bugfix #1051 (conc. #851/5) NullPointerExceptions with wide-span PERFORM THRU,
  *                                      new import option for tidying multi-line calls from PERFORM THRU; 
  *                                      bugfix #1050 import of READ with AT END or NOT AT END clauses now results in a
- *                                      handling Alternative with the fileRead() instruction in the no-EOF branch 
+ *                                      handling Alternative with the fileRead() instruction in the no-EOF branch
+ *      Kay Gürtzig     2022-07-31      Bugfix #1052: DISPLAY statements with screen display clauses caused nonsense
  *
  ******************************************************************************************************
  *
@@ -2988,14 +2989,14 @@ public class COBOLParser extends CodeParser
 //		final int PROD_DISPLAY_BODY_UPON_ENVIRONMENT_VALUE                                   = 1162;  // <display_body> ::= <id_or_lit> 'UPON_ENVIRONMENT_VALUE' <_display_exception_phrases>
 //		final int PROD_DISPLAY_BODY_UPON_ARGUMENT_NUMBER                                     = 1163;  // <display_body> ::= <id_or_lit> 'UPON_ARGUMENT_NUMBER' <_display_exception_phrases>
 //		final int PROD_DISPLAY_BODY_UPON_COMMAND_LINE                                        = 1164;  // <display_body> ::= <id_or_lit> 'UPON_COMMAND_LINE' <_display_exception_phrases>
-//		final int PROD_DISPLAY_BODY                                                          = 1165;  // <display_body> ::= <screen_or_device_display> <_display_exception_phrases>
-//		final int PROD_SCREEN_OR_DEVICE_DISPLAY                                              = 1166;  // <screen_or_device_display> ::= <display_list> <_x_list>
+		final int PROD_DISPLAY_BODY                                                          = 1165;  // <display_body> ::= <screen_or_device_display> <_display_exception_phrases>
+		final int PROD_SCREEN_OR_DEVICE_DISPLAY                                              = 1166;  // <screen_or_device_display> ::= <display_list> <_x_list>
 //		final int PROD_SCREEN_OR_DEVICE_DISPLAY2                                             = 1167;  // <screen_or_device_display> ::= <x_list>
 //		final int PROD_DISPLAY_LIST                                                          = 1168;  // <display_list> ::= <display_atom>
 //		final int PROD_DISPLAY_LIST2                                                         = 1169;  // <display_list> ::= <display_list> <display_atom>
-//		final int PROD_DISPLAY_ATOM                                                          = 1170;  // <display_atom> ::= <disp_list> <display_clauses>
+		final int PROD_DISPLAY_ATOM                                                          = 1170;  // <display_atom> ::= <disp_list> <display_clauses>
 //		final int PROD_DISP_LIST                                                             = 1171;  // <disp_list> ::= <x_list>
-//		final int PROD_DISP_LIST_OMITTED                                                     = 1172;  // <disp_list> ::= OMITTED
+		final int PROD_DISP_LIST_OMITTED                                                     = 1172;  // <disp_list> ::= OMITTED
 //		final int PROD_DISPLAY_CLAUSES                                                       = 1173;  // <display_clauses> ::= <display_clause>
 //		final int PROD_DISPLAY_CLAUSES2                                                      = 1174;  // <display_clauses> ::= <display_clauses> <display_clause>
 //		final int PROD_DISPLAY_CLAUSE                                                        = 1175;  // <display_clause> ::= <display_upon>
@@ -6018,18 +6019,20 @@ public class COBOLParser extends CodeParser
 			//System.out.println("PROD_DISPLAY_STATEMENT_DISPLAY");
 			// TODO: Identify whether fileAPI s to be used.
 			Reduction secRed = _reduction.get(1).asReduction();	// display body
-			// TODO: Define a specific routine to extract the expressions
+			// START KGU#1045 2022-07-31: Issue #1052 Use a specific routine to extract the expressions
 			//String content = this.appendDisplayBody(secRed, "");
-			String content = this.getContent_R(secRed, "", ", ");	// This is only a quick hack!
-			if (content.startsWith(", ")) {
-				content = content.substring(2);
-			}
-			if (content.endsWith(", ")) {
-				content = content.substring(0,  content.length()-2);
-			}
-			content = CodeParser.getKeyword("output") + " " + content;
-			Instruction instr = new Instruction(content);
-			_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
+			//String content = this.getContent_R(secRed, "", ", ");	// This is only a quick hack!
+			//if (content.startsWith(", ")) {
+			//	content = content.substring(2);
+			//}
+			//if (content.endsWith(", ")) {
+			//	content = content.substring(0,  content.length()-2);
+			//}
+			//content = CodeParser.getKeyword("output") + " " + content;
+			//Instruction instr = new Instruction(content);
+			//_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
+			this.importDisplay(secRed, _parentNode, this.retrieveComment(_reduction));
+			// END KGU#1045 2022-07-31
 		}
 		break;
 		// START KGU#848 2020-04-20: Issue #851/4
@@ -6332,6 +6335,86 @@ public class COBOLParser extends CodeParser
 			}
 		}
 	}
+
+	// STAR KGU#1045 2022-07-31: Bugfix #1052
+	/**
+	 * Imports a DISPLAY statement into one ore more instructions
+	 * @param _reduction - rule with head {@code <display_body>}
+	 * @param _parentNode - the {@link Subqueue} the elements are to be appended to
+	 * @throws ParserCancelled 
+	 */
+	private void importDisplay(Reduction _reduction, Subqueue _parentNode, String _comment) throws ParserCancelled {
+		int ruleId = _reduction.getParent().getTableIndex();
+		String output = CodeParser.getKeyword("output") + " ";
+		switch (ruleId) {
+		case RuleConstants.PROD_DISPLAY_BODY:
+		{
+			_reduction = _reduction.get(0).asReduction();
+			// <screen_or_device_display> ::= <display_list> <_x_list>
+			// <screen_or_device_display> ::= <x_list>
+			// Get the optional <x_list>
+			Reduction xlistRed = _reduction;
+			if (_reduction.getParent().getTableIndex() == RuleConstants.PROD_SCREEN_OR_DEVICE_DISPLAY) {
+				xlistRed = _reduction.get(1).asReduction();
+				// Get the display list
+				_reduction = _reduction.get(0).asReduction();
+				// <display_list> ::= <display_list> <display_atom>
+				// <display_list> ::= <display_atom>
+				int insertPos = _parentNode.getSize();
+				while (_reduction != null) {
+					Reduction atomRed = _reduction;
+					if (atomRed.getParent().getTableIndex() != RuleConstants.PROD_DISPLAY_ATOM) {
+						atomRed = _reduction.get(1).asReduction();
+						_reduction = _reduction.get(0).asReduction();
+					}
+					else {
+						_reduction = null;
+					}
+					// <display_atom> ::= <disp_list> <display_clauses>
+					Token listToken = atomRed.get(0);
+					// Might be "OMITTED" or an <xlist>
+					String content = "";
+					if (listToken.getType() == SymbolType.NON_TERMINAL) {
+						content = this.getContent_R(listToken.asReduction(), "", ", ");	// This is only a quick hack!
+						if (content.startsWith(", ")) {
+							content = content.substring(2);
+						}
+						if (content.endsWith(", ")) {
+							content = content.substring(0,  content.length()-2);
+						}
+					}
+					String clauses = this.getContent_R(atomRed.get(1).asReduction(), "Display clauses: ");
+					// The clauses will form a comment - we can't actually translate them
+					Instruction instr = new Instruction(output + content.trim());
+					instr.setComment(_comment);
+					instr.getComment().add(clauses);
+					_parentNode.insertElementAt(instr, insertPos);
+				}
+			}
+			if (xlistRed.size() == 0) {
+				break;
+			}
+			_reduction = xlistRed;
+			// Fall through to default
+		}
+		default:
+			// TODO Use a specific routine to extract the expressions
+			//String content = this.appendDisplayBody(secRed, "");
+			String content = this.getContent_R(_reduction, "", ", ");	// This is only a quick hack!
+			if (content.startsWith(", ")) {
+				content = content.substring(2);
+			}
+			if (content.endsWith(", ")) {
+				content = content.substring(0,  content.length()-2);
+			}
+			Instruction instr = new Instruction(output + content.trim());
+			if (_comment != null) {
+				instr.setComment(_comment);
+			}
+			_parentNode.addElement(instr);			
+		}
+	}
+	// END KGU#1045 2022-07-31
 
 	// 
 	/**
