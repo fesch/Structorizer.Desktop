@@ -102,6 +102,16 @@ package lu.fisch.structorizer.parsers;
  *                                      Issue #851/5 Simple solution for PERFORM ... THRU ... call spans
  *      Kay Gürtzig     2021-03-02      Bugfix #851/3: Float literals were torn apart by bugfix #485, index range
  *                                      violation with fix file format fixed (caused by the same flawed workaround).
+ *      Kay Gürtzig     2022-07-20      Enh. #1046: Decoding mechanism for token names to actual symbols
+ *      Kay Gürtzig     2022-07-27/28   Bugfix #1044/#1048: CORRESPONDING clauses had caused NullPointerException,
+ *                                      import of file record declarations and their mapping had failed.
+ *                                      Bugfix #1049: Condition name resolution reliabilit improved
+ *      Kay Gürtzig     2022-07-29      Bugfix #1051 (conc. #851/5) NullPointerExceptions with wide-span PERFORM THRU,
+ *                                      new import option for tidying multi-line calls from PERFORM THRU; 
+ *                                      bugfix #1050 import of READ with AT END or NOT AT END clauses now results in a
+ *                                      handling Alternative with the fileRead() instruction in the no-EOF branch
+ *      Kay Gürtzig     2022-07-31      Bugfix #1052: DISPLAY statements with screen display clauses caused nonsense,
+ *                                      bugfix #1053: Array declaration mechanism revised (fix #695 was defective)
  *
  ******************************************************************************************************
  *
@@ -146,6 +156,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Level;
@@ -172,6 +183,7 @@ import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.structorizer.elements.While;
+import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.parsers.CobTools.CobProg;
 import lu.fisch.structorizer.parsers.CobTools.CobVar;
 import lu.fisch.structorizer.parsers.CobTools.Usage;
@@ -1818,7 +1830,7 @@ public class COBOLParser extends CodeParser
 //		final int PROD_MNEMONIC_NAME_TOK_MNEMONIC_NAME                                       =    2;  // <MNEMONIC_NAME_TOK> ::= 'MNEMONIC_NAME'
 //		final int PROD_PROGRAM_NAME_COBOLWORD                                                =    3;  // <PROGRAM_NAME> ::= COBOLWord
 //		final int PROD_USER_FUNCTION_NAME_FUNCTION_COBOLWORD                                 =    4;  // <USER_FUNCTION_NAME> ::= FUNCTION COBOLWord
-//		final int PROD_WORD_COBOLWORD                                                        =    5;  // <WORD> ::= COBOLWord
+		final int PROD_WORD_COBOLWORD                                                        =    5;  // <WORD> ::= COBOLWord
 //		final int PROD_LITERAL_TOK_STRINGLITERAL                                             =    6;  // <LITERAL_TOK> ::= StringLiteral
 //		final int PROD_LITERAL_TOK_HEXLITERAL                                                =    7;  // <LITERAL_TOK> ::= HexLiteral
 //		final int PROD_LITERAL_TOK_ZLITERAL                                                  =    8;  // <LITERAL_TOK> ::= ZLiteral
@@ -2374,7 +2386,7 @@ public class COBOLParser extends CodeParser
 		final int PROD__RECORD_DESCRIPTION_LIST                                              =  558;  // <_record_description_list> ::=
 //		final int PROD__RECORD_DESCRIPTION_LIST2                                             =  559;  // <_record_description_list> ::= <record_description_list>
 //		final int PROD_RECORD_DESCRIPTION_LIST_TOK_DOT                                       =  560;  // <record_description_list> ::= <data_description> 'TOK_DOT'
-		final int PROD_RECORD_DESCRIPTION_LIST_TOK_DOT2                                      =  561;  // <record_description_list> ::= <record_description_list> <data_description> 'TOK_DOT'
+//		final int PROD_RECORD_DESCRIPTION_LIST_TOK_DOT2                                      =  561;  // <record_description_list> ::= <record_description_list> <data_description> 'TOK_DOT'
 //		final int PROD_DATA_DESCRIPTION                                                      =  562;  // <data_description> ::= <constant_entry>
 //		final int PROD_DATA_DESCRIPTION2                                                     =  563;  // <data_description> ::= <renames_entry>
 //		final int PROD_DATA_DESCRIPTION3                                                     =  564;  // <data_description> ::= <condition_name_entry>
@@ -2879,7 +2891,7 @@ public class COBOLParser extends CodeParser
 		final int PROD_ADD_STATEMENT_ADD                                                     = 1063;  // <add_statement> ::= ADD <add_body> <end_add>
 		final int PROD_ADD_BODY_TO                                                           = 1064;  // <add_body> ::= <x_list> TO <arithmetic_x_list> <on_size_error_phrases>
 		final int PROD_ADD_BODY_GIVING                                                       = 1065;  // <add_body> ::= <x_list> <_add_to> GIVING <arithmetic_x_list> <on_size_error_phrases>
-//		final int PROD_ADD_BODY_CORRESPONDING_TO                                             = 1066;  // <add_body> ::= CORRESPONDING <identifier> TO <identifier> <flag_rounded> <on_size_error_phrases>
+		final int PROD_ADD_BODY_CORRESPONDING_TO                                             = 1066;  // <add_body> ::= CORRESPONDING <identifier> TO <identifier> <flag_rounded> <on_size_error_phrases>
 //		final int PROD_ADD_BODY_TABLE_TO                                                     = 1067;  // <add_body> ::= TABLE <table_identifier> TO <table_identifier> <flag_rounded> <_from_idx_to_idx> <_dest_index> <on_size_error_phrases>
 //		final int PROD__ADD_TO                                                               = 1068;  // <_add_to> ::=
 //		final int PROD__ADD_TO_TO                                                            = 1069;  // <_add_to> ::= TO <x>
@@ -2978,14 +2990,14 @@ public class COBOLParser extends CodeParser
 //		final int PROD_DISPLAY_BODY_UPON_ENVIRONMENT_VALUE                                   = 1162;  // <display_body> ::= <id_or_lit> 'UPON_ENVIRONMENT_VALUE' <_display_exception_phrases>
 //		final int PROD_DISPLAY_BODY_UPON_ARGUMENT_NUMBER                                     = 1163;  // <display_body> ::= <id_or_lit> 'UPON_ARGUMENT_NUMBER' <_display_exception_phrases>
 //		final int PROD_DISPLAY_BODY_UPON_COMMAND_LINE                                        = 1164;  // <display_body> ::= <id_or_lit> 'UPON_COMMAND_LINE' <_display_exception_phrases>
-//		final int PROD_DISPLAY_BODY                                                          = 1165;  // <display_body> ::= <screen_or_device_display> <_display_exception_phrases>
-//		final int PROD_SCREEN_OR_DEVICE_DISPLAY                                              = 1166;  // <screen_or_device_display> ::= <display_list> <_x_list>
+		final int PROD_DISPLAY_BODY                                                          = 1165;  // <display_body> ::= <screen_or_device_display> <_display_exception_phrases>
+		final int PROD_SCREEN_OR_DEVICE_DISPLAY                                              = 1166;  // <screen_or_device_display> ::= <display_list> <_x_list>
 //		final int PROD_SCREEN_OR_DEVICE_DISPLAY2                                             = 1167;  // <screen_or_device_display> ::= <x_list>
 //		final int PROD_DISPLAY_LIST                                                          = 1168;  // <display_list> ::= <display_atom>
 //		final int PROD_DISPLAY_LIST2                                                         = 1169;  // <display_list> ::= <display_list> <display_atom>
-//		final int PROD_DISPLAY_ATOM                                                          = 1170;  // <display_atom> ::= <disp_list> <display_clauses>
+		final int PROD_DISPLAY_ATOM                                                          = 1170;  // <display_atom> ::= <disp_list> <display_clauses>
 //		final int PROD_DISP_LIST                                                             = 1171;  // <disp_list> ::= <x_list>
-//		final int PROD_DISP_LIST_OMITTED                                                     = 1172;  // <disp_list> ::= OMITTED
+		final int PROD_DISP_LIST_OMITTED                                                     = 1172;  // <disp_list> ::= OMITTED
 //		final int PROD_DISPLAY_CLAUSES                                                       = 1173;  // <display_clauses> ::= <display_clause>
 //		final int PROD_DISPLAY_CLAUSES2                                                      = 1174;  // <display_clauses> ::= <display_clauses> <display_clause>
 //		final int PROD_DISPLAY_CLAUSE                                                        = 1175;  // <display_clause> ::= <display_upon>
@@ -3143,7 +3155,7 @@ public class COBOLParser extends CodeParser
 //		final int PROD_MERGE_STATEMENT_MERGE                                                 = 1327;  // <merge_statement> ::= MERGE <sort_body>
 		final int PROD_MOVE_STATEMENT_MOVE                                                   = 1328;  // <move_statement> ::= MOVE <move_body>
 //		final int PROD_MOVE_BODY_TO                                                          = 1329;  // <move_body> ::= <x> TO <target_x_list>
-//		final int PROD_MOVE_BODY_CORRESPONDING_TO                                            = 1330;  // <move_body> ::= CORRESPONDING <x> TO <target_x_list>
+		final int PROD_MOVE_BODY_CORRESPONDING_TO                                            = 1330;  // <move_body> ::= CORRESPONDING <x> TO <target_x_list>
 		final int PROD_MULTIPLY_STATEMENT_MULTIPLY                                           = 1331;  // <multiply_statement> ::= MULTIPLY <multiply_body> <end_multiply>
 //		final int PROD_MULTIPLY_BODY_BY                                                      = 1332;  // <multiply_body> ::= <x> BY <arithmetic_x_list> <on_size_error_phrases>
 		final int PROD_MULTIPLY_BODY_BY_GIVING                                               = 1333;  // <multiply_body> ::= <x> BY <x> GIVING <arithmetic_x_list> <on_size_error_phrases>
@@ -3370,7 +3382,7 @@ public class COBOLParser extends CodeParser
 		final int PROD_SUBTRACT_STATEMENT_SUBTRACT                                           = 1554;  // <subtract_statement> ::= SUBTRACT <subtract_body> <end_subtract>
 //		final int PROD_SUBTRACT_BODY_FROM                                                    = 1555;  // <subtract_body> ::= <x_list> FROM <arithmetic_x_list> <on_size_error_phrases>
 		final int PROD_SUBTRACT_BODY_FROM_GIVING                                             = 1556;  // <subtract_body> ::= <x_list> FROM <x> GIVING <arithmetic_x_list> <on_size_error_phrases>
-//		final int PROD_SUBTRACT_BODY_CORRESPONDING_FROM                                      = 1557;  // <subtract_body> ::= CORRESPONDING <identifier> FROM <identifier> <flag_rounded> <on_size_error_phrases>
+		final int PROD_SUBTRACT_BODY_CORRESPONDING_FROM                                      = 1557;  // <subtract_body> ::= CORRESPONDING <identifier> FROM <identifier> <flag_rounded> <on_size_error_phrases>
 //		final int PROD_SUBTRACT_BODY_TABLE_FROM                                              = 1558;  // <subtract_body> ::= TABLE <table_identifier> FROM <table_identifier> <flag_rounded> <_from_idx_to_idx> <_dest_index> <on_size_error_phrases>
 //		final int PROD_END_SUBTRACT                                                          = 1559;  // <end_subtract> ::=
 //		final int PROD_END_SUBTRACT_END_SUBTRACT                                             = 1560;  // <end_subtract> ::= 'END_SUBTRACT'
@@ -3491,8 +3503,8 @@ public class COBOLParser extends CodeParser
 //		final int PROD_NOT_ON_OVERFLOW_NOT_OVERFLOW                                          = 1675;  // <not_on_overflow> ::= 'NOT_OVERFLOW' <statement_list>
 //		final int PROD_RETURN_AT_END                                                         = 1676;  // <return_at_end> ::= <at_end_clause> <_not_at_end_clause>
 //		final int PROD_RETURN_AT_END2                                                        = 1677;  // <return_at_end> ::= <not_at_end_clause> <at_end_clause>
-//		final int PROD_AT_END                                                                = 1678;  // <at_end> ::= <at_end_clause> <_not_at_end_clause>
-//		final int PROD_AT_END2                                                               = 1679;  // <at_end> ::= <not_at_end_clause> <_at_end_clause>
+		final int PROD_AT_END                                                                = 1678;  // <at_end> ::= <at_end_clause> <_not_at_end_clause>
+		final int PROD_AT_END2                                                               = 1679;  // <at_end> ::= <not_at_end_clause> <_at_end_clause>
 //		final int PROD__AT_END_CLAUSE                                                        = 1680;  // <_at_end_clause> ::=
 //		final int PROD__AT_END_CLAUSE2                                                       = 1681;  // <_at_end_clause> ::= <at_end_clause>
 //		final int PROD_AT_END_CLAUSE_END                                                     = 1682;  // <at_end_clause> ::= END <statement_list>
@@ -4121,6 +4133,278 @@ public class COBOLParser extends CodeParser
 			RuleConstants.PROD__SCREEN_SECTION_SCREEN_SECTION_TOK_DOT
 	};
 	// END KGU#407 2017-10-01
+
+	//------------------- Decoding of expected symbols -----------------------
+	
+	// START KGU#1037 2022-07-20: Enh. #1046
+	/** Permanently cashed map for {@link #getTerminalTranslations()} */
+	private static HashMap<String, String> symbolDecodeTable = null;
+	@Override
+	protected HashMap<String, String> getTerminalTranslations()
+	{
+		/* In most cases, we just provide the initial possible lexeme(s) for
+		 * a multi-word token, but in some case the entire sequence is given
+		 * where it helps to understand what's expected (e.g. with END_PROGRAM)
+		 */
+		if (symbolDecodeTable == null) {
+			symbolDecodeTable = new HashMap<String, String>();
+			symbolDecodeTable.put("ALPHABETIC_LOWER", "ALPHABETIC-LOWER");
+			symbolDecodeTable.put("ALPHABETIC_UPPER", "ALPHABETIC-UPPER");
+			symbolDecodeTable.put("ALPHANUMERIC_EDITED", "ALPHANUMERIC-EDITED");
+			symbolDecodeTable.put("ARGUMENT_NUMBER", "ARGUMENT-NUMBER");
+			symbolDecodeTable.put("ARGUMENT_VALUE", "ARGUMENT-VALUE");
+			symbolDecodeTable.put("AUTO", "AUTO | AUTO-SKIP | AUTOTERMINATE");
+			symbolDecodeTable.put("AWAY_FROM_ZERO", "AWAY-FROM-ZERO");
+			symbolDecodeTable.put("BACKGROUND_COLOR", "BACKGROUND-COLOR | BACKGROUND-COLOUR");
+			symbolDecodeTable.put("BELL", "BELL | BEEP");
+			symbolDecodeTable.put("BINARY_C_LONG", "BINARY-C-LONG");
+			symbolDecodeTable.put("BINARY_CHAR", "BINARY-CHAR");
+			symbolDecodeTable.put("BINARY_DOUBLE", "BINARY-DOUBLE | BINARY-LONG-LONG");
+			symbolDecodeTable.put("BINARY_LONG", "BINARY-LONG | BINARY-INT");
+			symbolDecodeTable.put("BINARY_SHORT", "BINARY-SHORT");
+			symbolDecodeTable.put("BYTE_LENGTH", "BYTE-LENGTH");
+			symbolDecodeTable.put("CARD_PUNCH", "CARD-PUNCH");
+			symbolDecodeTable.put("CARD_READER", "CARD-READER");
+			symbolDecodeTable.put("CODE_SET", "CODE-SET");
+			symbolDecodeTable.put("COMMAND_LINE", "COMMAND-LINE");
+			symbolDecodeTable.put("COMP_1", "COMP-1");
+			symbolDecodeTable.put("COMP_2", "COMP-2");
+			symbolDecodeTable.put("COMP_3", "COMP-3");
+			symbolDecodeTable.put("COMP_4", "COMP-4");
+			symbolDecodeTable.put("COMP_5", "COMP-5");
+			symbolDecodeTable.put("COMP_6", "COMP-6");
+			symbolDecodeTable.put("COMP_X", "COMP-X");
+			symbolDecodeTable.put("CORRESPONDING", "CORRESPONDING | CORR");
+			symbolDecodeTable.put("CRT_UNDER", "CRT-UNDER");
+			symbolDecodeTable.put("DAY_OF_WEEK", "DAY-OF-WEEK");
+			symbolDecodeTable.put("DECIMAL_POINT", "DECIMAL-POINT");
+			symbolDecodeTable.put("END_ACCEPT", "END-ACCEPT");
+			symbolDecodeTable.put("END_ADD", "END-ADD");
+			symbolDecodeTable.put("END_CALL", "END-CALL");
+			symbolDecodeTable.put("END_COMPUTE", "END-COMPUTE");
+			symbolDecodeTable.put("END_DELETE", "END-DELETE");
+			symbolDecodeTable.put("END_DISPLAY", "END-DISPLAY");
+			symbolDecodeTable.put("END_DIVIDE", "END-DIVIDE");
+			symbolDecodeTable.put("END_EVALUATE", "END-EVALUATE");
+			symbolDecodeTable.put("END_IF", "END-IF");
+			symbolDecodeTable.put("END_MULTIPLY", "END-MULTIPLY");
+			symbolDecodeTable.put("END_PERFORM", "END-PERFORM");
+			symbolDecodeTable.put("END_READ", "END-READ");
+			symbolDecodeTable.put("END_RECEIVE", "END-RECEIVE");
+			symbolDecodeTable.put("END_RETURN", "END-RETURN");
+			symbolDecodeTable.put("END_REWRITE", "END-REWRITE");
+			symbolDecodeTable.put("END_SEARCH", "END-SEARCH");
+			symbolDecodeTable.put("END_START", "END-START");
+			symbolDecodeTable.put("END_STRING", "END-STRING");
+			symbolDecodeTable.put("END_SUBTRACT", "END-SUBTRACT");
+			symbolDecodeTable.put("END_UNSTRING", "END-UNSTRING");
+			symbolDecodeTable.put("END_WRITE", "END-WRITE");
+			symbolDecodeTable.put("ENTRY_CONVENTION", "ENTRY-CONVENTION");
+			symbolDecodeTable.put("ENVIRONMENT_VALUE", "ENVIRONMENT-VALUE");
+			symbolDecodeTable.put("FILE_CONTROL", "FILE-CONTROL");
+			symbolDecodeTable.put("FILE_ID", "FILE-ID");
+			symbolDecodeTable.put("FLOAT_BINARY_128", "FLOAT-BINARY-128");
+			symbolDecodeTable.put("FLOAT_BINARY_32", "FLOAT-BINARY-32");
+			symbolDecodeTable.put("FLOAT_BINARY_64", "FLOAT-BINARY-64");
+			symbolDecodeTable.put("FLOAT_DECIMAL_16", "FLOAT-DECIMAL-16");
+			symbolDecodeTable.put("FLOAT_DECIMAL_34", "FLOAT-DECIMAL-34");
+			symbolDecodeTable.put("FLOAT_DECIMAL_7", "FLOAT-DECIMAL-7");
+			symbolDecodeTable.put("FLOAT_EXTENDED", "FLOAT-EXTENDED");
+			symbolDecodeTable.put("FLOAT_LONG", "FLOAT-LONG");
+			symbolDecodeTable.put("FLOAT_SHORT", "FLOAT-SHORT");
+			symbolDecodeTable.put("FOREGROUND_COLOR", "FOREGROUND-COLOR | FOREGROUND-COLOUR");
+			symbolDecodeTable.put("FULL", "FULL | LENGTH-CHECK");
+			symbolDecodeTable.put("FUNCTION_ID", "FUNCTION-ID");
+			symbolDecodeTable.put("HIGH_VALUE", "HIGH-VALUE | HIGH-VALUES");
+			symbolDecodeTable.put("INITIALIZE", "INITIALIZE | INITIALISE");
+			symbolDecodeTable.put("INITIALIZED", "INITIALIZED | INITIALISED");
+			symbolDecodeTable.put("INPUT_OUTPUT", "INPUT-OUTPUT");
+			symbolDecodeTable.put("I_O", "I-O");
+			symbolDecodeTable.put("I_O_CONTROL", "I-O-CONTROL");
+			symbolDecodeTable.put("JUSTIFIED", "JUSTIFIED | JUST");
+			symbolDecodeTable.put("LINAGE_COUNTER", "LINAGE-COUNTER");
+			symbolDecodeTable.put("LINE_COUNTER", "LINE-COUNTER");
+			symbolDecodeTable.put("LOCAL_STORAGE", "LOCAL-STORAGE");
+			symbolDecodeTable.put("LOW_VALUE", "LOW-VALUE | LOW-VALUES");
+			symbolDecodeTable.put("MAGNETIC_TAPE", "MAGNETIC-TAPE");
+			symbolDecodeTable.put("NATIONAL_EDITED", "NATIONAL-EDITED");
+			symbolDecodeTable.put("NEAREST_AWAY_FROM_ZERO", "NEAREST-AWAY-FROM-ZERO");
+			symbolDecodeTable.put("NEAREST_EVEN", "NEAREST-EVEN");
+			symbolDecodeTable.put("NEAREST_TOWARD_ZERO", "NEAREST-TOWARD-ZERO");
+			symbolDecodeTable.put("NO_ECHO", "NO-ECHO");
+			symbolDecodeTable.put("NUMERIC_EDITED", "NUMERIC-EDITED");
+			symbolDecodeTable.put("OBJECT_COMPUTER", "OBJECT-COMPUTER");
+			symbolDecodeTable.put("ORGANIZATION", "ORGANIZATION | ORGANISATION");
+			symbolDecodeTable.put("PACKED_DECIMAL", "PACKED-DECIMAL");
+			symbolDecodeTable.put("PAGE_COUNTER", "PAGE-COUNTER");
+			symbolDecodeTable.put("PRINTER_1", "PRINTER-1");
+			symbolDecodeTable.put("PROGRAM_ID", "PROGRAM-ID");
+			symbolDecodeTable.put("PROGRAM_POINTER", "PROGRAM-POINTER");
+			symbolDecodeTable.put("QUOTE", "QUOTE | QUOTES");
+			symbolDecodeTable.put("REQUIRED", "REQUIRED | EMPTY-CHECK");
+			symbolDecodeTable.put("REVERSE_VIDEO", "REVERSE-VIDEO");
+			symbolDecodeTable.put("SEGMENT_LIMIT", "SEGMENT-LIMIT");
+			symbolDecodeTable.put("SEMI_COLON", "';'");
+			symbolDecodeTable.put("SIGNED_INT", "SIGNED-INT");
+			symbolDecodeTable.put("SIGNED_LONG", "SIGNED-LONG");
+			symbolDecodeTable.put("SIGNED_SHORT", "SIGNED-SHORT");
+			symbolDecodeTable.put("SORT_MERGE", "SORT-MERGE");
+			symbolDecodeTable.put("SOURCE_COMPUTER", "SOURCE-COMPUTER");
+			symbolDecodeTable.put("SPACE", "SPACE | SPACES");
+			symbolDecodeTable.put("SPECIAL_NAMES", "SPECIAL-NAMES");
+			symbolDecodeTable.put("STANDARD_1", "STANDARD-1");
+			symbolDecodeTable.put("STANDARD_2", "STANDARD-2");
+			symbolDecodeTable.put("SUB_QUEUE_1", "SUB-QUEUE-1");
+			symbolDecodeTable.put("SUB_QUEUE_2", "SUB-QUEUE-2");
+			symbolDecodeTable.put("SUB_QUEUE_3", "SUB-QUEUE-3");
+			symbolDecodeTable.put("SYNCHRONIZED", "SYNCHRONIZED | SYNCHRONISED");
+			symbolDecodeTable.put("SYSTEM_DEFAULT", "SYSTEM-DEFAULT");
+			symbolDecodeTable.put("SYSTEM_OFFSET", "SYSTEM-OFFSET");
+			symbolDecodeTable.put("THRU", "THRU | THROUGH");
+			symbolDecodeTable.put("TIME_OUT", "TIME-OUT | TIMEOUT");
+			symbolDecodeTable.put("TOK_EXTERN", "EXTERN");
+			symbolDecodeTable.put("TOK_FALSE", "FALSE");
+			symbolDecodeTable.put("TOK_FILE", "FILE");
+			symbolDecodeTable.put("TOK_INITIAL", "INITIAL");
+			symbolDecodeTable.put("TOK_NULL", "NULL");
+			symbolDecodeTable.put("TOK_TRUE", "TRUE");
+			symbolDecodeTable.put("TOWARD_GREATER", "TOWARD-GREATER");
+			symbolDecodeTable.put("TOWARD_LESSER", "TOWARD-LESSER");
+			symbolDecodeTable.put("UNSIGNED_INT", "UNSIGNED-INT");
+			symbolDecodeTable.put("UNSIGNED_LONG", "UNSIGNED-LONG");
+			symbolDecodeTable.put("UNSIGNED_SHORT", "UNSIGNED-SHORT");
+			symbolDecodeTable.put("USER_DEFAULT", "USER-DEFAULT");
+			symbolDecodeTable.put("VALUE", "VALUE | VALUES");
+			symbolDecodeTable.put("WORKING_STORAGE", "WORKING-STORAGE");
+			symbolDecodeTable.put("ZERO", "ZERO | ZEROS | ZEROES");
+			symbolDecodeTable.put("SIXTY_SIX", "66");
+			symbolDecodeTable.put("SEVENTY_EIGHT", "78");
+			symbolDecodeTable.put("EIGHTY_EIGHT", "88");
+			symbolDecodeTable.put("TOK_OPEN_PAREN", "'('");
+			symbolDecodeTable.put("TOK_CLOSE_PAREN", "')'");
+			symbolDecodeTable.put("NOT_EQUAL", "'<>'");
+			symbolDecodeTable.put("EXPONENTIATION", "'**'");
+			symbolDecodeTable.put("TOK_DOT", "'.'");
+			symbolDecodeTable.put("TOK_AMPER", "'&'");
+			symbolDecodeTable.put("TOK_COLON", "':'");
+			symbolDecodeTable.put("TOK_EQUAL", "'='");
+			symbolDecodeTable.put("TOK_DIV", "'/'");
+			symbolDecodeTable.put("TOK_MUL", "'*'");
+			symbolDecodeTable.put("TOK_PLUS", "'+'");
+			symbolDecodeTable.put("TOK_MINUS", "'-'");
+			symbolDecodeTable.put("TOK_LESS", "'<'");
+			symbolDecodeTable.put("TOK_GREATER", "'>'");
+			symbolDecodeTable.put("COMMA_DELIM", "','");
+			symbolDecodeTable.put("END_PROGRAM", "END PROGRAM");
+			symbolDecodeTable.put("END_FUNCTION", "END FUNCTION");
+			symbolDecodeTable.put("PICTURE_SYMBOL", "PICTURE SYMBOL");
+			symbolDecodeTable.put("FROM_CRT", "FROM CRT");
+			symbolDecodeTable.put("SCREEN_CONTROL", "SCREEN CONTROL");
+			symbolDecodeTable.put("EVENT_STATUS", "EVENT STATUS");
+			symbolDecodeTable.put("READY_TRACE", "READY TRACE");
+			symbolDecodeTable.put("RESET_TRACE", "RESET TRACE");
+			symbolDecodeTable.put("GREATER_OR_EQUAL", "GREATER | '>='");
+			symbolDecodeTable.put("GREATER", "GREATER");
+			symbolDecodeTable.put("LESS_OR_EQUAL", "LESS | '<='");
+			symbolDecodeTable.put("LESS", "LESS");
+			symbolDecodeTable.put("EQUAL", "EQUAL | EQUALS");
+			symbolDecodeTable.put("TOP", "LINES");
+			symbolDecodeTable.put("BOTTOM", "LINES");
+			symbolDecodeTable.put("NO_ADVANCING", "NO");
+			symbolDecodeTable.put("NEXT_PAGE", "NEXT");
+			symbolDecodeTable.put("NOT_SIZE_ERROR", "ON | NOT");
+			symbolDecodeTable.put("SIZE_ERROR", "ON | SIZE");
+			symbolDecodeTable.put("NOT_ESCAPE", "NOT");
+			symbolDecodeTable.put("NOT_EXCEPTION", "NOT");
+			symbolDecodeTable.put("ESCAPE", "ON");
+			symbolDecodeTable.put("EXCEPTION", "ON");
+			symbolDecodeTable.put("NOT_OVERFLOW", "NOT");
+			symbolDecodeTable.put("NOT_END", "NOT");
+			symbolDecodeTable.put("END", "AT | END");
+			symbolDecodeTable.put("TOK_OVERFLOW", "ON | OVERFLOW");
+			symbolDecodeTable.put("NOT_EOP", "NOT");
+			symbolDecodeTable.put("EOP", "AT | END-OF-PAGE | EOP");
+			symbolDecodeTable.put("NOT_INVALID_KEY", "NOT");
+			symbolDecodeTable.put("INVALID_KEY", "INVALID");
+			symbolDecodeTable.put("NO_DATA", "NO");
+			symbolDecodeTable.put("WITH_DATA", "WITH");
+			symbolDecodeTable.put("UPON_ENVIRONMENT_NAME", "UPON");
+			symbolDecodeTable.put("UPON_ENVIRONMENT_VALUE", "UPON");
+			symbolDecodeTable.put("UPON_ARGUMENT_NUMBER", "UPON");
+			symbolDecodeTable.put("UPON_COMMAND_LINE", "UPON");
+			symbolDecodeTable.put("EXCEPTION_CONDITION", "AFTER | EXCEPTION");
+			symbolDecodeTable.put("EC", "AFTER | EC");
+			symbolDecodeTable.put("LENGTH_OF", "LENGTH");
+			symbolDecodeTable.put("CURRENT_DATE", "CURRENT-DATE");
+			symbolDecodeTable.put("DISPLAY_OF", "DISPLAY-OF");
+			symbolDecodeTable.put("FORMATTED_DATE", "FORMATTED-DATE");
+			symbolDecodeTable.put("FORMATTED_DATETIME", "FORMATTED-DATETIME");
+			symbolDecodeTable.put("FORMATTED_TIME", "FORMATTED-TIME");
+			symbolDecodeTable.put("LOCALE_DATE", "LOCALE-DATE");
+			symbolDecodeTable.put("LOCALE_TIME", "LOCALE-TIME");
+			symbolDecodeTable.put("LOCALE_TIME_FROM_SECONDS", "LOCALE-TIME-FROM-SECONDS");
+			symbolDecodeTable.put("LOWER_CASE", "LOWER-CASE");
+			symbolDecodeTable.put("NATIONAL_OF", "NATIONAL-OF");
+			symbolDecodeTable.put("NUMVAL_C", "NUMVAL-C");
+			symbolDecodeTable.put("SUBSTITUTE_CASE", "SUBSTITUTE-CASE");
+			symbolDecodeTable.put("UPPER_CASE", "UPPER-CASE");
+			symbolDecodeTable.put("WHEN_COMPILED", "WHEN-COMPILED");
+			symbolDecodeTable.put("BOOLEAN_OF_INTEGER", "BOOLEAN-OF-INTEGER");
+			symbolDecodeTable.put("CHAR_NATIONAL", "CHAR-NATIONAL");
+			symbolDecodeTable.put("COMBINED_DATETIME", "COMBINED-DATETIME");
+			symbolDecodeTable.put("CURRENCY_SYMBOL", "CURRENCY-SYMBOL");
+			symbolDecodeTable.put("DATE_OF_INTEGER", "DATE-OF-INTEGER");
+			symbolDecodeTable.put("DATE_TO_YYYYMMDD", "DATE-TO-YYYYMMDD");
+			symbolDecodeTable.put("DAY_OF_INTEGER", "DAY-OF-INTEGER");
+			symbolDecodeTable.put("DAY_TO_YYYYDDD", "DAY-TO-YYYYDDD");
+			symbolDecodeTable.put("EXCEPTION_FILE", "EXCEPTION-FILE");
+			symbolDecodeTable.put("EXCEPTION_FILE_N", "EXCEPTION-FILE-N");
+			symbolDecodeTable.put("EXCEPTION_LOCATION", "EXCEPTION-LOCATION");
+			symbolDecodeTable.put("EXCEPTION_LOCATION_N", "EXCEPTION-LOCATION-N");
+			symbolDecodeTable.put("EXCEPTION_STATEMENT", "EXCEPTION-STATEMENT");
+			symbolDecodeTable.put("EXCEPTION_STATUS", "EXCEPTION-STATUS");
+			symbolDecodeTable.put("FORMATTED_CURRENT_DATE", "FORMATTED-CURRENT-DATE");
+			symbolDecodeTable.put("FRACTION_PART", "FRACTION-PART");
+			symbolDecodeTable.put("HIGHEST_ALGEBRAIC", "HIGHEST-ALGEBRAIC");
+			symbolDecodeTable.put("INTEGER_OF_BOOLEAN", "INTEGER-OF-BOOLEAN");
+			symbolDecodeTable.put("INTEGER_OF_DATE", "INTEGER-OF-DATE");
+			symbolDecodeTable.put("INTEGER_OF_DAY", "INTEGER-OF-DAY");
+			symbolDecodeTable.put("INTEGER_OF_FORMATTED_DATE", "INTEGER-OF-FORMATTED-DATE");
+			symbolDecodeTable.put("INTEGER_PART", "INTEGER-PART");
+			symbolDecodeTable.put("LOCALE_COMPARE", "LOCALE-COMPARE");
+			symbolDecodeTable.put("LOWEST_ALGEBRAIC", "LOWEST-ALGEBRAIC");
+			symbolDecodeTable.put("MODULE_CALLER_ID", "MODULE-CALLER-ID");
+			symbolDecodeTable.put("MODULE_DATE", "MODULE-DATE");
+			symbolDecodeTable.put("MODULE_FORMATTED_DATE", "MODULE-FORMATTED-DATE");
+			symbolDecodeTable.put("MODULE_ID", "MODULE-ID");
+			symbolDecodeTable.put("MODULE_PATH", "MODULE-PATH");
+			symbolDecodeTable.put("MODULE_SOURCE", "MODULE-SOURCE");
+			symbolDecodeTable.put("MODULE_TIME", "MODULE-TIME");
+			symbolDecodeTable.put("MONETARY_DECIMAL_POINT", "MONETARY-DECIMAL-POINT");
+			symbolDecodeTable.put("MONETARY_THOUSANDS_SEPARATOR", "MONETARY-THOUSANDS-SEPARATOR");
+			symbolDecodeTable.put("NUMERIC_DECIMAL_POINT", "NUMERIC-DECIMAL-POINT");
+			symbolDecodeTable.put("NUMERIC_THOUSANDS_SEPARATOR", "NUMERIC-THOUSANDS-SEPARATOR");
+			symbolDecodeTable.put("NUMVAL_F", "NUMVAL-F");
+			symbolDecodeTable.put("ORD_MAX", "ORD-MAX");
+			symbolDecodeTable.put("ORD_MIN", "ORD-MIN");
+			symbolDecodeTable.put("PRESENT_VALUE", "PRESENT-VALUE");
+			symbolDecodeTable.put("SECONDS_FROM_FORMATTED_TIME", "SECONDS-FROM-FORMATTED-TIME");
+			symbolDecodeTable.put("SECONDS_PAST_MIDNIGHT", "SECONDS-PAST-MIDNIGHT");
+			symbolDecodeTable.put("STANDARD_COMPARE", "STANDARD-COMPARE");
+			symbolDecodeTable.put("STANDARD_DEVIATION", "STANDARD-DEVIATION");
+			symbolDecodeTable.put("STORED_CHAR_LENGTH", "STORED-CHAR-LENGTH");
+			symbolDecodeTable.put("TEST_DATE_YYYYMMDD", "TEST-DATE-YYYYMMDD");
+			symbolDecodeTable.put("TEST_DAY_YYYYDDD", "TEST-DAY-YYYYDDD");
+			symbolDecodeTable.put("TEST_FORMATTED_DATETIME", "TEST-FORMATTED-DATETIME");
+			symbolDecodeTable.put("TEST_NUMVAL", "TEST-NUMVAL");
+			symbolDecodeTable.put("TEST_NUMVAL_F", "TEST-NUMVAL-F");
+			symbolDecodeTable.put("YEAR_TO_YYYY", "YEAR-TO-YYYY");
+			symbolDecodeTable.put("DATE_WRITTEN", "DATE-WRITTEN");
+			symbolDecodeTable.put("DATE_COMPILED", "DATE-COMPILED");
+		}
+		return symbolDecodeTable;
+	}
+	// END KGU#1037 2022-07-20
 
 	//----------------------- Local helper functions -------------------------
 
@@ -5320,6 +5604,12 @@ public class COBOLParser extends CodeParser
 	// START KGU#476 2017-12-05: Try to distinguish superfluous paragraph labels
 	private LinkedHashMap< String, HashSet<Root> > internalGotos = new LinkedHashMap< String, HashSet<Root> >();
 	// END KGU#476 2017-12-05
+	// START KGU#1043 2022-07-30: Issue #1051 Preparation for cleanup
+	/** Set of {@link Roots} without executable elements (reachability is not checked) */
+	private HashSet<Root> expendableSubs = new HashSet<Root>();
+	/** General register of generated {@link Call}s all over the {@link Root}s */
+	private HashMap< String, LinkedList<Call> > totalCallMap = new HashMap< String, LinkedList<Call> >();
+	// END KGU#1043 2022-07-30
 
 	/**
 	 * Associates the name of the result variable to the respective function Root
@@ -5333,6 +5623,16 @@ public class COBOLParser extends CodeParser
 	private static final String fileStatusCaseText = "fileDescr\n0, -1\n-2\n-3\ndefault";
 	private static final String[] fileStatusCodes = {"39", "35", "37", "00"};
 	private static final String[] fileStatusComments = {"General failure", "File not found", "File access denied", "Ok"};
+	// START KGU#1043 2022-07-28: Issues #851/5, #1048/3, #1051
+	private static final String[] PERFORM_PROC_COMMENT = {"This was a call of an internal section or paragraph"};
+	private static final String[] PERFORM_THRU_COMMENT = {
+			"NOTE: This (combined) call was derived from a PERFORM THRU statement.",
+			"Split it (i.e. transmutate it via ctrl-t) and then check the following:",
+			"1. Does it contain calls to all sections/procedures in the source span?",
+			"2. Are there calls to effectively empty routines you might delete?"
+	};
+	private static final String WAS_REDUNDANT_CALL = "Called redundant routine was removed!";
+	// END KGU#1043 2022-07-28
 
 //	/**
 //	 * Used to combine nested declarations within one element
@@ -5720,18 +6020,20 @@ public class COBOLParser extends CodeParser
 			//System.out.println("PROD_DISPLAY_STATEMENT_DISPLAY");
 			// TODO: Identify whether fileAPI s to be used.
 			Reduction secRed = _reduction.get(1).asReduction();	// display body
-			// TODO: Define a specific routine to extract the expressions
+			// START KGU#1045 2022-07-31: Issue #1052 Use a specific routine to extract the expressions
 			//String content = this.appendDisplayBody(secRed, "");
-			String content = this.getContent_R(secRed, "", ", ");	// This is only a quick hack!
-			if (content.startsWith(", ")) {
-				content = content.substring(2);
-			}
-			if (content.endsWith(", ")) {
-				content = content.substring(0,  content.length()-2);
-			}
-			content = CodeParser.getKeyword("output") + " " + content;
-			Instruction instr = new Instruction(content);
-			_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
+			//String content = this.getContent_R(secRed, "", ", ");	// This is only a quick hack!
+			//if (content.startsWith(", ")) {
+			//	content = content.substring(2);
+			//}
+			//if (content.endsWith(", ")) {
+			//	content = content.substring(0,  content.length()-2);
+			//}
+			//content = CodeParser.getKeyword("output") + " " + content;
+			//Instruction instr = new Instruction(content);
+			//_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
+			this.importDisplay(secRed, _parentNode, this.retrieveComment(_reduction));
+			// END KGU#1045 2022-07-31
 		}
 		break;
 		// START KGU#848 2020-04-20: Issue #851/4
@@ -5753,24 +6055,36 @@ public class COBOLParser extends CodeParser
 					&& reclRed.getParent().getTableIndex() != RuleConstants.PROD__RECORD_DESCRIPTION_LIST) {
 				String fdName = this.getContent_R(fdRed.get(1).asReduction(), "").trim();
 				// The file descriptor should have been declared with the SELECT clause
-				do {
-					Reduction datRed = reclRed.get(0).asReduction();
-					if (reclRed.getParent().getTableIndex() == RuleConstants.PROD_RECORD_DESCRIPTION_LIST_TOK_DOT2) {
-						datRed = reclRed.get(1).asReduction();
-						reclRed = reclRed.get(0).asReduction();
-					}
-					else {
-						reclRed = null;
-					}
-					HashMap<String, String> typeMap = new HashMap<String, String>();
-					// START KGU 2017-05-24: We do not only want the type info here but also create declarations
-					//this.processDataDescriptions(datRed, null, typeMap);
-					this.processDataDescriptions(datRed, typeMap);
-					// END KGU 2017-05-24
-					for (String recName: typeMap.keySet()) {
-						currentProg.fileRecordMap.put(recName, fdName);
-					}
-				} while (reclRed != null);
+				// START KGU#1039 2022-07-28: Bugfix #1044/#1048 wrong way to process record definitions
+				//do {
+				//	Reduction datRed = reclRed.get(0).asReduction();
+				//	if (reclRed.getParent().getTableIndex() == RuleConstants.PROD_RECORD_DESCRIPTION_LIST_TOK_DOT2) {
+				//		// <record_description_list> ::= <record_description_list> <data_description> 'TOK_DOT'
+				//		datRed = reclRed.get(1).asReduction();
+				//		reclRed = reclRed.get(0).asReduction();
+				//	}
+				//	else {
+				//		// <record_description_list> ::= <data_description> 'TOK_DOT'
+				//		reclRed = null;
+				//	}
+				//	HashMap<String, String> typeMap = new HashMap<String, String>();
+				//	// START KGU 2017-05-24: We do not only want the type info here but also create declarations
+				//	//this.processDataDescriptions(datRed, null, typeMap);
+				//	this.processDataDescriptions(datRed, typeMap);
+				//	// END KGU 2017-05-24
+				//	for (String recName: typeMap.keySet()) {
+				//		currentProg.fileRecordMap.put(recName, fdName);
+				//	}
+				//} while (reclRed != null);
+				this.processDataDescriptions(reclRed, null);
+				this.buildDataSection(currentProg.getFileStorage(), _parentNode);
+				CobVar rec = currentProg.getFileStorage();
+				while (rec != null) {
+					currentProg.fileRecordMap.put(rec.getName(), fdName);
+					rec = rec.getSister();
+				}
+				currentProg.clearFileStorage();
+				// END KGU#1039 2022-07-28
 			}
 		}
 		break;
@@ -6023,6 +6337,87 @@ public class COBOLParser extends CodeParser
 		}
 	}
 
+	// STAR KGU#1045 2022-07-31: Bugfix #1052
+	/**
+	 * Imports a DISPLAY statement into one ore more instructions
+	 * @param _reduction - rule with head {@code <display_body>}
+	 * @param _parentNode - the {@link Subqueue} the elements are to be appended to
+	 * @throws ParserCancelled 
+	 */
+	private void importDisplay(Reduction _reduction, Subqueue _parentNode, String _comment) throws ParserCancelled {
+		int ruleId = _reduction.getParent().getTableIndex();
+		String output = CodeParser.getKeyword("output") + " ";
+		switch (ruleId) {
+		case RuleConstants.PROD_DISPLAY_BODY:
+		{
+			_reduction = _reduction.get(0).asReduction();
+			// <screen_or_device_display> ::= <display_list> <_x_list>
+			// <screen_or_device_display> ::= <x_list>
+			// Get the optional <x_list>
+			Reduction xlistRed = _reduction;
+			if (_reduction.getParent().getTableIndex() == RuleConstants.PROD_SCREEN_OR_DEVICE_DISPLAY) {
+				xlistRed = _reduction.get(1).asReduction();
+				// Get the display list
+				_reduction = _reduction.get(0).asReduction();
+				// <display_list> ::= <display_list> <display_atom>
+				// <display_list> ::= <display_atom>
+				int insertPos = _parentNode.getSize();
+				while (_reduction != null) {
+					Reduction atomRed = _reduction;
+					if (atomRed.getParent().getTableIndex() != RuleConstants.PROD_DISPLAY_ATOM) {
+						atomRed = _reduction.get(1).asReduction();
+						_reduction = _reduction.get(0).asReduction();
+					}
+					else {
+						_reduction = null;
+					}
+					// <display_atom> ::= <disp_list> <display_clauses>
+					Token listToken = atomRed.get(0);
+					String content = this.getContent_R(listToken.asReduction(), "", ", ");	// This is only a quick hack!
+					if (content.equalsIgnoreCase("OMITTED")) {
+						content = "";
+					}
+					else {
+						if (content.startsWith(", ")) {
+						content = content.substring(2);
+						}
+						if (content.endsWith(", ")) {
+							content = content.substring(0,  content.length()-2);
+						}
+					}
+					String clauses = this.getContent_R(atomRed.get(1).asReduction(), "Display clauses: ");
+					// The clauses will form a comment - we can't actually translate them
+					Instruction instr = new Instruction(output + content.trim());
+					instr.setComment(_comment);
+					instr.getComment().add(clauses);
+					_parentNode.insertElementAt(instr, insertPos);
+				}
+			}
+			if (xlistRed.size() == 0) {
+				break;
+			}
+			_reduction = xlistRed;
+			// Fall through to default
+		}
+		default:
+			// TODO Use a specific routine to extract the expressions
+			//String content = this.appendDisplayBody(secRed, "");
+			String content = this.getContent_R(_reduction, "", ", ");	// This is only a quick hack!
+			if (content.startsWith(", ")) {
+				content = content.substring(2);
+			}
+			if (content.endsWith(", ")) {
+				content = content.substring(0,  content.length()-2);
+			}
+			Instruction instr = new Instruction(output + content.trim());
+			if (_comment != null) {
+				instr.setComment(_comment);
+			}
+			_parentNode.addElement(instr);			
+		}
+	}
+	// END KGU#1045 2022-07-31
+
 	// 
 	/**
 	 * Provisionally imports a SORT statement as some dummy construct ensuring
@@ -6105,7 +6500,7 @@ public class COBOLParser extends CodeParser
 		if (inpProcRed != null) {
 			this.buildPerformCall1(inpProcRed, _parentNode);
 		}
-		Call call = new Call(proc);
+		Call call = new Call(proc);	// No need to register this in totalCallMap
 		call.setColor(Color.RED);
 		this.equipWithSourceComment(call, _reduction);
 		call.getComment().add("PROVISIONALLY IMPORTED FROM:");
@@ -6228,7 +6623,7 @@ public class COBOLParser extends CodeParser
 		}
 		int nClauses = counters.count();
 		if (nClauses == modes.count() && nClauses == subjects.count() && nClauses == afters.count() && nClauses == befores.count()) {
-			Call call = new Call("");
+			Call call = new Call("");	// No need to register this in totalCallMap
 			String hash = Integer.toHexString(call.hashCode());
 			String counter = "counts_" + hash;
 			StringList content = new StringList();
@@ -6359,7 +6754,7 @@ public class COBOLParser extends CodeParser
 			content.add("{" + replacers.reverse().concatenate(", ") + "},\\");
 			content.add("{" + afters.reverse().concatenate(", ") + "},\\");
 			content.add("{" + befores.reverse().concatenate(", ") + "})");
-			Call call = new Call(content);
+			Call call = new Call(content);	// No need to register this in totalCallMap
 			call.setColor(colorMisc);
 			_parentNode.addElement(this.equipWithSourceComment(call, _redInspect));
 			isDone = true;
@@ -6406,7 +6801,7 @@ public class COBOLParser extends CodeParser
 		content.add(replacers + ",\\");
 		content.add(afters.get(0) + ",\\");
 		content.add(befores.get(0) + ")");
-		Call call = new Call(content);
+		Call call = new Call(content);	// No need to register this in totalCallMap
 		call.setColor(colorMisc);
 		_parentNode.addElement(this.equipWithSourceComment(call, _redInspect));
 		isDone = true;
@@ -6968,7 +7363,14 @@ public class COBOLParser extends CodeParser
 
 	private void importMove(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
 		Reduction secRed = _reduction.get(1).asReduction();
-		String expr = this.getContent_R(secRed.get(0).asReduction(), "");
+		int ixExpr = 0;
+		// START KGU#1038 2022-07-28: Bugfix #1044/#1048
+		boolean isCorresponding = secRed.getParent().getTableIndex() == RuleConstants.PROD_MOVE_BODY_CORRESPONDING_TO;
+		if (isCorresponding) {
+			ixExpr++;
+		}
+		// END KGU#1038 2022-07-28
+		String expr = this.getContent_R(secRed.get(ixExpr).asReduction(), "");
 		// FIXME: This doesn't work for array elements - we need an expression list splitter
 		// but what exactly is an expression in a space-separated list looking like "A (I) B (J)"?
 		//String targetString = this.getContent_R(secRed.get(2).asReduction(), "");
@@ -6982,14 +7384,20 @@ public class COBOLParser extends CodeParser
 		//	targets = targetString.split(" ");
 		//}
 		//if (targets.length > 0) {
-		StringList targets = this.getExpressionList(secRed.get(2).asReduction(), "<target_x_list>", RuleConstants.PROD_TARGET_X_COMMA_DELIM);
+		StringList targets = this.getExpressionList(secRed.get(ixExpr+2).asReduction(), "<target_x_list>", RuleConstants.PROD_TARGET_X_COMMA_DELIM);
 		if (targets.count() > 0)
 		{
 			StringList assignments = new StringList();
 			for (int i = 0; i < targets.count(); i++) {
 				String target = targets.get(i).trim();
+				// START KGU#1038 2022-07-28: Bugfix #1044/#1048
+				//if (mCopyFunction.reset(target).matches()) {
+				if (isCorresponding) {
+					addCorrespondingAssignments(expr, target, assignments);
+				}
 				// We must do something to avoid copy() calls on the left-hand side
-				if (mCopyFunction.reset(target).matches()) {
+				else if (mCopyFunction.reset(target).matches()) {
+				// END KGU#1038 2022-07-28
 					assignments.add(mCopyFunction.replaceFirst("delete($1, $2, $3)"));
 					assignments.add(mCopyFunction.replaceFirst(Matcher.quoteReplacement("insert(" + expr) + ", $1, $2)"));
 				}
@@ -7001,6 +7409,26 @@ public class COBOLParser extends CodeParser
 				}
 			}
 			_parentNode.addElement(this.equipWithSourceComment(new Instruction(assignments), _reduction));
+		}
+	}
+
+	// START KGU#1037 2022-07-28: Bugfix #1044/#1048
+	/**
+	 * Special conversion treatment for MOVE CORRESPONDING statements, these must
+	 * be resolved into assignments per component.
+	 * 
+	 * @param source - name of the source record (maybe partially qualified?)
+	 * @param target - name of the target record (maybe partially qualified?)
+	 * @param asgmts - the sequence of assignment lines to be expanded
+	 */
+	private void addCorrespondingAssignments(String source, String target, StringList asgmts) {
+		CobVar srcRec = currentProg.getCobVar(source);
+		CobVar tgtRec = currentProg.getCobVar(target);
+		if (srcRec != null && tgtRec != null) {
+			ArrayList<String[]> compPairs = srcRec.findComponentPairs(tgtRec, false);
+			for (String[] pair: compPairs) {
+				asgmts.add(pair[1] + " <- " + pair[0]);
+			}
 		}
 	}
 
@@ -7191,6 +7619,13 @@ public class COBOLParser extends CodeParser
 			content = this.getContent_R(retRed.get(2).asReduction(), "") + " <- " + content;
 		}
 		Call ele = new Call(content);
+		// START KGU#1043 2022-07-30: Issue #1051
+		String signature = name + "(" + args.count() + ")";
+		if (!this.totalCallMap.containsKey(signature)) {
+			this.totalCallMap.put(signature, new LinkedList<Call>());
+		}
+		this.totalCallMap.get(signature).add(ele);
+		// END KGU#1051 2022-07-30
 		String comment = this.getOriginalText(_reduction, "");
 		if (!callOk) {
 			ele.setColor(Color.RED);
@@ -7247,6 +7682,7 @@ public class COBOLParser extends CodeParser
 		Call statusCheck = null;
 		if (statName != null && currentProg.getCobVar(statName) != null) {
 			statusCheck = new Call(statName + " <- fileStatusToCobol(" + fdName + ")");
+			// There is no need to register this in totalCallMap
 			_parentNode.addElement(statusCheck);
 			if (!this.fileStatusFctAdded) {
 				Root fileStatusFct = new Root();
@@ -7331,7 +7767,7 @@ public class COBOLParser extends CodeParser
 		}
 		if (target != null) {
 			String fnName = "fileRead";	// The default function name
-			// In order to find the best fileRead function we try to get the typ info from root
+			// In order to find the best fileRead function we try to get the type info from root
 			TypeMapEntry typeInfo = root.getTypeInfo().get(target);
 			if (typeInfo != null && typeInfo.isConflictFree()) {
 				String type = typeInfo.getTypes().get(0);
@@ -7349,10 +7785,61 @@ public class COBOLParser extends CodeParser
 				}
 			}
 			// we just ignore the lock clause
+			// START KGU#1042 2022-07-29: Issue #1050 Convert AT END clauses to an alternative
 			Instruction instr = new Instruction(target + " <- " + fnName + "(" + fdName + ")");
-			_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
-			instr.getComment().add(this.getOriginalText(_reduction, ""));
-			addStatusAssignment(_parentNode, fdName);
+			//_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
+			//instr.getComment().add(this.getOriginalText(_reduction, ""));
+			//addStatusAssignment(_parentNode, fdName);
+			Reduction endRed = bodyRed.get(6).asReduction();
+			int endRedId = endRed.getParent().getTableIndex();
+			if (endRedId == RuleConstants.PROD_AT_END || endRedId == RuleConstants.PROD_AT_END2) {
+				// There is an EOF handling - use an Alternative with prior fileEof() test
+				// <at_end> ::= <at_end_clause> <_not_at_end_clause>
+				// <at_end> ::= <not_at_end_clause> <_at_end_clause>
+				int endIx = endRedId == RuleConstants.PROD_AT_END ? 0 : 1;
+				Token atEnd = endRed.get(endIx);
+				Token notEnd = endRed.get(1 - endIx);
+				String cond = "fileEof(" + fdName + ")";
+				if (endIx != 0) {
+					cond = "not " + cond;
+				}
+				Alternative alt = new Alternative(cond);
+				// FIXME: Consider a line breaking
+				alt.getComment().add(this.getOriginalText(_reduction, ""));
+				_parentNode.addElement(alt);
+				if (endIx == 0) {
+					// Place the handling instructions for the EOF case in left (true) branch
+					this.buildNSD_R(atEnd.asReduction().get(1).asReduction(), alt.qTrue);
+					// Place the read instruction(s) into the right (false) branch
+					alt.qFalse.addElement(this.equipWithSourceComment(instr, _reduction));
+					addStatusAssignment(alt.qFalse, fdName);	// or belongs this behind alt?
+					// The second handling of the clause (not EOF) may be empty
+					if (notEnd.asReduction().size() > 0) {
+						// Place the handling instructions for the not-EOF case in right (false) branch
+						this.buildNSD_R(notEnd.asReduction().get(1).asReduction(), alt.qFalse);
+					}
+				}
+				else {
+					// Place the read instruction(s) into the left (not EOF) branch
+					alt.qTrue.addElement(this.equipWithSourceComment(instr, _reduction));
+					addStatusAssignment(alt.qTrue, fdName);	// or belongs this behind alt?
+					// Place the handling instructions for the not-EOF case in left (true) branch
+					this.buildNSD_R(notEnd.asReduction().get(1).asReduction(), alt.qTrue);
+					// The second handling of the clause (EOF) may be empty
+					if (atEnd.asReduction().size() > 0) {
+						// Place the handling instructions for the EOF case in right (false) branch
+						this.buildNSD_R(atEnd.asReduction().get(1).asReduction(), alt.qFalse);
+					}
+				}
+			}
+			else {
+				// No AT END or NOT AT END handling -> Just add the read instruction
+				_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
+				// FIXME: Consider a line breaking
+				instr.getComment().add(this.getOriginalText(_reduction, ""));
+				addStatusAssignment(_parentNode, fdName);
+			}
+			// END KGU#1042 2022-07-29
 			done = true;
 		}
 		return done;
@@ -7448,7 +7935,32 @@ public class COBOLParser extends CodeParser
 			summands1 = this.getExpressionList(secRed.get(0).asReduction(), "<x_list>", RuleConstants.PROD_X_COMMA_DELIM).concatenate(" + ");
 			targetIx = 2;
 			break;
-			// FIXME: There is no idea how to import the remaining ADD statement varieties
+		// START KGU#1038 2022-07-27: Bugfix #1044/#1048 We must handle et least the CORRESPONDING stuff
+		case RuleConstants.PROD_ADD_BODY_CORRESPONDING_TO:
+			/* We will have to construct a kind of sequence over components with corresponding names
+			 * To achieve this, we must identify the record structures of both identifiers.
+			 */
+			summands1 = this.getContent_R(secRed.get(1).asReduction(), "");	// source record id
+			summand2 = this.getContent_R(secRed.get(3).asReduction(), "");	// target record id
+			{
+				CobVar rec1 = currentProg.getCobVar(summands1);
+				CobVar rec2 = currentProg.getCobVar(summand2);
+				if (rec1 != null && rec2 != null) {
+					ArrayList<String[]> compPairs = rec1.findComponentPairs(rec2, true);
+					if (!compPairs.isEmpty()) {
+						StringList content = new StringList();
+						for (String[] qnames: compPairs) {
+							content.add(qnames[1] + " <- " + qnames[1] + " + " + qnames[0]);
+						}
+						_parentNode.addElement(this.equipWithSourceComment(
+								new Instruction(content), _reduction));
+						return;
+					}
+				}
+			}
+			break;
+		// END KGU#1038 2022-07-27
+		// FIXME: There is no idea how to import the remaining ADD statement varieties
 		}
 		StringList targets = null;
 		if (targetIx >= 0) {
@@ -7488,10 +8000,42 @@ public class COBOLParser extends CodeParser
 		int targetIx = 2;
 		String summands1 = this.getExpressionList(secRed.get(0).asReduction(), "<x_list>", RuleConstants.PROD_X_COMMA_DELIM).concatenate(" + ");
 		String summand2 = null;
-		if (secRuleId == RuleConstants.PROD_SUBTRACT_BODY_FROM_GIVING) {
+		// START KGU#1038 2022-07-27: Bugfix #1044/#1048 We must handle et least the CORRESPONDING stuff
+		//if (secRuleId == RuleConstants.PROD_SUBTRACT_BODY_FROM_GIVING) {
+		//	targetIx = 4;
+		//	summand2 = this.getContent_R(secRed.get(2).asReduction(), "");
+		//}
+		switch (secRuleId) {
+		case RuleConstants.PROD_SUBTRACT_BODY_FROM_GIVING: 
 			targetIx = 4;
 			summand2 = this.getContent_R(secRed.get(2).asReduction(), "");
+			break;
+		case RuleConstants.PROD_SUBTRACT_BODY_CORRESPONDING_FROM:
+			/* We will have to construct a kind of sequence over components with corresponding names
+			 * To achieve this, we must identify the record structures of both identifiers.
+			 */
+			summands1 = this.getContent_R(secRed.get(1).asReduction(), "");	// source record id
+			summand2 = this.getContent_R(secRed.get(3).asReduction(), "");	// target record id
+			{
+				CobVar rec1 = currentProg.getCobVar(summands1);
+				CobVar rec2 = currentProg.getCobVar(summand2);
+				if (rec1 != null && rec2 != null) {
+					ArrayList<String[]> compPairs = rec1.findComponentPairs(rec2, true);
+					if (!compPairs.isEmpty()) {
+						StringList content = new StringList();
+						for (String[] qnames: compPairs) {
+							content.add(qnames[1] + " <- " + qnames[1] + " - " + qnames[0]);
+						}
+						_parentNode.addElement(this.equipWithSourceComment(
+								new Instruction(content), _reduction));
+						return;
+					}
+				}
+			}
+			break;
+			// FIXME: Consider further variants
 		}
+		// END KGU#1038 2022-07-27
 		StringList targets = this.getExpressionList(secRed.get(targetIx).asReduction(), "<arithmetic_x_list>", RuleConstants.PROD_TARGET_X_COMMA_DELIM);
 		if (targets.count() > 0) {
 			String lastResult = null;
@@ -7716,6 +8260,7 @@ public class COBOLParser extends CodeParser
 
 	/**
 	 * Builds a loop or Call element from the PERFORM statement represented by {@code _reduction}.
+	 * 
 	 * @param _reduction - the top Reduction of the parsed PERFORM statement
 	 * @param _parentNode - the Subqueue to append the built elements to
 	 * @throws ParserCancelled
@@ -7880,9 +8425,11 @@ public class COBOLParser extends CodeParser
 	/**
 	 * Builds a Call element from the PERFORM statement for {@link RuleConstants#PROD_PERFORM_BODY}
 	 * represented by {@code _reduction}.
+	 * 
 	 * @param _reduction - the top {@link Reduction} of a parsed PERFORM statement
 	 * @param _parentNode - the Subqueue to append the built elements to
 	 * @throws ParserCancelled
+	 * 
 	 * @see {@link #buildPerformCall1(Reduction, Subqueue)}
 	 */
 	private final void buildPerformCall(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
@@ -7893,9 +8440,16 @@ public class COBOLParser extends CodeParser
 		
 	/**
 	 * Builds a Call element for an internal procedure call represented by {@code _reduction}.
+	 * Expected is one of these:
+	 * <ul>
+	 * <li>{@code <perform_procedure> ::= <procedure_name>}</li>
+	 * <li>{@code <perform_procedure> ::= <procedure_name> THRU <procedure_name>}</li>
+	 * </ul>
+	 * 
 	 * @param _reduction - a {@link Reduction} with head {@code <perform_procedure>}
 	 * @param _parentNode - the Subqueue to append the built elements to
 	 * @throws ParserCancelled
+	 * 
 	 * @see {@link #buildPerformCall(Reduction, Subqueue)}
 	 */
 	private final Call buildPerformCall1(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
@@ -7910,10 +8464,12 @@ public class COBOLParser extends CodeParser
 		// export it to a new NSD.
 		StringList content = new StringList();
 		StringList names = new StringList();
+		String[] comment = PERFORM_PROC_COMMENT;
 		if (_reduction.getParent().getTableIndex() == RuleConstants.PROD_PERFORM_PROCEDURE_THRU) {
 			// First get the second name
 			names.add(this.getContent_R(_reduction.get(2).asReduction(), "").trim());
 			_reduction = _reduction.get(0).asReduction();
+			comment = PERFORM_THRU_COMMENT;
 		}
 		names.add(this.getContent_R(_reduction, "").trim());
 		for (int i = 0; i < names.count(); i++) {
@@ -7926,7 +8482,7 @@ public class COBOLParser extends CodeParser
 		}
 		Call dummyCall = new Call(content.reverse());
 		dummyCall.setColor(Color.RED);
-		dummyCall.getComment().add("This was a call of an internal section or paragraph");
+		dummyCall.getComment().add(new StringList(comment));
 		_parentNode.addElement(dummyCall);
 		// Now we register the call(s) for later linking
 		for (int i = names.count() - 1; i >= 0; i--) {
@@ -7960,7 +8516,7 @@ public class COBOLParser extends CodeParser
 		if (subjlRuleId == RuleConstants.PROD_EVALUATE_SUBJECT_LIST_ALSO) {
 			// TODO: merge this with the subsequent case!
 			// This can only be represented by nested alternatives
-			//System.out.println("EVALUATE: PROD_EVALUATE_SUBJECT_LIST_ALSO");
+			//System.o(tj=rWW)2)fRut.println("EVALUATE: PROD_EVALUATE_SUBJECT_LIST_ALSO");
 			StringList subjects = this.getExpressionList(subjlRed, "<evaluate_subject_list>", -1);
 			Reduction otherRed = null;
 			Element elseBranch = null;
@@ -8717,16 +9273,35 @@ public class COBOLParser extends CodeParser
 		// to inspect the prefix of the composed string.)
 		String thruExpr = "";
 		int ruleId = _reduction.getParent().getTableIndex();
-		// If the condition consists of just a qualified name then this may be the result ...
-		if (ruleId == RuleConstants.PROD_QUALIFIED_WORD2 && (_lastSubject == null || _lastSubject.isEmpty())) {
+		// If the condition consists of just a (qualified) name then this may be the result ...
+		// START KGU#1041 2022-07-28: Bugfix #1049 Unreliable conversion of condition names
+		//if (ruleId == RuleConstants.PROD_QUALIFIED_WORD2 && (_lastSubject == null || _lastSubject.isEmpty())) {
+		//	String qualName = this.getContent_R(_reduction, "");
+		//	CobVar var = currentProg.getCobVar(qualName);
+		//	// in case of a condition name resolve the comparison
+		//	if (var != null && var.isConditionName()) {
+		//		qualName = var.getValuesAsExpression(true);
+		//	}
+		//	return qualName;
+		//}
+		if (_lastSubject == null || _lastSubject.isEmpty() 
+				&& (ruleId == RuleConstants.PROD_QUALIFIED_WORD2 
+				|| ruleId == RuleConstants.PROD_WORD_COBOLWORD)) {
 			String qualName = this.getContent_R(_reduction, "");
 			CobVar var = currentProg.getCobVar(qualName);
-			// in case of a condition name resolve the comparison
-			if (var != null && var.isConditionName()) {
-				qualName = var.getValuesAsExpression(true);
+			if (var != null) {
+				if (var.isConditionName()) {
+					qualName = var.getValuesAsExpression(true);
+				}
+				else {
+					qualName = var.getQualifiedName();
+				}
+				if (!qualName.isEmpty()) {
+					return qualName;
+				}
 			}
-			return qualName;
 		}
+		// END KGU#1041 2022-07-28
 
 		if (ruleId == RuleConstants.PROD_EVALUATE_OBJECT) {
 			Reduction thruRed = _reduction.get(1).asReduction();
@@ -8763,6 +9338,7 @@ public class COBOLParser extends CodeParser
 						CobVar var = currentProg.getCobVar(_lastSubject);
 						if (var != null) {
 							if (var.isConditionName()) {
+								// May we actually ignore the associated expression?
 								_lastSubject = var.getParent().getQualifiedName();
 							}
 							else {
@@ -9009,7 +9585,7 @@ public class COBOLParser extends CodeParser
 
 	/**
 	 * Recursively converts the substructure of {@link Reduction} {@code _reduction} into a target code string
-	 * and appens it to the given string {@code _content}.
+	 * and appends it to the given string {@code _content}.
 	 * @param _reduction - the current {@link Reduction} object
 	 * @param _content - previous content the string representation of {@code _reduction} is to be appended to.
 	 * @param _separator - a separator string to be put among sub-token results
@@ -9131,6 +9707,12 @@ public class COBOLParser extends CodeParser
 					}
 					_content += " copy(" + qualName + ", " + startStr +  ", " + lengthStr + ") ";
 				}
+				// START KGU#1045 2022-07-31: Bugfix #1052 Caused undue additional commas in output list
+				// FIXME Why was _separator inserted for, at all? Seems it was for ADD, MULTIPLY etc. with " " sepa.
+				else if (!_separator.isBlank() && _content.isEmpty()) {
+					_content = qualName;
+				}
+				// END KGU#1045 2022-07-31
 				else {
 					_content += _separator + qualName;
 				}
@@ -9447,10 +10029,10 @@ public class COBOLParser extends CodeParser
 
 	// START KGU#388 2017-10-03: Enh.#423
 	/**
-	 * Generates the necessary tye definitions, constant definitions and variable declarations (initialization
-	 * inclusive if available) for the variables link with {@code varRoot}, which is supposed to be the first
+	 * Generates the necessary type definitions, constant definitions and variable declarations (initialization
+	 * inclusive if available) for the variables linked with {@code varRoot}, which is supposed to be the first
 	 * top-level variable of a {@link CobProg} context.
-	 * @param varRoot - the root of the varaible tree
+	 * @param varRoot - the root of the variable tree
 	 * @param localNode - the insertion node for internal definitions (supposedly in {@link COBOLParser#root})
 	 */
 	private void buildDataSection(CobVar varRoot, Subqueue localNode)
@@ -9614,6 +10196,7 @@ public class COBOLParser extends CodeParser
 	 * If {@code var} is of a primitive type then no type definition element will be created. If {@code var} represents
 	 * a COBOL table (i.e. an array) then the defined type represents the element type, not the entire array; the
 	 * returned typename will contain the index range though (in Java notation, for the sake of simplicity and shortness).
+	 * 
 	 * @param var - the variable enry recursively to be modelled with record type definitions if structured.
 	 * @param externalNode - the target {@link Subqueue} for external definitions
 	 * @param globalNode - the target {@link Subqueue} for global definitions
@@ -9658,17 +10241,19 @@ public class COBOLParser extends CodeParser
 			else {
 				localNode.addElement(instr);
 			}
-			// START KGU#674 2019-03-04: Bugfix #695 - this seemed to be misplaced - put out of the branch
-			//if (var.isArray()) {
-			//	typeName += "[" + var.getOccursString() + "]";
-			//}
-			// END KGU#674 2019-03-04
+			// START KGU#674/KGU#1046 2022-07-31: Bugfix #1053 fix #695 reverted (code reactivated)
+			if (var.isArray()) {
+				typeName += "[" + var.getOccursString() + "]";
+			}
+			// END KGU#674/#1046 2022-07-31
 		}
-		// START KGU#674 2019-03-04: Bugfix #695 Arrays of basic types weren't reflected
-		if (var.isArray()) {
-			typeName += "[" + var.getOccursString() + "]";
-		}
-		// END KGU#674 2019-03-04
+		// START KGU#674/KGU#1046 2022-07-31: Bugfix #1053 fix #695 reverted (was in wrong place)
+//		// START KGU#674 2019-03-04: Bugfix #695 Arrays of basic types weren't reflected
+//		if (var.isArray()) {
+//			typeName += "[" + var.getOccursString() + "]";
+//		}
+//		// END KGU#674 2019-03-04
+		// END KGU#674/#1046 2022-07-31
 		return typeName;
 	}
 
@@ -9731,6 +10316,82 @@ public class COBOLParser extends CodeParser
 
 	//------------------------- Postprocessor ---------------------------
 
+	// START KGU#1043 2022-07-29: Issue #1051
+	/**
+	 * Internal Element visitor class for the detection of diagrams (or subtrees)
+	 * without executable elements.
+	 * @author Kay Gürtzig
+	 */
+	final static class ExpendabilityVisitor implements IElementVisitor {
+
+		private boolean canWork = false;
+		
+		@Override
+		public boolean visitPreOrder(Element _ele) {
+			if (!(_ele instanceof Root) && !(_ele instanceof Subqueue) && !_ele.isDisabled(false)) {
+				canWork = true;
+			}
+			return !canWork;
+		}
+
+		@Override
+		public boolean visitPostOrder(Element _ele) {
+			return !canWork;
+		}
+		
+		/**
+		 * @return the decision result of the traversal ({@code true} if no undisabled
+		 * executable element was found).
+		 */
+		public boolean isExpendable() {
+			return !canWork;
+		}
+	}
+	
+	// The need for the following class was avoided by registering on creation
+//	/**
+//	 * Internal Element visitor class for the mapping of Calls contained in a diagram
+//	 * to their signature, allowing to find al Call elements for certain signature.
+//	 * @author Kay Gürtzig
+//	 */
+//	final static class CallFinder implements IElementVisitor {
+//		
+//		private HashMap<String, LinkedList<Call>> callMap = new HashMap<String, LinkedList<Call>>();
+//
+//		@Override
+//		public boolean visitPreOrder(Element _ele) {
+//			if (_ele instanceof Call) {
+//				int nLines = _ele.getUnbrokenText().count();
+//				for (int i = 0; i < nLines; i++) {
+//					Function fn = ((Call)_ele).getCalledRoutine(i);
+//					if (fn != null && fn.isFunction()) {
+//						String signature = fn.getSignatureString();
+//						if (!callMap.containsKey(signature)) {
+//							callMap.put(signature, new LinkedList<Call>());
+//						}
+//						callMap.get(signature).add((Call)_ele);
+//					}
+//				}
+//			}
+//			return true;
+//		}
+//
+//		@Override
+//		public boolean visitPostOrder(Element _ele) {
+//			return true;
+//		}
+//		
+//		/**
+//		 * @return the map of procedure signatures to Calls contained in the
+//		 * traversed diagram subtree.
+//		 */
+//		public HashMap<String, LinkedList<Call>> getCallMap() {
+//			return callMap;
+//		}
+//		
+//	}
+	// END KGU#1043 2022-07-29
+	
 	// TODO Use this subclassable hook if some postprocessing for the generated roots is necessary
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.parsers.CodeParser#subclassUpdateRoot(lu.fisch.structorizer.elements.Root, java.lang.String)
@@ -9759,6 +10420,12 @@ public class COBOLParser extends CodeParser
 //				aRoot.addToIncludeList(externalRoot);
 //			}
 		}
+		// START KGU#1043 2022-07-30: Issue #1051 register void subroutines
+		if (aRoot.isSubroutine() && this.isExpendable(aRoot)) {
+			System.out.println(aRoot + " added to expendable roots.");
+			expendableSubs.add(aRoot);
+		}
+		// END KGU#1043 2022-07-30
 		// Force returning of the specified result
 		if (this.returnMap.containsKey(aRoot)) {
 			String resultVar = this.returnMap.get(aRoot);
@@ -9851,13 +10518,24 @@ public class COBOLParser extends CodeParser
 					}
 					// END KGU#464 2017-12-03
 					// START KGU#849 2020-04-20: Issue #851/5 add the proc call to all open span calls
-					for (StringList procList: thruCallMap.values()) {
+					// START KGU#1043 2022-07-29: Issue #1051 Preparation for cleanup
+					//for (StringList procList: thruCallMap.values()) {
+					//	// FIXME: Possibly this should be reduced to certain sop level?
+					//	procList.add(callText);
+					//}
+					for (Map.Entry<Call, StringList> entry: thruCallMap.entrySet()) {
 						// FIXME: Possibly this should be reduced to certain sop level?
-						procList.add(callText);
+						entry.getValue().add(callText);
 					}
+					// END KGU#1043 2022-07-29
 					// END KGU#849 2020-04-20
 					// Both the original proc text (now overwritten) and the replacingCall text contain
 					// no arguments anymore, so we don't need to check whether we got all declarations
+					// START KGU#1043 2022-07-28: Bugfix #1051
+					if (clients == null) {
+						clients = new LinkedList<Call>();
+					}
+					// END KGU#1043 2022-07-28
 					for (Call client: clients) {
 						// We may have to care for an includable Root that defines all necessary variables
 						// START KGU#849 2020-04-20: Issue #851/5
@@ -9944,8 +10622,161 @@ public class COBOLParser extends CodeParser
 			this.addAllRoots(declaredGlobals.keySet());
 		}
 		// END KGU#376 2017-10-19
+		
+		// START KGU#1043 2022-07-29: Issue #1051 Tidy up?
+		tidyUpMultilineCalls();
+		// END KGU#1043 2022-07-29
+	}
+
+	// START KGU#1043 2022-07-29: Issue #1051 Tidy up?
+	/**
+	 * Checks via option"tidyupPerformThru" whether multi-line calls resulting e.g. from
+	 * PERFORM THRU statements may be tidied up and if so tries it. May remove routine
+	 * diagrams from the subRoot list.
+	 */
+	private void tidyUpMultilineCalls() {
+		String tidyMode = (String)this.getPluginOption("tidyupPerformThru", "tidy calls and routines");
+		if (!tidyMode.equals("don't tidy")) {
+			boolean tidySubs = tidyMode.equals("tidy calls and routines");
+			HashSet<Call> thruCalls = new HashSet<Call>();
+			for (SectionOrParagraph sop: this.procedureList) {
+				//System.out.println("Routine " + sop.name + ":");
+				LinkedList<Call> clients = this.internalCalls.get(sop.name.toLowerCase());
+				if (clients != null) {
+					thruCalls.addAll(clients);
+				}
+			}
+			StringList thruComment = new StringList(PERFORM_THRU_COMMENT);
+			for (Call call: thruCalls) {
+				Element parent = call.parent;
+				if (parent instanceof Subqueue) {
+					Subqueue sq = (Subqueue)parent;
+					int pos = sq.getIndexOf(call);
+					int lineNo = call.comment.indexOf(thruComment, 0, true);
+					if (lineNo >= 0) {
+						call.comment.remove(lineNo + 1, lineNo + thruComment.count());
+					}
+					StringList callLines = call.getUnbrokenText();
+					Color elCol = call.getColor();
+					//System.out.println("Tidying call " + callLines.concatenate(" / "));
+					call.setText(callLines.get(0));
+					for (int i = callLines.count()-1; i > 0; i--) {
+						String line = callLines.get(i);
+						Root sub = getSubRoot(line);
+						if (sub != null && sub.isSubroutine() && !isExpendable(sub)) {
+							Call partCall = new Call(line);
+							partCall.setColor(elCol);
+							sq.insertElementAt(partCall, pos+1);
+							// Register the call for potential tidying of routines
+							String signature = partCall.getSignatureString();
+							LinkedList<Call> callList = this.totalCallMap.get(signature);
+							if (callList == null) {
+								this.totalCallMap.put(signature, callList = new LinkedList<Call>());
+							}
+							else {
+								callList.remove(call);
+							}
+							callList.add(partCall);
+						}
+						else if (sub != null) {
+							expendableSubs.add(sub);
+						}
+					}
+					Root sub = getSubRoot(callLines.get(0));
+					if (sub == null || isExpendable(sub)) {
+						((Subqueue)parent).removeElement(pos);
+						if (sub != null) {
+							expendableSubs.add(sub);
+						}
+					}
+				}
+			}
+			for (Root sub: expendableSubs) {
+				if (!tidySubs || removeRoot(sub)) {
+					//System.out.println("Subroutine " + sub.getSignatureString(false, false) + " removed.");
+					String subName = sub.getMethodName();
+					String signature = sub.getSignatureString(false, false);
+					/* First we check calls registered as internal calls (this may be redundant because
+					 * the subsequent loop over the total Call map subsumes it, but we don't know for sure)
+					 */
+					LinkedList<Call> calls = this.internalCalls.get(subName.toLowerCase());
+					if (calls != null) {
+						// These calls don't refer to the removed root but to the start of the actual procedure
+						for (Call call: calls) {
+							// So we look fo the matching Call among the next elements on the same level
+							Subqueue sq = (Subqueue)call.parent;
+							int pos = sq.getIndexOf(call) + 1;
+							for (; pos < sq.getSize(); pos++) {
+								Element el = sq.getElement(pos);
+								Function fn = null;
+								if (el instanceof Call
+									&& (fn = ((Call)el).getCalledRoutine()) != null
+									&& fn.isFunction()
+									&& signature.equals(fn.getSignatureString())) {
+									//System.out.println("\tDisabling call " + el + " in " + Element.getRoot(call));
+									el.setDisabled(true);
+									el.getComment().add(WAS_REDUNDANT_CALL);
+									break;
+								}
+							}
+						}
+					}
+					calls = this.totalCallMap.get(signature);
+					if (calls != null) {
+						for (Call call: calls) {
+							StringList brokenText = call.getBrokenText();
+							if (!call.isDisabled(true) && brokenText.count() > 1) {
+								// Multi-line call (unlikely!): find the line and remove it
+								for (int i = 0; i < brokenText.count(); i++) {
+									Function fn = call.getCalledRoutine(i);
+									if (fn != null && fn.isFunction() && signature.equals(fn.getSignatureString())) {
+										int lineNo = 0; // True line number
+										for (int j = 0; j < i; j++) {
+											lineNo += brokenText.get(j).split("\\n", -1).length;
+										}
+										call.getText().remove(lineNo, lineNo + brokenText.get(i).split("\n", -1).length);
+										call.getComment().add(WAS_REDUNDANT_CALL);
+									}
+								}
+							}
+							else if (signature.matches(".*exit.*") && tidySubs) {
+								/* Routines with name containing "exit" are usually
+								 * the dummy result of a labelled EXIT statement.
+								 * They can be removed without trace.
+								 */
+								Subqueue sq = (Subqueue)call.parent;
+								if (sq.removeElement(call)) {
+									//System.out.println("\tCall " + call + " in " + Element.getRoot(call) + " removed.");
+								}
+							}
+							else if (!call.isDisabled(true)) {
+								// Better only disable it such that the user gets a clue what happened
+								//System.out.println("\tDisabling call " + call + " in " + Element.getRoot(call));
+								call.setDisabled(true);
+								call.getComment().add(WAS_REDUNDANT_CALL);
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 	// END KGU 2017-05-28
+	
+	// START KGU#1043 2022-07-29: Issue #1051
+	/**
+	 * Checks whether the given Root does not contain any executable element
+	 * @param root - the diagram to be checked
+	 * @return {@code true} if the routine can't do anything substantial
+	 */
+	public boolean isExpendable(Root root)
+	{
+		// FIXME this is a somewhat rough approach, just checks disabled status
+		ExpendabilityVisitor visitor = new ExpendabilityVisitor();
+		root.children.traverse(visitor);
+		return visitor.isExpendable();
+	}
+	// END KGU#1043 2022-07-29
 
 	/**
 	 * Extracts the COBOL section or paragraph comprised by {@code sop} from its {@link Subqueue}
@@ -9980,6 +10811,13 @@ public class COBOLParser extends CodeParser
 		Call replacingCall = new Call(callText);
 		sop.parent.insertElementAt(replacingCall, sop.startsAt);
 		sop.endsBefore++;
+		// START KGU#1043 2022-07-30: Issue #1051
+		String signature = replacingCall.getSignatureString();
+		if (!this.totalCallMap.containsKey(signature)) {
+			this.totalCallMap.put(signature, new LinkedList<Call>());
+		}
+		this.totalCallMap.get(signature).add(replacingCall);
+		// END KGU#1051 2022-07-30
 		// Has the owner Root still shareable data at its beginning? Then outsource them...
 		extractShareableData(owner);
 		// If the owner has a mapped includable let the new proc include it as well
@@ -10218,6 +11056,9 @@ class CobTools {
 		private CobVar linkageStorage = null;
 		private CobVar screenStorage = null;
 		private CobVar reportStorage = null;
+		// START KGU#1039 2022-07-28: Bugfix #1044/#1048
+		private CobVar fileStorage = null;
+		// END KGU#1039 2022-07-28
 
 		private Storage currentStorage = Storage.STORAGE_UNKNOWN;
 
@@ -10242,6 +11083,16 @@ class CobTools {
 			lastVar = null;
 		}
 
+		/**
+		 * Adds {@code variable} to the current storage partition and updates the {@link #varNames}
+		 * look-up table accordingly.
+		 * 
+		 * @param variable - the new {@link CobVar} entity to be added
+		 * 
+		 * @see #currentStorage
+		 * @see #setCurrentStorage(Storage)
+		 * @see #getCobVar(String)
+		 */
 		public void insertVar(CobVar variable) {
 
 			/* store first entry in current storage enabling iterations later */
@@ -10276,7 +11127,11 @@ class CobTools {
 				}
 				break;
 			case STORAGE_FILE:
-				// TODO add handling - per file
+				// START KGU#1039 2022-07-28: Bugfix #1044/#1048
+				if (fileStorage == null) {
+					fileStorage = variable;
+				}
+				// END KGU#1039 2022-07-28
 				break;
 			}
 
@@ -10301,10 +11156,12 @@ class CobTools {
 		}
 
 		/**
-		 * @param name
-		 * @param extName
-		 * @param isFunction
-		 * @param parent
+		 * Produces a new program entity with name {@code name} and external name {@code extName}
+		 * 
+		 * @param name - internal (true) name
+		 * @param extName - external name
+		 * @param isFunction - whether this procedural entity is a function
+		 * @param parent - the parent program entity, or {@code null} if there isn't any
 		 */
 		public CobProg(String name, String extName, boolean isFunction, CobProg parent) {
 			this.name = name;
@@ -10322,59 +11179,99 @@ class CobTools {
 		}
 
 		/**
-		 * @return the child
+		 * @return the child program entity if there is any (may be {@code null})
+		 * 
+		 * @see #getSister()
+		 * @see #setChild(CobProg)
 		 */
 		public CobProg getChild() {
 			return child;
 		}
 		/**
-		 * @param child the child to set
+		 * @param child - the child program entity to be set
+		 * 
+		 * @see #getChild()
 		 */
 		public void setChild(CobProg child) {
 			this.child = child;
 		}
 		/**
-		 * @return the sister
+		 * @return the sibling program entity if there is any (may be {@code null})
+		 * 
+		 * @see #getChild()
+		 * @see #setSister(CobProg)
 		 */
 		public CobProg getSister() {
 			return sister;
 		}
 		/**
-		 * @param sister the sister to set
+		 * @param sister - the sibling program entity to be set
+		 * 
+		 * @see #getSister()
 		 */
 		public void setSister(CobProg sister) {
 			this.sister = sister;
 		}
 		/**
-		 * @return the workingStorage
+		 * @return the workingStorage (i.e., its root {@link CobVar} node)
+		 * 
+		 * @see #setCurrentStorage(Storage)
 		 */
 		public CobVar getWorkingStorage() {
 			return workingStorage;
 		}
 		/**
-		 * @return the localStorage
+		 * @return the localStorage (i.e., its root {@link CobVar} node)
+		 * 
+		 * @see #setCurrentStorage(Storage)
 		 */
 		public CobVar getLocalStorage() {
 			return localStorage;
 		}
 		/**
-		 * @return the linkageStorage
+		 * @return the linkageStorage (i.e., its root {@link CobVar} node)
+		 * 
+		 * @see #setCurrentStorage(Storage)
 		 */
 		public CobVar getLinkageStorage() {
 			return linkageStorage;
 		}
 		/**
-		 * @return the screenStorage
+		 * @return the screenStorage (i.e., its root {@link CobVar} node)
+		 * 
+		 * @see #setCurrentStorage(Storage)
 		 */
 		public CobVar getScreenStorage() {
 			return screenStorage;
 		}
 		/**
-		 * @return the reportStorage
+		 * @return the reportStorage (i.e., its root {@link CobVar} node)
+		 * 
+		 * @see #setCurrentStorage(Storage)
 		 */
 		public CobVar getReportStorage() {
 			return reportStorage;
 		}
+		// START KGU#1039 2022-07-28: Bugfix #1044/#1048
+		/**
+		 * @return the reportStorage (i.e., its root {@link CobVar} node)
+		 * 
+		 * @see #setCurrentStorage(Storage)
+		 * @see #clearFileStorage()
+		 */
+		public CobVar getFileStorage() {
+			return fileStorage;
+		}
+		/**
+		 * Empties the fileStorage (which is only used on a file declaration base)
+		 * 
+		 * @see #getFileStorage()
+		 */
+		public void clearFileStorage() {
+			fileStorage = null;
+		}
+		// END KGU#1039 2022-07-28
+		
 		/**
 		 * @return the name
 		 */
@@ -10382,13 +11279,13 @@ class CobTools {
 			return name;
 		}
 		/**
-		 * @return the extName
+		 * @return the external name
 		 */
 		public String getExtName() {
 			return extName;
 		}
 		/**
-		 * @return true if this represents a function, false otherwies
+		 * @return {@code true} if this represents a function, {@code false} otherwise
 		 */
 		public boolean isFunction() {
 			return isFunction;
@@ -10400,6 +11297,14 @@ class CobTools {
 			return parent;
 		}
 
+		/**
+		 * Retrieves the {@link CobVar} referred to by the given {@code nameOfVar} if
+		 * unambiguous in this program entity
+		 * 
+		 * @param nameOfVar - the variable name (may be partially qualified)
+		 * @return the corresponding {@link CobVar} object if found, or {@code null} (if
+		 *     unknown or ambiguous)
+		 */
 		public CobVar getCobVar(String nameOfVar) {
 
 			if (varNames == null || nameOfVar == null || nameOfVar.isEmpty()) {
@@ -10430,7 +11335,7 @@ class CobTools {
 			// search for List of variables with the given (unqualified) name
 			ArrayList<CobVar> varList = varNames.get(names[0]);
 
-			// if the entry exists check for neccessary qualification
+			// if the entry exists then check for neccessary qualification
 			if (varList == null) {
 				return null;
 			}
@@ -10484,7 +11389,12 @@ class CobTools {
 	//private static CobVar lastRealVar;
 	private int fillerCount = 0;
 
-
+	/**
+	 * Represents a node in a recursively defined COBOL data structure, this may be a variable,
+	 * a record component, eithar scalar or an array.<br/>
+	 * It is named, holds its COBOL structure level, and (as far as existent) references to the
+	 * parent node, the first child node, and the next sibling node as well as type information.
+	 */
 	class CobVar {
 
 		/** level of COBOL field */
@@ -10584,8 +11494,12 @@ class CobTools {
 
 		/**
 		 * In case of a condition name returns a Boolean expression suited for comparison
-		 * @param fullyQualified TODO
-		 * @return the valuesAsExpression
+		 * (which will also be cached in {@link #valuesAsExpression} if it hadn't been before),
+		 * otherwie an empty string.
+		 * 
+		 * @param fullyQualified - whether the variable access is to be fully qualified in the
+		 *     expression
+		 * @return the resulting content of {@link #valuesAsExpression}, may be empty
 		 */
 		public String getValuesAsExpression(boolean fullyQualified) {
 			if (this.valuesAsExpression == null) {
@@ -10715,9 +11629,10 @@ class CobTools {
 		 * null.
 		 * @param separator - the separator string to be put between two value strings
 		 * @param defaultString - a string that is to be placed for unset element values. If null then
-		 * missing values at the end (less value stored than elements declared) will be omitted, missing
-		 * value inbetween will produce an empty item.		 *
+		 *     missing values at the end (less value stored than elements declared) will be omitted, missing
+		 *     value inbetween will produce an empty item.		 *
 		 * @return a String composed of the value strings separated by {@code searator} or null!
+		 * 
 		 * @see #isArray()
 		 * @see #getValueFirst()
 		 * @see #getValuesAsExpression()
@@ -10860,15 +11775,15 @@ class CobTools {
 
 		/**
 		 * General constructor<br/>
-		 * Use {@link #setIndexedBy(CobVar)} afterwards to if in case of a table (array) an index variable was specified
-		 * @param level COBOL level number
-		 * @param name
-		 * @param picture
-		 * @param usage
+		 * Use {@link #setIndexedBy(CobVar)} afterwards if in case of a table (array) an index variable was specified
+		 * @param level - COBOL level number
+		 * @param name - Variable or component name (may be {@code null} in case of a filler
+		 * @param picture - the PIC definition (if declared this way, {@code null} or empty othewise)
+		 * @param usage - a usage type
 		 * @param redefines
 		 * @param isGlobal
 		 * @param isExternal
-		 * @param anyLength
+		 * @param anyLength - the number of elements in case of an array
 		 * @param times - the maximum number of occurrences of this component (array elements)
 		 * @param timesString - the (transformed) expression from which the {@code times} value was computed
 		 */
@@ -10899,6 +11814,9 @@ class CobTools {
 				// this.name += "_$" + fillerCount;
 				this.name += "_" + String.format("%1$02d", CobTools.this.fillerCount);
 				// END KGU#388_2017-10-04
+				// START KGU#1038 2022-07-28: Bugfix #1044/#1048
+				this.isFiller = true;
+				// END KGU#1038 2022-07-28
 			}
 			if (picture != null && !picture.isEmpty()) {
 				this.picture = picture.trim();
@@ -11210,9 +12128,9 @@ class CobTools {
 		 * Returns a fully qualified variable name for this CobVar (i.e. the complete
 		 * dot-separated path for a component of a record). This is needed for Structorizer.
 		 * For levels representing a table (array) there will be a placeholder "[%i]" next
-		 * the the respective component name (where i = 1...n is the index level from top
+		 * to the respective component name (where i = 1...n is the index level from top
 		 * to bottom), such that "%i" can be replaced by the respective i-th index expression.
-		 * @return fully qualified name (e.g. "top.foo.bar").
+		 * @return fully qualified name (e.g. "top.foo.bar" or "top.foo[%0].bar").
 		 */
 		public String getQualifiedName() {
 			String qualName = this.forceName();
@@ -11239,14 +12157,14 @@ class CobTools {
 		// END KGU 2017-06-26
 
 		/**
-		 * @return the parent
+		 * @return the parent (if there is any, otherwise {@code null})
 		 */
 		public CobVar getParent() {
 			return this.parent;
 		}
 
 		/**
-		 * @return the redefines
+		 * @return the redefines for this if theer is any
 		 */
 		public CobVar getRedefines() {
 			return this.redefines;
@@ -11277,6 +12195,81 @@ class CobTools {
 		public boolean isAnyNumeric() {
 			return (this.anyLength == 2);
 		}
+
+		// START KGU#1038 2022-07-27: Bugfix #1044/#1048 Find corresponding subcomponents
+		/**
+		 * Finds corresponding (sub-)compoonents between this and the passed-in second ConVar
+		 * and returns their path pairs (qualified names) as Strings.
+		 * 
+		 * @param var2 - the second variable supposed to be of record type (i.e. structured)
+		 * @param numericOnly - if {@code true} then only scalar numeric components will be
+		 *     yielded (otherwise simply the types must be assignment-compatible
+		 * @return an {@link ArrayList} of pairs of quaified component names
+		 */
+		public ArrayList<String[]> findComponentPairs(CobVar var2, boolean numericOnly) {
+			ArrayList<String[]> pathPairs = new ArrayList<String[]>();
+			addComponentPairs(var2, pathPairs, numericOnly, true);
+			return pathPairs;
+		}
+		
+		/**
+		 * Recursive subroutine for {@link #findComponentPairs(CobVar, boolean)}
+		 * @param var2 -the second variable supposed to be of record type (i.e. structured)
+		 * @param paths - The list of path pairs recursively to be filled
+		 * @param numericOnly - if {@code true} then only scalar numeric components will be
+		 *     yielded (otherwise simply the types must be assignment-compatible
+		 * @param atTop - if {@code true} then the given {@link CobVar}s themselves will not
+		 *     be considered as corresponding components.
+		 */
+		private void addComponentPairs(CobVar var2, ArrayList<String[]> paths, boolean numericOnly, boolean atTop) {
+			/* In case of numericOnly we add the paths of all numeric components with
+			 * same name it this level and recursively delve into the subtrees for all
+			 * structured components.
+			 * Otherwise we check whether all homonym child pairs have same type / structure
+			 * and if so, we return the path of the root CobVars themselves instead of
+			 * the children and don't descend.
+			 */
+			if (this.level == 88 || var2.level == 88 /* only condition names */
+					|| var2.level == 78 /* target is constant */) {
+				return;
+			}
+			CobVar child1 = this.child;
+			if (child1 == null && !var2.hasChild()) {
+				if (!this.isFiller() && !var2.isFiller()) {
+					if (numericOnly) {
+						if (!atTop && this.isNumeric() && var2.isNumeric()) {
+							paths.add(new String[] {this.getQualifiedName(), var2.getQualifiedName()});
+						}
+					}
+					// The following does not make sense as different CobVars can't have a comon type name
+					//String typeName1 = this.deriveTypeName();
+					//String typeName2 = var2.deriveTypeName();
+					//if (typeName1.equals(typeName2)) {
+					//	// Rather unlikely in COBOL...
+					//	paths.add(new String[] {this.getQualifiedName(), var2.getQualifiedName()});
+					//	return;
+					//}
+					else if (this.usage == var2.usage) {
+						paths.add(new String[] {this.getQualifiedName(), var2.getQualifiedName()});
+					}
+				}
+				return;
+			}
+			else {
+				while (child1 != null) {
+					String cname = child1.getName();
+					CobVar child2 = var2.getChild();
+					while (child2 != null) {
+						if (cname.equals(child2.getName())) {
+							child1.addComponentPairs(child2, paths, numericOnly, false);
+						}
+						child2 = child2.getSister();
+					}
+					child1 = child1.getSister();
+				}
+			}
+		}
+		// END KGU#1038 2022-07-27
 
 	}
 
@@ -11420,11 +12413,15 @@ class CobTools {
 	 * Returns the Java type of a given CobVar depending on its attributes including
 	 * usage, picture and length.<br/>
 	 * Note that in case of an array only the ELEMENT TYPE String will be returned
-	 * unless {@code withArraySize} is set!
-	 * @param CobVar - variable (or component) to return the type string for
-	 * @param withArraySize - if in case of a table (array) the array size is to be appended as {@code [<size>]}.
-	 * @return Java type representation as string, may be {@link #UNKNOWN_TYPE} in case of an unset usage
-	 * if "string" and "long" can be excluded.
+	 * <b>unless</b> {@code withArraySize} is set!
+	 * 
+	 * @param variable - variable (or component) to return the type string for
+	 * @param withArraySize - if in case of a table (array) the array size is to be
+	 *     appended as {@code [<size>]}.
+	 * @return Java type representation as string, may be {@link #UNKNOWN_TYPE} (or
+	 *     {@link #UNKNOWN_TYPE}{@code [<size>]} in case of an unset usage and if
+	 *     both "string" and "long" can be excluded.
+	 * 
 	 * @see CobVar#isArray()
 	 * @see CobVar#getArraySize()
 	 * @see #getTypeName(CobVar, boolean)
@@ -11461,9 +12458,12 @@ class CobTools {
 		case USAGE_LENGTH:
 			return "integer" + arraySuffix;
 		case USAGE_DISPLAY:
-			// Note: this isn't "correct" as String (and char) are already 16-bit Unicode types
+			// Note: this isn't "correct" since String (and char) are already 16-bit Unicode types
 			// CHECKME: maybe return char[picsize]
-			return "String";
+			// START KGU#674/KGU#1046 2022-07-31: Bugfix #695/#1053 String arrays weren't properly represented
+			//return "String";
+			return "String" + arraySuffix;
+			// END KGU#674/KGU#1046 2022-07-31
 		case USAGE_NATIONAL:
 			// CHECKME: maybe return char[picsize]
 			//return "String";
@@ -11519,13 +12519,19 @@ class CobTools {
 			}
 		case USAGE_NOT_SET:
 			if (variable.isAnyLength()) {
-				return "String";
+				// START KGU#674/KGU#1046 2022-07-31: Bugfix #695/#1053 String arrays weren't properly represented
+				//return "String";
+				return "String" + arraySuffix;
+				// END KGU#674/KGU#1046 2022-07-31
 			} else if (variable.isAnyNumeric()) {
 				return "long" + arraySuffix;
 			} else {
 				// CHECKME: does this happen? if not raise a warning or at least log a warning
 				//return "";
-				return UNKNOWN_TYPE;
+				// START KGU#674/KGU#1046 2022-07-31: Bugfix #695/#1053 String arrays weren't properly represented
+				//return UNKNOWN_TYPE;
+				return UNKNOWN_TYPE + arraySuffix;
+				// END KGU#674/KGU#1046 2022-07-31
 			}
 		// we explicitly don't want a default, allowing to check if all USAGEs have a value assigned
 		}
@@ -11541,20 +12547,24 @@ class CobTools {
 	 * This method is nearly identical to {@link #getTypeString(CobVar, boolean)} except
 	 * that it derives a new type name from the variable name in cases the latter
 	 * would return the {@value #UNKNOWN_TYPE} string.
+	 * 
 	 * @param CobVar - variable (or component) to return the type string for
 	 * @param withArraySize - if in case of a table (array) the array size is to be appended as {@code [<size>]}.
 	 * @return Java type representation as string
+	 * 
 	 * @see CobVar#isArray()
 	 * @see CobVar#getArraySize()
 	 * @see #getTypeString(CobVar, boolean)
 	 */
 	public static String getTypeName (CobVar variable, boolean withArraySize) {
 		String typeName = getTypeString(variable, withArraySize);
-		if (typeName.equals(UNKNOWN_TYPE)) {
+		if (typeName.equals(UNKNOWN_TYPE) || variable.isArray() && typeName.startsWith(UNKNOWN_TYPE)) {
 			typeName = variable.deriveTypeName();
 		}
 		return typeName;
 	}
 	// END KGU#465 2017-12-04
+	
+
 
 }

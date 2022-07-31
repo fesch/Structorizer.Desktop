@@ -73,7 +73,7 @@
 
 "About"   = 'Originally created in 1960, COBOL (COmmon Business Oriented Language)'
           | 'is one of the top 5 most popular languages in use today. COBOL was designed'
-          | 'to be self-documenting by using a structure simular to basic English.'
+          | 'to be self-documenting by using a structure similar to basic English.'
           | ''
           | 'This is the main grammar of GnuCOBOL cobc/parser.y, combined with cobc/scanner.l. '
           | ' Copyright (C) 2001-2012, 2014-2017 Free Software Foundation, Inc.'

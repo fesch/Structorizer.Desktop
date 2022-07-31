@@ -1109,6 +1109,12 @@ public class Root extends Element {
 	// END KGU 2015-10-13
 	
 	// START KGU#306 2016-12-12: Enh. #306
+	/**
+	 * @return {@code true} iff this diagram has no text (or just only "???"), no comment,
+	 *     no element and neither undo nor redo history.
+	 * 
+	 * 
+	 */
 	public boolean isEmpty()
 	{
 		String txt = this.text.concatenate().trim();

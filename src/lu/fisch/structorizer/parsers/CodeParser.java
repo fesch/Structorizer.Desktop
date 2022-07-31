@@ -52,6 +52,8 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2020-03-08      Issue #833: Modified API for new mechanism to get rid of superfluous roots
  *      Kay Gürtzig     2020-03-09      Issue #835: New import option and method for insertion of structure preference keywords
  *      Kay Gürtzig     2020-04-24      Method cleanComment() improved (indentation trimmed, empty lines dropped)
+ *      Kay Gürtzig     2022-07-20      Enh. #1046: Decoding mechanism for token names to actual symbols
+ *      Kay Gürtzig     2022-07-29      Issue #1051: New methods getSubRoot() and removeRoot() to support COBOL tidying
  *
  ******************************************************************************************************
  *
@@ -266,6 +268,39 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 		return this.subRoots.size();
 	}
 	// END KGU#537 3018-07-01
+	
+	// START KGU#1043 2022-07-29: Enh. #1051 Auxiliary methods for COBOL cleanup
+	/**
+	 * Searches for a registered sub-{@link Root} with given title text and returns it
+	 * if found
+	 * 
+	 * @param title - the first text line of the requested diagram
+	 * @return either a matching imported {@link Root} or {@code null}
+	 */
+	protected Root getSubRoot(String title)
+	{
+		for (Root root: this.subRoots) {
+			if (title.equals(root.getText().get(0))) {
+				return root;
+			}
+		}
+		return null;
+	}
+	
+	/**
+	 * Removes the first occurrence of the given {@link Root} {@code root} from the
+	 * list of generated diagrams.<br/>
+	 * <b>CAUTION</b>: This operation may impose a consistency risk and could provoke
+	 * stale references, so you should absolutely know what you do!
+	 * 
+	 * @param root - the {@link Root} to be removed if present
+	 * @return {@code true} if the list had contained the element
+	 */
+	protected boolean removeRoot(Root root)
+	{
+		return this.subRoots.remove(root);
+	}
+	// END KGU#1043 2022-07-29
 
 	// START KGU#395 2017-05-26: Enh. #357 - parser-specific options
 	private final HashMap<String, Object> optionMap = new HashMap<String, Object>();
@@ -447,6 +482,26 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 		return done;
 	}
 	// END KGU#537 2018-06-29
+	
+	// START KGU#1037 2022-07-20: Enh. #1046 translation option for defined "terminals"
+	/**
+	 * @return either a hash map for the replacement of token keywords for terminal
+	 *     symbol sequences by the actually expected symbols, or {@code null} if no such
+	 *     translation is necessary or intended.<br/>
+	 *     Usually the value will just be the first lexeme in case of symbol sequences.
+	 *     If a token keyword may represent several differing symbols (or sequences) then
+	 *     these should be separated by  {@code" | "}.<br/>
+	 *     Examples:
+	 *     <ul>
+	 *     <li> {@code "AUTO"} &rarr; {@code "AUTO | AUTO-SKIP | AUTOTERMINATE"} </li>
+	 *     <li> {@code "LESS_OR_EQUAL"} &rarr; {@code "LESS | '<='"}</li>
+	 *     </ul>
+	 */
+	protected HashMap<String, String> getTerminalTranslations()
+	{
+		return null;
+	}
+	// END KGU#1037 2022-07-20
 
 	/************ Abstract Methods *************/
 
@@ -765,9 +820,31 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 				error += "\n\nExpected: ";
 				String sepa = "";
 				String exp = "";
+				// START KGU#1037 2022-07-20: Enh. #1046 Decoding of symbolic terminals
+				HashMap<String, String> decodeTab = this.getTerminalTranslations();
+				HashSet<String> listedSymbols = new HashSet<String>();
+				// END KGU#1037 2022-07-20
 				for (Symbol sym: sl) {
-					exp += sepa + sym.toString();
-					sepa = " | ";
+					// START KGU#1037 2022-07-20: Enh. #1046 Decoding of symbolic terminals
+					//exp += sepa + sym.toString();
+					//sepa = " | ";
+					String symStr = sym.toString();
+					StringList symbols = null;
+					if (decodeTab != null && decodeTab.containsKey(symStr)) {
+						symbols = StringList.explode(decodeTab.get(symStr), " | ");
+					}
+					else {
+						symbols = StringList.getNew(symStr);
+					}
+					for (int i = 0; i < symbols.count(); i++) {
+						symStr = symbols.get(i);
+						if (!listedSymbols.contains(symStr)) {
+							listedSymbols.add(symStr);
+							exp += sepa + symStr;
+							sepa = " | ";
+						}
+					}
+					// END KGU#1037 2022-07-20
 					if (exp.length() > DLG_STR_WIDTH) {
 						error += exp;
 						exp = "";

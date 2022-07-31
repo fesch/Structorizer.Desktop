@@ -47,6 +47,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2018-10-26      Enh. #619: New method getMaxLineLength(boolean) implemented
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
  *      Kay Gürtzig     2020-05-02      Issue #866: Additional fields and methods to support revised selection expansion
+ *      Kay Gürtzig     2022-07-30      Result type of removeElement(Element) changed from void to boolean
  *
  ******************************************************************************************************
  *
@@ -423,7 +424,7 @@ public class SelectedSequence extends Element implements IElementSequence {
 	 * @param _element - Element t be removed
 	 */
 	@Override
-	public void removeElement(Element _element)
+	public boolean removeElement(Element _element)
 	{
 		// Is _element within my range?
 		int index = getIndexOf(_element);
@@ -434,7 +435,9 @@ public class SelectedSequence extends Element implements IElementSequence {
 			// START KGU#136 2016-03-01: Bugfix #97
 			this.resetDrawingInfo();
 			// END KGU#136 2016-03-01
+			return true;
 		}
+		return false;
 	}
 	
 	/**
