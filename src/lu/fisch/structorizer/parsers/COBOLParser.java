@@ -110,7 +110,8 @@ package lu.fisch.structorizer.parsers;
  *                                      new import option for tidying multi-line calls from PERFORM THRU; 
  *                                      bugfix #1050 import of READ with AT END or NOT AT END clauses now results in a
  *                                      handling Alternative with the fileRead() instruction in the no-EOF branch
- *      Kay Gürtzig     2022-07-31      Bugfix #1052: DISPLAY statements with screen display clauses caused nonsense
+ *      Kay Gürtzig     2022-07-31      Bugfix #1052: DISPLAY statements with screen display clauses caused nonsense,
+ *                                      bugfix #1053: Array declaration mechanism revised (fix #695 was defective)
  *
  ******************************************************************************************************
  *
@@ -10195,6 +10196,7 @@ public class COBOLParser extends CodeParser
 	 * If {@code var} is of a primitive type then no type definition element will be created. If {@code var} represents
 	 * a COBOL table (i.e. an array) then the defined type represents the element type, not the entire array; the
 	 * returned typename will contain the index range though (in Java notation, for the sake of simplicity and shortness).
+	 * 
 	 * @param var - the variable enry recursively to be modelled with record type definitions if structured.
 	 * @param externalNode - the target {@link Subqueue} for external definitions
 	 * @param globalNode - the target {@link Subqueue} for global definitions
@@ -10239,17 +10241,19 @@ public class COBOLParser extends CodeParser
 			else {
 				localNode.addElement(instr);
 			}
-			// START KGU#674 2019-03-04: Bugfix #695 - this seemed to be misplaced - put out of the branch
-			//if (var.isArray()) {
-			//	typeName += "[" + var.getOccursString() + "]";
-			//}
-			// END KGU#674 2019-03-04
+			// START KGU#674/KGU#1046 2022-07-31: Bugfix #1053 fix #695 reverted (code reactivated)
+			if (var.isArray()) {
+				typeName += "[" + var.getOccursString() + "]";
+			}
+			// END KGU#674/#1046 2022-07-31
 		}
-		// START KGU#674 2019-03-04: Bugfix #695 Arrays of basic types weren't reflected
-		if (var.isArray()) {
-			typeName += "[" + var.getOccursString() + "]";
-		}
-		// END KGU#674 2019-03-04
+		// START KGU#674/KGU#1046 2022-07-31: Bugfix #1053 fix #695 reverted (was in wrong place)
+//		// START KGU#674 2019-03-04: Bugfix #695 Arrays of basic types weren't reflected
+//		if (var.isArray()) {
+//			typeName += "[" + var.getOccursString() + "]";
+//		}
+//		// END KGU#674 2019-03-04
+		// END KGU#674/#1046 2022-07-31
 		return typeName;
 	}
 
@@ -12409,11 +12413,15 @@ class CobTools {
 	 * Returns the Java type of a given CobVar depending on its attributes including
 	 * usage, picture and length.<br/>
 	 * Note that in case of an array only the ELEMENT TYPE String will be returned
-	 * unless {@code withArraySize} is set!
-	 * @param CobVar - variable (or component) to return the type string for
-	 * @param withArraySize - if in case of a table (array) the array size is to be appended as {@code [<size>]}.
-	 * @return Java type representation as string, may be {@link #UNKNOWN_TYPE} in case of an unset usage
-	 * if "string" and "long" can be excluded.
+	 * <b>unless</b> {@code withArraySize} is set!
+	 * 
+	 * @param variable - variable (or component) to return the type string for
+	 * @param withArraySize - if in case of a table (array) the array size is to be
+	 *     appended as {@code [<size>]}.
+	 * @return Java type representation as string, may be {@link #UNKNOWN_TYPE} (or
+	 *     {@link #UNKNOWN_TYPE}{@code [<size>]} in case of an unset usage and if
+	 *     both "string" and "long" can be excluded.
+	 * 
 	 * @see CobVar#isArray()
 	 * @see CobVar#getArraySize()
 	 * @see #getTypeName(CobVar, boolean)
@@ -12450,9 +12458,12 @@ class CobTools {
 		case USAGE_LENGTH:
 			return "integer" + arraySuffix;
 		case USAGE_DISPLAY:
-			// Note: this isn't "correct" as String (and char) are already 16-bit Unicode types
+			// Note: this isn't "correct" since String (and char) are already 16-bit Unicode types
 			// CHECKME: maybe return char[picsize]
-			return "String";
+			// START KGU#674/KGU#1046 2022-07-31: Bugfix #695/#1053 String arrays weren't properly represented
+			//return "String";
+			return "String" + arraySuffix;
+			// END KGU#674/KGU#1046 2022-07-31
 		case USAGE_NATIONAL:
 			// CHECKME: maybe return char[picsize]
 			//return "String";
@@ -12508,13 +12519,19 @@ class CobTools {
 			}
 		case USAGE_NOT_SET:
 			if (variable.isAnyLength()) {
-				return "String";
+				// START KGU#674/KGU#1046 2022-07-31: Bugfix #695/#1053 String arrays weren't properly represented
+				//return "String";
+				return "String" + arraySuffix;
+				// END KGU#674/KGU#1046 2022-07-31
 			} else if (variable.isAnyNumeric()) {
 				return "long" + arraySuffix;
 			} else {
 				// CHECKME: does this happen? if not raise a warning or at least log a warning
 				//return "";
-				return UNKNOWN_TYPE;
+				// START KGU#674/KGU#1046 2022-07-31: Bugfix #695/#1053 String arrays weren't properly represented
+				//return UNKNOWN_TYPE;
+				return UNKNOWN_TYPE + arraySuffix;
+				// END KGU#674/KGU#1046 2022-07-31
 			}
 		// we explicitly don't want a default, allowing to check if all USAGEs have a value assigned
 		}
@@ -12530,16 +12547,18 @@ class CobTools {
 	 * This method is nearly identical to {@link #getTypeString(CobVar, boolean)} except
 	 * that it derives a new type name from the variable name in cases the latter
 	 * would return the {@value #UNKNOWN_TYPE} string.
+	 * 
 	 * @param CobVar - variable (or component) to return the type string for
 	 * @param withArraySize - if in case of a table (array) the array size is to be appended as {@code [<size>]}.
 	 * @return Java type representation as string
+	 * 
 	 * @see CobVar#isArray()
 	 * @see CobVar#getArraySize()
 	 * @see #getTypeString(CobVar, boolean)
 	 */
 	public static String getTypeName (CobVar variable, boolean withArraySize) {
 		String typeName = getTypeString(variable, withArraySize);
-		if (typeName.equals(UNKNOWN_TYPE)) {
+		if (typeName.equals(UNKNOWN_TYPE) || variable.isArray() && typeName.startsWith(UNKNOWN_TYPE)) {
 			typeName = variable.deriveTypeName();
 		}
 		return typeName;
