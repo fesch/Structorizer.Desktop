@@ -6372,12 +6372,13 @@ public class COBOLParser extends CodeParser
 					}
 					// <display_atom> ::= <disp_list> <display_clauses>
 					Token listToken = atomRed.get(0);
-					// Might be "OMITTED" or an <xlist>
-					String content = "";
-					if (listToken.getType() == SymbolType.NON_TERMINAL) {
-						content = this.getContent_R(listToken.asReduction(), "", ", ");	// This is only a quick hack!
+					String content = this.getContent_R(listToken.asReduction(), "", ", ");	// This is only a quick hack!
+					if (content.equalsIgnoreCase("OMITTED")) {
+						content = "";
+					}
+					else {
 						if (content.startsWith(", ")) {
-							content = content.substring(2);
+						content = content.substring(2);
 						}
 						if (content.endsWith(", ")) {
 							content = content.substring(0,  content.length()-2);
@@ -9583,7 +9584,7 @@ public class COBOLParser extends CodeParser
 
 	/**
 	 * Recursively converts the substructure of {@link Reduction} {@code _reduction} into a target code string
-	 * and appens it to the given string {@code _content}.
+	 * and appends it to the given string {@code _content}.
 	 * @param _reduction - the current {@link Reduction} object
 	 * @param _content - previous content the string representation of {@code _reduction} is to be appended to.
 	 * @param _separator - a separator string to be put among sub-token results
@@ -9705,6 +9706,12 @@ public class COBOLParser extends CodeParser
 					}
 					_content += " copy(" + qualName + ", " + startStr +  ", " + lengthStr + ") ";
 				}
+				// START KGU#1045 2022-07-31: Bugfix #1052 Caused undue additional commas in output list
+				// FIXME Why was _separator inserted for, at all? Seems it was for ADD, MULTIPLY etc. with " " sepa.
+				else if (!_separator.isBlank() && _content.isEmpty()) {
+					_content = qualName;
+				}
+				// END KGU#1045 2022-07-31
 				else {
 					_content += _separator + qualName;
 				}
