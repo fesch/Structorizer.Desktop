@@ -1382,7 +1382,10 @@ public class PythonGenerator extends Generator
 		if (topLevel)
 		{
 			// START KGU#815 2020-04-07: Enh. #828 group export
-			if (this.isLibraryModule()) {
+			// START KGU#1040 2022-08-01: Bugfix #1047 was ugly in batch export to console
+			//if (this.isLibraryModule()) {
+			if (this.isLibraryModule() && !this.pureFilename.isEmpty()) {
+			// END KGU#1040 2022-08-01
 				this.appendScissorLine(true, this.pureFilename + "." + this.getFileExtensions()[0]);
 			}
 			// END KGU#815 2020-04-07

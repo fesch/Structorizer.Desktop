@@ -82,6 +82,7 @@
  *      Kay Gürtzig     2020-06-03      Bugfix #868: mends implementation defects in Bob's most recent change
  *      Kay Gürtzig     2020-06-06      Issue #870: Command line option "-restricted" withdrawn
  *      Kay Gürtzig     2021-06-08      Issue #67, #953: retrieval mechanism for plugin-specific options from ini
+ *      Kay Gürtzig     2022-08-01      Enh. #1047: Batch export option -k for keeping the source files apart
  *
  ******************************************************************************************************
  *
@@ -312,7 +313,9 @@ public class Structorizer
 				openFound = true;
 			}
 			// END KGU#722 2019-08-07
+			// Other switches
 			else if (args[i].startsWith("-")) {
+				// append only the letter (without hyphen)
 				switches.add(args[i].substring(1));
 			}
 			else
@@ -558,7 +561,7 @@ public class Structorizer
 	// START KGU#187 2016-05-02: Enh. #179
 	private static final String[] synopsis = {
 		"Structorizer [-s SETTINGSFILE] [-open] [NSDFILE|ARRFILE|ARRZFILE]...",
-		"Structorizer -x GENERATOR [-a] [-b] [-c] [-f] [-l] [-t] [-e CHARSET] [-s SETTINGSFILE] [-] [-o OUTFILE] (NSDFILE|ARRSPEC|ARRZSPEC)...",
+		"Structorizer -x GENERATOR [-a] [-b] [-c] [-f] [-k] [-l] [-t] [-e CHARSET] [-s SETTINGSFILE] [-] [-o OUTFILE] (NSDFILE|ARRSPEC|ARRZSPEC)...",
 		"Structorizer -p [PARSER] [-f] [-z] [-v [LOGPATH]] [-l MAXLINELEN] [-e CHARSET] [-s SETTINGSFILE] [-o OUTFILE] SOURCEFILE...",
 		"Structorizer -h",
 		"(See " + Element.E_HELP_PAGE + "?menu=96 or " + Element.E_HELP_PAGE + "?menu=136 for details.)"
@@ -569,7 +572,7 @@ public class Structorizer
 	/*****************************************
 	 * batch code export method
 	 * @param _generatorName - name of the target language or generator class
-	 * @param _nsdOrArrNames - vector of the diagram or archive file names
+	 * @param _nsdOrArrNames - vector of the diagram and/or archive file names
 	 * @param _options - map of non-binary command line options
 	 * @param _switches - set of switches (on / off)
 	 *****************************************/
@@ -589,11 +592,14 @@ public class Structorizer
 		// path of a property file to be preferred over structorizer.ini
 		boolean settingsGiven = _options.containsKey("settingsFile");
 		// END KGU#720 2019-08-07
+		// START KGU#1040 2022-08-01: Issue #1047 separate nsd export and scissor fixing
+		boolean toStdOut = _switches.indexOf('-') >= 0;
+		// END KGU#1040 2022-08-01
 		for (String fName : _nsdOrArrNames)
 		{
 			try
 			{
-				// Test the existence of the current NSD file
+				// Test the existence of the current NSD or arrangement file
 				// START KGU#679 2019-03-13: Enh. #696 - allow to export archives
 				//File f = new File(fName);
 				//if (f.exists())
@@ -603,7 +609,7 @@ public class Structorizer
 				if (f.exists() && StructogramFilter.isNSD(fName))
 				// END KGU#679 2019-02-13
 				{
-					// open an existing file
+					// open an existing file and gather the Root
 					NSDParser parser = new NSDParser();
 					// START KGU#363 2017-05-21: Issue #372 API change
 					//root = parser.parse(f.toURI().toString());
@@ -612,7 +618,7 @@ public class Structorizer
 					root.filename = fName;
 					roots.add(root);
 					// If no output file name is given then derive one from the first NSD file
-					if (codeFileName == null && _switches.indexOf('-') < 0)
+					if (codeFileName == null && !toStdOut)
 					{
 						codeFileName = f.getCanonicalPath();
 					}
@@ -632,7 +638,7 @@ public class Structorizer
 					{
 						String outFilePath = outFileName; 
 						// If no output file name is given then derive one from the arrangement file
-						if (outFilePath == null && _switches.indexOf('-') < 0) {
+						if (outFilePath == null && !toStdOut) {
 							outFilePath = f.getCanonicalPath();
 						}
 						poolFileNames.add(outFilePath);
@@ -727,18 +733,55 @@ public class Structorizer
 				// START KGU#679 2019-03-13: Enh. #696 - allow to export archives
 				//if (!roots.isEmpty())
 				//gen.exportCode(roots, codeFileName, _switches, charSet);
+				// ======= Export nsd files ======
 				if (!roots.isEmpty()) {
-					// START KGU#720 2019-08-06: Enh. #737 - now with specific option file
-					//gen.exportCode(roots, codeFileName, _switches, charSet, null);
-					gen.exportCode(roots, codeFileName, _switches, charSet, settingsGiven, null);
-					// END KGU#720 2019-08-06
+					// START KGU#1040 2022-08-01: Issue #1047: Allow isolated export
+					//gen.exportCode(roots, codeFileName, _switches, charSet, settingsGiven, null);
+					if (_switches.indexOf('k') >= 0 && !_options.containsKey("outFileName")) {
+						// Export into separate (isolated) code files
+						for (Root root: roots) {
+							File f = new File(root.filename);
+							Vector<Root> oneRoot = new Vector<Root>();
+							oneRoot.add(root);
+							gen.exportCode(oneRoot, f.getAbsolutePath(), _switches, charSet, settingsGiven, null);
+							if (toStdOut) {
+								System.out.println();
+							}
+						}
+					}
+					else {
+						// Export into a single amalgamated code file with scissor lines
+						// START KGU#720 2019-08-06: Enh. #737 - now with specific option file
+						//gen.exportCode(roots, codeFileName, _switches, charSet, null);
+						gen.exportCode(roots, codeFileName, _switches, charSet, settingsGiven, null);
+						// END KGU#720 2019-08-06
+						// Ensure a newline after the last line of code
+						if (toStdOut) {
+							System.out.println();
+						}
+					}
+					// END KGU#1040 2022-08-01
 				}
+				// ======= Export arr/arrz files ======
 				int i = 0;
 				for (Entry<ArchivePool, Vector<Root>> poolEntry: pools.entrySet()) {
+					// START KGU#1040 2022-08-01: Issue #1047: Ensure scissor lines on stdout
+					//gen.exportCode(poolEntry.getValue(), poolFileNames.get(i++), _switches, charSet, settingsGiven, poolEntry.getKey());
+					if (toStdOut
+							&& (!roots.isEmpty() || pools.size() > 1)) {
+						String poolName = poolEntry.getKey().getName();
+						System.out.println(Generator.prepareScissorLine(true,
+								gen.deriveCodeFileName(poolName, false)));
+					}
 					// START KGU#720 2019-08-05: Enh. #737 - now with specific option file
 					//gen.exportCode(poolEntry.getValue(), poolFileNames.get(i++), _switches, charSet, poolEntry.getKey(), null);
 					gen.exportCode(poolEntry.getValue(), poolFileNames.get(i++), _switches, charSet, settingsGiven, poolEntry.getKey());
 					// END KGU#720 2019-08-05
+					// Ensure a newline after the last line of code
+					if (toStdOut) {
+						System.out.println();
+					}
+					// END KGU#1040 2022-08-01
 				}
 				// END KGU#679 2019-02-13
 			}

@@ -1,0 +1,417 @@
+\documentclass[a4paper,10pt]{article}
+
+\usepackage{struktex}
+\usepackage{ngerman}
+
+\title{Structorizer StrukTeX Export of ELIZA.arrz}
+\author{Kay G"urtzig}
+\date{01.08.2022}
+
+\begin{document}
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[adjustSpelling]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{sentence}}{type: \(string\)}
+    \end{declaration}
+    \begin{declaration}[Result type:]
+      \description{string}{}
+    \end{declaration}
+  }
+  \assign{\(result\ \gets\ sentence\)}
+  \assign{\(position\ \gets\ 1\)}
+  \while{\((position\ \leq\ length(sentence))\ \wedge\ (copy(sentence,\ position,\ 1)\ =\ \)"{}\ "{}\()\)}
+    \assign{\(position\ \gets\ position\ +\ 1\)}
+  \whileend
+  \ifthenelse{6}{6}{\(position\ \leq\ length(sentence)\)}{T}{F}
+    \assign{\(start\ \gets\ copy(sentence,\ 1,\ position)\)}
+    \assign{\(delete(result,\ 1,\ position)\)}
+    \assign{\(insert(uppercase(start),\ result,\ 1)\)}
+  \change
+  \ifend
+  \while{\(\forall word\in \{\)"{}\ i\ "{}\(,\ \)"{}\ i\textbackslash{}'{}"{}\(\}\)}
+    \assign{\(position\ \gets\ pos(word,\ result)\)}
+    \while{\(position\ >\ 0\)}
+      \assign{\(delete(result,\ position+1,\ 1)\)}
+      \assign{\(insert(\)"{}I"{}\(,\ result,\ position+1)\)}
+      \assign{\(position\ \gets\ pos(word,\ result)\)}
+    \whileend
+  \whileend
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[checkGoodBye]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{text}}{type: \(string\)}
+      \description{\pVar{phrases}}{type: \(array\ of\ array[0..1]\ of\ string\)}
+    \end{declaration}
+    \begin{declaration}[Result type:]
+      \description{boolean}{}
+    \end{declaration}
+  }
+  \while{\(\forall pair\in phrases\)}
+    \ifthenelse{6}{6}{\(pos(pair[0],\ text)\ >\ 0\)}{T}{F}
+      \assign{\(\)\pKey{OUTPUT}\(\ pair[1]\)}
+      \exit{\(\)\pKey{return}\(\ true\)}
+    \change
+    \ifend
+  \whileend
+  \assign{\(\)\pKey{return}\(\ false\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[checkRepetition]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{history}}{type: \(History\)}
+      \description{\pVar{newInput}}{type: \(string\)}
+    \end{declaration}
+    \begin{declaration}[Result type:]
+      \description{boolean}{}
+    \end{declaration}
+    \begin{declaration}[Requires:]
+      \description{History}{}
+    \end{declaration}
+  }
+  \assign{\(hasOccurred\ \gets\ false\)}
+  \ifthenelse{6}{6}{\(length(newInput)\ >\ 4\)}{T}{F}
+    \assign{\(histDepth\ \gets\ length(history.histArray)\)}
+    \while{\pKey{for}\(i\ \gets\ 0\)\pKey{to}\(histDepth-1\)}
+      \ifthenelse{6}{6}{\(newInput\ =\ history.histArray[i]\)}{T}{F}
+        \assign{\(hasOccurred\ \gets\ true\)}
+      \change
+      \ifend
+    \whileend
+    \assign{\(history.histArray[history.histIndex]\ \gets\ newInput\)}
+    \assign{\(history.histIndex\ \gets\ (history.histIndex\ +\ 1)\ \bmod\ (histDepth)\)}
+  \change
+  \ifend
+  \assign{\(\)\pKey{return}\(\ hasOccurred\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[conjugateStrings]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{sentence}}{type: \(string\)}
+      \description{\pVar{key}}{type: \(string\)}
+      \description{\pVar{keyPos}}{type: \(integer\)}
+      \description{\pVar{flexions}}{type: \(array\ of\ array[0..1]\ of\ string\)}
+    \end{declaration}
+    \begin{declaration}[Result type:]
+      \description{string}{}
+    \end{declaration}
+  }
+  \assign{\(result\ \gets\ \)"{}\ "{}\(\ +\ copy(sentence,\ keyPos\ +\ length(key),\ length(sentence))\ +\ \)"{}\ "{}\(\)}
+  \while{\(\forall pair\in flexions\)}
+    \assign{\(left\ \gets\ \)"{}"{}\(\)}
+    \assign{\(right\ \gets\ result\)}
+    \assign{\(pos0\ \gets\ pos(pair[0],\ right)\)}
+    \assign{\(pos1\ \gets\ pos(pair[1],\ right)\)}
+    \while{\(pos0\ >\ 0\ \vee\ pos1\ >\ 0\)}
+      \assign{\(which\ \gets\ 0\)}
+      \assign{\(position\ \gets\ pos0\)}
+      \ifthenelse{6}{6}{\((pos0\ =\ 0)\ \vee\ ((pos1\ >\ 0)\ \wedge\ (pos1\ <\ pos0))\)}{T}{F}
+        \assign{\(which\ \gets\ 1\)}
+        \assign{\(position\ \gets\ pos1\)}
+      \change
+      \ifend
+      \assign{\(left\ \gets\ left\ +\ copy(right,\ 1,\ position-1)\ +\ pair[1\ -\ which]\)}
+      \assign{\(right\ \gets\ copy(right,\ position\ +\ length(pair[which]),\ length(right))\)}
+      \assign{\(pos0\ \gets\ pos(pair[0],\ right)\)}
+      \assign{\(pos1\ \gets\ pos(pair[1],\ right)\)}
+    \whileend
+    \assign{\(result\ \gets\ left\ +\ right\)}
+  \whileend
+  \while{\(\forall str\in \{\)"{}\ \ "{}\(,\ \)"{}\textbar{}"{}\(\}\)}
+    \assign{\(position\ \gets\ pos(str,\ result)\)}
+    \while{\(position\ >\ 0\)}
+      \assign{\(result\ \gets\ copy(result,\ 1,\ position-1)\ +\ copy(result,\ position+1,\ length(result))\)}
+      \assign{\(position\ \gets\ pos(str,\ result)\)}
+    \whileend
+  \whileend
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[findKeyword]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{keyMap}}{type: \(array\ of\ KeyMapEntry\)}
+      \description{\pVar{sentence}}{type: \(string\)}
+    \end{declaration}
+    \begin{declaration}[Result type:]
+      \description{array[0..1] of integer}{}
+    \end{declaration}
+    \begin{declaration}[Requires:]
+      \description{KeyMapEntry}{}
+    \end{declaration}
+  }
+  \assign{\(result\ \gets\ \{-1,\ 0\}\)}
+  \assign{\(i\ \gets\ 0\)}
+  \while{\((result[0]\ <\ 0)\ \wedge\ (i\ <\ length(keyMap))\)}
+    \assign{\(var\ entry:\ KeyMapEntry\ \gets\ keyMap[i]\)}
+    \assign{\(position\ \gets\ pos(entry.keyword,\ sentence)\)}
+    \ifthenelse{6}{6}{\(position\ >\ 0\)}{T}{F}
+      \assign{\(result[0]\ \gets\ i\)}
+      \assign{\(result[1]\ \gets\ position\)}
+    \change
+    \ifend
+    \assign{\(i\ \gets\ i+1\)}
+  \whileend
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[normalizeInput]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{sentence}}{type: \(string\)}
+    \end{declaration}
+    \begin{declaration}[Result type:]
+      \description{string}{}
+    \end{declaration}
+  }
+  \assign{\(sentence\ \gets\ lowercase(sentence)\)}
+  \while{\(\forall symbol\in \{\)'{}.'{}\(,\ \)'{},'{}\(,\ \)'{};'{}\(,\ \)'{}!'{}\(,\ \)'{}?'{}\(\}\)}
+    \assign{\(position\ \gets\ pos(symbol,\ sentence)\)}
+    \while{\(position\ >\ 0\)}
+      \assign{\(sentence\ \gets\ copy(sentence,\ 1,\ position-1)\ +\ copy(sentence,\ position+1,\ length(sentence))\)}
+      \assign{\(position\ \gets\ pos(symbol,\ sentence)\)}
+    \whileend
+  \whileend
+  \assign{\(result\ \gets\ \)"{}\ "{}\(\ +\ sentence\ +\ \)"{}\ "{}\(\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[setupGoodByePhrases]
+  \assign{%
+    \begin{declaration}[Result type:]
+      \description{array of array[0..1] of string}{}
+    \end{declaration}
+  }
+  \assign{\(phrases[0]\ \gets\ \{\)"{}\ shut"{}\(,\ \)"{}Okay.\ If\ you\ feel\ that\ way\ I\textbackslash{}'{}ll\ shut\ up.\ ...\ Your\ choice."{}\(\}\)}
+  \assign{\(phrases[1]\ \gets\ \{\)"{}bye"{}\(,\ \)"{}Well,\ let\textbackslash{}'{}s\ end\ our\ talk\ for\ now.\ See\ you\ later.\ Bye."{}\(\}\)}
+  \assign{\(\)\pKey{return}\(\ phrases\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[setupKeywords]
+  \assign{%
+    \begin{declaration}[Result type:]
+      \description{array of KeyMapEntry}{}
+    \end{declaration}
+    \begin{declaration}[Requires:]
+      \description{KeyMapEntry}{}
+    \end{declaration}
+  }
+  \assign{\(keywords[39]\ \gets\ KeyMapEntry\{\)"{}"{}\(,\ 29\}\)}
+  \assign{\(keywords[0]\ \gets\ KeyMapEntry\{\)"{}can\ you\ "{}\(,\ 0\}\)}
+  \assign{\(keywords[1]\ \gets\ KeyMapEntry\{\)"{}can\ i\ "{}\(,\ 1\}\)}
+  \assign{\(keywords[2]\ \gets\ KeyMapEntry\{\)"{}you\ are\ "{}\(,\ 2\}\)}
+  \assign{\(keywords[3]\ \gets\ KeyMapEntry\{\)"{}you\textbackslash{}'{}re\ "{}\(,\ 2\}\)}
+  \assign{\(keywords[4]\ \gets\ KeyMapEntry\{\)"{}i\ don'{}t\ "{}\(,\ 3\}\)}
+  \assign{\(keywords[5]\ \gets\ KeyMapEntry\{\)"{}i\ feel\ "{}\(,\ 4\}\)}
+  \assign{\(keywords[6]\ \gets\ KeyMapEntry\{\)"{}why\ don\textbackslash{}'{}t\ you\ "{}\(,\ 5\}\)}
+  \assign{\(keywords[7]\ \gets\ KeyMapEntry\{\)"{}why\ can\textbackslash{}'{}t\ i\ "{}\(,\ 6\}\)}
+  \assign{\(keywords[8]\ \gets\ KeyMapEntry\{\)"{}are\ you\ "{}\(,\ 7\}\)}
+  \assign{\(keywords[9]\ \gets\ KeyMapEntry\{\)"{}i\ can\textbackslash{}'{}t\ "{}\(,\ 8\}\)}
+  \assign{\(keywords[10]\ \gets\ KeyMapEntry\{\)"{}i\ am\ "{}\(,\ 9\}\)}
+  \assign{\(keywords[11]\ \gets\ KeyMapEntry\{\)"{}i\textbackslash{}'{}m\ "{}\(,\ 9\}\)}
+  \assign{\(keywords[12]\ \gets\ KeyMapEntry\{\)"{}you\ "{}\(,\ 10\}\)}
+  \assign{\(keywords[13]\ \gets\ KeyMapEntry\{\)"{}i\ want\ "{}\(,\ 11\}\)}
+  \assign{\(keywords[14]\ \gets\ KeyMapEntry\{\)"{}what\ "{}\(,\ 12\}\)}
+  \assign{\(keywords[15]\ \gets\ KeyMapEntry\{\)"{}how\ "{}\(,\ 12\}\)}
+  \assign{\(keywords[16]\ \gets\ KeyMapEntry\{\)"{}who\ "{}\(,\ 12\}\)}
+  \assign{\(keywords[17]\ \gets\ KeyMapEntry\{\)"{}where\ "{}\(,\ 12\}\)}
+  \assign{\(keywords[18]\ \gets\ KeyMapEntry\{\)"{}when\ "{}\(,\ 12\}\)}
+  \assign{\(keywords[19]\ \gets\ KeyMapEntry\{\)"{}why\ "{}\(,\ 12\}\)}
+  \assign{\(keywords[20]\ \gets\ KeyMapEntry\{\)"{}name\ "{}\(,\ 13\}\)}
+  \assign{\(keywords[21]\ \gets\ KeyMapEntry\{\)"{}cause\ "{}\(,\ 14\}\)}
+  \assign{\(keywords[22]\ \gets\ KeyMapEntry\{\)"{}sorry\ "{}\(,\ 15\}\)}
+  \assign{\(keywords[23]\ \gets\ KeyMapEntry\{\)"{}dream\ "{}\(,\ 16\}\)}
+  \assign{\(keywords[24]\ \gets\ KeyMapEntry\{\)"{}hello\ "{}\(,\ 17\}\)}
+  \assign{\(keywords[25]\ \gets\ KeyMapEntry\{\)"{}hi\ "{}\(,\ 17\}\)}
+  \assign{\(keywords[26]\ \gets\ KeyMapEntry\{\)"{}maybe\ "{}\(,\ 18\}\)}
+  \assign{\(keywords[27]\ \gets\ KeyMapEntry\{\)"{}\ no"{}\(,\ 19\}\)}
+  \assign{\(keywords[28]\ \gets\ KeyMapEntry\{\)"{}your\ "{}\(,\ 20\}\)}
+  \assign{\(keywords[29]\ \gets\ KeyMapEntry\{\)"{}always\ "{}\(,\ 21\}\)}
+  \assign{\(keywords[30]\ \gets\ KeyMapEntry\{\)"{}think\ "{}\(,\ 22\}\)}
+  \assign{\(keywords[31]\ \gets\ KeyMapEntry\{\)"{}alike\ "{}\(,\ 23\}\)}
+  \assign{\(keywords[32]\ \gets\ KeyMapEntry\{\)"{}yes\ "{}\(,\ 24\}\)}
+  \assign{\(keywords[33]\ \gets\ KeyMapEntry\{\)"{}friend\ "{}\(,\ 25\}\)}
+  \assign{\(keywords[34]\ \gets\ KeyMapEntry\{\)"{}computer"{}\(,\ 26\}\)}
+  \assign{\(keywords[35]\ \gets\ KeyMapEntry\{\)"{}bot\ "{}\(,\ 26\}\)}
+  \assign{\(keywords[36]\ \gets\ KeyMapEntry\{\)"{}smartphone"{}\(,\ 27\}\)}
+  \assign{\(keywords[37]\ \gets\ KeyMapEntry\{\)"{}father\ "{}\(,\ 28\}\)}
+  \assign{\(keywords[38]\ \gets\ KeyMapEntry\{\)"{}mother\ "{}\(,\ 28\}\)}
+  \assign{\(\)\pKey{return}\(\ keywords\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[setupReflexions]
+  \assign{%
+    \begin{declaration}[Result type:]
+      \description{array of array[0..1] of string}{}
+    \end{declaration}
+  }
+  \assign{\(reflexions[0]\ \gets\ \{\)"{}\ are\ "{}\(,\ \)"{}\ am\ "{}\(\}\)}
+  \assign{\(reflexions[1]\ \gets\ \{\)"{}\ were\ "{}\(,\ \)"{}\ was\ "{}\(\}\)}
+  \assign{\(reflexions[2]\ \gets\ \{\)"{}\ you\ "{}\(,\ \)"{}\ i\ "{}\(\}\)}
+  \assign{\(reflexions[3]\ \gets\ \{\)"{}\ yours\ "{}\(,\ \)"{}\ mine\ "{}\(\}\)}
+  \assign{\(reflexions[4]\ \gets\ \{\)"{}\ yourself\ "{}\(,\ \)"{}\ myself\ "{}\(\}\)}
+  \assign{\(reflexions[5]\ \gets\ \{\)"{}\ your\ "{}\(,\ \)"{}\ my\ "{}\(\}\)}
+  \assign{\(reflexions[6]\ \gets\ \{\)"{}\ i\textbackslash{}'{}ve\ "{}\(,\ \)"{}\ you\textbackslash{}'{}ve\ "{}\(\}\)}
+  \assign{\(reflexions[7]\ \gets\ \{\)"{}\ i\textbackslash{}'{}m\ "{}\(,\ \)"{}\ you\textbackslash{}'{}re\ "{}\(\}\)}
+  \assign{\(reflexions[8]\ \gets\ \{\)"{}\ me\ "{}\(,\ \)"{}\ \textbar{}you\ "{}\(\}\)}
+  \assign{\(\)\pKey{return}\(\ reflexions\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[setupReplies]
+  \assign{%
+    \begin{declaration}[Result type:]
+      \description{array of array of string}{}
+    \end{declaration}
+  }
+  \assign{%
+    \begin{declaration}[variable:]
+      \description{replies}{var\ replies:\ array\ of\ array\ of\ String}
+    \end{declaration}
+  }
+  \assign{\(replies[29]\ \gets\ \{\ \)"{}Say,\ do\ you\ have\ any\ psychological\ problems?"{}\(,\ \)"{}What\ does\ that\ suggest\ to\ you?"{}\(,\ \)"{}I\ see."{}\(,\ \)"{}I'{}m\ not\ sure\ I\ understand\ you\ fully."{}\(,\ \)"{}Come\ come\ elucidate\ your\ thoughts."{}\(,\ \)"{}Can\ you\ elaborate\ on\ that?"{}\(,\ \)"{}That\ is\ quite\ interesting."{}\(\}\)}
+  \assign{\(replies[0]\ \gets\ \{\ \)"{}Don'{}t\ you\ believe\ that\ I\ can*?"{}\(,\ \)"{}Perhaps\ you\ would\ like\ to\ be\ like\ me?"{}\(,\ \)"{}You\ want\ me\ to\ be\ able\ to*?"{}\(\}\)}
+  \assign{\(replies[1]\ \gets\ \{\ \)"{}Perhaps\ you\ don'{}t\ want\ to*?"{}\(,\ \)"{}Do\ you\ want\ to\ be\ able\ to*?"{}\(\}\)}
+  \assign{\(replies[2]\ \gets\ \{\ \)"{}What\ makes\ you\ think\ I\ am*?"{}\(,\ \)"{}Does\ it\ please\ you\ to\ believe\ I\ am*?"{}\(,\ \)"{}Perhaps\ you\ would\ like\ to\ be*?"{}\(,\ \)"{}Do\ you\ sometimes\ wish\ you\ were*?"{}\(\}\)}
+  \assign{\(replies[3]\ \gets\ \{\ \)"{}Don'{}t\ you\ really*?"{}\(,\ \)"{}Why\ don'{}t\ you*?"{}\(,\ \)"{}Do\ you\ wish\ to\ be\ able\ to*?"{}\(,\ \)"{}Does\ that\ trouble\ you*?"{}\(\}\)}
+  \assign{\(replies[4]\ \gets\ \{\ \)"{}Do\ you\ often\ feel*?"{}\(,\ \)"{}Are\ you\ afraid\ of\ feeling*?"{}\(,\ \)"{}Do\ you\ enjoy\ feeling*?"{}\(\}\)}
+  \assign{\(replies[5]\ \gets\ \{\ \)"{}Do\ you\ really\ believe\ I\ don'{}t*?"{}\(,\ \)"{}Perhaps\ in\ good\ time\ I\ will*."{}\(,\ \)"{}Do\ you\ want\ me\ to*?"{}\(\}\)}
+  \assign{\(replies[6]\ \gets\ \{\ \)"{}Do\ you\ think\ you\ should\ be\ able\ to*?"{}\(,\ \)"{}Why\ can'{}t\ you*?"{}\(\}\)}
+  \assign{\(replies[7]\ \gets\ \{\ \)"{}Why\ are\ you\ interested\ in\ whether\ or\ not\ I\ am*?"{}\(,\ \)"{}Would\ you\ prefer\ if\ I\ were\ not*?"{}\(,\ \)"{}Perhaps\ in\ your\ fantasies\ I\ am*?"{}\(\}\)}
+  \assign{\(replies[8]\ \gets\ \{\ \)"{}How\ do\ you\ know\ you\ can'{}t*?"{}\(,\ \)"{}Have\ you\ tried?"{}\(,\)"{}Perhaps\ you\ can\ now*."{}\(\}\)}
+  \assign{\(replies[9]\ \gets\ \{\ \)"{}Did\ you\ come\ to\ me\ because\ you\ are*?"{}\(,\ \)"{}How\ long\ have\ you\ been*?"{}\(,\ \)"{}Do\ you\ believe\ it\ is\ normal\ to\ be*?"{}\(,\ \)"{}Do\ you\ enjoy\ being*?"{}\(\}\)}
+  \assign{\(replies[10]\ \gets\ \{\ \)"{}We\ were\ discussing\ you--not\ me."{}\(,\ \)"{}Oh,\ I*."{}\(,\ \)"{}You'{}re\ not\ really\ talking\ about\ me,\ are\ you?"{}\(\}\)}
+  \assign{\(replies[11]\ \gets\ \{\ \)"{}What\ would\ it\ mean\ to\ you\ if\ you\ got*?"{}\(,\ \)"{}Why\ do\ you\ want*?"{}\(,\ \)"{}Suppose\ you\ soon\ got*..."{}\(,\ \)"{}What\ if\ you\ never\ got*?"{}\(,\ \)"{}I\ sometimes\ also\ want*."{}\(\}\)}
+  \assign{\(replies[12]\ \gets\ \{\ \)"{}Why\ do\ you\ ask?"{}\(,\ \)"{}Does\ that\ question\ interest\ you?"{}\(,\ \)"{}What\ answer\ would\ please\ you\ the\ most?"{}\(,\ \)"{}What\ do\ you\ think?"{}\(,\ \)"{}Are\ such\ questions\ on\ your\ mind\ often?"{}\(,\ \)"{}What\ is\ it\ that\ you\ really\ want\ to\ know?"{}\(,\ \)"{}Have\ you\ asked\ anyone\ else?"{}\(,\ \)"{}Have\ you\ asked\ such\ questions\ before?"{}\(,\ \)"{}What\ else\ comes\ to\ mind\ when\ you\ ask\ that?"{}\(\}\)}
+  \assign{\(replies[13]\ \gets\ \{\ \)"{}Names\ don'{}t\ interest\ me."{}\(,\ \)"{}I\ don'{}t\ care\ about\ names\ --\ please\ go\ on."{}\(\}\)}
+  \assign{\(replies[14]\ \gets\ \{\ \)"{}Is\ that\ the\ real\ reason?"{}\(,\ \)"{}Don'{}t\ any\ other\ reasons\ come\ to\ mind?"{}\(,\ \)"{}Does\ that\ reason\ explain\ anything\ else?"{}\(,\ \)"{}What\ other\ reasons\ might\ there\ be?"{}\(\}\)}
+  \assign{\(replies[15]\ \gets\ \{\ \)"{}Please\ don'{}t\ apologize!"{}\(,\ \)"{}Apologies\ are\ not\ necessary."{}\(,\ \)"{}What\ feelings\ do\ you\ have\ when\ you\ apologize?"{}\(,\ \)"{}Don'{}t\ be\ so\ defensive!"{}\(\}\)}
+  \assign{\(replies[16]\ \gets\ \{\ \)"{}What\ does\ that\ dream\ suggest\ to\ you?"{}\(,\ \)"{}Do\ you\ dream\ often?"{}\(,\ \)"{}What\ persons\ appear\ in\ your\ dreams?"{}\(,\ \)"{}Are\ you\ disturbed\ by\ your\ dreams?"{}\(\}\)}
+  \assign{\(replies[17]\ \gets\ \{\ \)"{}How\ do\ you\ do\ ...please\ state\ your\ problem."{}\(\}\)}
+  \assign{\(replies[18]\ \gets\ \{\ \)"{}You\ don'{}t\ seem\ quite\ certain."{}\(,\ \)"{}Why\ the\ uncertain\ tone?"{}\(,\ \)"{}Can'{}t\ you\ be\ more\ positive?"{}\(,\ \)"{}You\ aren'{}t\ sure?"{}\(,\ \)"{}Don'{}t\ you\ know?"{}\(\}\)}
+  \assign{\(replies[19]\ \gets\ \{\ \)"{}Are\ you\ saying\ no\ just\ to\ be\ negative?"{}\(,\ \)"{}You\ are\ being\ a\ bit\ negative."{}\(,\ \)"{}Why\ not?"{}\(,\ \)"{}Are\ you\ sure?"{}\(,\ \)"{}Why\ no?"{}\(\}\)}
+  \assign{\(replies[20]\ \gets\ \{\ \)"{}Why\ are\ you\ concerned\ about\ my*?"{}\(,\ \)"{}What\ about\ your\ own*?"{}\(\}\)}
+  \assign{\(replies[21]\ \gets\ \{\ \)"{}Can\ you\ think\ of\ a\ specific\ example?"{}\(,\ \)"{}When?"{}\(,\ \)"{}What\ are\ you\ thinking\ of?"{}\(,\ \)"{}Really,\ always?"{}\(\}\)}
+  \assign{\(replies[22]\ \gets\ \{\ \)"{}Do\ you\ really\ think\ so?"{}\(,\ \)"{}But\ you\ are\ not\ sure\ you*?"{}\(,\ \)"{}Do\ you\ doubt\ you*?"{}\(\}\)}
+  \assign{\(replies[23]\ \gets\ \{\ \)"{}In\ what\ way?"{}\(,\ \)"{}What\ resemblance\ do\ you\ see?"{}\(,\ \)"{}What\ does\ the\ similarity\ suggest\ to\ you?"{}\(,\ \)"{}What\ other\ connections\ do\ you\ see?"{}\(,\ \)"{}Could\ there\ really\ be\ some\ connection?"{}\(,\ \)"{}How?"{}\(,\ \)"{}You\ seem\ quite\ positive."{}\(\}\)}
+  \assign{\(replies[24]\ \gets\ \{\ \)"{}Are\ you\ sure?"{}\(,\ \)"{}I\ see."{}\(,\ \)"{}I\ understand."{}\(\}\)}
+  \assign{\(replies[25]\ \gets\ \{\ \)"{}Why\ do\ you\ bring\ up\ the\ topic\ of\ friends?"{}\(,\ \)"{}Do\ your\ friends\ worry\ you?"{}\(,\ \)"{}Do\ your\ friends\ pick\ on\ you?"{}\(,\ \)"{}Are\ you\ sure\ you\ have\ any\ friends?"{}\(,\ \)"{}Do\ you\ impose\ on\ your\ friends?"{}\(,\ \)"{}Perhaps\ your\ love\ for\ friends\ worries\ you."{}\(\}\)}
+  \assign{\(replies[26]\ \gets\ \{\ \)"{}Do\ computers\ worry\ you?"{}\(,\ \)"{}Are\ you\ talking\ about\ me\ in\ particular?"{}\(,\ \)"{}Are\ you\ frightened\ by\ machines?"{}\(,\ \)"{}Why\ do\ you\ mention\ computers?"{}\(,\ \)"{}What\ do\ you\ think\ machines\ have\ to\ do\ with\ your\ problem?"{}\(,\ \)"{}Don'{}t\ you\ think\ computers\ can\ help\ people?"{}\(,\ \)"{}What\ is\ it\ about\ machines\ that\ worries\ you?"{}\(\}\)}
+  \assign{\(replies[27]\ \gets\ \{\ \)"{}Do\ you\ sometimes\ feel\ uneasy\ without\ a\ smartphone?"{}\(,\ \)"{}Have\ you\ had\ these\ phantasies\ before?"{}\(,\ \)"{}Does\ the\ world\ seem\ more\ real\ for\ you\ via\ apps?"{}\(\}\)}
+  \assign{\(replies[28]\ \gets\ \{\ \)"{}Tell\ me\ more\ about\ your\ family."{}\(,\ \)"{}Who\ else\ in\ your\ family*?"{}\(,\ \)"{}What\ does\ family\ relations\ mean\ for\ you?"{}\(,\ \)"{}Come\ on,\ How\ old\ are\ you?"{}\(\}\)}
+  \assign{\(setupReplies\ \gets\ replies\)}
+\end{struktogramm}
+
+
+% = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[ELIZA]
+  \assign{%
+    \begin{declaration}[Requires:]
+      \description{History, KeyMapEntry}{}
+    \end{declaration}
+  }
+  \assign{\(\)\pKey{OUTPUT}\(\ \)"{}*************\ ELIZA\ **************"{}\(\)}
+  \assign{\(\)\pKey{OUTPUT}\(\ \)"{}*\ Original\ design\ by\ J.\ Weizenbaum"{}\(\)}
+  \assign{\(\)\pKey{OUTPUT}\(\ \)"{}**********************************"{}\(\)}
+  \assign{\(\)\pKey{OUTPUT}\(\ \)"{}*\ Adapted\ for\ Basic\ on\ IBM\ PC\ by"{}\(\)}
+  \assign{\(\)\pKey{OUTPUT}\(\ \)"{}*\ -\ Patricia\ Danielson"{}\(\)}
+  \assign{\(\)\pKey{OUTPUT}\(\ \)"{}*\ -\ Paul\ Hashfield"{}\(\)}
+  \assign{\(\)\pKey{OUTPUT}\(\ \)"{}**********************************"{}\(\)}
+  \assign{\(\)\pKey{OUTPUT}\(\ \)"{}*\ Adapted\ for\ Structorizer\ by"{}\(\)}
+  \assign{\(\)\pKey{OUTPUT}\(\ \)"{}*\ -\ Kay\ G"urtzig\ /\ FH\ Erfurt\ 2016"{}\(\)}
+  \assign{\(\)\pKey{OUTPUT}\(\ \)"{}*\ Version:\ 2.4\ (2022-01-11)"{}\(\)}
+  \assign{\(\)\pKey{OUTPUT}\(\ \)"{}*\ (Requires\ at\ least\ Structorizer\ 3.30-03\ to\ run)"{}\(\)}
+  \assign{\(\)\pKey{OUTPUT}\(\ \)"{}**********************************"{}\(\)}
+  \assign{\(history\ \gets\ History\{\{\)"{}"{}\(,\ \)"{}"{}\(,\ \)"{}"{}\(,\ \)"{}"{}\(,\ \)"{}"{}\(\},\ 0\}\)}
+  \sub{\(const\ replies\ \gets\ setupReplies()\)}
+  \sub{\(const\ reflexions\ \gets\ setupReflexions()\)}
+  \sub{\(const\ byePhrases\ \gets\ setupGoodByePhrases()\)}
+  \sub{\(const\ keyMap\ \gets\ setupKeywords()\)}
+  \assign{\(offsets[length(keyMap)-1]\ \gets\ 0\)}
+  \assign{\(isGone\ \gets\ false\)}
+  \assign{\(\)\pKey{OUTPUT}\(\ \)"{}Hi!\ I\textbackslash{}'{}m\ your\ new\ therapist.\ My\ name\ is\ Eliza.\ What\textbackslash{}'{}s\ your\ problem?"{}\(\)}
+  \until{\(isGone\)}
+    \assign{\(\)\pKey{INPUT}\(\ userInput\)}
+    \sub{\(userInput\ \gets\ normalizeInput(userInput)\)}
+    \sub{\(isGone\ \gets\ checkGoodBye(userInput,\ byePhrases)\)}
+    \ifthenelse{6}{6}{\(!\ isGone\)}{T}{F}
+      \assign{\(reply\ \gets\ \)"{}Please\ don\textbackslash{}'{}t\ repeat\ yourself!"{}\(\)}
+      \sub{\(isRepeated\ \gets\ checkRepetition(history,\ userInput)\)}
+      \ifthenelse{6}{6}{\(!\ isRepeated\)}{T}{F}
+        \sub{\(findInfo\ \gets\ findKeyword(keyMap,\ userInput)\)}
+        \assign{\(keyIndex\ \gets\ findInfo[0]\)}
+        \ifthenelse{6}{6}{\(keyIndex\ <\ 0\)}{T}{F}
+          \assign{\(keyIndex\ \gets\ length(keyMap)-1\)}
+        \change
+        \ifend
+        \assign{\(var\ entry:\ KeyMapEntry\ \gets\ keyMap[keyIndex]\)}
+        \assign{\(varPart\ \gets\ \)"{}"{}\(\)}
+        \ifthenelse{6}{6}{\(length(entry.keyword)\ >\ 0\)}{T}{F}
+          \sub{\(varPart\ \gets\ conjugateStrings(userInput,\ entry.keyword,\ findInfo[1],\ reflexions)\)}
+        \change
+        \ifend
+        \assign{\(replyRing\ \gets\ replies[entry.index]\)}
+        \assign{\(reply\ \gets\ replyRing[offsets[keyIndex]]\)}
+        \assign{\(offsets[keyIndex]\ \gets\ (offsets[keyIndex]\ +\ 1)\ \bmod\ length(replyRing)\)}
+        \assign{\(posAster\ \gets\ pos(\)"{}*"{}\(,\ reply)\)}
+        \ifthenelse{6}{6}{\(posAster\ >\ 0\)}{T}{F}
+          \ifthenelse{6}{6}{\(varPart\ =\ \)"{}\ "{}\(\)}{T}{F}
+            \assign{\(reply\ \gets\ \)"{}You\ will\ have\ to\ elaborate\ more\ for\ me\ to\ help\ you."{}\(\)}
+          \change
+            \assign{\(delete(reply,\ posAster,\ 1)\)}
+            \assign{\(insert(varPart,\ reply,\ posAster)\)}
+          \ifend
+        \change
+        \ifend
+        \sub{\(reply\ \gets\ adjustSpelling(reply)\)}
+      \change
+      \ifend
+      \assign{\(\)\pKey{OUTPUT}\(\ reply\)}
+    \change
+    \ifend
+  \untilend
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[History]
+  \assign{%
+    \begin{declaration}[type:]
+      \description{History}{record\ \{\ histArray\ :\ array\ of\ string\ ;\ histIndex\ :\ int\ \}}
+    \end{declaration}
+  }
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[KeyMapEntry]
+  \assign{%
+    \begin{declaration}[type:]
+      \description{KeyMapEntry}{record\ \{\ keyword\ :\ string\ ;\ index\ :\ int\ \}}
+    \end{declaration}
+  }
+\end{struktogramm}
+
+\end{document}

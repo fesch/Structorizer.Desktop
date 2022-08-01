@@ -2548,13 +2548,15 @@ public class Root extends Element {
      * Returns the absolute file path as string if this diagram is associated to a file,
      * or an empty string otherwise.<br/>
      * If the file resides within an arrz archive, the path may be a symbolic path into
-     * the arrz archive unless {@code pathOfOrigin} is true, in which case it will be the
-     * archive path itself instead.<br/>
+     * the arrz archive unless {@code pathOfOrigin} is {@code true}, in which case it will
+     * be the archive path itself instead.<br/>
      * {@code getPath(true)} is equivalent to {@code getFile().getAbsolutePath()} if this
      * is associated to a file at all.
+     * 
      * @param pathOfOrigin - if true and the diagram resides within an arrz archive the
-     * path of the mere archive will be returned.
+     *     path of the mere archive will be returned.
      * @return the absolute path of the nsd file (may be symbolic) or of the housing arrz file.
+     * 
      * @see #getFile()
      */
     public String getPath(boolean pathOfOrigin)
