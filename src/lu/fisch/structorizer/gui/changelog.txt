@@ -23,7 +23,7 @@ Known issues:
 - ARM export is still experimental and relies on a specific and very restricted
   syntax for the element contents in order to produce meaningful results.
 
-Current development version 3.32-10 (2022-08-02)
+Current development version 3.32-10 (2022-08-09)
 - 01: Bugfix #987: Duplicate subroutine comment export by Pascal generator <2>
 - 01: Bugfix #988: Syntax error in Structorizer.bat and Arranger.bat fixed <2>
 - 01: Bugfix #989: Expressions in EXIT elements (e.g. return) were forgotten
@@ -103,6 +103,7 @@ Current development version 3.32-10 (2022-08-02)
 - 09: Bugfix #1054: Width of Alternatives not sufficient for long comments <2>
 - 10: Bugfix #1049: COBOL condition name resolution was still defective <2>
 - 10: Issue #1047: Isolated NSD batch export with new option -k [R. Schmidt]2
+- 10: Issue #1056: French translation revised [GitHub/tph002]2
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>

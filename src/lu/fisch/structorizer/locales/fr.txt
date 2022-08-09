@@ -60,6 +60,7 @@
  *      Kay Gürtzig     2018.07.02      KGU#245: all Colors stuff replaced with array keys 
  *      Kay Gürtzig     2019-03-03      Enh. #327: New section Keywords for ParserPreferences
  *      Kay Gürtzig     2019-03-17      Enh. #56: Messages for the new Element class Try
+ *      Kay Gürtzig     2022-08-09      Issue #1056
  *
  ******************************************************************************************************
  *
@@ -211,8 +212,8 @@ Menu.menuPreferencesColors.text=Couleurs ...
 Menu.menuPreferencesOptions.text=Structures ...
 Menu.menuPreferencesParser.text=Parser ...
 Menu.menuPreferencesAnalyser.text=Analyser ...
-Menu.menuPreferencesElements.text=Appellations des éléments ...
-Menu.menuPreferencesCtrlAliases.text=Controller aliases ...
+Menu.menuPreferencesElements.text=Appellation des éléments ...
+Menu.menuPreferencesCtrlAliases.text=Contrôler les alias ...
 Menu.menuPreferencesSaving.text=Sauvegarde ...
 Menu.menuPreferencesExport.text=Exporter ...
 Menu.menuPreferencesImport.text=Importer ...
@@ -234,7 +235,7 @@ Menu.menuPreferencesLanguageFromFile.text=De fichier ...
 Menu.menuPreferencesLookAndFeel.text=Look & Feel
 Menu.menuPreferencesWheel.text=Roue de la souris
 Menu.menuPreferencesWheelCollapse.text=Utiliser pour collaber/exploser?
-Menu.menuPreferencesWheelZoom.text=Invertir le zoom au l'usage con ctrl?
+Menu.menuPreferencesWheelZoom.text=Inverser le zoom avec ctrl?
 Menu.menuPreferencesScalePreset.text=GUI scaling ...
 
 Menu.menuPreferencesSave.text=Sauvegarder ou charger
@@ -261,6 +262,7 @@ Menu.menuHelp.text=Aide
 Menu.menuHelp.mnemonic=a
 // Submenu of "Help"
 Menu.menuHelpOnline.text=Manuel d'utilisation
+Menu.menuHelpDownload.text=Télécharger le guide au format PDF
 Menu.menuHelpAbout.text=À propos de ...
 Menu.menuHelpUpdate.text=Mise à jour ...
 
@@ -525,7 +527,7 @@ Preferences.lblAltF.text=Libellé FAUX
 Preferences.lblAltF.tooltip=Le libellé du côté droit.
 Preferences.lblAltContent.text=Contenu par défaut
 Preferences.lblAltContent.tooltip=Le contenu par défaut d'une structure @{Alternative}.
-Preferences.altPadRight.text=Élargirer la partie FAUX
+Preferences.altPadRight.text=Élargir la partie FAUX
 Preferences.pnlCase.border=Structure @{Case}
 Preferences.pnlCase.tooltip=
 Preferences.lblCase.text=Contenu par défaut
@@ -645,6 +647,30 @@ ExportOptionDialoge.jLabel1.text=Choisissez les options que vous désirez acitve
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Sauvegarder les options.
 
+-----[ ElementNamePreferences ]-----
+ElementNamePreferences.title=Préférences d'appellation des éléments
+ElementNamePreferences.lblExplanation.text=Re-label the Element types for display
+ElementNamePreferences.chkUseConfNames.text=Enable the configured labels
+ElementNamePreferences.lblLocalized.text=Localized label
+ElementNamePreferences.lblIndividual.text=Configured label
+ElementNamePreferences.btnEnglishStd.text=English Standard
+ElementNamePreferences.btnEnglishStd.tooltip=Adopt the English standard element names as configured labels for all languages.
+ElementNamePreferences.btnOK.text=OK
+ElementNamePreferences.btnOK.tooltip=Accept these settings.
+
+-----[ DiagramControllerAliases ]-----
+// Also consider Menu.msgTabHdrSignature and Menu.msgTabHdrAlias 
+DiagramControllerAliases.title=Contrôler les alias de routine
+DiagramControllerAliases.lblHeader.text=Specify alias names for the routines of controllable add-ons.
+DiagramControllerAliases.lblRemark.text=(Note that case is ignored with controller routine names!)
+DiagramControllerAliases.chkApplyAliases.text=Apply the specified aliases on display etc.
+DiagramControllerAliases.btnOK.text=OK
+DiagramControllerAliases.hlpEndEditing.text=End cell editing by pressing <Enter> or <Esc> or by clicking elsewhere.
+DiagramControllerAliases.msgIdentifierRequired.text=Your alias contains illegal characters.\nA routine name alias must either be empty or an identifier\n(i.e. only consist of letters, digits, and underscores).\n\nThe original text will be restored.
+DiagramControllerAliases.ttlIllegalValues.text=Illegal alias
+DiagramControllerAliases.msgIn.text=in
+DiagramControllerAliases.msgConflictsFound.text=There are signature conflicts, changes can't be committed:\n\n%\n\nYou must resolve these conflicts first. (The conflict list is copied to the clipboard.)
+
 -----[ FindAndReplace ]-----
 FindAndReplace.chkRootTypes.0.text=@n
 FindAndReplace.chkRootTypes.0.mnemonic=p
@@ -738,8 +764,8 @@ ElementNames.localizedNames.10.text=SAUT
 ElementNames.localizedNames.11.text=PARALLÈLE
 ElementNames.localizedNames.12.text=Diagramme
 ElementNames.localizedNames.13.text=Programme
-ElementNames.localizedNames.14.text=Sous programme
-ElementNames.localizedNames.15.text=Inclurible
+ElementNames.localizedNames.14.text=Sous-programme
+ElementNames.localizedNames.15.text=Incluable
 ElementNames.localizedNames.16.text=TRY
 
 -----> Keywords
