@@ -649,27 +649,28 @@ ExportOptionDialoge.jButton1.tooltip=Sauvegarder les options.
 
 -----[ ElementNamePreferences ]-----
 ElementNamePreferences.title=Préférences d'appellation des éléments
-ElementNamePreferences.lblExplanation.text=Re-label the Element types for display
-ElementNamePreferences.chkUseConfNames.text=Enable the configured labels
-ElementNamePreferences.lblLocalized.text=Localized label
-ElementNamePreferences.lblIndividual.text=Configured label
-ElementNamePreferences.btnEnglishStd.text=English Standard
-ElementNamePreferences.btnEnglishStd.tooltip=Adopt the English standard element names as configured labels for all languages.
+ElementNamePreferences.lblExplanation.text=
+ElementNamePreferences.chkUseConfNames.text=
+ElementNamePreferences.lblLocalized.text=Apellation localisée
+ElementNamePreferences.lblIndividual.text=Apellation individuelle
+ElementNamePreferences.btnEnglishStd.text=Défaut anglaise
+ElementNamePreferences.btnEnglishStd.tooltip=Adopter les appellations anglaises standard en tant que l'étiquettes individuelles des éléments.
 ElementNamePreferences.btnOK.text=OK
-ElementNamePreferences.btnOK.tooltip=Accept these settings.
+ElementNamePreferences.btnOK.tooltip=Sauvegarder les options.
 
 -----[ DiagramControllerAliases ]-----
 // Also consider Menu.msgTabHdrSignature and Menu.msgTabHdrAlias 
 DiagramControllerAliases.title=Contrôler les alias de routine
-DiagramControllerAliases.lblHeader.text=Specify alias names for the routines of controllable add-ons.
-DiagramControllerAliases.lblRemark.text=(Note that case is ignored with controller routine names!)
-DiagramControllerAliases.chkApplyAliases.text=Apply the specified aliases on display etc.
+DiagramControllerAliases.lblHeader.text=Prédéfinir alias des routines des outils complémentaires commandables.
+DiagramControllerAliases.lblRemark.text=(Observez que ne fait pas de distinction entre majuscules et minuscules ici!)
+DiagramControllerAliases.chkApplyAliases.text=Appliquer les alias à l'interface utlisateur
 DiagramControllerAliases.btnOK.text=OK
-DiagramControllerAliases.hlpEndEditing.text=End cell editing by pressing <Enter> or <Esc> or by clicking elsewhere.
-DiagramControllerAliases.msgIdentifierRequired.text=Your alias contains illegal characters.\nA routine name alias must either be empty or an identifier\n(i.e. only consist of letters, digits, and underscores).\n\nThe original text will be restored.
-DiagramControllerAliases.ttlIllegalValues.text=Illegal alias
-DiagramControllerAliases.msgIn.text=in
-DiagramControllerAliases.msgConflictsFound.text=There are signature conflicts, changes can't be committed:\n\n%\n\nYou must resolve these conflicts first. (The conflict list is copied to the clipboard.)
+DiagramControllerAliases.btnOK.tooltip=Sauvegarder les options.
+DiagramControllerAliases.hlpEndEditing.text=
+DiagramControllerAliases.msgIdentifierRequired.text=
+DiagramControllerAliases.ttlIllegalValues.text=Alias ilégal
+DiagramControllerAliases.msgIn.text=en
+DiagramControllerAliases.msgConflictsFound.text=
 
 -----[ FindAndReplace ]-----
 FindAndReplace.chkRootTypes.0.text=@n

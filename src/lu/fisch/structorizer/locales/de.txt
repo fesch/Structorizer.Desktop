@@ -1238,6 +1238,7 @@ DiagramControllerAliases.lblHeader.text=Legen Sie Alias-Namen für die Routinen 
 DiagramControllerAliases.lblRemark.text=(Beachte: Groß-/Kleinschreibung spielt keine Rolle bei Aktionsmodul-Routinen!)
 DiagramControllerAliases.chkApplyAliases.text=Die festgelegten Ersatznamen bei der Darstellung anwenden
 DiagramControllerAliases.btnOK.text=Speichern
+DiagramControllerAliases.btnOK.tooltip=Einstellungen übernehmen und Dialog schließen.
 DiagramControllerAliases.hlpEndEditing.text=Die Änderung der Tabellenzelle durch Taste <Enter> oder <Esc> oder durch Klick an andere Stelle beenden.
 DiagramControllerAliases.msgIdentifierRequired.text=Ihr Ersatzname enthält unzulässige Zeichen.\nEin Unterprogramm-Ersatzname muss entweder leer oder ein Bezeichner sein\n(d.h. darf nur aus Buchstaben, Ziffern und Unterstrichen bestehen).\n\nDer Originaltext wird wieder hergestellt.
 DiagramControllerAliases.ttlIllegalValues.text=Ungültiger Ersatzname

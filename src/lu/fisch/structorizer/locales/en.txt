@@ -1238,6 +1238,7 @@ DiagramControllerAliases.lblHeader.text=Specify alias names for the routines of 
 DiagramControllerAliases.lblRemark.text=(Note that case is ignored with controller routine names!)
 DiagramControllerAliases.chkApplyAliases.text=Apply the specified aliases on display etc.
 DiagramControllerAliases.btnOK.text=OK
+DiagramControllerAliases.btnOK.tooltip=Accept these settings.
 DiagramControllerAliases.hlpEndEditing.text=End cell editing by pressing <Enter> or <Esc> or by clicking elsewhere.
 DiagramControllerAliases.msgIdentifierRequired.text=Your alias contains illegal characters.\nA routine name alias must either be empty or an identifier\n(i.e. only consist of letters, digits, and underscores).\n\nThe original text will be restored.
 DiagramControllerAliases.ttlIllegalValues.text=Illegal alias
