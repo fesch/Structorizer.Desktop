@@ -48,16 +48,16 @@
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Bob Fisch       2008.01.14      First Issue
- *      Kay Gürtzig     2016.04.24      Issue #173: New mnemonic configurations added
- *      Bob Fisch       2016.08.02      Updated some strings
- *      Kay Gürtzig     2016.09.04      Menu.menuPreferencesLanguage... key structure modified
- *      Kay Gürtzig     2016.09.13      Entries for InputBox and InputBoxFor revised (bugfix #241)
- *      Kay Gürtzig     2016.09.22      AnalyserPreferences numbering modified, InputBoxFor augmented
- *      Kay Gürtzig     2016.10.11      Enh. 267: Menu.error15 divided into error15_1 and error15_2
- *      Kay Gürtzig     2017.04.05      Additions for enh. #388 and #390 (constant definition checks)
- *      Kay Gürtzig     2017.12.16      Element name placeholders introduced
- *      Kay Gürtzig     2018.07.02      KGU#245: all Colors stuff replaced with array keys 
+ *      Bob Fisch       2008-01-14      First Issue
+ *      Kay Gürtzig     2016-04-24      Issue #173: New mnemonic configurations added
+ *      Bob Fisch       2016-08-02      Updated some strings
+ *      Kay Gürtzig     2016-09-04      Menu.menuPreferencesLanguage... key structure modified
+ *      Kay Gürtzig     2016-09-13      Entries for InputBox and InputBoxFor revised (bugfix #241)
+ *      Kay Gürtzig     2016-09-22      AnalyserPreferences numbering modified, InputBoxFor augmented
+ *      Kay Gürtzig     2016-10-11      Enh. 267: Menu.error15 divided into error15_1 and error15_2
+ *      Kay Gürtzig     2017-04-05      Additions for enh. #388 and #390 (constant definition checks)
+ *      Kay Gürtzig     2017-12-16      Element name placeholders introduced
+ *      Kay Gürtzig     2018-07-02      KGU#245: all Colors stuff replaced with array keys 
  *      Kay Gürtzig     2019-03-03      Enh. #327: New section Keywords for ParserPreferences
  *      Kay Gürtzig     2019-03-17      Enh. #56: Messages for the new Element class Try
  *      Kay Gürtzig     2022-08-09/10   Issue #1056 (flawed translations, defective tooltip associations)
