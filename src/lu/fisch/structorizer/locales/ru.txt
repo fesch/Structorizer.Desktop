@@ -69,6 +69,8 @@
  *      Kay Gürtzig     2019-02-16  Enh. #682: Welcome message translated
  *      Kay Gürtzig     2019-02-17  Issue #684: New and missing messages for ParserPreferences added
  *      Kay Gürtzig     2020-01-20  Enh. #801: New messages for offline help support
+ *      Kay Gürtzig     2022-08-10  Enh. #56: Some missing message for insertion of TRY blocks added,
+ *                                  issue #492 more consequent use of element name placeholders
  *
  ******************************************************************************************************
  *
@@ -177,10 +179,10 @@ Menu.menuDiagramAddBeforeFor.text=Цикл @{For}
 Menu.menuDiagramAddBeforeWhile.text=Цикл @{While}
 Menu.menuDiagramAddBeforeRepeat.text=Цикл @{Repeat}
 Menu.menuDiagramAddBeforeForever.text=Цикл @{Forever}
-Menu.menuDiagramAddBeforeCall.text=Вызов процедуры
-Menu.menuDiagramAddBeforeJump.text=Переход (выход)
-Menu.menuDiagramAddBeforePara.text=Параллельное разветвление
-Menu.menuDiagramAddBeforeTry.text=Блок @q
+Menu.menuDiagramAddBeforeCall.text=@{Call} процедуры
+Menu.menuDiagramAddBeforeJump.text=@{Jump}
+Menu.menuDiagramAddBeforePara.text=@{Parallel}
+Menu.menuDiagramAddBeforeTry.text=Блок @{Try}
 // Submenu "Diagram -> Add -> After"
 Menu.menuDiagramAddAfter.text=Позади
 // Submenus for adding Elements "After"
@@ -191,10 +193,10 @@ Menu.menuDiagramAddAfterFor.text=Цикл @{For}
 Menu.menuDiagramAddAfterWhile.text=Цикл @{While}
 Menu.menuDiagramAddAfterRepeat.text=Цикл @{Repeat}
 Menu.menuDiagramAddAfterForever.text=Цикл @{Forever}
-Menu.menuDiagramAddAfterCall.text=Вызов процедуры
-Menu.menuDiagramAddAfterJump.text=Переход (выход)
-Menu.menuDiagramAddAfterPara.text=Параллельное разветвление
-Menu.menuDiagramAddAfterTry.text=Блок @q
+Menu.menuDiagramAddAfterCall.text=@{Call} процедуры
+Menu.menuDiagramAddAfterJump.text=@{Jump}
+Menu.menuDiagramAddAfterPara.text=@{Parallel}
+Menu.menuDiagramAddAfterTry.text=Блок @{Try}
 Menu.menuDiagramEdit.text=Изменить
 Menu.menuDiagramDelete.text=Удалить
 Menu.menuDiagramMoveUp.text=Вверх
@@ -544,15 +546,15 @@ Editor.btnSaveAll.tooltip=Сохранить все новые или измен
 // InsertAfter (+shift: before)
 Editor.btnAfterInst.tooltip=Добавить новую инструкцию позади выбранного элемента (с реги́стровой кла́вишей: перед выбранным элементом).
 Editor.btnAfterAlt.tooltip=Добавить разветвление @{Alternative} позади выбранного элемента (с реги́стровой кла́вишей: перед выбранным элементом).
+Editor.btnAfterCase.tooltip=Добавить многократное разветвление @{Case} позади выбранного элемента (с реги́стровой кла́вишей: перед выбранным элементом).
 Editor.btnAfterFor.tooltip=Добавить цикл @{For} позади выбранного элемента (с реги́стровой кла́вишей: перед выбранным элементом).
 Editor.btnAfterWhile.tooltip=Добавить цикл @{While} позади выбранного элемента (с реги́стровой кла́вишей: перед выбранным элементом).
 Editor.btnAfterRepeat.tooltip=Добавить цикл @{Repeat} позади выбранного элемента (с реги́стровой кла́вишей: перед выбранным элементом).
 Editor.btnAfterForever.tooltip=Добавить цикл @{Forever} позади выбранного элемента (с реги́стровой кла́вишей: перед выбранным элементом).
-Editor.btnAfterCall.tooltip=Добавить новый вызов процедуры позади выбранного элемента (с реги́стровой кла́вишей: перед выбранным элементом).
-Editor.btnAfterJump.tooltip=Добавить новый выход @{Jump} позади выбранного элемента (с реги́стровой кла́вишей: перед выбранным элементом).
-Editor.btnAfterCase.tooltip=Добавить многократное разветвление @{Case} позади выбранного элемента (с реги́стровой кла́вишей: перед выбранным элементом).
-Editor.btnAfterPara.tooltip=Добавить новое параллельное разветвление позади выбранного элемента (с реги́стровой кла́вишей: перед выбранным элементом).
-Editor.btnAfterTry.tooltip=
+Editor.btnAfterCall.tooltip=Добавить новый @{Call} процедуры позади выбранного элемента (с реги́стровой кла́вишей: перед выбранным элементом).
+Editor.btnAfterJump.tooltip=Добавить новый @{Jump} позади выбранного элемента (с реги́стровой кла́вишей: перед выбранным элементом).
+Editor.btnAfterPara.tooltip=Добавить новое @{Parallel} выбранного элемента (с реги́стровой кла́вишей: перед выбранным элементом).
+Editor.btnAfterTry.tooltip=Добавить новый блок @{Try} позади выбранного элемента (с реги́стровой кла́вишей: перед выбранным элементом).
 // undo & redo
 Editor.btnUndo.tooltip=Отменить последнее действие.
 Editor.btnRedo.tooltip=Повторить последнее действие.
@@ -613,9 +615,9 @@ Editor.popupAddBeforeFor.text=Цикл @{For}
 Editor.popupAddBeforeWhile.text=Цикл @{While}
 Editor.popupAddBeforeRepeat.text=Цикл @{Repeat}
 Editor.popupAddBeforeForever.text=Цикл @{Forever}
-Editor.popupAddBeforeCall.text=Вызов процедуры
-Editor.popupAddBeforeJump.text=Переход (Выход)
-Editor.popupAddBeforePara.text=Параллельное разветвление
+Editor.popupAddBeforeCall.text=@{Call} процедуры
+Editor.popupAddBeforeJump.text=@{Jump}
+Editor.popupAddBeforePara.text=@{Parallel}
 Editor.popupAddBeforeTry.text=Блок @{Try}
 // After
 Editor.popupAddAfter.text=Позади
@@ -627,9 +629,9 @@ Editor.popupAddAfterFor.text=Цикл @{For}
 Editor.popupAddAfterWhile.text=Цикл @{While}
 Editor.popupAddAfterRepeat.text=Цикл @{Repeat}
 Editor.popupAddAfterForever.text=Цикл @{Forever}
-Editor.popupAddAfterCall.text=Вызов процедуры
-Editor.popupAddAfterJump.text=Переход (Выход)
-Editor.popupAddAfterPara.text=Параллельное разветвление
+Editor.popupAddAfterCall.text=@{Call} процедуры
+Editor.popupAddAfterJump.text=@{Jump}
+Editor.popupAddAfterPara.text=@{Parallel}
 Editor.popupAddAfterTry.text=Блок @{Try}
 // Edit
 Editor.popupEdit.text=Изменить
@@ -684,9 +686,9 @@ InputBox.title[elementType:Case,getInsertionType():insert]=Добавить но
 InputBox.title[elementType:Forever,getInsertionType():insert]=Добавить цикл @{Forever}...
 InputBox.title[elementType:Repeat,getInsertionType():insert]=Добавить цикл @{Repeat}...
 InputBox.title[elementType:While,getInsertionType():insert]=Добавить цикл @{While}...
-InputBox.title[elementType:Call,getInsertionType():insert]=Добавить новый вызов процедуры...
+InputBox.title[elementType:Call,getInsertionType():insert]=Добавить новый @{Call} процедуры...
 InputBox.title[elementType:Jump,getInsertionType():insert]=Добавить новый @{Jump}...
-InputBox.title[elementType:Parallel,getInsertionType():insert]=Добавить новое параллельное разветвление...
+InputBox.title[elementType:Parallel,getInsertionType():insert]=Добавить новое @{Parallel}...
 InputBox.title[elementType:Try,getInsertionType():insert]=Добавить новый блок @{Try}
 InputBox.title[elementType:Instruction,getInsertionType():update]=Изменить инструкцию...
 InputBox.title[elementType:Alternative,getInsertionType():update]=Изменить разветвление @{Alternative}...
@@ -694,9 +696,9 @@ InputBox.title[elementType:Case,getInsertionType():update]=Изменить вы
 InputBox.title[elementType:Forever,getInsertionType():update]=Изменить цикл @{Forever}...
 InputBox.title[elementType:Repeat,getInsertionType():update]=Изменить цикл @{Repeat}...
 InputBox.title[elementType:While,getInsertionType():update]=Изменить цикл @{While...
-InputBox.title[elementType:Call,getInsertionType():update]=Изменить вызов процедуры...
+InputBox.title[elementType:Call,getInsertionType():update]=Изменить @{Call} процедуры...
 InputBox.title[elementType:Jump,getInsertionType():update]=Изменить @{Jump}...
-InputBox.title[elementType:Parallel,getInsertionType():update]=Изменить параллельное разветвление...
+InputBox.title[elementType:Parallel,getInsertionType():update]=Изменить @{Parallel}...
 InputBox.title[elementType:Try,getInsertionType():update]=Изменить блок @{Try}...
 
 -----[ InputBox For ]-----
@@ -1427,8 +1429,8 @@ ElementNames.localizedNames.6.text=WHILE
 ElementNames.localizedNames.7.text=REPEAT
 ElementNames.localizedNames.8.text=ENDLESS
 ElementNames.localizedNames.9.text=Вызов
-ElementNames.localizedNames.10.text=JUMP
-ElementNames.localizedNames.11.text=Параллельное ветвление
+ElementNames.localizedNames.10.text=Переход (выход)
+ElementNames.localizedNames.11.text=Параллельное разветвление
 ElementNames.localizedNames.12.text=Схема
 ElementNames.localizedNames.13.text=Программа
 ElementNames.localizedNames.14.text=Подпрограмма

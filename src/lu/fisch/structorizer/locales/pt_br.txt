@@ -59,6 +59,7 @@
  *      Kay Gürtzig     2017-04-05  Additions for enh. #388 and #390 (constant definition checks)
  *      Kay Gürtzig     2018-07-02  KGU#245: all Colors stuff replaced with array keys
  *      Kay Gürtzig     2018-12-30  Enh. #492: Element name place holders introduced
+ *      Kay Gürtzig     2022-08-10  Enh. #56, #492: Messages / tooltips for TRY elements added
  *
  ******************************************************************************************************
  *
@@ -167,6 +168,7 @@ Menu.menuDiagramAddBeforeForever.text=repetição @{Forever}
 Menu.menuDiagramAddBeforeCall.text=@{Call}
 Menu.menuDiagramAddBeforeJump.text=@{Jump}
 Menu.menuDiagramAddBeforePara.text=@{Parallel}
+Menu.menuDiagramAddBeforeTry.text=@{Try}
 
 // Submenu "Diagram -> Add -> After"
 Menu.menuDiagramAddAfter.text=Depois
@@ -182,6 +184,7 @@ Menu.menuDiagramAddAfterForever.text=repetição @{Forever}
 Menu.menuDiagramAddAfterCall.text=@{Call}
 Menu.menuDiagramAddAfterJump.text=@{Jump}
 Menu.menuDiagramAddAfterPara.text=@{Parallel}
+Menu.menuDiagramAddAfterTry.text=@{Try}
 Menu.menuDiagramEdit.text=Editar
 Menu.menuDiagramDelete.text=Apagar
 Menu.menuDiagramMoveUp.text=Para cima
@@ -192,8 +195,9 @@ Menu.menuDiagramExpand.text=Expandir
 
 // Diagram Appearance
 Menu.menuDiagramType.text=Tipo
-Menu.menuDiagramTypeProgram.text=Principal
-Menu.menuDiagramTypeFunction.text=Sub
+Menu.menuDiagramTypeProgram.text=@{Root.DT_MAIN}
+Menu.menuDiagramTypeFunction.text=@{Root.DT_SUB}
+Menu.menuDiagramTypeInclude.text=@{Root.DT_INCL}
 Menu.menuDiagramUnboxed.text=Diagrama no encaixado?
 Menu.menuDiagramComment.text=Mostrar comentários?
 Menu.menuDiagramSwitchComments.text=Trocar texto/comentários?
@@ -347,6 +351,7 @@ Editor.btnAfterCall.tooltip=Inserir uma nova chamada (@{Call}) após o (+shift: 
 Editor.btnAfterJump.tooltip=Inserir um novo desvio (@{Jump}) após o (+shift: antes do) elemento selecionado.
 Editor.btnAfterCase.tooltip=Inserir uma nova alternativa @{Case} após o (+shift: antes do) elemento selecionado.
 Editor.btnAfterPara.tooltip=Inserir um novo comando @{Parallel} após o (+shift: antes do) elemento selecionado.
+Editor.btnAfterTry.tooltip=Inserir um novo comando @{Try} após o (+shift: antes do) elemento selecionado.
 
 // undo & redo
 Editor.btnUndo.tooltip=Desfazer a última ação.
@@ -412,6 +417,7 @@ Editor.popupAddBeforeForever.text=repetição @{Forever}
 Editor.popupAddBeforeCall.text=@{Call}
 Editor.popupAddBeforeJump.text=@{Jump}
 Editor.popupAddBeforePara.text=@{Parallel}
+Editor.popupAddBeforeTry.text=@{Try}
 
 // After
 Editor.popupAddAfter.text=Depois
@@ -427,6 +433,7 @@ Editor.popupAddAfterForever.text=repetição @{Forever}
 Editor.popupAddAfterCall.text=@{Call}
 Editor.popupAddAfterJump.text=@{Jump}
 Editor.popupAddAfterPara.text=@{Parallel}
+Editor.popupAddAfterTry.text=@{Try}
 
 // Edit
 Editor.popupEdit.text=Editar
@@ -678,4 +685,4 @@ ElementNames.localizedNames.12.text=Diagrama
 ElementNames.localizedNames.13.text=Programa principal
 ElementNames.localizedNames.14.text=Subprograma
 ElementNames.localizedNames.15.text=Inclução
-ElementNames.localizedNames.16.text=TRY
+ElementNames.localizedNames.16.text=Tentar

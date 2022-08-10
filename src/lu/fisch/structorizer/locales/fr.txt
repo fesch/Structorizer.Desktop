@@ -193,6 +193,7 @@ Menu.menuDiagramExpand.text=Exploser
 Menu.menuDiagramType.text=Type de diagramme
 Menu.menuDiagramTypeProgram.text=@{Root.DT_MAIN}
 Menu.menuDiagramTypeFunction.text=@{Root.DT_SUB}
+Menu.menuDiagramTypeInclude.text=@{Root.DT_INCL}
 Menu.menuDiagramUnboxed.text=Diagramme non cadré
 Menu.menuDiagramComment.text=Montrer les commentaires?
 Menu.menuDiagramSwitchComments.text=Basculer entre code / commentaires?
