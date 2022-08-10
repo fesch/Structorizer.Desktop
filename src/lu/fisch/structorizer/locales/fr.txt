@@ -1573,7 +1573,7 @@ ElementNames.localizedNames.12.text=Diagramme
 ElementNames.localizedNames.13.text=Programme
 ElementNames.localizedNames.14.text=Sous-programme
 ElementNames.localizedNames.15.text=Incluable
-ElementNames.localizedNames.16.text=TRY
+ElementNames.localizedNames.16.text=TENTER
 
 -----> Keywords
 ParserKeywords.AltPre.text=si

@@ -48,12 +48,13 @@
  *
  *      Author          Date        Description
  *      ------          ----        -----------
- *      Wang Lei        2010.05.14  First Issue
- *      Zijun Ke        2015.10.29  Several additions
- *      Kay Gürtzig     2016.09.04  Menu.menuPreferencesLanguage... key structure modified
- *      Kay Gürtzig     2016.09.22  AnalyserPreferences numbering modified
- *      Kay Gürtzig     2016.12.14  New menu "Debug"
- *      Kay Gürtzig     2018.07.02  KGU#245: all Colors stuff replaced with array keys 
+ *      Wang Lei        2010-05-14  First Issue
+ *      Zijun Ke        2015-10-29  Several additions
+ *      Kay Gürtzig     2016-09-04  Menu.menuPreferencesLanguage... key structure modified
+ *      Kay Gürtzig     2016-09-22  AnalyserPreferences numbering modified
+ *      Kay Gürtzig     2016-12-14  New menu "Debug"
+ *      Kay Gürtzig     2018-07-02  KGU#245: all Colors stuff replaced with array keys
+ *      Kay Gürtzig     2022-08-11  Enh. #84/#250: Parser configuration for FOR loops updated
  *
  ******************************************************************************************************
  *
@@ -453,8 +454,13 @@ ParserPreferences.lblAlt.text=@{Alternative} 语句
 ParserPreferences.lblAlt.tooltip=
 ParserPreferences.lblCase.text=@{Case} 语句
 ParserPreferences.lblCase.tooltip=
-ParserPreferences.lblFor.text=@{For} 循环
+ParserPreferences.lblFor.text=@{For.COUNTER} 循环
 ParserPreferences.lblFor.tooltip=
+ParserPreferences.lblForStep.text=
+ParserPreferences.lblForIn.text=@{For.TRAVERSAL} 循环
+ParserPreferences.lblForIn.tooltip=
+ParserPreferences.edtForInPre.tooltip=
+ParserPreferences.edtForInPost.tooltip=
 ParserPreferences.lblWhile.text=@{While} 循环
 ParserPreferences.lblWhile.tooltip=
 ParserPreferences.lblRepeat.text=@{Repeat} 循环
