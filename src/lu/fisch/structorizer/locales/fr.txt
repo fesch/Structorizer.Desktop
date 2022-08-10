@@ -60,7 +60,7 @@
  *      Kay Gürtzig     2018.07.02      KGU#245: all Colors stuff replaced with array keys 
  *      Kay Gürtzig     2019-03-03      Enh. #327: New section Keywords for ParserPreferences
  *      Kay Gürtzig     2019-03-17      Enh. #56: Messages for the new Element class Try
- *      Kay Gürtzig     2022-08-09      Issue #1056
+ *      Kay Gürtzig     2022-08-09/10   Issue #1056 (flawed translations, defective tooltip associations)
  *
  ******************************************************************************************************
  *
@@ -140,7 +140,7 @@ Menu.menuEditRedo.text=Annuler annuler
 Menu.menuEditCut.text=Couper
 Menu.menuEditCopy.text=Copier
 Menu.menuEditPaste.text=Insérer
-Menu.menuEditSummonSub.text=Editer sous programme ...
+Menu.menuEditSummonSub.text=Editer @{Root.DT_SUB} ...
 Menu.menuEditSummonSub.tooltip=
 Menu.menuEditFindReplace.text=Rechercher/remplacer ...
 Menu.menuEditUpgradeTurtle.text=À graphique fin
@@ -191,8 +191,8 @@ Menu.menuDiagramCollapse.text=Collaber
 Menu.menuDiagramExpand.text=Exploser
 // Diagram Appearance
 Menu.menuDiagramType.text=Type de diagramme
-Menu.menuDiagramTypeProgram.text=Programme
-Menu.menuDiagramTypeFunction.text=Sous programme
+Menu.menuDiagramTypeProgram.text=@{Root.DT_MAIN}
+Menu.menuDiagramTypeFunction.text=@{Root.DT_SUB}
 Menu.menuDiagramUnboxed.text=Diagramme non cadré
 Menu.menuDiagramComment.text=Montrer les commentaires?
 Menu.menuDiagramSwitchComments.text=Basculer entre code / commentaires?
@@ -370,8 +370,8 @@ Editor.btnAfterForever.tooltip=Insérer une boucle @{Forever} derrière (+shift:
 Editor.btnAfterCall.tooltip=Insérer un APPEL derrière (+shift: devant) l'élément sélectionné.
 Editor.btnAfterJump.tooltip=Insérer un SAUT derrière (+shift: devant) l'élément sélectionné.
 Editor.btnAfterCase.tooltip=Insérer une structure @{Case} derrière (+shift: devant) l'élément sélectionné.
-Editor.btnAfterPara.tooltip=Insérer une instruction parallèle derrière (+shift: devant) l'élément sélectionné.
-Editor.btnAfterPara.tooltip=Insérer un bloque @{Try} derrière (+shift: devant) l'élément sélectionné.
+Editor.btnAfterPara.tooltip=Insérer une section @{Parallel} derrière (+shift: devant) l'élément sélectionné.
+Editor.btnAfterTry.tooltip=Insérer un bloque @{Try} derrière (+shift: devant) l'élément sélectionné.
 // undo & redo
 Editor.btnUndo.tooltip=Annuler la dernière action.
 Editor.btnRedo.tooltip=Annuler l'annulation de la dernière action.
@@ -381,8 +381,8 @@ Editor.btnCopy.tooltip=Copier l'élément sélectionné.
 Editor.btnPaste.tooltip=Insérer l'élément coupé ou copié devant l'élément sélectionné.
 // style
 Editor.btnUnboxed.tooltip=Changer la mode de visualisation du diagramme.
-Editor.btnFunction.tooltip=Sous programme (coins ronds).
-Editor.btnProgram.tooltip=Programme principal (coins carrés).
+Editor.btnFunction.tooltip=@{Root.DT_SUB} (coins ronds).
+Editor.btnProgram.tooltip=@{Root.DT_MAIN} principal (coins carrés).
 // editing
 Editor.btnEdit.tooltip=Editer l'élément sélectionné.
 Editor.btnDelete.tooltip=Supprimer l'élément sélectionné.
@@ -609,7 +609,7 @@ ParserPreferences.lblRepeat.tooltip=
 ParserPreferences.lblJump.text=@{Jump}
 ParserPreferences.lblJump.tooltip=
 ParserPreferences.lblJumpLeave.text=de boucle(s)
-ParserPreferences.lblJumpReturn.text=de sous progr.
+ParserPreferences.lblJumpReturn.text=de sous-progr.
 ParserPreferences.lblJumpExit.text=de programme
 ParserPreferences.lblInputOutput.text=Entrée / Sortie
 ParserPreferences.lblInput.text=Entrée
