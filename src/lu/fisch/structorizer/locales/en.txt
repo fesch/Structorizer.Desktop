@@ -625,13 +625,13 @@ Editor.btnSaveAll.tooltip=Save all diagrams and groups with unsaved changes.
 // InsertAfter (+shift: before)
 Editor.btnAfterInst.tooltip=Insert a new @a after (+shift: before) the selected element.
 Editor.btnAfterAlt.tooltip=Insert a new @b statement after (+shift: before) the selected element.
+Editor.btnAfterCase.tooltip=Insert a new @c statement after (+shift: before) the selected element.
 Editor.btnAfterFor.tooltip=Insert a new @d loop after (+shift: before) the selected element.
 Editor.btnAfterWhile.tooltip=Insert a new @g loop after (+shift: before) the selected element.
 Editor.btnAfterRepeat.tooltip=Insert a new @h loop after (+shift: before) the selected element.
 Editor.btnAfterForever.tooltip=Insert a new @i loop after (+shift: before) the selected element.
 Editor.btnAfterCall.tooltip=Insert a new @j after (+shift: before) the selected element.
 Editor.btnAfterJump.tooltip=Insert a new @k after (+shift: before) the selected element.
-Editor.btnAfterCase.tooltip=Insert a new @c statement after (+shift: before) the selected element.
 Editor.btnAfterPara.tooltip=Insert a new @l statement after (+shift: before) the selected element.
 Editor.btnAfterTry.tooltip=Insert a new @q statement after (+shift: before) the selected element.
 // undo & redo
