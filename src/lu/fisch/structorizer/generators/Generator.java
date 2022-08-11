@@ -120,6 +120,7 @@ package lu.fisch.structorizer.generators;
  *                                      batch export of just a list of nsd files (i.e. without switch -k),
  *                                      if the output is redirected or mirrored to stdout, labelled scissor
  *                                      lines are always to be inserted there.
+ *      Kay Gürtzig     2022-08-12      Issue #1047: Bug in deriveCodeFileName() fixed
  *
  ******************************************************************************************************
  *
@@ -5604,9 +5605,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 
 	/**
-	 * From the given  derives a file name or path suited for the produce code file,
-	 * i.e. adopts basename (and possibly path) and appends the target file name
-	 * extension.
+	 * From the given {@code _filePath} derives a file name or path suited for the
+	 * produced code file, i.e. adopts basename (and possibly path) and appends the
+	 * target file name extension.
 	 * 
 	 * @param _filePath - the file name or path to start with (e.g. an nsd file name)
 	 * @param _keepPath - whether the path (if contained in {@code _filePath}) is to
@@ -5622,8 +5623,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			int posDot = _filePath.lastIndexOf(".");
 			if (posDot > 0)
 			{
-				_filePath = _filePath.substring(0, posDot) + "." + this.getFileExtensions()[0];
+				_filePath = _filePath.substring(0, posDot);
 			}
+			_filePath += "." + this.getFileExtensions()[0];
 			if (_keepPath && path != null) {
 				_filePath = Path.of(path, _filePath).toString();
 			}

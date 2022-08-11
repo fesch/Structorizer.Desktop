@@ -83,6 +83,7 @@
  *      Kay Gürtzig     2020-06-06      Issue #870: Command line option "-restricted" withdrawn
  *      Kay Gürtzig     2021-06-08      Issue #67, #953: retrieval mechanism for plugin-specific options from ini
  *      Kay Gürtzig     2022-08-01      Enh. #1047: Batch export option -k for keeping the source files apart
+ *      Kay Gürtzig     2022-08-11      Enh. #1047: Modified effect of -o option (also in combination with -k)
  *
  ******************************************************************************************************
  *
@@ -105,6 +106,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.security.CodeSource;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -586,6 +588,28 @@ public class Structorizer
 		// END KGU#679 2019-02-13
 		String outFileName = _options.get("outFileName");
 		String codeFileName = outFileName;
+		// START KGU#1051 2022-08-11: Issue #1047 handle output folder
+		File outFile = null;
+		File outFolder = null;
+		if (outFileName != null) {
+			outFolder = outFile = new File(outFileName);
+			if (outFolder.isDirectory()) {
+				outFile = null;
+				codeFileName = null;	// not suited as code file name - derive it
+			}
+			else /* doesn't exist or isn't a directory */ {
+				// Check if at least the parent is an existing folder
+				outFolder = outFolder.getAbsoluteFile().getParentFile();
+				if (!outFolder.isDirectory()) {
+					System.err.println("*** Output folder \"" + outFolder.getAbsolutePath()
+					+ "\" does not exist, -o will be ignored.");
+					outFolder = outFile = null;
+					// Path isn't suited as code file - derive one
+					codeFileName = outFileName = null;
+				}
+			}
+		}
+		// END KGU#1051 2022-08-11
 		// the encoding to be used. 
 		String charSet = _options.getOrDefault("charSet", "UTF-8");
 		// START KGU#720 2019-08-07: Enh. #737
@@ -621,6 +645,11 @@ public class Structorizer
 					if (codeFileName == null && !toStdOut)
 					{
 						codeFileName = f.getCanonicalPath();
+						// START KGU#1051 2022-08-11: Issue #1047 handle output folder
+						if (outFolder != null) {
+							codeFileName = Path.of(outFolder.getPath(), f.getName()).toString();
+						}
+						// END KGU#1051 2022-08-11
 					}
 				}
 				// START KGU#679 2019-03-13: Enh. #696 - allow to export archives
@@ -632,11 +661,28 @@ public class Structorizer
 					}
 					// END KGU#851 2020-04-22
 					if (!addExportPool(pools, archivar, arrSpec, f, isArrz)) {
-						System.err.println("*** No starting diagrams in arrangement " + f.getAbsolutePath() + " found. Skipped.");
+						System.err.println("*** No starting diagrams in arrangement \"" + f.getAbsolutePath() + "\" found. Skipped.");
 					}
 					else 
 					{
 						String outFilePath = outFileName; 
+						// START KGU#1051 2022-08-11: Issue #1047 handle output folder
+						/*
+						 * If outFolder is given then it depends on -k whether the
+						 * target file base name is derived from the specified
+						 * outFileName (if it's not a folder) or from the arrangement
+						 * file name.
+						 */
+						if (outFolder != null) {
+							String baseName = f.getName();
+							if (outFile != null && _switches.indexOf('k') < 0) {
+								baseName = outFile.getName();
+							}
+							// Compose the out file path from the outFolder and the basename
+							outFilePath = Path.of(outFolder.getAbsolutePath(), baseName).toString();
+						}
+						else
+						// END KGU#1051 2022-08-11
 						// If no output file name is given then derive one from the arrangement file
 						if (outFilePath == null && !toStdOut) {
 							outFilePath = f.getCanonicalPath();
@@ -647,7 +693,7 @@ public class Structorizer
 				// END KGU#679 2019-02-13
 				else
 				{
-					System.err.println("*** File " + fName + " not found or inappropriate. Skipped.");
+					System.err.println("*** File \"" + fName + "\" not found or inappropriate. Skipped.");
 				}
 			}
 			catch (Exception e)
@@ -737,12 +783,17 @@ public class Structorizer
 				if (!roots.isEmpty()) {
 					// START KGU#1040 2022-08-01: Issue #1047: Allow isolated export
 					//gen.exportCode(roots, codeFileName, _switches, charSet, settingsGiven, null);
-					if (_switches.indexOf('k') >= 0 && !_options.containsKey("outFileName")) {
+					if (_switches.indexOf('k') >= 0) {
 						// Export into separate (isolated) code files
 						for (Root root: roots) {
 							File f = new File(root.filename);
 							Vector<Root> oneRoot = new Vector<Root>();
 							oneRoot.add(root);
+							// START KGU#1051 2022-08-11: Issue #1047 handle output folder
+							if (outFolder != null) {
+								f = new File(Path.of(outFolder.getAbsolutePath(), f.getName()).toString());
+							}
+							// END KGU#1051 2022-08-11
 							gen.exportCode(oneRoot, f.getAbsolutePath(), _switches, charSet, settingsGiven, null);
 							if (toStdOut) {
 								System.out.println();
