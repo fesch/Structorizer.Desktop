@@ -113,6 +113,8 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2022-07-31      Bugfix #1052: DISPLAY statements with screen display clauses caused nonsense,
  *                                      bugfix #1053: Array declaration mechanism revised (fix #695 was defective)
  *                                      bugfix #1049 revised (condition name resolution).
+ *      Kay Gürtzig     2022-08-11      Issue #1057: LENGTH OF operator is now converted to a symbolic sizeof() call
+ *                                      Bugfix #1058: negated condition names (at least in isolated cases)
  *
  ******************************************************************************************************
  *
@@ -2401,8 +2403,8 @@ public class COBOLParser extends CodeParser
 //		final int PROD_CONST_GLOBAL                                                          =  572;  // <const_global> ::=
 		final int PROD_CONST_GLOBAL_GLOBAL                                                   =  573;  // <const_global> ::= <_is> GLOBAL
 //		final int PROD_LIT_OR_LENGTH                                                         =  574;  // <lit_or_length> ::= <literal>
-//		final int PROD_LIT_OR_LENGTH_LENGTH_OF                                               =  575;  // <lit_or_length> ::= 'LENGTH_OF' <con_identifier>
-//		final int PROD_LIT_OR_LENGTH_LENGTH                                                  =  576;  // <lit_or_length> ::= LENGTH <con_identifier>
+		final int PROD_LIT_OR_LENGTH_LENGTH_OF                                               =  575;  // <lit_or_length> ::= 'LENGTH_OF' <con_identifier>
+		final int PROD_LIT_OR_LENGTH_LENGTH                                                  =  576;  // <lit_or_length> ::= LENGTH <con_identifier>
 //		final int PROD_LIT_OR_LENGTH_BYTE_LENGTH                                             =  577;  // <lit_or_length> ::= 'BYTE_LENGTH' <_of> <con_identifier>
 //		final int PROD_CON_IDENTIFIER                                                        =  578;  // <con_identifier> ::= <identifier_1>
 //		final int PROD_CON_IDENTIFIER_BINARY_CHAR                                            =  579;  // <con_identifier> ::= 'BINARY_CHAR'
@@ -3653,9 +3655,9 @@ public class COBOLParser extends CodeParser
 //		final int PROD_X_COMMON                                                              = 1824;  // <x_common> ::= <literal>
 //		final int PROD_X_COMMON2                                                             = 1825;  // <x_common> ::= <function>
 //		final int PROD_X_COMMON3                                                             = 1826;  // <x_common> ::= <line_linage_page_counter>
-//		final int PROD_X_COMMON_LENGTH_OF                                                    = 1827;  // <x_common> ::= 'LENGTH_OF' <identifier_1>
-//		final int PROD_X_COMMON_LENGTH_OF2                                                   = 1828;  // <x_common> ::= 'LENGTH_OF' <basic_literal>
-//		final int PROD_X_COMMON_LENGTH_OF3                                                   = 1829;  // <x_common> ::= 'LENGTH_OF' <function>
+		final int PROD_X_COMMON_LENGTH_OF                                                    = 1827;  // <x_common> ::= 'LENGTH_OF' <identifier_1>
+		final int PROD_X_COMMON_LENGTH_OF2                                                   = 1828;  // <x_common> ::= 'LENGTH_OF' <basic_literal>
+		final int PROD_X_COMMON_LENGTH_OF3                                                   = 1829;  // <x_common> ::= 'LENGTH_OF' <function>
 //		final int PROD_X_COMMON_ADDRESS                                                      = 1830;  // <x_common> ::= ADDRESS <_of> <prog_or_entry> <alnum_or_id>
 //		final int PROD_X_COMMON_ADDRESS2                                                     = 1831;  // <x_common> ::= ADDRESS <_of> <identifier_1>
 //		final int PROD_X_COMMON4                                                             = 1832;  // <x_common> ::= <MNEMONIC_NAME_TOK>
@@ -5686,6 +5688,9 @@ public class COBOLParser extends CodeParser
 	private static final Matcher STRING_MATCHER = Pattern.compile("^[HhXxZz]?([\"][^\"]*[\"]|['][^']*['])$").matcher("");
 	private static final Matcher NUMBER_MATCHER = Pattern.compile("^[+-]?[0-9]+([.][0-9]*)?(E[+-]?[0-9]+)?$").matcher("");
 	// END KGU#402 2019-03-07
+	// START KGU#1050 2022-01-08: Bugfix #1058 Insufficient handling of NOT prefixes
+	private static final Matcher UNEQUAL_MATCHER = Pattern.compile("(.*?\\W)\\s*" + BString.breakup("NOT", true) + "\\s*=\\s*(.*?)").matcher("");
+	// END KGU#1050 2022-01-08
 
 	// START KGU#847 2020-04-20: Issue #851 Mechanism to ensure sensible declarations for generated variables
 	private static final String AUX_VAR_DECL_COMMENT = "Auxiliary variables introduced by Structorizer on parsing";
@@ -8169,9 +8174,12 @@ public class COBOLParser extends CodeParser
 	}
 
 	/**
-	 * Builds an approptiate Jump element from the EXIT statement represented by {@code _reduction}.
+	 * Builds an approptiate Jump element from the EXIT statement represented by
+	 *    {@code _reduction}.
+	 *    
 	 * @param _reduction - the top Reduction of the parsed EXIT statement
 	 * @param _parentNode - the Subqueue to append the built elements to
+	 * 
 	 * @throws ParserCancelled
 	 */
 	private final void importExit(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
@@ -8235,12 +8243,14 @@ public class COBOLParser extends CodeParser
 	}
 
 	/**
-	 * Checks whether there is a open section or paragraph context and if so marks it as
-	 * containing an EXIT statement. Returns true if the category of the innermost context
-	 * matches the argument.
+	 * Checks whether there is an open section or paragraph context and if so marks it
+	 * as containing an EXIT statement. Returns true if the category of the innermost
+	 * context matches the argument.
+	 * 
 	 * @param _exitSection - true if the EXIT statement was an EXIT SECTION
-	 * @return true if the current procedure context is a section and {@code _exitSection} is true or
-	 * if the context is a paragraph and {@code _exitSection} is false
+	 * @return {@code true} if the current procedure context is a section and
+	 *    {@code _exitSection} is {@code true} or if the context is a paragraph and
+	 *    {@code _exitSection} is {@code false}
 	 */
 	private void registerExitInProcedureContext(Jump _jump, SoPTarget _target) {
 		if (!this.procedureList.isEmpty()) {
@@ -8260,7 +8270,8 @@ public class COBOLParser extends CodeParser
 	}
 
 	/**
-	 * Builds a loop or Call element from the PERFORM statement represented by {@code _reduction}.
+	 * Builds a loop or Call element from the PERFORM statement represented by
+	 * {@code _reduction}.
 	 * 
 	 * @param _reduction - the top Reduction of the parsed PERFORM statement
 	 * @param _parentNode - the Subqueue to append the built elements to
@@ -8785,16 +8796,20 @@ public class COBOLParser extends CodeParser
 //	}
 
 	/**
-	 * Helper method for importing ADD, SUBTRACT, MULTIPLY, and DIVIDE statements, generates the text for the
-	 * arithmetic instruction series
-	 * @param content - the multi-line Instruction text to append the specified assignment to
+	 * Helper method for importing ADD, SUBTRACT, MULTIPLY, and DIVIDE statements,
+	 * generates the text for the arithmetic instruction series
+	 * 
+	 * @param content - the multi-line Instruction text to append the specified
+	 *     assignment to
 	 * @param operator - the operator symbol t be used (one of "+", "-", "*", "/").
-	 * @param target - the variable (name) the expression result is to be assigned to (as string)
+	 * @param target - the variable (name) the expression result is to be assigned to
+	 *     (as string)
 	 * @param operand1 - first operand (as string)
 	 * @param operand2 - second operand (as string)
-	 * @param prevResult - the result of the previous operation (an expression, preferrably a variable name)
-	 * @return a String representing the result of the assignment (to be used as prevResult in the next
-	 *  call of this routine)
+	 * @param prevResult - the result of the previous operation (an expression,
+	 *     preferrably a variable name)
+	 * @return a String representing the result of the assignment (to be used as
+	 *     prevResult in the next call of this routine)
 	 */
 	private final String addArithmOperation(StringList content, String operator, String target, String operand1, String operand2, String prevResult) {
 		final String rounded = " ROUNDED ";
@@ -9184,12 +9199,15 @@ public class COBOLParser extends CodeParser
 	 * Traverses the recursive rule {@code _paramRed} to obtain a left-to-right
 	 * list of argument declarations (e.g. for a function call), particularly
 	 * coping with omittable arguments.
+	 * 
 	 * @param _paramRed - the rule recursively comprising the argument list
 	 * @param _listHead - the rule head representing the recursive part
 	 * @param _ruleId - id of a rule terminating the exploration
 	 * @param _nameIx - index of the name token within the reduction
 	 * @return list of expressions as strings
-	 * @throws ParserCancelled
+	 * 
+	 * @throws ParserCancelled if the user intervened
+	 * 
 	 * @see #getParameterList(Reduction, String, int, int)
 	 */
 	private final StringList getParameterList(Reduction _paramlRed, String _listHead, int _ruleId, int _nameIx) throws ParserCancelled {
@@ -9318,6 +9336,14 @@ public class COBOLParser extends CodeParser
 		LinkedList<Token> expr_tokens = new LinkedList<Token>();
 		this.lineariseTokenList(expr_tokens, _reduction, "<expr_tokens>");
 		String cond = "";
+		// START KGU#1050 2022-08-11: Bugfix #1058: Wrong results on negated condition names
+		boolean toNegate = false;
+		if (expr_tokens.size() == 2 && "NOT".equals(expr_tokens.getFirst().getName())) {
+			toNegate = true;
+			expr_tokens.removeFirst();
+		}
+		// END KGU#1050 2022-08-11
+		
 		// START KGU#402 2019-03-04: Issue #407: Approach to solve expressions like "a = 3 or 5"
 		String lastRelOp = null;
 		// END KGU#402 2019-03-04
@@ -9441,9 +9467,17 @@ public class COBOLParser extends CodeParser
 		}
 		// TODO We currently don't resolve the cond-name of "NOT cond-name"
 		cond += thruExpr;
-		if (cond.matches("(.*?\\W)" + BString.breakup("NOT", true) + "\\s*=(.*?)")) {
-			cond = cond.replaceAll("(.*?\\W)" + BString.breakup("NOT", true) + "\\s*=(.*?)", "$1 <> $2");
+		// START KGU#1050 2022-08-11: Bugfx #1058: Better handling of negations
+		//if (cond.matches("(.*?\\W)" + BString.breakup("NOT", true) + "\\s*=(.*?)")) {
+		//	cond = cond.replaceAll("(.*?\\W)" + BString.breakup("NOT", true) + "\\s*=(.*?)", "$1 <> $2");
+		//}
+		if (UNEQUAL_MATCHER.reset(cond).matches()) {
+			cond = UNEQUAL_MATCHER.replaceAll("$1 <> $2");
 		}
+		if (toNegate) {
+			cond = this.negateCondition(cond.trim());
+		}
+		// END KGU'1050 2022-08-11
 		// bad check, the comparision can include the *text* " OF "!
 //		if (cond.contains(" OF ")) {
 //			System.out.println("A record access slipped through badly...");
@@ -9525,8 +9559,16 @@ public class COBOLParser extends CodeParser
 //			default:
 //				lineariseTokenList(_tokens, _reduction.get(0).asReduction(), _listRuleHead);
 //			}
-			if (ruleHead.equals("<identifier_1>") || ruleHead.equals("<qualified_word>")) {
-				_tokens.addFirst(_reduction.get(0));	// Why at first?
+			// START KGU#1048 2022-08-11: Issue #1057 Handling of LENGTH OF
+			//if (ruleHead.equals("<identifier_1>") || ruleHead.equals("<qualified_word>")) {
+			int rule0Id = red0.getParent().getTableIndex();
+			if (ruleHead.equals("<identifier_1>")
+					|| ruleHead.equals("<qualified_word>")
+					|| rule0Id == RuleConstants.PROD_X_COMMON_LENGTH_OF
+					|| rule0Id == RuleConstants.PROD_X_COMMON_LENGTH_OF2
+					|| rule0Id == RuleConstants.PROD_X_COMMON_LENGTH_OF3) {
+			// END KGU#1048 2022-08-11
+				_tokens.addFirst(_reduction.get(0));	// Ultimate member of the list
 			}
 			else {
 				lineariseTokenList(_tokens, red0, _listRuleHead);
@@ -9539,6 +9581,13 @@ public class COBOLParser extends CodeParser
 		}
 	}
 
+	/**
+	 * Tries to negate a given condition as intelligently as possible (actually
+	 * delegates the task to {@link Element}).
+	 * 
+	 * @param condStr - the condition string to be negated
+	 * @return the logically negated string
+	 */
 	private final String negateCondition(String condStr) {
 		return Element.negateCondition(condStr);
 	}
@@ -9672,8 +9721,8 @@ public class COBOLParser extends CodeParser
 				posSub = 1;
 			case RuleConstants.PROD_IDENTIFIER_13:	// <identifier_1> ::= <qualified_word> <refmod>
 			case RuleConstants.PROD_TARGET_IDENTIFIER_13:	// <target_identifier_1> ::= <qualified_word> <refmod>
-				if (!hasRefMod && posSub < 0) hasRefMod = true;
 			{
+				if (!hasRefMod && posSub < 0) hasRefMod = true;
 				// This will already return a qualified name with paceholders for table indices
 				String qualName = this.getContent_R(_reduction.get(0).asReduction(), "");
 				if (posSub > 0) {
@@ -9759,6 +9808,21 @@ public class COBOLParser extends CodeParser
 				// Empty THRU expression --> don't change _content
 				break;
 			}
+			// START KGU#1048 2022-08-11: Issue #1057 operator LENGTH OF wasn't translated
+			case RuleConstants.PROD_LIT_OR_LENGTH_LENGTH_OF:
+				// <lit_or_length> ::= 'LENGTH_OF' <con_identifier>
+			case RuleConstants.PROD_LIT_OR_LENGTH_LENGTH:
+				// <lit_or_length> ::= LENGTH <con_identifier>
+			case RuleConstants.PROD_X_COMMON_LENGTH_OF:
+				// <x_common> ::= 'LENGTH_OF' <identifier_1>
+			case RuleConstants.PROD_X_COMMON_LENGTH_OF2:
+				// <x_common> ::= 'LENGTH_OF' <basic_literal>
+			case RuleConstants.PROD_X_COMMON_LENGTH_OF3: 
+				// <x_common> ::= 'LENGTH_OF' <function>
+				// Function sizeof does not exist but reflects the meaning
+				_content += "sizeof(" + this.getContentToken_R(_reduction.get(1), "", "", true) + ")";
+				break;
+			// END KGU#1048 2022-08-11
 			default:
 			{
 				for(int i=0; i<_reduction.size(); i++)
@@ -9773,13 +9837,15 @@ public class COBOLParser extends CodeParser
 	}
 
 	/**
-	 * Subroutine of {@link #getContent_R(Reduction, String, String)} for the conversion of sub-tokens,
-	 * which are not necessarily non-terminals.
+	 * Subroutine of {@link #getContent_R(Reduction, String, String)} for the conversion
+	 * of sub-tokens, which are not necessarily non-terminals.
+	 * 
 	 * @param _token - the current token
 	 * @param _content - previous content the string representation of this token is to be appended to.
 	 * @param _separator - a string to be put between the result for sub-tokens
 	 * @param _isFirst - whether this token is the first in a sequence (i.e. if a separator isn't needed before)
 	 * @return the string composed from {@code _content} and this {@link Token}.
+	 * 
 	 * @throws ParserCancelled
 	 */
 	private String getContentToken_R(Token _token, String _content, String _separator, boolean _isFirst) throws ParserCancelled {
@@ -9856,6 +9922,13 @@ public class COBOLParser extends CodeParser
 			else if (subRuleId == RuleConstants.PROD_SUBREF_TOK_OPEN_PAREN_TOK_CLOSE_PAREN) {
 				_content += "[" + this.getContent_R(subRed.get(1).asReduction(), "") + "] ";	// FIXME: spaces!?
 			}
+			// START KGU#1048 2022-08-11: Issue #1057 operator LENGTH OF wasn't translated
+			else if (subRuleId == RuleConstants.PROD_LIT_OR_LENGTH_LENGTH_OF
+					|| subRuleId == RuleConstants.PROD_LIT_OR_LENGTH_LENGTH) {
+				// Function sizeof does not exist but reflects the meaning
+				_content += "sizeof(" + this.getContentToken_R(subRed.get(1), "", "", true) + ")";
+			}
+			// END KGU#1048 2022-08-11
 			else {
 				String sepa = "";
 				String toAdd = getContent_R(_token.asReduction(), "", _separator);
@@ -10013,10 +10086,12 @@ public class COBOLParser extends CodeParser
 	}
 
 	/**
-	 * Drastically simplified method to retrieve a name expected as (optional) content of the given {@link Token}
+	 * Drastically simplified method to retrieve a name expected as (optional) content
+	 * of the given {@link Token}
 	 * {@code _token}.
-	 * @param _token
-	 * @return
+	 * @param _token - the token to be scanned (may be a COBOLWord or a FILLER or some
+	 *     wrapper)
+	 * @return the string content of the given token
 	 */
 	private String getWord(Token _token)
 	{
