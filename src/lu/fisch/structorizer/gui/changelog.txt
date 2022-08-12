@@ -104,7 +104,8 @@ Current development version 3.32-10 (2022-08-12)
 - 10: Enh. #84,#250: Chinese locales slightly updated w.r.t. FOR-IN loops <2>
 - 10: Issue #492: Element name placeholders accomplished in several locales <2>
 - 10: Bugfix #1049: COBOL condition name resolution was still defective <2>
-- 10: Issue #1047: Isolated NSD batch export with new option -k [R. Schmidt]2
+- 10: Issue #1047: Isolated NSD batch export with new option -k [R. Schmidt]2,
+      revised naming conventions in combination of options -o and -k <2>
 - 10: Issue #1056: Corrections in French locale (and others) [GitHub/tph002]2
 - 10: Issue #1057: COBOL import now converts 'LENGTH OF' into 'sizeof()' <2>
 - 10: Bugfix #1058: Defactive COBOL import of negated condition names <2>

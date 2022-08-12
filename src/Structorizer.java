@@ -83,7 +83,7 @@
  *      Kay Gürtzig     2020-06-06      Issue #870: Command line option "-restricted" withdrawn
  *      Kay Gürtzig     2021-06-08      Issue #67, #953: retrieval mechanism for plugin-specific options from ini
  *      Kay Gürtzig     2022-08-01      Enh. #1047: Batch export option -k for keeping the source files apart
- *      Kay Gürtzig     2022-08-11      Enh. #1047: Modified effect of -o option (also in combination with -k)
+ *      Kay Gürtzig     2022-08-11/12   Enh. #1047: Modified effect of -o option (also in combination with -k)
  *
  ******************************************************************************************************
  *
@@ -665,28 +665,28 @@ public class Structorizer
 					}
 					else 
 					{
-						String outFilePath = outFileName; 
 						// START KGU#1051 2022-08-11: Issue #1047 handle output folder
-						/*
-						 * If outFolder is given then it depends on -k whether the
-						 * target file base name is derived from the specified
-						 * outFileName (if it's not a folder) or from the arrangement
-						 * file name.
-						 */
-						if (outFolder != null) {
+						//String outFilePath = outFileName;
+						// If no output file name is given then derive one from the arrangement file
+						//if (outFilePath == null && !toStdOut) {
+						//	outFilePath = f.getCanonicalPath();
+						//}
+						String outFilePath = f.getCanonicalPath();
+						if (outFileName == null && toStdOut) {
+							outFilePath = null;
+						}
+						else if (outFolder != null) {
+							/*
+							 * If outFolder is given then it depends on -k whether the
+							 * target file base name is derived from the specified
+							 * outFileName (if it's not a folder) or from the arrangement
+							 * file name.
+							 */
 							String baseName = f.getName();
-							if (outFile != null && _switches.indexOf('k') < 0) {
-								baseName = outFile.getName();
-							}
 							// Compose the out file path from the outFolder and the basename
 							outFilePath = Path.of(outFolder.getAbsolutePath(), baseName).toString();
 						}
-						else
 						// END KGU#1051 2022-08-11
-						// If no output file name is given then derive one from the arrangement file
-						if (outFilePath == null && !toStdOut) {
-							outFilePath = f.getCanonicalPath();
-						}
 						poolFileNames.add(outFilePath);
 					}
 				}
@@ -701,6 +701,12 @@ public class Structorizer
 				System.err.println("*** Error while trying to load " + fName + ": " + e.getMessage());
 			}
 		}
+		// START KGU#1051 2022-08-12: Issue #1047
+		// Special case of given file name and only a single arrangement in the list
+		if (roots.isEmpty() && pools.size() == 1 && outFile != null) {
+			poolFileNames.set(0, outFile.getAbsolutePath());
+		}
+		// END KGU#1051 2022-08-12
 		
 		String genClassName = null;
 		// START KGU#679 2019-03-13: Enh. #696 - allow to export archives
