@@ -34,6 +34,9 @@
 !    21-03-02: Kay Gürtzig
 !       * Order of sections in <_configuration_section> revised (repository
 !         before special_names)
+!    22-08-13: Kay Gürtzig
+!       * Decimal and float literal definition modified such that no digit is
+!         required on the left-hand side of the decimal point
 !
 ! -----------------------------------------------------------------------------
 !
@@ -67,7 +70,7 @@
 ! -----------------------------------------------------------------------------
 
 "Name"    = 'GnuCOBOL'
-"Version" = '1.1'
+"Version" = '1.2'
 
 "Author"  = 'Original Written by Keisuke Nishida, Roger While, Simon Sobisch, Edward Hart'
 
@@ -175,8 +178,8 @@ AcuOctNumLiteral   = 'O#'{Number}+
 AcuHexNumLiteral   = [XH]'#'{Hex Chars}+
 
 IntLiteral         = [+-]?{Number}+
-DecimalLiteral     = [+-]?{Number}+ '.' {Number}+
-FloatLiteral       = [+-]?{Number}+ '.' {Number}+ 'E' [+-]?{Number}+
+DecimalLiteral     = [+-]?{Number}* '.' {Number}+
+FloatLiteral       = [+-]?{Number}* '.' {Number}+ 'E' [+-]?{Number}+
 
                   
 {COBOLLetter}      = {Letter} + {&80 .. &FF} - {Whitespace}
