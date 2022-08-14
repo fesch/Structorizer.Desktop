@@ -121,6 +121,7 @@ package lu.fisch.structorizer.generators;
  *                                      if the output is redirected or mirrored to stdout, labelled scissor
  *                                      lines are always to be inserted there.
  *      Kay Gürtzig     2022-08-12      Issue #1047: Bug in deriveCodeFileName() fixed
+ *      Kay Gürtzig     2022-08-14      Issues #441, #1047: usesTurtleizer must be reset at the beginning of exportCode
  *
  ******************************************************************************************************
  *
@@ -4559,6 +4560,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		this.hasOutput = false;
 		this.code.clear();
 		// END KGU#676 2019-03-13
+		// START KGU#446/1040 2022-08-14: Enh. #441, #1047 turtle mode must be reset
+		this.usesTurtleizer = false;
+		// END KGU#446/1040 2022-08-14
 		
 		if (Charset.isSupported(_charSet))
 		{
