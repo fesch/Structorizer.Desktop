@@ -18,23 +18,23 @@
 !
 ! Revisions:
 !
-!    17-04-13: Simon Sobisch
+!    2017-04-13: Simon Sobisch
 !       * Grammar converted from GnuCOBOL parser.y (lot of sed invocation and
 !         manual work)
-!    17-04-26: Simon Sobisch
+!    2017-04-26: Simon Sobisch
 !       * finished Terminals (conversion from GnuCOBOL reserved.c and 
 !         scanner.l, some manual addons like PicDef and <_Comment Items>)
-!    17-05-02: Simon Sobisch
+!    2017-05-02: Simon Sobisch
 !       * fixed edited Picture_Def
 !       * updated "Known Issues" entries
-!    17-05-19: Simon Sobisch
+!    2017-05-19: Simon Sobisch
 !       * added more alias names (in general this should be done by
 !         dialect aware preprocessing!)
 !       * fixed escaped literal terminators in NationalLiteral and ZLiteral
-!    21-03-02: Kay Gürtzig
+!    2021-03-02: Kay Gürtzig
 !       * Order of sections in <_configuration_section> revised (repository
 !         before special_names)
-!    22-08-13: Kay Gürtzig
+!    2022-08-13: Kay Gürtzig
 !       * Decimal and float literal definition modified such that no digit is
 !         required on the left-hand side of the decimal point
 !

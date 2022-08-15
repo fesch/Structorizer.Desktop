@@ -115,6 +115,7 @@ package lu.fisch.structorizer.parsers;
  *                                      bugfix #1049 revised (condition name resolution).
  *      Kay Gürtzig     2022-08-11      Issue #1057: LENGTH OF operator is now converted to a symbolic sizeof() call
  *                                      Bugfix #1058: negated condition names (at least in isolated cases)
+ *      Kay Gürtzig     2022-08-14      Bugfix #851/3: Float literals without digit left of the decimal point enabled
  *
  ******************************************************************************************************
  *
@@ -4437,7 +4438,10 @@ public class COBOLParser extends CodeParser
 	private static final int TEXTCOLUMN_VARIABLE = 500;
 
 	// START KGU#946 2021-03-01: Bugfix #851/3
-	private static final Matcher LEFT_DIGIT_SEQUENCE = Pattern.compile("^(.*?\\W)?[0-9]+$").matcher("");
+	// START KGU#946 2022-08-14: Bugfix #851/3 revised (no digit lef of decmal point required)
+	//private static final Matcher LEFT_DIGIT_SEQUENCE = Pattern.compile("^(.*?\\W)?[0-9]+$").matcher("");
+	private static final Matcher LEFT_DIGIT_SEQUENCE = Pattern.compile("^(.*?\\W)?[0-9]*$").matcher("");
+	// END KGU#946 2022-08-14
 	private static final Matcher RIGHT_DIGIT_SEQUENCE = Pattern.compile("^[0-9]+([eE][+-]?[0-9]+)?(\\W.*)?$").matcher("");
 	/** The decimal point surrogate used in the grammar to fix DecimalLiteral and FloatLiteral */
 	private static final String DEC_PT_SURR = "\u25AA";
