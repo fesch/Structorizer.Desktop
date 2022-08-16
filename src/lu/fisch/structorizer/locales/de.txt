@@ -135,6 +135,7 @@
  *      Kay Gürtzig         2021-03-07  KGU#961: Translations for known plugin options added.
  *      Kay Gürtzig         2021-10-05  Enh. #992: Messages for Analyser brackets check
  *      Kay Gürtzig         2021-10-31  Enh. #967, #1007 Texts for ARM-specific export options added
+ *      Kay Gürtzig         2022-08-16  Enh. #1051: Messages for COBOL-specific import options
  *
  ******************************************************************************************************
  *
@@ -224,7 +225,7 @@ Menu.menuEditUpgradeTurtle.tooltip=Ersetzt ganzzahlbasierte Turtle-Befehle in de
 Menu.menuEditDowngradeTurtle.text=Ganzzahlige Turtle-Befehle
 Menu.menuEditDowngradeTurtle.tooltip=Ersetzt reellwertige Turtle-Befehle in den ausgewählten Elementen durch ganzzahlbasierte.
 Menu.menuEditBreakLines.text=Textzeilen neu umbrechen ...
-Menu.menuEditBreakLines.tooltip=Erlaubt einen neuen Umbruch der Textzeilen der ausgewählten Elemente (und wahlweise ihrer Unterstruktur) auf eine vorgebbare Höchstlänge.  
+Menu.menuEditBreakLines.tooltip=Erlaubt einen neuen Umbruch der Textzeilen der ausgewählten Elemente (und wahlweise ihrer Unterstruktur) auf eine vorgebbare Höchstlänge.
 Menu.menuEditCopyDiagramPNG.text=Als PNG-Grafik kopieren
 Menu.menuEditCopyDiagramEMF.text=Als EMF-Grafik kopieren
 // Menu "Diagram"
@@ -288,6 +289,7 @@ Menu.menuDiagramDIN.tooltip=Wechselt das Erscheinungsbild von @d-Schleifen zwisc
 Menu.menuDiagramAnalyser.text=Struktogramm überprüfen?
 Menu.menuDiagramIndex.text=Arranger-Index anzeigen?
 Menu.menuDiagramPreview.text=Code-Voransicht zeigen?
+
 // Menu "Preferences"
 Menu.menuPreferences.text=Einstellungen
 Menu.menuPreferences.mnemonic=s
@@ -321,12 +323,12 @@ Menu.menuPreferencesLanguageItems.ru.text=Russisch
 Menu.menuPreferencesLanguageItems.pl.text=Polnisch
 Menu.menuPreferencesLanguageFromFile.text=Aus Datei ...
 Menu.menuPreferencesLanguageFromFile.tooltip=Sie können mit dem 'Übersetzer' im Dateimenü selbst Sprachdateien erstellen.
+Menu.menuPreferencesLookAndFeel.text=Aussehen & Bedienung
 Menu.menuPreferencesWheel.text=Mausrad
 Menu.menuPreferencesWheelCollapse.text=Mausrad zum Reduzieren?
 Menu.menuPreferencesWheelZoom.text=Umgekehrter Zoom mit Strg?
 Menu.menuPreferencesWheelUnit.text=Mausrad-Scroll-Einheit ...
 Menu.menuPreferencesScalePreset.text=GUI-Skalierung ...
-Menu.menuPreferencesLookAndFeel.text=Aussehen & Bedienung
 
 Menu.menuPreferencesSave.text=Einstellungen sichern/laden
 Menu.menuPreferencesSaveAll.text=Jetzt abspeichern
@@ -452,7 +454,7 @@ Menu.msgGuidedTourDone.text=Gratulation - Sie haben den Kurs «%» geschafft.
 Menu.msgGuidedTourNext.text=%1\nKurs «%2» wird gleich beginnen.\nSie könnten dazu ein neues Diagramm starten → Menü "%3"
 Menu.ttlGuidedTours.text=Geführte Kurse
 Menu.msgTooManyDiagrams.text=Die Zahl der erzeugten Diagramme übersteigt die konfigurierte Grenze (%) für direktes Darstellen.\nAlle erhaltenen Diagramme sofort speichern?
-Menu.lblAcceptProposedNames.text=Alle vorschlagenen Dateinamen akzeptieren. 
+Menu.lblAcceptProposedNames.text=Alle vorgeschlagenen Dateinamen akzeptieren.
 Menu.ttlBreakTextLines.text=Begrenzung der Zeilenlänge mittels Wortumbruch
 Menu.msgMaxLineLengthSelected.text=Maximale Zeilenlänge in ausgewähltem Element: %
 Menu.msgMaxLineLengthSubstructure.text=Maximale Zeilenlänge einschl. Unterstrukturen: %
@@ -472,9 +474,9 @@ Menu.ttlMouseScrollUnit.text=Mausrad-Scroll-Einheit
 Menu.msgSelectPreferences.text=Zu exportierende Einstellungen (Kategorien)
 Menu.msgAllPreferences.text=Alle Einstellungen
 Menu.msgInvertSelection.text=Auswahl umkehren
+Menu.ttDiagramMenuSettings.text=Einstellungen vom Menu "%"
 Menu.msgIniBackupFailed.text=Die Erstellung einer Backup-Datei der aktuellen Einstellungen ist gescheitert.\nWollen Sie trotzdem "%" laden?
 Menu.msgIniRestoreFailed.text=Das letzte Backup konnte nicht geladen werden%
-Menu.ttDiagramMenuSettings.text=Einstellungen vom Menu "%"
 Menu.prefsArranger.text=Arranger
 Menu.msgErrorSettingLaF.text=Problem beim Wechsel von Aussehen & Bedienung zu %1: %2
 Menu.msgRootCloned.text=Diagramm «%1» wurde geklont.\n\nSie arbeiten jetzt mit einer unabhängigen Kopie:\n%2
@@ -623,16 +625,16 @@ Editor.btnNew.tooltip=Erzeugen eines neuen, leeren Diagramms.
 Editor.btnOpen.tooltip=Öffnen eines bestehenden Diagramms.
 Editor.btnSave.tooltip=Speichern des aktuellen Diagramms.
 Editor.btnSaveAll.tooltip=Alle neuen und geänderten Diagramme und Gruppen sichern.
-// InsertAfter
+// InsertAfter (+shift: before)
 Editor.btnAfterInst.tooltip=Einfügen einer neuen @a nach (+Umschalt: vor) dem ausgewählten Element.
 Editor.btnAfterAlt.tooltip=Einfügen einer neuen @b-Anweisung nach (+Umschalt: vor) dem ausgewählten Element.
+Editor.btnAfterCase.tooltip=Einfügen einer neuen @c-Anweisung nach (+Umschalt: vor) dem ausgewählten Element.
 Editor.btnAfterFor.tooltip=Einfügen einer neuen @d-Schleife nach (+Umschalt: vor) dem ausgewählten Element.
 Editor.btnAfterWhile.tooltip=Einfügen einer neuen @g-Schleife nach (+Umschalt: vor) dem ausgewählten Element.
 Editor.btnAfterRepeat.tooltip=Einfügen einer neuen @h-Schleife nach (+Umschalt: vor) dem ausgewählten Element.
 Editor.btnAfterForever.tooltip=Einfügen einer neuen @i-Schleife nach (+Umschalt: vor) dem ausgewählten Element.
 Editor.btnAfterCall.tooltip=Einfügen einer neuen @j-Anweisung nach (+Umschalt: vor) dem ausgewählten Element.
 Editor.btnAfterJump.tooltip=Einfügen einer neuen @k-Anweisung nach (+Umschalt: vor) dem ausgewählten Element.
-Editor.btnAfterCase.tooltip=Einfügen einer neuen @c-Anweisung nach (+Umschalt: vor) dem ausgewählten Element.
 Editor.btnAfterPara.tooltip=Einfügen eines neuen @l-Abschnitts nach (+Umschalt: vor) dem ausgewählten Element.
 Editor.btnAfterTry.tooltip=Einfügen eines neuen @q-Blocks nach (+Umschalt: vor) dem ausgewählten Element.
 // undo & redo
@@ -739,6 +741,8 @@ Editor.popupCodeHide.text=Code-Voransicht verbergen
 Editor.ttPopupCodePreview.text=Stellt die Code-Voransicht nach % um und setzt % als bevorzugte Exportsprache.
 
 -----[ InputBox ]-----
+InputBox.title[getInsertionType():insert]=
+InputBox.title[getInsertionType():update]=
 InputBox.lblText.text=Einzugebender Text
 InputBox.lblText.tooltip=Eingabe des Textes an dieser Stelle.
 InputBox.lblComment.text=Einzugebender Kommentar
@@ -1022,7 +1026,6 @@ FontChooser.btnOK.text=Speichern
 FontChooser.btnOK.tooltip=Speichern der gewählten Einstellungen.
 FontChooser.cbFixPadding.text=Fester (schriftgrößenunabhängiger) Rand
 
-
 -----[ Colors ]-----
 Colors.title=Farb-Einstellungen
 Colors.lblColors.*.text=Farbe Nr. [#]
@@ -1197,6 +1200,8 @@ PluginOptionDialog.optionLabels.fixedColumnIndicator.text[getPluginKey():COBOLPa
 PluginOptionDialog.optionComponents.fixedColumnIndicator.tooltip[getPluginKey():COBOLParser]=Nummer der Spalte, in der bei festem Format die Indikatorzeichen stehen (Standard: 7).
 PluginOptionDialog.optionLabels.fixedColumnText.text[getPluginKey():COBOLParser]=Spalte des zu ignorierenden Texts bei festem Format
 PluginOptionDialog.optionComponents.fixedColumnText.tooltip[getPluginKey():COBOLParser]=Nummer der Spalte, in der der sogenannte Programmnamenbereich der Zeilen beginnt (Standard: 73).
+PluginOptionDialog.optionLabels.tidyupPerformThru.text[getPluginKey():COBOLParser]=Aufräumen der Prozeduraufrufketten (nach PERFORM THRU)
+PluginOptionDialog.optionComponents.tidyupPerformThru.tooltip[getPluginKey():COBOLParser]=Standardmäßig werden Aufrufketten und Dummy-Routinen aus dem Import von PERFORM THRU automatisch zerlegt bzw. aufgeräumt. Ändern Sie das hier, z.B. um Importfehlern nachzugehen.
 PluginOptionDialog.optionLabels.typeNames.text[getPluginKey():C99Parser]=Extern definierte Typenamen
 PluginOptionDialog.optionComponents.typeNames.tooltip[getPluginKey():C99Parser]=Kommagetrennte Liste von typedef-Namen, die nicht in der Quelldatei definiert, aber benutzt werden (damit die Syntaxprüfung nicht fehlschlägt).
 PluginOptionDialog.optionLabels.redundantNames.text[getPluginKey():C99Parser]=Redundante Präprozessornamen oder Makros
@@ -1232,12 +1237,13 @@ ElementNamePreferences.btnOK.text=Speichern
 ElementNamePreferences.btnOK.tooltip=Einstellungen übernehmen und Dialog schließen.
 
 -----[ DiagramControllerAliases ]-----
-// Also consider Menu.msgTabHdrSignature and Menu.msgTabHdrAlias 
+// Also consider Menu.msgTabHdrSignature and Menu.msgTabHdrAlias
 DiagramControllerAliases.title=Aktionsmodul-Routinenumbenennung
 DiagramControllerAliases.lblHeader.text=Legen Sie Alias-Namen für die Routinen von Aktionsmodulen fest.
 DiagramControllerAliases.lblRemark.text=(Beachte: Groß-/Kleinschreibung spielt keine Rolle bei Aktionsmodul-Routinen!)
 DiagramControllerAliases.chkApplyAliases.text=Die festgelegten Ersatznamen bei der Darstellung anwenden
 DiagramControllerAliases.btnOK.text=Speichern
+DiagramControllerAliases.btnOK.tooltip=Einstellungen übernehmen und Dialog schließen.
 DiagramControllerAliases.hlpEndEditing.text=Die Änderung der Tabellenzelle durch Taste <Enter> oder <Esc> oder durch Klick an andere Stelle beenden.
 DiagramControllerAliases.msgIdentifierRequired.text=Ihr Ersatzname enthält unzulässige Zeichen.\nEin Unterprogramm-Ersatzname muss entweder leer oder ein Bezeichner sein\n(d.h. darf nur aus Buchstaben, Ziffern und Unterstrichen bestehen).\n\nDer Originaltext wird wieder hergestellt.
 DiagramControllerAliases.ttlIllegalValues.text=Ungültiger Ersatzname
@@ -1317,7 +1323,7 @@ FindAndReplace.pnlPreview.border=Inhalt
 FindAndReplace.txtText.border=Text
 FindAndReplace.txtComm.border=Kommentar
 FindAndReplace.chkElementwise.text=Elementweise
-FindAndReplace.chkElementwise.menmonic=e
+FindAndReplace.chkElementwise.mnemonic=e
 FindAndReplace.btnFind.text=Suchen
 FindAndReplace.btnFind.mnemonic=n
 FindAndReplace.btnReplace.text=Ersetzen
@@ -1445,7 +1451,7 @@ Surface.msgRenamingFailed.text=Anordnungsdatei konnte nicht in "%" umbenannt wer
 Surface.msgSharedDiagrams.text=Die folgenden Diagramme sind ab jetzt mit den gelisteten Gruppen geteilt:\n - %1\n\nBeachten Sie, dass alle Änderungen an ihnen Auswirkungen auf jede der Gruppen\nund das Archiv %2 heben werden, selbst wenn letzteres nicht mehr geladen ist!
 Surface.msgFileMissing.text= fehlt!
 
-----[ ArrangerIndex ]----
+-----[ ArrangerIndex ]-----
 ArrangerIndex.popupIndexGet.text=Diagram holen
 ArrangerIndex.popupIndexAttributes.text=Eigenschaften anzeigen ...
 ArrangerIndex.popupIndexInfo.text=Diagramm-/Gruppen-Info ...
@@ -1464,6 +1470,7 @@ ArrangerIndex.popupIndexRenameGroup.text=Gruppe umbenennen ...
 ArrangerIndex.popupIndexExport.text=Diagramm/Gruppe exportieren
 ArrangerIndex.popupIndexRenameGroup.tooltip=Erlaubt, die ausgewählte Gruppe umzubenennen, wahlweise einschließlich der zugehörigen Datei.
 ArrangerIndex.popupIndexShowQualifiers.text=Namenspräfixe anzeigen (ggf.)
+ArrangerIndex.popupIndexShowQualifiers.tooltip=Namensraumbezeichner bei importierten (Methoden-)Diagrammen als Präfix anzeigen (andernfalls wird eine Baumansicht versucht).
 ArrangerIndex.popupIndexHide.text=Arranger-Index verbergen
 ArrangerIndex.lblSelectTargetGroup.text=Zielgruppe auswählen:
 ArrangerIndex.lblGroups.text=Zugeordnete Gruppen
@@ -1645,7 +1652,6 @@ ElementNames.localizedNames.14.text=Unterprogramm
 ElementNames.localizedNames.15.text=Einbeziehbar
 ElementNames.localizedNames.16.text=TRY
 
-
 -----> Keywords
 ParserKeywords.AltPre.text=wenn
 ParserKeywords.AltPost.text=
@@ -1666,3 +1672,4 @@ ParserKeywords.JumpExit.text=beende
 ParserKeywords.JumpThrow.text=eskaliere
 ParserKeywords.Input.text=Eingabe
 ParserKeywords.Output.text=Ausgabe
+

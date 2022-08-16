@@ -48,16 +48,17 @@
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Vaščák Vladimír 2010.11.04      Created
- *      Kay Gürtzig     2016.04.24      Issue #173: New mnemonic configurations added
- *      Kay Gürtzig     2016.09.04      Menu.menuPreferencesLanguage... key structure modified
- *      Kay Gürtzig     2016.09.13      Entries for InputBox and InputBoxFor revised (bugfix #241)
- *      Kay Gürtzig     2016.09.22      AnalyserPreferences numbering modified
- *      Kay Gürtzig     2016.10.11      Enh. 267: Menu.error15 divided into error15_1 and error15_2
- *      Kay Gürtzig     2016.12.14      Enh. #311: New menu "Debug"
- *      Kay Gürtzig     2017.04.05      Additions for enh. #388 and #390 (constant definition checks)
- *      Kay Gürtzig     2017.12.16      Element name place holders introduced
- *      Kay Gürtzig     2018.07.02      KGU#245: all Colors stuff replaced with array keys 
+ *      Vaščák Vladimír 2010-11-04      Created
+ *      Kay Gürtzig     2016-04-24      Issue #173: New mnemonic configurations added
+ *      Kay Gürtzig     2016-09-04      Menu.menuPreferencesLanguage... key structure modified
+ *      Kay Gürtzig     2016-09-13      Entries for InputBox and InputBoxFor revised (bugfix #241)
+ *      Kay Gürtzig     2016-09-22      AnalyserPreferences numbering modified
+ *      Kay Gürtzig     2016-10-11      Enh. 267: Menu.error15 divided into error15_1 and error15_2
+ *      Kay Gürtzig     2016-12-14      Enh. #311: New menu "Debug"
+ *      Kay Gürtzig     2017-04-05      Additions for enh. #388 and #390 (constant definition checks)
+ *      Kay Gürtzig     2017-12-16      Element name place holders introduced
+ *      Kay Gürtzig     2018-07-02      KGU#245: all Colors stuff replaced with array keys 
+ *      Kay Gürtzig     2022-08-10      Enh. #56, #492: Messages for TRY elements added, Element name placeholders
  *
  ******************************************************************************************************
  *
@@ -155,7 +156,8 @@ Menu.menuDiagramAddBeforeRepeat.text=@{Repeat} cyklus
 Menu.menuDiagramAddBeforeForever.text=@{Forever} cyklus
 Menu.menuDiagramAddBeforeCall.text=@{Call}
 Menu.menuDiagramAddBeforeJump.text=@{Jump}
-Menu.menuDiagramAddBeforePara.text=
+Menu.menuDiagramAddBeforePara.text=@{Parallel}
+Menu.menuDiagramAddBeforeTry.text=@{Try}
 // Submenu "Diagram -> Add -> After"
 Menu.menuDiagramAddAfter.text=Po
 // Submenus for adding Elements "After"
@@ -168,7 +170,8 @@ Menu.menuDiagramAddAfterRepeat.text=@{Repeat} cyklus
 Menu.menuDiagramAddAfterForever.text=@{Forever} cyklus
 Menu.menuDiagramAddAfterCall.text=@{Call}
 Menu.menuDiagramAddAfterJump.text=@{Jump}
-Menu.menuDiagramAddAfterPara.text=
+Menu.menuDiagramAddAfterPara.text=@{Parallel}
+Menu.menuDiagramAddAfterTry.text=@{Try}
 Menu.menuDiagramEdit.text=Editovat
 Menu.menuDiagramDelete.text=Smazat
 Menu.menuDiagramMoveUp.text=Posun nahoru
@@ -180,6 +183,7 @@ Menu.menuDiagramExpand.text=
 Menu.menuDiagramType.text=Typ
 Menu.menuDiagramTypeProgram.text=@{Root.DT_MAIN}
 Menu.menuDiagramTypeFunction.text=@{Root.DT_SUB}
+Menu.menuDiagramTypeInclude.text=@{Root.DT_INCL}
 Menu.menuDiagramUnboxed.text=Nezarámovaný diagram?
 Menu.menuDiagramComment.text=Ukazovat komentáře?
 Menu.menuDiagramSwitchComments.text=
@@ -333,14 +337,15 @@ Editor.btnSave.tooltip=Uložit aktuální diagram.
 // InsertAfter (+ shift: Before)
 Editor.btnAfterInst.tooltip=Vložit nový @{Instruction} po vybraném elementu (shift: před vybraný element).
 Editor.btnAfterAlt.tooltip=Vložit novou @{Alternative} podmínku po vybraném elementu (shift: před vybraný element).
+Editor.btnAfterCase.tooltip=Vložit nové @{Case} po vybraném elementu (shift: před vybraný element).
 Editor.btnAfterFor.tooltip=Vložit nový @{For} cyklus po vybraném elementu (shift: před vybraný element).
 Editor.btnAfterWhile.tooltip=Vložit nový @{While} cyklus po vybraném elementu (shift: před vybraný element).
 Editor.btnAfterRepeat.tooltip=Vložit nový @{Repeat} cyklus po vybraném elementu (shift: před vybraný element).
-Editor.btnAfterForever.tooltip=Vložit nový nekonečný @{Forever} cyklus po vybraném elementu (shift: před vybraný element).
-Editor.btnAfterCall.tooltip=Vložit nové volání CALL po vybraném elementu (shift: před vybraný element).
-Editor.btnAfterJump.tooltip=Vložit nový skok JUMP po vybraném elementu (shift: před vybraný element).
-Editor.btnAfterCase.tooltip=Vložit nové @{Case} po vybraném elementu (shift: před vybraný element).
-Editor.btnAfterPara.tooltip=
+Editor.btnAfterForever.tooltip=Vložit nový @{Forever} cyklus po vybraném elementu (shift: před vybraný element).
+Editor.btnAfterCall.tooltip=Vložit nové @{Call} po vybraném elementu (shift: před vybraný element).
+Editor.btnAfterJump.tooltip=Vložit nový @{Jump} po vybraném elementu (shift: před vybraný element).
+Editor.btnAfterPara.tooltip=Vložit nové element @{Parallel} po vybraném elementu (shift: před vybraný element).
+Editor.btnAfterTry.tooltip=Vložit nové element @{Try} po vybraném elementu (shift: před vybraný element).
 // undo & redo
 Editor.btnUndo.tooltip=Odvolat poslední akci.
 Editor.btnRedo.tooltip=Opakovat poslední akci.
@@ -390,9 +395,10 @@ Editor.popupAddBeforeFor.text=@{For} cyklus
 Editor.popupAddBeforeWhile.text=@{While} cyklus
 Editor.popupAddBeforeRepeat.text=@{Repeat} cyklus
 Editor.popupAddBeforeForever.text=@{Forever} cyklus
-Editor.popupAddBeforeCall.text=Call volání
-Editor.popupAddBeforeJump.text=Jump skok
-Editor.popupAddBeforePara.text=
+Editor.popupAddBeforeCall.text=@{Call}
+Editor.popupAddBeforeJump.text=@{Jump}
+Editor.popupAddBeforePara.text=@{Parallel}
+Editor.popupAddBeforePara.text=@{Try}
 // After
 Editor.popupAddAfter.text=Po
 // Submenus of "Add -> After"
@@ -403,9 +409,10 @@ Editor.popupAddAfterFor.text=@{For} cyklus
 Editor.popupAddAfterWhile.text=@{While} cyklus
 Editor.popupAddAfterRepeat.text=@{Repeat} cyklus
 Editor.popupAddAfterForever.text=@{Forever} cyklus
-Editor.popupAddAfterCall.text=Call volání
-Editor.popupAddAfterJump.text=Jump skok
-Editor.popupAddAfterPara.text=
+Editor.popupAddAfterCall.text=@{Call}
+Editor.popupAddAfterJump.text=@{Jump}
+Editor.popupAddAfterPara.text=@{Parallel}
+Editor.popupAddAfterTry.text=@{Try}
 // Edit
 Editor.popupEdit.text=Editovat
 Editor.popupDelete.text=Smazat
@@ -548,10 +555,10 @@ ParserPreferences.lblAlt.text=@{Alternative} podmínka
 ParserPreferences.lblAlt.tooltip=
 ParserPreferences.lblCase.text=@{Case} rozhodování
 ParserPreferences.lblCase.tooltip=
-ParserPreferences.lblFor.text=@{For} cyklus
+ParserPreferences.lblFor.text=@{For.COUNTER} cyklus
 ParserPreferences.lblFor.tooltip=
 ParserPreferences.lblForStep.text=
-ParserPreferences.lblForIn.text=
+ParserPreferences.lblForIn.text=@{For.TRAVERSAL} cyklus
 ParserPreferences.lblForIn.tooltip=
 ParserPreferences.edtForInPre.tooltip=
 ParserPreferences.edtForInPost.tooltip=
@@ -559,7 +566,7 @@ ParserPreferences.lblWhile.text=@{While} cyklus
 ParserPreferences.lblWhile.tooltip=
 ParserPreferences.lblRepeat.text=@{Repeat} cyklus
 ParserPreferences.lblRepeat.tooltip=
-ParserPreferences.lblJump.text=
+ParserPreferences.lblJump.text=@{Jump}
 ParserPreferences.lblJump.tooltip=
 ParserPreferences.lblJumpLeave.text=
 ParserPreferences.lblJumpReturn.text=
@@ -611,7 +618,7 @@ FindAndReplace.chkElementTypes.3.text=@{Case}
 FindAndReplace.chkElementTypes.4.text=@{For}
 FindAndReplace.chkElementTypes.5.text=@{While}
 FindAndReplace.chkElementTypes.6.text=@{Repeat}
-FindAndReplace.chkElementTypes.7.text=@{Forever}
+FindAndReplace.chkElementTypes.7.text=@{Forever} cyklus
 FindAndReplace.chkElementTypes.8.text=@{Call}
 FindAndReplace.chkElementTypes.9.text=@{Jump}
 FindAndReplace.chkElementTypes.10.text=@{Parallel}
@@ -685,7 +692,7 @@ ElementNames.localizedNames.4.text=FOR-TO
 ElementNames.localizedNames.5.text=FOR-IN
 ElementNames.localizedNames.6.text=WHILE
 ElementNames.localizedNames.7.text=REPEAT
-ElementNames.localizedNames.8.text=ENDLESS
+ElementNames.localizedNames.8.text=Nekonečný
 ElementNames.localizedNames.9.text=Volání
 ElementNames.localizedNames.10.text=Skok
 ElementNames.localizedNames.11.text=Paralelní

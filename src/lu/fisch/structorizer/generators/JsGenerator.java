@@ -458,7 +458,10 @@ public class JsGenerator extends CGenerator {
 		if (topLevel)
 		{
 			// START KGU#815 2020-04-03: Enh. #828 group export
-			if (this.isLibraryModule()) {
+			// START KGU#1040 2022-08-01: Bugfix #1047 was ugly in batch export to console
+			//if (this.isLibraryModule()) {
+			if (this.isLibraryModule() && !this.pureFilename.isEmpty()) {
+			// END KGU#1040 2022-08-01
 				appendScissorLine(true, this.pureFilename + ".js");
 			}
 			// END KGU#815 2020-04-03

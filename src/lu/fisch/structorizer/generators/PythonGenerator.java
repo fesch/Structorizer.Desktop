@@ -85,6 +85,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2021-12-05      Bugfix #1024: Precautions against defective record initializers
  *      Kay Gürtzig	            2022-07-04      Issue #1041: Unnecessary nesting of try blocks with finally clause
  *                                              Bugfix #1042: Wrong syntax for catch clauses with variable
+ *      Kay Gürtzig             2022-08-14      Bugfix #1061: Suppression of content conversions #423, #623, #680, #782, #812
  *
  ******************************************************************************************************
  *
@@ -638,67 +639,74 @@ public class PythonGenerator extends Generator
 				String codeLine = transform(line);
 				boolean done = false;
 
-				// START KGU#653 2019-02-14: Enh. #680 - face input instructions with multiple variables
-				StringList inputItems = Instruction.getInputItems(line);
-				// START KGU#799 2020-02-13: Bugfix #812
-				if (inputItems != null && root.isInclude()) {
-					for (int j = 1; j < inputItems.count(); j++) {
-						String var = inputItems.get(j);
-						if (!Function.testIdentifier(var, false, null) && MTCH_IDENTIFIER.reset(var).matches()) {
-							var = MTCH_IDENTIFIER.group(1);
+				// START KGU#1053 2022-08-14: Bugfix #1061 - hands off in "no conversion" mode!
+				if (!this.suppressTransformation)
+				{
+				// END KGU#1053 2022-08-14
+					// START KGU#653 2019-02-14: Enh. #680 - face input instructions with multiple variables
+					StringList inputItems = Instruction.getInputItems(line);
+					// START KGU#799 2020-02-13: Bugfix #812
+					if (inputItems != null && root.isInclude()) {
+						for (int j = 1; j < inputItems.count(); j++) {
+							String var = inputItems.get(j);
+							if (!Function.testIdentifier(var, false, null) && MTCH_IDENTIFIER.reset(var).matches()) {
+								var = MTCH_IDENTIFIER.group(1);
+							}
+							if (var != null) {
+								this.wasDefHandled(root, var, true, true);	// mark var as defined if it isn't
+							}
 						}
+					}
+					// END KGU#799 2020-02-13
+					if (inputItems != null && inputItems.count() > 2) {
+						String inputKey = CodeParser.getKeyword("input") + " ";
+						String prompt = inputItems.get(0);
+						if (!prompt.isEmpty()) {
+							addCode(transform(CodeParser.getKeyword("output") + " " + prompt), _indent, isDisabled);
+						}
+						for (int j = 1; j < inputItems.count(); j++) {
+							String item = inputItems.get(j);
+							addCode(transform(inputKey + "\"" + item + "\" " + item), _indent, isDisabled);
+						}
+						done = true;
+					}
+					// END KGU#653 2019-02-14
+					else if (Instruction.isTurtleizerMove(line)) {
+						// START KGU#599 2018-10-17: Bugfix #623 (turtle moves hadn't been exported)
+						//codeLine += " " + this.commentSymbolLeft() + " color = " + _inst.getHexColor();
+						//done = true;
+						if (tmpCol == null) {
+							tmpCol = "col" + Integer.toHexString(_inst.hashCode());
+							String hexCol = _inst.getHexColor();
+							// White elements induce black pen colour
+							if (hexCol.equals("ffffff")) hexCol = "000000";
+							addCode(tmpCol + " = turtle.pencolor(); turtle.pencolor(\"#" + hexCol + "\")", _indent, isDisabled);
+						}
+						// END KGU#599 2018-10-17
+					}
+					// START KGU#388 2017-10-02: Enh. #423 translate record types into mutable recordtype
+					else if (Instruction.isTypeDefinition(line)) {
+						mtchTypename.reset(line).matches();
+						String typeName = mtchTypename.group(1);
+						done = this.generateTypeDef(root, typeName, null, _indent, isDisabled);
+					}
+					// END KGU#388 2017-10-02
+					// START KGU#767 2019-11-24: Bugfix #782 We must handle variable declarations as unspecified initialisations
+					else if (Instruction.isMereDeclaration(line)) {
+						done = generateDeclaration(line, root, _indent, isDisabled);
+					}
+					// END KGU#767 2019-11-24
+					// START KGU#799 2020-02-13: Bugfix #812
+					else if (Instruction.isAssignment(line) && root.isInclude()) {
+						String var = this.getAssignedVarname(line, true);
 						if (var != null) {
 							this.wasDefHandled(root, var, true, true);	// mark var as defined if it isn't
 						}
 					}
+					// END KGUU#799 2020-02-13
+				// START KGU#1053 2022-08-14: Bugfix #1061 - hands off in "no conversion" mode!
 				}
-				// END KGU#799 2020-02-13
-				if (inputItems != null && inputItems.count() > 2) {
-					String inputKey = CodeParser.getKeyword("input") + " ";
-					String prompt = inputItems.get(0);
-					if (!prompt.isEmpty()) {
-						addCode(transform(CodeParser.getKeyword("output") + " " + prompt), _indent, isDisabled);
-					}
-					for (int j = 1; j < inputItems.count(); j++) {
-						String item = inputItems.get(j);
-						addCode(transform(inputKey + "\"" + item + "\" " + item), _indent, isDisabled);
-					}
-					done = true;
-				}
-				// END KGU#653 2019-02-14
-				else if (Instruction.isTurtleizerMove(line)) {
-					// START KGU#599 2018-10-17: Bugfix #623 (turtle moves hadn't been exported)
-					//codeLine += " " + this.commentSymbolLeft() + " color = " + _inst.getHexColor();
-					//done = true;
-					if (tmpCol == null) {
-						tmpCol = "col" + Integer.toHexString(_inst.hashCode());
-						String hexCol = _inst.getHexColor();
-						// White elements induce black pen colour
-						if (hexCol.equals("ffffff")) hexCol = "000000";
-						addCode(tmpCol + " = turtle.pencolor(); turtle.pencolor(\"#" + hexCol + "\")", _indent, isDisabled);
-					}
-					// END KGU#599 2018-10-17
-				}
-				// START KGU#388 2017-10-02: Enh. #423 translate record types into mutable recordtype
-				else if (Instruction.isTypeDefinition(line)) {
-					mtchTypename.reset(line).matches();
-					String typeName = mtchTypename.group(1);
-					done = this.generateTypeDef(root, typeName, null, _indent, isDisabled);
-				}
-				// END KGU#388 2017-10-02
-				// START KGU#767 2019-11-24: Bugfix #782 We must handle variable declarations as unspecified initialisations
-				else if (Instruction.isMereDeclaration(line)) {
-					done = generateDeclaration(line, root, _indent, isDisabled);
-				}
-				// END KGU#767 2019-11-24
-				// START KGU#799 2020-02-13: Bugfix #812
-				else if (Instruction.isAssignment(line) && root.isInclude()) {
-					String var = this.getAssignedVarname(line, true);
-					if (var != null) {
-						this.wasDefHandled(root, var, true, true);	// mark var as defined if it isn't
-					}
-				}
-				// END KGUU#799 2020-02-13
+				// END KGU#1053 2022-08-14
 				if (!done) {
 					addCode(codeLine, _indent, isDisabled);
 				}
@@ -1382,7 +1390,10 @@ public class PythonGenerator extends Generator
 		if (topLevel)
 		{
 			// START KGU#815 2020-04-07: Enh. #828 group export
-			if (this.isLibraryModule()) {
+			// START KGU#1040 2022-08-01: Bugfix #1047 was ugly in batch export to console
+			//if (this.isLibraryModule()) {
+			if (this.isLibraryModule() && !this.pureFilename.isEmpty()) {
+			// END KGU#1040 2022-08-01
 				this.appendScissorLine(true, this.pureFilename + "." + this.getFileExtensions()[0]);
 			}
 			// END KGU#815 2020-04-07

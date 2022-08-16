@@ -70,6 +70,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2021-01-22      Result value for setStepConst(String) introduced
  *      Kay Gürtzig     2021-02-01      Bugfix #923: Type retrieval for value lists was too weak
  *      Kay Gürtzig     2021-10-09      Bugfix #997: Inconsistent blank handling between forms and text
+ *      Kay Gürtzig     2022-08-15      Bugfix #997: Collateral damage of previous bugfix version mended.
  *
  ******************************************************************************************************
  *
@@ -77,7 +78,6 @@ package lu.fisch.structorizer.elements;
  *
  ******************************************************************************************************
  */
-
 
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -997,7 +997,7 @@ public class For extends Element implements ILoop {
 	 * Returns the FOR loop header resulting from the given arguments
 	 * @param _counter - name of the loop variable
 	 * @param _start - start value expression
-	 * @param _end - end value expression
+	 * @param _end - end value expression or {@code null}
 	 * @param _step - increment integer constant
 	 * @param _forceStep - if a step section is to be produced even in case step==1
 	 * @return the composed For loop header
@@ -1011,6 +1011,11 @@ public class For extends Element implements ILoop {
 		{
 			asgnmtOpr = " := ";
 		}
+		// START KGU#998 2022-08-15. Bugfix #997 _end being null caused exceptions
+		if (_end == null) {
+			_end = "?";
+		}
+		// END KGU#998 2022-08-15
 		String forClause = CodeParser.getKeyword("preFor").trim() + " "
 				// START KGU#998 2021-10-09: Bugfix #997 redundant spaces tended to spoil comparison
 				//+ _counter + asgnmtOpr + _start + " "

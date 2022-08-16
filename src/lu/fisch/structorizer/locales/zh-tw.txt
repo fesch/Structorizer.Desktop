@@ -48,11 +48,12 @@
  *
  *      Author          Date        Description
  *      ------          ----        -----------
- *      Hueyan Chen     2014.07.27  First Issue
- *      Kay Gürtzig     2016.09.04  Menu.menuPreferencesLanguage... key structure modified
- *      Kay Gürtzig     2016.09.22  AnalyserPreferences numbering modified
- *      Kay Gürtzig     2016.12.14  Enh. #311: New menu "Debug"
- *      Kay Gürtzig     2018.07.02  KGU#245: all Colors stuff replaced with array keys 
+ *      Hueyan Chen     2014-07-27  First Issue
+ *      Kay Gürtzig     2016-09-04  Menu.menuPreferencesLanguage... key structure modified
+ *      Kay Gürtzig     2016-09-22  AnalyserPreferences numbering modified
+ *      Kay Gürtzig     2016-12-14  Enh. #311: New menu "Debug"
+ *      Kay Gürtzig     2018-07-02  KGU#245: all Colors stuff replaced with array keys 
+ *      Kay Gürtzig     2022-08-11  Enh. #84/#250: Parser configuration for FOR loops updated
  *
  ******************************************************************************************************
  *
@@ -245,7 +246,7 @@ Menu.error13_2.text=你的函數可能沒有傳回執行結果!
 AnalyserPreferences.checkboxes.1.text=請檢查迴圈計數器變數的變更.
 AnalyserPreferences.checkboxes.2.text=請檢查無窮迴圈 (儘可能的檢查!)
 AnalyserPreferences.checkboxes.3.text=請檢查沒有初始化的變數.
-AnalyserPreferences.checkboxes.4.text=請檢查錯誤使用 IF 條件.
+AnalyserPreferences.checkboxes.4.text=請檢查錯誤使用 @b 條件.
 AnalyserPreferences.checkboxes.5.text=請檢查大寫的變數名稱. (LUX/MEN)
 AnalyserPreferences.checkboxes.6.text=請檢查大寫的程式/程序名稱. (LUX/MEN)
 AnalyserPreferences.checkboxes.7.text=請檢查合法的識別字.
@@ -439,12 +440,17 @@ ParserPreferences.lblPre.text=之前
 ParserPreferences.lblPre.tooltip=
 ParserPreferences.lblPost.text=之後
 ParserPreferences.lblPost.tooltip=
-ParserPreferences.lblAlt.text=IF條件
+ParserPreferences.lblAlt.text=@b條件
 ParserPreferences.lblAlt.tooltip=
 ParserPreferences.lblCase.text=@c條件
 ParserPreferences.lblCase.tooltip=
-ParserPreferences.lblFor.text=@d迴圈
+ParserPreferences.lblFor.text=@e迴圈
 ParserPreferences.lblFor.tooltip=
+ParserPreferences.lblForStep.text=
+ParserPreferences.lblForIn.text=@f迴圈
+ParserPreferences.lblForIn.tooltip=
+ParserPreferences.edtForInPre.tooltip=
+ParserPreferences.edtForInPost.tooltip=
 ParserPreferences.lblWhile.text=@g迴圈
 ParserPreferences.lblWhile.tooltip=
 ParserPreferences.lblRepeat.text=@h迴圈

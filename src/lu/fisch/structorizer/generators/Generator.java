@@ -116,6 +116,12 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2021-10-03      Issue #990: Precaution against fake result type associations
  *      Kay Gürtzig     2021-10-05      Method comment revision
  *      Kay Gürtzig     2021-10-31      Bugfix #1012 in method generateCode(Element, String)
+ *      Kay Gürtzig     2022-08-01      Issue #1047: Scissor lines should show the proposed file names on
+ *                                      batch export of just a list of nsd files (i.e. without switch -k),
+ *                                      if the output is redirected or mirrored to stdout, labelled scissor
+ *                                      lines are always to be inserted there.
+ *      Kay Gürtzig     2022-08-12      Issue #1047: Bug in deriveCodeFileName() fixed
+ *      Kay Gürtzig     2022-08-14      Issues #441, #1047: usesTurtleizer must be reset at the beginning of exportCode
  *
  ******************************************************************************************************
  *
@@ -166,6 +172,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -1539,7 +1546,8 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	/**
 	 * Appends a full or dashed scissor line (with a preceding and following empty line)
 	 * to mark the cut points in batch or group export, where a file name proposal may
-	 * be inserted
+	 * be inserted.<br/>
+	 * Modifies {@link #isFilePartitioned}!
 	 * 
 	 * @param full - if true then a solid line will be added otherwise a dashed line
 	 * @param fileName - a proposed file name to be inserted into the line or null
@@ -1549,12 +1557,14 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		addSepaLine();
 		appendComment(prepareScissorLine(full, fileName), "");
 		addSepaLine();
+		this.isFilePartitioned = true;
 	}
 	/**
 	 * Inserts a full or dashed scissor line at line indes {@code atLine} to mark a
 	 * cut point in the file on batch or group export, where a file name proposal may
 	 * be inserted.<br/>
-	 * Will update all line markers greater than or equal to {@code atLine}
+	 * Will update all line markers greater than or equal to {@code atLine}<br/>
+	 * Modifies {@link #isFilePartitioned}!
 	 * 
 	 * @param full - if true then a solid line will be added otherwise a dashed line
 	 * @param fileName - a proposed file name to be inserted into the line or null
@@ -1566,23 +1576,29 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		int nLines = insertSepaLine("", atLine);
 		nLines += insertComment(prepareScissorLine(full, fileName), "", atLine + nLines);
 		nLines += insertSepaLine("", atLine + nLines);
+		this.isFilePartitioned = true;
 		return nLines;
 	}
 	/** 
-	 * Internal method to prepare the scissor line for
-	 * {@link #appendScissorLine(boolean, String)}
-	 * and {@link #insertScissorLine(boolean, String, int)}
+	 * Method to produce the content of a possibly labelled ASCII scissor line
+	 * consisting of '=' characters and a symbol " 8< "
+	 * (for e.g. {@link #appendScissorLine(boolean, String)}
+	 * and {@link #insertScissorLine(boolean, String, int)}).
+	 * 
+	 * @param full - if {@code true} then a solid (contiguous) line will be returned,
+	 *     otherwise a dashed line.
+	 * @param fileName - a label to be inserted, might e.g. be a file name,
+	 *     or {@code null}, which means no inserted label.
 	 */
-	private String prepareScissorLine(boolean full, String fileName) {
+	public static String prepareScissorLine(boolean full, String label) {
 		String line = full ? SCISSOR_LINE_FULL : SCISSOR_LINE_DASHED;
-		if (fileName != null && !fileName.trim().isEmpty()) {
+		if (label != null && !label.isBlank()) {
 			int insPos = line.indexOf("8<") + 10;
-			int insLen = fileName.length() + 2;
+			int insLen = label.length() + 2;
 			int sciLen = line.length();
-			line = line.substring(0, insPos) + " " + fileName + " "
+			line = line.substring(0, insPos) + " " + label + " "
 					+ line.substring(Math.min(insPos + insLen, sciLen));
 		}
-		this.isFilePartitioned = true;
 		return line;
 	}
 	// END KGU#815/KGU#824 2020-03-20
@@ -4512,20 +4528,25 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 *****************************************/
 
 	/**
-	 * Exports the diagrams given by _roots into a text file with path _targetFile.<br/>
-	 * Note: This method is intended for batch export.
-	 * @param _roots - vector of diagram Roots to be exported (in this order).
-	 * @param _targetFile - path of the target text file for the code export.
-	 * @param _options - String containing code letters for export options ('b','c','f','l','t','-') 
+	 * Exports the diagrams given by {@code _roots} into a text file with path {@code _targetFile}.<br/>
+	 * <b>Note:</b> This method is intended for batch export.
+	 * 
+	 * @param _roots - vector of diagram {@link Root}s to be exported (in this order).
+	 * @param _targetFile - path of the target text file for the code export (the method cares itself
+	 *     for an appropriate file name extension).
+	 * @param _switches - String containing code letters for export options ('b','c','f','l','t','-') 
 	 * @param _charSet - name of the character set to be used.
 	 * @param _settingsFromFile - whether a (partial) ini file for alternative option retrieval was given
 	 * @param _routinePool - the routine pool to be used if referenced subroutines are to be exported
+	 *     (may be {@code null} if none is used)
+	 *     
 	 * @see #exportCode(Root, File, Frame, IRoutinePool)
+	 * @see #exportCode(Vector, String, File, Frame, IRoutinePool)
 	 */
 	// START KGU#676 2019-03-13: Enh. #696 allow explicitly to specify the routine pool to use
-	//public void exportCode(Vector<Root> _roots, String _targetFile, String _options, String _charSet)
+	//public void exportCode(Vector<Root> _roots, String _targetFile, String _switches, String _charSet)
 	// START KGU#720 2019-08-05: Enh. #737 - allow to load settings from a configuration file
-	public void exportCode(Vector<Root> _roots, String _targetFile, String _options, String _charSet, boolean _settingsFromFile, IRoutinePool _routinePool)
+	public void exportCode(Vector<Root> _roots, String _targetFile, String _switches, String _charSet, boolean _settingsFromFile, IRoutinePool _routinePool)
 	// END KGU#720 2019-08-05
 	// END KGU#676 2019-03-13
 	{
@@ -4539,6 +4560,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		this.hasOutput = false;
 		this.code.clear();
 		// END KGU#676 2019-03-13
+		// START KGU#446/1040 2022-08-14: Enh. #441, #1047 turtle mode must be reset
+		this.usesTurtleizer = false;
+		// END KGU#446/1040 2022-08-14
 		
 		if (Charset.isSupported(_charSet))
 		{
@@ -4577,11 +4601,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 
 		boolean overwrite = false;
 		// Explicit options override the preferences from the settings file
-		if (_options != null)
+		if (_switches != null)
 		{
-			for (int i = 0; i < _options.length(); i++)
+			for (int i = 0; i < _switches.length(); i++)
 			{
-				char ch = _options.charAt(i);
+				char ch = _switches.charAt(i);
 				switch (ch)
 				{
 				// START KGU#363 2017-05-11: Enh. #372
@@ -4626,16 +4650,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 
 		if (_targetFile != null)
 		{
-			if (!isOK(_targetFile))			
-			{
-				int posDot = _targetFile.lastIndexOf(".");
-				int posSep = _targetFile.lastIndexOf(System.getProperty("file.separator"));
-				if (posDot > posSep)
-				{
-					_targetFile = _targetFile.substring(0, posDot);
-				}
-				_targetFile += "." + getFileExtensions()[0];
-			}
+			_targetFile = deriveCodeFileName(_targetFile, true);
 
 			StringList nameParts = StringList.explode(_targetFile, "[.]");
 			//System.out.println("File name raw: " + nameParts);
@@ -4684,7 +4699,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		/* END KGU#676 2019-03-13 */
 
 		// Did the user want the code directed to standard output?
-		if (_options.indexOf('-') >= 0)
+		if (_switches.indexOf('-') >= 0)
 		{
 			exportToStdOut();
 		}
@@ -4718,16 +4733,21 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 
 	// START KGU#815 2020-03-13: Enh. #828 New entry point
 	/**
-	 * Entry point for interactively commanded code export from an arrangement group.
-	 * Retrieves export options, opens a file selection dialog, and effectuates the actual
+	 * Entry point for <b>interactively</b> commanded code export from an arrangement group.
+	 * Retrieves export options, opens a file selection dialog, and performs the actual
 	 * code export.
-	 * @param _roots - The list of diagrams to be exported together, more diagrams might be involved
-	 * if the respective option is set.
+	 * 
+	 * @param _roots - The list of diagrams to be exported together, more diagrams might
+	 *     be involved if the respective option is set.
 	 * @param _fileName - an proposed export file name (without path)
-	 * @param _proposedDirectory - last export or current Structorizer directory (as managed by Diagram)
+	 * @param _proposedDirectory - last export or current Structorizer directory (as managed
+	 *     by Diagram)
 	 * @param _frame - the GUI Frame object responsible for this action
-	 * @param _routinePool - {@link Arranger} or some other routine pool if subroutines are to be involved
-	 * @return the chosen target directory if the export hadn't been cancelled, otherwise null
+	 * @param _routinePool - {@link Arranger} or some other routine pool if subroutines are
+	 *     to be involved
+	 * @return the chosen target directory if the export hadn't been cancelled, otherwise
+	 *     {@code null}
+	 *     
 	 * @see #exportCode(Root, File, Frame, IRoutinePool)
 	 * @see #exportCode(Vector, String, String, String, String, IRoutinePool)
 	 */
@@ -4744,9 +4764,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		// Now the subclass gets a chance to modify the proposal if there are some  - according to #707 - hyphens in python file names are nasty
 		_fileName = this.ensureFilenameConformity(_fileName);
 		
-		/* If subroutines are not to be involved but moree than one Root is designated
+		/* If subroutines are not to be involved but more than one Root is designated
 		 * for export then we simply form a temporary routine pool around the specified
-		 * diagrams and switch subroutine involvement mode on such that potential
+		 * diagrams and switch subroutine involvement mode on, such that potential
 		 * dependencies among the diagrams can be detected and handled by topological sorting.
 		 */
 		if (!this.optionExportSubroutines() && _roots.size() > 1) {
@@ -4893,7 +4913,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	/**
 	 * Depending on {@link #optionExportSubroutines()} and {@code _batchMode} first analyses
 	 * the dependency trees rooted by the given {@code _entryPoints}, splits the set of involved
-	 * diagrams into modules if necessary and the exports the found diagrams module by module
+	 * diagrams into modules if necessary and then exports the found diagrams module by module
 	 * in topological order.<br/>
 	 * These are the rules:
 	 * <ul>
@@ -4914,10 +4934,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * </li>
 	 * </ul>
 	 * The splitting into several modules may break Jump (EXIT) dependencies, though.
+	 * 
 	 * @param _entryPoints - The {@link Root}s to be exported in any case
-	 * @param _batchMode - true if this routine is used in batch mode, false otherwise
-	 * case the routine pool name would be used as default)
-	 * @return true if some exported {@link Root}s requires the File API
+	 * @param _batchMode - {@code true} if this routine is used in batch mode, {@code false}
+	 *      otherwise
+	 * @return {@code true} if some exported {@link Root}s requires the File API
 	 */
 	protected boolean generatePartitionedCode(Vector<Root> _entryPoints, boolean _batchMode) {
 		// FIXME: Check top-level soundness, particularly for Pascal export
@@ -5182,7 +5203,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 					if (!firstExport) {
 						// Mark a new module section in the file
 						// ======= 8< ===========================================================
-						this.appendScissorLine(true, null);
+						// START KGU#1040 2022-08-01: Bugfix #1047 misfit in batch export over nsd files
+						//this.appendScissorLine(true, null);
+						if (this.routinePool != null) {
+							this.appendScissorLine(true, null);
+						}
+						// END KGU#1040 2022-08-01
 						// For the case this module needs a (different) module name
 						this.pureFilename = root.getMethodName();
 					}
@@ -5206,13 +5232,16 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * (if subroutine involvement is intended).<br/>
 	 * Side effects: Fields {@link #includedRoots}, {@link #includeMap}, {@link #rootsWithEmptyInput},
 	 * {@link #rootsWithInput}, {@link #rootsWithOutput} will be modified.
+	 * 
 	 * @param _roots - the top diagrams of the module
-	 * @param _dependencyTree - diagrams required by the given entry point(s); NOTE:
-	 * this tree map is likely to be modified (even cleared) by this method!
-	 * @param _batchMode - true if the module export is done in batch mode, false otherwise
-	 * @param _entryPoints - list of diagrams meant to be public (exported) or null (if all {@code _roots} be public)
+	 * @param _dependencyTree - diagrams required by the given entry point(s); <b>NOTE:</b>
+	 *     this tree map is likely to be modified (even cleared) by this method!
+	 * @param _batchMode - {@code true} if the module export is done in batch mode, {@code false}
+	 *     otherwise
+	 * @param _entryPoints - list of diagrams meant to be public (exported) or {@code null}
+	 *     (if all {@code _roots} be public)
 	 * @param _libName - name of the module the {@code _libMembers} are to be found in
-	 * @return true if the module requires the File API
+	 * @return {@code true} if the module requires the File API
 	 */
 	protected boolean generateModule(Vector<Root> _roots, TreeMap<Root, SubTopoSortEntry> _dependencyTree, boolean _batchMode, Vector<Root> _entryPoints, String _libName) {
 		boolean someRootUsesFileAPI = false;
@@ -5255,10 +5284,20 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			if (!this.optionExportSubroutines()) {
 				// If subroutines are not be involved then we may generate the code right away
 				this.generatorIncludes.clear();
-				if (_batchMode && !firstExport) {
+				// START KGU#1040 2022-08-01: Bugfix #1047
+				//if (_batchMode && !firstExport) {
+				//	this.appendComment(SCISSOR_LINE_FULL, "");
+				//}
+				if (_batchMode) {
 					// ======= 8< ===========================================================
-					this.appendComment(SCISSOR_LINE_FULL, "");
+					if (this.routinePool == null && !root.filename.isEmpty()) {
+						this.appendScissorLine(true, this.deriveCodeFileName(root.filename, false));
+					}
+					else if (!firstExport) {
+						this.appendComment(SCISSOR_LINE_FULL, "");
+					}
 				}
+				// END KGU#1040 2022-08-01
 				generateCode(root, "", true);
 				firstExport = false;
 			}
@@ -5419,7 +5458,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		try {
 			BufferedWriter writer = new BufferedWriter(outp);
 			writer.write(code.getText());
-			writer.close();		// May we do this at all with an underlying System.out?
+			// START KGU#1040 2022-08-01: Bugfix #1047: We must never close System.out!
+			//writer.close();
+			writer.flush();
+			// END KGU#1040 2022-08-01
 		} catch (IOException e) {
 			getLogger().log(Level.WARNING, "*** Error on writing to stdout: {0}", e.getMessage());
 		}
@@ -5566,6 +5608,34 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		return false;
 	}
 
+	/**
+	 * From the given {@code _filePath} derives a file name or path suited for the
+	 * produced code file, i.e. adopts basename (and possibly path) and appends the
+	 * target file name extension.
+	 * 
+	 * @param _filePath - the file name or path to start with (e.g. an nsd file name)
+	 * @param _keepPath - whether the path (if contained in {@code _filePath}) is to
+	 *     be maintained.
+	 * @return the adapted file name or path
+	 */
+	public String deriveCodeFileName(String _filePath, boolean _keepPath) {
+		if (!isOK(_filePath))
+		{
+			File f = new File(_filePath);
+			_filePath = f.getName();	// Shorten to the last path element (pure name)
+			String path = f.getParent();
+			int posDot = _filePath.lastIndexOf(".");
+			if (posDot > 0)
+			{
+				_filePath = _filePath.substring(0, posDot);
+			}
+			_filePath += "." + this.getFileExtensions()[0];
+			if (_keepPath && path != null) {
+				_filePath = Path.of(path, _filePath).toString();
+			}
+		}
+		return _filePath;
+	}
 
 	/******* Constructor ******************/
 

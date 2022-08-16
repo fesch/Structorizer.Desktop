@@ -58,6 +58,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-01-11      Enh. #910: Precautions against modifications of immutable elements
  *      Kay Gürtzig     2021-01-28      Bugfix #918: Missing Root type filter, unwanted checkbox for the #910 type
  *      Kay Gürtzig     2021-03-09      Issue #966: Tuning of highlight colours in case of dark luf themes
+ *      Kay Gürtzig     2022-08-15      Bugfix #1062: Mode changes didn't reset the result tree
  *
  ******************************************************************************************************
  *
@@ -561,6 +562,15 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 			pnlMode.setLayout(new GridLayout(0, 1));
 			pnlMode.setBorder(new TitledBorder("Mode"));
 			
+			// START KGU#1054 2022-08-15: Bugfix #1062 we must reset the results on mode changes
+			ItemListener modeListener = new ItemListener() {
+				@Override
+				public void itemStateChanged(ItemEvent evt) {
+					resetResults();
+				}
+			};
+			// END KGU#1054 2022-08-15
+			
 			this.rbDown = new JRadioButton("Down");
 			this.rbUp = new JRadioButton("Up");
 			ButtonGroup grpDirection = new ButtonGroup();
@@ -570,12 +580,18 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 			this.chkCaseSensitive.setMnemonic(java.awt.event.KeyEvent.VK_C);
 			this.chkCaseSensitive.addKeyListener(keyListener);
 			this.chkCaseSensitive.setSelected(ini.getProperty("findCaseSensitive", "0").equals("1"));
+			// START KGU#1054 2022-08-15: Bugfix #1062 we must reset the results
+			this.chkCaseSensitive.addItemListener(modeListener);
+			// END KGU#1054 2022-08-15
 			pnlMode.add(chkCaseSensitive);
 			
 			this.chkWholeWord = new JCheckBox("Whole word");
 			this.chkWholeWord.setMnemonic(java.awt.event.KeyEvent.VK_W);
 			this.chkWholeWord.addKeyListener(keyListener);
 			this.chkWholeWord.setSelected(ini.getProperty("findWholeWord", "0").equals("1"));
+			// START KGU#1054 2022-08-15: Bugfix #1062 we must reset the results
+			this.chkWholeWord.addItemListener(modeListener);
+			// END KGU#1054 2022-08-15
 			pnlMode.add(chkWholeWord);
 
 			this.chkRegEx = new JCheckBox("Regular expressions");
@@ -587,6 +603,9 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 					Boolean deselected = evt.getStateChange() == ItemEvent.DESELECTED;
 					chkCaseSensitive.setEnabled(deselected);
 					chkWholeWord.setEnabled(deselected && Function.testIdentifier((String)cmbSearchPattern.getEditor().getItem(), false, null));
+					// START KGU#1054 2022-08-15: Bugfix #1062
+					resetResults();
+					// END KGU#1054 2022-08-15
 				}
 			});
 			this.chkRegEx.setSelected(ini.getProperty("findRegEx", "0").equals("1"));
@@ -1334,8 +1353,8 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 	/**
 	 * Empties the result tree and unsets all navigation data ({@link #currentElement},
 	 * {@link #treeIterator}, {@link #currentNode}, {@link #currentPosition}). (Part of
-	 * the ItemListener for the scope choice and the StateChangeListener of the pattern
-	 * combo boxes, but may also be called externally.)
+	 * the ItemListeners for the mode and scope choice and the StateChangeListener of
+	 * the pattern combo boxes, but may also be called externally.)
 	 */
 	public void resetResults()
 	{

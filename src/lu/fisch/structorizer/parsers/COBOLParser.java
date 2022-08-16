@@ -112,6 +112,12 @@ package lu.fisch.structorizer.parsers;
  *                                      handling Alternative with the fileRead() instruction in the no-EOF branch
  *      Kay Gürtzig     2022-07-31      Bugfix #1052: DISPLAY statements with screen display clauses caused nonsense,
  *                                      bugfix #1053: Array declaration mechanism revised (fix #695 was defective)
+ *                                      bugfix #1049 revised (condition name resolution).
+ *      Kay Gürtzig     2022-08-11      Issue #1057: LENGTH OF operator is now converted to a symbolic sizeof() call
+ *                                      Bugfix #1058: Handling of negated condition names revised
+ *      Kay Gürtzig     2022-08-14      Bugfix #851/3: Float literals without digit left of the decimal point enabled
+ *      Kay Gürtzig     2022-08-15      Bugfix #1059: Complete redesign of transformCondition();
+ *                                      Issue #1064: Pseudo-Calls marking paragraphs and sections now permanently disabled
  *
  ******************************************************************************************************
  *
@@ -321,17 +327,17 @@ public class COBOLParser extends CodeParser
 //		final int SYM_BEFORE                                     =   50;  // BEFORE
 //		final int SYM_BELL                                       =   51;  // BELL
 //		final int SYM_BINARY                                     =   52;  // BINARY
-//		final int SYM_BINARY_CHAR                                =   53;  // 'BINARY_CHAR'
-//		final int SYM_BINARY_C_LONG                              =   54;  // 'BINARY_C_LONG'
+//		final int SYM_BINARY_C_LONG                              =   53;  // 'BINARY_C_LONG'
+//		final int SYM_BINARY_CHAR                                =   54;  // 'BINARY_CHAR'
 //		final int SYM_BINARY_DOUBLE                              =   55;  // 'BINARY_DOUBLE'
 //		final int SYM_BINARY_LONG                                =   56;  // 'BINARY_LONG'
 //		final int SYM_BINARY_SHORT                               =   57;  // 'BINARY_SHORT'
 //		final int SYM_BLANK                                      =   58;  // BLANK
 //		final int SYM_BLINK                                      =   59;  // BLINK
 //		final int SYM_BLOCK                                      =   60;  // BLOCK
-//		final int SYM_BOOLEANHEXLITERAL                          =   61;  // BooleanHexLiteral
-//		final int SYM_BOOLEANLITERAL                             =   62;  // BooleanLiteral
-//		final int SYM_BOOLEAN_OF_INTEGER                         =   63;  // 'BOOLEAN_OF_INTEGER'
+//		final int SYM_BOOLEAN_OF_INTEGER                         =   61;  // 'BOOLEAN_OF_INTEGER'
+//		final int SYM_BOOLEANHEXLITERAL                          =   62;  // BooleanHexLiteral
+//		final int SYM_BOOLEANLITERAL                             =   63;  // BooleanLiteral
 //		final int SYM_BOTTOM                                     =   64;  // BOTTOM
 //		final int SYM_BY                                         =   65;  // BY
 //		final int SYM_BYTE_LENGTH                                =   66;  // 'BYTE_LENGTH'
@@ -346,9 +352,9 @@ public class COBOLParser extends CodeParser
 //		final int SYM_CH                                         =   75;  // CH
 //		final int SYM_CHAINING                                   =   76;  // CHAINING
 //		final int SYM_CHAR                                       =   77;  // CHAR
-//		final int SYM_CHARACTER                                  =   78;  // CHARACTER
-//		final int SYM_CHARACTERS                                 =   79;  // CHARACTERS
-//		final int SYM_CHAR_NATIONAL                              =   80;  // 'CHAR_NATIONAL'
+//		final int SYM_CHAR_NATIONAL                              =   78;  // 'CHAR_NATIONAL'
+//		final int SYM_CHARACTER                                  =   79;  // CHARACTER
+//		final int SYM_CHARACTERS                                 =   80;  // CHARACTERS
 //		final int SYM_CLASS                                      =   81;  // CLASS
 //		final int SYM_CLASSIFICATION                             =   82;  // CLASSIFICATION
 //		final int SYM_CLOSE                                      =   83;  // CLOSE
@@ -363,20 +369,20 @@ public class COBOLParser extends CodeParser
 //		final int SYM_COLUMNS                                    =   92;  // COLUMNS
 //		final int SYM_COMBINED_DATETIME                          =   93;  // 'COMBINED_DATETIME'
 //		final int SYM_COMMA                                      =   94;  // COMMA
-//		final int SYM_COMMAND_LINE                               =   95;  // 'COMMAND_LINE'
-//		final int SYM_COMMA_DELIM                                =   96;  // 'COMMA_DELIM'
+//		final int SYM_COMMA_DELIM                                =   95;  // 'COMMA_DELIM'
+//		final int SYM_COMMAND_LINE                               =   96;  // 'COMMAND_LINE'
 //		final int SYM_COMMIT                                     =   97;  // COMMIT
 //		final int SYM_COMMON                                     =   98;  // COMMON
 //		final int SYM_COMMUNICATION                              =   99;  // COMMUNICATION
 //		final int SYM_COMP                                       =  100;  // COMP
-//		final int SYM_COMPUTE                                    =  101;  // COMPUTE
-//		final int SYM_COMP_1                                     =  102;  // 'COMP_1'
-//		final int SYM_COMP_2                                     =  103;  // 'COMP_2'
-//		final int SYM_COMP_3                                     =  104;  // 'COMP_3'
-//		final int SYM_COMP_4                                     =  105;  // 'COMP_4'
-//		final int SYM_COMP_5                                     =  106;  // 'COMP_5'
-//		final int SYM_COMP_6                                     =  107;  // 'COMP_6'
-//		final int SYM_COMP_X                                     =  108;  // 'COMP_X'
+//		final int SYM_COMP_1                                     =  101;  // 'COMP_1'
+//		final int SYM_COMP_2                                     =  102;  // 'COMP_2'
+//		final int SYM_COMP_3                                     =  103;  // 'COMP_3'
+//		final int SYM_COMP_4                                     =  104;  // 'COMP_4'
+//		final int SYM_COMP_5                                     =  105;  // 'COMP_5'
+//		final int SYM_COMP_6                                     =  106;  // 'COMP_6'
+//		final int SYM_COMP_X                                     =  107;  // 'COMP_X'
+//		final int SYM_COMPUTE                                    =  108;  // COMPUTE
 //		final int SYM_CONCATENATE                                =  109;  // CONCATENATE
 //		final int SYM_CONFIGURATION                              =  110;  // CONFIGURATION
 //		final int SYM_CONSTANT                                   =  111;  // CONSTANT
@@ -409,8 +415,8 @@ public class COBOLParser extends CodeParser
 //		final int SYM_DAY_TO_YYYYDDD                             =  138;  // 'DAY_TO_YYYYDDD'
 //		final int SYM_DE                                         =  139;  // DE
 //		final int SYM_DEBUGGING                                  =  140;  // DEBUGGING
-//		final int SYM_DECIMALLITERAL                             =  141;  // DecimalLiteral
-//		final int SYM_DECIMAL_POINT                              =  142;  // 'DECIMAL_POINT'
+//		final int SYM_DECIMAL_POINT                              =  141;  // 'DECIMAL_POINT'
+//		final int SYM_DECIMALLITERAL                             =  142;  // DecimalLiteral
 //		final int SYM_DECLARATIVES                               =  143;  // DECLARATIVES
 //		final int SYM_DEFAULT                                    =  144;  // DEFAULT
 //		final int SYM_DELETE                                     =  145;  // DELETE
@@ -500,16 +506,16 @@ public class COBOLParser extends CodeParser
 //		final int SYM_FINAL                                      =  229;  // FINAL
 //		final int SYM_FIRST                                      =  230;  // FIRST
 //		final int SYM_FIXED                                      =  231;  // FIXED
-//		final int SYM_FLOATLITERAL                               =  232;  // FloatLiteral
-//		final int SYM_FLOAT_BINARY_128                           =  233;  // 'FLOAT_BINARY_128'
-//		final int SYM_FLOAT_BINARY_32                            =  234;  // 'FLOAT_BINARY_32'
-//		final int SYM_FLOAT_BINARY_64                            =  235;  // 'FLOAT_BINARY_64'
-//		final int SYM_FLOAT_DECIMAL_16                           =  236;  // 'FLOAT_DECIMAL_16'
-//		final int SYM_FLOAT_DECIMAL_34                           =  237;  // 'FLOAT_DECIMAL_34'
-//		final int SYM_FLOAT_DECIMAL_7                            =  238;  // 'FLOAT_DECIMAL_7'
-//		final int SYM_FLOAT_EXTENDED                             =  239;  // 'FLOAT_EXTENDED'
-//		final int SYM_FLOAT_LONG                                 =  240;  // 'FLOAT_LONG'
-//		final int SYM_FLOAT_SHORT                                =  241;  // 'FLOAT_SHORT'
+//		final int SYM_FLOAT_BINARY_128                           =  232;  // 'FLOAT_BINARY_128'
+//		final int SYM_FLOAT_BINARY_32                            =  233;  // 'FLOAT_BINARY_32'
+//		final int SYM_FLOAT_BINARY_64                            =  234;  // 'FLOAT_BINARY_64'
+//		final int SYM_FLOAT_DECIMAL_16                           =  235;  // 'FLOAT_DECIMAL_16'
+//		final int SYM_FLOAT_DECIMAL_34                           =  236;  // 'FLOAT_DECIMAL_34'
+//		final int SYM_FLOAT_DECIMAL_7                            =  237;  // 'FLOAT_DECIMAL_7'
+//		final int SYM_FLOAT_EXTENDED                             =  238;  // 'FLOAT_EXTENDED'
+//		final int SYM_FLOAT_LONG                                 =  239;  // 'FLOAT_LONG'
+//		final int SYM_FLOAT_SHORT                                =  240;  // 'FLOAT_SHORT'
+//		final int SYM_FLOATLITERAL                               =  241;  // FloatLiteral
 //		final int SYM_FOOTING                                    =  242;  // FOOTING
 //		final int SYM_FOR                                        =  243;  // FOR
 //		final int SYM_FOREGROUND_COLOR                           =  244;  // 'FOREGROUND_COLOR'
@@ -536,39 +542,39 @@ public class COBOLParser extends CodeParser
 //		final int SYM_GROUP                                      =  265;  // GROUP
 //		final int SYM_HEADING                                    =  266;  // HEADING
 //		final int SYM_HEXLITERAL                                 =  267;  // HexLiteral
-//		final int SYM_HIGHEST_ALGEBRAIC                          =  268;  // 'HIGHEST_ALGEBRAIC'
-//		final int SYM_HIGHLIGHT                                  =  269;  // HIGHLIGHT
-//		final int SYM_HIGH_VALUE                                 =  270;  // 'HIGH_VALUE'
-//		final int SYM_ID                                         =  271;  // ID
-//		final int SYM_IDENTIFICATION                             =  272;  // IDENTIFICATION
-//		final int SYM_IF                                         =  273;  // IF
-//		final int SYM_IGNORE                                     =  274;  // IGNORE
-//		final int SYM_IGNORING                                   =  275;  // IGNORING
-//		final int SYM_IN                                         =  276;  // IN
-//		final int SYM_INDEX                                      =  277;  // INDEX
-//		final int SYM_INDEXED                                    =  278;  // INDEXED
-//		final int SYM_INDICATE                                   =  279;  // INDICATE
-//		final int SYM_INITIALIZE                                 =  280;  // INITIALIZE
-//		final int SYM_INITIALIZED                                =  281;  // INITIALIZED
-//		final int SYM_INITIATE                                   =  282;  // INITIATE
-//		final int SYM_INPUT                                      =  283;  // INPUT
-//		final int SYM_INPUT_OUTPUT                               =  284;  // 'INPUT_OUTPUT'
-//		final int SYM_INSPECT                                    =  285;  // INSPECT
-//		final int SYM_INSTALLATION                               =  286;  // INSTALLATION
-//		final int SYM_INTEGER                                    =  287;  // INTEGER
-//		final int SYM_INTEGER_OF_BOOLEAN                         =  288;  // 'INTEGER_OF_BOOLEAN'
-//		final int SYM_INTEGER_OF_DATE                            =  289;  // 'INTEGER_OF_DATE'
-//		final int SYM_INTEGER_OF_DAY                             =  290;  // 'INTEGER_OF_DAY'
-//		final int SYM_INTEGER_OF_FORMATTED_DATE                  =  291;  // 'INTEGER_OF_FORMATTED_DATE'
-//		final int SYM_INTEGER_PART                               =  292;  // 'INTEGER_PART'
-//		final int SYM_INTERMEDIATE                               =  293;  // INTERMEDIATE
-//		final int SYM_INTLITERAL                                 =  294;  // IntLiteral
-//		final int SYM_INTO                                       =  295;  // INTO
-//		final int SYM_INTRINSIC                                  =  296;  // INTRINSIC
-//		final int SYM_INVALID_KEY                                =  297;  // 'INVALID_KEY'
-//		final int SYM_IS                                         =  298;  // IS
-//		final int SYM_I_O                                        =  299;  // 'I_O'
-//		final int SYM_I_O_CONTROL                                =  300;  // 'I_O_CONTROL'
+//		final int SYM_HIGH_VALUE                                 =  268;  // 'HIGH_VALUE'
+//		final int SYM_HIGHEST_ALGEBRAIC                          =  269;  // 'HIGHEST_ALGEBRAIC'
+//		final int SYM_HIGHLIGHT                                  =  270;  // HIGHLIGHT
+//		final int SYM_I_O                                        =  271;  // 'I_O'
+//		final int SYM_I_O_CONTROL                                =  272;  // 'I_O_CONTROL'
+//		final int SYM_ID                                         =  273;  // ID
+//		final int SYM_IDENTIFICATION                             =  274;  // IDENTIFICATION
+//		final int SYM_IF                                         =  275;  // IF
+//		final int SYM_IGNORE                                     =  276;  // IGNORE
+//		final int SYM_IGNORING                                   =  277;  // IGNORING
+//		final int SYM_IN                                         =  278;  // IN
+//		final int SYM_INDEX                                      =  279;  // INDEX
+//		final int SYM_INDEXED                                    =  280;  // INDEXED
+//		final int SYM_INDICATE                                   =  281;  // INDICATE
+//		final int SYM_INITIALIZE                                 =  282;  // INITIALIZE
+//		final int SYM_INITIALIZED                                =  283;  // INITIALIZED
+//		final int SYM_INITIATE                                   =  284;  // INITIATE
+//		final int SYM_INPUT                                      =  285;  // INPUT
+//		final int SYM_INPUT_OUTPUT                               =  286;  // 'INPUT_OUTPUT'
+//		final int SYM_INSPECT                                    =  287;  // INSPECT
+//		final int SYM_INSTALLATION                               =  288;  // INSTALLATION
+//		final int SYM_INTEGER                                    =  289;  // INTEGER
+//		final int SYM_INTEGER_OF_BOOLEAN                         =  290;  // 'INTEGER_OF_BOOLEAN'
+//		final int SYM_INTEGER_OF_DATE                            =  291;  // 'INTEGER_OF_DATE'
+//		final int SYM_INTEGER_OF_DAY                             =  292;  // 'INTEGER_OF_DAY'
+//		final int SYM_INTEGER_OF_FORMATTED_DATE                  =  293;  // 'INTEGER_OF_FORMATTED_DATE'
+//		final int SYM_INTEGER_PART                               =  294;  // 'INTEGER_PART'
+//		final int SYM_INTERMEDIATE                               =  295;  // INTERMEDIATE
+//		final int SYM_INTLITERAL                                 =  296;  // IntLiteral
+//		final int SYM_INTO                                       =  297;  // INTO
+//		final int SYM_INTRINSIC                                  =  298;  // INTRINSIC
+//		final int SYM_INVALID_KEY                                =  299;  // 'INVALID_KEY'
+//		final int SYM_IS                                         =  300;  // IS
 //		final int SYM_JUSTIFIED                                  =  301;  // JUSTIFIED
 //		final int SYM_KEPT                                       =  302;  // KEPT
 //		final int SYM_KEY                                        =  303;  // KEY
@@ -587,22 +593,22 @@ public class COBOLParser extends CodeParser
 //		final int SYM_LINAGE                                     =  316;  // LINAGE
 //		final int SYM_LINAGE_COUNTER                             =  317;  // 'LINAGE_COUNTER'
 //		final int SYM_LINE                                       =  318;  // LINE
-//		final int SYM_LINES                                      =  319;  // LINES
-//		final int SYM_LINE_COUNTER                               =  320;  // 'LINE_COUNTER'
+//		final int SYM_LINE_COUNTER                               =  319;  // 'LINE_COUNTER'
+//		final int SYM_LINES                                      =  320;  // LINES
 //		final int SYM_LINKAGE                                    =  321;  // LINKAGE
-//		final int SYM_LOCALE                                     =  322;  // LOCALE
-//		final int SYM_LOCALE_COMPARE                             =  323;  // 'LOCALE_COMPARE'
-//		final int SYM_LOCALE_DATE                                =  324;  // 'LOCALE_DATE'
-//		final int SYM_LOCALE_TIME                                =  325;  // 'LOCALE_TIME'
-//		final int SYM_LOCALE_TIME_FROM_SECONDS                   =  326;  // 'LOCALE_TIME_FROM_SECONDS'
-//		final int SYM_LOCAL_STORAGE                              =  327;  // 'LOCAL_STORAGE'
+//		final int SYM_LOCAL_STORAGE                              =  322;  // 'LOCAL_STORAGE'
+//		final int SYM_LOCALE                                     =  323;  // LOCALE
+//		final int SYM_LOCALE_COMPARE                             =  324;  // 'LOCALE_COMPARE'
+//		final int SYM_LOCALE_DATE                                =  325;  // 'LOCALE_DATE'
+//		final int SYM_LOCALE_TIME                                =  326;  // 'LOCALE_TIME'
+//		final int SYM_LOCALE_TIME_FROM_SECONDS                   =  327;  // 'LOCALE_TIME_FROM_SECONDS'
 //		final int SYM_LOCK                                       =  328;  // LOCK
 //		final int SYM_LOG                                        =  329;  // LOG
-//		final int SYM_LOWER                                      =  330;  // LOWER
-//		final int SYM_LOWER_CASE                                 =  331;  // 'LOWER_CASE'
-//		final int SYM_LOWEST_ALGEBRAIC                           =  332;  // 'LOWEST_ALGEBRAIC'
-//		final int SYM_LOWLIGHT                                   =  333;  // LOWLIGHT
-//		final int SYM_LOW_VALUE                                  =  334;  // 'LOW_VALUE'
+//		final int SYM_LOW_VALUE                                  =  330;  // 'LOW_VALUE'
+//		final int SYM_LOWER                                      =  331;  // LOWER
+//		final int SYM_LOWER_CASE                                 =  332;  // 'LOWER_CASE'
+//		final int SYM_LOWEST_ALGEBRAIC                           =  333;  // 'LOWEST_ALGEBRAIC'
+//		final int SYM_LOWLIGHT                                   =  334;  // LOWLIGHT
 //		final int SYM_MAGNETIC_TAPE                              =  335;  // 'MAGNETIC_TAPE'
 //		final int SYM_MANUAL                                     =  336;  // MANUAL
 //		final int SYM_MAX                                        =  337;  // MAX
@@ -631,10 +637,10 @@ public class COBOLParser extends CodeParser
 //		final int SYM_MULTIPLY                                   =  360;  // MULTIPLY
 //		final int SYM_NAME                                       =  361;  // NAME
 //		final int SYM_NATIONAL                                   =  362;  // NATIONAL
-//		final int SYM_NATIONALHEXLITERAL                         =  363;  // NationalHexLiteral
-//		final int SYM_NATIONALLITERAL                            =  364;  // NationalLiteral
-//		final int SYM_NATIONAL_EDITED                            =  365;  // 'NATIONAL_EDITED'
-//		final int SYM_NATIONAL_OF                                =  366;  // 'NATIONAL_OF'
+//		final int SYM_NATIONAL_EDITED                            =  363;  // 'NATIONAL_EDITED'
+//		final int SYM_NATIONAL_OF                                =  364;  // 'NATIONAL_OF'
+//		final int SYM_NATIONALHEXLITERAL                         =  365;  // NationalHexLiteral
+//		final int SYM_NATIONALLITERAL                            =  366;  // NationalLiteral
 //		final int SYM_NATIVE                                     =  367;  // NATIVE
 //		final int SYM_NEAREST_AWAY_FROM_ZERO                     =  368;  // 'NEAREST_AWAY_FROM_ZERO'
 //		final int SYM_NEAREST_EVEN                               =  369;  // 'NEAREST_EVEN'
@@ -644,20 +650,20 @@ public class COBOLParser extends CodeParser
 //		final int SYM_NEXT                                       =  373;  // NEXT
 //		final int SYM_NEXT_PAGE                                  =  374;  // 'NEXT_PAGE'
 //		final int SYM_NO                                         =  375;  // NO
-//		final int SYM_NORMAL                                     =  376;  // NORMAL
-//		final int SYM_NOT                                        =  377;  // NOT
-//		final int SYM_NOTHING                                    =  378;  // NOTHING
-//		final int SYM_NOT_END                                    =  379;  // 'NOT_END'
-//		final int SYM_NOT_EOP                                    =  380;  // 'NOT_EOP'
-//		final int SYM_NOT_EQUAL                                  =  381;  // 'NOT_EQUAL'
-//		final int SYM_NOT_ESCAPE                                 =  382;  // 'NOT_ESCAPE'
-//		final int SYM_NOT_EXCEPTION                              =  383;  // 'NOT_EXCEPTION'
-//		final int SYM_NOT_INVALID_KEY                            =  384;  // 'NOT_INVALID_KEY'
-//		final int SYM_NOT_OVERFLOW                               =  385;  // 'NOT_OVERFLOW'
-//		final int SYM_NOT_SIZE_ERROR                             =  386;  // 'NOT_SIZE_ERROR'
-//		final int SYM_NO_ADVANCING                               =  387;  // 'NO_ADVANCING'
-//		final int SYM_NO_DATA                                    =  388;  // 'NO_DATA'
-//		final int SYM_NO_ECHO                                    =  389;  // 'NO_ECHO'
+//		final int SYM_NO_ADVANCING                               =  376;  // 'NO_ADVANCING'
+//		final int SYM_NO_DATA                                    =  377;  // 'NO_DATA'
+//		final int SYM_NO_ECHO                                    =  378;  // 'NO_ECHO'
+//		final int SYM_NORMAL                                     =  379;  // NORMAL
+//		final int SYM_NOT                                        =  380;  // NOT
+//		final int SYM_NOT_END                                    =  381;  // 'NOT_END'
+//		final int SYM_NOT_EOP                                    =  382;  // 'NOT_EOP'
+//		final int SYM_NOT_EQUAL                                  =  383;  // 'NOT_EQUAL'
+//		final int SYM_NOT_ESCAPE                                 =  384;  // 'NOT_ESCAPE'
+//		final int SYM_NOT_EXCEPTION                              =  385;  // 'NOT_EXCEPTION'
+//		final int SYM_NOT_INVALID_KEY                            =  386;  // 'NOT_INVALID_KEY'
+//		final int SYM_NOT_OVERFLOW                               =  387;  // 'NOT_OVERFLOW'
+//		final int SYM_NOT_SIZE_ERROR                             =  388;  // 'NOT_SIZE_ERROR'
+//		final int SYM_NOTHING                                    =  389;  // NOTHING
 //		final int SYM_NUMBER                                     =  390;  // NUMBER
 //		final int SYM_NUMBERS                                    =  391;  // NUMBERS
 //		final int SYM_NUMERIC                                    =  392;  // NUMERIC
@@ -679,9 +685,9 @@ public class COBOLParser extends CodeParser
 //		final int SYM_OPTIONS                                    =  408;  // OPTIONS
 //		final int SYM_OR                                         =  409;  // OR
 //		final int SYM_ORD                                        =  410;  // ORD
-//		final int SYM_ORDER                                      =  411;  // ORDER
-//		final int SYM_ORD_MAX                                    =  412;  // 'ORD_MAX'
-//		final int SYM_ORD_MIN                                    =  413;  // 'ORD_MIN'
+//		final int SYM_ORD_MAX                                    =  411;  // 'ORD_MAX'
+//		final int SYM_ORD_MIN                                    =  412;  // 'ORD_MIN'
+//		final int SYM_ORDER                                      =  413;  // ORDER
 //		final int SYM_ORGANIZATION                               =  414;  // ORGANIZATION
 //		final int SYM_OTHER                                      =  415;  // OTHER
 //		final int SYM_OUTPUT                                     =  416;  // OUTPUT
@@ -753,8 +759,8 @@ public class COBOLParser extends CodeParser
 //		final int SYM_RETURN                                     =  482;  // RETURN
 //		final int SYM_RETURNING                                  =  483;  // RETURNING
 //		final int SYM_REVERSE                                    =  484;  // REVERSE
-//		final int SYM_REVERSED                                   =  485;  // REVERSED
-//		final int SYM_REVERSE_VIDEO                              =  486;  // 'REVERSE_VIDEO'
+//		final int SYM_REVERSE_VIDEO                              =  485;  // 'REVERSE_VIDEO'
+//		final int SYM_REVERSED                                   =  486;  // REVERSED
 //		final int SYM_REWIND                                     =  487;  // REWIND
 //		final int SYM_REWRITE                                    =  488;  // REWRITE
 //		final int SYM_RF                                         =  489;  // RF
@@ -819,12 +825,12 @@ public class COBOLParser extends CodeParser
 //		final int SYM_STORED_CHAR_LENGTH                         =  548;  // 'STORED_CHAR_LENGTH'
 //		final int SYM_STRING                                     =  549;  // STRING
 //		final int SYM_STRINGLITERAL                              =  550;  // StringLiteral
-//		final int SYM_SUBSTITUTE                                 =  551;  // SUBSTITUTE
-//		final int SYM_SUBSTITUTE_CASE                            =  552;  // 'SUBSTITUTE_CASE'
-//		final int SYM_SUBTRACT                                   =  553;  // SUBTRACT
-//		final int SYM_SUB_QUEUE_1                                =  554;  // 'SUB_QUEUE_1'
-//		final int SYM_SUB_QUEUE_2                                =  555;  // 'SUB_QUEUE_2'
-//		final int SYM_SUB_QUEUE_3                                =  556;  // 'SUB_QUEUE_3'
+//		final int SYM_SUB_QUEUE_1                                =  551;  // 'SUB_QUEUE_1'
+//		final int SYM_SUB_QUEUE_2                                =  552;  // 'SUB_QUEUE_2'
+//		final int SYM_SUB_QUEUE_3                                =  553;  // 'SUB_QUEUE_3'
+//		final int SYM_SUBSTITUTE                                 =  554;  // SUBSTITUTE
+//		final int SYM_SUBSTITUTE_CASE                            =  555;  // 'SUBSTITUTE_CASE'
+//		final int SYM_SUBTRACT                                   =  556;  // SUBTRACT
 //		final int SYM_SUM                                        =  557;  // SUM
 //		final int SYM_SUPPRESS                                   =  558;  // SUPPRESS
 //		final int SYM_SYMBOLIC                                   =  559;  // SYMBOLIC
@@ -848,8 +854,8 @@ public class COBOLParser extends CodeParser
 //		final int SYM_THEN                                       =  577;  // THEN
 //		final int SYM_THRU                                       =  578;  // THRU
 //		final int SYM_TIME                                       =  579;  // TIME
-//		final int SYM_TIMES                                      =  580;  // TIMES
-//		final int SYM_TIME_OUT                                   =  581;  // 'TIME_OUT'
+//		final int SYM_TIME_OUT                                   =  580;  // 'TIME_OUT'
+//		final int SYM_TIMES                                      =  581;  // TIMES
 //		final int SYM_TO                                         =  582;  // TO
 //		final int SYM_TOK_AMPER                                  =  583;  // 'TOK_AMPER'
 //		final int SYM_TOK_CLOSE_PAREN                            =  584;  // 'TOK_CLOSE_PAREN'
@@ -921,904 +927,904 @@ public class COBOLParser extends CodeParser
 //		final int SYM_YYYYMMDD                                   =  650;  // YYYYMMDD
 //		final int SYM_ZERO                                       =  651;  // ZERO
 //		final int SYM_ZLITERAL                                   =  652;  // ZLiteral
-//		final int SYM_ACCEPT_BODY                                =  653;  // <accept_body>
-//		final int SYM_ACCEPT_CLAUSE                              =  654;  // <accept_clause>
-//		final int SYM_ACCEPT_CLAUSES                             =  655;  // <accept_clauses>
-//		final int SYM_ACCEPT_STATEMENT                           =  656;  // <accept_statement>
-//		final int SYM_ACCESS_MODE                                =  657;  // <access_mode>
-//		final int SYM_ACCESS_MODE_CLAUSE                         =  658;  // <access_mode_clause>
-//		final int SYM_ACCP_ATTR                                  =  659;  // <accp_attr>
-//		final int SYM_ACCP_IDENTIFIER                            =  660;  // <accp_identifier>
-//		final int SYM_ACCP_NOT_ON_EXCEPTION                      =  661;  // <accp_not_on_exception>
-//		final int SYM_ACCP_ON_EXCEPTION                          =  662;  // <accp_on_exception>
-//		final int SYM_ADD_BODY                                   =  663;  // <add_body>
-//		final int SYM_ADD_STATEMENT                              =  664;  // <add_statement>
-//		final int SYM_ADVANCING_LOCK_OR_RETRY                    =  665;  // <advancing_lock_or_retry>
-//		final int SYM_ALLOCATE_BODY                              =  666;  // <allocate_body>
-//		final int SYM_ALLOCATE_RETURNING                         =  667;  // <allocate_returning>
-//		final int SYM_ALLOCATE_STATEMENT                         =  668;  // <allocate_statement>
-//		final int SYM_ALNUM_OR_ID                                =  669;  // <alnum_or_id>
-//		final int SYM_ALPHABET_ALSO_SEQUENCE                     =  670;  // <alphabet_also_sequence>
-//		final int SYM_ALPHABET_DEFINITION                        =  671;  // <alphabet_definition>
-//		final int SYM_ALPHABET_LITERAL                           =  672;  // <alphabet_literal>
-//		final int SYM_ALPHABET_LITERAL_LIST                      =  673;  // <alphabet_literal_list>
-//		final int SYM_ALPHABET_LITS                              =  674;  // <alphabet_lits>
-//		final int SYM_ALPHABET_NAME                              =  675;  // <alphabet_name>
-//		final int SYM_ALPHABET_NAME_CLAUSE                       =  676;  // <alphabet_name_clause>
-//		final int SYM_ALTERNATIVE_RECORD_KEY_CLAUSE              =  677;  // <alternative_record_key_clause>
-//		final int SYM_ALTER_BODY                                 =  678;  // <alter_body>
-//		final int SYM_ALTER_ENTRY                                =  679;  // <alter_entry>
-//		final int SYM_ALTER_STATEMENT                            =  680;  // <alter_statement>
-//		final int SYM_ANY_LENGTH_CLAUSE                          =  681;  // <any_length_clause>
-//		final int SYM_ARITHMETIC_X                               =  682;  // <arithmetic_x>
-//		final int SYM_ARITHMETIC_X_LIST                          =  683;  // <arithmetic_x_list>
-//		final int SYM_ARITH_X                                    =  684;  // <arith_x>
-//		final int SYM_ASCENDING_OR_DESCENDING                    =  685;  // <ascending_or_descending>
-//		final int SYM_ASSIGNMENT_NAME                            =  686;  // <assignment_name>
-//		final int SYM_ASSIGN_CLAUSE                              =  687;  // <assign_clause>
-//		final int SYM_AT_END                                     =  688;  // <at_end>
-//		final int SYM_AT_END_CLAUSE                              =  689;  // <at_end_clause>
-//		final int SYM_AT_EOP_CLAUSE                              =  690;  // <at_eop_clause>
-//		final int SYM_AT_EOP_CLAUSES                             =  691;  // <at_eop_clauses>
-//		final int SYM_AT_LINE_COLUMN                             =  692;  // <at_line_column>
-//		final int SYM_BASED_CLAUSE                               =  693;  // <based_clause>
-//		final int SYM_BASIC_LITERAL                              =  694;  // <basic_literal>
-//		final int SYM_BASIC_VALUE                                =  695;  // <basic_value>
-//		final int SYM_BEFORE_OR_AFTER                            =  696;  // <before_or_after>
-//		final int SYM_BLANK_CLAUSE                               =  697;  // <blank_clause>
-//		final int SYM_BLOCK_CONTAINS_CLAUSE                      =  698;  // <block_contains_clause>
-//		final int SYM_CALL_BODY                                  =  699;  // <call_body>
-//		final int SYM_CALL_EXCEPTION_PHRASES                     =  700;  // <call_exception_phrases>
-//		final int SYM_CALL_NOT_ON_EXCEPTION                      =  701;  // <call_not_on_exception>
-//		final int SYM_CALL_ON_EXCEPTION                          =  702;  // <call_on_exception>
-//		final int SYM_CALL_PARAM                                 =  703;  // <call_param>
-//		final int SYM_CALL_PARAM_LIST                            =  704;  // <call_param_list>
-//		final int SYM_CALL_RETURNING                             =  705;  // <call_returning>
-//		final int SYM_CALL_STATEMENT                             =  706;  // <call_statement>
-//		final int SYM_CALL_TYPE                                  =  707;  // <call_type>
-//		final int SYM_CALL_USING                                 =  708;  // <call_using>
-//		final int SYM_CALL_X                                     =  709;  // <call_x>
-//		final int SYM_CANCEL_BODY                                =  710;  // <cancel_body>
-//		final int SYM_CANCEL_STATEMENT                           =  711;  // <cancel_statement>
-//		final int SYM_CD_NAME                                    =  712;  // <cd_name>
-//		final int SYM_CF_KEYWORD                                 =  713;  // <cf_keyword>
-//		final int SYM_CHAR_LIST                                  =  714;  // <char_list>
-//		final int SYM_CH_KEYWORD                                 =  715;  // <ch_keyword>
-//		final int SYM_CLASS_ITEM                                 =  716;  // <class_item>
-//		final int SYM_CLASS_ITEM_LIST                            =  717;  // <class_item_list>
-//		final int SYM_CLASS_NAME                                 =  718;  // <CLASS_NAME>
-//		final int SYM_CLASS_NAME_CLAUSE                          =  719;  // <class_name_clause>
-//		final int SYM_CLASS_VALUE                                =  720;  // <class_value>
-//		final int SYM_CLOSE_BODY                                 =  721;  // <close_body>
-//		final int SYM_CLOSE_OPTION                               =  722;  // <close_option>
-//		final int SYM_CLOSE_STATEMENT                            =  723;  // <close_statement>
-//		final int SYM_CODE_SET_CLAUSE                            =  724;  // <code_set_clause>
-//		final int SYM_COLLATING_SEQUENCE_CLAUSE                  =  725;  // <collating_sequence_clause>
-//		final int SYM_COLL_SEQUENCE                              =  726;  // <coll_sequence>
-//		final int SYM_COLUMNS_OR_COLS                            =  727;  // <columns_or_cols>
-//		final int SYM_COLUMN_CLAUSE                              =  728;  // <column_clause>
-//		final int SYM_COLUMN_NUMBER                              =  729;  // <column_number>
-//		final int SYM_COLUMN_OR_COL                              =  730;  // <column_or_col>
-//		final int SYM_COL_KEYWORD_CLAUSE                         =  731;  // <col_keyword_clause>
-//		final int SYM_COL_OR_PLUS                                =  732;  // <col_or_plus>
-//		final int SYM_COMMENTITEM                                =  733;  // <Comment Item>
-//		final int SYM_COMMIT_STATEMENT                           =  734;  // <commit_statement>
-//		final int SYM_COMMON_FUNCTION                            =  735;  // <COMMON_FUNCTION>
-//		final int SYM_COMMUNICATION_DESCRIPTION                  =  736;  // <communication_description>
-//		final int SYM_COMMUNICATION_DESCRIPTION_CLAUSE           =  737;  // <communication_description_clause>
-//		final int SYM_COMMUNICATION_DESCRIPTION_ENTRY            =  738;  // <communication_description_entry>
-//		final int SYM_COMMUNICATION_MODE                         =  739;  // <communication_mode>
-//		final int SYM_COMPILATION_GROUP                          =  740;  // <compilation_group>
-//		final int SYM_COMPUTER_WORDS                             =  741;  // <computer_words>
-//		final int SYM_COMPUTE_BODY                               =  742;  // <compute_body>
-//		final int SYM_COMPUTE_STATEMENT                          =  743;  // <compute_statement>
-//		final int SYM_COMP_EQUAL                                 =  744;  // <comp_equal>
-//		final int SYM_CONCATENATE_FUNC                           =  745;  // <CONCATENATE_FUNC>
-//		final int SYM_CONDITION                                  =  746;  // <condition>
-//		final int SYM_CONDITION_NAME_ENTRY                       =  747;  // <condition_name_entry>
-//		final int SYM_CONDITION_OP                               =  748;  // <condition_op>
-//		final int SYM_CONDITION_OR_CLASS                         =  749;  // <condition_or_class>
-//		final int SYM_COND_OR_EXIT                               =  750;  // <cond_or_exit>
-//		final int SYM_CONSTANT_ENTRY                             =  751;  // <constant_entry>
-//		final int SYM_CONSTANT_SOURCE                            =  752;  // <constant_source>
-//		final int SYM_CONST_GLOBAL                               =  753;  // <const_global>
-//		final int SYM_CONTINUE_STATEMENT                         =  754;  // <continue_statement>
-//		final int SYM_CONTROL_CLAUSE                             =  755;  // <control_clause>
-//		final int SYM_CONTROL_FIELD_LIST                         =  756;  // <control_field_list>
-//		final int SYM_CONTROL_KEYWORD                            =  757;  // <control_keyword>
-//		final int SYM_CONVENTION_TYPE                            =  758;  // <convention_type>
-//		final int SYM_CON_IDENTIFIER                             =  759;  // <con_identifier>
-//		final int SYM_CRT_STATUS_CLAUSE                          =  760;  // <crt_status_clause>
-//		final int SYM_CRT_UNDER2                                 =  761;  // <crt_under>
-//		final int SYM_CURRENCY_SIGN_CLAUSE                       =  762;  // <currency_sign_clause>
-//		final int SYM_CURRENT_DATE_FUNC                          =  763;  // <CURRENT_DATE_FUNC>
-//		final int SYM_CURSOR_CLAUSE                              =  764;  // <cursor_clause>
-//		final int SYM_DATA_DESCRIPTION                           =  765;  // <data_description>
-//		final int SYM_DATA_DESCRIPTION_CLAUSE                    =  766;  // <data_description_clause>
-//		final int SYM_DATA_OR_FINAL                              =  767;  // <data_or_final>
-//		final int SYM_DATA_RECORDS_CLAUSE                        =  768;  // <data_records_clause>
-//		final int SYM_DEBUGGING_LIST                             =  769;  // <debugging_list>
-//		final int SYM_DEBUGGING_TARGET                           =  770;  // <debugging_target>
-//		final int SYM_DECIMAL_POINT_CLAUSE                       =  771;  // <decimal_point_clause>
-//		final int SYM_DELETE_BODY                                =  772;  // <delete_body>
-//		final int SYM_DELETE_FILE_LIST                           =  773;  // <delete_file_list>
-//		final int SYM_DELETE_STATEMENT                           =  774;  // <delete_statement>
-//		final int SYM_DETAIL_KEYWORD                             =  775;  // <detail_keyword>
-//		final int SYM_DISABLE_STATEMENT                          =  776;  // <disable_statement>
-//		final int SYM_DISALLOWED_OP                              =  777;  // <disallowed_op>
-//		final int SYM_DISPLAY_ATOM                               =  778;  // <display_atom>
-//		final int SYM_DISPLAY_BODY                               =  779;  // <display_body>
-//		final int SYM_DISPLAY_CLAUSE                             =  780;  // <display_clause>
-//		final int SYM_DISPLAY_CLAUSES                            =  781;  // <display_clauses>
-//		final int SYM_DISPLAY_IDENTIFIER                         =  782;  // <display_identifier>
-//		final int SYM_DISPLAY_LIST                               =  783;  // <display_list>
-//		final int SYM_DISPLAY_OF_FUNC                            =  784;  // <DISPLAY_OF_FUNC>
-//		final int SYM_DISPLAY_STATEMENT                          =  785;  // <display_statement>
-//		final int SYM_DISPLAY_UPON                               =  786;  // <display_upon>
-//		final int SYM_DISP_ATTR                                  =  787;  // <disp_attr>
-//		final int SYM_DISP_LIST                                  =  788;  // <disp_list>
-//		final int SYM_DISP_NOT_ON_EXCEPTION                      =  789;  // <disp_not_on_exception>
-//		final int SYM_DISP_ON_EXCEPTION                          =  790;  // <disp_on_exception>
-//		final int SYM_DIVIDE_BODY                                =  791;  // <divide_body>
-//		final int SYM_DIVIDE_STATEMENT                           =  792;  // <divide_statement>
-//		final int SYM_DOUBLE_USAGE                               =  793;  // <double_usage>
-//		final int SYM_ENABLE_DISABLE_HANDLING                    =  794;  // <enable_disable_handling>
-//		final int SYM_ENABLE_STATEMENT                           =  795;  // <enable_statement>
-//		final int SYM_END_ACCEPT2                                =  796;  // <end_accept>
-//		final int SYM_END_ADD2                                   =  797;  // <end_add>
-//		final int SYM_END_CALL2                                  =  798;  // <end_call>
-//		final int SYM_END_COMPUTE2                               =  799;  // <end_compute>
-//		final int SYM_END_DELETE2                                =  800;  // <end_delete>
-//		final int SYM_END_DISPLAY2                               =  801;  // <end_display>
-//		final int SYM_END_DIVIDE2                                =  802;  // <end_divide>
-//		final int SYM_END_EVALUATE2                              =  803;  // <end_evaluate>
-//		final int SYM_END_FUNCTION2                              =  804;  // <end_function>
-//		final int SYM_END_IF2                                    =  805;  // <end_if>
-//		final int SYM_END_MULTIPLY2                              =  806;  // <end_multiply>
-//		final int SYM_END_PERFORM2                               =  807;  // <end_perform>
-//		final int SYM_END_PROGRAM2                               =  808;  // <end_program>
-//		final int SYM_END_PROGRAM_LIST                           =  809;  // <end_program_list>
-//		final int SYM_END_PROGRAM_NAME                           =  810;  // <end_program_name>
-//		final int SYM_END_READ2                                  =  811;  // <end_read>
-//		final int SYM_END_RECEIVE2                               =  812;  // <end_receive>
-//		final int SYM_END_RETURN2                                =  813;  // <end_return>
-//		final int SYM_END_REWRITE2                               =  814;  // <end_rewrite>
-//		final int SYM_END_SEARCH2                                =  815;  // <end_search>
-//		final int SYM_END_START2                                 =  816;  // <end_start>
-//		final int SYM_END_STRING2                                =  817;  // <end_string>
-//		final int SYM_END_SUBTRACT2                              =  818;  // <end_subtract>
-//		final int SYM_END_UNSTRING2                              =  819;  // <end_unstring>
-//		final int SYM_END_WRITE2                                 =  820;  // <end_write>
-//		final int SYM_ENTRY_BODY                                 =  821;  // <entry_body>
-//		final int SYM_ENTRY_STATEMENT                            =  822;  // <entry_statement>
-//		final int SYM_EOL2                                       =  823;  // <eol>
-//		final int SYM_EOS2                                       =  824;  // <eos>
-//		final int SYM_EQ                                         =  825;  // <eq>
-//		final int SYM_ERROR_STMT_RECOVER                         =  826;  // <error_stmt_recover>
-//		final int SYM_ESCAPE_OR_EXCEPTION                        =  827;  // <escape_or_exception>
-//		final int SYM_EVALUATE_BODY                              =  828;  // <evaluate_body>
-//		final int SYM_EVALUATE_CASE                              =  829;  // <evaluate_case>
-//		final int SYM_EVALUATE_CASE_LIST                         =  830;  // <evaluate_case_list>
-//		final int SYM_EVALUATE_CONDITION_LIST                    =  831;  // <evaluate_condition_list>
-//		final int SYM_EVALUATE_OBJECT                            =  832;  // <evaluate_object>
-//		final int SYM_EVALUATE_OBJECT_LIST                       =  833;  // <evaluate_object_list>
-//		final int SYM_EVALUATE_OTHER                             =  834;  // <evaluate_other>
-//		final int SYM_EVALUATE_STATEMENT                         =  835;  // <evaluate_statement>
-//		final int SYM_EVALUATE_SUBJECT                           =  836;  // <evaluate_subject>
-//		final int SYM_EVALUATE_SUBJECT_LIST                      =  837;  // <evaluate_subject_list>
-//		final int SYM_EVALUATE_WHEN_LIST                         =  838;  // <evaluate_when_list>
-//		final int SYM_EVENT_STATUS2                              =  839;  // <event_status>
-//		final int SYM_EXCEPTION_OR_ERROR                         =  840;  // <exception_or_error>
-//		final int SYM_EXIT_BODY                                  =  841;  // <exit_body>
-//		final int SYM_EXIT_PROGRAM_RETURNING                     =  842;  // <exit_program_returning>
-//		final int SYM_EXIT_STATEMENT                             =  843;  // <exit_statement>
-//		final int SYM_EXP2                                       =  844;  // <exp>
-//		final int SYM_EXPR                                       =  845;  // <expr>
-//		final int SYM_EXPR_TOKEN                                 =  846;  // <expr_token>
-//		final int SYM_EXPR_TOKENS                                =  847;  // <expr_tokens>
-//		final int SYM_EXPR_X                                     =  848;  // <expr_x>
-//		final int SYM_EXP_ATOM                                   =  849;  // <exp_atom>
-//		final int SYM_EXP_FACTOR                                 =  850;  // <exp_factor>
-//		final int SYM_EXP_LIST                                   =  851;  // <exp_list>
-//		final int SYM_EXP_TERM                                   =  852;  // <exp_term>
-//		final int SYM_EXP_UNARY                                  =  853;  // <exp_unary>
-//		final int SYM_EXTENDED_WITH_LOCK                         =  854;  // <extended_with_lock>
-//		final int SYM_EXTERNAL_CLAUSE                            =  855;  // <external_clause>
-//		final int SYM_FILE_CONTROL_ENTRY                         =  856;  // <file_control_entry>
-//		final int SYM_FILE_DESCRIPTION                           =  857;  // <file_description>
-//		final int SYM_FILE_DESCRIPTION_CLAUSE                    =  858;  // <file_description_clause>
-//		final int SYM_FILE_DESCRIPTION_ENTRY                     =  859;  // <file_description_entry>
-//		final int SYM_FILE_ID2                                   =  860;  // <file_id>
-//		final int SYM_FILE_NAME                                  =  861;  // <file_name>
-//		final int SYM_FILE_NAME_LIST                             =  862;  // <file_name_list>
-//		final int SYM_FILE_OR_RECORD_NAME                        =  863;  // <file_or_record_name>
-//		final int SYM_FILE_STATUS_CLAUSE                         =  864;  // <file_status_clause>
-//		final int SYM_FILE_TYPE                                  =  865;  // <file_type>
-//		final int SYM_FIRST_DETAIL                               =  866;  // <first_detail>
-//		final int SYM_FLAG_ALL                                   =  867;  // <flag_all>
-//		final int SYM_FLAG_DUPLICATES                            =  868;  // <flag_duplicates>
-//		final int SYM_FLAG_INITIALIZED                           =  869;  // <flag_initialized>
-//		final int SYM_FLAG_INITIALIZED_TO                        =  870;  // <flag_initialized_to>
-//		final int SYM_FLAG_OPTIONAL                              =  871;  // <flag_optional>
-//		final int SYM_FLAG_ROUNDED                               =  872;  // <flag_rounded>
-//		final int SYM_FLAG_SEPARATE                              =  873;  // <flag_separate>
-//		final int SYM_FLOAT_USAGE                                =  874;  // <float_usage>
-//		final int SYM_FOOTING_CLAUSE                             =  875;  // <footing_clause>
-//		final int SYM_FORMATTED_DATETIME_ARGS                    =  876;  // <formatted_datetime_args>
-//		final int SYM_FORMATTED_DATETIME_FUNC                    =  877;  // <FORMATTED_DATETIME_FUNC>
-//		final int SYM_FORMATTED_DATE_FUNC                        =  878;  // <FORMATTED_DATE_FUNC>
-//		final int SYM_FORMATTED_TIME_ARGS                        =  879;  // <formatted_time_args>
-//		final int SYM_FORMATTED_TIME_FUNC                        =  880;  // <FORMATTED_TIME_FUNC>
-//		final int SYM_FP128_USAGE                                =  881;  // <fp128_usage>
-//		final int SYM_FP32_USAGE                                 =  882;  // <fp32_usage>
-//		final int SYM_FP64_USAGE                                 =  883;  // <fp64_usage>
-//		final int SYM_FREE_BODY                                  =  884;  // <free_body>
-//		final int SYM_FREE_STATEMENT                             =  885;  // <free_statement>
-//		final int SYM_FROM_IDENTIFIER                            =  886;  // <from_identifier>
-//		final int SYM_FROM_OPTION                                =  887;  // <from_option>
-//		final int SYM_FROM_PARAMETER                             =  888;  // <from_parameter>
-//		final int SYM_FUNCTION2                                  =  889;  // <function>
-//		final int SYM_FUNCTION_DEFINITION                        =  890;  // <function_definition>
-//		final int SYM_FUNCTION_ID_PARAGRAPH                      =  891;  // <function_id_paragraph>
-//		final int SYM_FUNCTION_NAME                              =  892;  // <FUNCTION_NAME>
-//		final int SYM_FUNC_ARGS                                  =  893;  // <func_args>
-//		final int SYM_FUNC_MULTI_PARM                            =  894;  // <func_multi_parm>
-//		final int SYM_FUNC_NO_PARM                               =  895;  // <func_no_parm>
-//		final int SYM_FUNC_ONE_PARM                              =  896;  // <func_one_parm>
-//		final int SYM_FUNC_REFMOD                                =  897;  // <func_refmod>
-//		final int SYM_GE                                         =  898;  // <ge>
-//		final int SYM_GENERAL_DEVICE_NAME                        =  899;  // <general_device_name>
-//		final int SYM_GENERATE_BODY                              =  900;  // <generate_body>
-//		final int SYM_GENERATE_STATEMENT                         =  901;  // <generate_statement>
-//		final int SYM_GLOBAL_CLAUSE                              =  902;  // <global_clause>
-//		final int SYM_GOBACK_STATEMENT                           =  903;  // <goback_statement>
-//		final int SYM_GOTO_DEPENDING                             =  904;  // <goto_depending>
-//		final int SYM_GOTO_STATEMENT                             =  905;  // <goto_statement>
-//		final int SYM_GO_BODY                                    =  906;  // <go_body>
-//		final int SYM_GROUP_INDICATE_CLAUSE                      =  907;  // <group_indicate_clause>
-//		final int SYM_GT                                         =  908;  // <gt>
-//		final int SYM_HEADING_CLAUSE                             =  909;  // <heading_clause>
-//		final int SYM_IDENTIFICATION_OR_ID                       =  910;  // <identification_or_id>
-//		final int SYM_IDENTIFIER                                 =  911;  // <identifier>
-//		final int SYM_IDENTIFIER_1                               =  912;  // <identifier_1>
-//		final int SYM_IDENTIFIER_LIST                            =  913;  // <identifier_list>
-//		final int SYM_IDENTIFIER_OR_FILE_NAME                    =  914;  // <identifier_or_file_name>
-//		final int SYM_ID_OR_LIT                                  =  915;  // <id_or_lit>
-//		final int SYM_ID_OR_LIT_OR_FUNC                          =  916;  // <id_or_lit_or_func>
-//		final int SYM_ID_OR_LIT_OR_FUNC_AS                       =  917;  // <id_or_lit_or_func_as>
-//		final int SYM_ID_OR_LIT_OR_LENGTH_OR_FUNC                =  918;  // <id_or_lit_or_length_or_func>
-//		final int SYM_ID_OR_LIT_OR_PROGRAM_NAME                  =  919;  // <id_or_lit_or_program_name>
-//		final int SYM_IF_ELSE_STATEMENTS                         =  920;  // <if_else_statements>
-//		final int SYM_IF_STATEMENT                               =  921;  // <if_statement>
-//		final int SYM_IGNORING_LOCK                              =  922;  // <ignoring_lock>
-//		final int SYM_INITIALIZE_BODY                            =  923;  // <initialize_body>
-//		final int SYM_INITIALIZE_CATEGORY                        =  924;  // <initialize_category>
-//		final int SYM_INITIALIZE_REPLACING_ITEM                  =  925;  // <initialize_replacing_item>
-//		final int SYM_INITIALIZE_REPLACING_LIST                  =  926;  // <initialize_replacing_list>
-//		final int SYM_INITIALIZE_STATEMENT                       =  927;  // <initialize_statement>
-//		final int SYM_INITIATE_BODY                              =  928;  // <initiate_body>
-//		final int SYM_INITIATE_STATEMENT                         =  929;  // <initiate_statement>
-//		final int SYM_INIT_OR_RECURSE                            =  930;  // <init_or_recurse>
-//		final int SYM_INIT_OR_RECURSE_AND_COMMON                 =  931;  // <init_or_recurse_and_common>
-//		final int SYM_INSPECT_AFTER                              =  932;  // <inspect_after>
-//		final int SYM_INSPECT_BEFORE                             =  933;  // <inspect_before>
-//		final int SYM_INSPECT_BODY                               =  934;  // <inspect_body>
-//		final int SYM_INSPECT_CONVERTING                         =  935;  // <inspect_converting>
-//		final int SYM_INSPECT_LIST                               =  936;  // <inspect_list>
-//		final int SYM_INSPECT_REGION                             =  937;  // <inspect_region>
-//		final int SYM_INSPECT_REPLACING                          =  938;  // <inspect_replacing>
-//		final int SYM_INSPECT_STATEMENT                          =  939;  // <inspect_statement>
-//		final int SYM_INSPECT_TALLYING                           =  940;  // <inspect_tallying>
-//		final int SYM_INTEGER2                                   =  941;  // <integer>
-//		final int SYM_INTEGER_LABEL                              =  942;  // <integer_label>
-//		final int SYM_INTEGER_LIST                               =  943;  // <integer_list>
-//		final int SYM_INTEGER_OR_WORD                            =  944;  // <integer_or_word>
-//		final int SYM_INTERMEDIATE_ROUNDING_CHOICE               =  945;  // <intermediate_rounding_choice>
-//		final int SYM_INTLITERALORWORD                           =  946;  // <IntLiteral or WORD>
-//		final int SYM_INVALID_KEY_PHRASES                        =  947;  // <invalid_key_phrases>
-//		final int SYM_INVALID_KEY_SENTENCE                       =  948;  // <invalid_key_sentence>
-//		final int SYM_IN_OF                                      =  949;  // <in_of>
-//		final int SYM_I_O_CONTROL_CLAUSE                         =  950;  // <i_o_control_clause>
-//		final int SYM_I_O_CONTROL_LIST                           =  951;  // <i_o_control_list>
-//		final int SYM_JUSTIFIED_CLAUSE                           =  952;  // <justified_clause>
-//		final int SYM_KEY_OR_SPLIT_KEYS                          =  953;  // <key_or_split_keys>
-//		final int SYM_LABEL2                                     =  954;  // <label>
-//		final int SYM_LABEL_OPTION                               =  955;  // <label_option>
-//		final int SYM_LABEL_RECORDS_CLAUSE                       =  956;  // <label_records_clause>
-//		final int SYM_LAST_DETAIL                                =  957;  // <last_detail>
-//		final int SYM_LAST_HEADING                               =  958;  // <last_heading>
-//		final int SYM_LE                                         =  959;  // <le>
-//		final int SYM_LENGTH_ARG                                 =  960;  // <length_arg>
-//		final int SYM_LENGTH_FUNC                                =  961;  // <LENGTH_FUNC>
-//		final int SYM_LEVEL_NUMBER                               =  962;  // <level_number>
-//		final int SYM_LINAGE_BOTTOM                              =  963;  // <linage_bottom>
-//		final int SYM_LINAGE_CLAUSE                              =  964;  // <linage_clause>
-//		final int SYM_LINAGE_FOOTING                             =  965;  // <linage_footing>
-//		final int SYM_LINAGE_LINES                               =  966;  // <linage_lines>
-//		final int SYM_LINAGE_TOP                                 =  967;  // <linage_top>
-//		final int SYM_LINES_OR_NUMBER                            =  968;  // <lines_or_number>
-//		final int SYM_LINE_CLAUSE                                =  969;  // <line_clause>
-//		final int SYM_LINE_KEYWORD_CLAUSE                        =  970;  // <line_keyword_clause>
-//		final int SYM_LINE_LINAGE_PAGE_COUNTER                   =  971;  // <line_linage_page_counter>
-//		final int SYM_LINE_NUMBER                                =  972;  // <line_number>
-//		final int SYM_LINE_OR_LINES                              =  973;  // <line_or_lines>
-//		final int SYM_LINE_OR_PLUS                               =  974;  // <line_or_plus>
-//		final int SYM_LINE_SEQ_DEVICE_NAME                       =  975;  // <line_seq_device_name>
-//		final int SYM_LITERAL                                    =  976;  // <literal>
-//		final int SYM_LITERAL_TOK                                =  977;  // <LITERAL_TOK>
-//		final int SYM_LIT_OR_LENGTH                              =  978;  // <lit_or_length>
-//		final int SYM_LOCALE_CLASS                               =  979;  // <locale_class>
-//		final int SYM_LOCALE_CLAUSE                              =  980;  // <locale_clause>
-//		final int SYM_LOCALE_DATE_FUNC                           =  981;  // <LOCALE_DATE_FUNC>
-//		final int SYM_LOCALE_DT_ARGS                             =  982;  // <locale_dt_args>
-//		final int SYM_LOCALE_TIME_FROM_FUNC                      =  983;  // <LOCALE_TIME_FROM_FUNC>
-//		final int SYM_LOCALE_TIME_FUNC                           =  984;  // <LOCALE_TIME_FUNC>
-//		final int SYM_LOCK_MODE                                  =  985;  // <lock_mode>
-//		final int SYM_LOCK_MODE_CLAUSE                           =  986;  // <lock_mode_clause>
-//		final int SYM_LOCK_PHRASES                               =  987;  // <lock_phrases>
-//		final int SYM_LOCK_RECORDS                               =  988;  // <lock_records>
-//		final int SYM_LOWER_CASE_FUNC                            =  989;  // <LOWER_CASE_FUNC>
-//		final int SYM_LT                                         =  990;  // <lt>
-//		final int SYM_MERGE_STATEMENT                            =  991;  // <merge_statement>
-//		final int SYM_MESSAGE_OR_SEGMENT                         =  992;  // <message_or_segment>
-//		final int SYM_MINUS_MINUS                                =  993;  // <minus_minus>
-//		final int SYM_MNEMONIC_CHOICES                           =  994;  // <mnemonic_choices>
-//		final int SYM_MNEMONIC_NAME2                             =  995;  // <mnemonic_name>
-//		final int SYM_MNEMONIC_NAME_CLAUSE                       =  996;  // <mnemonic_name_clause>
-//		final int SYM_MNEMONIC_NAME_LIST                         =  997;  // <mnemonic_name_list>
-//		final int SYM_MNEMONIC_NAME_TOK                          =  998;  // <MNEMONIC_NAME_TOK>
-//		final int SYM_MODE_IS_BLOCK                              =  999;  // <mode_is_block>
-//		final int SYM_MOVE_BODY                                  = 1000;  // <move_body>
-//		final int SYM_MOVE_STATEMENT                             = 1001;  // <move_statement>
-//		final int SYM_MULTIPLE_FILE                              = 1002;  // <multiple_file>
-//		final int SYM_MULTIPLE_FILE_LIST                         = 1003;  // <multiple_file_list>
-//		final int SYM_MULTIPLE_FILE_TAPE_CLAUSE                  = 1004;  // <multiple_file_tape_clause>
-//		final int SYM_MULTIPLY_BODY                              = 1005;  // <multiply_body>
-//		final int SYM_MULTIPLY_STATEMENT                         = 1006;  // <multiply_statement>
-//		final int SYM_NAMED_INPUT_CD_CLAUSE                      = 1007;  // <named_input_cd_clause>
-//		final int SYM_NAMED_INPUT_CD_CLAUSES                     = 1008;  // <named_input_cd_clauses>
-//		final int SYM_NAMED_I_O_CD_CLAUSE                        = 1009;  // <named_i_o_cd_clause>
-//		final int SYM_NAMED_I_O_CD_CLAUSES                       = 1010;  // <named_i_o_cd_clauses>
-//		final int SYM_NATIONAL_OF_FUNC                           = 1011;  // <NATIONAL_OF_FUNC>
-//		final int SYM_NESTED_LIST                                = 1012;  // <nested_list>
-//		final int SYM_NEXT_GROUP_CLAUSE                          = 1013;  // <next_group_clause>
-//		final int SYM_NOISE                                      = 1014;  // <Noise>
-//		final int SYM_NOISELIST                                  = 1015;  // <NoiseList>
-//		final int SYM_NOT2                                       = 1016;  // <not>
-//		final int SYM_NOT_AT_END_CLAUSE                          = 1017;  // <not_at_end_clause>
-//		final int SYM_NOT_AT_EOP_CLAUSE                          = 1018;  // <not_at_eop_clause>
-//		final int SYM_NOT_EQUAL_OP                               = 1019;  // <not_equal_op>
-//		final int SYM_NOT_ESCAPE_OR_NOT_EXCEPTION                = 1020;  // <not_escape_or_not_exception>
-//		final int SYM_NOT_INVALID_KEY_SENTENCE                   = 1021;  // <not_invalid_key_sentence>
-//		final int SYM_NOT_ON_OVERFLOW                            = 1022;  // <not_on_overflow>
-//		final int SYM_NOT_ON_SIZE_ERROR                          = 1023;  // <not_on_size_error>
-//		final int SYM_NO_DATA_SENTENCE                           = 1024;  // <no_data_sentence>
-//		final int SYM_NO_ECHO2                                   = 1025;  // <no_echo>
-//		final int SYM_NO_OR_INTEGER                              = 1026;  // <no_or_integer>
-//		final int SYM_NULL_OR_OMITTED                            = 1027;  // <null_or_omitted>
-//		final int SYM_NUMERIC_IDENTIFIER                         = 1028;  // <numeric_identifier>
-//		final int SYM_NUMERIC_SIGN_CLAUSE                        = 1029;  // <numeric_sign_clause>
-//		final int SYM_NUMVALC_ARGS                               = 1030;  // <numvalc_args>
-//		final int SYM_NUMVALC_FUNC                               = 1031;  // <NUMVALC_FUNC>
-//		final int SYM_NUM_ID_OR_LIT                              = 1032;  // <num_id_or_lit>
-//		final int SYM_OBJECT_CHAR_OR_WORD                        = 1033;  // <object_char_or_word>
-//		final int SYM_OBJECT_CLAUSES                             = 1034;  // <object_clauses>
-//		final int SYM_OBJECT_CLAUSES_LIST                        = 1035;  // <object_clauses_list>
-//		final int SYM_OBJECT_COMPUTER_CLASS                      = 1036;  // <object_computer_class>
-//		final int SYM_OBJECT_COMPUTER_MEMORY                     = 1037;  // <object_computer_memory>
-//		final int SYM_OBJECT_COMPUTER_PARAGRAPH                  = 1038;  // <object_computer_paragraph>
-//		final int SYM_OBJECT_COMPUTER_SEGMENT                    = 1039;  // <object_computer_segment>
-//		final int SYM_OBJECT_COMPUTER_SEQUENCE                   = 1040;  // <object_computer_sequence>
-//		final int SYM_OCCURS_CLAUSE                              = 1041;  // <occurs_clause>
-//		final int SYM_OCCURS_INDEX                               = 1042;  // <occurs_index>
-//		final int SYM_OCCURS_INDEXED                             = 1043;  // <occurs_indexed>
-//		final int SYM_OCCURS_INDEX_LIST                          = 1044;  // <occurs_index_list>
-//		final int SYM_OCCURS_KEYS                                = 1045;  // <occurs_keys>
-//		final int SYM_OCCURS_KEY_FIELD                           = 1046;  // <occurs_key_field>
-//		final int SYM_OCCURS_KEY_LIST                            = 1047;  // <occurs_key_list>
-//		final int SYM_ON_OFF_CLAUSES                             = 1048;  // <on_off_clauses>
-//		final int SYM_ON_OFF_CLAUSES_1                           = 1049;  // <on_off_clauses_1>
-//		final int SYM_ON_OR_OFF                                  = 1050;  // <on_or_off>
-//		final int SYM_ON_OVERFLOW                                = 1051;  // <on_overflow>
-//		final int SYM_ON_SIZE_ERROR                              = 1052;  // <on_size_error>
-//		final int SYM_ON_SIZE_ERROR_PHRASES                      = 1053;  // <on_size_error_phrases>
-//		final int SYM_OPEN_BODY                                  = 1054;  // <open_body>
-//		final int SYM_OPEN_FILE_ENTRY                            = 1055;  // <open_file_entry>
-//		final int SYM_OPEN_MODE                                  = 1056;  // <open_mode>
-//		final int SYM_OPEN_OPTION                                = 1057;  // <open_option>
-//		final int SYM_OPEN_SHARING                               = 1058;  // <open_sharing>
-//		final int SYM_OPEN_STATEMENT                             = 1059;  // <open_statement>
-//		final int SYM_OPTIONAL_REFERENCE                         = 1060;  // <optional_reference>
-//		final int SYM_OPTIONAL_REFERENCE_LIST                    = 1061;  // <optional_reference_list>
-//		final int SYM_ORGANIZATION2                              = 1062;  // <organization>
-//		final int SYM_ORGANIZATION_CLAUSE                        = 1063;  // <organization_clause>
-//		final int SYM_OUTPUT_CD_CLAUSE                           = 1064;  // <output_cd_clause>
-//		final int SYM_OUTPUT_CD_CLAUSES                          = 1065;  // <output_cd_clauses>
-//		final int SYM_PADDING_CHARACTER_CLAUSE                   = 1066;  // <padding_character_clause>
-//		final int SYM_PAGE_DETAIL                                = 1067;  // <page_detail>
-//		final int SYM_PAGE_LIMIT_CLAUSE                          = 1068;  // <page_limit_clause>
-//		final int SYM_PAGE_LINE_COLUMN                           = 1069;  // <page_line_column>
-//		final int SYM_PARAGRAPH_HEADER                           = 1070;  // <paragraph_header>
-//		final int SYM_PARTIAL_EXPR                               = 1071;  // <partial_expr>
-//		final int SYM_PERFORM_BODY                               = 1072;  // <perform_body>
-//		final int SYM_PERFORM_OPTION                             = 1073;  // <perform_option>
-//		final int SYM_PERFORM_PROCEDURE                          = 1074;  // <perform_procedure>
-//		final int SYM_PERFORM_STATEMENT                          = 1075;  // <perform_statement>
-//		final int SYM_PERFORM_TEST                               = 1076;  // <perform_test>
-//		final int SYM_PERFORM_VARYING                            = 1077;  // <perform_varying>
-//		final int SYM_PERFORM_VARYING_LIST                       = 1078;  // <perform_varying_list>
-//		final int SYM_PF_KEYWORD                                 = 1079;  // <pf_keyword>
-//		final int SYM_PH_KEYWORD                                 = 1080;  // <ph_keyword>
-//		final int SYM_PICTURE_CLAUSE                             = 1081;  // <picture_clause>
-//		final int SYM_PLUS_PLUS                                  = 1082;  // <plus_plus>
-//		final int SYM_POINTER_LEN                                = 1083;  // <pointer_len>
-//		final int SYM_POSITIVE_ID_OR_LIT                         = 1084;  // <positive_id_or_lit>
-//		final int SYM_POS_NUM_ID_OR_LIT                          = 1085;  // <pos_num_id_or_lit>
-//		final int SYM_PRESENT_WHEN_CONDITION                     = 1086;  // <present_when_condition>
-//		final int SYM_PRINTER_NAME                               = 1087;  // <printer_name>
-//		final int SYM_PROCEDURE2                                 = 1088;  // <procedure>
-//		final int SYM_PROCEDURE_NAME                             = 1089;  // <procedure_name>
-//		final int SYM_PROCEDURE_NAME_LIST                        = 1090;  // <procedure_name_list>
-//		final int SYM_PROCEDURE_PARAM                            = 1091;  // <procedure_param>
-//		final int SYM_PROCEDURE_PARAM_LIST                       = 1092;  // <procedure_param_list>
-//		final int SYM_PROGRAM_DEFINITION                         = 1093;  // <program_definition>
-//		final int SYM_PROGRAM_ID_NAME                            = 1094;  // <program_id_name>
-//		final int SYM_PROGRAM_ID_PARAGRAPH                       = 1095;  // <program_id_paragraph>
-//		final int SYM_PROGRAM_NAME                               = 1096;  // <PROGRAM_NAME>
-//		final int SYM_PROGRAM_OR_PROTOTYPE                       = 1097;  // <program_or_prototype>
-//		final int SYM_PROGRAM_START_END                          = 1098;  // <program_start_end>
-//		final int SYM_PROGRAM_TYPE_CLAUSE                        = 1099;  // <program_type_clause>
-//		final int SYM_PROG_COLL_SEQUENCE                         = 1100;  // <prog_coll_sequence>
-//		final int SYM_PROG_OR_ENTRY                              = 1101;  // <prog_or_entry>
-//		final int SYM_PURGE_STATEMENT                            = 1102;  // <purge_statement>
-//		final int SYM_QUALIFIED_WORD                             = 1103;  // <qualified_word>
-//		final int SYM_READY_STATEMENT                            = 1104;  // <ready_statement>
-//		final int SYM_READ_BODY                                  = 1105;  // <read_body>
-//		final int SYM_READ_HANDLER                               = 1106;  // <read_handler>
-//		final int SYM_READ_INTO                                  = 1107;  // <read_into>
-//		final int SYM_READ_KEY                                   = 1108;  // <read_key>
-//		final int SYM_READ_STATEMENT                             = 1109;  // <read_statement>
-//		final int SYM_RECEIVE_BODY                               = 1110;  // <receive_body>
-//		final int SYM_RECEIVE_STATEMENT                          = 1111;  // <receive_statement>
-//		final int SYM_RECORDING_MODE                             = 1112;  // <recording_mode>
-//		final int SYM_RECORDING_MODE_CLAUSE                      = 1113;  // <recording_mode_clause>
-//		final int SYM_RECORDS2                                   = 1114;  // <records>
-//		final int SYM_RECORD_CLAUSE                              = 1115;  // <record_clause>
-//		final int SYM_RECORD_DELIMITER_CLAUSE                    = 1116;  // <record_delimiter_clause>
-//		final int SYM_RECORD_DESCRIPTION_LIST                    = 1117;  // <record_description_list>
-//		final int SYM_RECORD_KEY_CLAUSE                          = 1118;  // <record_key_clause>
-//		final int SYM_RECORD_NAME                                = 1119;  // <record_name>
-//		final int SYM_REDEFINES_CLAUSE                           = 1120;  // <redefines_clause>
-//		final int SYM_REEL_OR_UNIT                               = 1121;  // <reel_or_unit>
-//		final int SYM_REFERENCE2                                 = 1122;  // <reference>
-//		final int SYM_REFERENCE_LIST                             = 1123;  // <reference_list>
-//		final int SYM_REFERENCE_OR_LITERAL                       = 1124;  // <reference_or_literal>
-//		final int SYM_REFMOD                                     = 1125;  // <refmod>
-//		final int SYM_RELATIVE_KEY_CLAUSE                        = 1126;  // <relative_key_clause>
-//		final int SYM_RELEASE_BODY                               = 1127;  // <release_body>
-//		final int SYM_RELEASE_STATEMENT                          = 1128;  // <release_statement>
-//		final int SYM_RENAMES_ENTRY                              = 1129;  // <renames_entry>
-//		final int SYM_REPLACING_ITEM                             = 1130;  // <replacing_item>
-//		final int SYM_REPLACING_LIST                             = 1131;  // <replacing_list>
-//		final int SYM_REPLACING_REGION                           = 1132;  // <replacing_region>
-//		final int SYM_REPORT_CLAUSE                              = 1133;  // <report_clause>
-//		final int SYM_REPORT_COL_INTEGER_LIST                    = 1134;  // <report_col_integer_list>
-//		final int SYM_REPORT_DESCRIPTION                         = 1135;  // <report_description>
-//		final int SYM_REPORT_DESCRIPTION_OPTION                  = 1136;  // <report_description_option>
-//		final int SYM_REPORT_GROUP_DESCRIPTION_ENTRY             = 1137;  // <report_group_description_entry>
-//		final int SYM_REPORT_GROUP_OPTION                        = 1138;  // <report_group_option>
-//		final int SYM_REPORT_INTEGER                             = 1139;  // <report_integer>
-//		final int SYM_REPORT_KEYWORD                             = 1140;  // <report_keyword>
-//		final int SYM_REPORT_LINE_INTEGER_LIST                   = 1141;  // <report_line_integer_list>
-//		final int SYM_REPORT_NAME                                = 1142;  // <report_name>
-//		final int SYM_REPORT_OCCURS_CLAUSE                       = 1143;  // <report_occurs_clause>
-//		final int SYM_REPORT_USAGE_CLAUSE                        = 1144;  // <report_usage_clause>
-//		final int SYM_REPORT_X_LIST                              = 1145;  // <report_x_list>
-//		final int SYM_REPOSITORY_LIST                            = 1146;  // <repository_list>
-//		final int SYM_REPOSITORY_NAME                            = 1147;  // <repository_name>
-//		final int SYM_REPOSITORY_NAME_LIST                       = 1148;  // <repository_name_list>
-//		final int SYM_REP_KEYWORD                                = 1149;  // <rep_keyword>
-//		final int SYM_REP_NAME_LIST                              = 1150;  // <rep_name_list>
-//		final int SYM_RESERVE_CLAUSE                             = 1151;  // <reserve_clause>
-//		final int SYM_RESET_STATEMENT                            = 1152;  // <reset_statement>
-//		final int SYM_RETRY_OPTIONS                              = 1153;  // <retry_options>
-//		final int SYM_RETRY_PHRASE                               = 1154;  // <retry_phrase>
-//		final int SYM_RETURN_AT_END                              = 1155;  // <return_at_end>
-//		final int SYM_RETURN_BODY                                = 1156;  // <return_body>
-//		final int SYM_RETURN_GIVE                                = 1157;  // <return_give>
-//		final int SYM_RETURN_STATEMENT                           = 1158;  // <return_statement>
-//		final int SYM_REVERSE_FUNC                               = 1159;  // <REVERSE_FUNC>
-//		final int SYM_REVERSE_VIDEO2                             = 1160;  // <reverse_video>
-//		final int SYM_REWRITE_BODY                               = 1161;  // <rewrite_body>
-//		final int SYM_REWRITE_STATEMENT                          = 1162;  // <rewrite_statement>
-//		final int SYM_RF_KEYWORD                                 = 1163;  // <rf_keyword>
-//		final int SYM_RH_KEYWORD                                 = 1164;  // <rh_keyword>
-//		final int SYM_ROLLBACK_STATEMENT                         = 1165;  // <rollback_statement>
-//		final int SYM_ROUND_CHOICE                               = 1166;  // <round_choice>
-//		final int SYM_ROUND_MODE                                 = 1167;  // <round_mode>
-//		final int SYM_SAME_CLAUSE                                = 1168;  // <same_clause>
-//		final int SYM_SCOPE_TERMINATOR                           = 1169;  // <scope_terminator>
-//		final int SYM_SCREEN_COL_NUMBER                          = 1170;  // <screen_col_number>
-//		final int SYM_SCREEN_CONTROL2                            = 1171;  // <screen_control>
-//		final int SYM_SCREEN_DESCRIPTION                         = 1172;  // <screen_description>
-//		final int SYM_SCREEN_DESCRIPTION_LIST                    = 1173;  // <screen_description_list>
-//		final int SYM_SCREEN_GLOBAL_CLAUSE                       = 1174;  // <screen_global_clause>
-//		final int SYM_SCREEN_LINE_NUMBER                         = 1175;  // <screen_line_number>
-//		final int SYM_SCREEN_OCCURS_CLAUSE                       = 1176;  // <screen_occurs_clause>
-//		final int SYM_SCREEN_OPTION                              = 1177;  // <screen_option>
-//		final int SYM_SCREEN_OR_DEVICE_DISPLAY                   = 1178;  // <screen_or_device_display>
-//		final int SYM_SCROLL_LINE_OR_LINES                       = 1179;  // <scroll_line_or_lines>
-//		final int SYM_SEARCH_AT_END                              = 1180;  // <search_at_end>
-//		final int SYM_SEARCH_BODY                                = 1181;  // <search_body>
-//		final int SYM_SEARCH_STATEMENT                           = 1182;  // <search_statement>
-//		final int SYM_SEARCH_VARYING                             = 1183;  // <search_varying>
-//		final int SYM_SEARCH_WHEN                                = 1184;  // <search_when>
-//		final int SYM_SEARCH_WHENS                               = 1185;  // <search_whens>
-//		final int SYM_SECTION_HEADER                             = 1186;  // <section_header>
-//		final int SYM_SELECT_CLAUSE                              = 1187;  // <select_clause>
-//		final int SYM_SEND_BODY                                  = 1188;  // <send_body>
-//		final int SYM_SEND_IDENTIFIER                            = 1189;  // <send_identifier>
-//		final int SYM_SEND_STATEMENT                             = 1190;  // <send_statement>
-//		final int SYM_SET_ATTR                                   = 1191;  // <set_attr>
-//		final int SYM_SET_ATTR_CLAUSE                            = 1192;  // <set_attr_clause>
-//		final int SYM_SET_ATTR_ONE                               = 1193;  // <set_attr_one>
-//		final int SYM_SET_BODY                                   = 1194;  // <set_body>
-//		final int SYM_SET_ENVIRONMENT                            = 1195;  // <set_environment>
-//		final int SYM_SET_LAST_EXCEPTION_TO_OFF                  = 1196;  // <set_last_exception_to_off>
-//		final int SYM_SET_STATEMENT                              = 1197;  // <set_statement>
-//		final int SYM_SET_TO                                     = 1198;  // <set_to>
-//		final int SYM_SET_TO_ON_OFF                              = 1199;  // <set_to_on_off>
-//		final int SYM_SET_TO_ON_OFF_SEQUENCE                     = 1200;  // <set_to_on_off_sequence>
-//		final int SYM_SET_TO_TRUE_FALSE                          = 1201;  // <set_to_true_false>
-//		final int SYM_SET_TO_TRUE_FALSE_SEQUENCE                 = 1202;  // <set_to_true_false_sequence>
-//		final int SYM_SET_UP_DOWN                                = 1203;  // <set_up_down>
-//		final int SYM_SHARING_CLAUSE                             = 1204;  // <sharing_clause>
-//		final int SYM_SHARING_OPTION                             = 1205;  // <sharing_option>
-//		final int SYM_SIGN_CLAUSE                                = 1206;  // <sign_clause>
-//		final int SYM_SIMPLE_ALL_VALUE                           = 1207;  // <simple_all_value>
-//		final int SYM_SIMPLE_DISPLAY_ALL_VALUE                   = 1208;  // <simple_display_all_value>
-//		final int SYM_SIMPLE_DISPLAY_VALUE                       = 1209;  // <simple_display_value>
-//		final int SYM_SIMPLE_PROG                                = 1210;  // <simple_prog>
-//		final int SYM_SIMPLE_VALUE                               = 1211;  // <simple_value>
-//		final int SYM_SINGLE_REFERENCE                           = 1212;  // <single_reference>
-//		final int SYM_SIZELEN_CLAUSE                             = 1213;  // <sizelen_clause>
-//		final int SYM_SIZE_IS_INTEGER                            = 1214;  // <size_is_integer>
-//		final int SYM_SIZE_OR_LENGTH                             = 1215;  // <size_or_length>
-//		final int SYM_SORT_BODY                                  = 1216;  // <sort_body>
-//		final int SYM_SORT_COLLATING                             = 1217;  // <sort_collating>
-//		final int SYM_SORT_INPUT                                 = 1218;  // <sort_input>
-//		final int SYM_SORT_KEY_LIST                              = 1219;  // <sort_key_list>
-//		final int SYM_SORT_OUTPUT                                = 1220;  // <sort_output>
-//		final int SYM_SORT_STATEMENT                             = 1221;  // <sort_statement>
-//		final int SYM_SOURCE_CLAUSE                              = 1222;  // <source_clause>
-//		final int SYM_SOURCE_COMPUTER_PARAGRAPH                  = 1223;  // <source_computer_paragraph>
-//		final int SYM_SOURCE_ELEMENT                             = 1224;  // <source_element>
-//		final int SYM_SOURCE_ELEMENT_LIST                        = 1225;  // <source_element_list>
-//		final int SYM_SPACE_OR_ZERO                              = 1226;  // <space_or_zero>
-//		final int SYM_SPECIAL_NAME                               = 1227;  // <special_name>
-//		final int SYM_SPECIAL_NAMES_SENTENCE_LIST                = 1228;  // <special_names_sentence_list>
-//		final int SYM_SPECIAL_NAME_LIST                          = 1229;  // <special_name_list>
-//		final int SYM_START2                                     = 1230;  // <start>
-//		final int SYM_START_BODY                                 = 1231;  // <start_body>
-//		final int SYM_START_KEY                                  = 1232;  // <start_key>
-//		final int SYM_START_OP                                   = 1233;  // <start_op>
-//		final int SYM_START_STATEMENT                            = 1234;  // <start_statement>
-//		final int SYM_STATEMENT                                  = 1235;  // <statement>
-//		final int SYM_STATEMENTS                                 = 1236;  // <statements>
-//		final int SYM_STATEMENT_LIST                             = 1237;  // <statement_list>
-//		final int SYM_STOP_LITERAL                               = 1238;  // <stop_literal>
-//		final int SYM_STOP_RETURNING                             = 1239;  // <stop_returning>
-//		final int SYM_STOP_STATEMENT                             = 1240;  // <stop_statement>
-//		final int SYM_STRING_BODY                                = 1241;  // <string_body>
-//		final int SYM_STRING_DELIMITER                           = 1242;  // <string_delimiter>
-//		final int SYM_STRING_ITEM                                = 1243;  // <string_item>
-//		final int SYM_STRING_ITEM_LIST                           = 1244;  // <string_item_list>
-//		final int SYM_STRING_STATEMENT                           = 1245;  // <string_statement>
-//		final int SYM_SUBREF                                     = 1246;  // <subref>
-//		final int SYM_SUBSTITUTE_CASE_FUNC                       = 1247;  // <SUBSTITUTE_CASE_FUNC>
-//		final int SYM_SUBSTITUTE_FUNC                            = 1248;  // <SUBSTITUTE_FUNC>
-//		final int SYM_SUBTRACT_BODY                              = 1249;  // <subtract_body>
-//		final int SYM_SUBTRACT_STATEMENT                         = 1250;  // <subtract_statement>
-//		final int SYM_SUB_IDENTIFIER                             = 1251;  // <sub_identifier>
-//		final int SYM_SUB_IDENTIFIER_1                           = 1252;  // <sub_identifier_1>
-//		final int SYM_SUM_CLAUSE_LIST                            = 1253;  // <sum_clause_list>
-//		final int SYM_SUPPRESS_STATEMENT                         = 1254;  // <suppress_statement>
-//		final int SYM_SYMBOLIC_CHARACTERS_CLAUSE                 = 1255;  // <symbolic_characters_clause>
-//		final int SYM_SYMBOLIC_CHARS_LIST                        = 1256;  // <symbolic_chars_list>
-//		final int SYM_SYMBOLIC_CHARS_PHRASE                      = 1257;  // <symbolic_chars_phrase>
-//		final int SYM_SYMBOLIC_COLLECTION                        = 1258;  // <symbolic_collection>
-//		final int SYM_SYMBOLIC_INTEGER                           = 1259;  // <symbolic_integer>
-//		final int SYM_SYNCHRONIZED_CLAUSE                        = 1260;  // <synchronized_clause>
-//		final int SYM_TABLE_IDENTIFIER                           = 1261;  // <table_identifier>
-//		final int SYM_TABLE_NAME                                 = 1262;  // <table_name>
-//		final int SYM_TALLYING_ITEM                              = 1263;  // <tallying_item>
-//		final int SYM_TALLYING_LIST                              = 1264;  // <tallying_list>
-//		final int SYM_TARGET_IDENTIFIER                          = 1265;  // <target_identifier>
-//		final int SYM_TARGET_IDENTIFIER_1                        = 1266;  // <target_identifier_1>
-//		final int SYM_TARGET_X                                   = 1267;  // <target_x>
-//		final int SYM_TARGET_X_LIST                              = 1268;  // <target_x_list>
-//		final int SYM_TERMINATE_BODY                             = 1269;  // <terminate_body>
-//		final int SYM_TERMINATE_STATEMENT                        = 1270;  // <terminate_statement>
-//		final int SYM_TERM_OR_DOT                                = 1271;  // <term_or_dot>
-//		final int SYM_TO_INIT_VAL                                = 1272;  // <to_init_val>
-//		final int SYM_TRANSFORM_BODY                             = 1273;  // <transform_body>
-//		final int SYM_TRANSFORM_STATEMENT                        = 1274;  // <transform_statement>
-//		final int SYM_TRIM_ARGS                                  = 1275;  // <trim_args>
-//		final int SYM_TRIM_FUNC                                  = 1276;  // <TRIM_FUNC>
-//		final int SYM_TYPE_CLAUSE                                = 1277;  // <type_clause>
-//		final int SYM_TYPE_OPTION                                = 1278;  // <type_option>
-//		final int SYM_UNDEFINED_WORD                             = 1279;  // <undefined_word>
-//		final int SYM_UNIQUE_WORD                                = 1280;  // <unique_word>
-//		final int SYM_UNLOCK_BODY                                = 1281;  // <unlock_body>
-//		final int SYM_UNLOCK_STATEMENT                           = 1282;  // <unlock_statement>
-//		final int SYM_UNNAMED_INPUT_CD_CLAUSES                   = 1283;  // <unnamed_input_cd_clauses>
-//		final int SYM_UNNAMED_I_O_CD_CLAUSES                     = 1284;  // <unnamed_i_o_cd_clauses>
-//		final int SYM_UNSTRING_BODY                              = 1285;  // <unstring_body>
-//		final int SYM_UNSTRING_DELIMITED_ITEM                    = 1286;  // <unstring_delimited_item>
-//		final int SYM_UNSTRING_DELIMITED_LIST                    = 1287;  // <unstring_delimited_list>
-//		final int SYM_UNSTRING_INTO                              = 1288;  // <unstring_into>
-//		final int SYM_UNSTRING_INTO_ITEM                         = 1289;  // <unstring_into_item>
-//		final int SYM_UNSTRING_STATEMENT                         = 1290;  // <unstring_statement>
-//		final int SYM_UPDATE_DEFAULT                             = 1291;  // <update_default>
-//		final int SYM_UPPER_CASE_FUNC                            = 1292;  // <UPPER_CASE_FUNC>
-//		final int SYM_UP_OR_DOWN                                 = 1293;  // <up_or_down>
-//		final int SYM_USAGE2                                     = 1294;  // <usage>
-//		final int SYM_USAGE_CLAUSE                               = 1295;  // <usage_clause>
-//		final int SYM_USER_ENTRY_NAME                            = 1296;  // <user_entry_name>
-//		final int SYM_USER_FUNCTION_NAME                         = 1297;  // <USER_FUNCTION_NAME>
-//		final int SYM_USE_DEBUGGING                              = 1298;  // <use_debugging>
-//		final int SYM_USE_EXCEPTION                              = 1299;  // <use_exception>
-//		final int SYM_USE_EX_KEYW                                = 1300;  // <use_ex_keyw>
-//		final int SYM_USE_FILE_EXCEPTION                         = 1301;  // <use_file_exception>
-//		final int SYM_USE_FILE_EXCEPTION_TARGET                  = 1302;  // <use_file_exception_target>
-//		final int SYM_USE_GLOBAL                                 = 1303;  // <use_global>
-//		final int SYM_USE_PHRASE                                 = 1304;  // <use_phrase>
-//		final int SYM_USE_REPORTING                              = 1305;  // <use_reporting>
-//		final int SYM_USE_START_END                              = 1306;  // <use_start_end>
-//		final int SYM_USE_STATEMENT                              = 1307;  // <use_statement>
-//		final int SYM_U_OR_S                                     = 1308;  // <u_or_s>
-//		final int SYM_VALUEOF_NAME                               = 1309;  // <valueof_name>
-//		final int SYM_VALUE_CLAUSE                               = 1310;  // <value_clause>
-//		final int SYM_VALUE_ITEM                                 = 1311;  // <value_item>
-//		final int SYM_VALUE_ITEM_LIST                            = 1312;  // <value_item_list>
-//		final int SYM_VALUE_OF_CLAUSE                            = 1313;  // <value_of_clause>
-//		final int SYM_VARYING_CLAUSE                             = 1314;  // <varying_clause>
-//		final int SYM_VERB                                       = 1315;  // <verb>
-//		final int SYM_WHEN_COMPILED_FUNC                         = 1316;  // <WHEN_COMPILED_FUNC>
-//		final int SYM_WITH_DATA_SENTENCE                         = 1317;  // <with_data_sentence>
-//		final int SYM_WITH_DUPS                                  = 1318;  // <with_dups>
-//		final int SYM_WITH_INDICATOR                             = 1319;  // <with_indicator>
-//		final int SYM_WITH_LOCK                                  = 1320;  // <with_lock>
-//		final int SYM_WORD                                       = 1321;  // <WORD>
-//		final int SYM_WRITE_BODY                                 = 1322;  // <write_body>
-//		final int SYM_WRITE_HANDLER                              = 1323;  // <write_handler>
-//		final int SYM_WRITE_OPTION                               = 1324;  // <write_option>
-//		final int SYM_WRITE_STATEMENT                            = 1325;  // <write_statement>
-//		final int SYM_X                                          = 1326;  // <x>
-//		final int SYM_X_COMMON                                   = 1327;  // <x_common>
-//		final int SYM_X_LIST                                     = 1328;  // <x_list>
-//		final int SYM__ACCEPT_CLAUSES                            = 1329;  // <_accept_clauses>
-//		final int SYM__ACCEPT_EXCEPTION_PHRASES                  = 1330;  // <_accept_exception_phrases>
-//		final int SYM__ACCP_NOT_ON_EXCEPTION                     = 1331;  // <_accp_not_on_exception>
-//		final int SYM__ACCP_ON_EXCEPTION                         = 1332;  // <_accp_on_exception>
-//		final int SYM__ADD_TO                                    = 1333;  // <_add_to>
-//		final int SYM__ADVANCING                                 = 1334;  // <_advancing>
-//		final int SYM__AFTER                                     = 1335;  // <_after>
-//		final int SYM__ALL_REFS                                  = 1336;  // <_all_refs>
-//		final int SYM__ARE                                       = 1337;  // <_are>
-//		final int SYM__AREA                                      = 1338;  // <_area>
-//		final int SYM__AREAS                                     = 1339;  // <_areas>
-//		final int SYM__AS                                        = 1340;  // <_as>
-//		final int SYM__ASSIGNMENT_NAME                           = 1341;  // <_assignment_name>
-//		final int SYM__AS_EXTNAME                                = 1342;  // <_as_extname>
-//		final int SYM__AS_LITERAL                                = 1343;  // <_as_literal>
-//		final int SYM__AT                                        = 1344;  // <_at>
-//		final int SYM__AT_END_CLAUSE                             = 1345;  // <_at_end_clause>
-//		final int SYM__AT_EOP_CLAUSE                             = 1346;  // <_at_eop_clause>
-//		final int SYM__BEFORE                                    = 1347;  // <_before>
-//		final int SYM__BINARY                                    = 1348;  // <_binary>
-//		final int SYM__BY                                        = 1349;  // <_by>
-//		final int SYM__CALL_NOT_ON_EXCEPTION                     = 1350;  // <_call_not_on_exception>
-//		final int SYM__CALL_ON_EXCEPTION                         = 1351;  // <_call_on_exception>
-//		final int SYM__CAPACITY_IN                               = 1352;  // <_capacity_in>
-//		final int SYM__CHARACTER                                 = 1353;  // <_character>
-//		final int SYM__CHARACTERS                                = 1354;  // <_characters>
-//		final int SYM__COMMENTITEMS                              = 1355;  // <_Comment Items>
-//		final int SYM__COMMUNICATION_DESCRIPTION_CLAUSE_SEQUENCE = 1356;  // <_communication_description_clause_sequence>
-//		final int SYM__COMMUNICATION_DESCRIPTION_SEQUENCE        = 1357;  // <_communication_description_sequence>
-//		final int SYM__COMMUNICATION_SECTION                     = 1358;  // <_communication_section>
-//		final int SYM__CONFIGURATION_HEADER                      = 1359;  // <_configuration_header>
-//		final int SYM__CONFIGURATION_SECTION                     = 1360;  // <_configuration_section>
-//		final int SYM__CONTAINS                                  = 1361;  // <_contains>
-//		final int SYM__CONTROL_FINAL                             = 1362;  // <_control_final>
-//		final int SYM__DATA                                      = 1363;  // <_data>
-//		final int SYM__DATA_DESCRIPTION_CLAUSE_SEQUENCE          = 1364;  // <_data_description_clause_sequence>
-//		final int SYM__DATA_DIVISION                             = 1365;  // <_data_division>
-//		final int SYM__DATA_DIVISION_HEADER                      = 1366;  // <_data_division_header>
-//		final int SYM__DATA_SENTENCE_PHRASES                     = 1367;  // <_data_sentence_phrases>
-//		final int SYM__DEFAULT_ROUNDED_CLAUSE                    = 1368;  // <_default_rounded_clause>
-//		final int SYM__DEST_INDEX                                = 1369;  // <_dest_index>
-//		final int SYM__DISPLAY_EXCEPTION_PHRASES                 = 1370;  // <_display_exception_phrases>
-//		final int SYM__DISP_NOT_ON_EXCEPTION                     = 1371;  // <_disp_not_on_exception>
-//		final int SYM__DISP_ON_EXCEPTION                         = 1372;  // <_disp_on_exception>
-//		final int SYM__ENABLE_DISABLE_KEY                        = 1373;  // <_enable_disable_key>
-//		final int SYM__END_OF                                    = 1374;  // <_end_of>
-//		final int SYM__END_PROGRAM_LIST                          = 1375;  // <_end_program_list>
-//		final int SYM__ENTRY_CONVENTION_CLAUSE                   = 1376;  // <_entry_convention_clause>
-//		final int SYM__ENTRY_NAME                                = 1377;  // <_entry_name>
-//		final int SYM__ENVIRONMENT_DIVISION                      = 1378;  // <_environment_division>
-//		final int SYM__ENVIRONMENT_HEADER                        = 1379;  // <_environment_header>
-//		final int SYM__EVALUATE_THRU_EXPR                        = 1380;  // <_evaluate_thru_expr>
-//		final int SYM__EXTENDED_WITH_LOCK                        = 1381;  // <_extended_with_lock>
-//		final int SYM__EXT_CLAUSE                                = 1382;  // <_ext_clause>
-//		final int SYM__E_SEP                                     = 1383;  // <_e_sep>
-//		final int SYM__FALSE_IS                                  = 1384;  // <_false_is>
-//		final int SYM__FILE                                      = 1385;  // <_file>
-//		final int SYM__FILE_CONTROL_HEADER                       = 1386;  // <_file_control_header>
-//		final int SYM__FILE_CONTROL_SEQUENCE                     = 1387;  // <_file_control_sequence>
-//		final int SYM__FILE_DESCRIPTION_CLAUSE_SEQUENCE          = 1388;  // <_file_description_clause_sequence>
-//		final int SYM__FILE_DESCRIPTION_SEQUENCE                 = 1389;  // <_file_description_sequence>
-//		final int SYM__FILE_OR_SORT                              = 1390;  // <_file_or_sort>
-//		final int SYM__FILE_SECTION_HEADER                       = 1391;  // <_file_section_header>
-//		final int SYM__FILLER                                    = 1392;  // <_filler>
-//		final int SYM__FINAL                                     = 1393;  // <_final>
-//		final int SYM__FLAG_NEXT                                 = 1394;  // <_flag_next>
-//		final int SYM__FLAG_NOT                                  = 1395;  // <_flag_not>
-//		final int SYM__FOR                                       = 1396;  // <_for>
-//		final int SYM__FOR_SUB_RECORDS_CLAUSE                    = 1397;  // <_for_sub_records_clause>
-//		final int SYM__FROM                                      = 1398;  // <_from>
-//		final int SYM__FROM_IDENTIFIER                           = 1399;  // <_from_identifier>
-//		final int SYM__FROM_IDX_TO_IDX                           = 1400;  // <_from_idx_to_idx>
-//		final int SYM__FROM_INTEGER                              = 1401;  // <_from_integer>
-//		final int SYM__GLOBAL_CLAUSE                             = 1402;  // <_global_clause>
-//		final int SYM__IDENTIFICATION_HEADER                     = 1403;  // <_identification_header>
-//		final int SYM__IN                                        = 1404;  // <_in>
-//		final int SYM__INDEX                                     = 1405;  // <_index>
-//		final int SYM__INDICATE                                  = 1406;  // <_indicate>
-//		final int SYM__INITIAL                                   = 1407;  // <_initial>
-//		final int SYM__INITIALIZE_DEFAULT                        = 1408;  // <_initialize_default>
-//		final int SYM__INITIALIZE_FILLER                         = 1409;  // <_initialize_filler>
-//		final int SYM__INITIALIZE_REPLACING                      = 1410;  // <_initialize_replacing>
-//		final int SYM__INITIALIZE_VALUE                          = 1411;  // <_initialize_value>
-//		final int SYM__INPUT_CD_CLAUSES                          = 1412;  // <_input_cd_clauses>
-//		final int SYM__INPUT_OUTPUT_HEADER                       = 1413;  // <_input_output_header>
-//		final int SYM__INPUT_OUTPUT_SECTION                      = 1414;  // <_input_output_section>
-//		final int SYM__INTERMEDIATE_ROUNDING_CLAUSE              = 1415;  // <_intermediate_rounding_clause>
-//		final int SYM__INTO                                      = 1416;  // <_into>
-//		final int SYM__INVALID_KEY_PHRASES                       = 1417;  // <_invalid_key_phrases>
-//		final int SYM__INVALID_KEY_SENTENCE                      = 1418;  // <_invalid_key_sentence>
-//		final int SYM__IN_ORDER                                  = 1419;  // <_in_order>
-//		final int SYM__IS                                        = 1420;  // <_is>
-//		final int SYM__IS_ARE                                    = 1421;  // <_is_are>
-//		final int SYM__I_O_CD_CLAUSES                            = 1422;  // <_i_o_cd_clauses>
-//		final int SYM__I_O_CONTROL                               = 1423;  // <_i_o_control>
-//		final int SYM__I_O_CONTROL_HEADER                        = 1424;  // <_i_o_control_header>
-//		final int SYM__KEY                                       = 1425;  // <_key>
-//		final int SYM__KEY_LIST                                  = 1426;  // <_key_list>
-//		final int SYM__LEFT_OR_RIGHT                             = 1427;  // <_left_or_right>
-//		final int SYM__LIMITS                                    = 1428;  // <_limits>
-//		final int SYM__LINAGE_SEQUENCE                           = 1429;  // <_linage_sequence>
-//		final int SYM__LINE                                      = 1430;  // <_line>
-//		final int SYM__LINES                                     = 1431;  // <_lines>
-//		final int SYM__LINE_ADV_FILE                             = 1432;  // <_line_adv_file>
-//		final int SYM__LINE_OR_LINES                             = 1433;  // <_line_or_lines>
-//		final int SYM__LINKAGE_SECTION                           = 1434;  // <_linkage_section>
-//		final int SYM__LOCAL_STORAGE_SECTION                     = 1435;  // <_local_storage_section>
-//		final int SYM__LOCK_WITH                                 = 1436;  // <_lock_with>
-//		final int SYM__MESSAGE                                   = 1437;  // <_message>
-//		final int SYM__MNEMONIC_CONV                             = 1438;  // <_mnemonic_conv>
-//		final int SYM__MODE                                      = 1439;  // <_mode>
-//		final int SYM__MULTIPLE_FILE_POSITION                    = 1440;  // <_multiple_file_position>
-//		final int SYM__NOT                                       = 1441;  // <_not>
-//		final int SYM__NOT_AT_END_CLAUSE                         = 1442;  // <_not_at_end_clause>
-//		final int SYM__NOT_AT_EOP_CLAUSE                         = 1443;  // <_not_at_eop_clause>
-//		final int SYM__NOT_INVALID_KEY_SENTENCE                  = 1444;  // <_not_invalid_key_sentence>
-//		final int SYM__NOT_ON_OVERFLOW                           = 1445;  // <_not_on_overflow>
-//		final int SYM__NOT_ON_SIZE_ERROR                         = 1446;  // <_not_on_size_error>
-//		final int SYM__NO_DATA_SENTENCE                          = 1447;  // <_no_data_sentence>
-//		final int SYM__NUMBER                                    = 1448;  // <_number>
-//		final int SYM__NUMBERS                                   = 1449;  // <_numbers>
-//		final int SYM__OBJECT_COMPUTER_ENTRY                     = 1450;  // <_object_computer_entry>
-//		final int SYM__OCCURS_DEPENDING                          = 1451;  // <_occurs_depending>
-//		final int SYM__OCCURS_FROM_INTEGER                       = 1452;  // <_occurs_from_integer>
-//		final int SYM__OCCURS_INDEXED                            = 1453;  // <_occurs_indexed>
-//		final int SYM__OCCURS_INITIALIZED                        = 1454;  // <_occurs_initialized>
-//		final int SYM__OCCURS_INTEGER_TO                         = 1455;  // <_occurs_integer_to>
-//		final int SYM__OCCURS_KEYS_AND_INDEXED                   = 1456;  // <_occurs_keys_and_indexed>
-//		final int SYM__OCCURS_STEP                               = 1457;  // <_occurs_step>
-//		final int SYM__OCCURS_TO_INTEGER                         = 1458;  // <_occurs_to_integer>
-//		final int SYM__OF                                        = 1459;  // <_of>
-//		final int SYM__ON                                        = 1460;  // <_on>
-//		final int SYM__ONOFF_STATUS                              = 1461;  // <_onoff_status>
-//		final int SYM__ON_OVERFLOW                               = 1462;  // <_on_overflow>
-//		final int SYM__ON_OVERFLOW_PHRASES                       = 1463;  // <_on_overflow_phrases>
-//		final int SYM__ON_SIZE_ERROR                             = 1464;  // <_on_size_error>
-//		final int SYM__OPTIONS_CLAUSES                           = 1465;  // <_options_clauses>
-//		final int SYM__OPTIONS_PARAGRAPH                         = 1466;  // <_options_paragraph>
-//		final int SYM__OR_PAGE                                   = 1467;  // <_or_page>
-//		final int SYM__OTHER                                     = 1468;  // <_other>
-//		final int SYM__OUTPUT_CD_CLAUSES                         = 1469;  // <_output_cd_clauses>
-//		final int SYM__PAGE_HEADING_LIST                         = 1470;  // <_page_heading_list>
-//		final int SYM__PRINTING                                  = 1471;  // <_printing>
-//		final int SYM__PROCEDURE                                 = 1472;  // <_procedure>
-//		final int SYM__PROCEDURE_DECLARATIVES                    = 1473;  // <_procedure_declaratives>
-//		final int SYM__PROCEDURE_DIVISION                        = 1474;  // <_procedure_division>
-//		final int SYM__PROCEDURE_LIST                            = 1475;  // <_procedure_list>
-//		final int SYM__PROCEDURE_OPTIONAL                        = 1476;  // <_procedure_optional>
-//		final int SYM__PROCEDURE_RETURNING                       = 1477;  // <_procedure_returning>
-//		final int SYM__PROCEDURE_TYPE                            = 1478;  // <_procedure_type>
-//		final int SYM__PROCEDURE_USING_CHAINING                  = 1479;  // <_procedure_using_chaining>
-//		final int SYM__PROCEED_TO                                = 1480;  // <_proceed_to>
-//		final int SYM__PROGRAM                                   = 1481;  // <_program>
-//		final int SYM__PROGRAM_BODY                              = 1482;  // <_program_body>
-//		final int SYM__PROGRAM_TYPE                              = 1483;  // <_program_type>
-//		final int SYM__RECORD                                    = 1484;  // <_record>
-//		final int SYM__RECORDS                                   = 1485;  // <_records>
-//		final int SYM__RECORDS_OR_CHARACTERS                     = 1486;  // <_records_or_characters>
-//		final int SYM__RECORD_DEPENDING                          = 1487;  // <_record_depending>
-//		final int SYM__RECORD_DESCRIPTION_LIST                   = 1488;  // <_record_description_list>
-//		final int SYM__RENAMES_THRU                              = 1489;  // <_renames_thru>
-//		final int SYM__REPLACING_LINE                            = 1490;  // <_replacing_line>
-//		final int SYM__REPORT_DESCRIPTION_OPTIONS                = 1491;  // <_report_description_options>
-//		final int SYM__REPORT_DESCRIPTION_SEQUENCE               = 1492;  // <_report_description_sequence>
-//		final int SYM__REPORT_GROUP_DESCRIPTION_LIST             = 1493;  // <_report_group_description_list>
-//		final int SYM__REPORT_GROUP_OPTIONS                      = 1494;  // <_report_group_options>
-//		final int SYM__REPORT_SECTION                            = 1495;  // <_report_section>
-//		final int SYM__REPOSITORY_ENTRY                          = 1496;  // <_repository_entry>
-//		final int SYM__REPOSITORY_PARAGRAPH                      = 1497;  // <_repository_paragraph>
-//		final int SYM__RESET_CLAUSE                              = 1498;  // <_reset_clause>
-//		final int SYM__RETRY_PHRASE                              = 1499;  // <_retry_phrase>
-//		final int SYM__RIGHT                                     = 1500;  // <_right>
-//		final int SYM__SAME_OPTION                               = 1501;  // <_same_option>
-//		final int SYM__SCREEN_COL_PLUS_MINUS                     = 1502;  // <_screen_col_plus_minus>
-//		final int SYM__SCREEN_DESCRIPTION_LIST                   = 1503;  // <_screen_description_list>
-//		final int SYM__SCREEN_LINE_PLUS_MINUS                    = 1504;  // <_screen_line_plus_minus>
-//		final int SYM__SCREEN_OPTIONS                            = 1505;  // <_screen_options>
-//		final int SYM__SCREEN_SECTION                            = 1506;  // <_screen_section>
-//		final int SYM__SCROLL_LINES                              = 1507;  // <_scroll_lines>
-//		final int SYM__SEGMENT                                   = 1508;  // <_segment>
-//		final int SYM__SELECT_CLAUSES_OR_ERROR                   = 1509;  // <_select_clauses_or_error>
-//		final int SYM__SELECT_CLAUSE_SEQUENCE                    = 1510;  // <_select_clause_sequence>
-//		final int SYM__SIGN                                      = 1511;  // <_sign>
-//		final int SYM__SIGNED                                    = 1512;  // <_signed>
-//		final int SYM__SIGN_IS                                   = 1513;  // <_sign_is>
-//		final int SYM__SIZE                                      = 1514;  // <_size>
-//		final int SYM__SIZE_OPTIONAL                             = 1515;  // <_size_optional>
-//		final int SYM__SORT_DUPLICATES                           = 1516;  // <_sort_duplicates>
-//		final int SYM__SOURCE_COMPUTER_ENTRY                     = 1517;  // <_source_computer_entry>
-//		final int SYM__SOURCE_OBJECT_COMPUTER_PARAGRAPHS         = 1518;  // <_source_object_computer_paragraphs>
-//		final int SYM__SPECIAL_NAMES_PARAGRAPH                   = 1519;  // <_special_names_paragraph>
-//		final int SYM__SPECIAL_NAMES_SENTENCE_LIST               = 1520;  // <_special_names_sentence_list>
-//		final int SYM__SPECIAL_NAME_MNEMONIC_ON_OFF              = 1521;  // <_special_name_mnemonic_on_off>
-//		final int SYM__STANDARD                                  = 1522;  // <_standard>
-//		final int SYM__STATUS                                    = 1523;  // <_status>
-//		final int SYM__STATUS_X                                  = 1524;  // <_status_x>
-//		final int SYM__STRING_DELIMITED                          = 1525;  // <_string_delimited>
-//		final int SYM__SUPPRESS_CLAUSE                           = 1526;  // <_suppress_clause>
-//		final int SYM__SYMBOLIC                                  = 1527;  // <_symbolic>
-//		final int SYM__SYM_IN_WORD                               = 1528;  // <_sym_in_word>
-//		final int SYM__TAPE                                      = 1529;  // <_tape>
-//		final int SYM__TERMINAL                                  = 1530;  // <_terminal>
-//		final int SYM__THEN                                      = 1531;  // <_then>
-//		final int SYM__TIMES                                     = 1532;  // <_times>
-//		final int SYM__TO                                        = 1533;  // <_to>
-//		final int SYM__TO_INTEGER                                = 1534;  // <_to_integer>
-//		final int SYM__TO_USING                                  = 1535;  // <_to_using>
-//		final int SYM__UNSTRING_DELIMITED                        = 1536;  // <_unstring_delimited>
-//		final int SYM__UNSTRING_INTO_COUNT                       = 1537;  // <_unstring_into_count>
-//		final int SYM__UNSTRING_INTO_DELIMITER                   = 1538;  // <_unstring_into_delimiter>
-//		final int SYM__UNSTRING_TALLYING                         = 1539;  // <_unstring_tallying>
-//		final int SYM__USE_STATEMENT                             = 1540;  // <_use_statement>
-//		final int SYM__WHEN                                      = 1541;  // <_when>
-//		final int SYM__WHEN_SET_TO                               = 1542;  // <_when_set_to>
-//		final int SYM__WITH                                      = 1543;  // <_with>
-//		final int SYM__WITH_DATA_SENTENCE                        = 1544;  // <_with_data_sentence>
-//		final int SYM__WITH_DEBUGGING_MODE                       = 1545;  // <_with_debugging_mode>
-//		final int SYM__WITH_LOCK                                 = 1546;  // <_with_lock>
-//		final int SYM__WITH_PIC_SYMBOL                           = 1547;  // <_with_pic_symbol>
-//		final int SYM__WITH_POINTER                              = 1548;  // <_with_pointer>
-//		final int SYM__WORKING_STORAGE_SECTION                   = 1549;  // <_working_storage_section>
-//		final int SYM__X_LIST                                    = 1550;  // <_x_list>
+//		final int SYM__ACCEPT_CLAUSES                            =  653;  // <_accept_clauses>
+//		final int SYM__ACCEPT_EXCEPTION_PHRASES                  =  654;  // <_accept_exception_phrases>
+//		final int SYM__ACCP_NOT_ON_EXCEPTION                     =  655;  // <_accp_not_on_exception>
+//		final int SYM__ACCP_ON_EXCEPTION                         =  656;  // <_accp_on_exception>
+//		final int SYM__ADD_TO                                    =  657;  // <_add_to>
+//		final int SYM__ADVANCING                                 =  658;  // <_advancing>
+//		final int SYM__AFTER                                     =  659;  // <_after>
+//		final int SYM__ALL_REFS                                  =  660;  // <_all_refs>
+//		final int SYM__ARE                                       =  661;  // <_are>
+//		final int SYM__AREA                                      =  662;  // <_area>
+//		final int SYM__AREAS                                     =  663;  // <_areas>
+//		final int SYM__AS                                        =  664;  // <_as>
+//		final int SYM__AS_EXTNAME                                =  665;  // <_as_extname>
+//		final int SYM__AS_LITERAL                                =  666;  // <_as_literal>
+//		final int SYM__ASSIGNMENT_NAME                           =  667;  // <_assignment_name>
+//		final int SYM__AT                                        =  668;  // <_at>
+//		final int SYM__AT_END_CLAUSE                             =  669;  // <_at_end_clause>
+//		final int SYM__AT_EOP_CLAUSE                             =  670;  // <_at_eop_clause>
+//		final int SYM__BEFORE                                    =  671;  // <_before>
+//		final int SYM__BINARY                                    =  672;  // <_binary>
+//		final int SYM__BY                                        =  673;  // <_by>
+//		final int SYM__CALL_NOT_ON_EXCEPTION                     =  674;  // <_call_not_on_exception>
+//		final int SYM__CALL_ON_EXCEPTION                         =  675;  // <_call_on_exception>
+//		final int SYM__CAPACITY_IN                               =  676;  // <_capacity_in>
+//		final int SYM__CHARACTER                                 =  677;  // <_character>
+//		final int SYM__CHARACTERS                                =  678;  // <_characters>
+//		final int SYM__COMMENTITEMS                              =  679;  // <_Comment Items>
+//		final int SYM__COMMUNICATION_DESCRIPTION_CLAUSE_SEQUENCE =  680;  // <_communication_description_clause_sequence>
+//		final int SYM__COMMUNICATION_DESCRIPTION_SEQUENCE        =  681;  // <_communication_description_sequence>
+//		final int SYM__COMMUNICATION_SECTION                     =  682;  // <_communication_section>
+//		final int SYM__CONFIGURATION_HEADER                      =  683;  // <_configuration_header>
+//		final int SYM__CONFIGURATION_SECTION                     =  684;  // <_configuration_section>
+//		final int SYM__CONTAINS                                  =  685;  // <_contains>
+//		final int SYM__CONTROL_FINAL                             =  686;  // <_control_final>
+//		final int SYM__DATA                                      =  687;  // <_data>
+//		final int SYM__DATA_DESCRIPTION_CLAUSE_SEQUENCE          =  688;  // <_data_description_clause_sequence>
+//		final int SYM__DATA_DIVISION                             =  689;  // <_data_division>
+//		final int SYM__DATA_DIVISION_HEADER                      =  690;  // <_data_division_header>
+//		final int SYM__DATA_SENTENCE_PHRASES                     =  691;  // <_data_sentence_phrases>
+//		final int SYM__DEFAULT_ROUNDED_CLAUSE                    =  692;  // <_default_rounded_clause>
+//		final int SYM__DEST_INDEX                                =  693;  // <_dest_index>
+//		final int SYM__DISP_NOT_ON_EXCEPTION                     =  694;  // <_disp_not_on_exception>
+//		final int SYM__DISP_ON_EXCEPTION                         =  695;  // <_disp_on_exception>
+//		final int SYM__DISPLAY_EXCEPTION_PHRASES                 =  696;  // <_display_exception_phrases>
+//		final int SYM__E_SEP                                     =  697;  // <_e_sep>
+//		final int SYM__ENABLE_DISABLE_KEY                        =  698;  // <_enable_disable_key>
+//		final int SYM__END_OF                                    =  699;  // <_end_of>
+//		final int SYM__END_PROGRAM_LIST                          =  700;  // <_end_program_list>
+//		final int SYM__ENTRY_CONVENTION_CLAUSE                   =  701;  // <_entry_convention_clause>
+//		final int SYM__ENTRY_NAME                                =  702;  // <_entry_name>
+//		final int SYM__ENVIRONMENT_DIVISION                      =  703;  // <_environment_division>
+//		final int SYM__ENVIRONMENT_HEADER                        =  704;  // <_environment_header>
+//		final int SYM__EVALUATE_THRU_EXPR                        =  705;  // <_evaluate_thru_expr>
+//		final int SYM__EXT_CLAUSE                                =  706;  // <_ext_clause>
+//		final int SYM__EXTENDED_WITH_LOCK                        =  707;  // <_extended_with_lock>
+//		final int SYM__FALSE_IS                                  =  708;  // <_false_is>
+//		final int SYM__FILE                                      =  709;  // <_file>
+//		final int SYM__FILE_CONTROL_HEADER                       =  710;  // <_file_control_header>
+//		final int SYM__FILE_CONTROL_SEQUENCE                     =  711;  // <_file_control_sequence>
+//		final int SYM__FILE_DESCRIPTION_CLAUSE_SEQUENCE          =  712;  // <_file_description_clause_sequence>
+//		final int SYM__FILE_DESCRIPTION_SEQUENCE                 =  713;  // <_file_description_sequence>
+//		final int SYM__FILE_OR_SORT                              =  714;  // <_file_or_sort>
+//		final int SYM__FILE_SECTION_HEADER                       =  715;  // <_file_section_header>
+//		final int SYM__FILLER                                    =  716;  // <_filler>
+//		final int SYM__FINAL                                     =  717;  // <_final>
+//		final int SYM__FLAG_NEXT                                 =  718;  // <_flag_next>
+//		final int SYM__FLAG_NOT                                  =  719;  // <_flag_not>
+//		final int SYM__FOR                                       =  720;  // <_for>
+//		final int SYM__FOR_SUB_RECORDS_CLAUSE                    =  721;  // <_for_sub_records_clause>
+//		final int SYM__FROM                                      =  722;  // <_from>
+//		final int SYM__FROM_IDENTIFIER                           =  723;  // <_from_identifier>
+//		final int SYM__FROM_IDX_TO_IDX                           =  724;  // <_from_idx_to_idx>
+//		final int SYM__FROM_INTEGER                              =  725;  // <_from_integer>
+//		final int SYM__GLOBAL_CLAUSE                             =  726;  // <_global_clause>
+//		final int SYM__I_O_CD_CLAUSES                            =  727;  // <_i_o_cd_clauses>
+//		final int SYM__I_O_CONTROL                               =  728;  // <_i_o_control>
+//		final int SYM__I_O_CONTROL_HEADER                        =  729;  // <_i_o_control_header>
+//		final int SYM__IDENTIFICATION_HEADER                     =  730;  // <_identification_header>
+//		final int SYM__IN                                        =  731;  // <_in>
+//		final int SYM__IN_ORDER                                  =  732;  // <_in_order>
+//		final int SYM__INDEX                                     =  733;  // <_index>
+//		final int SYM__INDICATE                                  =  734;  // <_indicate>
+//		final int SYM__INITIAL                                   =  735;  // <_initial>
+//		final int SYM__INITIALIZE_DEFAULT                        =  736;  // <_initialize_default>
+//		final int SYM__INITIALIZE_FILLER                         =  737;  // <_initialize_filler>
+//		final int SYM__INITIALIZE_REPLACING                      =  738;  // <_initialize_replacing>
+//		final int SYM__INITIALIZE_VALUE                          =  739;  // <_initialize_value>
+//		final int SYM__INPUT_CD_CLAUSES                          =  740;  // <_input_cd_clauses>
+//		final int SYM__INPUT_OUTPUT_HEADER                       =  741;  // <_input_output_header>
+//		final int SYM__INPUT_OUTPUT_SECTION                      =  742;  // <_input_output_section>
+//		final int SYM__INTERMEDIATE_ROUNDING_CLAUSE              =  743;  // <_intermediate_rounding_clause>
+//		final int SYM__INTO                                      =  744;  // <_into>
+//		final int SYM__INVALID_KEY_PHRASES                       =  745;  // <_invalid_key_phrases>
+//		final int SYM__INVALID_KEY_SENTENCE                      =  746;  // <_invalid_key_sentence>
+//		final int SYM__IS                                        =  747;  // <_is>
+//		final int SYM__IS_ARE                                    =  748;  // <_is_are>
+//		final int SYM__KEY                                       =  749;  // <_key>
+//		final int SYM__KEY_LIST                                  =  750;  // <_key_list>
+//		final int SYM__LEFT_OR_RIGHT                             =  751;  // <_left_or_right>
+//		final int SYM__LIMITS                                    =  752;  // <_limits>
+//		final int SYM__LINAGE_SEQUENCE                           =  753;  // <_linage_sequence>
+//		final int SYM__LINE                                      =  754;  // <_line>
+//		final int SYM__LINE_ADV_FILE                             =  755;  // <_line_adv_file>
+//		final int SYM__LINE_OR_LINES                             =  756;  // <_line_or_lines>
+//		final int SYM__LINES                                     =  757;  // <_lines>
+//		final int SYM__LINKAGE_SECTION                           =  758;  // <_linkage_section>
+//		final int SYM__LOCAL_STORAGE_SECTION                     =  759;  // <_local_storage_section>
+//		final int SYM__LOCK_WITH                                 =  760;  // <_lock_with>
+//		final int SYM__MESSAGE                                   =  761;  // <_message>
+//		final int SYM__MNEMONIC_CONV                             =  762;  // <_mnemonic_conv>
+//		final int SYM__MODE                                      =  763;  // <_mode>
+//		final int SYM__MULTIPLE_FILE_POSITION                    =  764;  // <_multiple_file_position>
+//		final int SYM__NO_DATA_SENTENCE                          =  765;  // <_no_data_sentence>
+//		final int SYM__NOT                                       =  766;  // <_not>
+//		final int SYM__NOT_AT_END_CLAUSE                         =  767;  // <_not_at_end_clause>
+//		final int SYM__NOT_AT_EOP_CLAUSE                         =  768;  // <_not_at_eop_clause>
+//		final int SYM__NOT_INVALID_KEY_SENTENCE                  =  769;  // <_not_invalid_key_sentence>
+//		final int SYM__NOT_ON_OVERFLOW                           =  770;  // <_not_on_overflow>
+//		final int SYM__NOT_ON_SIZE_ERROR                         =  771;  // <_not_on_size_error>
+//		final int SYM__NUMBER                                    =  772;  // <_number>
+//		final int SYM__NUMBERS                                   =  773;  // <_numbers>
+//		final int SYM__OBJECT_COMPUTER_ENTRY                     =  774;  // <_object_computer_entry>
+//		final int SYM__OCCURS_DEPENDING                          =  775;  // <_occurs_depending>
+//		final int SYM__OCCURS_FROM_INTEGER                       =  776;  // <_occurs_from_integer>
+//		final int SYM__OCCURS_INDEXED                            =  777;  // <_occurs_indexed>
+//		final int SYM__OCCURS_INITIALIZED                        =  778;  // <_occurs_initialized>
+//		final int SYM__OCCURS_INTEGER_TO                         =  779;  // <_occurs_integer_to>
+//		final int SYM__OCCURS_KEYS_AND_INDEXED                   =  780;  // <_occurs_keys_and_indexed>
+//		final int SYM__OCCURS_STEP                               =  781;  // <_occurs_step>
+//		final int SYM__OCCURS_TO_INTEGER                         =  782;  // <_occurs_to_integer>
+//		final int SYM__OF                                        =  783;  // <_of>
+//		final int SYM__ON                                        =  784;  // <_on>
+//		final int SYM__ON_OVERFLOW                               =  785;  // <_on_overflow>
+//		final int SYM__ON_OVERFLOW_PHRASES                       =  786;  // <_on_overflow_phrases>
+//		final int SYM__ON_SIZE_ERROR                             =  787;  // <_on_size_error>
+//		final int SYM__ONOFF_STATUS                              =  788;  // <_onoff_status>
+//		final int SYM__OPTIONS_CLAUSES                           =  789;  // <_options_clauses>
+//		final int SYM__OPTIONS_PARAGRAPH                         =  790;  // <_options_paragraph>
+//		final int SYM__OR_PAGE                                   =  791;  // <_or_page>
+//		final int SYM__OTHER                                     =  792;  // <_other>
+//		final int SYM__OUTPUT_CD_CLAUSES                         =  793;  // <_output_cd_clauses>
+//		final int SYM__PAGE_HEADING_LIST                         =  794;  // <_page_heading_list>
+//		final int SYM__PRINTING                                  =  795;  // <_printing>
+//		final int SYM__PROCEDURE                                 =  796;  // <_procedure>
+//		final int SYM__PROCEDURE_DECLARATIVES                    =  797;  // <_procedure_declaratives>
+//		final int SYM__PROCEDURE_DIVISION                        =  798;  // <_procedure_division>
+//		final int SYM__PROCEDURE_LIST                            =  799;  // <_procedure_list>
+//		final int SYM__PROCEDURE_OPTIONAL                        =  800;  // <_procedure_optional>
+//		final int SYM__PROCEDURE_RETURNING                       =  801;  // <_procedure_returning>
+//		final int SYM__PROCEDURE_TYPE                            =  802;  // <_procedure_type>
+//		final int SYM__PROCEDURE_USING_CHAINING                  =  803;  // <_procedure_using_chaining>
+//		final int SYM__PROCEED_TO                                =  804;  // <_proceed_to>
+//		final int SYM__PROGRAM                                   =  805;  // <_program>
+//		final int SYM__PROGRAM_BODY                              =  806;  // <_program_body>
+//		final int SYM__PROGRAM_TYPE                              =  807;  // <_program_type>
+//		final int SYM__RECORD                                    =  808;  // <_record>
+//		final int SYM__RECORD_DEPENDING                          =  809;  // <_record_depending>
+//		final int SYM__RECORD_DESCRIPTION_LIST                   =  810;  // <_record_description_list>
+//		final int SYM__RECORDS                                   =  811;  // <_records>
+//		final int SYM__RECORDS_OR_CHARACTERS                     =  812;  // <_records_or_characters>
+//		final int SYM__RENAMES_THRU                              =  813;  // <_renames_thru>
+//		final int SYM__REPLACING_LINE                            =  814;  // <_replacing_line>
+//		final int SYM__REPORT_DESCRIPTION_OPTIONS                =  815;  // <_report_description_options>
+//		final int SYM__REPORT_DESCRIPTION_SEQUENCE               =  816;  // <_report_description_sequence>
+//		final int SYM__REPORT_GROUP_DESCRIPTION_LIST             =  817;  // <_report_group_description_list>
+//		final int SYM__REPORT_GROUP_OPTIONS                      =  818;  // <_report_group_options>
+//		final int SYM__REPORT_SECTION                            =  819;  // <_report_section>
+//		final int SYM__REPOSITORY_ENTRY                          =  820;  // <_repository_entry>
+//		final int SYM__REPOSITORY_PARAGRAPH                      =  821;  // <_repository_paragraph>
+//		final int SYM__RESET_CLAUSE                              =  822;  // <_reset_clause>
+//		final int SYM__RETRY_PHRASE                              =  823;  // <_retry_phrase>
+//		final int SYM__RIGHT                                     =  824;  // <_right>
+//		final int SYM__SAME_OPTION                               =  825;  // <_same_option>
+//		final int SYM__SCREEN_COL_PLUS_MINUS                     =  826;  // <_screen_col_plus_minus>
+//		final int SYM__SCREEN_DESCRIPTION_LIST                   =  827;  // <_screen_description_list>
+//		final int SYM__SCREEN_LINE_PLUS_MINUS                    =  828;  // <_screen_line_plus_minus>
+//		final int SYM__SCREEN_OPTIONS                            =  829;  // <_screen_options>
+//		final int SYM__SCREEN_SECTION                            =  830;  // <_screen_section>
+//		final int SYM__SCROLL_LINES                              =  831;  // <_scroll_lines>
+//		final int SYM__SEGMENT                                   =  832;  // <_segment>
+//		final int SYM__SELECT_CLAUSE_SEQUENCE                    =  833;  // <_select_clause_sequence>
+//		final int SYM__SELECT_CLAUSES_OR_ERROR                   =  834;  // <_select_clauses_or_error>
+//		final int SYM__SIGN                                      =  835;  // <_sign>
+//		final int SYM__SIGN_IS                                   =  836;  // <_sign_is>
+//		final int SYM__SIGNED                                    =  837;  // <_signed>
+//		final int SYM__SIZE                                      =  838;  // <_size>
+//		final int SYM__SIZE_OPTIONAL                             =  839;  // <_size_optional>
+//		final int SYM__SORT_DUPLICATES                           =  840;  // <_sort_duplicates>
+//		final int SYM__SOURCE_COMPUTER_ENTRY                     =  841;  // <_source_computer_entry>
+//		final int SYM__SOURCE_OBJECT_COMPUTER_PARAGRAPHS         =  842;  // <_source_object_computer_paragraphs>
+//		final int SYM__SPECIAL_NAME_MNEMONIC_ON_OFF              =  843;  // <_special_name_mnemonic_on_off>
+//		final int SYM__SPECIAL_NAMES_PARAGRAPH                   =  844;  // <_special_names_paragraph>
+//		final int SYM__SPECIAL_NAMES_SENTENCE_LIST               =  845;  // <_special_names_sentence_list>
+//		final int SYM__STANDARD                                  =  846;  // <_standard>
+//		final int SYM__STATUS                                    =  847;  // <_status>
+//		final int SYM__STATUS_X                                  =  848;  // <_status_x>
+//		final int SYM__STRING_DELIMITED                          =  849;  // <_string_delimited>
+//		final int SYM__SUPPRESS_CLAUSE                           =  850;  // <_suppress_clause>
+//		final int SYM__SYM_IN_WORD                               =  851;  // <_sym_in_word>
+//		final int SYM__SYMBOLIC                                  =  852;  // <_symbolic>
+//		final int SYM__TAPE                                      =  853;  // <_tape>
+//		final int SYM__TERMINAL                                  =  854;  // <_terminal>
+//		final int SYM__THEN                                      =  855;  // <_then>
+//		final int SYM__TIMES                                     =  856;  // <_times>
+//		final int SYM__TO                                        =  857;  // <_to>
+//		final int SYM__TO_INTEGER                                =  858;  // <_to_integer>
+//		final int SYM__TO_USING                                  =  859;  // <_to_using>
+//		final int SYM__UNSTRING_DELIMITED                        =  860;  // <_unstring_delimited>
+//		final int SYM__UNSTRING_INTO_COUNT                       =  861;  // <_unstring_into_count>
+//		final int SYM__UNSTRING_INTO_DELIMITER                   =  862;  // <_unstring_into_delimiter>
+//		final int SYM__UNSTRING_TALLYING                         =  863;  // <_unstring_tallying>
+//		final int SYM__USE_STATEMENT                             =  864;  // <_use_statement>
+//		final int SYM__WHEN                                      =  865;  // <_when>
+//		final int SYM__WHEN_SET_TO                               =  866;  // <_when_set_to>
+//		final int SYM__WITH                                      =  867;  // <_with>
+//		final int SYM__WITH_DATA_SENTENCE                        =  868;  // <_with_data_sentence>
+//		final int SYM__WITH_DEBUGGING_MODE                       =  869;  // <_with_debugging_mode>
+//		final int SYM__WITH_LOCK                                 =  870;  // <_with_lock>
+//		final int SYM__WITH_PIC_SYMBOL                           =  871;  // <_with_pic_symbol>
+//		final int SYM__WITH_POINTER                              =  872;  // <_with_pointer>
+//		final int SYM__WORKING_STORAGE_SECTION                   =  873;  // <_working_storage_section>
+//		final int SYM__X_LIST                                    =  874;  // <_x_list>
+//		final int SYM_ACCEPT_BODY                                =  875;  // <accept_body>
+//		final int SYM_ACCEPT_CLAUSE                              =  876;  // <accept_clause>
+//		final int SYM_ACCEPT_CLAUSES                             =  877;  // <accept_clauses>
+//		final int SYM_ACCEPT_STATEMENT                           =  878;  // <accept_statement>
+//		final int SYM_ACCESS_MODE                                =  879;  // <access_mode>
+//		final int SYM_ACCESS_MODE_CLAUSE                         =  880;  // <access_mode_clause>
+//		final int SYM_ACCP_ATTR                                  =  881;  // <accp_attr>
+//		final int SYM_ACCP_IDENTIFIER                            =  882;  // <accp_identifier>
+//		final int SYM_ACCP_NOT_ON_EXCEPTION                      =  883;  // <accp_not_on_exception>
+//		final int SYM_ACCP_ON_EXCEPTION                          =  884;  // <accp_on_exception>
+//		final int SYM_ADD_BODY                                   =  885;  // <add_body>
+//		final int SYM_ADD_STATEMENT                              =  886;  // <add_statement>
+//		final int SYM_ADVANCING_LOCK_OR_RETRY                    =  887;  // <advancing_lock_or_retry>
+//		final int SYM_ALLOCATE_BODY                              =  888;  // <allocate_body>
+//		final int SYM_ALLOCATE_RETURNING                         =  889;  // <allocate_returning>
+//		final int SYM_ALLOCATE_STATEMENT                         =  890;  // <allocate_statement>
+//		final int SYM_ALNUM_OR_ID                                =  891;  // <alnum_or_id>
+//		final int SYM_ALPHABET_ALSO_SEQUENCE                     =  892;  // <alphabet_also_sequence>
+//		final int SYM_ALPHABET_DEFINITION                        =  893;  // <alphabet_definition>
+//		final int SYM_ALPHABET_LITERAL                           =  894;  // <alphabet_literal>
+//		final int SYM_ALPHABET_LITERAL_LIST                      =  895;  // <alphabet_literal_list>
+//		final int SYM_ALPHABET_LITS                              =  896;  // <alphabet_lits>
+//		final int SYM_ALPHABET_NAME                              =  897;  // <alphabet_name>
+//		final int SYM_ALPHABET_NAME_CLAUSE                       =  898;  // <alphabet_name_clause>
+//		final int SYM_ALTER_BODY                                 =  899;  // <alter_body>
+//		final int SYM_ALTER_ENTRY                                =  900;  // <alter_entry>
+//		final int SYM_ALTER_STATEMENT                            =  901;  // <alter_statement>
+//		final int SYM_ALTERNATIVE_RECORD_KEY_CLAUSE              =  902;  // <alternative_record_key_clause>
+//		final int SYM_ANY_LENGTH_CLAUSE                          =  903;  // <any_length_clause>
+//		final int SYM_ARITH_X                                    =  904;  // <arith_x>
+//		final int SYM_ARITHMETIC_X                               =  905;  // <arithmetic_x>
+//		final int SYM_ARITHMETIC_X_LIST                          =  906;  // <arithmetic_x_list>
+//		final int SYM_ASCENDING_OR_DESCENDING                    =  907;  // <ascending_or_descending>
+//		final int SYM_ASSIGN_CLAUSE                              =  908;  // <assign_clause>
+//		final int SYM_ASSIGNMENT_NAME                            =  909;  // <assignment_name>
+//		final int SYM_AT_END                                     =  910;  // <at_end>
+//		final int SYM_AT_END_CLAUSE                              =  911;  // <at_end_clause>
+//		final int SYM_AT_EOP_CLAUSE                              =  912;  // <at_eop_clause>
+//		final int SYM_AT_EOP_CLAUSES                             =  913;  // <at_eop_clauses>
+//		final int SYM_AT_LINE_COLUMN                             =  914;  // <at_line_column>
+//		final int SYM_BASED_CLAUSE                               =  915;  // <based_clause>
+//		final int SYM_BASIC_LITERAL                              =  916;  // <basic_literal>
+//		final int SYM_BASIC_VALUE                                =  917;  // <basic_value>
+//		final int SYM_BEFORE_OR_AFTER                            =  918;  // <before_or_after>
+//		final int SYM_BLANK_CLAUSE                               =  919;  // <blank_clause>
+//		final int SYM_BLOCK_CONTAINS_CLAUSE                      =  920;  // <block_contains_clause>
+//		final int SYM_CALL_BODY                                  =  921;  // <call_body>
+//		final int SYM_CALL_EXCEPTION_PHRASES                     =  922;  // <call_exception_phrases>
+//		final int SYM_CALL_NOT_ON_EXCEPTION                      =  923;  // <call_not_on_exception>
+//		final int SYM_CALL_ON_EXCEPTION                          =  924;  // <call_on_exception>
+//		final int SYM_CALL_PARAM                                 =  925;  // <call_param>
+//		final int SYM_CALL_PARAM_LIST                            =  926;  // <call_param_list>
+//		final int SYM_CALL_RETURNING                             =  927;  // <call_returning>
+//		final int SYM_CALL_STATEMENT                             =  928;  // <call_statement>
+//		final int SYM_CALL_TYPE                                  =  929;  // <call_type>
+//		final int SYM_CALL_USING                                 =  930;  // <call_using>
+//		final int SYM_CALL_X                                     =  931;  // <call_x>
+//		final int SYM_CANCEL_BODY                                =  932;  // <cancel_body>
+//		final int SYM_CANCEL_STATEMENT                           =  933;  // <cancel_statement>
+//		final int SYM_CD_NAME                                    =  934;  // <cd_name>
+//		final int SYM_CF_KEYWORD                                 =  935;  // <cf_keyword>
+//		final int SYM_CH_KEYWORD                                 =  936;  // <ch_keyword>
+//		final int SYM_CHAR_LIST                                  =  937;  // <char_list>
+//		final int SYM_CLASS_ITEM                                 =  938;  // <class_item>
+//		final int SYM_CLASS_ITEM_LIST                            =  939;  // <class_item_list>
+//		final int SYM_CLASS_NAME                                 =  940;  // <CLASS_NAME>
+//		final int SYM_CLASS_NAME_CLAUSE                          =  941;  // <class_name_clause>
+//		final int SYM_CLASS_VALUE                                =  942;  // <class_value>
+//		final int SYM_CLOSE_BODY                                 =  943;  // <close_body>
+//		final int SYM_CLOSE_OPTION                               =  944;  // <close_option>
+//		final int SYM_CLOSE_STATEMENT                            =  945;  // <close_statement>
+//		final int SYM_CODE_SET_CLAUSE                            =  946;  // <code_set_clause>
+//		final int SYM_COL_KEYWORD_CLAUSE                         =  947;  // <col_keyword_clause>
+//		final int SYM_COL_OR_PLUS                                =  948;  // <col_or_plus>
+//		final int SYM_COLL_SEQUENCE                              =  949;  // <coll_sequence>
+//		final int SYM_COLLATING_SEQUENCE_CLAUSE                  =  950;  // <collating_sequence_clause>
+//		final int SYM_COLUMN_CLAUSE                              =  951;  // <column_clause>
+//		final int SYM_COLUMN_NUMBER                              =  952;  // <column_number>
+//		final int SYM_COLUMN_OR_COL                              =  953;  // <column_or_col>
+//		final int SYM_COLUMNS_OR_COLS                            =  954;  // <columns_or_cols>
+//		final int SYM_COMMENTITEM                                =  955;  // <Comment Item>
+//		final int SYM_COMMIT_STATEMENT                           =  956;  // <commit_statement>
+//		final int SYM_COMMON_FUNCTION                            =  957;  // <COMMON_FUNCTION>
+//		final int SYM_COMMUNICATION_DESCRIPTION                  =  958;  // <communication_description>
+//		final int SYM_COMMUNICATION_DESCRIPTION_CLAUSE           =  959;  // <communication_description_clause>
+//		final int SYM_COMMUNICATION_DESCRIPTION_ENTRY            =  960;  // <communication_description_entry>
+//		final int SYM_COMMUNICATION_MODE                         =  961;  // <communication_mode>
+//		final int SYM_COMP_EQUAL                                 =  962;  // <comp_equal>
+//		final int SYM_COMPILATION_GROUP                          =  963;  // <compilation_group>
+//		final int SYM_COMPUTE_BODY                               =  964;  // <compute_body>
+//		final int SYM_COMPUTE_STATEMENT                          =  965;  // <compute_statement>
+//		final int SYM_COMPUTER_WORDS                             =  966;  // <computer_words>
+//		final int SYM_CON_IDENTIFIER                             =  967;  // <con_identifier>
+//		final int SYM_CONCATENATE_FUNC                           =  968;  // <CONCATENATE_FUNC>
+//		final int SYM_COND_OR_EXIT                               =  969;  // <cond_or_exit>
+//		final int SYM_CONDITION                                  =  970;  // <condition>
+//		final int SYM_CONDITION_NAME_ENTRY                       =  971;  // <condition_name_entry>
+//		final int SYM_CONDITION_OP                               =  972;  // <condition_op>
+//		final int SYM_CONDITION_OR_CLASS                         =  973;  // <condition_or_class>
+//		final int SYM_CONST_GLOBAL                               =  974;  // <const_global>
+//		final int SYM_CONSTANT_ENTRY                             =  975;  // <constant_entry>
+//		final int SYM_CONSTANT_SOURCE                            =  976;  // <constant_source>
+//		final int SYM_CONTINUE_STATEMENT                         =  977;  // <continue_statement>
+//		final int SYM_CONTROL_CLAUSE                             =  978;  // <control_clause>
+//		final int SYM_CONTROL_FIELD_LIST                         =  979;  // <control_field_list>
+//		final int SYM_CONTROL_KEYWORD                            =  980;  // <control_keyword>
+//		final int SYM_CONVENTION_TYPE                            =  981;  // <convention_type>
+//		final int SYM_CRT_STATUS_CLAUSE                          =  982;  // <crt_status_clause>
+//		final int SYM_CRT_UNDER2                                 =  983;  // <crt_under>
+//		final int SYM_CURRENCY_SIGN_CLAUSE                       =  984;  // <currency_sign_clause>
+//		final int SYM_CURRENT_DATE_FUNC                          =  985;  // <CURRENT_DATE_FUNC>
+//		final int SYM_CURSOR_CLAUSE                              =  986;  // <cursor_clause>
+//		final int SYM_DATA_DESCRIPTION                           =  987;  // <data_description>
+//		final int SYM_DATA_DESCRIPTION_CLAUSE                    =  988;  // <data_description_clause>
+//		final int SYM_DATA_OR_FINAL                              =  989;  // <data_or_final>
+//		final int SYM_DATA_RECORDS_CLAUSE                        =  990;  // <data_records_clause>
+//		final int SYM_DEBUGGING_LIST                             =  991;  // <debugging_list>
+//		final int SYM_DEBUGGING_TARGET                           =  992;  // <debugging_target>
+//		final int SYM_DECIMAL_POINT_CLAUSE                       =  993;  // <decimal_point_clause>
+//		final int SYM_DELETE_BODY                                =  994;  // <delete_body>
+//		final int SYM_DELETE_FILE_LIST                           =  995;  // <delete_file_list>
+//		final int SYM_DELETE_STATEMENT                           =  996;  // <delete_statement>
+//		final int SYM_DETAIL_KEYWORD                             =  997;  // <detail_keyword>
+//		final int SYM_DISABLE_STATEMENT                          =  998;  // <disable_statement>
+//		final int SYM_DISALLOWED_OP                              =  999;  // <disallowed_op>
+//		final int SYM_DISP_ATTR                                  = 1000;  // <disp_attr>
+//		final int SYM_DISP_LIST                                  = 1001;  // <disp_list>
+//		final int SYM_DISP_NOT_ON_EXCEPTION                      = 1002;  // <disp_not_on_exception>
+//		final int SYM_DISP_ON_EXCEPTION                          = 1003;  // <disp_on_exception>
+//		final int SYM_DISPLAY_ATOM                               = 1004;  // <display_atom>
+//		final int SYM_DISPLAY_BODY                               = 1005;  // <display_body>
+//		final int SYM_DISPLAY_CLAUSE                             = 1006;  // <display_clause>
+//		final int SYM_DISPLAY_CLAUSES                            = 1007;  // <display_clauses>
+//		final int SYM_DISPLAY_IDENTIFIER                         = 1008;  // <display_identifier>
+//		final int SYM_DISPLAY_LIST                               = 1009;  // <display_list>
+//		final int SYM_DISPLAY_OF_FUNC                            = 1010;  // <DISPLAY_OF_FUNC>
+//		final int SYM_DISPLAY_STATEMENT                          = 1011;  // <display_statement>
+//		final int SYM_DISPLAY_UPON                               = 1012;  // <display_upon>
+//		final int SYM_DIVIDE_BODY                                = 1013;  // <divide_body>
+//		final int SYM_DIVIDE_STATEMENT                           = 1014;  // <divide_statement>
+//		final int SYM_DOUBLE_USAGE                               = 1015;  // <double_usage>
+//		final int SYM_ENABLE_DISABLE_HANDLING                    = 1016;  // <enable_disable_handling>
+//		final int SYM_ENABLE_STATEMENT                           = 1017;  // <enable_statement>
+//		final int SYM_END_ACCEPT2                                = 1018;  // <end_accept>
+//		final int SYM_END_ADD2                                   = 1019;  // <end_add>
+//		final int SYM_END_CALL2                                  = 1020;  // <end_call>
+//		final int SYM_END_COMPUTE2                               = 1021;  // <end_compute>
+//		final int SYM_END_DELETE2                                = 1022;  // <end_delete>
+//		final int SYM_END_DISPLAY2                               = 1023;  // <end_display>
+//		final int SYM_END_DIVIDE2                                = 1024;  // <end_divide>
+//		final int SYM_END_EVALUATE2                              = 1025;  // <end_evaluate>
+//		final int SYM_END_FUNCTION2                              = 1026;  // <end_function>
+//		final int SYM_END_IF2                                    = 1027;  // <end_if>
+//		final int SYM_END_MULTIPLY2                              = 1028;  // <end_multiply>
+//		final int SYM_END_PERFORM2                               = 1029;  // <end_perform>
+//		final int SYM_END_PROGRAM2                               = 1030;  // <end_program>
+//		final int SYM_END_PROGRAM_LIST                           = 1031;  // <end_program_list>
+//		final int SYM_END_PROGRAM_NAME                           = 1032;  // <end_program_name>
+//		final int SYM_END_READ2                                  = 1033;  // <end_read>
+//		final int SYM_END_RECEIVE2                               = 1034;  // <end_receive>
+//		final int SYM_END_RETURN2                                = 1035;  // <end_return>
+//		final int SYM_END_REWRITE2                               = 1036;  // <end_rewrite>
+//		final int SYM_END_SEARCH2                                = 1037;  // <end_search>
+//		final int SYM_END_START2                                 = 1038;  // <end_start>
+//		final int SYM_END_STRING2                                = 1039;  // <end_string>
+//		final int SYM_END_SUBTRACT2                              = 1040;  // <end_subtract>
+//		final int SYM_END_UNSTRING2                              = 1041;  // <end_unstring>
+//		final int SYM_END_WRITE2                                 = 1042;  // <end_write>
+//		final int SYM_ENTRY_BODY                                 = 1043;  // <entry_body>
+//		final int SYM_ENTRY_STATEMENT                            = 1044;  // <entry_statement>
+//		final int SYM_EOL2                                       = 1045;  // <eol>
+//		final int SYM_EOS2                                       = 1046;  // <eos>
+//		final int SYM_EQ                                         = 1047;  // <eq>
+//		final int SYM_ERROR_STMT_RECOVER                         = 1048;  // <error_stmt_recover>
+//		final int SYM_ESCAPE_OR_EXCEPTION                        = 1049;  // <escape_or_exception>
+//		final int SYM_EVALUATE_BODY                              = 1050;  // <evaluate_body>
+//		final int SYM_EVALUATE_CASE                              = 1051;  // <evaluate_case>
+//		final int SYM_EVALUATE_CASE_LIST                         = 1052;  // <evaluate_case_list>
+//		final int SYM_EVALUATE_CONDITION_LIST                    = 1053;  // <evaluate_condition_list>
+//		final int SYM_EVALUATE_OBJECT                            = 1054;  // <evaluate_object>
+//		final int SYM_EVALUATE_OBJECT_LIST                       = 1055;  // <evaluate_object_list>
+//		final int SYM_EVALUATE_OTHER                             = 1056;  // <evaluate_other>
+//		final int SYM_EVALUATE_STATEMENT                         = 1057;  // <evaluate_statement>
+//		final int SYM_EVALUATE_SUBJECT                           = 1058;  // <evaluate_subject>
+//		final int SYM_EVALUATE_SUBJECT_LIST                      = 1059;  // <evaluate_subject_list>
+//		final int SYM_EVALUATE_WHEN_LIST                         = 1060;  // <evaluate_when_list>
+//		final int SYM_EVENT_STATUS2                              = 1061;  // <event_status>
+//		final int SYM_EXCEPTION_OR_ERROR                         = 1062;  // <exception_or_error>
+//		final int SYM_EXIT_BODY                                  = 1063;  // <exit_body>
+//		final int SYM_EXIT_PROGRAM_RETURNING                     = 1064;  // <exit_program_returning>
+//		final int SYM_EXIT_STATEMENT                             = 1065;  // <exit_statement>
+//		final int SYM_EXP2                                       = 1066;  // <exp>
+//		final int SYM_EXP_ATOM                                   = 1067;  // <exp_atom>
+//		final int SYM_EXP_FACTOR                                 = 1068;  // <exp_factor>
+//		final int SYM_EXP_LIST                                   = 1069;  // <exp_list>
+//		final int SYM_EXP_TERM                                   = 1070;  // <exp_term>
+//		final int SYM_EXP_UNARY                                  = 1071;  // <exp_unary>
+//		final int SYM_EXPR                                       = 1072;  // <expr>
+//		final int SYM_EXPR_TOKEN                                 = 1073;  // <expr_token>
+//		final int SYM_EXPR_TOKENS                                = 1074;  // <expr_tokens>
+//		final int SYM_EXPR_X                                     = 1075;  // <expr_x>
+//		final int SYM_EXTENDED_WITH_LOCK                         = 1076;  // <extended_with_lock>
+//		final int SYM_EXTERNAL_CLAUSE                            = 1077;  // <external_clause>
+//		final int SYM_FILE_CONTROL_ENTRY                         = 1078;  // <file_control_entry>
+//		final int SYM_FILE_DESCRIPTION                           = 1079;  // <file_description>
+//		final int SYM_FILE_DESCRIPTION_CLAUSE                    = 1080;  // <file_description_clause>
+//		final int SYM_FILE_DESCRIPTION_ENTRY                     = 1081;  // <file_description_entry>
+//		final int SYM_FILE_ID2                                   = 1082;  // <file_id>
+//		final int SYM_FILE_NAME                                  = 1083;  // <file_name>
+//		final int SYM_FILE_NAME_LIST                             = 1084;  // <file_name_list>
+//		final int SYM_FILE_OR_RECORD_NAME                        = 1085;  // <file_or_record_name>
+//		final int SYM_FILE_STATUS_CLAUSE                         = 1086;  // <file_status_clause>
+//		final int SYM_FILE_TYPE                                  = 1087;  // <file_type>
+//		final int SYM_FIRST_DETAIL                               = 1088;  // <first_detail>
+//		final int SYM_FLAG_ALL                                   = 1089;  // <flag_all>
+//		final int SYM_FLAG_DUPLICATES                            = 1090;  // <flag_duplicates>
+//		final int SYM_FLAG_INITIALIZED                           = 1091;  // <flag_initialized>
+//		final int SYM_FLAG_INITIALIZED_TO                        = 1092;  // <flag_initialized_to>
+//		final int SYM_FLAG_OPTIONAL                              = 1093;  // <flag_optional>
+//		final int SYM_FLAG_ROUNDED                               = 1094;  // <flag_rounded>
+//		final int SYM_FLAG_SEPARATE                              = 1095;  // <flag_separate>
+//		final int SYM_FLOAT_USAGE                                = 1096;  // <float_usage>
+//		final int SYM_FOOTING_CLAUSE                             = 1097;  // <footing_clause>
+//		final int SYM_FORMATTED_DATE_FUNC                        = 1098;  // <FORMATTED_DATE_FUNC>
+//		final int SYM_FORMATTED_DATETIME_ARGS                    = 1099;  // <formatted_datetime_args>
+//		final int SYM_FORMATTED_DATETIME_FUNC                    = 1100;  // <FORMATTED_DATETIME_FUNC>
+//		final int SYM_FORMATTED_TIME_ARGS                        = 1101;  // <formatted_time_args>
+//		final int SYM_FORMATTED_TIME_FUNC                        = 1102;  // <FORMATTED_TIME_FUNC>
+//		final int SYM_FP128_USAGE                                = 1103;  // <fp128_usage>
+//		final int SYM_FP32_USAGE                                 = 1104;  // <fp32_usage>
+//		final int SYM_FP64_USAGE                                 = 1105;  // <fp64_usage>
+//		final int SYM_FREE_BODY                                  = 1106;  // <free_body>
+//		final int SYM_FREE_STATEMENT                             = 1107;  // <free_statement>
+//		final int SYM_FROM_IDENTIFIER                            = 1108;  // <from_identifier>
+//		final int SYM_FROM_OPTION                                = 1109;  // <from_option>
+//		final int SYM_FROM_PARAMETER                             = 1110;  // <from_parameter>
+//		final int SYM_FUNC_ARGS                                  = 1111;  // <func_args>
+//		final int SYM_FUNC_MULTI_PARM                            = 1112;  // <func_multi_parm>
+//		final int SYM_FUNC_NO_PARM                               = 1113;  // <func_no_parm>
+//		final int SYM_FUNC_ONE_PARM                              = 1114;  // <func_one_parm>
+//		final int SYM_FUNC_REFMOD                                = 1115;  // <func_refmod>
+//		final int SYM_FUNCTION2                                  = 1116;  // <function>
+//		final int SYM_FUNCTION_DEFINITION                        = 1117;  // <function_definition>
+//		final int SYM_FUNCTION_ID_PARAGRAPH                      = 1118;  // <function_id_paragraph>
+//		final int SYM_FUNCTION_NAME                              = 1119;  // <FUNCTION_NAME>
+//		final int SYM_GE                                         = 1120;  // <ge>
+//		final int SYM_GENERAL_DEVICE_NAME                        = 1121;  // <general_device_name>
+//		final int SYM_GENERATE_BODY                              = 1122;  // <generate_body>
+//		final int SYM_GENERATE_STATEMENT                         = 1123;  // <generate_statement>
+//		final int SYM_GLOBAL_CLAUSE                              = 1124;  // <global_clause>
+//		final int SYM_GO_BODY                                    = 1125;  // <go_body>
+//		final int SYM_GOBACK_STATEMENT                           = 1126;  // <goback_statement>
+//		final int SYM_GOTO_DEPENDING                             = 1127;  // <goto_depending>
+//		final int SYM_GOTO_STATEMENT                             = 1128;  // <goto_statement>
+//		final int SYM_GROUP_INDICATE_CLAUSE                      = 1129;  // <group_indicate_clause>
+//		final int SYM_GT                                         = 1130;  // <gt>
+//		final int SYM_HEADING_CLAUSE                             = 1131;  // <heading_clause>
+//		final int SYM_I_O_CONTROL_CLAUSE                         = 1132;  // <i_o_control_clause>
+//		final int SYM_I_O_CONTROL_LIST                           = 1133;  // <i_o_control_list>
+//		final int SYM_ID_OR_LIT                                  = 1134;  // <id_or_lit>
+//		final int SYM_ID_OR_LIT_OR_FUNC                          = 1135;  // <id_or_lit_or_func>
+//		final int SYM_ID_OR_LIT_OR_FUNC_AS                       = 1136;  // <id_or_lit_or_func_as>
+//		final int SYM_ID_OR_LIT_OR_LENGTH_OR_FUNC                = 1137;  // <id_or_lit_or_length_or_func>
+//		final int SYM_ID_OR_LIT_OR_PROGRAM_NAME                  = 1138;  // <id_or_lit_or_program_name>
+//		final int SYM_IDENTIFICATION_OR_ID                       = 1139;  // <identification_or_id>
+//		final int SYM_IDENTIFIER                                 = 1140;  // <identifier>
+//		final int SYM_IDENTIFIER_1                               = 1141;  // <identifier_1>
+//		final int SYM_IDENTIFIER_LIST                            = 1142;  // <identifier_list>
+//		final int SYM_IDENTIFIER_OR_FILE_NAME                    = 1143;  // <identifier_or_file_name>
+//		final int SYM_IF_ELSE_STATEMENTS                         = 1144;  // <if_else_statements>
+//		final int SYM_IF_STATEMENT                               = 1145;  // <if_statement>
+//		final int SYM_IGNORING_LOCK                              = 1146;  // <ignoring_lock>
+//		final int SYM_IN_OF                                      = 1147;  // <in_of>
+//		final int SYM_INIT_OR_RECURSE                            = 1148;  // <init_or_recurse>
+//		final int SYM_INIT_OR_RECURSE_AND_COMMON                 = 1149;  // <init_or_recurse_and_common>
+//		final int SYM_INITIALIZE_BODY                            = 1150;  // <initialize_body>
+//		final int SYM_INITIALIZE_CATEGORY                        = 1151;  // <initialize_category>
+//		final int SYM_INITIALIZE_REPLACING_ITEM                  = 1152;  // <initialize_replacing_item>
+//		final int SYM_INITIALIZE_REPLACING_LIST                  = 1153;  // <initialize_replacing_list>
+//		final int SYM_INITIALIZE_STATEMENT                       = 1154;  // <initialize_statement>
+//		final int SYM_INITIATE_BODY                              = 1155;  // <initiate_body>
+//		final int SYM_INITIATE_STATEMENT                         = 1156;  // <initiate_statement>
+//		final int SYM_INSPECT_AFTER                              = 1157;  // <inspect_after>
+//		final int SYM_INSPECT_BEFORE                             = 1158;  // <inspect_before>
+//		final int SYM_INSPECT_BODY                               = 1159;  // <inspect_body>
+//		final int SYM_INSPECT_CONVERTING                         = 1160;  // <inspect_converting>
+//		final int SYM_INSPECT_LIST                               = 1161;  // <inspect_list>
+//		final int SYM_INSPECT_REGION                             = 1162;  // <inspect_region>
+//		final int SYM_INSPECT_REPLACING                          = 1163;  // <inspect_replacing>
+//		final int SYM_INSPECT_STATEMENT                          = 1164;  // <inspect_statement>
+//		final int SYM_INSPECT_TALLYING                           = 1165;  // <inspect_tallying>
+//		final int SYM_INTEGER2                                   = 1166;  // <integer>
+//		final int SYM_INTEGER_LABEL                              = 1167;  // <integer_label>
+//		final int SYM_INTEGER_LIST                               = 1168;  // <integer_list>
+//		final int SYM_INTEGER_OR_WORD                            = 1169;  // <integer_or_word>
+//		final int SYM_INTERMEDIATE_ROUNDING_CHOICE               = 1170;  // <intermediate_rounding_choice>
+//		final int SYM_INTLITERALORWORD                           = 1171;  // <IntLiteral or WORD>
+//		final int SYM_INVALID_KEY_PHRASES                        = 1172;  // <invalid_key_phrases>
+//		final int SYM_INVALID_KEY_SENTENCE                       = 1173;  // <invalid_key_sentence>
+//		final int SYM_JUSTIFIED_CLAUSE                           = 1174;  // <justified_clause>
+//		final int SYM_KEY_OR_SPLIT_KEYS                          = 1175;  // <key_or_split_keys>
+//		final int SYM_LABEL2                                     = 1176;  // <label>
+//		final int SYM_LABEL_OPTION                               = 1177;  // <label_option>
+//		final int SYM_LABEL_RECORDS_CLAUSE                       = 1178;  // <label_records_clause>
+//		final int SYM_LAST_DETAIL                                = 1179;  // <last_detail>
+//		final int SYM_LAST_HEADING                               = 1180;  // <last_heading>
+//		final int SYM_LE                                         = 1181;  // <le>
+//		final int SYM_LENGTH_ARG                                 = 1182;  // <length_arg>
+//		final int SYM_LENGTH_FUNC                                = 1183;  // <LENGTH_FUNC>
+//		final int SYM_LEVEL_NUMBER                               = 1184;  // <level_number>
+//		final int SYM_LINAGE_BOTTOM                              = 1185;  // <linage_bottom>
+//		final int SYM_LINAGE_CLAUSE                              = 1186;  // <linage_clause>
+//		final int SYM_LINAGE_FOOTING                             = 1187;  // <linage_footing>
+//		final int SYM_LINAGE_LINES                               = 1188;  // <linage_lines>
+//		final int SYM_LINAGE_TOP                                 = 1189;  // <linage_top>
+//		final int SYM_LINE_CLAUSE                                = 1190;  // <line_clause>
+//		final int SYM_LINE_KEYWORD_CLAUSE                        = 1191;  // <line_keyword_clause>
+//		final int SYM_LINE_LINAGE_PAGE_COUNTER                   = 1192;  // <line_linage_page_counter>
+//		final int SYM_LINE_NUMBER                                = 1193;  // <line_number>
+//		final int SYM_LINE_OR_LINES                              = 1194;  // <line_or_lines>
+//		final int SYM_LINE_OR_PLUS                               = 1195;  // <line_or_plus>
+//		final int SYM_LINE_SEQ_DEVICE_NAME                       = 1196;  // <line_seq_device_name>
+//		final int SYM_LINES_OR_NUMBER                            = 1197;  // <lines_or_number>
+//		final int SYM_LIT_OR_LENGTH                              = 1198;  // <lit_or_length>
+//		final int SYM_LITERAL                                    = 1199;  // <literal>
+//		final int SYM_LITERAL_TOK                                = 1200;  // <LITERAL_TOK>
+//		final int SYM_LOCALE_CLASS                               = 1201;  // <locale_class>
+//		final int SYM_LOCALE_CLAUSE                              = 1202;  // <locale_clause>
+//		final int SYM_LOCALE_DATE_FUNC                           = 1203;  // <LOCALE_DATE_FUNC>
+//		final int SYM_LOCALE_DT_ARGS                             = 1204;  // <locale_dt_args>
+//		final int SYM_LOCALE_TIME_FROM_FUNC                      = 1205;  // <LOCALE_TIME_FROM_FUNC>
+//		final int SYM_LOCALE_TIME_FUNC                           = 1206;  // <LOCALE_TIME_FUNC>
+//		final int SYM_LOCK_MODE                                  = 1207;  // <lock_mode>
+//		final int SYM_LOCK_MODE_CLAUSE                           = 1208;  // <lock_mode_clause>
+//		final int SYM_LOCK_PHRASES                               = 1209;  // <lock_phrases>
+//		final int SYM_LOCK_RECORDS                               = 1210;  // <lock_records>
+//		final int SYM_LOWER_CASE_FUNC                            = 1211;  // <LOWER_CASE_FUNC>
+//		final int SYM_LT                                         = 1212;  // <lt>
+//		final int SYM_MERGE_STATEMENT                            = 1213;  // <merge_statement>
+//		final int SYM_MESSAGE_OR_SEGMENT                         = 1214;  // <message_or_segment>
+//		final int SYM_MINUS_MINUS                                = 1215;  // <minus_minus>
+//		final int SYM_MNEMONIC_CHOICES                           = 1216;  // <mnemonic_choices>
+//		final int SYM_MNEMONIC_NAME2                             = 1217;  // <mnemonic_name>
+//		final int SYM_MNEMONIC_NAME_CLAUSE                       = 1218;  // <mnemonic_name_clause>
+//		final int SYM_MNEMONIC_NAME_LIST                         = 1219;  // <mnemonic_name_list>
+//		final int SYM_MNEMONIC_NAME_TOK                          = 1220;  // <MNEMONIC_NAME_TOK>
+//		final int SYM_MODE_IS_BLOCK                              = 1221;  // <mode_is_block>
+//		final int SYM_MOVE_BODY                                  = 1222;  // <move_body>
+//		final int SYM_MOVE_STATEMENT                             = 1223;  // <move_statement>
+//		final int SYM_MULTIPLE_FILE                              = 1224;  // <multiple_file>
+//		final int SYM_MULTIPLE_FILE_LIST                         = 1225;  // <multiple_file_list>
+//		final int SYM_MULTIPLE_FILE_TAPE_CLAUSE                  = 1226;  // <multiple_file_tape_clause>
+//		final int SYM_MULTIPLY_BODY                              = 1227;  // <multiply_body>
+//		final int SYM_MULTIPLY_STATEMENT                         = 1228;  // <multiply_statement>
+//		final int SYM_NAMED_I_O_CD_CLAUSE                        = 1229;  // <named_i_o_cd_clause>
+//		final int SYM_NAMED_I_O_CD_CLAUSES                       = 1230;  // <named_i_o_cd_clauses>
+//		final int SYM_NAMED_INPUT_CD_CLAUSE                      = 1231;  // <named_input_cd_clause>
+//		final int SYM_NAMED_INPUT_CD_CLAUSES                     = 1232;  // <named_input_cd_clauses>
+//		final int SYM_NATIONAL_OF_FUNC                           = 1233;  // <NATIONAL_OF_FUNC>
+//		final int SYM_NESTED_LIST                                = 1234;  // <nested_list>
+//		final int SYM_NEXT_GROUP_CLAUSE                          = 1235;  // <next_group_clause>
+//		final int SYM_NO_DATA_SENTENCE                           = 1236;  // <no_data_sentence>
+//		final int SYM_NO_ECHO2                                   = 1237;  // <no_echo>
+//		final int SYM_NO_OR_INTEGER                              = 1238;  // <no_or_integer>
+//		final int SYM_NOISE                                      = 1239;  // <Noise>
+//		final int SYM_NOISELIST                                  = 1240;  // <NoiseList>
+//		final int SYM_NOT2                                       = 1241;  // <not>
+//		final int SYM_NOT_AT_END_CLAUSE                          = 1242;  // <not_at_end_clause>
+//		final int SYM_NOT_AT_EOP_CLAUSE                          = 1243;  // <not_at_eop_clause>
+//		final int SYM_NOT_EQUAL_OP                               = 1244;  // <not_equal_op>
+//		final int SYM_NOT_ESCAPE_OR_NOT_EXCEPTION                = 1245;  // <not_escape_or_not_exception>
+//		final int SYM_NOT_INVALID_KEY_SENTENCE                   = 1246;  // <not_invalid_key_sentence>
+//		final int SYM_NOT_ON_OVERFLOW                            = 1247;  // <not_on_overflow>
+//		final int SYM_NOT_ON_SIZE_ERROR                          = 1248;  // <not_on_size_error>
+//		final int SYM_NULL_OR_OMITTED                            = 1249;  // <null_or_omitted>
+//		final int SYM_NUM_ID_OR_LIT                              = 1250;  // <num_id_or_lit>
+//		final int SYM_NUMERIC_IDENTIFIER                         = 1251;  // <numeric_identifier>
+//		final int SYM_NUMERIC_SIGN_CLAUSE                        = 1252;  // <numeric_sign_clause>
+//		final int SYM_NUMVALC_ARGS                               = 1253;  // <numvalc_args>
+//		final int SYM_NUMVALC_FUNC                               = 1254;  // <NUMVALC_FUNC>
+//		final int SYM_OBJECT_CHAR_OR_WORD                        = 1255;  // <object_char_or_word>
+//		final int SYM_OBJECT_CLAUSES                             = 1256;  // <object_clauses>
+//		final int SYM_OBJECT_CLAUSES_LIST                        = 1257;  // <object_clauses_list>
+//		final int SYM_OBJECT_COMPUTER_CLASS                      = 1258;  // <object_computer_class>
+//		final int SYM_OBJECT_COMPUTER_MEMORY                     = 1259;  // <object_computer_memory>
+//		final int SYM_OBJECT_COMPUTER_PARAGRAPH                  = 1260;  // <object_computer_paragraph>
+//		final int SYM_OBJECT_COMPUTER_SEGMENT                    = 1261;  // <object_computer_segment>
+//		final int SYM_OBJECT_COMPUTER_SEQUENCE                   = 1262;  // <object_computer_sequence>
+//		final int SYM_OCCURS_CLAUSE                              = 1263;  // <occurs_clause>
+//		final int SYM_OCCURS_INDEX                               = 1264;  // <occurs_index>
+//		final int SYM_OCCURS_INDEX_LIST                          = 1265;  // <occurs_index_list>
+//		final int SYM_OCCURS_INDEXED                             = 1266;  // <occurs_indexed>
+//		final int SYM_OCCURS_KEY_FIELD                           = 1267;  // <occurs_key_field>
+//		final int SYM_OCCURS_KEY_LIST                            = 1268;  // <occurs_key_list>
+//		final int SYM_OCCURS_KEYS                                = 1269;  // <occurs_keys>
+//		final int SYM_ON_OFF_CLAUSES                             = 1270;  // <on_off_clauses>
+//		final int SYM_ON_OFF_CLAUSES_1                           = 1271;  // <on_off_clauses_1>
+//		final int SYM_ON_OR_OFF                                  = 1272;  // <on_or_off>
+//		final int SYM_ON_OVERFLOW                                = 1273;  // <on_overflow>
+//		final int SYM_ON_SIZE_ERROR                              = 1274;  // <on_size_error>
+//		final int SYM_ON_SIZE_ERROR_PHRASES                      = 1275;  // <on_size_error_phrases>
+//		final int SYM_OPEN_BODY                                  = 1276;  // <open_body>
+//		final int SYM_OPEN_FILE_ENTRY                            = 1277;  // <open_file_entry>
+//		final int SYM_OPEN_MODE                                  = 1278;  // <open_mode>
+//		final int SYM_OPEN_OPTION                                = 1279;  // <open_option>
+//		final int SYM_OPEN_SHARING                               = 1280;  // <open_sharing>
+//		final int SYM_OPEN_STATEMENT                             = 1281;  // <open_statement>
+//		final int SYM_OPTIONAL_REFERENCE                         = 1282;  // <optional_reference>
+//		final int SYM_OPTIONAL_REFERENCE_LIST                    = 1283;  // <optional_reference_list>
+//		final int SYM_ORGANIZATION2                              = 1284;  // <organization>
+//		final int SYM_ORGANIZATION_CLAUSE                        = 1285;  // <organization_clause>
+//		final int SYM_OUTPUT_CD_CLAUSE                           = 1286;  // <output_cd_clause>
+//		final int SYM_OUTPUT_CD_CLAUSES                          = 1287;  // <output_cd_clauses>
+//		final int SYM_PADDING_CHARACTER_CLAUSE                   = 1288;  // <padding_character_clause>
+//		final int SYM_PAGE_DETAIL                                = 1289;  // <page_detail>
+//		final int SYM_PAGE_LIMIT_CLAUSE                          = 1290;  // <page_limit_clause>
+//		final int SYM_PAGE_LINE_COLUMN                           = 1291;  // <page_line_column>
+//		final int SYM_PARAGRAPH_HEADER                           = 1292;  // <paragraph_header>
+//		final int SYM_PARTIAL_EXPR                               = 1293;  // <partial_expr>
+//		final int SYM_PERFORM_BODY                               = 1294;  // <perform_body>
+//		final int SYM_PERFORM_OPTION                             = 1295;  // <perform_option>
+//		final int SYM_PERFORM_PROCEDURE                          = 1296;  // <perform_procedure>
+//		final int SYM_PERFORM_STATEMENT                          = 1297;  // <perform_statement>
+//		final int SYM_PERFORM_TEST                               = 1298;  // <perform_test>
+//		final int SYM_PERFORM_VARYING                            = 1299;  // <perform_varying>
+//		final int SYM_PERFORM_VARYING_LIST                       = 1300;  // <perform_varying_list>
+//		final int SYM_PF_KEYWORD                                 = 1301;  // <pf_keyword>
+//		final int SYM_PH_KEYWORD                                 = 1302;  // <ph_keyword>
+//		final int SYM_PICTURE_CLAUSE                             = 1303;  // <picture_clause>
+//		final int SYM_PLUS_PLUS                                  = 1304;  // <plus_plus>
+//		final int SYM_POINTER_LEN                                = 1305;  // <pointer_len>
+//		final int SYM_POS_NUM_ID_OR_LIT                          = 1306;  // <pos_num_id_or_lit>
+//		final int SYM_POSITIVE_ID_OR_LIT                         = 1307;  // <positive_id_or_lit>
+//		final int SYM_PRESENT_WHEN_CONDITION                     = 1308;  // <present_when_condition>
+//		final int SYM_PRINTER_NAME                               = 1309;  // <printer_name>
+//		final int SYM_PROCEDURE2                                 = 1310;  // <procedure>
+//		final int SYM_PROCEDURE_NAME                             = 1311;  // <procedure_name>
+//		final int SYM_PROCEDURE_NAME_LIST                        = 1312;  // <procedure_name_list>
+//		final int SYM_PROCEDURE_PARAM                            = 1313;  // <procedure_param>
+//		final int SYM_PROCEDURE_PARAM_LIST                       = 1314;  // <procedure_param_list>
+//		final int SYM_PROG_COLL_SEQUENCE                         = 1315;  // <prog_coll_sequence>
+//		final int SYM_PROG_OR_ENTRY                              = 1316;  // <prog_or_entry>
+//		final int SYM_PROGRAM_DEFINITION                         = 1317;  // <program_definition>
+//		final int SYM_PROGRAM_ID_NAME                            = 1318;  // <program_id_name>
+//		final int SYM_PROGRAM_ID_PARAGRAPH                       = 1319;  // <program_id_paragraph>
+//		final int SYM_PROGRAM_NAME                               = 1320;  // <PROGRAM_NAME>
+//		final int SYM_PROGRAM_OR_PROTOTYPE                       = 1321;  // <program_or_prototype>
+//		final int SYM_PROGRAM_START_END                          = 1322;  // <program_start_end>
+//		final int SYM_PROGRAM_TYPE_CLAUSE                        = 1323;  // <program_type_clause>
+//		final int SYM_PURGE_STATEMENT                            = 1324;  // <purge_statement>
+//		final int SYM_QUALIFIED_WORD                             = 1325;  // <qualified_word>
+//		final int SYM_READ_BODY                                  = 1326;  // <read_body>
+//		final int SYM_READ_HANDLER                               = 1327;  // <read_handler>
+//		final int SYM_READ_INTO                                  = 1328;  // <read_into>
+//		final int SYM_READ_KEY                                   = 1329;  // <read_key>
+//		final int SYM_READ_STATEMENT                             = 1330;  // <read_statement>
+//		final int SYM_READY_STATEMENT                            = 1331;  // <ready_statement>
+//		final int SYM_RECEIVE_BODY                               = 1332;  // <receive_body>
+//		final int SYM_RECEIVE_STATEMENT                          = 1333;  // <receive_statement>
+//		final int SYM_RECORD_CLAUSE                              = 1334;  // <record_clause>
+//		final int SYM_RECORD_DELIMITER_CLAUSE                    = 1335;  // <record_delimiter_clause>
+//		final int SYM_RECORD_DESCRIPTION_LIST                    = 1336;  // <record_description_list>
+//		final int SYM_RECORD_KEY_CLAUSE                          = 1337;  // <record_key_clause>
+//		final int SYM_RECORD_NAME                                = 1338;  // <record_name>
+//		final int SYM_RECORDING_MODE                             = 1339;  // <recording_mode>
+//		final int SYM_RECORDING_MODE_CLAUSE                      = 1340;  // <recording_mode_clause>
+//		final int SYM_RECORDS2                                   = 1341;  // <records>
+//		final int SYM_REDEFINES_CLAUSE                           = 1342;  // <redefines_clause>
+//		final int SYM_REEL_OR_UNIT                               = 1343;  // <reel_or_unit>
+//		final int SYM_REFERENCE2                                 = 1344;  // <reference>
+//		final int SYM_REFERENCE_LIST                             = 1345;  // <reference_list>
+//		final int SYM_REFERENCE_OR_LITERAL                       = 1346;  // <reference_or_literal>
+//		final int SYM_REFMOD                                     = 1347;  // <refmod>
+//		final int SYM_RELATIVE_KEY_CLAUSE                        = 1348;  // <relative_key_clause>
+//		final int SYM_RELEASE_BODY                               = 1349;  // <release_body>
+//		final int SYM_RELEASE_STATEMENT                          = 1350;  // <release_statement>
+//		final int SYM_RENAMES_ENTRY                              = 1351;  // <renames_entry>
+//		final int SYM_REP_KEYWORD                                = 1352;  // <rep_keyword>
+//		final int SYM_REP_NAME_LIST                              = 1353;  // <rep_name_list>
+//		final int SYM_REPLACING_ITEM                             = 1354;  // <replacing_item>
+//		final int SYM_REPLACING_LIST                             = 1355;  // <replacing_list>
+//		final int SYM_REPLACING_REGION                           = 1356;  // <replacing_region>
+//		final int SYM_REPORT_CLAUSE                              = 1357;  // <report_clause>
+//		final int SYM_REPORT_COL_INTEGER_LIST                    = 1358;  // <report_col_integer_list>
+//		final int SYM_REPORT_DESCRIPTION                         = 1359;  // <report_description>
+//		final int SYM_REPORT_DESCRIPTION_OPTION                  = 1360;  // <report_description_option>
+//		final int SYM_REPORT_GROUP_DESCRIPTION_ENTRY             = 1361;  // <report_group_description_entry>
+//		final int SYM_REPORT_GROUP_OPTION                        = 1362;  // <report_group_option>
+//		final int SYM_REPORT_INTEGER                             = 1363;  // <report_integer>
+//		final int SYM_REPORT_KEYWORD                             = 1364;  // <report_keyword>
+//		final int SYM_REPORT_LINE_INTEGER_LIST                   = 1365;  // <report_line_integer_list>
+//		final int SYM_REPORT_NAME                                = 1366;  // <report_name>
+//		final int SYM_REPORT_OCCURS_CLAUSE                       = 1367;  // <report_occurs_clause>
+//		final int SYM_REPORT_USAGE_CLAUSE                        = 1368;  // <report_usage_clause>
+//		final int SYM_REPORT_X_LIST                              = 1369;  // <report_x_list>
+//		final int SYM_REPOSITORY_LIST                            = 1370;  // <repository_list>
+//		final int SYM_REPOSITORY_NAME                            = 1371;  // <repository_name>
+//		final int SYM_REPOSITORY_NAME_LIST                       = 1372;  // <repository_name_list>
+//		final int SYM_RESERVE_CLAUSE                             = 1373;  // <reserve_clause>
+//		final int SYM_RESET_STATEMENT                            = 1374;  // <reset_statement>
+//		final int SYM_RETRY_OPTIONS                              = 1375;  // <retry_options>
+//		final int SYM_RETRY_PHRASE                               = 1376;  // <retry_phrase>
+//		final int SYM_RETURN_AT_END                              = 1377;  // <return_at_end>
+//		final int SYM_RETURN_BODY                                = 1378;  // <return_body>
+//		final int SYM_RETURN_GIVE                                = 1379;  // <return_give>
+//		final int SYM_RETURN_STATEMENT                           = 1380;  // <return_statement>
+//		final int SYM_REVERSE_FUNC                               = 1381;  // <REVERSE_FUNC>
+//		final int SYM_REVERSE_VIDEO2                             = 1382;  // <reverse_video>
+//		final int SYM_REWRITE_BODY                               = 1383;  // <rewrite_body>
+//		final int SYM_REWRITE_STATEMENT                          = 1384;  // <rewrite_statement>
+//		final int SYM_RF_KEYWORD                                 = 1385;  // <rf_keyword>
+//		final int SYM_RH_KEYWORD                                 = 1386;  // <rh_keyword>
+//		final int SYM_ROLLBACK_STATEMENT                         = 1387;  // <rollback_statement>
+//		final int SYM_ROUND_CHOICE                               = 1388;  // <round_choice>
+//		final int SYM_ROUND_MODE                                 = 1389;  // <round_mode>
+//		final int SYM_SAME_CLAUSE                                = 1390;  // <same_clause>
+//		final int SYM_SCOPE_TERMINATOR                           = 1391;  // <scope_terminator>
+//		final int SYM_SCREEN_COL_NUMBER                          = 1392;  // <screen_col_number>
+//		final int SYM_SCREEN_CONTROL2                            = 1393;  // <screen_control>
+//		final int SYM_SCREEN_DESCRIPTION                         = 1394;  // <screen_description>
+//		final int SYM_SCREEN_DESCRIPTION_LIST                    = 1395;  // <screen_description_list>
+//		final int SYM_SCREEN_GLOBAL_CLAUSE                       = 1396;  // <screen_global_clause>
+//		final int SYM_SCREEN_LINE_NUMBER                         = 1397;  // <screen_line_number>
+//		final int SYM_SCREEN_OCCURS_CLAUSE                       = 1398;  // <screen_occurs_clause>
+//		final int SYM_SCREEN_OPTION                              = 1399;  // <screen_option>
+//		final int SYM_SCREEN_OR_DEVICE_DISPLAY                   = 1400;  // <screen_or_device_display>
+//		final int SYM_SCROLL_LINE_OR_LINES                       = 1401;  // <scroll_line_or_lines>
+//		final int SYM_SEARCH_AT_END                              = 1402;  // <search_at_end>
+//		final int SYM_SEARCH_BODY                                = 1403;  // <search_body>
+//		final int SYM_SEARCH_STATEMENT                           = 1404;  // <search_statement>
+//		final int SYM_SEARCH_VARYING                             = 1405;  // <search_varying>
+//		final int SYM_SEARCH_WHEN                                = 1406;  // <search_when>
+//		final int SYM_SEARCH_WHENS                               = 1407;  // <search_whens>
+//		final int SYM_SECTION_HEADER                             = 1408;  // <section_header>
+//		final int SYM_SELECT_CLAUSE                              = 1409;  // <select_clause>
+//		final int SYM_SEND_BODY                                  = 1410;  // <send_body>
+//		final int SYM_SEND_IDENTIFIER                            = 1411;  // <send_identifier>
+//		final int SYM_SEND_STATEMENT                             = 1412;  // <send_statement>
+//		final int SYM_SET_ATTR                                   = 1413;  // <set_attr>
+//		final int SYM_SET_ATTR_CLAUSE                            = 1414;  // <set_attr_clause>
+//		final int SYM_SET_ATTR_ONE                               = 1415;  // <set_attr_one>
+//		final int SYM_SET_BODY                                   = 1416;  // <set_body>
+//		final int SYM_SET_ENVIRONMENT                            = 1417;  // <set_environment>
+//		final int SYM_SET_LAST_EXCEPTION_TO_OFF                  = 1418;  // <set_last_exception_to_off>
+//		final int SYM_SET_STATEMENT                              = 1419;  // <set_statement>
+//		final int SYM_SET_TO                                     = 1420;  // <set_to>
+//		final int SYM_SET_TO_ON_OFF                              = 1421;  // <set_to_on_off>
+//		final int SYM_SET_TO_ON_OFF_SEQUENCE                     = 1422;  // <set_to_on_off_sequence>
+//		final int SYM_SET_TO_TRUE_FALSE                          = 1423;  // <set_to_true_false>
+//		final int SYM_SET_TO_TRUE_FALSE_SEQUENCE                 = 1424;  // <set_to_true_false_sequence>
+//		final int SYM_SET_UP_DOWN                                = 1425;  // <set_up_down>
+//		final int SYM_SHARING_CLAUSE                             = 1426;  // <sharing_clause>
+//		final int SYM_SHARING_OPTION                             = 1427;  // <sharing_option>
+//		final int SYM_SIGN_CLAUSE                                = 1428;  // <sign_clause>
+//		final int SYM_SIMPLE_ALL_VALUE                           = 1429;  // <simple_all_value>
+//		final int SYM_SIMPLE_DISPLAY_ALL_VALUE                   = 1430;  // <simple_display_all_value>
+//		final int SYM_SIMPLE_DISPLAY_VALUE                       = 1431;  // <simple_display_value>
+//		final int SYM_SIMPLE_PROG                                = 1432;  // <simple_prog>
+//		final int SYM_SIMPLE_VALUE                               = 1433;  // <simple_value>
+//		final int SYM_SINGLE_REFERENCE                           = 1434;  // <single_reference>
+//		final int SYM_SIZE_IS_INTEGER                            = 1435;  // <size_is_integer>
+//		final int SYM_SIZE_OR_LENGTH                             = 1436;  // <size_or_length>
+//		final int SYM_SIZELEN_CLAUSE                             = 1437;  // <sizelen_clause>
+//		final int SYM_SORT_BODY                                  = 1438;  // <sort_body>
+//		final int SYM_SORT_COLLATING                             = 1439;  // <sort_collating>
+//		final int SYM_SORT_INPUT                                 = 1440;  // <sort_input>
+//		final int SYM_SORT_KEY_LIST                              = 1441;  // <sort_key_list>
+//		final int SYM_SORT_OUTPUT                                = 1442;  // <sort_output>
+//		final int SYM_SORT_STATEMENT                             = 1443;  // <sort_statement>
+//		final int SYM_SOURCE_CLAUSE                              = 1444;  // <source_clause>
+//		final int SYM_SOURCE_COMPUTER_PARAGRAPH                  = 1445;  // <source_computer_paragraph>
+//		final int SYM_SOURCE_ELEMENT                             = 1446;  // <source_element>
+//		final int SYM_SOURCE_ELEMENT_LIST                        = 1447;  // <source_element_list>
+//		final int SYM_SPACE_OR_ZERO                              = 1448;  // <space_or_zero>
+//		final int SYM_SPECIAL_NAME                               = 1449;  // <special_name>
+//		final int SYM_SPECIAL_NAME_LIST                          = 1450;  // <special_name_list>
+//		final int SYM_SPECIAL_NAMES_SENTENCE_LIST                = 1451;  // <special_names_sentence_list>
+//		final int SYM_START2                                     = 1452;  // <start>
+//		final int SYM_START_BODY                                 = 1453;  // <start_body>
+//		final int SYM_START_KEY                                  = 1454;  // <start_key>
+//		final int SYM_START_OP                                   = 1455;  // <start_op>
+//		final int SYM_START_STATEMENT                            = 1456;  // <start_statement>
+//		final int SYM_STATEMENT                                  = 1457;  // <statement>
+//		final int SYM_STATEMENT_LIST                             = 1458;  // <statement_list>
+//		final int SYM_STATEMENTS                                 = 1459;  // <statements>
+//		final int SYM_STOP_LITERAL                               = 1460;  // <stop_literal>
+//		final int SYM_STOP_RETURNING                             = 1461;  // <stop_returning>
+//		final int SYM_STOP_STATEMENT                             = 1462;  // <stop_statement>
+//		final int SYM_STRING_BODY                                = 1463;  // <string_body>
+//		final int SYM_STRING_DELIMITER                           = 1464;  // <string_delimiter>
+//		final int SYM_STRING_ITEM                                = 1465;  // <string_item>
+//		final int SYM_STRING_ITEM_LIST                           = 1466;  // <string_item_list>
+//		final int SYM_STRING_STATEMENT                           = 1467;  // <string_statement>
+//		final int SYM_SUB_IDENTIFIER                             = 1468;  // <sub_identifier>
+//		final int SYM_SUB_IDENTIFIER_1                           = 1469;  // <sub_identifier_1>
+//		final int SYM_SUBREF                                     = 1470;  // <subref>
+//		final int SYM_SUBSTITUTE_CASE_FUNC                       = 1471;  // <SUBSTITUTE_CASE_FUNC>
+//		final int SYM_SUBSTITUTE_FUNC                            = 1472;  // <SUBSTITUTE_FUNC>
+//		final int SYM_SUBTRACT_BODY                              = 1473;  // <subtract_body>
+//		final int SYM_SUBTRACT_STATEMENT                         = 1474;  // <subtract_statement>
+//		final int SYM_SUM_CLAUSE_LIST                            = 1475;  // <sum_clause_list>
+//		final int SYM_SUPPRESS_STATEMENT                         = 1476;  // <suppress_statement>
+//		final int SYM_SYMBOLIC_CHARACTERS_CLAUSE                 = 1477;  // <symbolic_characters_clause>
+//		final int SYM_SYMBOLIC_CHARS_LIST                        = 1478;  // <symbolic_chars_list>
+//		final int SYM_SYMBOLIC_CHARS_PHRASE                      = 1479;  // <symbolic_chars_phrase>
+//		final int SYM_SYMBOLIC_COLLECTION                        = 1480;  // <symbolic_collection>
+//		final int SYM_SYMBOLIC_INTEGER                           = 1481;  // <symbolic_integer>
+//		final int SYM_SYNCHRONIZED_CLAUSE                        = 1482;  // <synchronized_clause>
+//		final int SYM_TABLE_IDENTIFIER                           = 1483;  // <table_identifier>
+//		final int SYM_TABLE_NAME                                 = 1484;  // <table_name>
+//		final int SYM_TALLYING_ITEM                              = 1485;  // <tallying_item>
+//		final int SYM_TALLYING_LIST                              = 1486;  // <tallying_list>
+//		final int SYM_TARGET_IDENTIFIER                          = 1487;  // <target_identifier>
+//		final int SYM_TARGET_IDENTIFIER_1                        = 1488;  // <target_identifier_1>
+//		final int SYM_TARGET_X                                   = 1489;  // <target_x>
+//		final int SYM_TARGET_X_LIST                              = 1490;  // <target_x_list>
+//		final int SYM_TERM_OR_DOT                                = 1491;  // <term_or_dot>
+//		final int SYM_TERMINATE_BODY                             = 1492;  // <terminate_body>
+//		final int SYM_TERMINATE_STATEMENT                        = 1493;  // <terminate_statement>
+//		final int SYM_TO_INIT_VAL                                = 1494;  // <to_init_val>
+//		final int SYM_TRANSFORM_BODY                             = 1495;  // <transform_body>
+//		final int SYM_TRANSFORM_STATEMENT                        = 1496;  // <transform_statement>
+//		final int SYM_TRIM_ARGS                                  = 1497;  // <trim_args>
+//		final int SYM_TRIM_FUNC                                  = 1498;  // <TRIM_FUNC>
+//		final int SYM_TYPE_CLAUSE                                = 1499;  // <type_clause>
+//		final int SYM_TYPE_OPTION                                = 1500;  // <type_option>
+//		final int SYM_U_OR_S                                     = 1501;  // <u_or_s>
+//		final int SYM_UNDEFINED_WORD                             = 1502;  // <undefined_word>
+//		final int SYM_UNIQUE_WORD                                = 1503;  // <unique_word>
+//		final int SYM_UNLOCK_BODY                                = 1504;  // <unlock_body>
+//		final int SYM_UNLOCK_STATEMENT                           = 1505;  // <unlock_statement>
+//		final int SYM_UNNAMED_I_O_CD_CLAUSES                     = 1506;  // <unnamed_i_o_cd_clauses>
+//		final int SYM_UNNAMED_INPUT_CD_CLAUSES                   = 1507;  // <unnamed_input_cd_clauses>
+//		final int SYM_UNSTRING_BODY                              = 1508;  // <unstring_body>
+//		final int SYM_UNSTRING_DELIMITED_ITEM                    = 1509;  // <unstring_delimited_item>
+//		final int SYM_UNSTRING_DELIMITED_LIST                    = 1510;  // <unstring_delimited_list>
+//		final int SYM_UNSTRING_INTO                              = 1511;  // <unstring_into>
+//		final int SYM_UNSTRING_INTO_ITEM                         = 1512;  // <unstring_into_item>
+//		final int SYM_UNSTRING_STATEMENT                         = 1513;  // <unstring_statement>
+//		final int SYM_UP_OR_DOWN                                 = 1514;  // <up_or_down>
+//		final int SYM_UPDATE_DEFAULT                             = 1515;  // <update_default>
+//		final int SYM_UPPER_CASE_FUNC                            = 1516;  // <UPPER_CASE_FUNC>
+//		final int SYM_USAGE2                                     = 1517;  // <usage>
+//		final int SYM_USAGE_CLAUSE                               = 1518;  // <usage_clause>
+//		final int SYM_USE_DEBUGGING                              = 1519;  // <use_debugging>
+//		final int SYM_USE_EX_KEYW                                = 1520;  // <use_ex_keyw>
+//		final int SYM_USE_EXCEPTION                              = 1521;  // <use_exception>
+//		final int SYM_USE_FILE_EXCEPTION                         = 1522;  // <use_file_exception>
+//		final int SYM_USE_FILE_EXCEPTION_TARGET                  = 1523;  // <use_file_exception_target>
+//		final int SYM_USE_GLOBAL                                 = 1524;  // <use_global>
+//		final int SYM_USE_PHRASE                                 = 1525;  // <use_phrase>
+//		final int SYM_USE_REPORTING                              = 1526;  // <use_reporting>
+//		final int SYM_USE_START_END                              = 1527;  // <use_start_end>
+//		final int SYM_USE_STATEMENT                              = 1528;  // <use_statement>
+//		final int SYM_USER_ENTRY_NAME                            = 1529;  // <user_entry_name>
+//		final int SYM_USER_FUNCTION_NAME                         = 1530;  // <USER_FUNCTION_NAME>
+//		final int SYM_VALUE_CLAUSE                               = 1531;  // <value_clause>
+//		final int SYM_VALUE_ITEM                                 = 1532;  // <value_item>
+//		final int SYM_VALUE_ITEM_LIST                            = 1533;  // <value_item_list>
+//		final int SYM_VALUE_OF_CLAUSE                            = 1534;  // <value_of_clause>
+//		final int SYM_VALUEOF_NAME                               = 1535;  // <valueof_name>
+//		final int SYM_VARYING_CLAUSE                             = 1536;  // <varying_clause>
+//		final int SYM_VERB                                       = 1537;  // <verb>
+//		final int SYM_WHEN_COMPILED_FUNC                         = 1538;  // <WHEN_COMPILED_FUNC>
+//		final int SYM_WITH_DATA_SENTENCE                         = 1539;  // <with_data_sentence>
+//		final int SYM_WITH_DUPS                                  = 1540;  // <with_dups>
+//		final int SYM_WITH_INDICATOR                             = 1541;  // <with_indicator>
+//		final int SYM_WITH_LOCK                                  = 1542;  // <with_lock>
+//		final int SYM_WORD                                       = 1543;  // <WORD>
+//		final int SYM_WRITE_BODY                                 = 1544;  // <write_body>
+//		final int SYM_WRITE_HANDLER                              = 1545;  // <write_handler>
+//		final int SYM_WRITE_OPTION                               = 1546;  // <write_option>
+//		final int SYM_WRITE_STATEMENT                            = 1547;  // <write_statement>
+//		final int SYM_X                                          = 1548;  // <x>
+//		final int SYM_X_COMMON                                   = 1549;  // <x_common>
+//		final int SYM_X_LIST                                     = 1550;  // <x_list>
 //	};
 
 	// Symbolic constants naming the table indices of the grammar rules
@@ -2400,8 +2406,8 @@ public class COBOLParser extends CodeParser
 //		final int PROD_CONST_GLOBAL                                                          =  572;  // <const_global> ::=
 		final int PROD_CONST_GLOBAL_GLOBAL                                                   =  573;  // <const_global> ::= <_is> GLOBAL
 //		final int PROD_LIT_OR_LENGTH                                                         =  574;  // <lit_or_length> ::= <literal>
-//		final int PROD_LIT_OR_LENGTH_LENGTH_OF                                               =  575;  // <lit_or_length> ::= 'LENGTH_OF' <con_identifier>
-//		final int PROD_LIT_OR_LENGTH_LENGTH                                                  =  576;  // <lit_or_length> ::= LENGTH <con_identifier>
+		final int PROD_LIT_OR_LENGTH_LENGTH_OF                                               =  575;  // <lit_or_length> ::= 'LENGTH_OF' <con_identifier>
+		final int PROD_LIT_OR_LENGTH_LENGTH                                                  =  576;  // <lit_or_length> ::= LENGTH <con_identifier>
 //		final int PROD_LIT_OR_LENGTH_BYTE_LENGTH                                             =  577;  // <lit_or_length> ::= 'BYTE_LENGTH' <_of> <con_identifier>
 //		final int PROD_CON_IDENTIFIER                                                        =  578;  // <con_identifier> ::= <identifier_1>
 //		final int PROD_CON_IDENTIFIER_BINARY_CHAR                                            =  579;  // <con_identifier> ::= 'BINARY_CHAR'
@@ -2997,7 +3003,7 @@ public class COBOLParser extends CodeParser
 //		final int PROD_DISPLAY_LIST2                                                         = 1169;  // <display_list> ::= <display_list> <display_atom>
 		final int PROD_DISPLAY_ATOM                                                          = 1170;  // <display_atom> ::= <disp_list> <display_clauses>
 //		final int PROD_DISP_LIST                                                             = 1171;  // <disp_list> ::= <x_list>
-		final int PROD_DISP_LIST_OMITTED                                                     = 1172;  // <disp_list> ::= OMITTED
+//		final int PROD_DISP_LIST_OMITTED                                                     = 1172;  // <disp_list> ::= OMITTED
 //		final int PROD_DISPLAY_CLAUSES                                                       = 1173;  // <display_clauses> ::= <display_clause>
 //		final int PROD_DISPLAY_CLAUSES2                                                      = 1174;  // <display_clauses> ::= <display_clauses> <display_clause>
 //		final int PROD_DISPLAY_CLAUSE                                                        = 1175;  // <display_clause> ::= <display_upon>
@@ -3553,7 +3559,7 @@ public class COBOLParser extends CodeParser
 		final int PROD_EXPR_TOKEN_OR                                                         = 1725;  // <expr_token> ::= OR
 //		final int PROD__NOT                                                                  = 1726;  // <_not> ::=
 		final int PROD__NOT2                                                                 = 1727;  // <_not> ::= <not>
-//		final int PROD_NOT_NOT                                                               = 1728;  // <not> ::= NOT
+		final int PROD_NOT_NOT                                                               = 1728;  // <not> ::= NOT
 		final int PROD_CONDITION_OR_CLASS                                                    = 1729;  // <condition_or_class> ::= <CLASS_NAME>
 //		final int PROD_CONDITION_OR_CLASS2                                                   = 1730;  // <condition_or_class> ::= <condition_op>
 //		final int PROD_CONDITION_OP                                                          = 1731;  // <condition_op> ::= <eq>
@@ -3652,9 +3658,9 @@ public class COBOLParser extends CodeParser
 //		final int PROD_X_COMMON                                                              = 1824;  // <x_common> ::= <literal>
 //		final int PROD_X_COMMON2                                                             = 1825;  // <x_common> ::= <function>
 //		final int PROD_X_COMMON3                                                             = 1826;  // <x_common> ::= <line_linage_page_counter>
-//		final int PROD_X_COMMON_LENGTH_OF                                                    = 1827;  // <x_common> ::= 'LENGTH_OF' <identifier_1>
-//		final int PROD_X_COMMON_LENGTH_OF2                                                   = 1828;  // <x_common> ::= 'LENGTH_OF' <basic_literal>
-//		final int PROD_X_COMMON_LENGTH_OF3                                                   = 1829;  // <x_common> ::= 'LENGTH_OF' <function>
+		final int PROD_X_COMMON_LENGTH_OF                                                    = 1827;  // <x_common> ::= 'LENGTH_OF' <identifier_1>
+		final int PROD_X_COMMON_LENGTH_OF2                                                   = 1828;  // <x_common> ::= 'LENGTH_OF' <basic_literal>
+		final int PROD_X_COMMON_LENGTH_OF3                                                   = 1829;  // <x_common> ::= 'LENGTH_OF' <function>
 //		final int PROD_X_COMMON_ADDRESS                                                      = 1830;  // <x_common> ::= ADDRESS <_of> <prog_or_entry> <alnum_or_id>
 //		final int PROD_X_COMMON_ADDRESS2                                                     = 1831;  // <x_common> ::= ADDRESS <_of> <identifier_1>
 //		final int PROD_X_COMMON4                                                             = 1832;  // <x_common> ::= <MNEMONIC_NAME_TOK>
@@ -4434,7 +4440,10 @@ public class COBOLParser extends CodeParser
 	private static final int TEXTCOLUMN_VARIABLE = 500;
 
 	// START KGU#946 2021-03-01: Bugfix #851/3
-	private static final Matcher LEFT_DIGIT_SEQUENCE = Pattern.compile("^(.*?\\W)?[0-9]+$").matcher("");
+	// START KGU#946 2022-08-14: Bugfix #851/3 revised (no digit lef of decmal point required)
+	//private static final Matcher LEFT_DIGIT_SEQUENCE = Pattern.compile("^(.*?\\W)?[0-9]+$").matcher("");
+	private static final Matcher LEFT_DIGIT_SEQUENCE = Pattern.compile("^(.*?\\W)?[0-9]*$").matcher("");
+	// END KGU#946 2022-08-14
 	private static final Matcher RIGHT_DIGIT_SEQUENCE = Pattern.compile("^[0-9]+([eE][+-]?[0-9]+)?(\\W.*)?$").matcher("");
 	/** The decimal point surrogate used in the grammar to fix DecimalLiteral and FloatLiteral */
 	private static final String DEC_PT_SURR = "\u25AA";
@@ -5681,10 +5690,21 @@ public class COBOLParser extends CodeParser
 	// END KGU#614 2018-12-17
 
 	private static Matcher mCopyFunction = Pattern.compile("^copy\\((.*),(.*),(.*)\\)$").matcher("");
-	// START KGU#402 2019-03-07: Issue #407
-	private static final Matcher STRING_MATCHER = Pattern.compile("^[HhXxZz]?([\"][^\"]*[\"]|['][^']*['])$").matcher("");
-	private static final Matcher NUMBER_MATCHER = Pattern.compile("^[+-]?[0-9]+([.][0-9]*)?(E[+-]?[0-9]+)?$").matcher("");
+	// START KGU#402 2019-03-07: Issue #407 / 2022-08-16 no longer needed
+	//private static final Matcher STRING_MATCHER = Pattern.compile("^[HhXxZz]?([\"][^\"]*[\"]|['][^']*['])$").matcher("");
+	//private static final Matcher NUMBER_MATCHER = Pattern.compile("^[+-]?[0-9]+([.][0-9]*)?(E[+-]?[0-9]+)?$").matcher("");
 	// END KGU#402 2019-03-07
+	// START KGU#1050 2022-01-08: Bugfix #1058 Insufficient handling of NOT prefixes
+	//private static final Matcher UNEQUAL_MATCHER = Pattern.compile("(.*?\\W)\\s*" + BString.breakup("NOT", true) + "\\s*=\\s*(.*?)").matcher("");
+	private static final StringList NEGATABLE_REL_OPS = new StringList(new String[] {
+			"=",
+			"<",
+			">",
+			"<=",
+			">=",
+			"<>"
+	});
+	// END KGU#1050 2022-01-08
 
 	// START KGU#847 2020-04-20: Issue #851 Mechanism to ensure sensible declarations for generated variables
 	private static final String AUX_VAR_DECL_COMMENT = "Auxiliary variables introduced by Structorizer on parsing";
@@ -5895,7 +5915,10 @@ public class COBOLParser extends CodeParser
 
 			// add to NSD
 			Call sec = new Call(name);
-			sec.setDisabled(true);
+			// START KGU#1055 2022-08-16: Issue #1064 Now permanently disabled via Java import mechanism
+			//sec.setDisabled(true);
+			sec.isMethodDeclaration = true;
+			// END KGU#1055 202208-16
 			_parentNode.addElement(this.equipWithSourceComment(sec, _reduction));
 			sec.getComment().insert("Definition of section " + name, 0);
 
@@ -5915,7 +5938,10 @@ public class COBOLParser extends CodeParser
 
 			// add to NSD
 			Call par = new Call(name);
-			par.setDisabled(true);
+			// START KGU#1055 2022-08-16: Issue #1064 Now permanently disabled via Java import mechanism
+			//par.setDisabled(true);
+			par.isMethodDeclaration = true;
+			// END KGU#1055 202208-16
 			_parentNode.addElement(this.equipWithSourceComment(par, _reduction));
 			par.getComment().insert("Definition of paragraph " + name, 0);
 
@@ -7433,7 +7459,7 @@ public class COBOLParser extends CodeParser
 	}
 
 	private void importIf(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
-		String content = this.transformCondition(_reduction.get(1).asReduction(), "");
+		String content = this.transformCondition(_reduction.get(1).asReduction(), null);
 		//System.out.println("\tCondition: " + content);
 		Reduction secRed = _reduction.get(3).asReduction();
 		int secRuleId = secRed.getParent().getTableIndex();
@@ -8168,9 +8194,12 @@ public class COBOLParser extends CodeParser
 	}
 
 	/**
-	 * Builds an approptiate Jump element from the EXIT statement represented by {@code _reduction}.
+	 * Builds an approptiate Jump element from the EXIT statement represented by
+	 *    {@code _reduction}.
+	 *    
 	 * @param _reduction - the top Reduction of the parsed EXIT statement
 	 * @param _parentNode - the Subqueue to append the built elements to
+	 * 
 	 * @throws ParserCancelled
 	 */
 	private final void importExit(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
@@ -8234,12 +8263,14 @@ public class COBOLParser extends CodeParser
 	}
 
 	/**
-	 * Checks whether there is a open section or paragraph context and if so marks it as
-	 * containing an EXIT statement. Returns true if the category of the innermost context
-	 * matches the argument.
+	 * Checks whether there is an open section or paragraph context and if so marks it
+	 * as containing an EXIT statement. Returns true if the category of the innermost
+	 * context matches the argument.
+	 * 
 	 * @param _exitSection - true if the EXIT statement was an EXIT SECTION
-	 * @return true if the current procedure context is a section and {@code _exitSection} is true or
-	 * if the context is a paragraph and {@code _exitSection} is false
+	 * @return {@code true} if the current procedure context is a section and
+	 *    {@code _exitSection} is {@code true} or if the context is a paragraph and
+	 *    {@code _exitSection} is {@code false}
 	 */
 	private void registerExitInProcedureContext(Jump _jump, SoPTarget _target) {
 		if (!this.procedureList.isEmpty()) {
@@ -8259,7 +8290,8 @@ public class COBOLParser extends CodeParser
 	}
 
 	/**
-	 * Builds a loop or Call element from the PERFORM statement represented by {@code _reduction}.
+	 * Builds a loop or Call element from the PERFORM statement represented by
+	 * {@code _reduction}.
 	 * 
 	 * @param _reduction - the top Reduction of the parsed PERFORM statement
 	 * @param _parentNode - the Subqueue to append the built elements to
@@ -8501,8 +8533,10 @@ public class COBOLParser extends CodeParser
 	/**
 	 * Builds Case elements or nested Alternatives from the EVALUATE statement
 	 * represented by {@code _reduction}.
+	 * 
 	 * @param _reduction - the top Reduction of the parsed EVALUATE statement
 	 * @param _parentNode - the Subqueue to append the built elements to
+	 * 
 	 * @throws ParserCancelled
 	 */
 	private final void importEvaluate(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
@@ -8638,7 +8672,7 @@ public class COBOLParser extends CodeParser
 					String cond = "";
 					Reduction condRed = null;
 					/* the token list is reversed -> as long as we get PROD_EVALUATE_WHEN_LIST_WHEN2
-					   we have more braching parts to check */
+					   we have more branching parts to check */
 					if (whenlRed.getParent().getTableIndex() == RuleConstants.PROD_EVALUATE_WHEN_LIST_WHEN2) {
 						condRed = whenlRed.get(2).asReduction();
 						whenlRed = whenlRed.get(0).asReduction();
@@ -8784,16 +8818,20 @@ public class COBOLParser extends CodeParser
 //	}
 
 	/**
-	 * Helper method for importing ADD, SUBTRACT, MULTIPLY, and DIVIDE statements, generates the text for the
-	 * arithmetic instruction series
-	 * @param content - the multi-line Instruction text to append the specified assignment to
+	 * Helper method for importing ADD, SUBTRACT, MULTIPLY, and DIVIDE statements,
+	 * generates the text for the arithmetic instruction series
+	 * 
+	 * @param content - the multi-line Instruction text to append the specified
+	 *     assignment to
 	 * @param operator - the operator symbol t be used (one of "+", "-", "*", "/").
-	 * @param target - the variable (name) the expression result is to be assigned to (as string)
+	 * @param target - the variable (name) the expression result is to be assigned to
+	 *     (as string)
 	 * @param operand1 - first operand (as string)
 	 * @param operand2 - second operand (as string)
-	 * @param prevResult - the result of the previous operation (an expression, preferrably a variable name)
-	 * @return a String representing the result of the assignment (to be used as prevResult in the next
-	 *  call of this routine)
+	 * @param prevResult - the result of the previous operation (an expression,
+	 *     preferrably a variable name)
+	 * @return a String representing the result of the assignment (to be used as
+	 *     prevResult in the next call of this routine)
 	 */
 	private final String addArithmOperation(StringList content, String operator, String target, String operand1, String operand2, String prevResult) {
 		final String rounded = " ROUNDED ";
@@ -9183,12 +9221,15 @@ public class COBOLParser extends CodeParser
 	 * Traverses the recursive rule {@code _paramRed} to obtain a left-to-right
 	 * list of argument declarations (e.g. for a function call), particularly
 	 * coping with omittable arguments.
+	 * 
 	 * @param _paramRed - the rule recursively comprising the argument list
 	 * @param _listHead - the rule head representing the recursive part
 	 * @param _ruleId - id of a rule terminating the exploration
 	 * @param _nameIx - index of the name token within the reduction
 	 * @return list of expressions as strings
-	 * @throws ParserCancelled
+	 * 
+	 * @throws ParserCancelled if the user intervened
+	 * 
 	 * @see #getParameterList(Reduction, String, int, int)
 	 */
 	private final StringList getParameterList(Reduction _paramlRed, String _listHead, int _ruleId, int _nameIx) throws ParserCancelled {
@@ -9256,21 +9297,74 @@ public class COBOLParser extends CodeParser
 	/**
 	 * Derives an expression that makes some sense as Boolean condition from the given
 	 * {@link Reduction} {@code _reduction}. Tries to handle incomplete expressions,
-	 * condition names as variable attributes etc.
+	 * condition names (as variable attributes) etc.
+	 * 
 	 * @param _reduction - the top rule for the condition
 	 * @param _lastSubject - a comparison subject in case of an incomplete expression
-	 * (e.g. the discriminator in a CASE structure)
+	 *     (e.g. the discriminator in a CASE structure)
 	 * @return the derived expression in Structorizer-compatible syntax
+	 * 
 	 * @throws ParserCancelled
 	 */
 	private final String transformCondition(Reduction _reduction, String _lastSubject) throws ParserCancelled {
-		// We must resolve expressions like "expr1 = expr2 or > expr3" or "expr1 = expr2 or expr3".
-		// Unfortunately the <condition> node is not defined as hierarchical expression
-		// tree dominated by operator nodes but as left-recursive "list".
-		// We should transform the left-recursive <expr_tokens> list into a linear
-		// list of <expr_token> we can analyse from left to right, such that we can
-		// identify the first token as comparison operator. (It seems rather simpler
-		// to inspect the prefix of the composed string.)
+		/* We must resolve expressions like "expr1 = expr2 or > expr3" or
+		 * "expr1 = expr2 or expr3".
+		 * Unfortunately the <condition> node is not defined as hierarchical expression
+		 * tree dominated by operator nodes but as left-recursive "list".
+		 * We transform the left-recursive <expr_tokens> list into a linear list of
+		 * <expr_token>.
+		 * The toxic problem here is that after a boolean operator we may have to cope with just
+		 * another right operand or with an operator plus right operand
+		 * or with a complete comparison:
+		 * [IF] X = 5 OR 7
+		 * [IF] X >= 1 AND <= 10
+		 * [IF] X >= 1 AND X <= 10
+		 * [IF] X >= 1 AND Y >= X
+		 * This means: if we find some operand (variable or literal, maybe
+		 * a parenthesis) then it might either be a new left subject or
+		 * another new right operand (associated with the previous operator).
+		 * In the letter case we will also have to insert the prior operand
+		 * and cached operator and keep the previous subject, in the other case
+		 * we would have to override the previous subject. So we will hardly
+		 * know before we inspect the next token. Only that can save us from
+		 * ambiguity:
+		 * We would have to accomplish the partial condition now if a closing
+		 * parenthesis, a boolean operator, or the end of the list is following.
+		 * In any other case we may have to wait. A cached relation operator
+		 * is no criterion (only a missing one would be). We need a state machine
+		 * and some scratch area.
+		 * We start with a given _lastSubject (usually importing a CASE structure)
+		 * or without one (loops and IF instructions).
+		 * With no regard to negation, the following states should be distinguished:
+		 *  0. At the very beginning without lastSubject
+		 *     - identifier or literal: cache as opd1 --> state 1
+		 *     - condition name: write condition, cache var as opd1 --> state 3
+		 *     - '(': write '(' --> state 0
+		 *  1. lastSubject accepted or cached
+		 *     - relation operator: cache ropr, write opd1, ropr --> state 2
+		 *     - postfix condition: write function(opd1), clr ropr --> state 3
+		 *     - ')': write opd1 ')', clear ropr --> state 3
+		 *  2. relation operator accepted
+		 *     - identifier or literal: write opd1 ropr opd2 --> state 3
+		 *     - '(': write '(' --> state 4
+		 *  3. potential end state
+		 *     - ')': write ')' --> state 3
+		 *     - boolean operator: write bopr --> state 4
+		 *     - end of list --> return condition
+		 *  4. opd1 cached, potential continuation with opd1, ropr, or opd2
+		 *     - identifier or literal:
+		 *          a) no ropr: cache as opd1 --> state 1
+		 *          b) ropr cached: cache as opd2 --> state 5
+		 *     - condition name: write condition, cache var as opd1 --> state 3
+		 *     - relation operator: write opd1, ropr --> state 2
+		 *     - postfix condition: write function(opd1) --> state 3
+		 *     - '(': write '(' --> state 4
+		 *  5. New opd1 or opd2 accepted, ropr cached
+		 *     - relational operator: opd1 := opd2, cache ropr -> state 2
+		 *     - postfix condition: write function(opd2), opd1 := opd2 --> state 3
+		 *     - ')': check level, write opd1 ropr opd2 ')' --> state 3
+		 *     - end of list: write opd1 ropr opd2 --> return condition
+		 */
 		String thruExpr = "";
 		int ruleId = _reduction.getParent().getTableIndex();
 		// If the condition consists of just a (qualified) name then this may be the result ...
@@ -9284,9 +9378,9 @@ public class COBOLParser extends CodeParser
 		//	}
 		//	return qualName;
 		//}
-		if (_lastSubject == null || _lastSubject.isEmpty() 
-				&& (ruleId == RuleConstants.PROD_QUALIFIED_WORD2 
-				|| ruleId == RuleConstants.PROD_WORD_COBOLWORD)) {
+		if ((_lastSubject == null || _lastSubject.isEmpty())
+				&& ((ruleId == RuleConstants.PROD_QUALIFIED_WORD2 
+				|| ruleId == RuleConstants.PROD_WORD_COBOLWORD))) {
 			String qualName = this.getContent_R(_reduction, "");
 			CobVar var = currentProg.getCobVar(qualName);
 			if (var != null) {
@@ -9304,6 +9398,7 @@ public class COBOLParser extends CodeParser
 		// END KGU#1041 2022-07-28
 
 		if (ruleId == RuleConstants.PROD_EVALUATE_OBJECT) {
+			// <evaluate_object> ::= <partial_expr> <_evaluate_thru_expr>
 			Reduction thruRed = _reduction.get(1).asReduction();
 			if (thruRed.getParent().getTableIndex() == RuleConstants.PROD__EVALUATE_THRU_EXPR_THRU) {
 				thruExpr = this.getContent_R(thruRed.get(1).asReduction(), " .. ");
@@ -9312,159 +9407,593 @@ public class COBOLParser extends CodeParser
 		}
 		LinkedList<Token> expr_tokens = new LinkedList<Token>();
 		this.lineariseTokenList(expr_tokens, _reduction, "<expr_tokens>");
-		String cond = "";
-		// START KGU#402 2019-03-04: Issue #407: Approach to solve expressions like "a = 3 or 5"
-		String lastRelOp = null;
-		// END KGU#402 2019-03-04
-		//String cond = this.getContent_R(_reduction, "").trim();
-		// Test if cond starts with a comparison operator. In this case add lastSubject...
-		//if (cond.startsWith("<") || cond.startsWith("=") || cond.startsWith(">")) {
-		//	if (lastSubject != null) {
-		//		cond = (lastSubject + " " + cond).trim();
-		//	}
-		//}
-		ruleId = -1;
-		if (!expr_tokens.isEmpty() && expr_tokens.getFirst().getType() == SymbolType.NON_TERMINAL) {
-			ruleId = expr_tokens.getFirst().asReduction().getParent().getTableIndex();
+		
+// START KGU#1052 2022-08-16: Bugfix #1059 complete redesign
+//		String cond = "";
+//		
+//		// START KGU#402 2019-03-04: Issue #407: Approach to solve expressions like "a = 3 or 5"
+//		String lastRelOp = null;
+//		// END KGU#402 2019-03-04
+//		//String cond = this.getContent_R(_reduction, "").trim();
+//		// Test if cond starts with a comparison operator. In this case add lastSubject...
+//		//if (cond.startsWith("<") || cond.startsWith("=") || cond.startsWith(">")) {
+//		//	if (lastSubject != null) {
+//		//		cond = (lastSubject + " " + cond).trim();
+//		//	}
+//		//}
+//
+//		// Identify the starting reduction rule (-1 for a content token)
+//		ruleId = -1;	// Content token assumed as default
+//		if (!expr_tokens.isEmpty() && expr_tokens.getFirst().getType() == SymbolType.NON_TERMINAL) {
+//			ruleId = expr_tokens.getFirst().asReduction().getParent().getTableIndex();
+//		}
+//		/* Now check the first token in order to identify an initial subject (to be held
+//		 * in _lastSubject) that subsequent abbreviated terms might refer to.
+//		 */
+//		// START KGU#1052 2022-08-15: Bugfx #1059 we shouldn't be less catious than above
+//		//if (_lastSubject == null || _lastSubject.isEmpty()) {
+//		if (!expr_tokens.isEmpty()
+//				&& (_lastSubject == null || _lastSubject.isEmpty())) {
+//		// END KGU#1052 2022-08-15
+//			Token tok = expr_tokens.getFirst();
+//			if (!isComparisonOpRuleId(ruleId)) {
+//				if (tok.getType() == SymbolType.CONTENT) {
+//					// START KGU#1052 2022-08-15: Bugfix #1059
+//					//_lastSubject = tok.asString();
+//					String tokStr = tok.asString();
+//					if (!tokStr.equals("(")) {
+//						_lastSubject = tokStr;
+//					// END KGU#1052 2022-08-15
+//						if (tok.getName().equals("COBOLWord")) {
+//							_lastSubject = _lastSubject.replace("-", "_");
+//							// Try to identify a variable and if so, fetch its qualified name
+//							CobVar var = currentProg.getCobVar(_lastSubject);
+//							if (var != null) {
+//								if (var.isConditionName()) {
+//									// May we actually ignore the associated expression?
+//									_lastSubject = var.getParent().getQualifiedName();
+//									// START KGU#1041 2022-07-28: Bugfix #1049 Unreliable conversion of condition names
+//									if (expr_tokens.size() == 1 && thruExpr.isEmpty()) {
+//										String cmp = var.getValuesAsExpression(true);
+//										if (!cmp.isEmpty()) {
+//											return cmp;
+//										}
+//									}
+//									// END KGU#1041 2022-07-28
+//								}
+//								else {
+//									_lastSubject = var.getQualifiedName();
+//								}
+//							}
+//							/* FIXME: if the current word matches an internal register,
+//							 * then check if it exists and create it otherwise.
+//							 * Note: depending on the register we should fill it, too
+//							 * (RETURN-CODE, NUMBER-OF-CALL-PARAMETERS, ...)
+//							 * else if (cT.matchesRegister(lastSubject)) {
+//							 * 		...
+//							 * }
+//							 */
+//							;
+//						}
+//					// START KGU#1052 2022-08-15: Bugfix #1059
+//					}
+//					// END KGU#1052 2022-08-15
+//				}
+//				else {
+//					// FIXME could be complex, couldn't it?
+//					_lastSubject = this.getContent_R(tok.asReduction(), "");
+//				}
+//			}
+//			else {
+//				_lastSubject = "";
+//			}
+//		}
+//		/* Now iterate through the entire token list */
+//		boolean afterLogOpr = true;
+//		// START KGU#1050 2022-08-12: Bugfix #1058 Problem with negated conditions
+//		boolean afterNot = false;
+//		// END KGU#1050 2022-08-12
+//		for (Token tok: expr_tokens) {
+//			// START KGU#1050 2022-08-12: Bugfix #1058 Problem with negated conditions
+//			if (isNot(tok)) {
+//				afterNot = !afterNot;
+//				continue;
+//			}
+//			// END KGU#1050 2022-08-12
+//			String tokStr = "";
+//			if (tok.getType() == SymbolType.NON_TERMINAL) {
+//				// START KGU#1052 2022-08-15: Bugfix #1059
+//				tokStr = this.processPostfixCondition(_reduction, _lastSubject, afterNot);
+//				if (tokStr != null) {
+//					afterLogOpr = false;
+//				}
+//				else {
+//				// END KGU#1052 2022-08-15
+//					ruleId = tok.asReduction().getParent().getTableIndex();
+//					tokStr = this.getContent_R(tok.asReduction(), "");
+//					CobVar checkedVar = currentProg.getCobVar(tokStr);
+//					if (checkedVar != null && checkedVar.isConditionName()) {
+//						tokStr = checkedVar.getValuesAsExpression(true);
+//						// START KGU#1050 2022-08-12: Bugfix #1058 Problem with negated conditions
+//						if (afterNot) {
+//							tokStr = this.negateCondition(tokStr);
+//						}
+//						// END KGU#1050 2022-08-12
+//					}
+//					// START KGU#402 2019-03-04: Issue #407 - we may have to complete conds like "a = 4 or 7"
+//					else if (_lastSubject != null && !_lastSubject.isEmpty() && ruleId == RuleConstants.PROD_EXPR_TOKEN2) {
+//						// START KGU#1050 2022-08-12: Bugfix #1058 Problem with negated conditions
+//						if (afterNot) {
+//							tokStr = this.negateCondition(tokStr);
+//						}
+//						// END KGU#1050 2022-08-12
+//						lastRelOp = tokStr.trim();
+//					}
+//				// START KGU#1052 2022-08-15: Bugfix #1058 Problem with negated conditions
+//				}
+//				// END KGU#1050 2022-08-12
+//			}
+//			else {
+//				tokStr = tok.asString();
+//				// FIXME also address qualified names (rule PROD_QUALIFIED_WORD2)
+//				if (tok.getName().equals("COBOLWord")) {
+//					tokStr = tokStr.replace("-", "_");
+//					CobVar checkedVar = currentProg.getCobVar(_lastSubject);
+//					if (checkedVar != null) {
+//						// First of all accomplish the name as fallback
+//						tokStr = checkedVar.getQualifiedName();
+//						// Now look for some configured comparison expression
+//						String condString = checkedVar.getValuesAsExpression(true);
+//						if (!condString.isEmpty()) {
+//							tokStr = condString;
+//							// START KGU#1050 2022-08-12: Bugfix #1058 Problem with negated conditions
+//							if (afterNot) {
+//								tokStr = this.negateCondition(tokStr);
+//							}
+//							// END KGU#1050 2022-08-12
+//						}
+//					}
+//				}
+//				// START KGU#402 2019-03-04: Issue #407 - FIXME this patch may be superfluous
+//				else if (_lastSubject != null && !_lastSubject.isEmpty() && isComparisonOperator(tokStr)) {
+//					// START KGU#1050 2022-08-12: Bugfix #1058 Problem with negated conditions
+//					if (afterNot) {
+//						tokStr = this.negateCondition(tokStr);
+//					}
+//					// END KGU#1050 2022-08-12
+//					lastRelOp = tokStr.trim();
+//				}
+//				// END KGU#402 2019-03-04
+//			}
+//			if (!tokStr.trim().isEmpty()) {
+//				// START KGU#402 2019-03-04: Issue #407: Approach to solve expressions like "a = 3 or 5"
+//				//if (afterLogOpr && isComparisonOpRuleId(ruleId)) {
+//				//	// Place the last comparison subject to accomplish the next incomplete expression
+//				//	cond += " " + _lastSubject;
+//				//}
+//				if (afterLogOpr) {
+//					if (isComparisonOpRuleId(ruleId)) {
+//						// Place the last comparison subject to accomplish the next incomplete expression
+//						cond += " " + _lastSubject;
+//						lastRelOp = tokStr.trim();
+//					}
+//					else if (lastRelOp != null && isNonBooleanOperand(tokStr) && !_lastSubject.isEmpty()) {
+//						cond += " " + _lastSubject + " " + lastRelOp;
+//					}
+//				}
+//				// END KGU#402 2019-03-04
+//				afterLogOpr = (ruleId == RuleConstants.PROD_EXPR_TOKEN_AND || ruleId == RuleConstants.PROD_EXPR_TOKEN_OR);
+//				if (afterLogOpr) {
+//					tokStr = tokStr.toLowerCase();
+//				}
+//				cond += " " + tokStr; // FIXME somewhat rash...
+//			}
+//			afterNot = false;
+//		}
+//		// TODO We currently don't resolve the cond-name of "NOT cond-name"
+//		cond += thruExpr;
+//		// START KGU#1050 2022-08-11: Bugfx #1058: Better handling of negations
+//		//if (cond.matches("(.*?\\W)" + BString.breakup("NOT", true) + "\\s*=(.*?)")) {
+//		//	cond = cond.replaceAll("(.*?\\W)" + BString.breakup("NOT", true) + "\\s*=(.*?)", "$1 <> $2");
+//		//}
+//		if (UNEQUAL_MATCHER.reset(cond).matches()) {
+//			cond = UNEQUAL_MATCHER.replaceAll("$1 <> $2");
+//		}
+////		if (toNegate) {
+////			cond = this.negateCondition(cond.trim());
+////		}
+//		// END KGU'1050 2022-08-11
+//		// bad check, the comparision can include the *text* " OF "!
+////		if (cond.contains(" OF ")) {
+////			System.out.println("A record access slipped through badly...");
+////		}
+//		System.out.println("a) " + cond.trim());	// DEBUG
+		String cond = transformCondition1059(expr_tokens, _lastSubject, null) + thruExpr;
+		//System.out.println(cond.trim()); System.out.println();	// DEBUG
+// END KGU#1052 2022-08-15
+		return cond.trim();
+	}
+
+	// START KGU#1052 2022-08-15: Bugfix #1059 Condition transformation redesigned
+	/**
+	 * State type for the transformation of (partial) conditions
+	 * @author kay
+	 *
+	 */
+	private static enum CondState {
+		/**
+		 * CS0 - At the very beginning, without opd1
+		 * <ul>
+		 * <li>identifier or literal: cache as opd1 --> CS1</li>
+		 * <li>condition name: write condition, cache var as opd1 --> CS3</li>
+		 * <li>'(': write '(', recursively (--> CS0)
+		 * <ul>
+		 */
+		CS0_START,
+		/**
+		 * CS1 - opd1 accepted or cached
+		 * <lu>
+		 * <li>relation operator: cache ropr --> CS2</li>
+		 * <li>postfix condition: write as function(opd1), clr ropr --> CS3</li>
+		 * <li>')': check level, write opd1, ')', clear ropr, resume</li>
+		 * </ul>
+		 */
+		CS1_OPERAND1,
+		/**
+		 * CS2 - relation operator accepted
+		 * <ul>
+		 * <li>identifier or literal: write opd1 ropr opd2 --> CS3</li>
+		 * <li>'(': write '(', recursively (--> CS4)</li>
+		 * </ul>
+		 */
+		CS2_REL_OPR,
+		/**
+		 * CS3 - potential end state
+		 * <ul>
+		 * <li>')': check level, write ')', resume</li>
+		 * <li>boolean operator: write bopr --> CS4</li>
+		 * <li>end of list --> return condition</li>
+		 * </ul>
+		 */
+		CS3_END,
+		/**
+		 * CS4 - opd1 cached, potential continuation with opd1, ropr, or opd2<br/>
+		 * (similar to CS0, differing in gathered information)
+		 * <ul>
+		 * <li>identifier or literal:<ol>
+		 *     <li>no ropr: cache as opd1 --> CS1</li>
+		 *     <li>ropr cached: cache as opd2 --> CS5</li></ol>
+		 * </li>
+		 * <li>condition name: write condition, cache var as opd1, clear ropr --> CS3</li>
+		 * <li>relation operator: cache ropr --> CS2</li>
+		 * <li>postfix condition: write as function(opd1) --> CS3</li>
+		 * <li>'(': write '(', recursively (--> CS4)</li>
+		 * <ul>
+		 */
+		CS4_CONTINUE,
+		/**
+		 * CS5 - New opd1 or opd2 accepted, ropr cached
+		 * <ul>
+		 * <li>relational operator: opd1 := opd2, cache ropr -> CS2</li>
+		 * <li>postfix condition: write as function(opd2), opd1 := opd2 --> CS3</li>
+		 * <li>')': check level, write opd1 ropr opd2 ')' --> CS3</li>
+		 * <li>end of list: write opd1 ropr opd2 --> CS3</li>
+		 * </ul>
+		 */
+		CS5_OPD_RELOP
+	};
+	
+	/**
+	 * Derives an expression that makes some sense as Boolean condition from the given
+	 * list of {@link Token}s of kind {@code <expr_token>}. Tries to handle incomplete
+	 * expressions, condition names (as variable attributes) etc.
+	 * 
+	 * @param _expr_tokens - list of expression tokens of the condition, will be consumed
+	 * @param _operand1 - last subject in the condition (potential 1st operand in partial
+	 *     condition, may be {@code null} or empty
+	 * @param _relOpr - last relation operator or {@code null}
+	 * @return the composed condition as string
+	 * 
+	 * @throws ParserCancelled 
+	 */
+	private String transformCondition1059(LinkedList<Token> _expr_tokens, String _operand1, String _relOpr) throws ParserCancelled {
+		StringBuilder condSB = new StringBuilder();
+		CondState state = CondState.CS0_START;
+		if (_operand1 != null && !_operand1.isBlank()) {
+			state = CondState.CS4_CONTINUE;
 		}
-		if (_lastSubject == null || _lastSubject.isEmpty()) {
-			Token tok = expr_tokens.getFirst();
-			if (!isComparisonOpRuleId(ruleId)) {
-				if (tok.getType() == SymbolType.CONTENT) {
-					_lastSubject = tok.asString();
-					if (tok.getName().equals("COBOLWord")) {
-						_lastSubject = _lastSubject.replace("-", "_");
-						// Try to identify a variable and if so, fetch its qualified name
-						CobVar var = currentProg.getCobVar(_lastSubject);
-						if (var != null) {
-							if (var.isConditionName()) {
-								// May we actually ignore the associated expression?
-								_lastSubject = var.getParent().getQualifiedName();
-							}
-							else {
-								_lastSubject = var.getQualifiedName();
-							}
-						}
-						/* FIXME: if the current word matches an internal register,
-						 * then check if it exists and create it otherwise.
-						 * Note: depending on the register we should fill it, too
-						 * (RETURN-CODE, NUMBER-OF-CALL-PARAMETERS, ...)
-						 * else if (cT.matchesRegister(lastSubject)) {
-						 * 		...
-						 * }
-						 */
-						;
-					}
-				}
-				else {
-					_lastSubject = this.getContent_R(tok.asReduction(), "");
-				}
+		boolean afterNot = false;
+		String operand2 = null;
+		while (!_expr_tokens.isEmpty()) {
+			int ruleId = -1;
+			Token tok = _expr_tokens.removeFirst();
+			if (isNot(tok)) {
+				afterNot = !afterNot;
+				continue;
 			}
-			else {
-				_lastSubject = "";
-			}
-		}
-		boolean afterLogOpr = true;
-		for (Token tok: expr_tokens) {
-			String tokStr = "";
+			// Now we do some common token preparation
+			String tokStr = null;
+			CobVar var = null;	// possible variable
 			if (tok.getType() == SymbolType.NON_TERMINAL) {
+				Reduction red = tok.asReduction();
+				tokStr = this.processPostfixCondition(red, _operand1, afterNot);
+				if (tokStr != null) {
+					// Not to be expected in other states than CS1, CS4, CS5
+					if (state == CondState.CS5_OPD_RELOP) {
+						_operand1 = operand2;
+					}
+					afterNot = false; // was consumed by processPostfixCondition()
+					_relOpr = null;
+					condSB.append(" " + tokStr);
+					state = CondState.CS3_END;
+					continue;
+				}
 				ruleId = tok.asReduction().getParent().getTableIndex();
 				tokStr = this.getContent_R(tok.asReduction(), "");
-				CobVar checkedVar = currentProg.getCobVar(tokStr);
-				if (checkedVar != null && checkedVar.isConditionName()) {
-					tokStr = checkedVar.getValuesAsExpression(true);
-				}
-				// START KGU#402 2019-03-04: Issue #407 - we may have to complete conds like "a = 4 or 7"
-				else if (!_lastSubject.isEmpty() && ruleId == RuleConstants.PROD_EXPR_TOKEN2) {
-					lastRelOp = tokStr.trim();
-				}
+				var = currentProg.getCobVar(tokStr);
 			}
 			else {
 				tokStr = tok.asString();
-				// FIXME also address qualified names (rule PROD_QUALIFIED_WORD2)
 				if (tok.getName().equals("COBOLWord")) {
 					tokStr = tokStr.replace("-", "_");
-					CobVar checkedVar = currentProg.getCobVar(_lastSubject);
-					if (checkedVar != null) {
-						// First of all accomplish the name as fallback
-						tokStr = checkedVar.getQualifiedName();
-						// Now look for some configured comparison expression
-						String condString = checkedVar.getValuesAsExpression(true);
-						if (!condString.isEmpty()) {
-							tokStr = condString;
+					var = currentProg.getCobVar(tokStr);
+				}
+			}
+			switch (state) {
+			case CS4_CONTINUE:
+				if (tokStr.equals(")")) {
+					condSB.append(" )");
+					state = CondState.CS3_END;
+					break;
+				}
+				// fall through
+			case CS0_START:
+				if (var != null) {
+					if (var.isConditionName()) {
+						tokStr = var.getValuesAsExpression(true);
+						if (afterNot) {
+							tokStr = this.negateCondition(tokStr);
+							afterNot = false;
+						}
+						condSB.append(" " + tokStr);
+						_operand1 = var.getParent().getQualifiedName();
+						state = CondState.CS3_END;
+					}
+					else {
+						if (tok.getName().equals("COBOLWord")) {
+							tokStr = var.getQualifiedName();
+						}
+						if (_relOpr == null) {
+							// State CS0
+							_operand1 = tokStr;
+							state = CondState.CS1_OPERAND1;
+						}
+						else {
+							// State CS4
+							operand2 = tokStr;
+							state = CondState.CS5_OPD_RELOP;
 						}
 					}
 				}
-				// START KGU#402 2019-03-04: Issue #407 - FIXME this patch may be superfluous
-				else if (!_lastSubject.isEmpty() && isComparisonOperator(tokStr)) {
-					lastRelOp = tokStr.trim();
-				}
-				// END KGU#402 2019-03-04
-			}
-			if (!tokStr.trim().isEmpty()) {
-				// START KGU#402 2019-03-04: Issue #407: Approach to solve expressions like "a = 3 or 5"
-				//if (afterLogOpr && isComparisonOpRuleId(ruleId)) {
-				//	// Place the last comparison subject to accomplish the next incomplete expression
-				//	cond += " " + _lastSubject;
-				//}
-				if (afterLogOpr) {
-					if (isComparisonOpRuleId(ruleId)) {
-						// Place the last comparison subject to accomplish the next incomplete expression
-						cond += " " + _lastSubject;
-						lastRelOp = tokStr.trim();
+				else if ("(".equals(tokStr.trim())) {
+					if (afterNot) {
+						condSB.append(" not");
+						afterNot = false;
 					}
-					else if (lastRelOp != null && isNonBooleanOperand(tokStr) && !_lastSubject.isEmpty()) {
-						// What we do here is pretty vague. To be more exact, we would have to analyse the next token...
-						cond += " " + _lastSubject + " " + lastRelOp;
-					}
+					condSB.append(" (");
+					state = CondState.CS4_CONTINUE;	// Or CS0?
 				}
-				// END KGU#402 2019-03-04
-				afterLogOpr = (ruleId == RuleConstants.PROD_EXPR_TOKEN_AND || ruleId == RuleConstants.PROD_EXPR_TOKEN_OR);
-				if (afterLogOpr) {
+				else if (_operand1 != null && !_operand1.isBlank()
+						&& isComparisonOpRuleId(ruleId)
+						&& isComparisonOperator(tokStr)) {
+					if (afterNot) {
+						tokStr = this.negateCondition(tokStr);
+					}
+					_relOpr = tokStr.trim();
+					state = CondState.CS2_REL_OPR;
+				}
+				else {
+					// Should now be a literal or other kind of operand...
+					if (_relOpr == null) {
+						// State CS0
+						_operand1 = tokStr;
+						state = CondState.CS1_OPERAND1;
+					}
+					else {
+						// State CS4
+						operand2 = tokStr;
+						state = CondState.CS5_OPD_RELOP;
+					}					
+				}
+				break;
+			case CS1_OPERAND1:
+				if (_operand1 != null && !_operand1.isBlank()
+				&& isComparisonOpRuleId(ruleId)
+				&& isComparisonOperator(tokStr)) {
+					if (afterNot) {
+						tokStr = this.negateCondition(tokStr);
+						afterNot = false;
+					}
+					_relOpr = tokStr.trim();
+					state = CondState.CS2_REL_OPR;
+				}
+				else if (tokStr.equals(")")) {
+					condSB.append(" " + _operand1 + " )");
+					state = CondState.CS3_END;
+				}
+				break;
+			case CS2_REL_OPR:
+				if (tokStr.equals("(")) {
+					if (afterNot) {
+						condSB.append(" not");
+						afterNot = false;
+					}
+					condSB.append("(");
+					state = CondState.CS4_CONTINUE;	// Or CS0?
+					break;
+				}
+				else if (var != null && tok.getName().equals("COBOLWord")) {
+					tokStr = var.getQualifiedName();
+				}
+				condSB.append(" " + _operand1.trim() + " "
+						+ _relOpr.trim() + " " + tokStr.trim());
+				state = CondState.CS3_END;
+				break;
+			case CS3_END:
+				if (ruleId == RuleConstants.PROD_EXPR_TOKEN_AND || ruleId == RuleConstants.PROD_EXPR_TOKEN_OR) {
 					tokStr = tokStr.toLowerCase();
+					condSB.append("\\\n" + tokStr);
+					state = CondState.CS4_CONTINUE;
 				}
-				cond += " " + tokStr;
+				else if (")".equals(tokStr)) {
+					condSB.append(" )");
+					// We stay in this state...
+				}
+				break;
+			case CS5_OPD_RELOP:
+				if (isComparisonOpRuleId(ruleId)
+						&& isComparisonOperator(tokStr)) {
+					if (afterNot) {
+						tokStr = this.negateCondition(tokStr);
+						afterNot = false;
+					}
+					_operand1 = operand2;
+					_relOpr = tokStr.trim();
+					state = CondState.CS2_REL_OPR;
+				}
+				else {
+					// All three parts should be different from null here...
+					condSB.append(" " + _operand1.trim() + " " + _relOpr.trim() + " " + tokStr.trim());
+					state = CondState.CS3_END;
+				}
+				break;
 			}
 		}
-		// TODO We currently don't resolve the cond-name of "NOT cond-name"
-		cond += thruExpr;
-		if (cond.matches("(.*?\\W)" + BString.breakup("NOT", true) + "\\s*=(.*?)")) {
-			cond = cond.replaceAll("(.*?\\W)" + BString.breakup("NOT", true) + "\\s*=(.*?)", "$1 <> $2");
-		}
-		// bad check, the comparision can include the *text* " OF "!
-//		if (cond.contains(" OF ")) {
-//			System.out.println("A record access slipped through badly...");
-//		}
-		return cond.trim();	// This is just an insufficient first default approach
+		return condSB.toString();
 	}
 
-	// START KGU#402 2019-03-04: Issue #407 - More heuristics for abbreviated comparison like "a = 4 or 7"
-	private boolean isNonBooleanOperand(String tokStr) {
-		boolean mayBeBoolean = true;
-		// First quick check for primitive literals (i.e. numbers, strings)
-		if (STRING_MATCHER.reset(tokStr).matches() || NUMBER_MATCHER.reset(tokStr).matches()) {
-			mayBeBoolean = false;
-		}
-		// Now check as variables
-		else {
-			CobVar checkedVar = currentProg.getCobVar(tokStr);
-			if (checkedVar != null && !checkedVar.isConditionName()) {
-				String type = CobTools.getTypeString(checkedVar, true);
-				if (!type.isEmpty() && !type.equals(CobTools.UNKNOWN_TYPE)) {
-					mayBeBoolean = false;
+	/**
+	 * Tries to convert rules of type
+	 * {@code <expr_token> ::= IS <not> <condition_or_class>} or<br/>
+	 * {@code <expr_token> ::= <_is> <condition_op>} or<br/>
+	 * {@code <expr_token> ::= IS <_not> ZERO}
+	 * into appropriate test expressions (possibly with function call syntax).
+	 * 
+	 * @param _red - a Reduction
+	 * @param _lastSubj - possibly the entity to apply the condition to
+	 *     (may be {@code null} or empty, in which case {@code null} will be
+	 *     returned, though
+	 * @param _toNegate - whether the condition is to be negated.
+	 * @return the converted condition, or {@code null} if there is no last
+	 *     subject given or if {@code _red} is not appropriate for the job
+	 * 
+	 * @throws ParserCancelled
+	 */
+	private String processPostfixCondition(Reduction _red, String _lastSubj, boolean _toNegate) throws ParserCancelled {
+		String cond = null;
+		if (_lastSubj != null && !_lastSubj.isEmpty()) {
+			int ruleId = _red.getParent().getTableIndex();
+			int ixCond = 1;
+			switch (ruleId) {
+			case RuleConstants.PROD_EXPR_TOKEN_IS2:
+				// <expr_token> ::= IS <not> <condition_or_class>
+				ixCond++;
+				_toNegate = !_toNegate;
+			case RuleConstants.PROD_EXPR_TOKEN2:
+				// <expr_token> ::= <_is> <condition_op>
+				cond = getContentToken_R(_red.get(ixCond), "", "", true);
+				if ("NUMERIC".equalsIgnoreCase(cond)) {
+					cond = "isNumber(" + _lastSubj + ")";
 				}
+				else if ("ALPHABETIC".equalsIgnoreCase(cond)
+						|| "ALPHABETIC-Lower".equalsIgnoreCase(cond)
+						|| "ALPHABETIC-Higher".equalsIgnoreCase(cond)) {
+					cond = "isString(" + _lastSubj + ") and isA"
+							+ cond.substring(1).toLowerCase().replace('-', '_')
+							+ "(" + _lastSubj + ")";
+				}
+				else if ("OMITTED".equalsIgnoreCase(cond)) {
+					cond = "wasOMITTED(" + _lastSubj + ")";
+				}
+				else if ("NEGATIVE".equalsIgnoreCase(cond)) {
+					cond = _lastSubj + (_toNegate ? " >= 0" : " < 0");
+					_toNegate = false;	// done
+				}
+				else if ("POSITIVE".equalsIgnoreCase(cond)) {
+					cond = _lastSubj + (_toNegate ? " <= 0" : " > 0");
+					_toNegate = false;	// done
+				}
+				else {
+					cond = null;
+				}
+				// We have to negate if either the arg says so or the rule but not both
+				if (cond != null && _toNegate) {
+					cond = "not " + cond;
+				}
+				break;
+			case RuleConstants.PROD_EXPR_TOKEN_IS_ZERO:
+				// <expr_token> ::= IS <_not> ZERO
+				if (_red.get(1).asReduction().size() > 0) {
+					_toNegate = !_toNegate;
+				}
+				cond = _lastSubj + (_toNegate ? " <> 0" : " = 0");
+				break;
 			}
+				
 		}
-		return !mayBeBoolean;
+		return cond;
 	}
+	// END KGU#1052 2022-08-15
+	
+	
+	// START KGU#1050 2022-08-11: Bugfix #1058: Facilitates the detection of NOT operators
+	/**
+	 * Determines whether the given token {@code tok} represents the operator "NOT"
+	 * (there are several possible cases).
+	 * 
+	 * @param tok - the token to be checked
+	 * @return {@code true} is {@code tok} represents "NOT", {@code false} otherwise
+	 */
+	private boolean isNot(Token tok) {
+		Reduction red = tok.asReduction();
+		return "NOT".equals(tok.getName())
+				|| (red != null && red.getParent().getTableIndex() == RuleConstants.PROD_NOT_NOT);
+	}
+	// END KGU#1050 2022-08-11
+	
+	// START KGU#402 2019-03-04: Issue #407 - More heuristics for abbreviated comparison like "a = 4 or 7"
+//	private boolean isNonBooleanOperand(String tokStr) {
+//		boolean mayBeBoolean = true;
+//		// First quick check for primitive literals (i.e. numbers, strings)
+//		if (STRING_MATCHER.reset(tokStr).matches() || NUMBER_MATCHER.reset(tokStr).matches()) {
+//			mayBeBoolean = false;
+//		}
+//		// Now check as variables
+//		else {
+//			CobVar checkedVar = currentProg.getCobVar(tokStr);
+//			if (checkedVar != null && !checkedVar.isConditionName()) {
+//				String type = CobTools.getTypeString(checkedVar, true);
+//				if (!type.isEmpty() && !type.equals(CobTools.UNKNOWN_TYPE)) {
+//					mayBeBoolean = false;
+//				}
+//			}
+//		}
+//		return !mayBeBoolean;
+//	}
 	
 	private boolean isComparisonOperator(String tokStr) {
 		tokStr = tokStr.trim();
-		// Apparently there is no operator symbol for unequality
-		return tokStr.equals("=") || tokStr.equals("<") || tokStr.equals(">") || tokStr.equals("<=") || tokStr.equals(">=");
+		return NEGATABLE_REL_OPS.contains(tokStr);
 	}
 	// END KGU#402 2019-03-04
 
+	/**
+	 * Checks whether the given {@code ruleId} belongs to a relational (or conditional)
+	 * operator (this may include tests like IS NUMERICAL).
+	 * 
+	 * @param ruleId - the table id of a production rule
+	 * @return {@code true} if the id specifies some comparison operator
+	 */
 	private final boolean isComparisonOpRuleId(int ruleId)
 	{
 		switch (ruleId) {
@@ -9512,8 +10041,16 @@ public class COBOLParser extends CodeParser
 //			default:
 //				lineariseTokenList(_tokens, _reduction.get(0).asReduction(), _listRuleHead);
 //			}
-			if (ruleHead.equals("<identifier_1>") || ruleHead.equals("<qualified_word>")) {
-				_tokens.addFirst(_reduction.get(0));	// Why at first?
+			// START KGU#1048 2022-08-11: Issue #1057 Handling of LENGTH OF
+			//if (ruleHead.equals("<identifier_1>") || ruleHead.equals("<qualified_word>")) {
+			int rule0Id = red0.getParent().getTableIndex();
+			if (ruleHead.equals("<identifier_1>")
+					|| ruleHead.equals("<qualified_word>")
+					|| rule0Id == RuleConstants.PROD_X_COMMON_LENGTH_OF
+					|| rule0Id == RuleConstants.PROD_X_COMMON_LENGTH_OF2
+					|| rule0Id == RuleConstants.PROD_X_COMMON_LENGTH_OF3) {
+			// END KGU#1048 2022-08-11
+				_tokens.addFirst(_reduction.get(0));	// Ultimate member of the list
 			}
 			else {
 				lineariseTokenList(_tokens, red0, _listRuleHead);
@@ -9526,7 +10063,19 @@ public class COBOLParser extends CodeParser
 		}
 	}
 
+	/**
+	 * Tries to negate a given condition as intelligently as possible (actually
+	 * delegates the task to {@link Element}).
+	 * 
+	 * @param condStr - the condition string to be negated
+	 * @return the logically negated string
+	 */
 	private final String negateCondition(String condStr) {
+		int ix = NEGATABLE_REL_OPS.indexOf(condStr.trim());
+		if (ix >= 0) {
+			// Makes e.g. " < " from " >= " etc.
+			return NEGATABLE_REL_OPS.get(NEGATABLE_REL_OPS.count() - ix - 1);
+		}
 		return Element.negateCondition(condStr);
 	}
 
@@ -9659,8 +10208,8 @@ public class COBOLParser extends CodeParser
 				posSub = 1;
 			case RuleConstants.PROD_IDENTIFIER_13:	// <identifier_1> ::= <qualified_word> <refmod>
 			case RuleConstants.PROD_TARGET_IDENTIFIER_13:	// <target_identifier_1> ::= <qualified_word> <refmod>
-				if (!hasRefMod && posSub < 0) hasRefMod = true;
 			{
+				if (!hasRefMod && posSub < 0) hasRefMod = true;
 				// This will already return a qualified name with paceholders for table indices
 				String qualName = this.getContent_R(_reduction.get(0).asReduction(), "");
 				if (posSub > 0) {
@@ -9746,6 +10295,21 @@ public class COBOLParser extends CodeParser
 				// Empty THRU expression --> don't change _content
 				break;
 			}
+			// START KGU#1048 2022-08-11: Issue #1057 operator LENGTH OF wasn't translated
+			case RuleConstants.PROD_LIT_OR_LENGTH_LENGTH_OF:
+				// <lit_or_length> ::= 'LENGTH_OF' <con_identifier>
+			case RuleConstants.PROD_LIT_OR_LENGTH_LENGTH:
+				// <lit_or_length> ::= LENGTH <con_identifier>
+			case RuleConstants.PROD_X_COMMON_LENGTH_OF:
+				// <x_common> ::= 'LENGTH_OF' <identifier_1>
+			case RuleConstants.PROD_X_COMMON_LENGTH_OF2:
+				// <x_common> ::= 'LENGTH_OF' <basic_literal>
+			case RuleConstants.PROD_X_COMMON_LENGTH_OF3: 
+				// <x_common> ::= 'LENGTH_OF' <function>
+				// Function sizeof does not exist but reflects the meaning
+				_content += "sizeof(" + this.getContentToken_R(_reduction.get(1), "", "", true) + ")";
+				break;
+			// END KGU#1048 2022-08-11
 			default:
 			{
 				for(int i=0; i<_reduction.size(); i++)
@@ -9760,13 +10324,15 @@ public class COBOLParser extends CodeParser
 	}
 
 	/**
-	 * Subroutine of {@link #getContent_R(Reduction, String, String)} for the conversion of sub-tokens,
-	 * which are not necessarily non-terminals.
+	 * Subroutine of {@link #getContent_R(Reduction, String, String)} for the conversion
+	 * of sub-tokens, which are not necessarily non-terminals.
+	 * 
 	 * @param _token - the current token
 	 * @param _content - previous content the string representation of this token is to be appended to.
 	 * @param _separator - a string to be put between the result for sub-tokens
 	 * @param _isFirst - whether this token is the first in a sequence (i.e. if a separator isn't needed before)
 	 * @return the string composed from {@code _content} and this {@link Token}.
+	 * 
 	 * @throws ParserCancelled
 	 */
 	private String getContentToken_R(Token _token, String _content, String _separator, boolean _isFirst) throws ParserCancelled {
@@ -9823,7 +10389,7 @@ public class COBOLParser extends CodeParser
 				// _content (regarding parentheses, operator precedence etc.) but even this is vague - it might
 				// be incomplete.
 				// So we replace it by the Java instanceof operator, which comes nearest but will hardly identify
-				// COBOL classes and doesn't work for primitive types of course.
+				// COBOL classes and doesn't work for primitive types, of course.
 				_content += " instanceof (" + this.getContent_R(subRed.get(1).asReduction(), "") + ") ";
 			}
 			else if (subRuleId == RuleConstants.PROD_EXPR_TOKEN_IS2) {
@@ -9843,6 +10409,13 @@ public class COBOLParser extends CodeParser
 			else if (subRuleId == RuleConstants.PROD_SUBREF_TOK_OPEN_PAREN_TOK_CLOSE_PAREN) {
 				_content += "[" + this.getContent_R(subRed.get(1).asReduction(), "") + "] ";	// FIXME: spaces!?
 			}
+			// START KGU#1048 2022-08-11: Issue #1057 operator LENGTH OF wasn't translated
+			else if (subRuleId == RuleConstants.PROD_LIT_OR_LENGTH_LENGTH_OF
+					|| subRuleId == RuleConstants.PROD_LIT_OR_LENGTH_LENGTH) {
+				// Function sizeof does not exist but reflects the meaning
+				_content += "sizeof(" + this.getContentToken_R(subRed.get(1), "", "", true) + ")";
+			}
+			// END KGU#1048 2022-08-11
 			else {
 				String sepa = "";
 				String toAdd = getContent_R(_token.asReduction(), "", _separator);
@@ -10000,10 +10573,12 @@ public class COBOLParser extends CodeParser
 	}
 
 	/**
-	 * Drastically simplified method to retrieve a name expected as (optional) content of the given {@link Token}
+	 * Drastically simplified method to retrieve a name expected as (optional) content
+	 * of the given {@link Token}
 	 * {@code _token}.
-	 * @param _token
-	 * @return
+	 * @param _token - the token to be scanned (may be a COBOLWord or a FILLER or some
+	 *     wrapper)
+	 * @return the string content of the given token
 	 */
 	private String getWord(Token _token)
 	{

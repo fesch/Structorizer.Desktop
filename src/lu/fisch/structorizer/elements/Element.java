@@ -301,7 +301,7 @@ public abstract class Element {
 	public static final long E_HELP_FILE_SIZE = 12300000;
 	public static final String E_DOWNLOAD_PAGE = "https://www.fisch.lu/Php/download.php";
 	// END KGU#791 2020-01-20
-	public static final String E_VERSION = "3.32-09";
+	public static final String E_VERSION = "3.32-10";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -353,6 +353,7 @@ public abstract class Element {
 	" - ZH-TW: Joe Chem <hueyan_chen@yahoo.com.tw>\n"+
 	" - CZ: Vladimír Vaščák <vascak@spszl.cz>\n"+
 	" - RU: Юра Лебедев <elita.alegator@gmail.com>\n"+
+	" - FR: tph002 (https://github.com/tph002)\n"+
 	"\n"+
 	"Different good ideas and improvements contributed by\n"+
 	" - Serge Marelli <serge.marelli@education.lu>\n"+
@@ -5061,8 +5062,9 @@ public abstract class Element {
 
 	/**
 	 * Negates the given condition as intelligently as possible.
+	 * 
 	 * @param condition - a boolean expression (in Structorizer-conform syntax)
-	 * @return an expression reprsenting the logical opposite of {@code condition}
+	 * @return an expression representing the logical opposite of {@code condition}
 	 */
 	public static String negateCondition(String condition)
 	{

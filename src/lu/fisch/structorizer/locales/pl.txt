@@ -48,13 +48,14 @@
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Bob Fisch       2008.01.14      First Issue
- *      Kay Gürtzig     2016.04.24      Issue #173: New mnemonic configurations added
- *      Kay Gürtzig     2016.09.04      Menu.menuPreferencesLanguage... key structure modified
- *      Kay Gürtzig     2016.09.22      AnalyserPreferences numbering modified
- *      Kay Gürtzig     2016.12.14      Enh. #311: New menu Debug, duplicate mnemonics (p) modified
- *      Kay Gürtzig     2017.04.05      Additions for enh. #388 and #390 (constant definition checks)
- *      Kay Gürtzig     2018.07.02      KGU#245: all Colors stuff replaced with array keys 
+ *      Bob Fisch       2008-01-14      First Issue
+ *      Kay Gürtzig     2016-04-24      Issue #173: New mnemonic configurations added
+ *      Kay Gürtzig     2016-09-04      Menu.menuPreferencesLanguage... key structure modified
+ *      Kay Gürtzig     2016-09-22      AnalyserPreferences numbering modified
+ *      Kay Gürtzig     2016-12-14      Enh. #311: New menu Debug, duplicate mnemonics (p) modified
+ *      Kay Gürtzig     2017-04-05      Additions for enh. #388 and #390 (constant definition checks)
+ *      Kay Gürtzig     2018-07-02      KGU#245: all Colors stuff replaced with array keys 
+ *      Kay Gürtzig     2022-08-10      Enh. #56, #492: Element name placeholders and TRY blocks considered
  *
  ******************************************************************************************************
  *
@@ -133,34 +134,39 @@ Menu.menuDiagramAdd.text=Dodaj
 // Submenu "Diagram -> Add -> Before"
 Menu.menuDiagramAddBefore.text=Przed
 // Submenus for adding Elements "Before"
-Menu.menuDiagramAddBeforeInst.text=Instrukcja
-Menu.menuDiagramAddBeforeAlt.text=instrukcja IF 
-Menu.menuDiagramAddBeforeCase.text=instrukcja CASE
-Menu.menuDiagramAddBeforeFor.text=pętla FOR
-Menu.menuDiagramAddBeforeWhile.text=pętla WHILE
-Menu.menuDiagramAddBeforeRepeat.text=pętla REPEAT
-Menu.menuDiagramAddBeforeForever.text=NIESKOŃCZONA pętla
-Menu.menuDiagramAddBeforeCall.text=Wywołanie
-Menu.menuDiagramAddBeforeJump.text=Skok
+Menu.menuDiagramAddBeforeInst.text=@{Instruction}
+Menu.menuDiagramAddBeforeAlt.text=instrukcja @{Alternative}
+Menu.menuDiagramAddBeforeCase.text=instrukcja @{Case}
+Menu.menuDiagramAddBeforeFor.text=pętla @{For}
+Menu.menuDiagramAddBeforeWhile.text=pętla @{While}
+Menu.menuDiagramAddBeforeRepeat.text=pętla @{Repeat}
+Menu.menuDiagramAddBeforeForever.text=@{Forever} pętla
+Menu.menuDiagramAddBeforeCall.text=@{Call}
+Menu.menuDiagramAddBeforeJump.text=@{Jump}
+Menu.menuDiagramAddBeforePara.text=@{Parallel}
+Menu.menuDiagramAddBeforeTry.text=@{Try}
 // Submenu "Diagram -> Add -> After"
 Menu.menuDiagramAddAfter.text=Po
 // Submenus for adding Elements "After"
-Menu.menuDiagramAddAfterInst.text=Instrukcja
-Menu.menuDiagramAddAfterAlt.text=instrukcja IF
-Menu.menuDiagramAddAfterCase.text=instrukcja CASE
-Menu.menuDiagramAddAfterFor.text=pętla FOR
-Menu.menuDiagramAddAfterWhile.text=pętla WHILE
-Menu.menuDiagramAddAfterRepeat.text=pętla REPEAT
-Menu.menuDiagramAddAfterForever.text=NIESKOŃCZONA pętla
-Menu.menuDiagramAddAfterCall.text=Wywołanie
-Menu.menuDiagramAddAfterJump.text=Skok
+Menu.menuDiagramAddAfterInst.text=@{Instruction}
+Menu.menuDiagramAddAfterAlt.text=instrukcja @{Alternative}
+Menu.menuDiagramAddAfterCase.text=instrukcja @{Case}
+Menu.menuDiagramAddAfterFor.text=pętla @{For}
+Menu.menuDiagramAddAfterWhile.text=pętla @{While}
+Menu.menuDiagramAddAfterRepeat.text=pętla @{Repeat}
+Menu.menuDiagramAddAfterForever.text=@{Forever} pętla
+Menu.menuDiagramAddAfterCall.text=@{Call}
+Menu.menuDiagramAddAfterJump.text=@{Jump}
+Menu.menuDiagramAddAfterPara.text=blok @{Parallel}
+Menu.menuDiagramAddAfterTry.text=blok @{Try}
 Menu.menuDiagramEdit.text=Edycja
 Menu.menuDiagramDelete.text=Usuń
 Menu.menuDiagramMoveUp.text=W górę
 Menu.menuDiagramMoveDown.text=W dół
 Menu.menuDiagramType.text=Typ
-Menu.menuDiagramTypeProgram.text=Program główny
-Menu.menuDiagramTypeFunction.text=Podprogram
+Menu.menuDiagramTypeProgram.text=@{Root.DT_MAIN}
+Menu.menuDiagramTypeFunction.text=@{Root.DT_SUB}
+Menu.menuDiagramTypeInclude.text=@{Root.DT_INCL}
 Menu.menuDiagramUnboxed.text=Diagram bez ramy?
 Menu.menuDiagramComment.text=Pokaż komentarze?
 Menu.menuDiagramMarker.text=Wyróżnij zmienne?
@@ -270,15 +276,16 @@ Editor.btnOpen.tooltip=Otwórz istniejący diagram.
 Editor.btnSave.tooltip=Zapisz bieżący diagram.
 // InsertAfter (+shift: Before)
 Editor.btnAfterInst.tooltip=Wstaw nową instrukcję za wybranym elementem (+shift: przed wybrany element). 
-Editor.btnAfterAlt.tooltip=Wstaw instrukcję IF za wybranym elementem (+shift: przed wybrany element).
-Editor.btnAfterFor.tooltip=Wstaw pętlę FOR za wybranym elementem (+shift: przed wybrany element).
-Editor.btnAfterWhile.tooltip=Wstaw pętlę WHILE za wybranym elementem (+shift: przed wybrany element).
-Editor.btnAfterRepeat.tooltip=Wstaw pętlę REPEAT za wybranym elementem (+shift: przed wybrany element).
-Editor.btnAfterForever.tooltip=Wstaw NIESKOŃCZONĄ za wybranym elementem (+shift: przed wybrany element).
-Editor.btnAfterCall.tooltip=Wstaw instrukcję CALL za wybranym elementem (+shift: przed wybrany element).
-Editor.btnAfterJump.tooltip=Wstaw instrukcję JUMP za wybranym elementem (+shift: przed wybrany element).
-Editor.btnAfterCase.tooltip=Wstaw instrukcję CASE za wybranym elementem (+shift: przed wybrany element).
-Editor.btnAfterPara.tooltip=Wstaw instrukcję PARALLEL za wybranym elementem (+shift: przed wybrany element).
+Editor.btnAfterAlt.tooltip=Wstaw instrukcję {Alternative} za wybranym elementem (+shift: przed wybrany element).
+Editor.btnAfterFor.tooltip=Wstaw pętlę @{For} za wybranym elementem (+shift: przed wybrany element).
+Editor.btnAfterWhile.tooltip=Wstaw pętlę @{While} za wybranym elementem (+shift: przed wybrany element).
+Editor.btnAfterRepeat.tooltip=Wstaw pętlę @{Repeat} za wybranym elementem (+shift: przed wybrany element).
+Editor.btnAfterForever.tooltip=Wstaw pętlę @{Forever} za wybranym elementem (+shift: przed wybrany element).
+Editor.btnAfterCall.tooltip=Wstaw instrukcję @{Call} za wybranym elementem (+shift: przed wybrany element).
+Editor.btnAfterJump.tooltip=Wstaw instrukcję @{Jump} za wybranym elementem (+shift: przed wybrany element).
+Editor.btnAfterCase.tooltip=Wstaw instrukcję @{Case} za wybranym elementem (+shift: przed wybrany element).
+Editor.btnAfterPara.tooltip=Wstaw instrukcję @{Parallel} za wybranym elementem (+shift: przed wybrany element).
+Editor.btnAfterTry.tooltip=Wstaw blok @{Try} za wybranym elementem (+shift: przed wybrany element).
 // undo & redo
 Editor.btnUndo.tooltip=Cofnij.
 Editor.btnRedo.tooltip=Przywróć.
@@ -312,29 +319,31 @@ Editor.popupAdd.text=Dodaj
 // Submenu of "Add"
 Editor.popupAddBefore.text=Przed
 // Submenus of "Add -> Before"
-Editor.popupAddBeforeInst.text=Instrukcja
-Editor.popupAddBeforeAlt.text=instrukcja IF
-Editor.popupAddBeforeCase.text=instrukcja CASE
-Editor.popupAddBeforeFor.text=pętla FOR
-Editor.popupAddBeforeWhile.text=pętla WHILE
-Editor.popupAddBeforeRepeat.text=pętla REPEAT
-Editor.popupAddBeforeForever.text=NIESKOŃCZONA pętla
-Editor.popupAddBeforeCall.text=instrukcja Call
-Editor.popupAddBeforeJump.text=instrukcja Jump
-Editor.popupAddBeforePara.text=instrukcja Parallel
+Editor.popupAddBeforeInst.text=@{Instruction}
+Editor.popupAddBeforeAlt.text=instrukcja @{Alternative}
+Editor.popupAddBeforeCase.text=instrukcja @{Case}
+Editor.popupAddBeforeFor.text=pętla @{For}
+Editor.popupAddBeforeWhile.text=pętla @{While}
+Editor.popupAddBeforeRepeat.text=pętla @{Repeat}
+Editor.popupAddBeforeForever.text=@{Forever} pętla
+Editor.popupAddBeforeCall.text=instrukcja @{Call}
+Editor.popupAddBeforeJump.text=instrukcja @{Jump}
+Editor.popupAddBeforePara.text=blok @{Parallel}
+Editor.popupAddBeforeTry.text=blok @{Try}
 // After
 Editor.popupAddAfter.text=Po
 // Submenus of "Add -> After"
-Editor.popupAddAfterInst.text=Instrukcja
-Editor.popupAddAfterAlt.text=instrukcja IF
-Editor.popupAddAfterCase.text=instrukcja CASE
-Editor.popupAddAfterFor.text=pętla FOR
-Editor.popupAddAfterWhile.text=pętla WHILE
-Editor.popupAddAfterRepeat.text=pętla REPEAT
-Editor.popupAddAfterForever.text=NIESKOŃCZONA pętla
-Editor.popupAddAfterCall.text=instrukcja Call
-Editor.popupAddAfterJump.text=instrukcja Jump
-Editor.popupAddAfterPara.text=instrukcja Parallel
+Editor.popupAddAfterInst.text=@{Instruction}
+Editor.popupAddAfterAlt.text=instrukcja @{Alternative}
+Editor.popupAddAfterCase.text=instrukcja @{Case}
+Editor.popupAddAfterFor.text=pętla @{For}
+Editor.popupAddAfterWhile.text=pętla @{While}
+Editor.popupAddAfterRepeat.text=pętla @{Repeat}
+Editor.popupAddAfterForever.text=@{Forever} pętla
+Editor.popupAddAfterCall.text=instrukcja @{Call}
+Editor.popupAddAfterJump.text=instrukcja @{Jump}
+Editor.popupAddAfterPara.text=blok @{Parallel}
+Editor.popupAddAfterPara.text=blok @{Try}
 // Edxit	
 Editor.popupEdit.text=Edytuj
 Editor.popupDelete.text=Usuń
@@ -427,15 +436,20 @@ ParserPreferences.lblPre.text=Pre
 ParserPreferences.lblPre.tooltip=
 ParserPreferences.lblPost.text=Post
 ParserPreferences.lblPost.tooltip=
-ParserPreferences.lblAlt.text=instrukcja IF
+ParserPreferences.lblAlt.text=instrukcja @{Alternaive}
 ParserPreferences.lblAlt.tooltip=
-ParserPreferences.lblCase.text=instrukcja CASE
+ParserPreferences.lblCase.text=instrukcja @{Case}
 ParserPreferences.lblCase.tooltip=
-ParserPreferences.lblFor.text=pętla FOR
+ParserPreferences.lblFor.text=pętla @{For.COUNTER}
 ParserPreferences.lblFor.tooltip=
-ParserPreferences.lblWhile.text=pętla WHILE
+ParserPreferences.lblForStep.text=
+ParserPreferences.lblForIn.text=Boucle @{For.TRAVERSAL}
+ParserPreferences.lblForIn.tooltip=
+ParserPreferences.edtForInPre.tooltip=
+ParserPreferences.edtForInPost.tooltip=
+ParserPreferences.lblWhile.text=pętla @{While}
 ParserPreferences.lblWhile.tooltip=
-ParserPreferences.lblRepeat.text=pętla REPEAT
+ParserPreferences.lblRepeat.text=pętla @{Repeat}
 ParserPreferences.lblRepeat.tooltip=
 ParserPreferences.lblInput.text=instrukcja wejścia
 ParserPreferences.lblInput.tooltip=
@@ -478,7 +492,7 @@ FindAndReplace.chkElementTypes.11.text=@{Try}
 DownloadMonitor.btnCancel.text=Kasuj
 
 -----> Elements
-ElementNames.localizedNames.0.text=Instruction
+ElementNames.localizedNames.0.text=Instrukcja
 ElementNames.localizedNames.1.text=IF
 ElementNames.localizedNames.2.text=CASE
 ElementNames.localizedNames.3.text=FOR
@@ -486,12 +500,12 @@ ElementNames.localizedNames.4.text=FOR-TO
 ElementNames.localizedNames.5.text=FOR-IN
 ElementNames.localizedNames.6.text=WHILE
 ElementNames.localizedNames.7.text=REPEAT
-ElementNames.localizedNames.8.text=ENDLESS
-ElementNames.localizedNames.9.text=CALL
-ElementNames.localizedNames.10.text=EXIT
+ElementNames.localizedNames.8.text=NIESKOŃCZONĄ
+ElementNames.localizedNames.9.text=Wywołanie
+ElementNames.localizedNames.10.text=Skok
 ElementNames.localizedNames.11.text=PARALLEL
 ElementNames.localizedNames.12.text=Diagram
-ElementNames.localizedNames.13.text=Main program
-ElementNames.localizedNames.14.text=Sub-routine
+ElementNames.localizedNames.13.text=Program główny
+ElementNames.localizedNames.14.text=Podprogram
 ElementNames.localizedNames.15.text=Includable
 ElementNames.localizedNames.16.text=TRY

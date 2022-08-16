@@ -20,6 +20,28 @@
 
 package lu.fisch.structorizer.parsers;
 
+/******************************************************************************************************
+ *
+ *      Author:         Kay Gürtzig
+ *
+ *      Description:    Class SbdImporter for importing sbide files as diagrams
+ *
+ ******************************************************************************************************
+ *
+ *      Revision List
+ *
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Kay Gürtzig     2022-05-07      First Issue to implement #1032
+ *      Kay Gürtzig     2022-05-11      More stable array size detection (constant expressions accepted)
+ *
+ ******************************************************************************************************
+ *
+ *      Comment:
+ *      
+ *
+ ******************************************************************************************************///
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -43,28 +65,6 @@ import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.While;
 import lu.fisch.utils.StringList;
 
-/******************************************************************************************************
- *
- *      Author:         Kay Gürtzig
- *
- *      Description:    Class SbdImporter for importing sbide files as diagrams
- *
- ******************************************************************************************************
- *
- *      Revision List
- *
- *      Author          Date            Description
- *      ------          ----            -----------
- *      Kay Gürtzig     2022-05-07      First Issue to implement #1032
- *      Kay Gürtzig     2022-05-11      More stable array size detection (constant expressions accepted)
- *
- ******************************************************************************************************
- *
- *      Comment:
- *      
- *
- ******************************************************************************************************///
-
 /**
  * Importer class for sbd files from structogram editor www.sbide.de
  * 
@@ -77,10 +77,10 @@ public class SbdImporter implements INSDImporter {
 	 */
 	private static final StringList SBIDE_TYPES = StringList.explode("int,float,char,vint,vfloat,vchar", ",");
 	
-	/**
-	 * StringList of arithmetic operators supported by sbide and parentheses
-	 */
-	private static final StringList SBIDE_OPERATORS = StringList.explode("+,-,*,/,mod,(,)", ",");
+//	/**
+//	 * StringList of arithmetic operators supported by sbide and parentheses
+//	 */
+//	private static final StringList SBIDE_OPERATORS = StringList.explode("+,-,*,/,mod,(,)", ",");
 	/**
 	 * Comment string to be applied to elements containing array element access
 	 */

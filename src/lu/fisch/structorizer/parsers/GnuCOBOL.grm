@@ -18,22 +18,25 @@
 !
 ! Revisions:
 !
-!    17-04-13: Simon Sobisch
+!    2017-04-13: Simon Sobisch
 !       * Grammar converted from GnuCOBOL parser.y (lot of sed invocation and
 !         manual work)
-!    17-04-26: Simon Sobisch
+!    2017-04-26: Simon Sobisch
 !       * finished Terminals (conversion from GnuCOBOL reserved.c and 
 !         scanner.l, some manual addons like PicDef and <_Comment Items>)
-!    17-05-02: Simon Sobisch
+!    2017-05-02: Simon Sobisch
 !       * fixed edited Picture_Def
 !       * updated "Known Issues" entries
-!    17-05-19: Simon Sobisch
+!    2017-05-19: Simon Sobisch
 !       * added more alias names (in general this should be done by
 !         dialect aware preprocessing!)
 !       * fixed escaped literal terminators in NationalLiteral and ZLiteral
-!    21-03-02: Kay Gürtzig
+!    2021-03-02: Kay Gürtzig
 !       * Order of sections in <_configuration_section> revised (repository
 !         before special_names)
+!    2022-08-13: Kay Gürtzig
+!       * Decimal and float literal definition modified such that no digit is
+!         required on the left-hand side of the decimal point
 !
 ! -----------------------------------------------------------------------------
 !
@@ -67,7 +70,7 @@
 ! -----------------------------------------------------------------------------
 
 "Name"    = 'GnuCOBOL'
-"Version" = '1.1'
+"Version" = '1.2'
 
 "Author"  = 'Original Written by Keisuke Nishida, Roger While, Simon Sobisch, Edward Hart'
 
@@ -175,8 +178,8 @@ AcuOctNumLiteral   = 'O#'{Number}+
 AcuHexNumLiteral   = [XH]'#'{Hex Chars}+
 
 IntLiteral         = [+-]?{Number}+
-DecimalLiteral     = [+-]?{Number}+ '.' {Number}+
-FloatLiteral       = [+-]?{Number}+ '.' {Number}+ 'E' [+-]?{Number}+
+DecimalLiteral     = [+-]?{Number}* '.' {Number}+
+FloatLiteral       = [+-]?{Number}* '.' {Number}+ 'E' [+-]?{Number}+
 
                   
 {COBOLLetter}      = {Letter} + {&80 .. &FF} - {Whitespace}
@@ -194,7 +197,7 @@ COBOLWord          = {Number}* {COBOLLetter} ({COBOLCharsFull}*{COBOLChars}+)?
 ! ===================================================================
 
 {PicChar}    = [anxz$19*+-] + [pb0/,]
-! "correct" defintion (not usable as we currently have to include CONSTANTs -> COBOLWords)
+! "correct" definition (not usable as we currently have to include CONSTANTs -> COBOLWords)
 !Picture_Def = 'PIC'('TURE')? {Whitespace}+ (IS {Whitespace}+)? (CR|DB|[$s])? ({PicChar}+ ( '('{Number}+')' )?)+ ( [v.] ({PicChar}+ ( '('{Number}+')' )?)+ (('E' '9'+ ( '('{Number}+')' )?)?) | (CR|DB|[$s]))?
 Picture_Def = 'PIC'('TURE')? {Whitespace}+ (IS {Whitespace}+)? (CR|DB|[$s])? ({PicChar}+ ( '('{COBOLCharsFull}+')' )?)+ ( [v.] ({PicChar}+ ( '('{COBOLCharsFull}+')' )?)+ (('E' '9'+ ( '('{COBOLCharsFull}+')' )?)?) | (CR|DB|[$s]))?
 

@@ -209,6 +209,7 @@ Menu.menuFileArrange.text=Colocar en el Arranger
 Menu.menuFileAttributes.text=Inspiciar propiedades ...
 Menu.menuFileTranslator.text=Traductor ...
 Menu.menuFileQuit.text=Salir
+
 // Menu "Edit"
 Menu.menuEdit.text=Editar
 Menu.menuEdit.mnemonic=e
@@ -226,7 +227,7 @@ Menu.menuEditUpgradeTurtle.tooltip=Reemplaza los comandos Turtle con precisión 
 Menu.menuEditDowngradeTurtle.text=Hacia comandos integrales
 Menu.menuEditDowngradeTurtle.tooltip=Reemplaza los comandos Turtle con precisión fina en los elementos seleccionados por aquellos con precisión discreta.
 Menu.menuEditBreakLines.text=(Re-)ajustar renglones ...
-Menu.menuEditBreakLines.tooltip=Permite reajustar las líneas de los elementos seleccionados (y opcionálmente de sus subestructuras) a un nuevo limite de longitud.  
+Menu.menuEditBreakLines.tooltip=Permite reajustar las líneas de los elementos seleccionados (y opcionálmente de sus subestructuras) a un nuevo limite de longitud.
 Menu.menuEditCopyDiagramPNG.text=Copiar Imagen PNG
 Menu.menuEditCopyDiagramEMF.text=Copiar Imagen EMF
 // Menu "Diagram"
@@ -290,6 +291,7 @@ Menu.menuDiagramDIN.tooltip=Cambia la apariencia de ciclos @d entre norma DIN 66
 Menu.menuDiagramAnalyser.text=¿Comprobar diagrama?
 Menu.menuDiagramIndex.text=¿Mostrar índice de Arranger?
 Menu.menuDiagramPreview.text=¿Mostrar prevista de código?
+
 // Menu "Preferences"
 Menu.menuPreferences.text=Preferencias
 Menu.menuPreferences.mnemonic=p
@@ -323,12 +325,12 @@ Menu.menuPreferencesLanguageItems.ru.text=Ruso
 Menu.menuPreferencesLanguageItems.pl.text=Polaco
 Menu.menuPreferencesLanguageFromFile.text=De un archivo ...
 Menu.menuPreferencesLanguageFromFile.tooltip=Archivos de traducción se pueden crear con el 'Traductor' en el menú 'Archivo'.
-Menu.menuPreferencesScalePreset.text=Escalar interfaz gráfica ...
 Menu.menuPreferencesLookAndFeel.text=Aspecto & Ambiente
 Menu.menuPreferencesWheel.text=Rueda
 Menu.menuPreferencesWheelCollapse.text=¿Usar rueda para reducir?
 Menu.menuPreferencesWheelZoom.text=¿Invertar zoom usando ctrl + rueda?
 Menu.menuPreferencesWheelUnit.text=Unidad de desplazamiento ...
+Menu.menuPreferencesScalePreset.text=Escalar interfaz gráfica ...
 
 Menu.menuPreferencesSave.text=Guardar o importar
 Menu.menuPreferencesSaveAll.text=Guardar ahora
@@ -435,13 +437,13 @@ Menu.lblYesToAll.text=Sí para todos
 Menu.lblNoToAll.text=No para todos
 Menu.lblSuppressUpdateHint.text=Jamás mostrar esta ventanilla
 Menu.lblHint.text=Aviso
+Menu.lblCopyToClipBoard.text=Copiar en el portapapeles
 Menu.lblReduced.text=Sí, modo simplificado
 Menu.lblNormal.text=No, modo normal
-Menu.lblCopyToClipBoard.text=Copiar en el portapapeles
 Menu.ttlCodeImport.text=Importe de código
 Menu.msgSelectParser.text=Tipo de código del fichero "%" es ambiguo.\nEscoge el idioma / analizador más apropiado, por favor:
 Menu.msgImportCancelled.text=Importe de código para fichero "%" cancelado.
-Menu.msgSubroutineName.text=Nombre del nuevo subprograma 
+Menu.msgSubroutineName.text=Nombre del nuevo subprograma
 Menu.msgIncludableName.text=Nombre de (nuevo) incluíble diagrama para caber tipos comunes
 Menu.msgMustBeIdentifier.text=¡El dado nombre no era aceptable como identificador!
 Menu.msgJumpsOutwardsScope.text=Entre los elementos seleccionados hay @ks que puntan afuera de la región del diagrama.\n¡Segregandolos va a resultar en lógica distorsionada del programa o en un algoritmo defectivo!\nLos saltos respectivos están listados abajo y destacados en ROJO en el diagrama:\n%\n\n¿Todavía quieres segregar los elementos a pesar de eso?
@@ -607,7 +609,7 @@ AnalyserPreferences.checkboxes.21.text=Desaconsejar el uso de los ecivocables id
 AnalyserPreferences.checkboxes.22.text=Comprobar que constantes no son comprometidas.
 AnalyserPreferences.checkboxes.23.text=Comprobar si la lista de diagramas a ser incluídos causa problemas.
 AnalyserPreferences.checkboxes.24.text=Combrobar las definiciones y el uso de tipos (variables compuestas).
-AnalyserPreferences.checkboxes.25.text=Recomendaciones para primeras instrucciones 
+AnalyserPreferences.checkboxes.25.text=Recomendaciones para primeras instrucciones
 AnalyserPreferences.checkboxes.26.text=Guía corta hacia un algoritmo "Hola mundo"
 AnalyserPreferences.checkboxes.27.text=Comprobar que los selectores de @c son constantes integrales.
 AnalyserPreferences.checkboxes.28.text=Comprobar que las listas selectoras de @c son disjuntas.
@@ -617,6 +619,7 @@ AnalyserPreferences.lblDrawWarningSign.text=Dibuja señal de advertencia en elem
 AnalyserPreferences.okButton.text=Aceptar
 
 
+
 -----[ Diagram ]-----
 // Buttons
 // I/O
@@ -624,16 +627,16 @@ Editor.btnNew.tooltip=Crear un nuevo diagrama en blanco.
 Editor.btnOpen.tooltip=Abrir un diagrama existente.
 Editor.btnSave.tooltip=Guardar diagrama actual.
 Editor.btnSaveAll.tooltip=Guardar todos diagramas y grupos nuevos o cambiados.
-// InsertAfter
+// InsertAfter (+shift: before)
 Editor.btnAfterInst.tooltip=Insertar nueva @a después (con tecla de mayúsculas: antes) del elemento seleccionado.
 Editor.btnAfterAlt.tooltip=Insertar nueva ramificación @b después (con tecla de mayúsculas: antes) del elemento seleccionado.
+Editor.btnAfterCase.tooltip=Insertar nueva instrucción @c después (con tecla de mayúsculas: antes) del elemento seleccionado.
 Editor.btnAfterFor.tooltip=Insertar nuevo bucle @d después (con tecla de mayúsculas: antes) del elemento seleccionado.
 Editor.btnAfterWhile.tooltip=Insertar nuevo bucle @g después (con tecla de mayúsculas: antes) del elemento seleccionado.
 Editor.btnAfterRepeat.tooltip=Insertar nuevo bucle @h después (con tecla de mayúsculas: antes) del elemento seleccionado.
 Editor.btnAfterForever.tooltip=Insertar nuevo bucle @i después (con tecla de mayúsculas: antes) del elemento seleccionado.
 Editor.btnAfterCall.tooltip=Insertar nueva @j después (con tecla de mayúsculas: antes) del elemento seleccionado.
 Editor.btnAfterJump.tooltip=Insertar nuevo @k después (con tecla de mayúsculas: antes) del elemento seleccionado.
-Editor.btnAfterCase.tooltip=Insertar nueva instrucción @c después (con tecla de mayúsculas: antes) del elemento seleccionado.
 Editor.btnAfterPara.tooltip=Insertar nueva sección @l después (con tecla de mayúsculas: antes) del elemento seleccionado.
 Editor.btnAfterTry.tooltip=Insertar nuevo bloque @q después (con tecla de mayúsculas: antes) del elemento seleccionado.
 // undo & redo
@@ -671,11 +674,11 @@ Editor.btnColors.*.tooltip=Colorear el elemento seleccionado con este color.
 // collapsing
 Editor.btnCollapse.tooltip=Reducir el elemento seleccionado.
 Editor.btnExpand.tooltip=Expandir el elemento seleccionado.
-Editor.btnDisable.tooltip=Desactivar/reactivar los elementos seleccionados.
-// turtleizer & executor
+// debug
 Editor.btnTurtle.tooltip=Abrir Turtleizer ...
 Editor.btnMake.tooltip=Activar Control de Ejecución ...
 Editor.btnDropBrk.tooltip=Ignorar todos los breakpoints.
+Editor.btnDisable.tooltip=Desactivar/reactivar los elementos seleccionados.
 // display mode
 Editor.ttSwitchComments.text=¡Se presentan comentarios en lugar de textos!
 Editor.ttOperatorsC.text=¡Operadores están simbolizados en estilo C!
@@ -728,7 +731,7 @@ Editor.popupEditSub.tooltip=Convocar la llamada @o o un diagrama incluido al edi
 Editor.popupCollapse.text=Reducir
 Editor.popupExpand.text=Expandir
 Editor.popupDisable.text=Desactivar/Reactivar
-// Breakpoint
+// Debug
 Editor.popupBreakpoint.text=Poner/eliminar breakpoint
 Editor.popupBreakTrigger.text=Fija la condición de parar ...
 // Tabbed pane
@@ -740,6 +743,8 @@ Editor.popupCodeHide.text=Esconder la prevista
 Editor.ttPopupCodePreview.text=Cambia la prevista de código hacia % y lo pone como lenguaje preferido de exportación.
 
 -----[ InputBox ]-----
+InputBox.title[getInsertionType():insert]=
+InputBox.title[getInsertionType():update]=
 InputBox.lblText.text=Por favor ingresa un texto
 InputBox.lblText.tooltip=
 InputBox.lblComment.text=Comentario
@@ -926,7 +931,7 @@ AttributeInspector.lblSub.text=@o
 AttributeInspector.lblIncl.text=@p
 AttributeInspector.pnCopyrights.border=Copyrights
 AttributeInspector.pnStatistics.border=Cantidades (estadística)
-AttributeInspector.pnKeywordSet.border=Juego diferente de palabras claves  
+AttributeInspector.pnKeywordSet.border=Juego diferente de palabras claves
 AttributeInspector.msgOverrideLicense.text=¿Reemplazar el texto de licencia por el de la seleccionada licencia estándar "%"?
 AttributeInspector.msgLicenseChange.text=Modificación de Licencia
 AttributeInspector.msgLicenseLoadError.text=¡Error al tratar de cargar el texto de licencia "%1":\n%2!
@@ -976,7 +981,7 @@ Preferences.pnlCase.tooltip=
 Preferences.lblCase.text=Contenido por defecto
 Preferences.lblCase.tooltip=El contenido por defecto de una ramificación @c
 Preferences.lblCaseRot.text=Min. brazos para rotar
-Preferences.lblCaseRot.tooltip=Número de brazos encima del cual es tratado de reducir el ancho por rotation de brazos (0 = nunca) 
+Preferences.lblCaseRot.tooltip=Número de brazos encima del cual es tratado de reducir el ancho por rotation de brazos (0 = nunca)
 Preferences.chkCaseEditor.text=Utilizar editor especial para elementos @c
 Preferences.pnlRoot.border=Encabezamiento del diagrama
 Preferences.lblRoot.text=Rótulo de la lista de incluíbles
@@ -1022,7 +1027,6 @@ FontChooser.lblSize.tooltip=El tamaño de la fuente a seleccionar.
 FontChooser.btnOK.text=Aceptar
 FontChooser.btnOK.tooltip=Aceptar los cambios.
 FontChooser.cbFixPadding.text=Márgenes fijos (no proporcionales)
-
 
 -----[ Colors ]-----
 Colors.title=Preferencias de Color
@@ -1198,6 +1202,8 @@ PluginOptionDialog.optionLabels.fixedColumnIndicator.text[getPluginKey():COBOLPa
 PluginOptionDialog.optionComponents.fixedColumnIndicator.tooltip[getPluginKey():COBOLParser]=Número de la columna, en la cual se encuentran los indicadores en el formato fijo (estándar: 7).
 PluginOptionDialog.optionLabels.fixedColumnText.text[getPluginKey():COBOLParser]=Columna del texto ignorable (con formato fijo)
 PluginOptionDialog.optionComponents.fixedColumnText.tooltip[getPluginKey():COBOLParser]=Número des la columna, a partir de la cual comienza la llamada zona de nombe de programa en las líneas (estándar: 73).
+PluginOptionDialog.optionLabels.tidyupPerformThru.text[getPluginKey():COBOLParser]=Modo the limpieza entre rutinas (resultando de PERFORM THRU)
+PluginOptionDialog.optionComponents.tidyupPerformThru.tooltip[getPluginKey():COBOLParser]=Normálmente cadenas de llamadas procediendo del importe de una instrucción PERFORM THRU serán dividias y limpiadas. Aqui un modo de menos asistencia puede ser escogido (p.ej. para aclarar fallas del importe).
 PluginOptionDialog.optionLabels.typeNames.text[getPluginKey():C99Parser]=Nombres de tipos externos
 PluginOptionDialog.optionComponents.typeNames.tooltip[getPluginKey():C99Parser]=Lista de nombres de tipos typedef (separados con coma), que serán referenciados en el código sin que sus definiciones ocurran en el archivo (para hacer el análisis de sintaxis pasar).
 PluginOptionDialog.optionLabels.redundantNames.text[getPluginKey():C99Parser]=Nombres y macros redundantes del preprocesor
@@ -1233,12 +1239,13 @@ ElementNamePreferences.btnOK.text=Aceptar
 ElementNamePreferences.btnOK.tooltip=Aceptar los cambios.
 
 -----[ DiagramControllerAliases ]-----
-// Also consider Menu.msgTabHdrSignature and Menu.msgTabHdrAlias 
+// Also consider Menu.msgTabHdrSignature and Menu.msgTabHdrAlias
 DiagramControllerAliases.title=Aliases de rutinas de mando
 DiagramControllerAliases.lblHeader.text=Especifica aliases para rutinas de unidades de mando.
 DiagramControllerAliases.lblRemark.text=(Fijate: Mayúscula/minúscula no son significantes con estas rutinas.)
 DiagramControllerAliases.chkApplyAliases.text=Aplicar los aliases especificados
 DiagramControllerAliases.btnOK.text=Aceptar
+DiagramControllerAliases.btnOK.tooltip=Aceptar los cambios.
 DiagramControllerAliases.hlpEndEditing.text=Termina de editar la línea con tecla <Enter> o <Esc> o clicando sobre otro sitio.
 DiagramControllerAliases.msgIdentifierRequired.text=Tu alias contiene carácteres ilícitos.\nUn alias de rutina tiene que ser o vacío o un identificador\n(es decir constar sólamente de letras, cifras y guiones bajos).\n\nEl texto original será restablecido.
 DiagramControllerAliases.ttlIllegalValues.text=Alias ilícito
@@ -1274,20 +1281,30 @@ FindAndReplace.lblSearchPattern.text=Buscar:
 FindAndReplace.lblReplacePattern.text=Sustituir por:
 FindAndReplace.pnlMode.border=Modo
 FindAndReplace.chkCaseSensitive.text=Cuidar may./minúscula
+FindAndReplace.chkCaseSensitive.mnemonic=
 FindAndReplace.chkWholeWord.text=Palabra entera
+FindAndReplace.chkWholeWord.mnemonic=
 FindAndReplace.chkRegEx.text=Expresiones regulares
+FindAndReplace.chkRegEx.mnemonic=
 FindAndReplace.rbDown.text=Abajo
+FindAndReplace.rbDown.mnemonic=
 FindAndReplace.rbUp.text=Arriva
+FindAndReplace.rbUp.mnemonic=
 FindAndReplace.pnlScope.border=Alcance
 FindAndReplace.cmbScope.item.0=Selección actual
 FindAndReplace.cmbScope.item.1=Diagrama actual
 FindAndReplace.cmbScope.item.2=Diagramas abiertos
 FindAndReplace.pnlRootTypes.border=Tipos de diagrama
 FindAndReplace.chkRootTypes.0.text=Programas
+FindAndReplace.chkRootTypes.0.mnemonic=p
 FindAndReplace.chkRootTypes.1.text=Subrutinas
+FindAndReplace.chkRootTypes.1.mnemonic=s
 FindAndReplace.chkRootTypes.2.text=Incluíbles
+FindAndReplace.chkRootTypes.2.mnemonic=i
 FindAndReplace.chkInTexts.text=En textos
+FindAndReplace.chkInTexts.mnemonic=t
 FindAndReplace.chkInComments.text=En comentarios
+FindAndReplace.chkInComments.mnemonic=m
 FindAndReplace.pnlElements.border=Tipos de elemente
 FindAndReplace.btnAll.text=Todos
 FindAndReplace.btnNone.text=Ningunos
@@ -1308,12 +1325,19 @@ FindAndReplace.pnlPreview.border=Contenido
 FindAndReplace.txtText.border=Texto
 FindAndReplace.txtComm.border=Comentario
 FindAndReplace.chkElementwise.text=Elemento a elemento
+FindAndReplace.chkElementwise.mnemonic=e
 FindAndReplace.btnFind.text=Buscar
+FindAndReplace.btnFind.mnemonic=b
 FindAndReplace.btnReplace.text=Reemplazar
+FindAndReplace.btnReplace.mnemonic=r
 FindAndReplace.btnReplaceFind.text=Reemplazar/Avanzar
+FindAndReplace.btnReplaceFind.mnemonic=v
 FindAndReplace.btnReplaceAll.text=Reemplazar todos
+FindAndReplace.btnReplaceAll.mnemonic=o
 FindAndReplace.btnReplaceAll.tooltip=Reemplaza todas aparencias restantes del texto de búsqueda a partir de la posición actual en la puesta dirección.
 FindAndReplace.btnClose.text=Cerrar
+FindAndReplace.msgRegexCorrupt.text=Expresión regular «%1» parece malformada: %2
+FindAndReplace.ttlSearchError.text=Error en la búsqueda
 
 -----[ DownloadMonitor ]-----
 DownloadMonitor.btnCancel.text=Cancelar
@@ -1327,17 +1351,19 @@ Arranger.btnRemoveAllDiagrams.text=Quita todos
 Arranger.btnExportPNG.text=Exporte a PNG
 Arranger.btnSaveArr.text=Graba coloc.
 Arranger.btnLoadArr.text=Carga coloc.
+Arranger.btnAddDiagram.tooltip=Inserta un nuevo, vacío diagrama.
 Arranger.btnPinDiagram.text=Grapa diagrama
 Arranger.btnSetCovered.text=Pon cubierto
-Arranger.btnZoom.text=Zoom 
+Arranger.btnZoom.text=Zoom
 Arranger.btnSaveArr.tooltip=Graba la colocación de los diagramas seleccionados como lista (*.arr) o archivo comprimido (*.arrz).
 Arranger.btnLoadArr.tooltip=Carga una colocación desde lista (*.arr) o archivo comprimido (*.arrz).
-Arranger.btnAddDiagram.tooltip=Inserta un nuevo, vacío diagrama.
 Arranger.btnExportPNG.tooltip=Dibuja esta colocación en un fichero de imagen del formato PNG.
 Arranger.btnPinDiagram.tooltip=Grapa los diagramas seleccionados para protejerlos de reemplazamiento por Structorizer.
 Arranger.btnSetCovered.tooltip=Marca los diagrama seleccionados de rutina como completamente probado para llamadas.
 Arranger.btnRemoveDiagram.tooltip=Quitar los diagramas seleccionados - deja presionada la tecla Shift para quitar todos diagramas.
 Arranger.btnZoom.tooltip=Deja presionada la tecla Shift para acercarse con el zoom.
+Arranger.chkDrawGroups.text=Dibujar grupos
+Arranger.chkSelectGroups.text=Selecc. grupos
 Arranger.popupHitList.text=Diagramas/grupos tocados
 Arranger.popupRemove.text=Quitar diagramas seleccionados
 Arranger.popupRemoveAll.text=Quitar todos diagramas
@@ -1353,8 +1379,6 @@ Arranger.popupKeyBindings.text=Atajos de teclado ...
 Arranger.popupKeyBindings.tooltip=Muestras la lista de atajos de teclado en el browser
 Arranger.popupRearrange.text=Recolocar por grupos
 Arranger.statusSelection.tooltip=Diagramas contenidos y ahora seleccionados
-Arranger.chkDrawGroups.text=Dibujar grupos
-Arranger.chkSelectGroups.text=Selecc. grupos
 Arranger.msgConfirmRemoveAll.text=¿Quieres reálmente quitar todos los diagramas de Arranger?
 Arranger.msgTitleWarning.text=Advertencia
 Arranger.msgTitleIllegal.text=¡Operación ilícita!
@@ -1429,7 +1453,7 @@ Surface.msgRenamingFailed.text=No fue posible renombrar el archivo de la colocac
 Surface.msgSharedDiagrams.text=Los siguientes diagramas serán compartidos con los grupos señalados\n - %1\n\nFíjate que cualquier modificación de ellos va a influir en todos ellos grupos\ny también en el archivo %2, ¡aun en el caso que el último ya no estase presente!
 Surface.msgFileMissing.text= falta!
 
-// Arranger index
+-----[ ArrangerIndex ]-----
 ArrangerIndex.popupIndexGet.text=Coger diagrama
 ArrangerIndex.popupIndexAttributes.text=Inspiciar propiedades ...
 ArrangerIndex.popupIndexInfo.text=Informaciones ...
@@ -1448,6 +1472,7 @@ ArrangerIndex.popupIndexRenameGroup.text=Renombrar grupo ...
 ArrangerIndex.popupIndexExport.text=Exportar diagrama/grupo
 ArrangerIndex.popupIndexRenameGroup.tooltip=Permite renombrar el groupo seleccionado, posíblemente incluso el archivo asociado
 ArrangerIndex.popupIndexShowQualifiers.text=Mostrar prefijos
+ArrangerIndex.popupIndexShowQualifiers.tooltip=Mostrar nombres prefijos de las rutinas (métodas) importadas (de otro modo el índice sería presentatado de forma jerárquica).
 ArrangerIndex.popupIndexHide.text=Esconder este índice
 ArrangerIndex.lblSelectTargetGroup.text=Selecciona el grupo destinatorio:
 ArrangerIndex.lblGroups.text=Grupos asociados
@@ -1457,7 +1482,7 @@ ArrangerIndex.lblDependingDiagrams.text=Diagramas dependientes
 ArrangerIndex.lblStaleReferences.text=Referencias no satisfechas
 ArrangerIndex.lblModifications.text=Modificaciones no guardados
 ArrangerIndex.lblExternSubroutines.text=Requeridas @os externas
-ArrangerIndex.lblExternIncludables.text=Requeridos @ps externos 
+ArrangerIndex.lblExternIncludables.text=Requeridos @ps externos
 ArrangerIndex.btnShowGroup.tooltip=Activar/desactivar la visibilidad individual del grupo en Arranger
 ArrangerIndex.btnGroupColors.*.tooltip=Reemplaza el color del grupo por el color de este botón
 ArrangerIndex.msgDefaultGroupName.text=(Grupo de incumplimiento)
@@ -1538,10 +1563,10 @@ Control.msgInvalidComponent.text=¡No hay un componente «%1» en la estructura 
 Control.msgConstantRecordComponent.text=¡Un componente como «%» no puede ser hecho un constante!
 Control.msgTypeMismatch.text=¡El tipo «%1» del valor no es compatible con el tipo «%2» de variable/componente «%3»!
 Control.msgBadValueList.text=<%> no se puede interpretar como lista de valores.
+Control.msgBadValueListDetails.text=Detalles: %
 Control.msgInvalidArrayAccess.text=¡Intento inesperado de accesar a «%1» con índice (%2)!
 Control.msgIndexOutOfBounds.text=¡Indice «%1» (%2) está fuera de los márgines del array «%3»!
 Control.msgInitializerAsArgument.text=Un inicialisador de array ne se puede pasar diréctamente como parámetro a una función interna.\nPon el array anteriórmente en una variable y pasa ésa pués.
-Control.msgBadValueListDetails.text=Detalles: %
 Control.msgIllegalEmptyLine.text=¡Una linea vacías no es aceptable en un @j!
 Control.msgVarUpdateErrors.text=Problemas poniendo nuevos valores
 Control.msgVarUpdatesFailed.text=Estas modificaciones de variables no valen por faltas sintacticas:\n\n%
@@ -1649,3 +1674,4 @@ ParserKeywords.JumpExit.text=abortar
 ParserKeywords.JumpThrow.text=lanzar
 ParserKeywords.Input.text=LEER
 ParserKeywords.Output.text=ESCRIBIR
+
