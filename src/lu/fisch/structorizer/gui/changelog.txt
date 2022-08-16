@@ -115,6 +115,8 @@ Current development version 3.32-10 (2022-08-16)
 - 10: Bugfix #1061: Python export didn't suppress all instruction translation
       in mode "No conversion of expressions/Instruction contents" <2>
 - 10: Bugfix #1062: Mode changes in Find & Replace did not reset results <2>
+- 10: Issue #1064: COBOL import now applies permanently disabled state to
+      section and paragraph markers (abused Call elements) <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>
