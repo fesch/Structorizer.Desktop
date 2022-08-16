@@ -23,7 +23,7 @@ Known issues:
 - ARM export is still experimental and relies on a specific and very restricted
   syntax for the element contents in order to produce meaningful results.
 
-Current development version 3.32-10 (2022-08-15)
+Current development version 3.32-10 (2022-08-16)
 - 01: Bugfix #987: Duplicate subroutine comment export by Pascal generator <2>
 - 01: Bugfix #988: Syntax error in Structorizer.bat and Arranger.bat fixed <2>
 - 01: Bugfix #989: Expressions in EXIT elements (e.g. return) were forgotten
@@ -111,6 +111,7 @@ Current development version 3.32-10 (2022-08-15)
 - 10: Issue #1056: Corrections in French locale (and others) [GitHub/tph002]2
 - 10: Issue #1057: COBOL import now converts 'LENGTH OF' into 'sizeof()' <2>
 - 10: Bugfix #1058: Defective COBOL import of negated condition names <2>
+- 10: Bugfix #1059: COBOL import of conditions completely redesigned <2> 
 - 10: Bugfix #1061: Python export didn't suppress all instruction translation
       in mode "No conversion of expressions/Instruction contents" <2>
 

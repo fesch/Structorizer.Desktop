@@ -114,8 +114,9 @@ package lu.fisch.structorizer.parsers;
  *                                      bugfix #1053: Array declaration mechanism revised (fix #695 was defective)
  *                                      bugfix #1049 revised (condition name resolution).
  *      Kay Gürtzig     2022-08-11      Issue #1057: LENGTH OF operator is now converted to a symbolic sizeof() call
- *                                      Bugfix #1058: negated condition names (at least in isolated cases)
+ *                                      Bugfix #1058: Handling of negated condition names revised
  *      Kay Gürtzig     2022-08-14      Bugfix #851/3: Float literals without digit left of the decimal point enabled
+ *      Kay Gürtzig     2022-08-15      Bugfix #1059: Complete redesign of transformCondition()
  *
  ******************************************************************************************************
  *
@@ -3001,7 +3002,7 @@ public class COBOLParser extends CodeParser
 //		final int PROD_DISPLAY_LIST2                                                         = 1169;  // <display_list> ::= <display_list> <display_atom>
 		final int PROD_DISPLAY_ATOM                                                          = 1170;  // <display_atom> ::= <disp_list> <display_clauses>
 //		final int PROD_DISP_LIST                                                             = 1171;  // <disp_list> ::= <x_list>
-		final int PROD_DISP_LIST_OMITTED                                                     = 1172;  // <disp_list> ::= OMITTED
+//		final int PROD_DISP_LIST_OMITTED                                                     = 1172;  // <disp_list> ::= OMITTED
 //		final int PROD_DISPLAY_CLAUSES                                                       = 1173;  // <display_clauses> ::= <display_clause>
 //		final int PROD_DISPLAY_CLAUSES2                                                      = 1174;  // <display_clauses> ::= <display_clauses> <display_clause>
 //		final int PROD_DISPLAY_CLAUSE                                                        = 1175;  // <display_clause> ::= <display_upon>
@@ -5688,12 +5689,12 @@ public class COBOLParser extends CodeParser
 	// END KGU#614 2018-12-17
 
 	private static Matcher mCopyFunction = Pattern.compile("^copy\\((.*),(.*),(.*)\\)$").matcher("");
-	// START KGU#402 2019-03-07: Issue #407
-	private static final Matcher STRING_MATCHER = Pattern.compile("^[HhXxZz]?([\"][^\"]*[\"]|['][^']*['])$").matcher("");
-	private static final Matcher NUMBER_MATCHER = Pattern.compile("^[+-]?[0-9]+([.][0-9]*)?(E[+-]?[0-9]+)?$").matcher("");
+	// START KGU#402 2019-03-07: Issue #407 / 2022-08-16 no longer needed
+	//private static final Matcher STRING_MATCHER = Pattern.compile("^[HhXxZz]?([\"][^\"]*[\"]|['][^']*['])$").matcher("");
+	//private static final Matcher NUMBER_MATCHER = Pattern.compile("^[+-]?[0-9]+([.][0-9]*)?(E[+-]?[0-9]+)?$").matcher("");
 	// END KGU#402 2019-03-07
 	// START KGU#1050 2022-01-08: Bugfix #1058 Insufficient handling of NOT prefixes
-	private static final Matcher UNEQUAL_MATCHER = Pattern.compile("(.*?\\W)\\s*" + BString.breakup("NOT", true) + "\\s*=\\s*(.*?)").matcher("");
+	//private static final Matcher UNEQUAL_MATCHER = Pattern.compile("(.*?\\W)\\s*" + BString.breakup("NOT", true) + "\\s*=\\s*(.*?)").matcher("");
 	private static final StringList NEGATABLE_REL_OPS = new StringList(new String[] {
 			"=",
 			"<",
@@ -7451,7 +7452,7 @@ public class COBOLParser extends CodeParser
 	}
 
 	private void importIf(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
-		String content = this.transformCondition(_reduction.get(1).asReduction(), "");
+		String content = this.transformCondition(_reduction.get(1).asReduction(), null);
 		//System.out.println("\tCondition: " + content);
 		Reduction secRed = _reduction.get(3).asReduction();
 		int secRuleId = secRed.getParent().getTableIndex();
@@ -8525,8 +8526,10 @@ public class COBOLParser extends CodeParser
 	/**
 	 * Builds Case elements or nested Alternatives from the EVALUATE statement
 	 * represented by {@code _reduction}.
+	 * 
 	 * @param _reduction - the top Reduction of the parsed EVALUATE statement
 	 * @param _parentNode - the Subqueue to append the built elements to
+	 * 
 	 * @throws ParserCancelled
 	 */
 	private final void importEvaluate(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled {
@@ -8662,7 +8665,7 @@ public class COBOLParser extends CodeParser
 					String cond = "";
 					Reduction condRed = null;
 					/* the token list is reversed -> as long as we get PROD_EVALUATE_WHEN_LIST_WHEN2
-					   we have more braching parts to check */
+					   we have more branching parts to check */
 					if (whenlRed.getParent().getTableIndex() == RuleConstants.PROD_EVALUATE_WHEN_LIST_WHEN2) {
 						condRed = whenlRed.get(2).asReduction();
 						whenlRed = whenlRed.get(0).asReduction();
@@ -9287,23 +9290,73 @@ public class COBOLParser extends CodeParser
 	/**
 	 * Derives an expression that makes some sense as Boolean condition from the given
 	 * {@link Reduction} {@code _reduction}. Tries to handle incomplete expressions,
-	 * condition names as variable attributes etc.
+	 * condition names (as variable attributes) etc.
 	 * 
 	 * @param _reduction - the top rule for the condition
 	 * @param _lastSubject - a comparison subject in case of an incomplete expression
-	 * (e.g. the discriminator in a CASE structure)
+	 *     (e.g. the discriminator in a CASE structure)
 	 * @return the derived expression in Structorizer-compatible syntax
 	 * 
 	 * @throws ParserCancelled
 	 */
 	private final String transformCondition(Reduction _reduction, String _lastSubject) throws ParserCancelled {
-		/* We must resolve expressions like "expr1 = expr2 or > expr3" or "expr1 = expr2 or expr3".
+		/* We must resolve expressions like "expr1 = expr2 or > expr3" or
+		 * "expr1 = expr2 or expr3".
 		 * Unfortunately the <condition> node is not defined as hierarchical expression
 		 * tree dominated by operator nodes but as left-recursive "list".
-		 * We should transform the left-recursive <expr_tokens> list into a linear
-		 * list of <expr_token> we can analyse from left to right, such that we can
-		 * identify the first token as comparison operator. (It seems rather simpler
-		 * to inspect the prefix of the composed string.)
+		 * We transform the left-recursive <expr_tokens> list into a linear list of
+		 * <expr_token>.
+		 * The toxic problem here is that after a boolean operator we may have to cope with just
+		 * another right operand or with an operator plus right operand
+		 * or with a complete comparison:
+		 * [IF] X = 5 OR 7
+		 * [IF] X >= 1 AND <= 10
+		 * [IF] X >= 1 AND X <= 10
+		 * [IF] X >= 1 AND Y >= X
+		 * This means: if we find some operand (variable or literal, maybe
+		 * a parenthesis) then it might either be a new left subject or
+		 * another new right operand (associated with the previous operator).
+		 * In the letter case we will also have to insert the prior operand
+		 * and cached operator and keep the previous subject, in the other case
+		 * we would have to override the previous subject. So we will hardly
+		 * know before we inspect the next token. Only that can save us from
+		 * ambiguity:
+		 * We would have to accomplish the partial condition now if a closing
+		 * parenthesis, a boolean operator, or the end of the list is following.
+		 * In any other case we may have to wait. A cached relation operator
+		 * is no criterion (only a missing one would be). We need a state machine
+		 * and some scratch area.
+		 * We start with a given _lastSubject (usually importing a CASE structure)
+		 * or without one (loops and IF instructions).
+		 * With no regard to negation, the following states should be distinguished:
+		 *  0. At the very beginning without lastSubject
+		 *     - identifier or literal: cache as opd1 --> state 1
+		 *     - condition name: write condition, cache var as opd1 --> state 3
+		 *     - '(': write '(' --> state 0
+		 *  1. lastSubject accepted or cached
+		 *     - relation operator: cache ropr, write opd1, ropr --> state 2
+		 *     - postfix condition: write function(opd1), clr ropr --> state 3
+		 *     - ')': write opd1 ')', clear ropr --> state 3
+		 *  2. relation operator accepted
+		 *     - identifier or literal: write opd1 ropr opd2 --> state 3
+		 *     - '(': write '(' --> state 4
+		 *  3. potential end state
+		 *     - ')': write ')' --> state 3
+		 *     - boolean operator: write bopr --> state 4
+		 *     - end of list --> return condition
+		 *  4. opd1 cached, potential continuation with opd1, ropr, or opd2
+		 *     - identifier or literal:
+		 *          a) no ropr: cache as opd1 --> state 1
+		 *          b) ropr cached: cache as opd2 --> state 5
+		 *     - condition name: write condition, cache var as opd1 --> state 3
+		 *     - relation operator: write opd1, ropr --> state 2
+		 *     - postfix condition: write function(opd1) --> state 3
+		 *     - '(': write '(' --> state 4
+		 *  5. New opd1 or opd2 accepted, ropr cached
+		 *     - relational operator: opd1 := opd2, cache ropr -> state 2
+		 *     - postfix condition: write function(opd2), opd1 := opd2 --> state 3
+		 *     - ')': check level, write opd1 ropr opd2 ')' --> state 3
+		 *     - end of list: write opd1 ropr opd2 --> return condition
 		 */
 		String thruExpr = "";
 		int ruleId = _reduction.getParent().getTableIndex();
@@ -9347,180 +9400,545 @@ public class COBOLParser extends CodeParser
 		}
 		LinkedList<Token> expr_tokens = new LinkedList<Token>();
 		this.lineariseTokenList(expr_tokens, _reduction, "<expr_tokens>");
-		String cond = "";
-		// START KGU#1050 2022-08-11: Bugfix #1058: Wrong results on negated condition names
-//		boolean toNegate = false;
-//		if (expr_tokens.size() == 2 && isNot(expr_tokens.getFirst())) {
-//			toNegate = true;
-//			expr_tokens.removeFirst();
+		
+// START KGU#1052 2022-08-16: Bugfix #1059 complete redesign
+//		String cond = "";
+//		
+//		// START KGU#402 2019-03-04: Issue #407: Approach to solve expressions like "a = 3 or 5"
+//		String lastRelOp = null;
+//		// END KGU#402 2019-03-04
+//		//String cond = this.getContent_R(_reduction, "").trim();
+//		// Test if cond starts with a comparison operator. In this case add lastSubject...
+//		//if (cond.startsWith("<") || cond.startsWith("=") || cond.startsWith(">")) {
+//		//	if (lastSubject != null) {
+//		//		cond = (lastSubject + " " + cond).trim();
+//		//	}
+//		//}
+//
+//		// Identify the starting reduction rule (-1 for a content token)
+//		ruleId = -1;	// Content token assumed as default
+//		if (!expr_tokens.isEmpty() && expr_tokens.getFirst().getType() == SymbolType.NON_TERMINAL) {
+//			ruleId = expr_tokens.getFirst().asReduction().getParent().getTableIndex();
 //		}
-		// END KGU#1050 2022-08-11
-		
-		// START KGU#402 2019-03-04: Issue #407: Approach to solve expressions like "a = 3 or 5"
-		String lastRelOp = null;
-		// END KGU#402 2019-03-04
-		//String cond = this.getContent_R(_reduction, "").trim();
-		// Test if cond starts with a comparison operator. In this case add lastSubject...
-		//if (cond.startsWith("<") || cond.startsWith("=") || cond.startsWith(">")) {
-		//	if (lastSubject != null) {
-		//		cond = (lastSubject + " " + cond).trim();
-		//	}
-		//}
-		
-		/* Now check the first token in order to identify an initial subject (to be held
-		 * in _lastSubject) that subsequent abbreviated terms might refer to.
+//		/* Now check the first token in order to identify an initial subject (to be held
+//		 * in _lastSubject) that subsequent abbreviated terms might refer to.
+//		 */
+//		// START KGU#1052 2022-08-15: Bugfx #1059 we shouldn't be less catious than above
+//		//if (_lastSubject == null || _lastSubject.isEmpty()) {
+//		if (!expr_tokens.isEmpty()
+//				&& (_lastSubject == null || _lastSubject.isEmpty())) {
+//		// END KGU#1052 2022-08-15
+//			Token tok = expr_tokens.getFirst();
+//			if (!isComparisonOpRuleId(ruleId)) {
+//				if (tok.getType() == SymbolType.CONTENT) {
+//					// START KGU#1052 2022-08-15: Bugfix #1059
+//					//_lastSubject = tok.asString();
+//					String tokStr = tok.asString();
+//					if (!tokStr.equals("(")) {
+//						_lastSubject = tokStr;
+//					// END KGU#1052 2022-08-15
+//						if (tok.getName().equals("COBOLWord")) {
+//							_lastSubject = _lastSubject.replace("-", "_");
+//							// Try to identify a variable and if so, fetch its qualified name
+//							CobVar var = currentProg.getCobVar(_lastSubject);
+//							if (var != null) {
+//								if (var.isConditionName()) {
+//									// May we actually ignore the associated expression?
+//									_lastSubject = var.getParent().getQualifiedName();
+//									// START KGU#1041 2022-07-28: Bugfix #1049 Unreliable conversion of condition names
+//									if (expr_tokens.size() == 1 && thruExpr.isEmpty()) {
+//										String cmp = var.getValuesAsExpression(true);
+//										if (!cmp.isEmpty()) {
+//											return cmp;
+//										}
+//									}
+//									// END KGU#1041 2022-07-28
+//								}
+//								else {
+//									_lastSubject = var.getQualifiedName();
+//								}
+//							}
+//							/* FIXME: if the current word matches an internal register,
+//							 * then check if it exists and create it otherwise.
+//							 * Note: depending on the register we should fill it, too
+//							 * (RETURN-CODE, NUMBER-OF-CALL-PARAMETERS, ...)
+//							 * else if (cT.matchesRegister(lastSubject)) {
+//							 * 		...
+//							 * }
+//							 */
+//							;
+//						}
+//					// START KGU#1052 2022-08-15: Bugfix #1059
+//					}
+//					// END KGU#1052 2022-08-15
+//				}
+//				else {
+//					// FIXME could be complex, couldn't it?
+//					_lastSubject = this.getContent_R(tok.asReduction(), "");
+//				}
+//			}
+//			else {
+//				_lastSubject = "";
+//			}
+//		}
+//		/* Now iterate through the entire token list */
+//		boolean afterLogOpr = true;
+//		// START KGU#1050 2022-08-12: Bugfix #1058 Problem with negated conditions
+//		boolean afterNot = false;
+//		// END KGU#1050 2022-08-12
+//		for (Token tok: expr_tokens) {
+//			// START KGU#1050 2022-08-12: Bugfix #1058 Problem with negated conditions
+//			if (isNot(tok)) {
+//				afterNot = !afterNot;
+//				continue;
+//			}
+//			// END KGU#1050 2022-08-12
+//			String tokStr = "";
+//			if (tok.getType() == SymbolType.NON_TERMINAL) {
+//				// START KGU#1052 2022-08-15: Bugfix #1059
+//				tokStr = this.processPostfixCondition(_reduction, _lastSubject, afterNot);
+//				if (tokStr != null) {
+//					afterLogOpr = false;
+//				}
+//				else {
+//				// END KGU#1052 2022-08-15
+//					ruleId = tok.asReduction().getParent().getTableIndex();
+//					tokStr = this.getContent_R(tok.asReduction(), "");
+//					CobVar checkedVar = currentProg.getCobVar(tokStr);
+//					if (checkedVar != null && checkedVar.isConditionName()) {
+//						tokStr = checkedVar.getValuesAsExpression(true);
+//						// START KGU#1050 2022-08-12: Bugfix #1058 Problem with negated conditions
+//						if (afterNot) {
+//							tokStr = this.negateCondition(tokStr);
+//						}
+//						// END KGU#1050 2022-08-12
+//					}
+//					// START KGU#402 2019-03-04: Issue #407 - we may have to complete conds like "a = 4 or 7"
+//					else if (_lastSubject != null && !_lastSubject.isEmpty() && ruleId == RuleConstants.PROD_EXPR_TOKEN2) {
+//						// START KGU#1050 2022-08-12: Bugfix #1058 Problem with negated conditions
+//						if (afterNot) {
+//							tokStr = this.negateCondition(tokStr);
+//						}
+//						// END KGU#1050 2022-08-12
+//						lastRelOp = tokStr.trim();
+//					}
+//				// START KGU#1052 2022-08-15: Bugfix #1058 Problem with negated conditions
+//				}
+//				// END KGU#1050 2022-08-12
+//			}
+//			else {
+//				tokStr = tok.asString();
+//				// FIXME also address qualified names (rule PROD_QUALIFIED_WORD2)
+//				if (tok.getName().equals("COBOLWord")) {
+//					tokStr = tokStr.replace("-", "_");
+//					CobVar checkedVar = currentProg.getCobVar(_lastSubject);
+//					if (checkedVar != null) {
+//						// First of all accomplish the name as fallback
+//						tokStr = checkedVar.getQualifiedName();
+//						// Now look for some configured comparison expression
+//						String condString = checkedVar.getValuesAsExpression(true);
+//						if (!condString.isEmpty()) {
+//							tokStr = condString;
+//							// START KGU#1050 2022-08-12: Bugfix #1058 Problem with negated conditions
+//							if (afterNot) {
+//								tokStr = this.negateCondition(tokStr);
+//							}
+//							// END KGU#1050 2022-08-12
+//						}
+//					}
+//				}
+//				// START KGU#402 2019-03-04: Issue #407 - FIXME this patch may be superfluous
+//				else if (_lastSubject != null && !_lastSubject.isEmpty() && isComparisonOperator(tokStr)) {
+//					// START KGU#1050 2022-08-12: Bugfix #1058 Problem with negated conditions
+//					if (afterNot) {
+//						tokStr = this.negateCondition(tokStr);
+//					}
+//					// END KGU#1050 2022-08-12
+//					lastRelOp = tokStr.trim();
+//				}
+//				// END KGU#402 2019-03-04
+//			}
+//			if (!tokStr.trim().isEmpty()) {
+//				// START KGU#402 2019-03-04: Issue #407: Approach to solve expressions like "a = 3 or 5"
+//				//if (afterLogOpr && isComparisonOpRuleId(ruleId)) {
+//				//	// Place the last comparison subject to accomplish the next incomplete expression
+//				//	cond += " " + _lastSubject;
+//				//}
+//				if (afterLogOpr) {
+//					if (isComparisonOpRuleId(ruleId)) {
+//						// Place the last comparison subject to accomplish the next incomplete expression
+//						cond += " " + _lastSubject;
+//						lastRelOp = tokStr.trim();
+//					}
+//					else if (lastRelOp != null && isNonBooleanOperand(tokStr) && !_lastSubject.isEmpty()) {
+//						cond += " " + _lastSubject + " " + lastRelOp;
+//					}
+//				}
+//				// END KGU#402 2019-03-04
+//				afterLogOpr = (ruleId == RuleConstants.PROD_EXPR_TOKEN_AND || ruleId == RuleConstants.PROD_EXPR_TOKEN_OR);
+//				if (afterLogOpr) {
+//					tokStr = tokStr.toLowerCase();
+//				}
+//				cond += " " + tokStr; // FIXME somewhat rash...
+//			}
+//			afterNot = false;
+//		}
+//		// TODO We currently don't resolve the cond-name of "NOT cond-name"
+//		cond += thruExpr;
+//		// START KGU#1050 2022-08-11: Bugfx #1058: Better handling of negations
+//		//if (cond.matches("(.*?\\W)" + BString.breakup("NOT", true) + "\\s*=(.*?)")) {
+//		//	cond = cond.replaceAll("(.*?\\W)" + BString.breakup("NOT", true) + "\\s*=(.*?)", "$1 <> $2");
+//		//}
+//		if (UNEQUAL_MATCHER.reset(cond).matches()) {
+//			cond = UNEQUAL_MATCHER.replaceAll("$1 <> $2");
+//		}
+////		if (toNegate) {
+////			cond = this.negateCondition(cond.trim());
+////		}
+//		// END KGU'1050 2022-08-11
+//		// bad check, the comparision can include the *text* " OF "!
+////		if (cond.contains(" OF ")) {
+////			System.out.println("A record access slipped through badly...");
+////		}
+//		System.out.println("a) " + cond.trim());	// DEBUG
+		String cond = transformCondition1059(expr_tokens, _lastSubject, null) + thruExpr;
+		//System.out.println(cond.trim()); System.out.println();	// DEBUG
+// END KGU#1052 2022-08-15
+		return cond.trim();
+	}
+
+	// START KGU#1052 2022-08-15: Bugfix #1059 Condition transformation redesigned
+	/**
+	 * State type for the transformation of (partial) conditions
+	 * @author kay
+	 *
+	 */
+	private static enum CondState {
+		/**
+		 * CS0 - At the very beginning, without opd1
+		 * <ul>
+		 * <li>identifier or literal: cache as opd1 --> CS1</li>
+		 * <li>condition name: write condition, cache var as opd1 --> CS3</li>
+		 * <li>'(': write '(', recursively (--> CS0)
+		 * <ul>
 		 */
-		ruleId = -1;
-		if (!expr_tokens.isEmpty() && expr_tokens.getFirst().getType() == SymbolType.NON_TERMINAL) {
-			ruleId = expr_tokens.getFirst().asReduction().getParent().getTableIndex();
+		CS0_START,
+		/**
+		 * CS1 - opd1 accepted or cached
+		 * <lu>
+		 * <li>relation operator: cache ropr --> CS2</li>
+		 * <li>postfix condition: write as function(opd1), clr ropr --> CS3</li>
+		 * <li>')': check level, write opd1, ')', clear ropr, resume</li>
+		 * </ul>
+		 */
+		CS1_OPERAND1,
+		/**
+		 * CS2 - relation operator accepted
+		 * <ul>
+		 * <li>identifier or literal: write opd1 ropr opd2 --> CS3</li>
+		 * <li>'(': write '(', recursively (--> CS4)</li>
+		 * </ul>
+		 */
+		CS2_REL_OPR,
+		/**
+		 * CS3 - potential end state
+		 * <ul>
+		 * <li>')': check level, write ')', resume</li>
+		 * <li>boolean operator: write bopr --> CS4</li>
+		 * <li>end of list --> return condition</li>
+		 * </ul>
+		 */
+		CS3_END,
+		/**
+		 * CS4 - opd1 cached, potential continuation with opd1, ropr, or opd2<br/>
+		 * (similar to CS0, differing in gathered information)
+		 * <ul>
+		 * <li>identifier or literal:<ol>
+		 *     <li>no ropr: cache as opd1 --> CS1</li>
+		 *     <li>ropr cached: cache as opd2 --> CS5</li></ol>
+		 * </li>
+		 * <li>condition name: write condition, cache var as opd1, clear ropr --> CS3</li>
+		 * <li>relation operator: cache ropr --> CS2</li>
+		 * <li>postfix condition: write as function(opd1) --> CS3</li>
+		 * <li>'(': write '(', recursively (--> CS4)</li>
+		 * <ul>
+		 */
+		CS4_CONTINUE,
+		/**
+		 * CS5 - New opd1 or opd2 accepted, ropr cached
+		 * <ul>
+		 * <li>relational operator: opd1 := opd2, cache ropr -> CS2</li>
+		 * <li>postfix condition: write as function(opd2), opd1 := opd2 --> CS3</li>
+		 * <li>')': check level, write opd1 ropr opd2 ')' --> CS3</li>
+		 * <li>end of list: write opd1 ropr opd2 --> CS3</li>
+		 * </ul>
+		 */
+		CS5_OPD_RELOP
+	};
+	
+	/**
+	 * Derives an expression that makes some sense as Boolean condition from the given
+	 * list of {@link Token}s of kind {@code <expr_token>}. Tries to handle incomplete
+	 * expressions, condition names (as variable attributes) etc.
+	 * 
+	 * @param _expr_tokens - list of expression tokens of the condition, will be consumed
+	 * @param _operand1 - last subject in the condition (potential 1st operand in partial
+	 *     condition, may be {@code null} or empty
+	 * @param _relOpr - last relation operator or {@code null}
+	 * @return the composed condition as string
+	 * 
+	 * @throws ParserCancelled 
+	 */
+	private String transformCondition1059(LinkedList<Token> _expr_tokens, String _operand1, String _relOpr) throws ParserCancelled {
+		StringBuilder condSB = new StringBuilder();
+		CondState state = CondState.CS0_START;
+		if (_operand1 != null && !_operand1.isBlank()) {
+			state = CondState.CS4_CONTINUE;
 		}
-		if (_lastSubject == null || _lastSubject.isEmpty()) {
-			Token tok = expr_tokens.getFirst();
-			if (!isComparisonOpRuleId(ruleId)) {
-				if (tok.getType() == SymbolType.CONTENT) {
-					_lastSubject = tok.asString();
-					if (tok.getName().equals("COBOLWord")) {
-						_lastSubject = _lastSubject.replace("-", "_");
-						// Try to identify a variable and if so, fetch its qualified name
-						CobVar var = currentProg.getCobVar(_lastSubject);
-						if (var != null) {
-							if (var.isConditionName()) {
-								// May we actually ignore the associated expression?
-								_lastSubject = var.getParent().getQualifiedName();
-								// START KGU#1041 2022-07-28: Bugfix #1049 Unreliable conversion of condition names
-								if (expr_tokens.size() == 1 && thruExpr.isEmpty()) {
-									String cmp = var.getValuesAsExpression(true);
-									if (!cmp.isEmpty()) {
-										return cmp;
-									}
-								}
-								// END KGU#1041 2022-07-28
-							}
-							else {
-								_lastSubject = var.getQualifiedName();
-							}
-						}
-						/* FIXME: if the current word matches an internal register,
-						 * then check if it exists and create it otherwise.
-						 * Note: depending on the register we should fill it, too
-						 * (RETURN-CODE, NUMBER-OF-CALL-PARAMETERS, ...)
-						 * else if (cT.matchesRegister(lastSubject)) {
-						 * 		...
-						 * }
-						 */
-						;
-					}
-				}
-				else {
-					_lastSubject = this.getContent_R(tok.asReduction(), "");
-				}
-			}
-			else {
-				_lastSubject = "";
-			}
-		}
-		/* Now iterate through the entire token list */
-		boolean afterLogOpr = true;
 		boolean afterNot = false;
-		for (Token tok: expr_tokens) {
+		String operand2 = null;
+		while (!_expr_tokens.isEmpty()) {
+			int ruleId = -1;
+			Token tok = _expr_tokens.removeFirst();
 			if (isNot(tok)) {
 				afterNot = !afterNot;
 				continue;
 			}
-			String tokStr = "";
+			// Now we do some common token preparation
+			String tokStr = null;
+			CobVar var = null;	// possible variable
 			if (tok.getType() == SymbolType.NON_TERMINAL) {
+				Reduction red = tok.asReduction();
+				tokStr = this.processPostfixCondition(red, _operand1, afterNot);
+				if (tokStr != null) {
+					// Not to be expected in other states than CS1, CS4, CS5
+					if (state == CondState.CS5_OPD_RELOP) {
+						_operand1 = operand2;
+					}
+					afterNot = false; // was consumed by processPostfixCondition()
+					_relOpr = null;
+					condSB.append(" " + tokStr);
+					state = CondState.CS3_END;
+					continue;
+				}
 				ruleId = tok.asReduction().getParent().getTableIndex();
 				tokStr = this.getContent_R(tok.asReduction(), "");
-				CobVar checkedVar = currentProg.getCobVar(tokStr);
-				if (checkedVar != null && checkedVar.isConditionName()) {
-					tokStr = checkedVar.getValuesAsExpression(true);
-					if (afterNot) {
-						tokStr = this.negateCondition(tokStr);
-					}
-				}
-				// START KGU#402 2019-03-04: Issue #407 - we may have to complete conds like "a = 4 or 7"
-				else if (!_lastSubject.isEmpty() && ruleId == RuleConstants.PROD_EXPR_TOKEN2) {
-					if (afterNot) {
-						tokStr = this.negateCondition(tokStr);
-					}
-					lastRelOp = tokStr.trim();
-				}
+				var = currentProg.getCobVar(tokStr);
 			}
 			else {
 				tokStr = tok.asString();
-				// FIXME also address qualified names (rule PROD_QUALIFIED_WORD2)
 				if (tok.getName().equals("COBOLWord")) {
 					tokStr = tokStr.replace("-", "_");
-					CobVar checkedVar = currentProg.getCobVar(_lastSubject);
-					if (checkedVar != null) {
-						// First of all accomplish the name as fallback
-						tokStr = checkedVar.getQualifiedName();
-						// Now look for some configured comparison expression
-						String condString = checkedVar.getValuesAsExpression(true);
-						if (!condString.isEmpty()) {
-							tokStr = condString;
-							if (afterNot) {
-								tokStr = this.negateCondition(tokStr);
-							}
+					var = currentProg.getCobVar(tokStr);
+				}
+			}
+			switch (state) {
+			case CS4_CONTINUE:
+				if (tokStr.equals(")")) {
+					condSB.append(" )");
+					state = CondState.CS3_END;
+					break;
+				}
+				// fall through
+			case CS0_START:
+				if (var != null) {
+					if (var.isConditionName()) {
+						tokStr = var.getValuesAsExpression(true);
+						if (afterNot) {
+							tokStr = this.negateCondition(tokStr);
+							afterNot = false;
+						}
+						condSB.append(" " + tokStr);
+						_operand1 = var.getParent().getQualifiedName();
+						state = CondState.CS3_END;
+					}
+					else {
+						if (tok.getName().equals("COBOLWord")) {
+							tokStr = var.getQualifiedName();
+						}
+						if (_relOpr == null) {
+							// State CS0
+							_operand1 = tokStr;
+							state = CondState.CS1_OPERAND1;
+						}
+						else {
+							// State CS4
+							operand2 = tokStr;
+							state = CondState.CS5_OPD_RELOP;
 						}
 					}
 				}
-				// START KGU#402 2019-03-04: Issue #407 - FIXME this patch may be superfluous
-				else if (!_lastSubject.isEmpty() && isComparisonOperator(tokStr)) {
+				else if ("(".equals(tokStr.trim())) {
+					if (afterNot) {
+						condSB.append(" not");
+						afterNot = false;
+					}
+					condSB.append(" (");
+					state = CondState.CS4_CONTINUE;	// Or CS0?
+				}
+				else if (_operand1 != null && !_operand1.isBlank()
+						&& isComparisonOpRuleId(ruleId)
+						&& isComparisonOperator(tokStr)) {
 					if (afterNot) {
 						tokStr = this.negateCondition(tokStr);
 					}
-					lastRelOp = tokStr.trim();
+					_relOpr = tokStr.trim();
+					state = CondState.CS2_REL_OPR;
 				}
-				// END KGU#402 2019-03-04
-			}
-			if (!tokStr.trim().isEmpty()) {
-				// START KGU#402 2019-03-04: Issue #407: Approach to solve expressions like "a = 3 or 5"
-				//if (afterLogOpr && isComparisonOpRuleId(ruleId)) {
-				//	// Place the last comparison subject to accomplish the next incomplete expression
-				//	cond += " " + _lastSubject;
-				//}
-				if (afterLogOpr) {
-					if (isComparisonOpRuleId(ruleId)) {
-						// Place the last comparison subject to accomplish the next incomplete expression
-						cond += " " + _lastSubject;
-						lastRelOp = tokStr.trim();
+				else {
+					// Should now be a literal or other kind of operand...
+					if (_relOpr == null) {
+						// State CS0
+						_operand1 = tokStr;
+						state = CondState.CS1_OPERAND1;
 					}
-					else if (lastRelOp != null && isNonBooleanOperand(tokStr) && !_lastSubject.isEmpty()) {
-						// What we do here is pretty vague. To be more exact, we would have to analyse the next token...
-						cond += " " + _lastSubject + " " + lastRelOp;
-					}
+					else {
+						// State CS4
+						operand2 = tokStr;
+						state = CondState.CS5_OPD_RELOP;
+					}					
 				}
-				// END KGU#402 2019-03-04
-				afterLogOpr = (ruleId == RuleConstants.PROD_EXPR_TOKEN_AND || ruleId == RuleConstants.PROD_EXPR_TOKEN_OR);
-				if (afterLogOpr) {
+				break;
+			case CS1_OPERAND1:
+				if (_operand1 != null && !_operand1.isBlank()
+				&& isComparisonOpRuleId(ruleId)
+				&& isComparisonOperator(tokStr)) {
+					if (afterNot) {
+						tokStr = this.negateCondition(tokStr);
+						afterNot = false;
+					}
+					_relOpr = tokStr.trim();
+					state = CondState.CS2_REL_OPR;
+				}
+				else if (tokStr.equals(")")) {
+					condSB.append(" " + _operand1 + " )");
+					state = CondState.CS3_END;
+				}
+				break;
+			case CS2_REL_OPR:
+				if (tokStr.equals("(")) {
+					if (afterNot) {
+						condSB.append(" not");
+						afterNot = false;
+					}
+					condSB.append("(");
+					state = CondState.CS4_CONTINUE;	// Or CS0?
+					break;
+				}
+				else if (var != null && tok.getName().equals("COBOLWord")) {
+					tokStr = var.getQualifiedName();
+				}
+				condSB.append(" " + _operand1.trim() + " "
+						+ _relOpr.trim() + " " + tokStr.trim());
+				state = CondState.CS3_END;
+				break;
+			case CS3_END:
+				if (ruleId == RuleConstants.PROD_EXPR_TOKEN_AND || ruleId == RuleConstants.PROD_EXPR_TOKEN_OR) {
 					tokStr = tokStr.toLowerCase();
+					condSB.append("\\\n" + tokStr);
+					state = CondState.CS4_CONTINUE;
 				}
-				cond += " " + tokStr;
+				else if (")".equals(tokStr)) {
+					condSB.append(" )");
+					// We stay in this state...
+				}
+				break;
+			case CS5_OPD_RELOP:
+				if (isComparisonOpRuleId(ruleId)
+						&& isComparisonOperator(tokStr)) {
+					if (afterNot) {
+						tokStr = this.negateCondition(tokStr);
+						afterNot = false;
+					}
+					_operand1 = operand2;
+					_relOpr = tokStr.trim();
+					state = CondState.CS2_REL_OPR;
+				}
+				else {
+					// All three parts should be different from null here...
+					condSB.append(" " + _operand1.trim() + " " + _relOpr.trim() + " " + tokStr.trim());
+					state = CondState.CS3_END;
+				}
+				break;
 			}
-			afterNot = false;
 		}
-		// TODO We currently don't resolve the cond-name of "NOT cond-name"
-		cond += thruExpr;
-		// START KGU#1050 2022-08-11: Bugfx #1058: Better handling of negations
-		//if (cond.matches("(.*?\\W)" + BString.breakup("NOT", true) + "\\s*=(.*?)")) {
-		//	cond = cond.replaceAll("(.*?\\W)" + BString.breakup("NOT", true) + "\\s*=(.*?)", "$1 <> $2");
-		//}
-		if (UNEQUAL_MATCHER.reset(cond).matches()) {
-			cond = UNEQUAL_MATCHER.replaceAll("$1 <> $2");
-		}
-//		if (toNegate) {
-//			cond = this.negateCondition(cond.trim());
-//		}
-		// END KGU'1050 2022-08-11
-		// bad check, the comparision can include the *text* " OF "!
-//		if (cond.contains(" OF ")) {
-//			System.out.println("A record access slipped through badly...");
-//		}
-		System.out.println(cond.trim()); System.out.println();	// FIXME
-		return cond.trim();	// This is just an insufficient first default approach
+		return condSB.toString();
 	}
 
+	/**
+	 * Tries to convert rules of type
+	 * {@code <expr_token> ::= IS <not> <condition_or_class>} or<br/>
+	 * {@code <expr_token> ::= <_is> <condition_op>} or<br/>
+	 * {@code <expr_token> ::= IS <_not> ZERO}
+	 * into appropriate test expressions (possibly with function call syntax).
+	 * 
+	 * @param _red - a Reduction
+	 * @param _lastSubj - possibly the entity to apply the condition to
+	 *     (may be {@code null} or empty, in which case {@code null} will be
+	 *     returned, though
+	 * @param _toNegate - whether the condition is to be negated.
+	 * @return the converted condition, or {@code null} if there is no last
+	 *     subject given or if {@code _red} is not appropriate for the job
+	 * 
+	 * @throws ParserCancelled
+	 */
+	private String processPostfixCondition(Reduction _red, String _lastSubj, boolean _toNegate) throws ParserCancelled {
+		String cond = null;
+		if (_lastSubj != null && !_lastSubj.isEmpty()) {
+			int ruleId = _red.getParent().getTableIndex();
+			int ixCond = 1;
+			switch (ruleId) {
+			case RuleConstants.PROD_EXPR_TOKEN_IS2:
+				// <expr_token> ::= IS <not> <condition_or_class>
+				ixCond++;
+				_toNegate = !_toNegate;
+			case RuleConstants.PROD_EXPR_TOKEN2:
+				// <expr_token> ::= <_is> <condition_op>
+				cond = getContentToken_R(_red.get(ixCond), "", "", true);
+				if ("NUMERIC".equalsIgnoreCase(cond)) {
+					cond = "isNumber(" + _lastSubj + ")";
+				}
+				else if ("ALPHABETIC".equalsIgnoreCase(cond)
+						|| "ALPHABETIC-Lower".equalsIgnoreCase(cond)
+						|| "ALPHABETIC-Higher".equalsIgnoreCase(cond)) {
+					cond = "isString(" + _lastSubj + ") and isA"
+							+ cond.substring(1).toLowerCase().replace('-', '_')
+							+ "(" + _lastSubj + ")";
+				}
+				else if ("OMITTED".equalsIgnoreCase(cond)) {
+					cond = "wasOMITTED(" + _lastSubj + ")";
+				}
+				else if ("NEGATIVE".equalsIgnoreCase(cond)) {
+					cond = _lastSubj + (_toNegate ? " >= 0" : " < 0");
+					_toNegate = false;	// done
+				}
+				else if ("POSITIVE".equalsIgnoreCase(cond)) {
+					cond = _lastSubj + (_toNegate ? " <= 0" : " > 0");
+					_toNegate = false;	// done
+				}
+				else {
+					cond = null;
+				}
+				// We have to negate if either the arg says so or the rule but not both
+				if (cond != null && _toNegate) {
+					cond = "not " + cond;
+				}
+				break;
+			case RuleConstants.PROD_EXPR_TOKEN_IS_ZERO:
+				// <expr_token> ::= IS <_not> ZERO
+				if (_red.get(1).asReduction().size() > 0) {
+					_toNegate = !_toNegate;
+				}
+				cond = _lastSubj + (_toNegate ? " <> 0" : " = 0");
+				break;
+			}
+				
+		}
+		return cond;
+	}
+	// END KGU#1052 2022-08-15
+	
+	
 	// START KGU#1050 2022-08-11: Bugfix #1058: Facilitates the detection of NOT operators
 	/**
 	 * Determines whether the given token {@code tok} represents the operator "NOT"
@@ -9537,32 +9955,38 @@ public class COBOLParser extends CodeParser
 	// END KGU#1050 2022-08-11
 	
 	// START KGU#402 2019-03-04: Issue #407 - More heuristics for abbreviated comparison like "a = 4 or 7"
-	private boolean isNonBooleanOperand(String tokStr) {
-		boolean mayBeBoolean = true;
-		// First quick check for primitive literals (i.e. numbers, strings)
-		if (STRING_MATCHER.reset(tokStr).matches() || NUMBER_MATCHER.reset(tokStr).matches()) {
-			mayBeBoolean = false;
-		}
-		// Now check as variables
-		else {
-			CobVar checkedVar = currentProg.getCobVar(tokStr);
-			if (checkedVar != null && !checkedVar.isConditionName()) {
-				String type = CobTools.getTypeString(checkedVar, true);
-				if (!type.isEmpty() && !type.equals(CobTools.UNKNOWN_TYPE)) {
-					mayBeBoolean = false;
-				}
-			}
-		}
-		return !mayBeBoolean;
-	}
+//	private boolean isNonBooleanOperand(String tokStr) {
+//		boolean mayBeBoolean = true;
+//		// First quick check for primitive literals (i.e. numbers, strings)
+//		if (STRING_MATCHER.reset(tokStr).matches() || NUMBER_MATCHER.reset(tokStr).matches()) {
+//			mayBeBoolean = false;
+//		}
+//		// Now check as variables
+//		else {
+//			CobVar checkedVar = currentProg.getCobVar(tokStr);
+//			if (checkedVar != null && !checkedVar.isConditionName()) {
+//				String type = CobTools.getTypeString(checkedVar, true);
+//				if (!type.isEmpty() && !type.equals(CobTools.UNKNOWN_TYPE)) {
+//					mayBeBoolean = false;
+//				}
+//			}
+//		}
+//		return !mayBeBoolean;
+//	}
 	
 	private boolean isComparisonOperator(String tokStr) {
 		tokStr = tokStr.trim();
-		// Apparently there is no operator symbol for unequality
-		return tokStr.equals("=") || tokStr.equals("<") || tokStr.equals(">") || tokStr.equals("<=") || tokStr.equals(">=");
+		return NEGATABLE_REL_OPS.contains(tokStr);
 	}
 	// END KGU#402 2019-03-04
 
+	/**
+	 * Checks whether the given {@code ruleId} belongs to a relational (or conditional)
+	 * operator (this may include tests like IS NUMERICAL).
+	 * 
+	 * @param ruleId - the table id of a production rule
+	 * @return {@code true} if the id specifies some comparison operator
+	 */
 	private final boolean isComparisonOpRuleId(int ruleId)
 	{
 		switch (ruleId) {
