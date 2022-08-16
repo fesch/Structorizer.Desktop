@@ -104,7 +104,7 @@ Current development version 3.32-10 (2022-08-16)
 - 10: Enh. #84,#250: Chinese locales slightly updated w.r.t. FOR-IN loops <2>
 - 10: Issue #492: Element name placeholders accomplished in several locales <2>
 - 10: Bugfix #851/3: COBOL import of float literals like .75 still failed <2>
-- 10: Bugfix #997: NullpOinterExceptions on code import with FOR-IN loops <2>
+- 10: Bugfix #997: NullPointerExceptions on code import with FOR-IN loops <2>
 - 10: Bugfix #1049: COBOL condition name resolution was still defective <2>
 - 10: Issue #1047: Isolated NSD batch export with new option -k [R. Schmidt]2,
       revised naming conventions in combination of options -o and -k <2>
@@ -114,6 +114,7 @@ Current development version 3.32-10 (2022-08-16)
 - 10: Bugfix #1059: COBOL import of conditions completely redesigned <2> 
 - 10: Bugfix #1061: Python export didn't suppress all instruction translation
       in mode "No conversion of expressions/Instruction contents" <2>
+- 10: Bugfix #1062: Mode changes in Find & Replace did not reset results <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>
