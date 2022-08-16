@@ -144,7 +144,7 @@ Menu.menuEditCopy.text=Copier
 Menu.menuEditPaste.text=Coller
 Menu.menuEditSummonSub.text=Éditer @o ...
 Menu.menuEditSummonSub.tooltip=Invoquer le @o appelé ou un diagramme @p référencé pour l'éditer.
-Menu.menuEditFindReplace.text=Rechercher/remplacer ...
+Menu.menuEditFindReplace.text=Rechercher / remplacer ...
 Menu.menuEditUpgradeTurtle.text=Pour des graphiques fins
 Menu.menuEditUpgradeTurtle.tooltip=Remplace dans les éléments sélectionnés toutes les instructions de Turtle basées sur des entiers par des instructions plus précises.
 Menu.menuEditDowngradeTurtle.text=Pour des graphiques basés sur des entiers
@@ -275,7 +275,7 @@ Menu.menuDebugExecute.text=Exécuteur ...
 Menu.menuDebugDropBrkpts.text=Ignorer tous les points d'arrêt
 Menu.menuDebugBreakpoint.text=Basculer le point d'arrêt
 Menu.menuDebugBreakTrigger.text=Condition d'arrêt ...
-Menu.menuDebugDisable.text=Inactiver/activer
+Menu.menuDebugDisable.text=Inactiver / activer
 
 // Menu "Help"
 Menu.menuHelp.text=Aide
@@ -566,7 +566,7 @@ Editor.btnAfterTry.tooltip=Insérer une structure @q derrière (+shift: devant) 
 Editor.btnUndo.tooltip=Annuler la dernière action.
 Editor.btnRedo.tooltip=Refaire la dernière action.
 // find & replace
-Editor.btnFindReplace.tooltip=Ouvrir le dialogue Rechercher/remplacer.
+Editor.btnFindReplace.tooltip=Ouvrir le dialogue Rechercher / remplacer.
 // copy & paste
 Editor.btnCut.tooltip=Couper l'élément sélectionné.
 Editor.btnCopy.tooltip=Copier l'élément sélectionné.
@@ -827,7 +827,7 @@ AttributeInspector.lblPars.tooltip=Sections @l
 AttributeInspector.lblTries.tooltip=Blocs @q
 AttributeInspector.btnShowLicense.text=Texte de la licence
 AttributeInspector.btnShowLicense.tooltip=Appuyer sur ce bouton pour ouvrir l'édition et la revue du texte de la licence sélectionnée.
-AttributeInspector.cbLicenseName.tooltip=Sélectionner une licence disponible dans le pool de licences personnelles ou du pool courant pour 'éditer.
+AttributeInspector.cbLicenseName.tooltip=Sélectionner une licence disponible dans le pool de licences personnelles ou du pool courant pour éditer.
 AttributeInspector.lblPrefsAlt.text=Structure @b
 AttributeInspector.lblPrefsCase.text=Structure @c
 AttributeInspector.lblPrefsFor.text=Boucle @e
@@ -1267,7 +1267,7 @@ DownloadMonitor.btnCancel.text=Annuler
 -----[ Arranger ]-----
 Arranger.btnAddDiagram.text=Nouveau diagramme
 Arranger.btnRemoveDiagram.text=Supprimer le diagramme
-Arranger.btnRemoveDiagrams.text=Supprimer des diagrammes
+Arranger.btnRemoveDiagrams.text=Suppr. des diagr.
 Arranger.btnRemoveAllDiagrams.text=Tout supprimer
 Arranger.btnExportPNG.text=Exporter au format PNG
 Arranger.btnSaveArr.text=Sauvegarder Arr.

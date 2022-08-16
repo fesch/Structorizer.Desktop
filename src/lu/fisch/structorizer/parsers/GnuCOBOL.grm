@@ -197,7 +197,7 @@ COBOLWord          = {Number}* {COBOLLetter} ({COBOLCharsFull}*{COBOLChars}+)?
 ! ===================================================================
 
 {PicChar}    = [anxz$19*+-] + [pb0/,]
-! "correct" defintion (not usable as we currently have to include CONSTANTs -> COBOLWords)
+! "correct" definition (not usable as we currently have to include CONSTANTs -> COBOLWords)
 !Picture_Def = 'PIC'('TURE')? {Whitespace}+ (IS {Whitespace}+)? (CR|DB|[$s])? ({PicChar}+ ( '('{Number}+')' )?)+ ( [v.] ({PicChar}+ ( '('{Number}+')' )?)+ (('E' '9'+ ( '('{Number}+')' )?)?) | (CR|DB|[$s]))?
 Picture_Def = 'PIC'('TURE')? {Whitespace}+ (IS {Whitespace}+)? (CR|DB|[$s])? ({PicChar}+ ( '('{COBOLCharsFull}+')' )?)+ ( [v.] ({PicChar}+ ( '('{COBOLCharsFull}+')' )?)+ (('E' '9'+ ( '('{COBOLCharsFull}+')' )?)?) | (CR|DB|[$s]))?
 
