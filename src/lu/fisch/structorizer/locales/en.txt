@@ -1197,6 +1197,8 @@ PluginOptionDialog.optionLabels.fixedColumnIndicator.text[getPluginKey():COBOLPa
 PluginOptionDialog.optionComponents.fixedColumnIndicator.tooltip[getPluginKey():COBOLParser]=
 PluginOptionDialog.optionLabels.fixedColumnText.text[getPluginKey():COBOLParser]=
 PluginOptionDialog.optionComponents.fixedColumnText.tooltip[getPluginKey():COBOLParser]=
+PluginOptionDialog.optionLabels.tidyupPerformThru.text[getPluginKey():COBOLParser]=
+PluginOptionDialog.optionComponents.tidyupPerformThru.tooltip[getPluginKey():COBOLParser]=Chained calls resulting from PERFORM THRU will usually be parted, expendable calls and routines discarded. Adapt this e.g. for import forensics.
 PluginOptionDialog.optionLabels.typeNames.text[getPluginKey():C99Parser]=
 PluginOptionDialog.optionComponents.typeNames.tooltip[getPluginKey():C99Parser]=
 PluginOptionDialog.optionLabels.redundantNames.text[getPluginKey():C99Parser]=
