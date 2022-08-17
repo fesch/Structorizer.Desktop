@@ -23,7 +23,7 @@ Known issues:
 - ARM export is still experimental and relies on a specific and very restricted
   syntax for the element contents in order to produce meaningful results.
 
-Current development version 3.32-10 (2022-08-16)
+Current development version 3.32-11 (2022-08-17)
 - 01: Bugfix #987: Duplicate subroutine comment export by Pascal generator <2>
 - 01: Bugfix #988: Syntax error in Structorizer.bat and Arranger.bat fixed <2>
 - 01: Bugfix #989: Expressions in EXIT elements (e.g. return) were forgotten
@@ -117,6 +117,7 @@ Current development version 3.32-10 (2022-08-16)
 - 10: Bugfix #1062: Mode changes in Find & Replace did not reset results <2>
 - 10: Issue #1064: COBOL import now applies permanently disabled state to
       section and paragraph markers (abused Call elements) <2>
+- 11: Bugfix #1059: Rare negation cases on COBOL import of conditions <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>
