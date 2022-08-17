@@ -102,6 +102,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-02-18      Bugfix #940: Workaround for java version sensitivity of #912 fix via reflection
  *      Kay Gürtzig     2021-06-13      Issue #944: Code adapted for Java 11 (begun)
  *      Kay Gürtzig     2021-11-14      Issue #967: Ini support for plugin-specific Analyser checks
+ *      Kay Gürtzig     2022-08-17      Issue #1065: GUI responsiveness problem with ArrangerIndex notifications solved
  *
  ******************************************************************************************************
  *
@@ -1571,6 +1572,12 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	// START KGU#305 2016-12-16: Code revision
 	@Override
 	public void routinePoolChanged(IRoutinePool _source, int _flags) {
+		// START KGU#1056 2022-08-17: Issue #1065 Avoid unnecessary latency
+		boolean hasLocalImpact = (_flags &
+				(IRoutinePoolListener.RPC_POOL_CHANGED
+				| IRoutinePoolListener.RPC_STATUS_CHANGED
+				| IRoutinePoolListener.RPC_NAME_CHANGED)) != 0;
+		// END KGU#1056 2022-08-17
 		if (_source instanceof Arranger && this.editor != null) {
 			if ((_flags & (IRoutinePoolListener.RPC_POOL_CHANGED | IRoutinePoolListener.RPC_NAME_CHANGED)) != 0) {
 				// START KGU#626 2019-01-01: Enh. #657
@@ -1583,10 +1590,20 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 				this.editor.repaintArrangerIndex();
 			}
 			// START KGU#701 2019-03-30: Issue #718
-			diagram.invalidateAndRedraw();
+			// START KGU#1056 2022-08-17: Issue #1065
+			//diagram.invalidateAndRedraw();
+			if (hasLocalImpact) {
+				diagram.invalidateAndRedraw();
+			}
+			// END KGU#1056 2022-08-17
 			// END KGU#701 2019-03-30
 		}
-		updateAnalysis();
+		// START KGU#1056 2022-08-17: Issue #1065
+		//updateAnalysis();
+		if (hasLocalImpact) {
+			updateAnalysis();
+		}
+		// END KGU#1056 2022-08-17
 	}
 	// END KGU#305 2016-12-16
 

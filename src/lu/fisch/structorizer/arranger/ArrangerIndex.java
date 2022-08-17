@@ -47,6 +47,7 @@ package lu.fisch.structorizer.arranger;
  *                                      on quitting the pane; confirmation request before dissolving groups
  *      Kay Gürtzig     2021-01-11      Enh. #910: Menu items disabled if only DiagramController proxies are selected
  *      Kay Gürtzig     2021-02-23      Issue #901: WAIT_CURSOR now also set on group saving
+ *      Kay Gürtzig     2022-08-17      Issue #1065: Right-click now overrides a previous single selection
  *
  ******************************************************************************************************
  *
@@ -440,12 +441,21 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 				// START KGU#318 2017-01-05: Enh. #319
 				//popup.show(e.getComponent(), e.getX(), e.getY());
 				if (e.getComponent() == ArrangerIndex.this) {
-					if (isSelectionEmpty()) {
+					
+					// START KGU#1056 2022-08-17: Issue #1065 right click should hit
+					//if (isSelectionEmpty()) {
+					//	TreePath path = getClosestPathForLocation(e.getX(), e.getY());
+					//	if (path != null) {
+					//		addSelectionPath(path);
+					//	}
+					//}
+					if (getSelectionModel().getSelectionCount() <= 1) {
 						TreePath path = getClosestPathForLocation(e.getX(), e.getY());
 						if (path != null) {
-							addSelectionPath(path);
+							setSelectionPath(path);
 						}
 					}
+					// END KGU#1056 2022-08-17
 					doButtonsLocal();
 					requestFocusInWindow();
 					// START KGU#646 2019-02-10: workaround for issue #674

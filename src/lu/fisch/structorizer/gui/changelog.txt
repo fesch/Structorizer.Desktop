@@ -118,6 +118,8 @@ Current development version 3.32-11 (2022-08-17)
 - 10: Issue #1064: COBOL import now applies permanently disabled state to
       section and paragraph markers (abused Call elements) <2>
 - 11: Bugfix #1059: Rare negation cases on COBOL import of conditions <2>
+- 11: Issue #1065: Bad ArrangerIndex latency with huge current diagram,
+      right mouse click may override a previous single selection now <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>
