@@ -984,7 +984,7 @@ public abstract class Element {
 		_ele.setColor(this.getColor());
 		_ele.breakpoint = this.breakpoint;
 		_ele.breakTriggerCount = this.breakTriggerCount;
-    	this.copyRuntimeData(_ele, _simplyCoveredToo);
+		this.copyRuntimeData(_ele, _simplyCoveredToo);
 		// START KGU#183 2016-04-24: Issue #169
 		_ele.selected = this.selected;
 		// END KGU#183 2016-04-24
@@ -1150,15 +1150,15 @@ public abstract class Element {
 	 */
 	public StringList getCuteText()
 	{
-    	StringList cute = new StringList();
-    	for (int i = 0; i < text.count(); i++) {
-    		String line = text.get(i);
-    		if (line.endsWith("\\")) {
-    			line = line.substring(0, line.length() - 1);
-    		}
-    		cute.add(line);
-    	}
-    	return cute;
+		StringList cute = new StringList();
+		for (int i = 0; i < text.count(); i++) {
+			String line = text.get(i);
+			if (line.endsWith("\\")) {
+				line = line.substring(0, line.length() - 1);
+			}
+			cute.add(line);
+		}
+		return cute;
 	}
 	/**
 	 * Returns the content of the text field unless {@code _alwaysTrueText} is false and
@@ -1559,24 +1559,24 @@ public abstract class Element {
 	// END KGU#183 2016-04-24
 	
 	// START KGU 2016-04-24: replaces Root.checkChild(this, _ancestor)
-    /**
-     * Checks if this is a descendant of _ancestor in the tree
-     * @param _parent - Element to be verified as ancestor of _child
-     * @return true iff this is a descendant of _ancestor
-     */
-    public boolean isDescendantOf(Element _ancestor)
-    {
-            Element tmp = this.parent;
-            boolean res = false;
-            while ((tmp != null) && !(res = tmp == _ancestor))
-            {
-            	tmp = tmp.parent;
-            }
-            return res;
-    }
-    // END KGU 2016-04-24
-    
-    // START KGU#143 2016-01-22: Bugfix #114 - we need a method to decide execution involvement
+	/**
+	 * Checks if this is a descendant of _ancestor in the tree
+	 * @param _parent - Element to be verified as ancestor of _child
+	 * @return true iff this is a descendant of _ancestor
+	 */
+	public boolean isDescendantOf(Element _ancestor)
+	{
+		Element tmp = this.parent;
+		boolean res = false;
+		while ((tmp != null) && !(res = tmp == _ancestor))
+		{
+			tmp = tmp.parent;
+		}
+		return res;
+	}
+	// END KGU 2016-04-24
+
+	// START KGU#143 2016-01-22: Bugfix #114 - we need a method to decide execution involvement
 	/**
 	 * Checks execution involvement.
 	 * @return true iff this or some substructure of this is currently executed. 
@@ -1590,7 +1590,7 @@ public abstract class Element {
 	}
 	// END KGU#143 2016-01-22
 	
-    // START KGU#143 2016-11-17: Bugfix #114 - we need a method avoiding cyclic recursion
+	// START KGU#143 2016-11-17: Bugfix #114 - we need a method avoiding cyclic recursion
 	/**
 	 * Checks execution involvement.
 	 * @param checkParent - whether the waiting status of the owning Subqueue is relevant
@@ -4715,18 +4715,18 @@ public abstract class Element {
         }
     }
     // END KGU#162 2016-03-31
-    
-    // START KGU#152 2016-03-02: Better self-description of Elements
-    @Override
-    public String toString()
-    {
-    	return getClass().getSimpleName() + '@' + Integer.toHexString(hashCode()) +
-    			// START KGU#261 2017-01-19: Enh. #259 (type map)
-    			//"(" + (this.getText().count() > 0 ? this.getText().get(0) : "") + ")";
-    			"(" + this.id + (this.getText().count() > 0 ? (": " + this.getText().get(0)) : "") + ")";
-    			// END KGU#261 2017-01-19
-    }
-    // END KGU#152 2016-03-02
+
+	// START KGU#152 2016-03-02: Better self-description of Elements
+	@Override
+	public String toString()
+	{
+		return getClass().getSimpleName() + '@' + Integer.toHexString(hashCode()) +
+				// START KGU#261 2017-01-19: Enh. #259 (type map)
+				//"(" + (this.getText().count() > 0 ? this.getText().get(0) : "") + ")";
+				"(" + this.id + (this.getText().count() > 0 ? (": " + this.getText().get(0)) : "") + ")";
+		// END KGU#261 2017-01-19
+	}
+	// END KGU#152 2016-03-02
 
 	// START KGU#258 2016-09-26: Enh. #253
 	/**
