@@ -238,6 +238,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-11-14      Enh. #967: Analyser preferences enhanced by plugin-specific checks
  *      Kay Gürtzig     2022-05-08      Bugfix #1033: Diagram import left a stale Analyser report list.
  *      Kay Gürtzig     2022-06-24      Bugfix #1038: Additional argument for setRoot() to suppress recursive saving requests
+ *      Kay Gürtzig     2022-08-18      Enh. #1066: text auto-completion mechanism in showInputBox()
  *
  ******************************************************************************************************
  *
@@ -9870,6 +9871,27 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			inputbox.chkDisabled.setVisible(!isRoot);
 			inputbox.chkDisabled.setSelected(_data.disabled);
 			// END KGU#277 2016-10-13
+			
+			// START KGU#1057 2022-08-18: Enh. #1066 Support for autocompletions
+			if (!isRoot && !_elementType.equals("Parallel") && !_elementType.equals("Try")) {
+				var words = new ArrayList<String>();
+				var varNames = root.getVarNames();
+				for (int i = 0; i < varNames.count(); i++) {
+					words.add(varNames.get(i));
+				}
+				// For calls, we add the known routine signatures
+				if (_elementType.equals("Call") && Arranger.hasInstance()) {
+					var roots = Arranger.getInstance().getAllRoots();
+					for (Root rt: roots) {
+						if (rt.isSubroutine()) {
+							words.add(rt.getSignatureString(false, true));
+						}
+					}
+				}
+				Collections.sort(words, String.CASE_INSENSITIVE_ORDER);
+				inputbox.words = words;
+			}
+			// END KGU#1057 2022-08-18
 
 			inputbox.OK = false;
 			// START KGU#42 2015-10-14: Pass the additional information for title translation control

@@ -57,6 +57,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-01-26  Issue #400: Some Components had not reacted to Esc and Shift/Ctrl-Enter
  *      Kay Gürtzig     2021-02-10  Bugfix #931: Font resizing: JTextArea font was spread to other components,
  *                                  JTables are to be involved on init already, scaleFactor to be considered
+ *      Kay Gürtzig     2022-08-18  Enh. #1066: First draft of a simple text auto-completion mechanism
  *
  ******************************************************************************************************
  *
@@ -71,11 +72,16 @@ import lu.fisch.structorizer.locales.LangTextHolder;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Vector;
 
 import javax.swing.*;
 import javax.swing.border.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.TableCellRenderer;
+import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
@@ -143,16 +149,81 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
     public boolean forInsertion = false;		// If this dialog is used to setup a new element (in contrast to updating an existing element)
     // END KGU 2015-10-14
 
-    // START KGU#287 2016-11-02: Enh. #180, Issue #81 (DPI awareness workaround)
-    protected void setPreferredSize(double scaleFactor) {
-        setSize((int)(PREFERRED_SIZE[0] * scaleFactor), (int)(PREFERRED_SIZE[1] * scaleFactor));
+    // START KGU#1057 2022-08-18: Enh. #1066 Auto-text-completion
+    private static enum CompletionMode { INSERT, COMPLETION };
+    /**
+     * A case-insensitively sorted list of completable words (e.g. variable names etc.)
+     */
+    private static final String COMMIT_ACTION = "commit";
+    public ArrayList<String> words = null;
+    private int minComplChars = 3;
+    private CompletionMode mode = CompletionMode.INSERT;
+    
+    private class CompletionTask implements Runnable {
+        String completion;
+        int start, position;
+        
+        CompletionTask(String completion, int position, int nRemove) {
+            int posOpen = -1;
+            if (completion.endsWith(")") && (posOpen = completion.lastIndexOf("(")) >= 0) {
+                int nArgs = Integer.parseInt(completion.substring(posOpen+1, completion.length()-1));
+                completion = completion.substring(0, posOpen+1)
+                        + (nArgs > 0 ? "?" + ",?".repeat(nArgs-1) : "") + ")";
+            }
+            this.completion = completion;
+            this.position = position;
+            this.start = position - nRemove;
+        }
+        
+        public void run() {
+            txtText.replaceRange(completion, start, position);
+            txtText.setCaretPosition(start + completion.length());
+            txtText.moveCaretPosition(position);
+            mode = CompletionMode.COMPLETION;
+        }
     }
-    // END KGU#287 2016-11-02
+    
+    private class CommitAction extends AbstractAction {
+        public void actionPerformed(ActionEvent ev) {
+            if (mode == CompletionMode.COMPLETION) {
+                int pos0 = txtText.getSelectionStart();
+                int pos = txtText.getSelectionEnd();
+                boolean caretDone = false;
+                try {
+                    String selText = txtText.getText(pos0, pos-pos0);
+                    int posOpen = -1;
+                    if (selText.endsWith(")")
+                            && (posOpen = selText.lastIndexOf("(")) >= 0
+                            && selText.indexOf("?", posOpen) > 0) {
+                        txtText.setCaretPosition(pos0 + posOpen + 2);
+                        txtText.moveCaretPosition(pos0 + posOpen + 1);
+                        caretDone = true;
+                    }
+                } catch (BadLocationException exc) {
+                    // Ignore it
+                }
+                if (!caretDone) {
+                    txtText.insert(" ", pos);
+                    txtText.setCaretPosition(pos + 1);
+                }
+                mode = CompletionMode.INSERT;
+            } else {
+                txtText.replaceSelection("\n");
+            }
+        }
+    }
+    // END KGU#1057 2022-08-18
     
     // START KGU#294 2016-11-21: Issue #284
     // Components with fonts to be scaled independently 
     protected Vector<JComponent> scalableComponents = new Vector<JComponent>();
     // END KGU#294 2016-11-21
+    
+    // START KGU#287 2016-11-02: Enh. #180, Issue #81 (DPI awareness workaround)
+    protected void setPreferredSize(double scaleFactor) {
+        setSize((int)(PREFERRED_SIZE[0] * scaleFactor), (int)(PREFERRED_SIZE[1] * scaleFactor));
+    }
+    // END KGU#287 2016-11-02
     
     private void create() {
         // set window title
@@ -219,6 +290,81 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         docText.addUndoableEditListener(umText);
         docComment.addUndoableEditListener(umComment);
         // END KGU#915 2021-01-24
+        
+        // START KGU#1057 2022-08-18: Enh. #1066 first auto-completion approach
+        // Solution was taken from https://docs.oracle.com/javase/tutorial/uiswing/components/textarea.html
+        InputMap im = txtText.getInputMap();
+        ActionMap am = txtText.getActionMap();
+        im.put(KeyStroke.getKeyStroke("ENTER"), COMMIT_ACTION);
+        am.put(COMMIT_ACTION, new CommitAction());
+        var completionListener = new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent ev) {
+                if (ev.getLength() != 1 || words == null || minComplChars <= 0) {
+                    return;
+                }
+                int pos = ev.getOffset();
+                String content = null;
+                try {
+                    content = txtText.getText(0, pos + 1);
+                } catch (BadLocationException ex) {
+                    ex.printStackTrace();
+                }
+                // Find where the word starts
+                int w;
+                for (w = pos; w >= 0; w--) {
+                    if (! Character.isUnicodeIdentifierPart(content.charAt(w))) {
+                        break;
+                    }
+                }
+                if (pos - w < minComplChars) {
+                    // Too few chars
+                    return;
+                }
+                String prefix = content.substring(w + 1);
+                int n = Collections.binarySearch(words, prefix, String.CASE_INSENSITIVE_ORDER);
+                if (n < 0 && -n <= words.size()) {
+                    String match = words.get(-n - 1);
+                    if (match.startsWith(prefix)) {
+                        // A completion is found, we need what's still not written
+                        String completion = match.substring(pos - w);
+                        // We cannot modify Document from within notification,
+                        // so we submit a task that does the change later
+                        SwingUtilities.invokeLater(
+                                new CompletionTask(completion, pos + 1, 0));
+                    }
+                    else if (match.toLowerCase().startsWith(prefix.toLowerCase())) {
+                        // Find the first position with case difference
+                        int posDiff = 0;
+                        while (posDiff < prefix.length() && prefix.charAt(posDiff) == match.charAt(posDiff)) {
+                            posDiff++;
+                        }
+                        String completion = match.substring(posDiff);
+                        // We cannot modify Document from within notification,
+                        // so we submit a task that does the change later
+                        SwingUtilities.invokeLater(
+                                new CompletionTask(completion, pos + 1, prefix.length() - posDiff));
+                    }
+                } else {
+                    // Nothing found
+                    mode = CompletionMode.INSERT;
+                }
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                // TODO Auto-generated method stub
+                
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                // TODO Auto-generated method stub
+                
+            }
+        };
+        docText.addDocumentListener(completionListener);
+        // END KGU#1057 2022-08-18
         
         // START KGU#294 2016-11-21: Issue #284
         scalableComponents.addElement(txtText);
