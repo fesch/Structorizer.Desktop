@@ -58,6 +58,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-02-10  Bugfix #931: Font resizing: JTextArea font was spread to other components,
  *                                  JTables are to be involved on init already, scaleFactor to be considered
  *      Kay Gürtzig     2022-08-18  Enh. #1066: First draft of a simple text auto-completion mechanism
+ *      Kay Gürtzig     2022-08-19  Enh. #1066: New text suggestion approach with pulldown (based on LogicBig
+ *                                  SuggestionDropDownDecorator
  *
  ******************************************************************************************************
  *
@@ -66,32 +68,37 @@ package lu.fisch.structorizer.gui;
  ******************************************************************************************************
  */
 
-import lu.fisch.structorizer.io.Ini;
-import lu.fisch.structorizer.locales.LangDialog;
-import lu.fisch.structorizer.locales.LangTextHolder;
-import lu.fisch.utils.StringList;
-
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Vector;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.*;
 import javax.swing.border.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
+import javax.swing.text.JTextComponent;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoManager;
 
+import com.logicbig.uicommon.SuggestionClient;
+import com.logicbig.uicommon.SuggestionDropDownDecorator;
+
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.structorizer.executor.Function;
+import lu.fisch.structorizer.io.Ini;
+import lu.fisch.structorizer.locales.LangDialog;
+import lu.fisch.structorizer.locales.LangTextHolder;
+import lu.fisch.utils.StringList;
 
 @SuppressWarnings("serial")
 public class InputBox extends LangDialog implements ActionListener, KeyListener {
@@ -153,139 +160,150 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
     public boolean forInsertion = false;		// If this dialog is used to setup a new element (in contrast to updating an existing element)
     // END KGU 2015-10-14
 
-    // START KGU#1057 2022-08-18: Enh. #1066 Auto-text-completion
-    private static enum CompletionMode { INSERT, COMPLETION };
+    // START KGU#1057 2022-08-19: Enh. #1066 Auto-text-completion with dropdown
     /**
-     * A case-insensitively sorted list of completable words (e.g. variable names etc.)
+     * A case-insensitively sorted list of suggestable words (e.g. variable names etc.)
      */
-    private static final String COMMIT_ACTION = "commit";
     public ArrayList<String> words = null;
     public HashMap<String, TypeMapEntry> typeMap = null;
     private int minComplChars = 3;
-    private CompletionMode mode = CompletionMode.INSERT;
     
-    private class CompletionTask implements Runnable {
-        String completion;
-        int start, position;
+    /**
+     * Specific text suggestion client for the LogicBig.com SuggestionDropDownDecorator
+     * Cares for sensible name insertion proposals (variables, routines, components).
+     * 
+     * @author Kay Gürtzig
+     */
+    private class InputSuggestionClient implements SuggestionClient<JTextComponent> {
         
-        CompletionTask(String completion, int position, int nRemove) {
+        private Logger logger = Logger.getLogger(InputSuggestionClient.class.getName());
+
+        @Override
+        public Point getPopupLocation(JTextComponent invoker) {
+            int caretPosition = invoker.getCaretPosition();
+            try {
+                Rectangle2D rectangle2D = invoker.modelToView2D(caretPosition);
+                return new Point((int) rectangle2D.getX(), (int) (rectangle2D.getY() + rectangle2D.getHeight()));
+            } catch (BadLocationException ex) {
+                logger.log(Level.FINE, ex.toString());
+            }
+            return null;
+        }
+
+        @Override
+        public void setSelectedText(JTextComponent tc, String selectedValue) {
+            int cp = tc.getCaretPosition();
             int posOpen = -1;
-            if (completion.endsWith(")") && (posOpen = completion.lastIndexOf("(")) >= 0) {
-                int nArgs = Integer.parseInt(completion.substring(posOpen+1, completion.length()-1));
-                completion = completion.substring(0, posOpen+1)
+            if (selectedValue.endsWith(")") && (posOpen = selectedValue.lastIndexOf("(")) >= 0) {
+                int nArgs = Integer.parseInt(selectedValue.substring(posOpen+1, selectedValue.length()-1));
+                selectedValue = selectedValue.substring(0, posOpen+1)
                         + (nArgs > 0 ? "?" + ",?".repeat(nArgs-1) : "") + ")";
             }
-            this.completion = completion;
-            this.position = position;
-            this.start = position - nRemove;
-        }
-        
-        public void run() {
-            txtText.replaceRange(completion, start, position);
-            txtText.setCaretPosition(start + completion.length());
-            txtText.moveCaretPosition(position);
-            mode = CompletionMode.COMPLETION;
-        }
-    }
-    
-    private class CommitAction extends AbstractAction {
-        public void actionPerformed(ActionEvent ev) {
-            if (mode == CompletionMode.COMPLETION) {
-                int pos0 = txtText.getSelectionStart();
-                int pos = txtText.getSelectionEnd();
-                boolean caretDone = false;
-                try {
-                    String selText = txtText.getText(pos0, pos-pos0);
-                    int posOpen = -1;
-                    if (selText.endsWith(")")
-                            && (posOpen = selText.lastIndexOf("(")) >= 0
-                            && selText.indexOf("?", posOpen) > 0) {
-                        txtText.setCaretPosition(pos0 + posOpen + 2);
-                        txtText.moveCaretPosition(pos0 + posOpen + 1);
-                        caretDone = true;
+            try {
+                if (cp == 0 || tc.getText(cp - 1, 1).trim().isEmpty()) {
+                    tc.getDocument().insertString(cp, selectedValue, null);
+                } else {
+                    int previousWordIndex = this.findWordStart(tc, cp - 1);
+                    String text = tc.getText(previousWordIndex, cp - previousWordIndex);
+                    if (selectedValue.startsWith(text)) {
+                        tc.getDocument().insertString(cp, selectedValue.substring(text.length()), null);
+                    } else if (selectedValue.toLowerCase().startsWith(text.toLowerCase())) {
+                        tc.setSelectionStart(previousWordIndex);
+                        tc.setSelectionEnd(cp);
+                        tc.replaceSelection(selectedValue);
+                    } else {
+                        // In case of a mismatch just append the selectedValue (???)
+                        tc.getDocument().insertString(cp, selectedValue, null);
+                        previousWordIndex = cp;
                     }
-                } catch (BadLocationException exc) {
-                    // Ignore it
+                    if (posOpen > 0 && selectedValue.contains("?")) {
+                        // Routine with at least on argument - select the first '?'
+                        cp = previousWordIndex + posOpen + 1;
+                        tc.setCaretPosition(cp+1);
+                        tc.moveCaretPosition(cp);
+                    }
                 }
-                if (!caretDone) {
-                    txtText.insert(" ", pos);
-                    txtText.setCaretPosition(pos + 1);
-                }
-                mode = CompletionMode.INSERT;
-            } else {
-                txtText.replaceSelection("\n");
+            } catch (BadLocationException ex) {
+                logger.log(Level.FINE, ex.toString());
             }
         }
-    }
-    
-    private class CompletionListener implements DocumentListener {
+
         @Override
-        public void insertUpdate(DocumentEvent ev) {
-            if (ev.getLength() != 1 || words == null || minComplChars <= 0) {
-                return;
+        public List<String> getSuggestions(JTextComponent tc) {
+            if (words == null || minComplChars <= 0) {
+                return null;
             }
-            int pos = ev.getOffset();
+            int pos = tc.getCaretPosition();
+            int w = this.findWordStart(tc, pos - 1);
             String content = null;
             try {
-                content = txtText.getText(0, pos + 1);
+                content = tc.getText(0, pos);
             } catch (BadLocationException ex) {
-                ex.printStackTrace();
+                logger.log(Level.FINE, ex.toString());
+            }
+            
+            ArrayList<String> proposals = words;
+            // Now check whether a dot precedes - in which case we have to provide component names
+            if (w > 1 && pos > w && content.charAt(w-1) == '.' && typeMap != null) {
+                proposals = retrieveComponentNames(content.substring(0, w-1), proposals);
+            }
+            else if (pos - w < minComplChars) {
+                // Too few chars
+                return null;
+            }
+            ArrayList<String> suggestions = new ArrayList<String>();
+            String prefix = content.substring(w);
+            int n = Collections.binarySearch(proposals, prefix, String.CASE_INSENSITIVE_ORDER);
+            if (n < 0) {
+                n = -n - 1;
+            }
+            prefix = prefix.toLowerCase();
+            String match = null;
+            while (n < proposals.size()
+                    && (match = proposals.get(n)).toLowerCase().startsWith(prefix)) {
+                suggestions.add(match);
+                n++;
+            }
+            return suggestions;
+        }
+        
+        /**
+         * Goes backwards through the text preceding position {@code pos}, searching
+         * for a character that is not part of an identifier
+         * 
+         * @param invoker - the {@link JTextComponent} to operate within
+         * @param pos - current {@code invoker} position WITHIN the supposed identifier
+         * @return the start position of the identifier
+         */
+        private int findWordStart(JTextComponent invoker, int pos) {
+            String content = "";
+            try {
+                content = invoker.getText(0, pos + 1);
+            } catch (BadLocationException ex) {
+                logger.log(Level.FINE, ex.toString());
+                return pos;
             }
             // Find where the word starts
             int w;
             for (w = pos; w >= 0; w--) {
-                if (! Character.isUnicodeIdentifierPart(content.charAt(w))) {
+                if (!Character.isUnicodeIdentifierPart(content.charAt(w))) {
                     break;
                 }
             }
-            ArrayList<String> proposals = words;
-            // Now check whether a dot precedes - in which case we have to provide component names
-            if (w > 0 && pos > w && content.charAt(w) == '.' && typeMap != null) {
-                proposals = retrieveComponentNames(content, w, proposals);
-            }
-            else if (pos - w < minComplChars) {
-                // Too few chars
-                return;
-            }
-            String prefix = content.substring(w + 1);
-            int n = Collections.binarySearch(proposals, prefix, String.CASE_INSENSITIVE_ORDER);
-            if (n < 0 && -n <= proposals.size()) {
-                String match = proposals.get(-n - 1);
-                if (match.startsWith(prefix)) {
-                    // A completion is found, we need what's still not written
-                    String completion = match.substring(pos - w);
-                    // We cannot modify Document from within notification,
-                    // so we submit a task that does the change later
-                    SwingUtilities.invokeLater(
-                            new CompletionTask(completion, pos + 1, 0));
-                }
-                else if (match.toLowerCase().startsWith(prefix.toLowerCase())) {
-                    // Find the first position with case difference
-                    int posDiff = 0;
-                    while (posDiff < prefix.length() && prefix.charAt(posDiff) == match.charAt(posDiff)) {
-                        posDiff++;
-                    }
-                    String completion = match.substring(posDiff);
-                    // We cannot modify Document from within notification,
-                    // so we submit a task that does the change later
-                    SwingUtilities.invokeLater(
-                            new CompletionTask(completion, pos + 1, prefix.length() - posDiff));
-                }
-            } else {
-                // Nothing found
-                mode = CompletionMode.INSERT;
-            }
+            return w + 1;
         }
-
+        
         /**
-         * Analyses the text content preceding a dot at position _start
-         * @param _content - the preceding text content
-         * @param _endPos - the end position of the text part to be checked
+         * Analyses the text {@code content} preceding a dot for record structure information.
+         * if the pretext describes an object with record structure then returns the sorted
+         * list of the component names, otherwise the result will be the given {@code _proposals}
+         * 
+         * @param _content - the text content up to (but not including) the triggering dot
          * @param _proposals - the recently proposed names
          * @return either the old or new proposals (component names in the latter case)
          */
-        private ArrayList<String> retrieveComponentNames(String _content, int _endPos, ArrayList<String> _proposals) {
-            StringList lines = StringList.explode(_content.substring(0, _endPos), "\n");
+        private ArrayList<String> retrieveComponentNames(String _content, ArrayList<String> _proposals) {
+            StringList lines = StringList.explode(_content, "\n");
             String prevLine = null;
             while (lines.count() > 1 && (prevLine = lines.get(lines.count()-2)).endsWith("\\")) {
                 lines.set(lines.count()-2,
@@ -374,20 +392,9 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
             }
             return _proposals;
         }
-
-        @Override
-        public void removeUpdate(DocumentEvent e) {
-            // TODO Auto-generated method stub
-            
-        }
-
-        @Override
-        public void changedUpdate(DocumentEvent e) {
-            // TODO Auto-generated method stub
-            
-        }
     }
-    // END KGU#1057 2022-08-18
+    
+    // END KGU#1057 2022-08-19
     
     // START KGU#294 2016-11-21: Issue #284
     // Components with fonts to be scaled independently 
@@ -466,15 +473,9 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         docComment.addUndoableEditListener(umComment);
         // END KGU#915 2021-01-24
         
-        // START KGU#1057 2022-08-18: Enh. #1066 first auto-completion approach
-        // Solution was taken from https://docs.oracle.com/javase/tutorial/uiswing/components/textarea.html
-        InputMap im = txtText.getInputMap();
-        ActionMap am = txtText.getActionMap();
-        im.put(KeyStroke.getKeyStroke("ENTER"), COMMIT_ACTION);
-        am.put(COMMIT_ACTION, new CommitAction());
-        var completionListener = new CompletionListener();
-        docText.addDocumentListener(completionListener);
-        // END KGU#1057 2022-08-18
+        // START KGU#1057 2022-08-19: Enh. #1066 first auto-completion approach
+        SuggestionDropDownDecorator.decorate(txtText, new InputSuggestionClient());
+        // END KGU#1057 2022-08-19
         
         // START KGU#294 2016-11-21: Issue #284
         scalableComponents.addElement(txtText);
