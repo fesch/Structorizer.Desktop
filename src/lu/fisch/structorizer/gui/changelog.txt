@@ -121,6 +121,7 @@ Current development version 3.32-11 (2022-08-19)
 - 11: Issue #1065: Bad ArrangerIndex latency with huge current diagram,
       right mouse click may override a previous single selection now <2>
 - 11: Enh. #1066: Simple name completion in Element editor text field <2>
+- 11: Bugfix #1067: Certain execution errors used to slip through <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>

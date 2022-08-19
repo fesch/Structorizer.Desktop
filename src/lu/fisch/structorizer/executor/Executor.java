@@ -212,6 +212,7 @@ package lu.fisch.structorizer.executor;
  *                                      array initialisation.
  *      Kay Gürtzig     2022-01-05      Adaptations to modified EvalError API on upgrading from bsh-2.0b6.jar to bsh-2.1.0.jar
  *      Kay Gürtzig     2022-06-24      Bugfix #1038: Explicit saving decisions are no longer reiterated
+ *      Kay Gürtzig     2022-08-19      Bugfix #1067: EvalErrors could slip through in stepInstruction
  *
  ******************************************************************************************************
  *
@@ -5521,8 +5522,14 @@ public class Executor implements Runnable
 				//trouble = ex.getLocalizedMessage();
 				//if (trouble == null) trouble = ex.getMessage();
 				trouble = ex.getRawMessage();
+				// START KGU#1058 2022-08-19: Bugfix #1067 some errors passed unnoticed
+				if (trouble == null || trouble.isBlank()) {
+					// Tis will always yield a non-empty string
+					trouble = ex.toString();
+				}
+				// END KGU#1058 2022-08-19
 				int pilcrowPos = -1;
-				if (trouble != null && (pilcrowPos = trouble.indexOf(EVAL_ERR_PREFIX_SEPA)) > 0) {
+				if ((pilcrowPos = trouble.indexOf(EVAL_ERR_PREFIX_SEPA)) > 0) {
 					trouble = trouble.substring(0, pilcrowPos);
 				}
 				// END KGU#1024 2022-01-05
