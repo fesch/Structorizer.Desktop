@@ -69,11 +69,13 @@ package lu.fisch.structorizer.gui;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.locales.LangDialog;
 import lu.fisch.structorizer.locales.LangTextHolder;
+import lu.fisch.utils.StringList;
 
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Vector;
 
 import javax.swing.*;
@@ -88,6 +90,8 @@ import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoManager;
 
 import lu.fisch.structorizer.elements.Element;
+import lu.fisch.structorizer.elements.TypeMapEntry;
+import lu.fisch.structorizer.executor.Function;
 
 @SuppressWarnings("serial")
 public class InputBox extends LangDialog implements ActionListener, KeyListener {
@@ -156,6 +160,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
      */
     private static final String COMMIT_ACTION = "commit";
     public ArrayList<String> words = null;
+    public HashMap<String, TypeMapEntry> typeMap = null;
     private int minComplChars = 3;
     private CompletionMode mode = CompletionMode.INSERT;
     
@@ -210,6 +215,176 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
             } else {
                 txtText.replaceSelection("\n");
             }
+        }
+    }
+    
+    private class CompletionListener implements DocumentListener {
+        @Override
+        public void insertUpdate(DocumentEvent ev) {
+            if (ev.getLength() != 1 || words == null || minComplChars <= 0) {
+                return;
+            }
+            int pos = ev.getOffset();
+            String content = null;
+            try {
+                content = txtText.getText(0, pos + 1);
+            } catch (BadLocationException ex) {
+                ex.printStackTrace();
+            }
+            // Find where the word starts
+            int w;
+            for (w = pos; w >= 0; w--) {
+                if (! Character.isUnicodeIdentifierPart(content.charAt(w))) {
+                    break;
+                }
+            }
+            ArrayList<String> proposals = words;
+            // Now check whether a dot precedes - in which case we have to provide component names
+            if (w > 0 && pos > w && content.charAt(w) == '.' && typeMap != null) {
+                proposals = retrieveComponentNames(content, w, proposals);
+            }
+            else if (pos - w < minComplChars) {
+                // Too few chars
+                return;
+            }
+            String prefix = content.substring(w + 1);
+            int n = Collections.binarySearch(proposals, prefix, String.CASE_INSENSITIVE_ORDER);
+            if (n < 0 && -n <= proposals.size()) {
+                String match = proposals.get(-n - 1);
+                if (match.startsWith(prefix)) {
+                    // A completion is found, we need what's still not written
+                    String completion = match.substring(pos - w);
+                    // We cannot modify Document from within notification,
+                    // so we submit a task that does the change later
+                    SwingUtilities.invokeLater(
+                            new CompletionTask(completion, pos + 1, 0));
+                }
+                else if (match.toLowerCase().startsWith(prefix.toLowerCase())) {
+                    // Find the first position with case difference
+                    int posDiff = 0;
+                    while (posDiff < prefix.length() && prefix.charAt(posDiff) == match.charAt(posDiff)) {
+                        posDiff++;
+                    }
+                    String completion = match.substring(posDiff);
+                    // We cannot modify Document from within notification,
+                    // so we submit a task that does the change later
+                    SwingUtilities.invokeLater(
+                            new CompletionTask(completion, pos + 1, prefix.length() - posDiff));
+                }
+            } else {
+                // Nothing found
+                mode = CompletionMode.INSERT;
+            }
+        }
+
+        /**
+         * Analyses the text content preceding a dot at position _start
+         * @param _content - the preceding text content
+         * @param _endPos - the end position of the text part to be checked
+         * @param _proposals - the recently proposed names
+         * @return either the old or new proposals (component names in the latter case)
+         */
+        private ArrayList<String> retrieveComponentNames(String _content, int _endPos, ArrayList<String> _proposals) {
+            StringList lines = StringList.explode(_content.substring(0, _endPos), "\n");
+            String prevLine = null;
+            while (lines.count() > 1 && (prevLine = lines.get(lines.count()-2)).endsWith("\\")) {
+                lines.set(lines.count()-2,
+                        prevLine.substring(0, prevLine.length()-1) + lines.get(lines.count()-1));
+                lines.remove(lines.count()-1);
+            }
+            StringList tokens = Element.splitLexically(lines.get(lines.count()-1), true);
+            tokens.removeAll(" ");
+            // Go as far backward as we can go to find the base variable
+            // We will not go beyond a function call, so what may precede is an id or ']'
+            StringList path = new StringList();
+            int ix = tokens.count() -1 ;
+            while (path != null && ix >= 0) {
+                String prevToken = tokens.get(ix);
+                // There might be several index expressions
+                while (path != null && prevToken.equals("]")) {
+                    // We will have to find the corresponding opening bracket
+                    int level = 1;
+                    ix--;
+                    while (level > 0 && ix >= 0) {
+                        prevToken = tokens.get(ix);
+                        if (prevToken.equals("]")) {
+                            level++;
+                        }
+                        else if (prevToken.equals("[")) {
+                            level--;
+                        }
+                        ix--;
+                        /* If more than one index expression is listed here,
+                         * then we won't notice. Just to count commas at level 1
+                         * doesn't help while we don't care about parentheses
+                         */
+                    }
+                    if (level > 0) {
+                        path = null;
+                    }
+                    else {
+                        path.add("[]");
+                        prevToken = tokens.get(ix);
+                    }
+                }
+                if (path != null && Function.testIdentifier(prevToken, true, null)) {
+                    path.add(prevToken);
+                    ix--;
+                    if (ix > 0 && tokens.get(ix).equals(".")) {
+                    	ix--; // Continue path collection
+                    }
+                    else {
+                    	ix = -1;	// Stop analysis, path may be valid
+                    }
+                }
+                else {
+                    path = null;
+                }
+            }
+            // Now we may have a reverse valid access path
+            if (path != null && path.count() >= 1) {
+                path = path.reverse();
+                TypeMapEntry varType = typeMap.get(path.get(0));
+                path.remove(0);
+                while (varType != null && !path.isEmpty()) {
+                    if (varType.isArray() && path.get(0).equals("[]")) {
+                        String typeStr = varType.getCanonicalType(true, true);
+                        while (typeStr.startsWith("@") && !path.isEmpty()
+                                && path.get(0).equals("[]")) {
+                            typeStr = typeStr.substring(1);
+                            path.remove(0);
+                        }
+                        varType = typeMap.get(":" + typeStr);
+                    }
+                    if (varType != null && varType.isRecord()) {
+                        if (!path.isEmpty()) {
+                            var compInfo = varType.getComponentInfo(true);
+                            varType = compInfo.get(path.get(0));
+                            path.remove(0);
+                        }
+                    }
+                }
+                if (varType != null && varType.isRecord()) {
+                    // path must now be exhausted, the component names are our proposals
+                    var compInfo = varType.getComponentInfo(true);
+                    _proposals = new ArrayList<String>();
+                    _proposals.addAll(compInfo.keySet());
+                    Collections.sort(_proposals, String.CASE_INSENSITIVE_ORDER);
+                }
+            }
+            return _proposals;
+        }
+
+        @Override
+        public void removeUpdate(DocumentEvent e) {
+            // TODO Auto-generated method stub
+            
+        }
+
+        @Override
+        public void changedUpdate(DocumentEvent e) {
+            // TODO Auto-generated method stub
+            
         }
     }
     // END KGU#1057 2022-08-18
@@ -297,72 +472,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         ActionMap am = txtText.getActionMap();
         im.put(KeyStroke.getKeyStroke("ENTER"), COMMIT_ACTION);
         am.put(COMMIT_ACTION, new CommitAction());
-        var completionListener = new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent ev) {
-                if (ev.getLength() != 1 || words == null || minComplChars <= 0) {
-                    return;
-                }
-                int pos = ev.getOffset();
-                String content = null;
-                try {
-                    content = txtText.getText(0, pos + 1);
-                } catch (BadLocationException ex) {
-                    ex.printStackTrace();
-                }
-                // Find where the word starts
-                int w;
-                for (w = pos; w >= 0; w--) {
-                    if (! Character.isUnicodeIdentifierPart(content.charAt(w))) {
-                        break;
-                    }
-                }
-                if (pos - w < minComplChars) {
-                    // Too few chars
-                    return;
-                }
-                String prefix = content.substring(w + 1);
-                int n = Collections.binarySearch(words, prefix, String.CASE_INSENSITIVE_ORDER);
-                if (n < 0 && -n <= words.size()) {
-                    String match = words.get(-n - 1);
-                    if (match.startsWith(prefix)) {
-                        // A completion is found, we need what's still not written
-                        String completion = match.substring(pos - w);
-                        // We cannot modify Document from within notification,
-                        // so we submit a task that does the change later
-                        SwingUtilities.invokeLater(
-                                new CompletionTask(completion, pos + 1, 0));
-                    }
-                    else if (match.toLowerCase().startsWith(prefix.toLowerCase())) {
-                        // Find the first position with case difference
-                        int posDiff = 0;
-                        while (posDiff < prefix.length() && prefix.charAt(posDiff) == match.charAt(posDiff)) {
-                            posDiff++;
-                        }
-                        String completion = match.substring(posDiff);
-                        // We cannot modify Document from within notification,
-                        // so we submit a task that does the change later
-                        SwingUtilities.invokeLater(
-                                new CompletionTask(completion, pos + 1, prefix.length() - posDiff));
-                    }
-                } else {
-                    // Nothing found
-                    mode = CompletionMode.INSERT;
-                }
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                // TODO Auto-generated method stub
-                
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                // TODO Auto-generated method stub
-                
-            }
-        };
+        var completionListener = new CompletionListener();
         docText.addDocumentListener(completionListener);
         // END KGU#1057 2022-08-18
         

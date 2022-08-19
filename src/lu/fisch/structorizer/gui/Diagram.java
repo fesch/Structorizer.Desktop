@@ -9890,6 +9890,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				Collections.sort(words, String.CASE_INSENSITIVE_ORDER);
 				inputbox.words = words;
+				inputbox.typeMap = root.getTypeInfo();
 			}
 			// END KGU#1057 2022-08-18
 
