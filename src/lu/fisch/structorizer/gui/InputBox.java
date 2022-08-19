@@ -244,7 +244,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
             
             ArrayList<String> proposals = words;
             // Now check whether a dot precedes - in which case we have to provide component names
-            if (w > 1 && pos > w && content.charAt(w-1) == '.' && typeMap != null) {
+            if (w > 1 && pos >= w && content.charAt(w-1) == '.' && typeMap != null) {
                 proposals = retrieveComponentNames(content.substring(0, w-1), proposals);
             }
             else if (pos - w < minComplChars) {
