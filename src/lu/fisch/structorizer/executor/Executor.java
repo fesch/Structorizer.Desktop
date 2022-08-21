@@ -213,6 +213,8 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2022-01-05      Adaptations to modified EvalError API on upgrading from bsh-2.0b6.jar to bsh-2.1.0.jar
  *      Kay Gürtzig     2022-06-24      Bugfix #1038: Explicit saving decisions are no longer reiterated
  *      Kay Gürtzig     2022-08-19      Bugfix #1067: EvalErrors could slip through in stepInstruction
+ *      Kay Gürtzig     2022-08-21      Bugfix #1068: Consistency of supported array index notations,
+ *                                      problems with access to record components within arrays on the left-hand side
  *
  ******************************************************************************************************
  *
@@ -3806,7 +3808,7 @@ public class Executor implements Runnable
 			/* Now either an identifier might follow (which makes it an
 			 * initialisation of C or Java style) or some access path
 			 */
-			// START KGU#1008 2021-11-01: Bugfx #1013 trouble with case c)
+			// START KGU#1008 2021-11-01: Bugfix #1013 trouble with case c)
 			//if ((declType != null || isJavaType || isStandardType) && posDot < nTokens
 			if ((declType != null || isJavaType || isStandardType || mayBeUnknownType)
 					&& posDot < nTokens
@@ -3844,6 +3846,9 @@ public class Executor implements Runnable
 				associateType(target, typeDescr);
 				// We are done with cases b), d). isDecl will prevent further parsing
 			}
+			// START KGU#1060 2022-08-21: Bugfix #1068 unwrapping of types was incorrect
+			String typeStr = null;
+			// END KGU#1060 2022-08-21
 			while (!isDecl && posDot+1 < nTokens && ".[".contains(token1 = tokens.get(posDot))) {
 				// Now it is either an access path or still a Java declaration
 				if (token1.equals("[")) {
@@ -3884,7 +3889,10 @@ public class Executor implements Runnable
 								.replace("%1", tokens.concatenate(null)), null, null);
 					}
 					// Okay, some index expression is expected, no Java or C declaration
-					else if (targetType == null || targetType.isArray() || isVariable) {
+					else if (targetType == null || targetType.isArray() || isVariable
+						// START KGU#1060 2022-08-21: Bugfix #1068
+							|| typeStr != null && typeStr.startsWith("@")) {
+						// END KGU#1060 2022-08-21
 						// Variable may not exist. For a simple path we can create it.
 						StringList indexExprs = Element.splitExpressionList(
 								tokens.subSequence(posDot + 1, nTokens), ",", true);
@@ -3899,7 +3907,9 @@ public class Executor implements Runnable
 									.replace("%", tokens.concatenate(null)), null, null);
 						}
 						// Try to determine the array element type
-						String typeStr = null;
+						// START KGU#1060 2022-08-21: Bugfix #1068 unwrapping of types was incorrect
+						//String typeStr = null;
+						// END KGU#1060 2022-08-21
 						if (targetType != null && targetType.isArray()) {
 							typeStr = targetType.getCanonicalType(true, false);
 						}
@@ -3919,6 +3929,9 @@ public class Executor implements Runnable
 	// <================================================
 								}
 								typeStr = typeStr.substring(1);
+								// START KGU#1060 2022-08-21: Bugfix #1068 unwrapping of types was incorrect
+								targetType = context.dynTypeMap.get(":" + typeStr);
+								// END KGU#1060 2022-08-21
 							}
 							// Pre-evaluate the index at this point
 							Object index = this.evaluateExpression(indexStr, true, false);
@@ -4285,6 +4298,12 @@ public class Executor implements Runnable
 							targetType = context.dynTypeMap.get(":" + typeStr);
 						}
 					}
+					// START KGU#1060 2022-08-21: Bugfix #1068 Be aware of intermediate levels
+					else if (typeStr != null && typeStr.startsWith("@")) {
+						typeStr = typeStr.substring(1);
+						targetType = context.dynTypeMap.get(":" + typeStr);
+					}
+					// END KGU#1060 2022-08-21
 				}
 				
 				else {
@@ -6243,11 +6262,26 @@ public class Executor implements Runnable
 				// START KGU#33 2014-12-05: We ought to show the index value
 				// if the variable is indeed an array element
 				if (var.contains("[") && var.contains("]")) {
+					// This is a problem: What about an expression a[i].comp1[j]?
 					try {
-						// Try to replace the index expression by its current value
-						int index = getIndexValue(var);
-						var = var.substring(0, var.indexOf('[')+1) + index
-								+ var.substring(var.indexOf(']'));
+						// START KGU#1060 2022-08-21: Bugfix #1068					
+						// Try to replace the index expressions by their current values
+						//int index = getIndexValue(var);
+						//var = var.substring(0, var.indexOf('[')+1) + index
+						//		+ var.substring(var.indexOf(']'));
+						int posBr = var.indexOf('[');
+						while (posBr >= 0) {
+							StringList exprs = Element.splitExpressionList(var.substring(posBr+1), ",", true);
+							int nExprs = exprs.count() - 1;
+							var = var.substring(0, posBr+1);
+							for (int j = 0; j < nExprs; j++) {
+								int index = getIndexValue(exprs.get(j));
+								var += (j > 0 ? "," : "") + Integer.toString(index);
+							}
+							var += exprs.get(nExprs);
+							posBr = var.indexOf('[', posBr + 1);
+						}
+						// END KGU#1060 2022-08-21
 					}
 					catch (Exception e)
 					{
@@ -8027,8 +8061,8 @@ public class Executor implements Runnable
 				tokens.set(0, "Object[]");
 				tokens.remove(1,3);
 			}
-			// START KGU#1060 2022-08-21: 
-			// We accept index lists on the left-hand side, so we should here too
+			// START KGU#1060 2022-08-21: Issue #1068 Inconsistency in the support of index expressions
+			// We accept index lists on the left-hand side, so we should do here too
 			//tokens.replaceAll("[", ".get(");
 			//tokens.replaceAll("]", ")");
 			int pos = tokens.count() - 1;
@@ -8391,31 +8425,30 @@ public class Executor implements Runnable
 	
 	// START KGU#33/KGU#34 2014-12-05
 	/**
-	 * Method tries to extract the index value from an expression formed like
-	 * an array element access, i.e. {@code "<arrayname>[<expression>]"}
+	 * Method tries to extract the index value(s) from an expression.
 	 * 
-	 * @param varname - variable access expression
-	 * @return the evaluated non-negative index (if there is some).
+	 * @param ind - assumed index expression
+	 * @return The evaluated non-negative indices (if there are some).
 	 * 
 	 * @throws EvalError if no non-negative integral index can be evaluated
 	 */
-	private int getIndexValue(String varname) throws EvalError
+	// START KGU#1060 2022-08-21: Bugfix #1068 In case of an existing structure allow index lists
+	private int getIndexValue(String ind) throws EvalError
+	// END KGU#1060 2022-08-21
 	{
 		// START KGU#141 2016-01-16: Bugfix #112
-		String message = "Illegal (negative) index";
+		String message = "Illegal (negative) index";	// FIXME Define LangTextHolder in Control
 		// END KGU#141 2016-01-16
-		String ind = varname.substring(varname.indexOf("[") + 1,
-				// START KGU#166 2016-03-29: Bugfix #139 (nested index expressions failed)
-				//varname.indexOf("]"));
-				varname.lastIndexOf("]"));
-				// END KGU#166 2016-03-29
 
 		int index = -1;
 
 		try
 		{
 			//index = Integer.parseInt(ind);	// KGU: This was nonsense - usually no literal here
-			index = (Integer) this.evaluateExpression(ind, false, false);
+			// START KGU#1060 2022-08-21: Bugfix #1068 Was still too simple
+			//index = (Integer) this.evaluateExpression(ind, false, false);
+			index = (Integer) this.evaluateExpression(convert(ind), false, false);
+			// END KGU#1060 2022-08-21
 		}
 		// START KGU#1024 2022-01-05: Upgrade from bsh-2.0b6.jar to bsh-2.1.0.jar
 		catch (EvalError e)
@@ -8438,7 +8471,8 @@ public class Executor implements Runnable
 		// START KGU#141 2016-01-16: Bugfix #112 - We may not allow negative indices
 		if (index < 0)
 		{
-			throw new EvalError(message + " on index evaluation in: " + varname, null, null);
+			// FIXME: Define LangTextHolder in Control
+			throw new EvalError(message + " on evaluating index expression: " + ind, null, null);
 		}
 		// END KGU#141 2016-01-16
 		return index;
