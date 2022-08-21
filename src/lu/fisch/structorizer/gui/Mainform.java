@@ -950,6 +950,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			// START KGU#428 2017-10-06: Enh. #430
 			InputBox.FONT_SIZE = Float.parseFloat(ini.getProperty("editorFontSize", "0"));
 			// END KGU#428 2017-10-06
+			// START KGU#1057 2022-08-21: Enh. #1066 Auto-text-completion with dropdown
+			InputBox.MIN_SUGG_PREFIX = Integer.parseInt(ini.getProperty("editorMinSuggPrefix", "3"));
+			// END KGU#1057 2022-10-21
 			
 			// KGU#602 2018-10-28: Fetching of recent file paths outsourced to Diagram.fetchIniProperties()
 			
@@ -1063,6 +1066,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 				ini.setProperty("editorFontSize", Float.toString(InputBox.FONT_SIZE));
 			}
 			// END KGU#428 2017-10-06
+			// START KGU#1057 2022-08-21: Enh. #1066 Auto-text-completion with dropdown
+			ini.setProperty("editorMinSuggPrefix", Integer.toString(InputBox.MIN_SUGG_PREFIX));
+			// END KGU#1057 2022-10-21
 			
 			// ======================= saving options ========================
 			// START KGU#309 2016-12-15: Enh. #310 new saving options

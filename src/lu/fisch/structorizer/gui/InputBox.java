@@ -59,7 +59,7 @@ package lu.fisch.structorizer.gui;
  *                                  JTables are to be involved on init already, scaleFactor to be considered
  *      Kay Gürtzig     2022-08-18  Enh. #1066: First draft of a simple text auto-completion mechanism
  *      Kay Gürtzig     2022-08-19  Enh. #1066: New text suggestion approach with pulldown (based on LogicBig
- *                                  SuggestionDropDownDecorator
+ *                                  SuggestionDropDownDecorator)
  *
  ******************************************************************************************************
  *
@@ -94,7 +94,6 @@ import com.logicbig.uicommon.SuggestionDropDownDecorator;
 
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.TypeMapEntry;
-import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.locales.LangDialog;
 import lu.fisch.structorizer.locales.LangTextHolder;
@@ -107,6 +106,9 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
     /** font size for the text fields, 0 = default, may be overridden by keys or from ini */
     public static float FONT_SIZE = 0;	// Default value
     // END KGU#428 2017-10-06
+    // START KGU#1057 2022-08-19: Enh. #1066 Auto-text-completion with dropdown
+    public static int MIN_SUGG_PREFIX = 3;
+    // END KGU#1057 2022-08-19
     
     protected static int[] PREFERRED_SIZE = new int[] {500, 400};
 
@@ -128,7 +130,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
     private UndoManager umText = new UndoManager();
     private UndoManager umComment = new UndoManager();
     // END KGU#915 2021-01-24
-
+    
     // Scrollpanes
     protected JScrollPane scrText = new JScrollPane(txtText);
     protected JScrollPane scrComment = new JScrollPane(txtComment);
@@ -166,7 +168,6 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
      */
     public ArrayList<String> words = null;
     public HashMap<String, TypeMapEntry> typeMap = null;
-    private int minComplChars = 3;
     
     /**
      * Specific text suggestion client for the LogicBig.com SuggestionDropDownDecorator
@@ -230,7 +231,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
 
         @Override
         public List<String> getSuggestions(JTextComponent tc) {
-            if (words == null || minComplChars <= 0) {
+            if (words == null || MIN_SUGG_PREFIX <= 0) {
                 return null;
             }
             int pos = tc.getCaretPosition();
@@ -245,9 +246,12 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
             ArrayList<String> proposals = words;
             // Now check whether a dot precedes - in which case we have to provide component names
             if (w > 1 && pos >= w && content.charAt(w-1) == '.' && typeMap != null) {
-                proposals = retrieveComponentNames(content.substring(0, w-1), proposals);
+                if ((proposals = retrieveComponentNames(content.substring(0, w-1))) == null) {
+                    // No record information available -> don't provide suggestions
+                    return null;
+                }
             }
-            else if (pos - w < minComplChars) {
+            else if (pos - w < MIN_SUGG_PREFIX) {
                 // Too few chars
                 return null;
             }
@@ -294,15 +298,16 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         }
         
         /**
-         * Analyses the text {@code content} preceding a dot for record structure information.
+         * Analyses the text {@code content} preceding a dot in backwards direction for
+         * record structure information.<br/>
          * if the pretext describes an object with record structure then returns the sorted
-         * list of the component names, otherwise the result will be the given {@code _proposals}
+         * list of the component names, otherwise the result will {@code null}.
          * 
          * @param _content - the text content up to (but not including) the triggering dot
-         * @param _proposals - the recently proposed names
-         * @return either the old or new proposals (component names in the latter case)
+         * @return either the new proposals (component names in the latter case) or {@code null}
          */
-        private ArrayList<String> retrieveComponentNames(String _content, ArrayList<String> _proposals) {
+        private ArrayList<String> retrieveComponentNames(String _content) {
+            ArrayList<String> proposals = null;
             StringList lines = StringList.explode(_content, "\n");
             String prevLine = null;
             while (lines.count() > 1 && (prevLine = lines.get(lines.count()-2)).endsWith("\\")) {
@@ -311,89 +316,13 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
                 lines.remove(lines.count()-1);
             }
             StringList tokens = Element.splitLexically(lines.get(lines.count()-1), true);
-            tokens.removeAll(" ");
-            // Go as far backward as we can go to find the base variable
-            // We will not go beyond a function call, so what may precede is an id or ']'
-            StringList path = new StringList();
-            int ix = tokens.count() -1 ;
-            while (path != null && ix >= 0) {
-                String prevToken = tokens.get(ix);
-                // There might be several index expressions
-                while (path != null && prevToken.equals("]")) {
-                    // We will have to find the corresponding opening bracket
-                    int level = 1;
-                    ix--;
-                    while (level > 0 && ix >= 0) {
-                        prevToken = tokens.get(ix);
-                        if (prevToken.equals("]")) {
-                            level++;
-                        }
-                        else if (prevToken.equals("[")) {
-                            level--;
-                        }
-                        ix--;
-                        /* If more than one index expression is listed here,
-                         * then we won't notice. Just to count commas at level 1
-                         * doesn't help while we don't care about parentheses
-                         */
-                    }
-                    if (level > 0) {
-                        path = null;
-                    }
-                    else {
-                        path.add("[]");
-                        prevToken = tokens.get(ix);
-                    }
-                }
-                if (path != null && Function.testIdentifier(prevToken, true, null)) {
-                    path.add(prevToken);
-                    ix--;
-                    if (ix > 0 && tokens.get(ix).equals(".")) {
-                    	ix--; // Continue path collection
-                    }
-                    else {
-                    	ix = -1;	// Stop analysis, path may be valid
-                    }
-                }
-                else {
-                    path = null;
-                }
+            proposals = Element.retrieveComponentNames(tokens, typeMap, null);
+            if (proposals != null) {
+                Collections.sort(proposals, String.CASE_INSENSITIVE_ORDER);
             }
-            // Now we may have a reverse valid access path
-            if (path != null && path.count() >= 1) {
-                path = path.reverse();
-                TypeMapEntry varType = typeMap.get(path.get(0));
-                path.remove(0);
-                while (varType != null && !path.isEmpty()) {
-                    if (varType.isArray() && path.get(0).equals("[]")) {
-                        String typeStr = varType.getCanonicalType(true, true);
-                        while (typeStr.startsWith("@") && !path.isEmpty()
-                                && path.get(0).equals("[]")) {
-                            typeStr = typeStr.substring(1);
-                            path.remove(0);
-                        }
-                        varType = typeMap.get(":" + typeStr);
-                    }
-                    if (varType != null && varType.isRecord()) {
-                        if (!path.isEmpty()) {
-                            var compInfo = varType.getComponentInfo(true);
-                            varType = compInfo.get(path.get(0));
-                            path.remove(0);
-                        }
-                    }
-                }
-                if (varType != null && varType.isRecord()) {
-                    // path must now be exhausted, the component names are our proposals
-                    var compInfo = varType.getComponentInfo(true);
-                    _proposals = new ArrayList<String>();
-                    _proposals.addAll(compInfo.keySet());
-                    Collections.sort(_proposals, String.CASE_INSENSITIVE_ORDER);
-                }
-            }
-            return _proposals;
+            return proposals;
         }
     }
-    
     // END KGU#1057 2022-08-19
     
     // START KGU#294 2016-11-21: Issue #284

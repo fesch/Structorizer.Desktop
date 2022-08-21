@@ -131,6 +131,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2021-11-17      Bugfix #1021 in getHighlightUnits()
  *      Kay Gürtzig     2022-05-31      Bugfix #1037 in getHighlightUnits()
  *      Kay Gürtzig     2022-07-07      Issue #653: Consistency with Colors.defaultColors ensured
+ *      Kay Gürtzig     2022-08-20      Enh. #1066: New static method retrieveComponentNames()
  *
  ******************************************************************************************************
  *
@@ -231,6 +232,7 @@ import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.font.TextAttribute;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -3707,6 +3709,116 @@ public abstract class Element {
 		return typeSpec;
 	}
 	// END KGU#261 2017-02-01
+	
+	// START KGU#1057 2022-08-20: Enh. #1066 Interactive input assistent
+	/**
+	 * Analyses the token list {@code tokens} preceding a dot in backwards direction for
+	 * record structure information.<br/>
+	 * If the pretext describes an object with record structure then returns the list
+	 * of component names.
+	 * 
+	 * @param tokens - the lexically split line content up to (but not including) a dot
+	 * @param typeMap - the current mapping of variables and type names to type info
+	 * @param firstSeen - must either be {@code null} or an int array with at least one
+	 *     element, at position 0 of which the index of the first token that contributed
+	 *     to the analysis will be placed.
+	 * @return either a list of component names or {@code null}
+	 */
+	public static ArrayList<String> retrieveComponentNames(
+			StringList tokens,
+			HashMap<String, TypeMapEntry> typeMap,
+			int[] firstSeen) {
+		ArrayList<String> proposals = null;
+		tokens.removeAll(" ");
+		// Go as far backward as we can go to find the base variable
+		// We will not go beyond a function call, so what may precede is an id or ']'
+		StringList path = new StringList();
+		int ix = tokens.count() -1;
+		while (path != null && ix >= 0) {
+			String prevToken = tokens.get(ix);
+			// There might be several index expressions
+			while (path != null && prevToken.equals("]")) {
+				// We will have to find the corresponding opening bracket
+				int ixClose = ix;
+				int level = 1;
+				ix--;
+				while (level > 0 && ix >= 0) {
+					prevToken = tokens.get(ix);
+					if (prevToken.equals("]")) {
+						level++;
+					}
+					else if (prevToken.equals("[")) {
+						level--;
+					}
+					ix--;
+					/* If more than one index expression is listed here,
+					 * then we will find out via expression analysis below
+					 */
+				}
+				if (level > 0) {
+					path = null;
+				}
+				else {
+					// Now find out how many indices are given between the brackets
+					StringList indexExprs = Element.splitExpressionList(
+							tokens.subSequence(ix + 2, ixClose + 1), ",", false);
+					// Add as many bracket pairs to the path
+					for (int i = 0; i < indexExprs.count(); i++) {
+						path.add("[]");
+					}
+					prevToken = tokens.get(ix);
+				}
+			}
+			if (path != null && Function.testIdentifier(prevToken, true, null)) {
+				path.add(prevToken);
+				ix--;
+				if (ix > 0 && tokens.get(ix).equals(".")) {
+					ix--; // Continue path collection
+				}
+				else {
+					break;	// Stop analysis, path may be valid
+				}
+			}
+			else {
+				path = null;
+			}
+		}
+		if (path != null && path.count() >= 1) {
+			// Now we may have a reverse valid access path
+			path = path.reverse();
+			TypeMapEntry varType = typeMap.get(path.get(0));
+			path.remove(0);
+			while (varType != null && !path.isEmpty()) {
+				if (varType.isArray() && path.get(0).equals("[]")) {
+					String typeStr = varType.getCanonicalType(true, true);
+					while (typeStr.startsWith("@") && !path.isEmpty()
+							&& path.get(0).equals("[]")) {
+						typeStr = typeStr.substring(1);
+						path.remove(0);
+					}
+					varType = typeMap.get(":" + typeStr);
+				}
+				if (varType != null && varType.isRecord()) {
+					if (!path.isEmpty()) {
+						var compInfo = varType.getComponentInfo(true);
+						varType = compInfo.get(path.get(0));
+						path.remove(0);
+					}
+				}
+			}
+			if (varType != null && varType.isRecord()) {
+				// path must now be exhausted, the component names are our proposals
+				var compInfo = varType.getComponentInfo(true);
+				proposals = new ArrayList<String>();
+				proposals.addAll(compInfo.keySet());
+			}
+		}
+		if (firstSeen != null && firstSeen.length > 0) {
+			firstSeen[0] = ix + 1;
+		}
+		return proposals;
+	}
+	// END KGU#1057 2022-08-20
 	
 	// START KGU#63 2015-11-03: getWidthOutVariables and writeOutVariables were nearly identical (and had to be!)
 	// Now it's two wrappers and a common algorithm -> ought to avoid duplicate work and prevents from divergence

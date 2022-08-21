@@ -5073,66 +5073,76 @@ public class Root extends Element {
 	 */
 	private void analyse_24_tokens(Element _ele, Vector<DetectedError> _errors,
 			HashMap<String, TypeMapEntry> _types, StringList _tokens) {
+		_tokens.removeAll(" ");
 		int nTokens = _tokens.count();
 		int posDot = -1;
-		String path = "";
+		int[] indexInform = new int[] {0};
 		TypeMapEntry varType = null;
 		while ((posDot = _tokens.indexOf(".", posDot + 1)) > 0 && posDot < nTokens - 1) {
-			String before = _tokens.get(posDot - 1);
-			// Jump in front of an index access
-			// FIXME: This is just a rough heuristics producing nonsense in case of nested expressions with indices
-			int posBrack = -1;
-			if (before.equals("]") && (posBrack = _tokens.lastIndexOf("[", posDot)) > 0) {
-				before = _tokens.get(posBrack - 1);
-			}
+			// START KGU#1059 2022-08-20: Better solution from enh. #1066 adopted
+//			String before = _tokens.get(posDot - 1);
+//			// Jump in front of an index access
+//			// FIXME: This is just a rough heuristics producing nonsense in case of nested expressions with indices
+//			int posBrack = -1;
+//			if (before.equals("]") && (posBrack = _tokens.lastIndexOf("[", posDot)) > 0) {
+//				before = _tokens.get(posBrack - 1);
+//			}
+//			String after = _tokens.get(posDot+1);
+//			if (!Function.testIdentifier(after, false, null) || !Function.testIdentifier(before, false, null)) {
+//				path = "";
+//				varType = null;
+//				continue;
+//			}
+//			// START KGU#507 2018-03-15 - nonsense from expressions like OUTPUT otherDay.day, ".", otherDay.month, ".", otherDay.year 
+//			else if (!path.endsWith("]") && !path.endsWith(before)) {
+//				path = "";
+//				varType = null;
+//			}
+//			// END KGU#507 2018-03-15
+//			if ((path.isEmpty() || varType == null) && Function.testIdentifier(before, false, null)) {
+//				if (path.isEmpty()) {
+//					path = before;
+//				}
+//				varType = _types.get(path);
+//			}
+//			if (varType != null && posBrack > 0 && varType.isArray()) {
+//				String arrTypeStr = varType.getCanonicalType(true, false);
+//				if (arrTypeStr != null && arrTypeStr.startsWith("@")) {
+//					// Try to get the element type
+//					// START KGU#502 2018-02-12: Bugfix #518 - seemed inconsistent to check the field typeMap here
+//					//varType = typeMap.get(":" + arrTypeStr.substring(1));
+//					varType = _types.get(":" + arrTypeStr.substring(1));
+//					// END KGU#502 2018-02-12
+//				}
+//			}
+//			if (varType == null || !varType.isRecord() || !varType.getComponentInfo(false).containsKey(after)) {
+//				if (posBrack > 0) {
+//					path += _tokens.concatenate("", posBrack, posDot);
+//				}
+//				//error  = new DetectedError("Variable «"+varName+"» hasn't got a component «"+compName+"»!", _instr);
+//				addError(_errors, new DetectedError(errorMsg(Menu.error24_8, new String[]{path, after}), _ele), 24);
+//				varType = null;
+//				path += "." + after;
+//			}
+//			// START KGU#514 2018-04-03: Bugfix #528 - went wrong for e.g. rec.arr[idx].comp
+//			//else if (posDot + 2 < nTokens && tokens.get(posDot+2).equals(".")) {
+//			else if (posDot + 2 < nTokens && (_tokens.get(posDot+2).equals(".") || _tokens.get(posDot+2).equals("["))) {
+//			// END KGU#514 2018-04-03
+//				path += "." + after;
+//				varType = varType.getComponentInfo(false).get(after);
+//			}
+//			else {
+//				varType = null;
+//				path = "";
+//			}
 			String after = _tokens.get(posDot+1);
-			if (!Function.testIdentifier(after, false, null) || !Function.testIdentifier(before, false, null)) {
-				path = "";
-				varType = null;
-				continue;
-			}
-			// START KGU#507 2018-03-15 - nonsense from expressions like OUTPUT otherDay.day, ".", otherDay.month, ".", otherDay.year 
-			else if (!path.endsWith("]") && !path.endsWith(before)) {
-				path = "";
-				varType = null;
-			}
-			// END KGU#507 2018-03-15
-			if ((path.isEmpty() || varType == null) && Function.testIdentifier(before, false, null)) {
-				if (path.isEmpty()) {
-					path = before;
-				}
-				varType = _types.get(path);
-			}
-			if (varType != null && posBrack > 0 && varType.isArray()) {
-				String arrTypeStr = varType.getCanonicalType(true, false);
-				if (arrTypeStr != null && arrTypeStr.startsWith("@")) {
-					// Try to get the element type
-					// START KGU#502 2018-02-12: Bugfix #518 - seemed inconsistent to check the field typeMap here
-					//varType = typeMap.get(":" + arrTypeStr.substring(1));
-					varType = _types.get(":" + arrTypeStr.substring(1));
-					// END KGU#502 2018-02-12
-				}
-			}
-			if (varType == null || !varType.isRecord() || !varType.getComponentInfo(false).containsKey(after)) {
-				if (posBrack > 0) {
-					path += _tokens.concatenate("", posBrack, posDot);
-				}
-				//error  = new DetectedError("Variable «"+varName+"» hasn't got a component «"+compName+"»!", _instr);
+			ArrayList<String> compNames = Element.retrieveComponentNames(
+					_tokens.subSequence(0, posDot), _types, indexInform);
+			if (compNames == null || !compNames.contains(after)) {
+				String path = _tokens.concatenate(null, indexInform[0], posDot).trim();
 				addError(_errors, new DetectedError(errorMsg(Menu.error24_8, new String[]{path, after}), _ele), 24);
-				varType = null;
-				path += "." + after;
 			}
-			// START KGU#514 2018-04-03: Bugfix #528 - went wrong for e.g. rec.arr[idx].comp
-			//else if (posDot + 2 < nTokens && tokens.get(posDot+2).equals(".")) {
-			else if (posDot + 2 < nTokens && (_tokens.get(posDot+2).equals(".") || _tokens.get(posDot+2).equals("["))) {
-			// END KGU#514 2018-04-03
-				path += "." + after;
-				varType = varType.getComponentInfo(false).get(after);
-			}
-			else {
-				varType = null;
-				path = "";
-			}
+			// END KGU#1059 2022-08-20
 		}
 	}
 	

@@ -8027,8 +8027,39 @@ public class Executor implements Runnable
 				tokens.set(0, "Object[]");
 				tokens.remove(1,3);
 			}
-			tokens.replaceAll("[", ".get(");
-			tokens.replaceAll("]", ")");
+			// START KGU#1060 2022-08-21: 
+			// We accept index lists on the left-hand side, so we should here too
+			//tokens.replaceAll("[", ".get(");
+			//tokens.replaceAll("]", ")");
+			int pos = tokens.count() - 1;
+			while ((pos = tokens.lastIndexOf("]", pos)) >= 0) {
+				var context = new Stack<Boolean>();
+				context.push(true);
+				tokens.set(pos--, ")");
+				while (!context.isEmpty() && pos >= 0) {
+					String tok = tokens.get(pos);
+					if (tok.equals("]")) {
+						context.push(true);
+						tokens.set(pos, ")");
+					}
+					else if (tok.equals(")") || tok.equals("}")) {
+						context.push(false);
+					}
+					else if (tok.equals("[")) {
+						context.pop();
+						tokens.set(pos, ".get(");
+					}
+					else if (tok.equals("(") || tok.equals("{")) {
+						context.pop();
+					}
+					else if (tok.equals(",") && context.peek()) {
+						// We are at bracket level, so this comma separates indices...
+						tokens.set(pos, ").get(");
+					}
+					pos--;
+				}
+			}
+			// END KGU#1060
 		}
 		// END KGU#439 2017-10-13
 		// Special treatment for inc() and dec() functions? - no need if convert was applied before
