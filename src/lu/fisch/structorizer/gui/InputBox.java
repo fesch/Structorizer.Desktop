@@ -213,10 +213,17 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         public void setSelectedText(JTextComponent tc, String selectedValue) {
             int cp = tc.getCaretPosition();
             int posOpen = -1;
-            if (selectedValue.endsWith(")") && (posOpen = selectedValue.lastIndexOf("(")) >= 0) {
-                int nArgs = Integer.parseInt(selectedValue.substring(posOpen+1, selectedValue.length()-1));
+            if (selectedValue.endsWith(")") && (posOpen = selectedValue.lastIndexOf('(')) >= 0) {
+                String nArgsStr = selectedValue.substring(posOpen+1, selectedValue.length()-1);
+                boolean hasOptArgs = nArgsStr.contains("-");
+                if (hasOptArgs) {
+                    nArgsStr = nArgsStr.substring(0, nArgsStr.indexOf('-'));
+                    
+                }
+                int nArgs = Integer.parseInt(nArgsStr);
                 selectedValue = selectedValue.substring(0, posOpen+1)
-                        + (nArgs > 0 ? "?" + ",?".repeat(nArgs-1) : "") + ")";
+                        + (nArgs > 0 ? "?" + ",?".repeat(nArgs-1) : "")
+                        + (hasOptArgs ? "..." : "") + ")";
             }
             try {
                 if (cp == 0 || tc.getText(cp - 1, 1).trim().isEmpty()) {
@@ -235,11 +242,17 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
                         tc.getDocument().insertString(cp, selectedValue, null);
                         previousWordIndex = cp;
                     }
-                    if (posOpen > 0 && selectedValue.contains("?")) {
-                        // Routine with at least on argument - select the first '?'
+                    if (posOpen > 0) {
                         cp = previousWordIndex + posOpen + 1;
-                        tc.setCaretPosition(cp+1);
-                        tc.moveCaretPosition(cp);
+                        if (selectedValue.contains("?")) {
+                            // Routine with at least on argument - select the first '?'
+                            tc.setCaretPosition(cp+1);
+                            tc.moveCaretPosition(cp);
+                        } else if (selectedValue.contains("...")) {
+                            // Routine with only optional arguments
+                            tc.setCaretPosition(cp+3);
+                            tc.moveCaretPosition(cp);
+                        }
                     }
                 }
             } catch (BadLocationException ex) {
