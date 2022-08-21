@@ -81,6 +81,8 @@ import java.util.logging.Logger;
 
 import javax.swing.*;
 import javax.swing.border.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
@@ -97,6 +99,7 @@ import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.locales.LangDialog;
 import lu.fisch.structorizer.locales.LangTextHolder;
+import lu.fisch.structorizer.parsers.CodeParser;
 import lu.fisch.utils.StringList;
 
 @SuppressWarnings("serial")
@@ -108,6 +111,11 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
     // END KGU#428 2017-10-06
     // START KGU#1057 2022-08-19: Enh. #1066 Auto-text-completion with dropdown
     public static int MIN_SUGG_PREFIX = 3;
+    private static final HashMap<String, StringList> KEYWORD_SUGGESTIONS = new HashMap<String, StringList>();
+    static {
+        KEYWORD_SUGGESTIONS.put("Instruction", StringList.explode("input,output", ","));
+        KEYWORD_SUGGESTIONS.put("Jump", StringList.explode("preReturn,preLeave,preExit", ","));
+    }
     // END KGU#1057 2022-08-19
     
     protected static int[] PREFERRED_SIZE = new int[] {500, 400};
@@ -131,6 +139,12 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
     private UndoManager umComment = new UndoManager();
     // END KGU#915 2021-01-24
     
+    // START KGU#1057 2022-08-21: Enh. #1066
+    public JPanel pnlSuggest = new JPanel();
+    private JLabel lblSuggest = new JLabel("Suggestion trigger");
+    private JSpinner spnSuggest = new JSpinner();
+    // END KGU#1057 2022-08-21
+
     // Scrollpanes
     protected JScrollPane scrText = new JScrollPane(txtText);
     protected JScrollPane scrComment = new JScrollPane(txtComment);
@@ -158,7 +172,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
     // END KGI#294 2016-11-22
 
     // START KGU 2015-10-14: Additional information for data-specific title translation
-    public String elementType = new String();	// The (lower-case) class name of the element type to be edited here
+    public String elementType = new String();	// The class name of the element type to be edited here
     public boolean forInsertion = false;		// If this dialog is used to setup a new element (in contrast to updating an existing element)
     // END KGU 2015-10-14
 
@@ -257,6 +271,18 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
             }
             ArrayList<String> suggestions = new ArrayList<String>();
             String prefix = content.substring(w);
+            if ((w == 0 || content.charAt(w-1) == '\n')) {
+                StringList keys = KEYWORD_SUGGESTIONS.get(elementType);
+                if (keys != null) {
+                    for (int i = 0; i < keys.count(); i++) {
+                        String keyword = CodeParser.getKeyword(keys.get(i));
+                        if (keyword != null
+                                && keyword.toLowerCase().startsWith(prefix.toLowerCase())) {
+                            suggestions.add(keyword);
+                        }
+                    }
+                }
+            }
             int n = Collections.binarySearch(proposals, prefix, String.CASE_INSENSITIVE_ORDER);
             if (n < 0) {
                 n = -n - 1;
@@ -404,6 +430,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         
         // START KGU#1057 2022-08-19: Enh. #1066 first auto-completion approach
         SuggestionDropDownDecorator.decorate(txtText, new InputSuggestionClient());
+        spnSuggest.setModel(new SpinnerNumberModel(0, 0, 5, 1));
         // END KGU#1057 2022-08-19
         
         // START KGU#294 2016-11-21: Issue #284
@@ -631,14 +658,32 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
     protected int createPanelTop(JPanel _panel, GridBagLayout _gb, GridBagConstraints _gbc) {
         _gbc.gridx = 1;
         _gbc.gridy = 1;
-        _gbc.gridwidth = 18;
+        _gbc.gridwidth = 1;
         _gbc.gridheight = 1;
         _gbc.fill = GridBagConstraints.BOTH;
         _gbc.weightx = 1;
         _gbc.weighty = 0;
         _gbc.anchor = GridBagConstraints.NORTH;
-        _gb.setConstraints(lblText, _gbc);
-        _panel.add(lblText);
+        //_gb.setConstraints(lblText, _gbc);
+        _panel.add(lblText, _gbc);
+        
+        // START KGU#1057 2022-08-21: Enh. #1066
+        pnlSuggest.add(lblSuggest);
+        pnlSuggest.add(spnSuggest);
+        _gbc.gridx = 2;
+        _gbc.weightx = 0;
+        _gbc.fill = GridBagConstraints.NONE;
+        _panel.add(pnlSuggest, _gbc);
+        // Disable it by default
+        pnlSuggest.setVisible(false);
+        spnSuggest.setValue(MIN_SUGG_PREFIX);
+        ((JSpinner.DefaultEditor)spnSuggest.getEditor()).getTextField().addKeyListener(this);
+        spnSuggest.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent ev) {
+                InputBox.MIN_SUGG_PREFIX = (Integer)spnSuggest.getValue();
+            }});
+        // END KGU#1057 2022-08-21
         // Return the number of used grid lines such that the calling method may go on there
         return 1;
     }
@@ -669,7 +714,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         // END KGU#393 2021-01-26
         
         return _gbc.gridx + _gbc.gridwidth;
-	}
+    }
 
     // listen to actions
     @Override

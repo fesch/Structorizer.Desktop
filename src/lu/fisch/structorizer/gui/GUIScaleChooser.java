@@ -262,15 +262,15 @@ public class GUIScaleChooser extends LangDialog implements ChangeListener {
 			// END KGU#393 2018-10-07
 			
 			// add the ACTION-listeners
-			ActionListener actionListener = new ActionListener()
+			btnOK.addActionListener(new ActionListener()
 			{
+				@Override
 				public void actionPerformed(ActionEvent event)
 				{
 					Element.E_NEXT_SCALE_FACTOR = (Double)spnScale.getValue();
 					setVisible(false);
 				}
-			};
-			btnOK.addActionListener(actionListener);
+			});
 		}
 		
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);

@@ -951,7 +951,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			InputBox.FONT_SIZE = Float.parseFloat(ini.getProperty("editorFontSize", "0"));
 			// END KGU#428 2017-10-06
 			// START KGU#1057 2022-08-21: Enh. #1066 Auto-text-completion with dropdown
-			InputBox.MIN_SUGG_PREFIX = Integer.parseInt(ini.getProperty("editorMinSuggPrefix", "3"));
+			InputBox.MIN_SUGG_PREFIX = Integer.parseInt(ini.getProperty("editorMinSuggPrefix", "2"));
 			// END KGU#1057 2022-10-21
 			
 			// KGU#602 2018-10-28: Fetching of recent file paths outsourced to Diagram.fetchIniProperties()

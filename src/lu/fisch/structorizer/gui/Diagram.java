@@ -9891,6 +9891,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				Collections.sort(words, String.CASE_INSENSITIVE_ORDER);
 				inputbox.words = words;
 				inputbox.typeMap = root.getTypeInfo();
+				inputbox.pnlSuggest.setVisible(true);
 			}
 			// END KGU#1057 2022-08-18
 
