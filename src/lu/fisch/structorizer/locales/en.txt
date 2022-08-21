@@ -131,6 +131,7 @@
  *      Kay Gürtzig     2021-03-07      KGU#961: Translation skeleton for known plugin options added.
  *      Kay Gürtzig     2021-10-05      Enh. #992: Messages for Analyser brackets check
  *      Kay Gürtzig     2021-10-31      Enh. #967, #1007 Texts for ARM-specific export options added
+ *      Kay Gürtzig     2022-08-21      Enh. #1066: Caption and tooltip for InputBox.lblSuggest
  *
  ******************************************************************************************************
  *
@@ -744,6 +745,8 @@ InputBox.lblText.text=Please enter a text
 InputBox.lblText.tooltip=
 InputBox.lblComment.text=Comment
 InputBox.lblComment.tooltip=
+InputBox.lblSuggest.text=Suggestion threshold
+InputBox.lblSuggest.tooltip=Minimum number of typed characters to instigate word suggestions (0 disables assistance).
 InputBox.txtText.tooltip=The content of the element.
 InputBox.txtComment.tooltip=The comment of the element.
 InputBox.btnOK.text=OK

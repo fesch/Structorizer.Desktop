@@ -136,6 +136,7 @@
  *      Kay Gürtzig     2021-03-07  KGU#961: Translations for known plugin options added.
  *      Kay Gürtzig     2021-06-07  Enh. #953: Translations for new generator plugin options added
  *      Kay Gürtzig     2021-10-31  Enh. #967, #1007 Texts for ARM-specific export options added
+ *      Kay Gürtzig     2022-08-21  Enh. #1066: Caption and tooltip for InputBox.lblSuggest
  *
  ******************************************************************************************************
  *
@@ -751,6 +752,8 @@ InputBox.lblComment.text=Comentario
 InputBox.lblComment.tooltip=
 InputBox.txtText.tooltip=El contenido del elemento.
 InputBox.txtComment.tooltip=El comentario del elemento.
+InputBox.lblSuggest.text=Letras para propuestas
+InputBox.lblSuggest.tooltip=Número minimal de letras entrados que instigan propuestas de palabras (0 desactiva la asisténcia).
 InputBox.btnOK.text=Aceptar
 InputBox.btnOK.tooltip=Aceptar los cambios.
 InputBox.btnCancel.text=Cancelar

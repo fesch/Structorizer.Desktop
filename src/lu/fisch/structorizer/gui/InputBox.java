@@ -58,8 +58,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-02-10  Bugfix #931: Font resizing: JTextArea font was spread to other components,
  *                                  JTables are to be involved on init already, scaleFactor to be considered
  *      Kay Gürtzig     2022-08-18  Enh. #1066: First draft of a simple text auto-completion mechanism
- *      Kay Gürtzig     2022-08-19  Enh. #1066: New text suggestion approach with pulldown (based on LogicBig
- *                                  SuggestionDropDownDecorator)
+ *      Kay Gürtzig     2022-08-21  Enh. #1066: New text suggestion approach with pulldown (based on LogicBig
+ *                                  SuggestionDropDownDecorator) and keyword inclusion
  *
  ******************************************************************************************************
  *
@@ -114,7 +114,11 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
     private static final HashMap<String, StringList> KEYWORD_SUGGESTIONS = new HashMap<String, StringList>();
     static {
         KEYWORD_SUGGESTIONS.put("Instruction", StringList.explode("input,output", ","));
-        KEYWORD_SUGGESTIONS.put("Jump", StringList.explode("preReturn,preLeave,preExit", ","));
+        KEYWORD_SUGGESTIONS.put("Jump", StringList.explode("preReturn,preLeave,preExit,preThrow", ","));
+        KEYWORD_SUGGESTIONS.put("Alternative", StringList.getNew("preAlt"));
+        KEYWORD_SUGGESTIONS.put("While", StringList.getNew("preWhile"));
+        KEYWORD_SUGGESTIONS.put("Repeat", StringList.getNew("preRepeat"));
+        KEYWORD_SUGGESTIONS.put("For", StringList.explode("preFor,preForIn", ","));
     }
     // END KGU#1057 2022-08-19
     
@@ -141,7 +145,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
     
     // START KGU#1057 2022-08-21: Enh. #1066
     public JPanel pnlSuggest = new JPanel();
-    private JLabel lblSuggest = new JLabel("Suggestion trigger");
+    private JLabel lblSuggest = new JLabel("Suggestion threshold");
     private JSpinner spnSuggest = new JSpinner();
     // END KGU#1057 2022-08-21
 
@@ -683,6 +687,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
             public void stateChanged(ChangeEvent ev) {
                 InputBox.MIN_SUGG_PREFIX = (Integer)spnSuggest.getValue();
             }});
+        lblSuggest.setToolTipText("Minimum number of typed characters to instigate word suggestions (0 to switch assistance off).");
         // END KGU#1057 2022-08-21
         // Return the number of used grid lines such that the calling method may go on there
         return 1;

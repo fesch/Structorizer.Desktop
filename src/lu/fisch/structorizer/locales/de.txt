@@ -136,6 +136,7 @@
  *      Kay Gürtzig         2021-10-05  Enh. #992: Messages for Analyser brackets check
  *      Kay Gürtzig         2021-10-31  Enh. #967, #1007 Texts for ARM-specific export options added
  *      Kay Gürtzig         2022-08-16  Enh. #1051: Messages for COBOL-specific import options
+ *      Kay Gürtzig         2022-08-21  Enh. #1066: Caption and tooltip for InputBox.lblSuggest
  *
  ******************************************************************************************************
  *
@@ -749,6 +750,8 @@ InputBox.lblComment.text=Einzugebender Kommentar
 InputBox.lblComment.tooltip=Eingabe eines Kommentars an dieser Stelle.
 InputBox.txtText.tooltip=Der Inhalt dieses Elementes.
 InputBox.txtComment.tooltip=Der Kommentar zu diesem Element.
+InputBox.lblSuggest.text=Schwelle für Vorschläge
+InputBox.lblSuggest.tooltip=Minimalanzahl eingegebener Zeichen zur Auslösung von Wortvorschägen (0 schaltet die Assistenz aus).
 InputBox.btnOK.text=OK
 InputBox.btnOK.tooltip=Übernehmen der Eintragungen und Schließen des Bearbeitungsfensters.
 InputBox.btnCancel.text=Abbruch
