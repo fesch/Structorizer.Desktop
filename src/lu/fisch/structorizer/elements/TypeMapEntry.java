@@ -44,6 +44,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-11-17      Field isCStyle removed, several method signatures accordingly reduced,
  *                                      Enh. #739: Support for enum types
  *      Kay Gürtzig     2021-02-03      Bugfix #923: Method isNamed() corrected ("unnamed" types are often named "???")
+ *      Kay Gürtzig     2022-08-22      Bugfix #1068: Type description inconsistency on declaration comparison
  *
  ******************************************************************************************************
  *
@@ -623,6 +624,7 @@ public class TypeMapEntry {
 	 * Note that in case of an enumeration type, the caller must add the respective
 	 * constant values to the {@link Root#constants} map if {@code _element} isn't
 	 * given or isn't linked to its owning {@link Root}.
+	 * 
 	 * @param _descriptor - the found type-describing or -specifying string
 	 * @param _element - the originating Structorizer element
 	 * @param _lineNo - the line number within the element text
@@ -637,10 +639,17 @@ public class TypeMapEntry {
 		for (VarDeclaration currDecl: declarations) {
 			boolean equals = currDecl.typeDescriptor.equalsIgnoreCase(_descriptor);
 			if (!equals) {
-				differs = true;
+				// START KGU#1060 2022-08-22: We try a canonical comparison
+				//differs = true;
+				var decl = new VarDeclaration(_descriptor, _element, _lineNo);
+				if (!decl.getCanonicalType(true).equals(currDecl.getCanonicalType(true))) {
+					differs = true;
+				}
+				// END KGU#1060 2022-08-22
 			}
 			if (currDecl.definingElement == _element && equals) {
 				isNew = false;
+				break;
 			}
 		}
 		if (isNew) {

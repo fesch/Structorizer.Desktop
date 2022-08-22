@@ -132,6 +132,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2022-05-31      Bugfix #1037 in getHighlightUnits()
  *      Kay Gürtzig     2022-07-07      Issue #653: Consistency with Colors.defaultColors ensured
  *      Kay Gürtzig     2022-08-20      Enh. #1066: New static method retrieveComponentNames()
+ *      Kay Gürtzig     2022-08-22      Bugfix #1068: Type inference failure for array initialisers mended
  *
  ******************************************************************************************************
  *
@@ -3560,6 +3561,7 @@ public abstract class Element {
 		// 1. Check whether it's a known typed variable
 		TypeMapEntry typeEntry = null;
 		if (typeMap != null) {
+			// In case of a variable (name) we might directly get the type
 			typeEntry = typeMap.get(expr);
 			// START KGU#923 2021-02-03: Bugfix #923 complex access paths were ignored
 			if (typeEntry == null && (expr.contains(".") || expr.contains("["))) {
@@ -3657,6 +3659,29 @@ public abstract class Element {
 			typeSpec = "int";
 		}
 		// END KGU#354 2017-05-22
+		// START KGU#1060 2022-08-22: Bugfix #1068 Try an array initializer
+		else if (expr.startsWith("{") && expr.endsWith("}")) {
+			StringList exprs = Element.splitExpressionList(expr.substring(1), ",", true);
+			int nExprs = exprs.count() - 1;
+			String elType = null;
+			if (nExprs > 0) {
+				elType = identifyExprType(typeMap, exprs.get(0), canonicalizeTypeNames);
+				for (int i = 1; i < nExprs; i++) {
+					String exprType = identifyExprType(typeMap, exprs.get(i), canonicalizeTypeNames);
+					if (exprType != null) {
+						if (elType == null) {
+							elType = exprType;
+						}
+						else if (!exprType.equals(elType)) {
+							elType = "???";
+							break;
+						}
+					}
+				}
+			}
+			typeSpec = "@" + elType;
+		}
+
 		// 2. If none of the approaches above succeeded check for a numeric literal
 		// START KGU#920 2021-02-03: Issue #920 Inifinity introduced as new literal
 		if (typeSpec.isEmpty() && (expr.equals("Infinity") || expr.equals("-Infinity") || expr.equals("\u221E"))) {
@@ -5061,6 +5086,7 @@ public abstract class Element {
 	/**
 	 * Analyses the given {@code typeSpec} string and adds a derived {@code TypeMapEntry.VarDeclaration}
 	 * to the {@code typeMap} associated to the given {@code varName}.
+	 * 
 	 * @param typeMap - maps variable and type names to gathered detailed type information 
 	 * @param varName - name of a variable being declared
 	 * @param typeSpec - a type-describing string (might be a type name or a type construction)
