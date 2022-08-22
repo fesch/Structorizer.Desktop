@@ -1060,13 +1060,13 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     		new LangTextHolder("Ambiguous CALL: Different callable diagrams \"%1\" (%2 parameters) found!");
     // END KGU#317 2016-12-29
     public final LangTextHolder msgInvalidExpr =
-    		new LangTextHolder("<%1> is not a correct or existing expression.");
+    		new LangTextHolder("«%1» is not a correct or existing expression.");
     // START KGU#249 2016-09-17: Bugfix #246 + Issue #243
     public final LangTextHolder msgInvalidBool =
-    		new LangTextHolder("<%1> is not a valid Boolean expression.");
+    		new LangTextHolder("«%1» is not a valid Boolean expression.");
     // END KGU#249 2016-09-17
     public final LangTextHolder msgIllFunction =
-    		new LangTextHolder("<%1> is not a correct function!");
+    		new LangTextHolder("«%1» is not a correct function!");
     public final LangTextHolder msgManualBreak =
     		new LangTextHolder("Manual Break!");
     public final LangTextHolder msgIllegalLeave =
@@ -1076,7 +1076,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     public final LangTextHolder msgExitCode =
     		new LangTextHolder("Program exited with code %1!");
     public final LangTextHolder msgIllegalJump =
-    		new LangTextHolder("Illegal content of a Jump (i.e. exit) instruction: <%1>!");
+    		new LangTextHolder("Illegal content of a Jump (i.e. exit) instruction: «%1»!");
     public final LangTextHolder msgTooManyLevels =
     		new LangTextHolder("Too many levels to leave (actual depth: %1 / specified: %2)!");
     // END KGU#197 2016-07-27
@@ -1118,7 +1118,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     // END KGU#388 2017-09-14
     // START KGU 2017-10-08
     public final LangTextHolder msgBadValueList =
-    		new LangTextHolder("<%> cannot be interpreted as value list.");
+    		new LangTextHolder("«%» cannot be interpreted as value list.");
     public final LangTextHolder msgBadValueListDetails =
     		new LangTextHolder("Details: %");
     // END KGU 2017-10-08

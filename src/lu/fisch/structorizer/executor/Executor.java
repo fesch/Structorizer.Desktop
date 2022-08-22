@@ -213,8 +213,9 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2022-01-05      Adaptations to modified EvalError API on upgrading from bsh-2.0b6.jar to bsh-2.1.0.jar
  *      Kay Gürtzig     2022-06-24      Bugfix #1038: Explicit saving decisions are no longer reiterated
  *      Kay Gürtzig     2022-08-19      Bugfix #1067: EvalErrors could slip through in stepInstruction
- *      Kay Gürtzig     2022-08-21      Bugfix #1068: Consistency of supported array index notations,
- *                                      problems with access to record components within arrays on the left-hand side
+ *      Kay Gürtzig     2022-08-21/22   Bugfix #1068: Consistency of supported array index notations,
+ *                                      problems with access to record components within arrays on the left-hand side,
+ *                                      problems with type inference on assignments to array elements
  *
  ******************************************************************************************************
  *
@@ -1015,6 +1016,10 @@ public class Executor implements Runnable
 	/** {@link Call} element currently to be executed (in paused mode) or {@code null} */
 	private Call currentCall;
 	// END KGU#907 2021-01-04
+	// START KGU#1060 2022-08-22: Bugfix #1068 for correct type attributions etc.
+	/**	Contains the currently executed Element */
+	public Element currentElement = null;
+	// END KGU#1060 2022-08-22
 	// START KGU#1032 2022-06-22: Bugfix #1038 Keep saving decisions
 	/** Set of {@link Root}s for which saving had been handled during this execution */
 	private HashSet<Root> askedToSave = new HashSet<Root>();
@@ -3921,7 +3926,7 @@ public class Executor implements Runnable
 								if (!typeStr.startsWith("@")) {
 									tokens.add("► [");
 									tokens.add(indexExprs.subSequence(i, nExprs).concatenate("]["));
-									tokens.add("]");
+									//tokens.add("]"); // Is part of indexExprs.get(nExprs)
 									tokens.add(indexExprs.get(nExprs));
 									throw new EvalError(control.msgInvalidArrayAccess.getText()
 											.replace("%1", tokens.concatenate(null)).replace("%2", typeStr),
@@ -3951,7 +3956,7 @@ public class Executor implements Runnable
 								tokens.add(indexStr);
 								tokens.add("]...");
 								throw new EvalError(control.msgInvalidExpr.getText()
-										.replace("%", tokens.concatenate(null)),
+										.replace("%1", tokens.concatenate(null)),
 										null, null);
 	// <=============================================
 							}
@@ -4333,7 +4338,7 @@ public class Executor implements Runnable
 			}
 			if (compObject == null) {
 				throw new EvalError(control.msgInvalidExpr.getText()
-						.replace("%2", composeAccessPath(accessPath, level)),
+						.replace("%1", composeAccessPath(accessPath, level)),
 						null, null);
 			}
 
@@ -4717,7 +4722,10 @@ public class Executor implements Runnable
 			TypeMapEntry type = new TypeMapEntry(typeDescr.concatenate(null),
 					isId ? typeName : null,
 					context.dynTypeMap,
-					null, -1,
+					// START KGU#1060 2022-08-22: Bugfix #1068 avoid duplicate entries
+					//null, -1,
+					currentElement, -1,
+					// END KGU#1060 2022-08-22
 					false, false);
 			newType = true;
 			context.dynTypeMap.put(target, type);
@@ -5272,6 +5280,10 @@ public class Executor implements Runnable
 			this.currentCall = null;
 			// END KGU#907 2021-01-04
 			
+			// START KGU#1060 2022-08-22: Bugfix #1068 for correct type attributions etc.
+			this.currentElement = element;
+			// END KGU#1060 2022-08-22
+
 			// START KGU#2 2015-11-14: Separate execution for CALL elements to keep things clearer
 			//if (element instanceof Instruction)
 			if (element instanceof Call)
@@ -6136,6 +6148,9 @@ public class Executor implements Runnable
 						context.dynTypeMap.put(target, typeEntry);
 					}
 					else {
+						// START KGU#1060 2022-08-22: Bugfix #1068 comparison failed with arrays
+						typeDescr = typeDescr.replace("@", "array of ");
+						// END KGU#1060 2022-08-22
 						oldEntry.addDeclaration(typeDescr, instr, lineNo, true);
 					}
 				}
@@ -6293,6 +6308,8 @@ public class Executor implements Runnable
 				}
 				// END KGU#33 2014-12-05
 				// START KGU#375 2017-03-30: Enh. #388 - support of constants
+				/* This test is too simple for more complex access paths but setVar() will
+				 * find out the more complex cases anyway */
 				if (this.isConstant(var)) {
 					trouble = control.msgConstantRedefinition.getText().replaceAll("%", var);
 				}
