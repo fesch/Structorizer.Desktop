@@ -3218,6 +3218,7 @@ public abstract class Element {
 					isWellFormed = parenthDepth > 0 && token.equals(enclosings.pop());
 					parenthDepth--;
 				}
+				
 				if (isWellFormed)
 				{
 					// START KGU#914 2021-01-22: Bugfix - see above
@@ -3231,7 +3232,13 @@ public abstract class Element {
 					//expressionList.add(currExpr.trim());
 					//currExpr = "";
 					//tail = _tokens.concatenate("", i).trim();
-					expressionList.add(currExpr.trim().concatenate(null));
+					// START KGU#1061 2022-08-23: Bugfix #1068 an empty list generated a list with empty string
+					//expressionList.add(currExpr.trim().concatenate(null));
+					if (!expressionList.isEmpty()) {
+						// There must have been at least one separator - so add even an empty term
+						expressionList.add(currExpr.trim().concatenate(null));
+					}
+					// END KGU#1061 2022-08-23
 					currExpr.clear();
 					tail = _tokens.concatenate(null, i).trim();
 					// END KGU#914 2021-01-22
