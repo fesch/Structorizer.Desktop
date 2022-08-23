@@ -124,6 +124,7 @@ Current development version 3.32-11 (2022-08-23)
 - 11: Bugfix #1067: Certain execution errors used to slip through <2>
 - 11: Issue #1068: Executor now accepts index lists like my_array[i,j], <2>
       Generators updated to cope with index lists
+- 11  TeX exports (algo/StrukTex) now ensured to contain the version no. <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>

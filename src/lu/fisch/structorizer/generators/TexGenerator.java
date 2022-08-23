@@ -50,6 +50,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2021-05-12      Bugfix #975: Backslashes (and tilde symbols) hadn't been escaped in text literals
  *      Kay Gürtzig     2021-06-06      Bugfix #975: ^ within tokens replaced by \textasciicircum rather than \hat{}
  *                                      method transformText extracted for the token-internal substitution
+ *      Kay Gürtzig     2022-08-23      Structorizer version inserted as LaTeX comment
  *
  ******************************************************************************************************
  *
@@ -720,6 +721,7 @@ public class TexGenerator extends Generator {
 			// START KGU#363 2017-05-16: Enh. #372
 			//code.add("\\author{Structorizer "+Element.E_VERSION+"}");
 			if (this.optionExportLicenseInfo()) {
+				code.add("% Structorizer version " + Element.E_VERSION);
 				code.add("\\author{" + transformText(_root.getAuthor()) + "}");
 			} else {
 				code.add("\\author{Structorizer " + Element.E_VERSION + "}");
