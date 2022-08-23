@@ -94,7 +94,6 @@ import com.logicbig.uicommon.SuggestionDropDownDecorator;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.executor.Function;
-import lu.fisch.structorizer.gui.InputBox.InputSuggestionClient;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.locales.LangTextHolder;
 import lu.fisch.structorizer.parsers.CodeParser;
