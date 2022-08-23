@@ -392,6 +392,9 @@ public abstract class Element {
 	"\n"+
 	"Command interpreter provided by\n"+
 	" - Pat Niemeyer <pat@pat.net>\n"+
+	"\n"+
+	"SuggestionDropDownDecorator (Content Assist) provided by\n"+
+	" - LogicBig <www.logicbic.com>\n"+
 	"";
 	public final static String E_CHANGELOG = "";
 
