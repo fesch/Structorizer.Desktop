@@ -300,16 +300,35 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
                     }
                 }
             }
-            int n = Collections.binarySearch(proposals, prefix, String.CASE_INSENSITIVE_ORDER);
-            if (n < 0) {
-                n = -n - 1;
+            boolean addProposals = true;
+            // For Jump elements don't offer other proposals before one of the four keywords is placed
+            if ("Jump".equals(elementType)) {
+                addProposals = false;
+                if (w > 0) {
+                    String lineStart = content.substring(0, w);
+                    StringList keys = KEYWORD_SUGGESTIONS.get(elementType);
+                    for (int i = 0; !addProposals && i < keys.count(); i++) {
+                        String keyword = CodeParser.getKeyword(keys.get(i));
+                        if (keyword != null
+                                && (lineStart.startsWith(keyword)
+                                        || CodeParser.ignoreCase && lineStart.toLowerCase().startsWith(keyword.toLowerCase()))) {
+                            addProposals = true;
+                        }
+                    }
+                }
             }
-            prefix = prefix.toLowerCase();
-            String match = null;
-            while (n < proposals.size()
-                    && (match = proposals.get(n)).toLowerCase().startsWith(prefix)) {
-                suggestions.add(match);
-                n++;
+            if (addProposals) {
+                int n = Collections.binarySearch(proposals, prefix, String.CASE_INSENSITIVE_ORDER);
+                if (n < 0) {
+                    n = -n - 1;
+                }
+                prefix = prefix.toLowerCase();
+                String match = null;
+                while (n < proposals.size()
+                        && (match = proposals.get(n)).toLowerCase().startsWith(prefix)) {
+                    suggestions.add(match);
+                    n++;
+                }
             }
             return suggestions;
         }
