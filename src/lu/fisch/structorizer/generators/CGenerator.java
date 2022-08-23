@@ -113,7 +113,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2021-10-03      Bugfix #990: Made-up result types on exported procedures
  *                                              Bugfix #993: Wrong handling of constant parameters
  *      Kay Gürtzig             2021-12-05      Bugfix #1024: Precautions against defective record initializers
- *      Kay Gürtzig             2022-08-23      Issue #1068: transformIndexLists() inserted in transformTokens()
+ *      Kay Gürtzig             2022-08-23      Issue #1068: transformIndexLists() inserted into transformTokens(),
+ *                                              transformOrGenerateArrayInit() mended (mutilated empty initialisers)
  *
  ******************************************************************************************************
  *
@@ -2902,11 +2903,20 @@ public class CGenerator extends Generator {
 			// START KGU#732 2019-10-03: Bugfix #755 we have to care for recursive transformation
 			//return this.transform("{" + _arrayItems.concatenate(", ") + "}");
 			StringBuilder arrIni = new StringBuilder();
-			String sepa = "{";
+			// START KGU#1061 2022-08-23 Bugfix #1068 With a empty list the brace was missing
+			//String sepa = "{";
+			arrIni.append("{");
+			// END KGU#1061 2022-08-23
 			for (int i = 0; i < nItems; i++) {
-				arrIni.append(sepa);
+				// START KGU#1061 2022-08-23 Bugfix #1068 With a empty list the brace was missing
+				//arrIni.append(sepa);
+				//arrIni.append(transform(_arrayItems.get(i)));
+				//sepa = ", ";
+				if (i > 0) {
+					arrIni.append(", ");
+				}
 				arrIni.append(transform(_arrayItems.get(i)));
-				sepa = ", ";
+				// END KGU#1061 2022-08-23
 			}
 			arrIni.append('}');
 			return arrIni.toString();
