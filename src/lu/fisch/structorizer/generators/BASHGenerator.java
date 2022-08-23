@@ -96,6 +96,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2021-02-03      Issue #920: Transformation for "Infinity" literal
  *      Kay Gürtzig         2021-10-03      Issue #990: Precautions against wrong result type associations
  *      Kay Gürtzig         2021-11-02      Bugfix #1014: Declarations in C and Java style hadn't been processed correctly
+ *      Kay Gürtzig         2022-08-23      Issue #1068: transformIndexLists() inserted in transformTokens()
  *
  ******************************************************************************************************
  *
@@ -537,6 +538,9 @@ public class BASHGenerator extends Generator {
 		String varName = "";
 		String origExpr = "";
 		// END KGU#803 2020-02-18
+		// START KGU#1061 2022-08-23: Issue #1068
+		transformIndexLists(tokens);
+		// END KGU#1061 2022-08-23
 		// START KGU#920 2021-02-03: Issue #920 Handle Infinity literal
 		// https://unix.stackexchange.com/questions/24721/how-to-compare-to-floating-point-number-in-a-shell-script
 		tokens.replaceAll("Infinity", "INF");
