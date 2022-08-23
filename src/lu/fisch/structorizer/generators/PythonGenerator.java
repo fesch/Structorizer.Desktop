@@ -86,6 +86,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig	            2022-07-04      Issue #1041: Unnecessary nesting of try blocks with finally clause
  *                                              Bugfix #1042: Wrong syntax for catch clauses with variable
  *      Kay Gürtzig             2022-08-14      Bugfix #1061: Suppression of content conversions #423, #623, #680, #782, #812
+ *      Kay Gürtzig             2022-08-23      Issue #1068: transformIndexLists() inserted in transformTokens()
  *
  ******************************************************************************************************
  *
@@ -335,6 +336,9 @@ public class PythonGenerator extends Generator
 	@Override
 	protected String transformTokens(StringList tokens)
 	{
+		// START KGU#1061 2022-08-23: Issue #1068
+		transformIndexLists(tokens);
+		// END KGU#1061 2022-08-23
 		// START KGU#920 2021-02-03: Issue #920 Handle Infinity literal
 		tokens.replaceAll("Infinity", "float(\"inf\")");
 		// END KGU#920 2021-02-03

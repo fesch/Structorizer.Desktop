@@ -122,6 +122,7 @@ package lu.fisch.structorizer.generators;
  *                                      lines are always to be inserted there.
  *      Kay Gürtzig     2022-08-12      Issue #1047: Bug in deriveCodeFileName() fixed
  *      Kay Gürtzig     2022-08-14      Issues #441, #1047: usesTurtleizer must be reset at the beginning of exportCode
+ *      Kay Gürtzig     2022-08-23      Issue #1068: Auxiliary method transformIndexLists(StringList) added
  *
  ******************************************************************************************************
  *
@@ -1951,6 +1952,47 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @return either a syntactically converted combined string with suited
 	 *     operator or separator symbols, or {@code null}.
 	 */
+	
+	// START KGU#1061 2022-08-23: Issue #1068
+	/**
+	 * Recursively transforms index lists in bracket pairs into chains of
+	 * index suffixes ({@code [i,j,k]} &rarr; {@code [i][j][k]}.
+	 * Actually it is not checked whether e.g. a variable name precedes the
+	 * opening bracket. So this method should not be applied to already
+	 * transformed code if expressions like {@code [a, b, c]} may occur
+	 * there as intended transformation result.
+	 * 
+	 * @param tokens the split line (will be modified)
+	 */
+	protected void transformIndexLists(StringList tokens) {
+		StringList newTokens = new StringList();
+		int posBr = -1;
+		while ((posBr = tokens.indexOf("[")) >= 0) {
+			newTokens.add(tokens.subSequence(0, posBr + 1));
+			tokens.remove(0, posBr+1);
+			StringList exprs = Element.splitExpressionList(tokens, ",", true);
+			int nExprs = exprs.count() - 1;
+			for (int i = 0; i < nExprs; i++) {
+				if (i > 0) {
+					newTokens.add("]");
+					newTokens.add("[");
+				}
+				StringList toks = Element.splitLexically(exprs.get(i), true);
+				// We must apply this recursively
+				transformIndexLists(toks);
+				newTokens.add(toks);
+			}
+			tokens.clear();
+			tokens.add(Element.splitLexically(exprs.get(nExprs), true));
+		}
+		// We must ensure that the argument variable contains all remaining tokens in the end
+		newTokens.add(tokens);
+		tokens.clear();
+		tokens.add(newTokens);
+		newTokens.clear();	// This is just to facilitate garbage collection
+	}
+	// END KGU#1061 2022-08-23
+
 	protected String composeInputItems(StringList _inputVarItems)
 	{
 		return null;

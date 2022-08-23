@@ -3038,104 +3038,104 @@ public class Root extends Element {
      */
     public StringList getVarNames(StringList lines, HashMap<String, String> constantDefs)
     {
-    	StringList varNames = new StringList();
+        StringList varNames = new StringList();
 
-    	// START KGU#163 2016-03-25: Pre-processed match patterns for identifier search
-    	splitKeywords.clear();
-    	String[] keywords = CodeParser.getAllProperties();
-    	for (int k = 0; k < keywords.length; k++)
-    	{
-    		splitKeywords.add(Element.splitLexically(keywords[k], false));
-    	}
-    	// END KGU#163 2016-03-25
+        // START KGU#163 2016-03-25: Pre-processed match patterns for identifier search
+        splitKeywords.clear();
+        String[] keywords = CodeParser.getAllProperties();
+        for (int k = 0; k < keywords.length; k++)
+        {
+            splitKeywords.add(Element.splitLexically(keywords[k], false));
+        }
+        // END KGU#163 2016-03-25
 
-    	for(int i=0; i<lines.count(); i++)
-    	{
-    		String allText = lines.get(i);
-    		// modify "inc" and "dec" function (Pascal)
-    		// START KGU#575 2018-09-17: Issue #594 - replace obsolete 3rd-party Regex library
-    		//Regex r;
-    		//r = new Regex(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 + $2"); allText=r.replaceAll(allText);
-    		//r = new Regex(BString.breakup("inc")+"[(](.*?)[)](.*?)","$1 <- $1 + 1"); allText=r.replaceAll(allText);
-    		//r = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 - $2"); allText=r.replaceAll(allText);
-    		//r = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)","$1 <- $1 - 1"); allText=r.replaceAll(allText);
-    		allText = transform_inc_dec(allText);
-    		// END KGU#575 2018-09-17
+        for(int i=0; i<lines.count(); i++)
+        {
+            String allText = lines.get(i);
+            // modify "inc" and "dec" function (Pascal)
+            // START KGU#575 2018-09-17: Issue #594 - replace obsolete 3rd-party Regex library
+            //Regex r;
+            //r = new Regex(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 + $2"); allText=r.replaceAll(allText);
+            //r = new Regex(BString.breakup("inc")+"[(](.*?)[)](.*?)","$1 <- $1 + 1"); allText=r.replaceAll(allText);
+            //r = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 - $2"); allText=r.replaceAll(allText);
+            //r = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)","$1 <- $1 - 1"); allText=r.replaceAll(allText);
+            allText = transform_inc_dec(allText);
+            // END KGU#575 2018-09-17
 
-    		StringList tokens = Element.splitLexically(allText, true);
+            StringList tokens = Element.splitLexically(allText, true);
 
-    		Element.unifyOperators(tokens, false);
+            Element.unifyOperators(tokens, false);
 
-    		// Replace all split keywords by the respective configured strings
-    		// This replacement will be aware of the case sensitivity preference
-    		for (int kw = 0; kw < keywords.length; kw++)
-    		{
-    			if (keywords[kw].trim().length() > 0)
-    			{
-    				StringList keyTokens = splitKeywords.elementAt(kw);
-    				int keyLength = keyTokens.count();
-    				int pos = -1;
-    				while ((pos = tokens.indexOf(keyTokens, pos + 1, !CodeParser.ignoreCase)) >= 0)
-    				{
-    					tokens.set(pos, keywords[kw]);
-    					tokens.remove(pos + 1, pos + keyLength);
-    				}
-    			}
-    		}
+            // Replace all split keywords by the respective configured strings
+            // This replacement will be aware of the case sensitivity preference
+            for (int kw = 0; kw < keywords.length; kw++)
+            {
+                if (keywords[kw].trim().length() > 0)
+                {
+                    StringList keyTokens = splitKeywords.elementAt(kw);
+                    int keyLength = keyTokens.count();
+                    int pos = -1;
+                    while ((pos = tokens.indexOf(keyTokens, pos + 1, !CodeParser.ignoreCase)) >= 0)
+                    {
+                        tokens.set(pos, keywords[kw]);
+                        tokens.remove(pos + 1, pos + keyLength);
+                    }
+                }
+            }
 
-    		// Unify FOR-IN loops and FOR loops for the purpose of variable analysis
-    		if (!CodeParser.getKeyword("postForIn").trim().isEmpty())
-    		{
-    			tokens.replaceAll(CodeParser.getKeyword("postForIn"), "<-");
-    		}
+            // Unify FOR-IN loops and FOR loops for the purpose of variable analysis
+            if (!CodeParser.getKeyword("postForIn").trim().isEmpty())
+            {
+                tokens.replaceAll(CodeParser.getKeyword("postForIn"), "<-");
+            }
 
-    		// Here all the unification, alignment, reduction is done, now the actual analysis begins
+            // Here all the unification, alignment, reduction is done, now the actual analysis begins
 
-    		int asgnPos = tokens.indexOf("<-");
-    		if (asgnPos > 0)
-    		{
-    			String s = tokens.subSequence(0, asgnPos).concatenate();
-    			// (KGU#141 2016-01-16: type elimination moved to extractVarName())
-    			//System.out.println("Adding to initialised var names: " + extractVarName(allText.trim()));
-    			String varName = extractVarName(s.trim());
-    			boolean wasNew = varNames.addOrderedIfNew(varName);
-    			// START KGU#375 2017-03-31: Enh. #388 collect constant definitions
-    			// Register it as constant if marked as such and not having been declared before
-    			if (tokens.get(0).equals("const") && wasNew && !constantDefs.containsKey(varName)) {
-    				constantDefs.put(varName, tokens.subSequence(asgnPos+1, tokens.count()).concatenate().trim());
-    			}
-    		}
-
-
-    		// get names from read statements
-    		int inpPos = tokens.indexOf(CodeParser.getKeyword("input"));
-    		if (inpPos >= 0)
-    		{
-    			// START KGU#281 2016-10-12: Issue #271 - there may be a prompt string literal to be skipped
-    			//String s = tokens.subSequence(inpPos + 1, tokens.count()).concatenate().trim();
-    			inpPos++;
-    			// START KGU#281 2016-12-23: Enh. #271 - allow comma between prompt and variable name
-    			//while (inpPos < tokens.count() && (tokens.get(inpPos).trim().isEmpty() || tokens.get(inpPos).matches("^[\"\'].*[\"\']$")))
-    			while (inpPos < tokens.count() && (tokens.get(inpPos).trim().isEmpty() || tokens.get(inpPos).trim().equals(",") || tokens.get(inpPos).matches("^[\"\'].*[\"\']$")))
-    			// END KGU#281 2016-12-23
-    			{
-    				inpPos++;
-    			}
-    			//String s = tokens.subSequence(inpPos, tokens.count()).concatenate().trim();
-    			// END KGU#281 2016-10-12
-    			// A mere splitting by comma would spoil function calls as indices etc.
-    			StringList parts = Element.splitExpressionList(tokens.subSequence(inpPos, tokens.count()), ",", false);
-    			for (int p = 0; p < parts.count(); p++)
-    			{
-    				varNames.addOrderedIfNew(extractVarName(parts.get(p).trim()));
-    			}
-    		}
+            int asgnPos = tokens.indexOf("<-");
+            if (asgnPos > 0)
+            {
+                String s = tokens.subSequence(0, asgnPos).concatenate();
+                // (KGU#141 2016-01-16: type elimination moved to extractVarName())
+                //System.out.println("Adding to initialised var names: " + extractVarName(allText.trim()));
+                String varName = extractVarName(s.trim());
+                boolean wasNew = varNames.addOrderedIfNew(varName);
+                // START KGU#375 2017-03-31: Enh. #388 collect constant definitions
+                // Register it as constant if marked as such and not having been declared before
+                if (tokens.get(0).equals("const") && wasNew && !constantDefs.containsKey(varName)) {
+                    constantDefs.put(varName, tokens.subSequence(asgnPos+1, tokens.count()).concatenate().trim());
+                }
+            }
 
 
-    		//lines.set(i, allText);
-    	}
+            // get names from read statements
+            int inpPos = tokens.indexOf(CodeParser.getKeyword("input"));
+            if (inpPos >= 0)
+            {
+                // START KGU#281 2016-10-12: Issue #271 - there may be a prompt string literal to be skipped
+                //String s = tokens.subSequence(inpPos + 1, tokens.count()).concatenate().trim();
+                inpPos++;
+                // START KGU#281 2016-12-23: Enh. #271 - allow comma between prompt and variable name
+                //while (inpPos < tokens.count() && (tokens.get(inpPos).trim().isEmpty() || tokens.get(inpPos).matches("^[\"\'].*[\"\']$")))
+                while (inpPos < tokens.count() && (tokens.get(inpPos).trim().isEmpty() || tokens.get(inpPos).trim().equals(",") || tokens.get(inpPos).matches("^[\"\'].*[\"\']$")))
+                // END KGU#281 2016-12-23
+                {
+                    inpPos++;
+                }
+                //String s = tokens.subSequence(inpPos, tokens.count()).concatenate().trim();
+                // END KGU#281 2016-10-12
+                // A mere splitting by comma would spoil function calls as indices etc.
+                StringList parts = Element.splitExpressionList(tokens.subSequence(inpPos, tokens.count()), ",", false);
+                for (int p = 0; p < parts.count(); p++)
+                {
+                    varNames.addOrderedIfNew(extractVarName(parts.get(p).trim()));
+                }
+            }
 
-    	return varNames;
+
+            //lines.set(i, allText);
+        }
+
+        return varNames;
     }
 
     /**

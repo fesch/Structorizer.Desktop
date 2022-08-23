@@ -122,7 +122,8 @@ Current development version 3.32-11 (2022-08-23)
       right mouse click may override a previous single selection now <2>
 - 11: Enh. #1066: Name completion dropdown in Element editor text field <2>
 - 11: Bugfix #1067: Certain execution errors used to slip through <2>
-- 11: Issue #1068: Executor now accepts index lists like my_array[i,j] <2>
+- 11: Issue #1068: Executor now accepts index lists like my_array[i,j], <2>
+      Generators updated to cope with index lists
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>
