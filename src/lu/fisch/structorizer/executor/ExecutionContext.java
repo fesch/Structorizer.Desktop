@@ -51,7 +51,6 @@ package lu.fisch.structorizer.executor;
 import java.util.HashMap;
 
 import bsh.Interpreter;
-import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.utils.StringList;

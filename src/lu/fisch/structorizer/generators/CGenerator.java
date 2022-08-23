@@ -113,6 +113,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2021-10-03      Bugfix #990: Made-up result types on exported procedures
  *                                              Bugfix #993: Wrong handling of constant parameters
  *      Kay Gürtzig             2021-12-05      Bugfix #1024: Precautions against defective record initializers
+ *      Kay Gürtzig             2022-08-23      Issue #1068: transformIndexLists() inserted in transformTokens()
  *
  ******************************************************************************************************
  *
@@ -541,6 +542,9 @@ public class CGenerator extends Generator {
 	@Override
 	protected String transformTokens(StringList tokens)
 	{
+		// START KGU#1061 2022-08-23: Issue #1068
+		transformIndexLists(tokens);
+		// END KGU#1061 2022-08-23
 		// START KGU#920 2021-02-03: Issue #920 Handle Infinity literal
 		tokens.replaceAll("Infinity", "INFINITY");
 		// END KGU#920 2021-02-03
@@ -2887,12 +2891,19 @@ public class CGenerator extends Generator {
 	 */
 	protected String transformOrGenerateArrayInit(String _lValue, StringList _arrayItems, String _indent, boolean _isDisabled, String _elemType, boolean _isDecl)
 	{
+		int nItems = _arrayItems.count();
+		// START KGU#1061 2022-08-23: Issue #1068
+		// If the last item is an empty string then drop it
+		if (nItems > 0 && _arrayItems.get(nItems-1).isBlank()) {
+			_arrayItems.remove(--nItems);
+		}
+		// END KGU#1061 2022-08-23
 		if (_isDecl && this.isInternalDeclarationAllowed()) {
 			// START KGU#732 2019-10-03: Bugfix #755 we have to care for recursive transformation
 			//return this.transform("{" + _arrayItems.concatenate(", ") + "}");
 			StringBuilder arrIni = new StringBuilder();
 			String sepa = "{";
-			for (int i = 0; i < _arrayItems.count(); i++) {
+			for (int i = 0; i < nItems; i++) {
 				arrIni.append(sepa);
 				arrIni.append(transform(_arrayItems.get(i)));
 				sepa = ", ";
@@ -2901,7 +2912,7 @@ public class CGenerator extends Generator {
 			return arrIni.toString();
 			// END KGU#732 2019-10-03
 		}
-		for (int i = 0; i < _arrayItems.count(); i++) {
+		for (int i = 0; i < nItems; i++) {
 			// initializers must be handled recursively!
 			generateAssignment(_lValue + "[" + i + "]", _arrayItems.get(i), _indent, _isDisabled);
 		}
