@@ -3232,9 +3232,9 @@ public abstract class Element {
 					//tail = _tokens.concatenate("", i).trim();
 					// START KGU#1061 2022-08-23: Bugfix #1068 an empty list generated a list with empty string
 					//expressionList.add(currExpr.trim().concatenate(null));
-					if (!expressionList.isEmpty()) {
+					if (!expressionList.isEmpty() || !(currExpr = currExpr.trim()).isEmpty()) {
 						// There must have been at least one separator - so add even an empty term
-						expressionList.add(currExpr.trim().concatenate(null));
+						expressionList.add(currExpr.concatenate(null));
 					}
 					// END KGU#1061 2022-08-23
 					currExpr.clear();
