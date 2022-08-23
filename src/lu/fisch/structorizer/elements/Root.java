@@ -5077,7 +5077,7 @@ public class Root extends Element {
 		int nTokens = _tokens.count();
 		int posDot = -1;
 		int[] indexInform = new int[] {0};
-		TypeMapEntry varType = null;
+		//TypeMapEntry varType = null;
 		while ((posDot = _tokens.indexOf(".", posDot + 1)) > 0 && posDot < nTokens - 1) {
 			// START KGU#1059 2022-08-20: Better solution from enh. #1066 adopted
 //			String before = _tokens.get(posDot - 1);

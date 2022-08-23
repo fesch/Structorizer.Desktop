@@ -60,6 +60,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2022-08-18  Enh. #1066: First draft of a simple text auto-completion mechanism
  *      Kay Gürtzig     2022-08-21  Enh. #1066: New text suggestion approach with pulldown (based on LogicBig
  *                                  SuggestionDropDownDecorator) and keyword inclusion
+ *      Kay Gürtzig     2022-08-23  Enh. #1066: Autocomplete switched off on disabled JTextComponents
  *
  ******************************************************************************************************
  *
@@ -111,6 +112,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
     // END KGU#428 2017-10-06
     // START KGU#1057 2022-08-19: Enh. #1066 Auto-text-completion with dropdown
     public static int MIN_SUGG_PREFIX = 3;
+    private static final String[] DECLARATION_KEYWORDS = {"type", "const", "var", "dim"};
     private static final HashMap<String, StringList> KEYWORD_SUGGESTIONS = new HashMap<String, StringList>();
     static {
         KEYWORD_SUGGESTIONS.put("Instruction", StringList.explode("input,output", ","));
@@ -193,7 +195,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
      * 
      * @author Kay Gürtzig
      */
-    private class InputSuggestionClient implements SuggestionClient<JTextComponent> {
+    protected class InputSuggestionClient implements SuggestionClient<JTextComponent> {
         
         private Logger logger = Logger.getLogger(InputSuggestionClient.class.getName());
 
@@ -254,6 +256,10 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
                             tc.moveCaretPosition(cp);
                         }
                     }
+                    else if (selectedValue.endsWith("{}")) {
+                        // type constructor: place the caret between the braces
+                        tc.setCaretPosition(previousWordIndex + selectedValue.length()-1);
+                    }
                 }
             } catch (BadLocationException ex) {
                 logger.log(Level.FINE, ex.toString());
@@ -262,7 +268,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
 
         @Override
         public List<String> getSuggestions(JTextComponent tc) {
-            if (words == null || MIN_SUGG_PREFIX <= 0) {
+            if (!tc.isEnabled() || words == null || MIN_SUGG_PREFIX <= 0) {
                 return null;
             }
             int pos = tc.getCaretPosition();
@@ -288,6 +294,10 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
             }
             ArrayList<String> suggestions = new ArrayList<String>();
             String prefix = content.substring(w);
+            StringList tokens = Element.splitLexically(content.substring(0, w), true);
+            tokens.removeAll(" ");
+            int nTokens = tokens.count();
+            String lastToken = tokens.get(nTokens-1).toLowerCase();
             if ((w == 0 || content.charAt(w-1) == '\n')) {
                 StringList keys = KEYWORD_SUGGESTIONS.get(elementType);
                 if (keys != null) {
@@ -299,6 +309,57 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
                         }
                     }
                 }
+                if ("Instruction".equals(elementType)) {
+                    for (String keyword: DECLARATION_KEYWORDS) {
+                        if (keyword.startsWith(prefix.toLowerCase())) {
+                            suggestions.add(keyword);
+                            // These keywords don't share a prefix, so there can't be another match
+                            break;
+                        }
+                    }
+                }
+            }
+            else if ("Instruction".equals(elementType)
+                    && content.lastIndexOf("\n", w) < 0
+                    && content.lastIndexOf("<-", w) < 0
+                    && content.lastIndexOf(":=", w) < 0
+                    && (content.startsWith("type ")
+                            || content.startsWith("const ")
+                            || content.startsWith("var ")
+                            || content.startsWith("dim "))) {
+                boolean isTypedef = tokens.get(0).equals("type")
+                        && nTokens == 3 && tokens.get(2).equals("=");
+                if (typeMap != null && (
+                       lastToken.equals(":") || lastToken.equals("as")
+                       || isTypedef
+                       || lastToken.equals("of")
+                       && nTokens > 3 && (
+                               tokens.get(nTokens - 1).toLowerCase().equals("array")
+                               || tokens.get(nTokens - 1).equals("]")))) {
+                    // add matching type names
+                    return retrieveTypeNames(prefix, isTypedef);
+                }
+            }
+            // Now check for a record initialiser
+            int posBr = tokens.lastIndexOf("{");	// position of left brace
+            TypeMapEntry recType;
+            if (nTokens > 1 && posBr >= 0
+                    && (posBr == nTokens-1 || lastToken.equals(";"))
+                    && typeMap != null
+                    && !tokens.subSequence(posBr, nTokens).contains("}")
+                    && (recType = typeMap.get(":" + tokens.get(posBr-1))) != null
+                    && recType.isRecord()) {
+                // We need the component names in this position
+                for (String key: recType.getComponentInfo(true).keySet()) {
+                    if (key.toLowerCase().startsWith(prefix)) {
+                        suggestions.add(key);
+                    }
+                }
+                if (!suggestions.isEmpty()) {
+                    Collections.sort(suggestions, String.CASE_INSENSITIVE_ORDER);
+                    return suggestions;
+                }
+                return null;
             }
             boolean addProposals = true;
             // For Jump elements don't offer other proposals before one of the four keywords is placed
@@ -384,6 +445,45 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
             }
             return proposals;
         }
+        
+        /**
+         * Gathers all type names matching the given prefix from typeMap and rturns
+         * a sorted list of them.
+         * 
+         * @param prefix - the entered word prefix
+         * @return a sorted list of type names or type constructors
+         */
+        private ArrayList<String> retrieveTypeNames(String prefix, boolean isDef) {
+            var typeNames = new ArrayList<String>();
+            var stdTypes = TypeMapEntry.getStandardTypeNames();
+            prefix = prefix.toLowerCase();
+            if (isDef) {
+                for (String constr: new String[] {"enum{}", "record{}", "struct{}"}) {
+                    if (constr.startsWith(prefix)) {
+                        typeNames.add(constr);
+                        break;
+                    }
+                }
+            }
+            if ("array".startsWith(prefix)) {
+                typeNames.add("array of ");
+            }
+            for (int i = 0; i < stdTypes.count(); i++) {
+                if (stdTypes.get(i).startsWith(prefix)) {
+                    typeNames.add(stdTypes.get(i));
+                }
+            }
+            prefix = ":" + prefix;
+            for (String key: typeMap.keySet()) {
+                if (key.toLowerCase().startsWith(prefix)
+                        && !typeNames.contains(key.substring(1))) {
+                    typeNames.add(key.substring(1));
+                }
+            }
+            Collections.sort(typeNames, String.CASE_INSENSITIVE_ORDER);
+            return typeNames;
+        }
+
     }
     // END KGU#1057 2022-08-19
     

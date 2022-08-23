@@ -50,6 +50,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017-07-01  Issue #413 FOR-IN value list check made aware of built-in split function
  *      Kay Gürtzig     2019-02-19  Bugfix #684 Fall-back FOR-IN radio button caption was wrong in case preForIn is void
  *      Kay Gürtzig     2021-01-26  Issue #400: Some Components had not reacted to Esc and Shift/Ctrl-Enter
+ *      Kay Gürtzig     2022-08-23  Enh. #1066: SuggestionDropDownDecorator attached to three form fields
  *
  ******************************************************************************************************
  *
@@ -85,10 +86,15 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.UIManager;
+import javax.swing.text.JTextComponent;
+
+import com.logicbig.uicommon.SuggestionClient;
+import com.logicbig.uicommon.SuggestionDropDownDecorator;
 
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.executor.Function;
+import lu.fisch.structorizer.gui.InputBox.InputSuggestionClient;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.locales.LangTextHolder;
 import lu.fisch.structorizer.parsers.CodeParser;
@@ -215,6 +221,12 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		txtVariableIn.addKeyListener(this);
 		txtValueList.addKeyListener(this);
 		// END KGU#61 2016-09-23
+		// START KGU#1057 2022-08-23: Enh. #1066
+		SuggestionClient<JTextComponent> assist = new InputSuggestionClient();
+		SuggestionDropDownDecorator.decorate(txtStartVal, assist);
+		SuggestionDropDownDecorator.decorate(txtEndVal, assist);
+		SuggestionDropDownDecorator.decorate(txtValueList, assist);
+		// END KGU#1057 2022-08-23
 
 		txtVariable.addKeyListener(this);
 		txtStartVal.addKeyListener(this);
