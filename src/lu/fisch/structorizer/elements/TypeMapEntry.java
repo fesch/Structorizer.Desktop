@@ -44,6 +44,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-11-17      Field isCStyle removed, several method signatures accordingly reduced,
  *                                      Enh. #739: Support for enum types
  *      Kay Gürtzig     2021-02-03      Bugfix #923: Method isNamed() corrected ("unnamed" types are often named "???")
+ *      Kay Gürtzig     2022-08-22      Bugfix #1068: Type description inconsistency on declaration comparison
+ *      Kay Gürtzig     2022-08-23      Enh. #1066: New method getStandardTypeNames()
  *
  ******************************************************************************************************
  *
@@ -90,14 +92,20 @@ public class TypeMapEntry {
 	private static TypeMapEntry dummy = null;
 	// END KGU#388 2017-09-18
 	// "Canonical" scalar type names
-	private static final String[] canonicalNumericTypes = {
-			"byte",
-			"short",
-			"int",
-			"long",
-			"float",
-			"double"
-	};
+	// START KGU#1057 2022-08-23: Issue #1066 renamed and chnaged from String[] to StringList
+	//private static final String[] CANONICAL_NUMERIC_TYPES = {
+	//		"byte",
+	//		"short",
+	//		"int",
+	//		"long",
+	//		"float",
+	//		"double"
+	//};
+	private static final StringList CANONICAL_NUMERIC_TYPES = StringList.explode(
+			"byte,short,int,long,float,double", ",");
+	private static final StringList CANONICAL_NON_NUMERIC_TYPES = StringList.explode(
+			"string,char,boolean", ",");
+	// END KGU#1057 2022-08-23
 	private static final Pattern ARRAY_PATTERN1 = Pattern.compile("^[Aa][Rr][Rr][Aa][Yy]\\s*?[Oo][Ff](\\s.*)");
 	private static final Pattern ARRAY_PATTERN1o = Pattern.compile("^[Aa][Rr][Rr][Aa][Yy]\\s*?(\\d*)\\s*?[Oo][Ff](\\s.*)");	// Oberon style
 	private static final Pattern ARRAY_PATTERN2 = Pattern.compile("^[Aa][Rr][Rr][Aa][Yy]\\s*?\\[(.*)\\]\\s*?[Oo][Ff](\\s.*)");
@@ -598,22 +606,42 @@ public class TypeMapEntry {
 	/**
 	 * Checks if the canonicalized type description of {@code typeName} is among the
 	 * canonical names of standard types.
-	 * @param typeName - a typ description (should be a name)
-	 * @return true if the type is detected.
+	 * 
+	 * @param typeName - a type description (should be a name)
+	 * @return {@code true} if the type is detected.
+	 * 
+	 * @see #getStandardTypeNames()
 	 */
 	public static boolean isStandardType(String typeName)
 	{
 		String canonicalType = canonicalizeType(typeName);
-		if (canonicalType.equals("string") || canonicalType.equals("char") || canonicalType.equals("boolean")) {
-			return true;
-		}
-		for (String canon: canonicalNumericTypes) {
-			if (canonicalType.equals(canon)) {
-				return true;
-			}
-		}
-		return false;
+		// START KGU#1057 2022-08-23: Issue #1066
+		//if (canonicalType.equals("string") || canonicalType.equals("char") || canonicalType.equals("boolean")) {
+		//	return true;
+		//}
+		//for (String canon: CANONICAL_NUMERIC_TYPES) {
+		//	if (canonicalType.equals(canon)) {
+		//		return true;
+		//	}
+		//}
+		//return false;
+		return CANONICAL_NON_NUMERIC_TYPES.contains(canonicalType)
+				|| CANONICAL_NUMERIC_TYPES.contains(canonicalType);
+		// END KGU#1057 2022-08-23
 	}
+	
+	// START KGU#1057 2022-08-23: Enh. #1066
+	/**
+	 * @return the list of canonical standard type names
+	 * 
+	 * @see #isStandardType(String)
+	 */
+	public static StringList getStandardTypeNames() {
+		StringList stdTypes = CANONICAL_NON_NUMERIC_TYPES.copy();
+		stdTypes.add(CANONICAL_NUMERIC_TYPES);
+		return stdTypes;
+	}
+	// END KGU#1057 2022-08-23
 	
 	/**
 	 * Analyses the given declaration information and adds a corresponding
@@ -623,6 +651,7 @@ public class TypeMapEntry {
 	 * Note that in case of an enumeration type, the caller must add the respective
 	 * constant values to the {@link Root#constants} map if {@code _element} isn't
 	 * given or isn't linked to its owning {@link Root}.
+	 * 
 	 * @param _descriptor - the found type-describing or -specifying string
 	 * @param _element - the originating Structorizer element
 	 * @param _lineNo - the line number within the element text
@@ -637,10 +666,17 @@ public class TypeMapEntry {
 		for (VarDeclaration currDecl: declarations) {
 			boolean equals = currDecl.typeDescriptor.equalsIgnoreCase(_descriptor);
 			if (!equals) {
-				differs = true;
+				// START KGU#1060 2022-08-22: We try a canonical comparison
+				//differs = true;
+				var decl = new VarDeclaration(_descriptor, _element, _lineNo);
+				if (!decl.getCanonicalType(true).equals(currDecl.getCanonicalType(true))) {
+					differs = true;
+				}
+				// END KGU#1060 2022-08-22
 			}
 			if (currDecl.definingElement == _element && equals) {
 				isNew = false;
+				break;
 			}
 		}
 		if (isNew) {
@@ -970,17 +1006,31 @@ public class TypeMapEntry {
 		}
 		if (!type1.equals(type2)) {
 			int typeIx1 = -1, typeIx2 = -1;
-			for (int i = 0; i < canonicalNumericTypes.length && (typeIx1 < 0 || typeIx2 < 0); i++) {
-				if (typeIx1 < 0 && type1.equals(canonicalNumericTypes[i])) {
+			// START KGU#1057 2022-08-23: Enh. #1066 Implementation modified
+			//for (int i = 0; i < CANONICAL_NUMERIC_TYPES.length && (typeIx1 < 0 || typeIx2 < 0); i++) {
+			//	if (typeIx1 < 0 && type1.equals(CANONICAL_NUMERIC_TYPES[i])) {
+			//		typeIx1 = i;
+			//	}
+			//	if (typeIx2 < 0 && type2.equals(CANONICAL_NUMERIC_TYPES[i])) {
+			//		typeIx2 = i;
+			//	}
+			//}
+			if (typeIx1 >= 0 && typeIx2 >= 0) {
+				type1 = CANONICAL_NUMERIC_TYPES.get(Math.max(typeIx1, typeIx2));
+			}
+			for (int i = 0; i < CANONICAL_NUMERIC_TYPES.count() && (typeIx1 < 0 || typeIx2 < 0); i++) {
+				String canonType = CANONICAL_NUMERIC_TYPES.get(i);
+				if (typeIx1 < 0 && type1.equals(canonType)) {
 					typeIx1 = i;
 				}
-				if (typeIx2 < 0 && type2.equals(canonicalNumericTypes[i])) {
+				if (typeIx2 < 0 && type2.equals(canonType)) {
 					typeIx2 = i;
 				}
 			}
 			if (typeIx1 >= 0 && typeIx2 >= 0) {
-				type1 = canonicalNumericTypes[Math.max(typeIx1, typeIx2)];
+				type1 = CANONICAL_NUMERIC_TYPES.get(Math.max(typeIx1, typeIx2));
 			}
+			// END KGU#1057 2022-08-23
 			else if (type1.equals("char") && type2.equals("string")
 					|| type1.equals("string") && type2.equals("char")) {
 				// We try an automatic conversion

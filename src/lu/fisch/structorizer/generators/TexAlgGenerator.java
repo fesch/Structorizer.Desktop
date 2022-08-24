@@ -33,6 +33,7 @@ package lu.fisch.structorizer.generators;
  *      Author          Date            Description
  *      ------          ----            -----------
  *      Kay Gürtzig     2021-06-08      First Issue on behalf of enhancement request #953
+ *      Kay Gürtzig     2022-08-23      Structorizer version inserted as LaTeX comment
  *
  ******************************************************************************************************
  *
@@ -1424,6 +1425,7 @@ public class TexAlgGenerator extends Generator {
 					+ (file != null ? " of " + transformText(file.getName()) : "")
 					+ "}", "", false);
 			if (this.optionExportLicenseInfo()) {
+				addCode("% Structorizer version " + Element.E_VERSION, "", false);
 				addCode("\\author{" + transformText(_root.getAuthor()) + "}", "", false);
 			} else {
 				addCode("\\author{Structorizer " + Element.E_VERSION + "}","", false);

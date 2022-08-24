@@ -131,6 +131,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2021-11-17      Bugfix #1021 in getHighlightUnits()
  *      Kay Gürtzig     2022-05-31      Bugfix #1037 in getHighlightUnits()
  *      Kay Gürtzig     2022-07-07      Issue #653: Consistency with Colors.defaultColors ensured
+ *      Kay Gürtzig     2022-08-20      Enh. #1066: New static method retrieveComponentNames()
+ *      Kay Gürtzig     2022-08-22      Bugfix #1068: Type inference failure for array initialisers mended
  *
  ******************************************************************************************************
  *
@@ -231,6 +233,7 @@ import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.font.TextAttribute;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -301,7 +304,7 @@ public abstract class Element {
 	public static final long E_HELP_FILE_SIZE = 12300000;
 	public static final String E_DOWNLOAD_PAGE = "https://www.fisch.lu/Php/download.php";
 	// END KGU#791 2020-01-20
-	public static final String E_VERSION = "3.32-10";
+	public static final String E_VERSION = "3.32-11";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -389,6 +392,9 @@ public abstract class Element {
 	"\n"+
 	"Command interpreter provided by\n"+
 	" - Pat Niemeyer <pat@pat.net>\n"+
+	"\n"+
+	"SuggestionDropDownDecorator (Content Assist) provided by\n"+
+	" - LogicBig <www.logicbic.com>\n"+
 	"";
 	public final static String E_CHANGELOG = "";
 
@@ -984,7 +990,7 @@ public abstract class Element {
 		_ele.setColor(this.getColor());
 		_ele.breakpoint = this.breakpoint;
 		_ele.breakTriggerCount = this.breakTriggerCount;
-    	this.copyRuntimeData(_ele, _simplyCoveredToo);
+		this.copyRuntimeData(_ele, _simplyCoveredToo);
 		// START KGU#183 2016-04-24: Issue #169
 		_ele.selected = this.selected;
 		// END KGU#183 2016-04-24
@@ -1150,15 +1156,15 @@ public abstract class Element {
 	 */
 	public StringList getCuteText()
 	{
-    	StringList cute = new StringList();
-    	for (int i = 0; i < text.count(); i++) {
-    		String line = text.get(i);
-    		if (line.endsWith("\\")) {
-    			line = line.substring(0, line.length() - 1);
-    		}
-    		cute.add(line);
-    	}
-    	return cute;
+		StringList cute = new StringList();
+		for (int i = 0; i < text.count(); i++) {
+			String line = text.get(i);
+			if (line.endsWith("\\")) {
+				line = line.substring(0, line.length() - 1);
+			}
+			cute.add(line);
+		}
+		return cute;
 	}
 	/**
 	 * Returns the content of the text field unless {@code _alwaysTrueText} is false and
@@ -1559,24 +1565,24 @@ public abstract class Element {
 	// END KGU#183 2016-04-24
 	
 	// START KGU 2016-04-24: replaces Root.checkChild(this, _ancestor)
-    /**
-     * Checks if this is a descendant of _ancestor in the tree
-     * @param _parent - Element to be verified as ancestor of _child
-     * @return true iff this is a descendant of _ancestor
-     */
-    public boolean isDescendantOf(Element _ancestor)
-    {
-            Element tmp = this.parent;
-            boolean res = false;
-            while ((tmp != null) && !(res = tmp == _ancestor))
-            {
-            	tmp = tmp.parent;
-            }
-            return res;
-    }
-    // END KGU 2016-04-24
-    
-    // START KGU#143 2016-01-22: Bugfix #114 - we need a method to decide execution involvement
+	/**
+	 * Checks if this is a descendant of _ancestor in the tree
+	 * @param _parent - Element to be verified as ancestor of _child
+	 * @return true iff this is a descendant of _ancestor
+	 */
+	public boolean isDescendantOf(Element _ancestor)
+	{
+		Element tmp = this.parent;
+		boolean res = false;
+		while ((tmp != null) && !(res = tmp == _ancestor))
+		{
+			tmp = tmp.parent;
+		}
+		return res;
+	}
+	// END KGU 2016-04-24
+
+	// START KGU#143 2016-01-22: Bugfix #114 - we need a method to decide execution involvement
 	/**
 	 * Checks execution involvement.
 	 * @return true iff this or some substructure of this is currently executed. 
@@ -1590,7 +1596,7 @@ public abstract class Element {
 	}
 	// END KGU#143 2016-01-22
 	
-    // START KGU#143 2016-11-17: Bugfix #114 - we need a method avoiding cyclic recursion
+	// START KGU#143 2016-11-17: Bugfix #114 - we need a method avoiding cyclic recursion
 	/**
 	 * Checks execution involvement.
 	 * @param checkParent - whether the waiting status of the owning Subqueue is relevant
@@ -3215,6 +3221,7 @@ public abstract class Element {
 					isWellFormed = parenthDepth > 0 && token.equals(enclosings.pop());
 					parenthDepth--;
 				}
+				
 				if (isWellFormed)
 				{
 					// START KGU#914 2021-01-22: Bugfix - see above
@@ -3228,7 +3235,13 @@ public abstract class Element {
 					//expressionList.add(currExpr.trim());
 					//currExpr = "";
 					//tail = _tokens.concatenate("", i).trim();
-					expressionList.add(currExpr.trim().concatenate(null));
+					// START KGU#1061 2022-08-23: Bugfix #1068 an empty list generated a list with empty string
+					//expressionList.add(currExpr.trim().concatenate(null));
+					if (!(currExpr = currExpr.trim()).isEmpty() || !expressionList.isEmpty()) {
+						// There must have been at least one separator - so add even an empty term
+						expressionList.add(currExpr.concatenate(null));
+					}
+					// END KGU#1061 2022-08-23
 					currExpr.clear();
 					tail = _tokens.concatenate(null, i).trim();
 					// END KGU#914 2021-01-22
@@ -3558,6 +3571,7 @@ public abstract class Element {
 		// 1. Check whether it's a known typed variable
 		TypeMapEntry typeEntry = null;
 		if (typeMap != null) {
+			// In case of a variable (name) we might directly get the type
 			typeEntry = typeMap.get(expr);
 			// START KGU#923 2021-02-03: Bugfix #923 complex access paths were ignored
 			if (typeEntry == null && (expr.contains(".") || expr.contains("["))) {
@@ -3655,6 +3669,29 @@ public abstract class Element {
 			typeSpec = "int";
 		}
 		// END KGU#354 2017-05-22
+		// START KGU#1060 2022-08-22: Bugfix #1068 Try an array initializer
+		else if (expr.startsWith("{") && expr.endsWith("}")) {
+			StringList exprs = Element.splitExpressionList(expr.substring(1), ",", true);
+			int nExprs = exprs.count() - 1;
+			String elType = null;
+			if (nExprs > 0) {
+				elType = identifyExprType(typeMap, exprs.get(0), canonicalizeTypeNames);
+				for (int i = 1; i < nExprs; i++) {
+					String exprType = identifyExprType(typeMap, exprs.get(i), canonicalizeTypeNames);
+					if (exprType != null) {
+						if (elType == null) {
+							elType = exprType;
+						}
+						else if (!exprType.equals(elType)) {
+							elType = "???";
+							break;
+						}
+					}
+				}
+			}
+			typeSpec = "@" + elType;
+		}
+
 		// 2. If none of the approaches above succeeded check for a numeric literal
 		// START KGU#920 2021-02-03: Issue #920 Inifinity introduced as new literal
 		if (typeSpec.isEmpty() && (expr.equals("Infinity") || expr.equals("-Infinity") || expr.equals("\u221E"))) {
@@ -3707,6 +3744,116 @@ public abstract class Element {
 		return typeSpec;
 	}
 	// END KGU#261 2017-02-01
+	
+	// START KGU#1057 2022-08-20: Enh. #1066 Interactive input assistent
+	/**
+	 * Analyses the token list {@code tokens} preceding a dot in backwards direction for
+	 * record structure information.<br/>
+	 * If the pretext describes an object with record structure then returns the list
+	 * of component names.
+	 * 
+	 * @param tokens - the lexically split line content up to (but not including) a dot
+	 * @param typeMap - the current mapping of variables and type names to type info
+	 * @param firstSeen - must either be {@code null} or an int array with at least one
+	 *     element, at position 0 of which the index of the first token that contributed
+	 *     to the analysis will be placed.
+	 * @return either a list of component names or {@code null}
+	 */
+	public static ArrayList<String> retrieveComponentNames(
+			StringList tokens,
+			HashMap<String, TypeMapEntry> typeMap,
+			int[] firstSeen) {
+		ArrayList<String> proposals = null;
+		tokens.removeAll(" ");
+		// Go as far backward as we can go to find the base variable
+		// We will not go beyond a function call, so what may precede is an id or ']'
+		StringList path = new StringList();
+		int ix = tokens.count() -1;
+		while (path != null && ix >= 0) {
+			String prevToken = tokens.get(ix);
+			// There might be several index expressions
+			while (path != null && prevToken.equals("]")) {
+				// We will have to find the corresponding opening bracket
+				int ixClose = ix;
+				int level = 1;
+				ix--;
+				while (level > 0 && ix >= 0) {
+					prevToken = tokens.get(ix);
+					if (prevToken.equals("]")) {
+						level++;
+					}
+					else if (prevToken.equals("[")) {
+						level--;
+					}
+					ix--;
+					/* If more than one index expression is listed here,
+					 * then we will find out via expression analysis below
+					 */
+				}
+				if (level > 0) {
+					path = null;
+				}
+				else {
+					// Now find out how many indices are given between the brackets
+					StringList indexExprs = Element.splitExpressionList(
+							tokens.subSequence(ix + 2, ixClose + 1), ",", false);
+					// Add as many bracket pairs to the path
+					for (int i = 0; i < indexExprs.count(); i++) {
+						path.add("[]");
+					}
+					prevToken = tokens.get(ix);
+				}
+			}
+			if (path != null && Function.testIdentifier(prevToken, true, null)) {
+				path.add(prevToken);
+				ix--;
+				if (ix > 0 && tokens.get(ix).equals(".")) {
+					ix--; // Continue path collection
+				}
+				else {
+					break;	// Stop analysis, path may be valid
+				}
+			}
+			else {
+				path = null;
+			}
+		}
+		if (path != null && path.count() >= 1) {
+			// Now we may have a reverse valid access path
+			path = path.reverse();
+			TypeMapEntry varType = typeMap.get(path.get(0));
+			path.remove(0);
+			while (varType != null && !path.isEmpty()) {
+				if (varType.isArray() && path.get(0).equals("[]")) {
+					String typeStr = varType.getCanonicalType(true, true);
+					while (typeStr.startsWith("@") && !path.isEmpty()
+							&& path.get(0).equals("[]")) {
+						typeStr = typeStr.substring(1);
+						path.remove(0);
+					}
+					varType = typeMap.get(":" + typeStr);
+				}
+				if (varType != null && varType.isRecord()) {
+					if (!path.isEmpty()) {
+						var compInfo = varType.getComponentInfo(true);
+						varType = compInfo.get(path.get(0));
+						path.remove(0);
+					}
+				}
+			}
+			if (varType != null && varType.isRecord()) {
+				// path must now be exhausted, the component names are our proposals
+				var compInfo = varType.getComponentInfo(true);
+				proposals = new ArrayList<String>();
+				proposals.addAll(compInfo.keySet());
+			}
+		}
+		if (firstSeen != null && firstSeen.length > 0) {
+			firstSeen[0] = ix + 1;
+		}
+		return proposals;
+	}
+	// END KGU#1057 2022-08-20
 	
 	// START KGU#63 2015-11-03: getWidthOutVariables and writeOutVariables were nearly identical (and had to be!)
 	// Now it's two wrappers and a common algorithm -> ought to avoid duplicate work and prevents from divergence
@@ -4715,18 +4862,18 @@ public abstract class Element {
         }
     }
     // END KGU#162 2016-03-31
-    
-    // START KGU#152 2016-03-02: Better self-description of Elements
-    @Override
-    public String toString()
-    {
-    	return getClass().getSimpleName() + '@' + Integer.toHexString(hashCode()) +
-    			// START KGU#261 2017-01-19: Enh. #259 (type map)
-    			//"(" + (this.getText().count() > 0 ? this.getText().get(0) : "") + ")";
-    			"(" + this.id + (this.getText().count() > 0 ? (": " + this.getText().get(0)) : "") + ")";
-    			// END KGU#261 2017-01-19
-    }
-    // END KGU#152 2016-03-02
+
+	// START KGU#152 2016-03-02: Better self-description of Elements
+	@Override
+	public String toString()
+	{
+		return getClass().getSimpleName() + '@' + Integer.toHexString(hashCode()) +
+				// START KGU#261 2017-01-19: Enh. #259 (type map)
+				//"(" + (this.getText().count() > 0 ? this.getText().get(0) : "") + ")";
+				"(" + this.id + (this.getText().count() > 0 ? (": " + this.getText().get(0)) : "") + ")";
+		// END KGU#261 2017-01-19
+	}
+	// END KGU#152 2016-03-02
 
 	// START KGU#258 2016-09-26: Enh. #253
 	/**
@@ -4949,6 +5096,7 @@ public abstract class Element {
 	/**
 	 * Analyses the given {@code typeSpec} string and adds a derived {@code TypeMapEntry.VarDeclaration}
 	 * to the {@code typeMap} associated to the given {@code varName}.
+	 * 
 	 * @param typeMap - maps variable and type names to gathered detailed type information 
 	 * @param varName - name of a variable being declared
 	 * @param typeSpec - a type-describing string (might be a type name or a type construction)

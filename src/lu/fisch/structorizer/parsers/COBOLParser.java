@@ -118,6 +118,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2022-08-14      Bugfix #851/3: Float literals without digit left of the decimal point enabled
  *      Kay Gürtzig     2022-08-15      Bugfix #1059: Complete redesign of transformCondition();
  *                                      Issue #1064: Pseudo-Calls marking paragraphs and sections now permanently disabled
+ *      Kay Gürtzig     2022-08-17      Bugfix #1059: Some finishing of negation handling in conditions.
  *
  ******************************************************************************************************
  *
@@ -9788,6 +9789,7 @@ public class COBOLParser extends CodeParser
 						&& isComparisonOperator(tokStr)) {
 					if (afterNot) {
 						tokStr = this.negateCondition(tokStr);
+						afterNot = false;
 					}
 					_relOpr = tokStr.trim();
 					state = CondState.CS2_REL_OPR;
@@ -9828,15 +9830,21 @@ public class COBOLParser extends CodeParser
 						condSB.append(" not");
 						afterNot = false;
 					}
-					condSB.append("(");
+					condSB.append(" (");
 					state = CondState.CS4_CONTINUE;	// Or CS0?
 					break;
 				}
 				else if (var != null && tok.getName().equals("COBOLWord")) {
 					tokStr = var.getQualifiedName();
 				}
-				condSB.append(" " + _operand1.trim() + " "
-						+ _relOpr.trim() + " " + tokStr.trim());
+				tokStr = _operand1.trim() + " "
+						+ _relOpr.trim() + " " + tokStr.trim();
+				if (afterNot) {
+					// Rather unlikely here, but you'll never know in COBOL...
+					tokStr = this.negateCondition(tokStr);
+					afterNot = false;
+				}
+				condSB.append(" " + tokStr.trim());
 				state = CondState.CS3_END;
 				break;
 			case CS3_END:
@@ -9863,7 +9871,14 @@ public class COBOLParser extends CodeParser
 				}
 				else {
 					// All three parts should be different from null here...
-					condSB.append(" " + _operand1.trim() + " " + _relOpr.trim() + " " + tokStr.trim());
+					tokStr = _operand1.trim() + " "
+							+ _relOpr.trim() + " " + tokStr.trim();
+					if (afterNot) {
+						// Rather unlikely here, but you'll never know in COBOL...
+						tokStr = this.negateCondition(tokStr);
+						afterNot = false;
+					}
+					condSB.append(" " + tokStr.trim());
 					state = CondState.CS3_END;
 				}
 				break;

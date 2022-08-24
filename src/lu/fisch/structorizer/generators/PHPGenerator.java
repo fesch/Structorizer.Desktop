@@ -75,6 +75,7 @@ package lu.fisch.structorizer.generators;
  *                                              also: randomize -> srand, toDegrees -> rad2deg, toRadians -> deg2rad
  *      Kay Gürtzig             2021-02-03      Issue #920: Transformation for "Infinity" literal
  *      Kay Gürtzig             2021-12-05      Bugfix #1024: Precautions against defective record initializers
+ *      Kay Gürtzig             2022-08-23      Issue #1068: transformIndexLists() inserted in transformTokens()
  *
  ******************************************************************************************************
  *
@@ -299,6 +300,9 @@ public class PHPGenerator extends Generator
 	@Override
 	protected String transformTokens(StringList tokens)
 	{
+		// START KGU#1061 2022-08-23: Issue #1068
+		transformIndexLists(tokens);
+		// END KGU#1061 2022-08-23
 		// START KGU#920 2021-02-03: Issue #920 Handle Infinity literal
 		tokens.replaceAll("Infinity", "INF");
 		// END KGU#920 2021-02-03

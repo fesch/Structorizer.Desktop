@@ -4618,7 +4618,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		// START KGU#312 2016-12-29: Enh. #315 - adaptation to modified signature 
 		//Diagram diagr = this.findDiagram(aRoot, true);
 		Diagram diagr = this.findDiagram(aRoot, 1);	// Check for identity here
-		// ED KGU#312 2016-12-29
+		// END KGU#312 2016-12-29
 		if (diagr != null) {
 			if (setAtTop) {
 				this.diagrams.remove(diagr);

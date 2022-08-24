@@ -57,6 +57,10 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-01-26  Issue #400: Some Components had not reacted to Esc and Shift/Ctrl-Enter
  *      Kay Gürtzig     2021-02-10  Bugfix #931: Font resizing: JTextArea font was spread to other components,
  *                                  JTables are to be involved on init already, scaleFactor to be considered
+ *      Kay Gürtzig     2022-08-18  Enh. #1066: First draft of a simple text auto-completion mechanism
+ *      Kay Gürtzig     2022-08-21  Enh. #1066: New text suggestion approach with pulldown (based on LogicBig
+ *                                  SuggestionDropDownDecorator) and keyword inclusion
+ *      Kay Gürtzig     2022-08-23  Enh. #1066: Autocomplete switched off on disabled JTextComponents
  *
  ******************************************************************************************************
  *
@@ -65,23 +69,39 @@ package lu.fisch.structorizer.gui;
  ******************************************************************************************************
  */
 
-import lu.fisch.structorizer.io.Ini;
-import lu.fisch.structorizer.locales.LangDialog;
-import lu.fisch.structorizer.locales.LangTextHolder;
-
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Vector;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.*;
 import javax.swing.border.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.table.TableCellRenderer;
+import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
+import javax.swing.text.JTextComponent;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoManager;
 
+import com.logicbig.uicommon.SuggestionClient;
+import com.logicbig.uicommon.SuggestionDropDownDecorator;
+
 import lu.fisch.structorizer.elements.Element;
+import lu.fisch.structorizer.elements.TypeMapEntry;
+import lu.fisch.structorizer.io.Ini;
+import lu.fisch.structorizer.locales.LangDialog;
+import lu.fisch.structorizer.locales.LangTextHolder;
+import lu.fisch.structorizer.parsers.CodeParser;
+import lu.fisch.utils.StringList;
 
 @SuppressWarnings("serial")
 public class InputBox extends LangDialog implements ActionListener, KeyListener {
@@ -90,6 +110,19 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
     /** font size for the text fields, 0 = default, may be overridden by keys or from ini */
     public static float FONT_SIZE = 0;	// Default value
     // END KGU#428 2017-10-06
+    // START KGU#1057 2022-08-19: Enh. #1066 Auto-text-completion with dropdown
+    public static int MIN_SUGG_PREFIX = 3;
+    private static final String[] DECLARATION_KEYWORDS = {"type", "const", "var", "dim"};
+    private static final HashMap<String, StringList> KEYWORD_SUGGESTIONS = new HashMap<String, StringList>();
+    static {
+        KEYWORD_SUGGESTIONS.put("Instruction", StringList.explode("input,output", ","));
+        KEYWORD_SUGGESTIONS.put("Jump", StringList.explode("preReturn,preLeave,preExit,preThrow", ","));
+        KEYWORD_SUGGESTIONS.put("Alternative", StringList.getNew("preAlt"));
+        KEYWORD_SUGGESTIONS.put("While", StringList.getNew("preWhile"));
+        KEYWORD_SUGGESTIONS.put("Repeat", StringList.getNew("preRepeat"));
+        KEYWORD_SUGGESTIONS.put("For", StringList.explode("preFor,preForIn", ","));
+    }
+    // END KGU#1057 2022-08-19
     
     protected static int[] PREFERRED_SIZE = new int[] {500, 400};
 
@@ -111,6 +144,12 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
     private UndoManager umText = new UndoManager();
     private UndoManager umComment = new UndoManager();
     // END KGU#915 2021-01-24
+    
+    // START KGU#1057 2022-08-21: Enh. #1066
+    public JPanel pnlSuggest = new JPanel();
+    private JLabel lblSuggest = new JLabel("Suggestion threshold");
+    private JSpinner spnSuggest = new JSpinner();
+    // END KGU#1057 2022-08-21
 
     // Scrollpanes
     protected JScrollPane scrText = new JScrollPane(txtText);
@@ -139,20 +178,325 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
     // END KGI#294 2016-11-22
 
     // START KGU 2015-10-14: Additional information for data-specific title translation
-    public String elementType = new String();	// The (lower-case) class name of the element type to be edited here
+    public String elementType = new String();	// The class name of the element type to be edited here
     public boolean forInsertion = false;		// If this dialog is used to setup a new element (in contrast to updating an existing element)
     // END KGU 2015-10-14
 
-    // START KGU#287 2016-11-02: Enh. #180, Issue #81 (DPI awareness workaround)
-    protected void setPreferredSize(double scaleFactor) {
-        setSize((int)(PREFERRED_SIZE[0] * scaleFactor), (int)(PREFERRED_SIZE[1] * scaleFactor));
+    // START KGU#1057 2022-08-19: Enh. #1066 Auto-text-completion with dropdown
+    /**
+     * A case-insensitively sorted list of suggestable words (e.g. variable names etc.)
+     */
+    public ArrayList<String> words = null;
+    public HashMap<String, TypeMapEntry> typeMap = null;
+    
+    /**
+     * Specific text suggestion client for the LogicBig.com SuggestionDropDownDecorator
+     * Cares for sensible name insertion proposals (variables, routines, components).
+     * 
+     * @author Kay Gürtzig
+     */
+    protected class InputSuggestionClient implements SuggestionClient<JTextComponent> {
+        
+        private Logger logger = Logger.getLogger(InputSuggestionClient.class.getName());
+
+        @Override
+        public Point getPopupLocation(JTextComponent invoker) {
+            int caretPosition = invoker.getCaretPosition();
+            try {
+                Rectangle2D rectangle2D = invoker.modelToView2D(caretPosition);
+                return new Point((int) rectangle2D.getX(), (int) (rectangle2D.getY() + rectangle2D.getHeight()));
+            } catch (BadLocationException ex) {
+                logger.log(Level.FINE, ex.toString());
+            }
+            return null;
+        }
+
+        @Override
+        public void setSelectedText(JTextComponent tc, String selectedValue) {
+            int cp = tc.getCaretPosition();
+            int posOpen = -1;
+            if (selectedValue.endsWith(")") && (posOpen = selectedValue.lastIndexOf('(')) >= 0) {
+                String nArgsStr = selectedValue.substring(posOpen+1, selectedValue.length()-1);
+                boolean hasOptArgs = nArgsStr.contains("-");
+                if (hasOptArgs) {
+                    nArgsStr = nArgsStr.substring(0, nArgsStr.indexOf('-'));
+                    
+                }
+                int nArgs = Integer.parseInt(nArgsStr);
+                selectedValue = selectedValue.substring(0, posOpen+1)
+                        + (nArgs > 0 ? "?" + ",?".repeat(nArgs-1) : "")
+                        + (hasOptArgs ? "..." : "") + ")";
+            }
+            try {
+                if (cp == 0 || tc.getText(cp - 1, 1).trim().isEmpty()) {
+                    tc.getDocument().insertString(cp, selectedValue, null);
+                } else {
+                    int previousWordIndex = this.findWordStart(tc, cp - 1);
+                    String text = tc.getText(previousWordIndex, cp - previousWordIndex);
+                    if (selectedValue.startsWith(text)) {
+                        tc.getDocument().insertString(cp, selectedValue.substring(text.length()), null);
+                    } else if (selectedValue.toLowerCase().startsWith(text.toLowerCase())) {
+                        tc.setSelectionStart(previousWordIndex);
+                        tc.setSelectionEnd(cp);
+                        tc.replaceSelection(selectedValue);
+                    } else {
+                        // In case of a mismatch just append the selectedValue (???)
+                        tc.getDocument().insertString(cp, selectedValue, null);
+                        previousWordIndex = cp;
+                    }
+                    if (posOpen > 0) {
+                        cp = previousWordIndex + posOpen + 1;
+                        if (selectedValue.contains("?")) {
+                            // Routine with at least on argument - select the first '?'
+                            tc.setCaretPosition(cp+1);
+                            tc.moveCaretPosition(cp);
+                        } else if (selectedValue.contains("...")) {
+                            // Routine with only optional arguments
+                            tc.setCaretPosition(cp+3);
+                            tc.moveCaretPosition(cp);
+                        }
+                    }
+                    else if (selectedValue.endsWith("{}")) {
+                        // type constructor: place the caret between the braces
+                        tc.setCaretPosition(previousWordIndex + selectedValue.length()-1);
+                    }
+                }
+            } catch (BadLocationException ex) {
+                logger.log(Level.FINE, ex.toString());
+            }
+        }
+
+        @Override
+        public List<String> getSuggestions(JTextComponent tc) {
+            if (!tc.isEnabled() || words == null || MIN_SUGG_PREFIX <= 0) {
+                return null;
+            }
+            int pos = tc.getCaretPosition();
+            int w = this.findWordStart(tc, pos - 1);
+            String content = null;
+            try {
+                content = tc.getText(0, pos);
+            } catch (BadLocationException ex) {
+                logger.log(Level.FINE, ex.toString());
+            }
+            
+            ArrayList<String> proposals = words;
+            // Now check whether a dot precedes - in which case we have to provide component names
+            if (w > 1 && pos >= w && content.charAt(w-1) == '.' && typeMap != null) {
+                if ((proposals = retrieveComponentNames(content.substring(0, w-1))) == null) {
+                    // No record information available -> don't provide suggestions
+                    return null;
+                }
+            }
+            else if (pos - w < MIN_SUGG_PREFIX) {
+                // Too few chars
+                return null;
+            }
+            ArrayList<String> suggestions = new ArrayList<String>();
+            String prefix = content.substring(w);
+            StringList tokens = Element.splitLexically(content.substring(0, w), true);
+            tokens.removeAll(" ");
+            int nTokens = tokens.count();
+            String lastToken = tokens.get(nTokens-1).toLowerCase();
+            if ((w == 0 || content.charAt(w-1) == '\n')) {
+                StringList keys = KEYWORD_SUGGESTIONS.get(elementType);
+                if (keys != null) {
+                    for (int i = 0; i < keys.count(); i++) {
+                        String keyword = CodeParser.getKeyword(keys.get(i));
+                        if (keyword != null
+                                && keyword.toLowerCase().startsWith(prefix.toLowerCase())) {
+                            suggestions.add(keyword);
+                        }
+                    }
+                }
+                if ("Instruction".equals(elementType)) {
+                    for (String keyword: DECLARATION_KEYWORDS) {
+                        if (keyword.startsWith(prefix.toLowerCase())) {
+                            suggestions.add(keyword);
+                            // These keywords don't share a prefix, so there can't be another match
+                            break;
+                        }
+                    }
+                }
+            }
+            else if ("Instruction".equals(elementType)
+                    && content.lastIndexOf("\n", w) < 0
+                    && content.lastIndexOf("<-", w) < 0
+                    && content.lastIndexOf(":=", w) < 0
+                    && (content.startsWith("type ")
+                            || content.startsWith("const ")
+                            || content.startsWith("var ")
+                            || content.startsWith("dim "))) {
+                boolean isTypedef = tokens.get(0).equals("type")
+                        && nTokens == 3 && tokens.get(2).equals("=");
+                if (typeMap != null && (
+                       lastToken.equals(":") || lastToken.equals("as")
+                       || isTypedef
+                       || lastToken.equals("of")
+                       && nTokens > 3 && (
+                               tokens.get(nTokens - 1).toLowerCase().equals("array")
+                               || tokens.get(nTokens - 1).equals("]")))) {
+                    // add matching type names
+                    return retrieveTypeNames(prefix, isTypedef);
+                }
+            }
+            // Now check for a record initialiser
+            int posBr = tokens.lastIndexOf("{");	// position of left brace
+            TypeMapEntry recType;
+            if (nTokens > 1 && posBr >= 0
+                    && (posBr == nTokens-1 || lastToken.equals(";"))
+                    && typeMap != null
+                    && !tokens.subSequence(posBr, nTokens).contains("}")
+                    && (recType = typeMap.get(":" + tokens.get(posBr-1))) != null
+                    && recType.isRecord()) {
+                // We need the component names in this position
+                for (String key: recType.getComponentInfo(true).keySet()) {
+                    if (key.toLowerCase().startsWith(prefix)) {
+                        suggestions.add(key);
+                    }
+                }
+                if (!suggestions.isEmpty()) {
+                    Collections.sort(suggestions, String.CASE_INSENSITIVE_ORDER);
+                    return suggestions;
+                }
+                return null;
+            }
+            boolean addProposals = true;
+            // For Jump elements don't offer other proposals before one of the four keywords is placed
+            if ("Jump".equals(elementType)) {
+                addProposals = false;
+                if (w > 0) {
+                    String lineStart = content.substring(0, w);
+                    StringList keys = KEYWORD_SUGGESTIONS.get(elementType);
+                    for (int i = 0; !addProposals && i < keys.count(); i++) {
+                        String keyword = CodeParser.getKeyword(keys.get(i));
+                        if (keyword != null
+                                && (lineStart.startsWith(keyword)
+                                        || CodeParser.ignoreCase && lineStart.toLowerCase().startsWith(keyword.toLowerCase()))) {
+                            addProposals = true;
+                        }
+                    }
+                }
+            }
+            if (addProposals) {
+                int n = Collections.binarySearch(proposals, prefix, String.CASE_INSENSITIVE_ORDER);
+                if (n < 0) {
+                    n = -n - 1;
+                }
+                prefix = prefix.toLowerCase();
+                String match = null;
+                while (n < proposals.size()
+                        && (match = proposals.get(n)).toLowerCase().startsWith(prefix)) {
+                    suggestions.add(match);
+                    n++;
+                }
+            }
+            return suggestions;
+        }
+        
+        /**
+         * Goes backwards through the text preceding position {@code pos}, searching
+         * for a character that is not part of an identifier
+         * 
+         * @param invoker - the {@link JTextComponent} to operate within
+         * @param pos - current {@code invoker} position WITHIN the supposed identifier
+         * @return the start position of the identifier
+         */
+        private int findWordStart(JTextComponent invoker, int pos) {
+            String content = "";
+            try {
+                content = invoker.getText(0, pos + 1);
+            } catch (BadLocationException ex) {
+                logger.log(Level.FINE, ex.toString());
+                return pos;
+            }
+            // Find where the word starts
+            int w;
+            for (w = pos; w >= 0; w--) {
+                if (!Character.isUnicodeIdentifierPart(content.charAt(w))) {
+                    break;
+                }
+            }
+            return w + 1;
+        }
+        
+        /**
+         * Analyses the text {@code content} preceding a dot in backwards direction for
+         * record structure information.<br/>
+         * if the pretext describes an object with record structure then returns the sorted
+         * list of the component names, otherwise the result will {@code null}.
+         * 
+         * @param _content - the text content up to (but not including) the triggering dot
+         * @return either the new proposals (component names in the latter case) or {@code null}
+         */
+        private ArrayList<String> retrieveComponentNames(String _content) {
+            ArrayList<String> proposals = null;
+            StringList lines = StringList.explode(_content, "\n");
+            String prevLine = null;
+            while (lines.count() > 1 && (prevLine = lines.get(lines.count()-2)).endsWith("\\")) {
+                lines.set(lines.count()-2,
+                        prevLine.substring(0, prevLine.length()-1) + lines.get(lines.count()-1));
+                lines.remove(lines.count()-1);
+            }
+            StringList tokens = Element.splitLexically(lines.get(lines.count()-1), true);
+            proposals = Element.retrieveComponentNames(tokens, typeMap, null);
+            if (proposals != null) {
+                Collections.sort(proposals, String.CASE_INSENSITIVE_ORDER);
+            }
+            return proposals;
+        }
+        
+        /**
+         * Gathers all type names matching the given prefix from typeMap and rturns
+         * a sorted list of them.
+         * 
+         * @param prefix - the entered word prefix
+         * @return a sorted list of type names or type constructors
+         */
+        private ArrayList<String> retrieveTypeNames(String prefix, boolean isDef) {
+            var typeNames = new ArrayList<String>();
+            var stdTypes = TypeMapEntry.getStandardTypeNames();
+            prefix = prefix.toLowerCase();
+            if (isDef) {
+                for (String constr: new String[] {"enum{}", "record{}", "struct{}"}) {
+                    if (constr.startsWith(prefix)) {
+                        typeNames.add(constr);
+                        break;
+                    }
+                }
+            }
+            if ("array".startsWith(prefix)) {
+                typeNames.add("array of ");
+            }
+            for (int i = 0; i < stdTypes.count(); i++) {
+                if (stdTypes.get(i).startsWith(prefix)) {
+                    typeNames.add(stdTypes.get(i));
+                }
+            }
+            prefix = ":" + prefix;
+            for (String key: typeMap.keySet()) {
+                if (key.toLowerCase().startsWith(prefix)
+                        && !typeNames.contains(key.substring(1))) {
+                    typeNames.add(key.substring(1));
+                }
+            }
+            Collections.sort(typeNames, String.CASE_INSENSITIVE_ORDER);
+            return typeNames;
+        }
+
     }
-    // END KGU#287 2016-11-02
+    // END KGU#1057 2022-08-19
     
     // START KGU#294 2016-11-21: Issue #284
     // Components with fonts to be scaled independently 
     protected Vector<JComponent> scalableComponents = new Vector<JComponent>();
     // END KGU#294 2016-11-21
+    
+    // START KGU#287 2016-11-02: Enh. #180, Issue #81 (DPI awareness workaround)
+    protected void setPreferredSize(double scaleFactor) {
+        setSize((int)(PREFERRED_SIZE[0] * scaleFactor), (int)(PREFERRED_SIZE[1] * scaleFactor));
+    }
+    // END KGU#287 2016-11-02
     
     private void create() {
         // set window title
@@ -219,6 +563,11 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         docText.addUndoableEditListener(umText);
         docComment.addUndoableEditListener(umComment);
         // END KGU#915 2021-01-24
+        
+        // START KGU#1057 2022-08-19: Enh. #1066 first auto-completion approach
+        SuggestionDropDownDecorator.decorate(txtText, new InputSuggestionClient());
+        spnSuggest.setModel(new SpinnerNumberModel(0, 0, 5, 1));
+        // END KGU#1057 2022-08-19
         
         // START KGU#294 2016-11-21: Issue #284
         scalableComponents.addElement(txtText);
@@ -445,14 +794,33 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
     protected int createPanelTop(JPanel _panel, GridBagLayout _gb, GridBagConstraints _gbc) {
         _gbc.gridx = 1;
         _gbc.gridy = 1;
-        _gbc.gridwidth = 18;
+        _gbc.gridwidth = 1;
         _gbc.gridheight = 1;
         _gbc.fill = GridBagConstraints.BOTH;
         _gbc.weightx = 1;
         _gbc.weighty = 0;
         _gbc.anchor = GridBagConstraints.NORTH;
-        _gb.setConstraints(lblText, _gbc);
-        _panel.add(lblText);
+        //_gb.setConstraints(lblText, _gbc);
+        _panel.add(lblText, _gbc);
+        
+        // START KGU#1057 2022-08-21: Enh. #1066
+        pnlSuggest.add(lblSuggest);
+        pnlSuggest.add(spnSuggest);
+        _gbc.gridx = 2;
+        _gbc.weightx = 0;
+        _gbc.fill = GridBagConstraints.NONE;
+        _panel.add(pnlSuggest, _gbc);
+        // Disable it by default
+        pnlSuggest.setVisible(false);
+        spnSuggest.setValue(MIN_SUGG_PREFIX);
+        ((JSpinner.DefaultEditor)spnSuggest.getEditor()).getTextField().addKeyListener(this);
+        spnSuggest.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent ev) {
+                InputBox.MIN_SUGG_PREFIX = (Integer)spnSuggest.getValue();
+            }});
+        lblSuggest.setToolTipText("Minimum number of typed characters to instigate word suggestions (0 to switch assistance off).");
+        // END KGU#1057 2022-08-21
         // Return the number of used grid lines such that the calling method may go on there
         return 1;
     }
@@ -483,7 +851,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         // END KGU#393 2021-01-26
         
         return _gbc.gridx + _gbc.gridwidth;
-	}
+    }
 
     // listen to actions
     @Override

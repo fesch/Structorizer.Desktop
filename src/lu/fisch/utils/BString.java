@@ -44,6 +44,7 @@ package lu.fisch.utils;
  *      Kay Gürtzig     2018-09-12      Method name typo refactored: enocodeVectorToHtml() --> encodeVectorToHtml()
  *      Kay Gürtzig     2019-11-22      Dead code in encodeToHtml() disabled, bugfix in explode()
  *      Kay Gürtzig     2020-04-21      Bugfix #852: method breakup completely rewritten, signature changed
+ *      Kay Gürtzig     2022-08-18      replaceInsensitive() rewritten, croissantStrict() hardened against empty strings
  *
  ******************************************************************************************************
  *
@@ -278,35 +279,30 @@ public abstract class BString
 		}
 		
 		/**
-		 * Replaces all substrings {@code substr} in string {@code str} with another
-		 * substring {@code with}.
-		 *@return The replaced string
-		 *@param str The original string
-		 *@param substr The substring to be replaced
-		 *@param with The substring to put in
+		 * Case-insensitively replaces all substrings {@code substr} in string {@code str}
+		 * with another substring {@code with}.
+		 * 
+		 *@param str - The original string
+		 *@param substr - The substring case-insensitively to be replaced
+		 *@param with - The substring to put in
+		 *@return The resulting string of the substitutions
 		 */
 		public static String replaceInsensitive(String str, String substr, String with)
 		{
-			String outi = new String("");
+			StringBuilder sb = new StringBuilder();
 			String strLower = str.toLowerCase();
 			String substrLower = substr.toLowerCase();
-			int width = str.length();
-			int count = 0;
-			do
+			int substrLen = substr.length();
+			int from = 0;
+			int index = -1;
+			while ((index = strLower.indexOf(substrLower, from)) >= 0)
 			{
-				int index = strLower.indexOf(substrLower,count); 
-				if (index != -1)
-				{
-					outi += str.substring(count,index) + with;
-					count = index + substr.length();
-				}
-				else
-				{
-					outi += str.substring(count,str.length());
-					count = str.length();
-				}
-			} while (count<width);
-			return outi;
+				sb.append(str.substring(from, index));
+				sb.append(with);
+				from = index + substrLen;
+			}
+			sb.append(str.substring(from, str.length()));
+			return sb.toString();
 		}
 
 		/**
@@ -314,28 +310,25 @@ public abstract class BString
 		 * i.e. i &le; j --&gt; s[i] &le; s[j], but not all equal (if there are
 		 * at least two characters).
 		 * @param s - the string to be analysed
-		 * @return true iff the monotony described above holds
+		 * @return {@code true} iff the monotony described above holds
 		 */
 		public static boolean croissantStrict(String s)
 		{
-			boolean ret = true;
+			if (s.length() <= 1) {
+				return true;
+			}
 			for(int i = 0; i < s.length()-1; i++)
 			{
 				if (s.charAt(i) > s.charAt(i+1))
 				{
-					ret = false;
-					break;
+					return false;
 				}
 			}
 			if (s.charAt(0) >= s.charAt(s.length()-1))
 			{
-				ret = false;
+				return false;
 			}
-			if(s.length()==1)
-			{
-				ret=true;
-			}
-			return ret;
+			return true;
 		}
 		
 		/**
