@@ -60,7 +60,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2022-08-18  Enh. #1066: First draft of a simple text auto-completion mechanism
  *      Kay Gürtzig     2022-08-21  Enh. #1066: New text suggestion approach with pulldown (based on LogicBig
  *                                  SuggestionDropDownDecorator) and keyword inclusion
- *      Kay Gürtzig     2022-08-23  Enh. #1066: Autocomplete switched off on disabled JTextComponents
+ *      Kay Gürtzig     2022-08-23  Enh. #1066: Auto-complete switched off on disabled JTextComponents
+ *      Kay Gürtzig     2022-08-23  Enh. #1066: Context sensitivity for call proposals improved
  *
  ******************************************************************************************************
  *
@@ -285,6 +286,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
             if (w > 1 && pos >= w && content.charAt(w-1) == '.' && typeMap != null) {
                 if ((proposals = retrieveComponentNames(content.substring(0, w-1))) == null) {
                     // No record information available -> don't provide suggestions
+                	// Okay, it might be a float number like "12." but then no name may follow
                     return null;
                 }
             }
@@ -362,6 +364,15 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
                 return null;
             }
             boolean addProposals = true;
+            // START KGU#1062 2022-08-25: Enh. #1066
+            // A routine reference is only expected at line start or after an assignment symbol
+            boolean isCallPosition = "Call".equals(elementType)
+                    && (w == 0 || content.charAt(w-1) == '\n'
+                    || lastToken.equals("<-") || lastToken.equals(":="));
+            // In a Call, immediately after the assignment symbol only a function reference may occur
+            boolean noNameInCall = "Call".equals(elementType)
+            		&& (lastToken.equals("<-") || lastToken.equals(":="));
+            // END KGU#1062 2022-08-25
             // For Jump elements don't offer other proposals before one of the four keywords is placed
             if ("Jump".equals(elementType)) {
                 addProposals = false;
@@ -387,7 +398,13 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
                 String match = null;
                 while (n < proposals.size()
                         && (match = proposals.get(n)).toLowerCase().startsWith(prefix)) {
-                    suggestions.add(match);
+                    // START KGU#1062 2022-08-25: Enh. #1066 More precise context check for routines
+                    //suggestions.add(match);
+                    if (isCallPosition && match.endsWith(")")
+                            || !noNameInCall && !match.endsWith(")")) {
+                        suggestions.add(match);
+                    }
+                    // END KGU#1062 2022-08-25
                     n++;
                 }
             }

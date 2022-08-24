@@ -239,6 +239,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2022-05-08      Bugfix #1033: Diagram import left a stale Analyser report list.
  *      Kay Gürtzig     2022-06-24      Bugfix #1038: Additional argument for setRoot() to suppress recursive saving requests
  *      Kay Gürtzig     2022-08-18      Enh. #1066: text auto-completion mechanism in showInputBox()
+ *      Kay Gürtzig     2022-08-25      Enh. #1066: Infinity literal added to auto-complete words.
  *
  ******************************************************************************************************
  *
@@ -9875,6 +9876,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// START KGU#1057 2022-08-18: Enh. #1066 Support for autocompletions
 			if (!isRoot && !_elementType.equals("Parallel") && !_elementType.equals("Try")) {
 				ArrayList<String> words = new ArrayList<String>();
+				// START KGU#1062 2022-08-25 Enh. #1066
+				words.add("Infinity");
+				// END KGU#1062 2022-08-25
 				StringList varNames = root.getVarNames();
 				for (int i = 0; i < varNames.count(); i++) {
 					words.add(varNames.get(i));
