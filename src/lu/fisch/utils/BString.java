@@ -30,11 +30,11 @@ package lu.fisch.utils;
  *
  *      Revision List
  *
- *      Author          Date			Description
- *      ------			----			-----------
+ *      Author          Date            Description
+ *      ------          ----            -----------
  *      Bob Fisch       2003-05-10      First Issue
- *		Bob Fisch		2007-12-09		Moved to another package and adapted for Structorizer
- *		Kay Gürtzig		2015-10-31		Performance improvements
+ *      Bob Fisch       2007-12-09      Moved to another package and adapted for Structorizer
+ *      Kay Gürtzig     2015-10-31      Performance improvements
  *      Kay Gürtzig     2017-03-13      New method pair encodeToXML and decodeFromXML added for enh. #372,
  *                                      Some code revisions where it ached too much looking at.
  *      Kay Gürtzig     2017-06-18      Method breakup refined to cope with meta symbols in the string to
@@ -532,8 +532,6 @@ public abstract class BString
 			}
 			return result.toString();
 // END KGU#850 2020-04-21
-
 		}
-		
 		
 	}
