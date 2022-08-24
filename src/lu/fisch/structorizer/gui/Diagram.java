@@ -9874,14 +9874,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			
 			// START KGU#1057 2022-08-18: Enh. #1066 Support for autocompletions
 			if (!isRoot && !_elementType.equals("Parallel") && !_elementType.equals("Try")) {
-				var words = new ArrayList<String>();
-				var varNames = root.getVarNames();
+				ArrayList<String> words = new ArrayList<String>();
+				StringList varNames = root.getVarNames();
 				for (int i = 0; i < varNames.count(); i++) {
 					words.add(varNames.get(i));
 				}
 				// For calls, we add the known routine signatures
 				if (_elementType.equals("Call") && Arranger.hasInstance()) {
-					var roots = Arranger.getInstance().getAllRoots();
+					Set<Root> roots = Arranger.getInstance().getAllRoots();
 					for (Root rt: roots) {
 						if (rt.isSubroutine()) {
 							words.add(rt.getSignatureString(false, true));

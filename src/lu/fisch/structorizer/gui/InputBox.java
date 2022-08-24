@@ -454,8 +454,8 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
          * @return a sorted list of type names or type constructors
          */
         private ArrayList<String> retrieveTypeNames(String prefix, boolean isDef) {
-            var typeNames = new ArrayList<String>();
-            var stdTypes = TypeMapEntry.getStandardTypeNames();
+            ArrayList<String> typeNames = new ArrayList<String>();
+            StringList stdTypes = TypeMapEntry.getStandardTypeNames();
             prefix = prefix.toLowerCase();
             if (isDef) {
                 for (String constr: new String[] {"enum{}", "record{}", "struct{}"}) {

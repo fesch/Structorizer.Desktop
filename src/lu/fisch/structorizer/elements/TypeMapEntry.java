@@ -668,7 +668,7 @@ public class TypeMapEntry {
 			if (!equals) {
 				// START KGU#1060 2022-08-22: We try a canonical comparison
 				//differs = true;
-				var decl = new VarDeclaration(_descriptor, _element, _lineNo);
+				VarDeclaration decl = new VarDeclaration(_descriptor, _element, _lineNo);
 				if (!decl.getCanonicalType(true).equals(currDecl.getCanonicalType(true))) {
 					differs = true;
 				}

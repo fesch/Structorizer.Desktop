@@ -8084,7 +8084,7 @@ public class Executor implements Runnable
 			//tokens.replaceAll("]", ")");
 			int pos = tokens.count() - 1;
 			while ((pos = tokens.lastIndexOf("]", pos)) >= 0) {
-				var context = new Stack<Boolean>();
+				Stack<Boolean> context = new Stack<Boolean>();
 				context.push(true);
 				tokens.set(pos--, ")");
 				while (!context.isEmpty() && pos >= 0) {

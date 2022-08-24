@@ -3835,7 +3835,7 @@ public abstract class Element {
 				}
 				if (varType != null && varType.isRecord()) {
 					if (!path.isEmpty()) {
-						var compInfo = varType.getComponentInfo(true);
+						LinkedHashMap<String,TypeMapEntry> compInfo = varType.getComponentInfo(true);
 						varType = compInfo.get(path.get(0));
 						path.remove(0);
 					}
@@ -3843,7 +3843,7 @@ public abstract class Element {
 			}
 			if (varType != null && varType.isRecord()) {
 				// path must now be exhausted, the component names are our proposals
-				var compInfo = varType.getComponentInfo(true);
+				LinkedHashMap<String,TypeMapEntry> compInfo = varType.getComponentInfo(true);
 				proposals = new ArrayList<String>();
 				proposals.addAll(compInfo.keySet());
 			}
