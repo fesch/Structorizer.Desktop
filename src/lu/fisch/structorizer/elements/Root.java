@@ -178,6 +178,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2021-12-05      Bugfix #1024: Malformed record initializer killed Analyser in check 24
  *      Kay Gürtzig     2021-12-13      Bugfix #1025: Lacking evaluation of binary, octal and hexadecimal literals in check 27
  *      Kay Gürtzig     2022-01-04      Bugfix #1026: Analyser defect on broken lines in Jump or Instruction elements
+ *      Kay Gürtzig     2022-09-27      Bugfix #1071: Less vague Analyser check 11 (assignment error)
  *      
  ******************************************************************************************************
  *
@@ -4271,6 +4272,25 @@ public class Root extends Element {
 			//if (tokens.contains("<-"))
 			boolean isReturn = tokens.indexOf(returnTokens, 0, !CodeParser.ignoreCase) == 0;
 			// END KGU#297 2016-11-22
+			// START KGU#1063 2022-09-27: Bugfix #1071 too simple check 10
+			boolean isProc = false;
+			// END KGU#1063 2022-09-27
+			
+			// CHECK: wrong multi-line instruction (#10 - new!)	
+			if (tokens.indexOf(inputTokens, 0, !CodeParser.ignoreCase) == 0)
+			{
+				isInput = true;
+			}
+			else if (tokens.indexOf(outputTokens, 0, !CodeParser.ignoreCase) == 0)
+			{
+				isOutput = true;
+			}
+			// START KGU#1063 2022-09-27: Bugfix #1071 too simple check 11
+			else if (tokens.count() > 2) {
+				isProc = Function.testIdentifier(tokens.get(0), false, null) && tokens.get(1).equals("(");
+			}
+			// END KGU#1063 2022-09-27
+			
 			if (tokens.contains("<-") && !isReturn)
 			{
 				// START KGU#375 2017-04-05: Enh. #388
@@ -4290,21 +4310,16 @@ public class Root extends Element {
 			// END KGU#388 2017-09-13
 			// START KGU#297 2016-11-22: Issue #295: Instructions starting with the return keyword must be handled separately
 			//else if (tokens.contains("=="))
-			else if (!isReturn && tokens.contains("==") || isReturn && tokens.contains("<-"))
+			// START KGU#1063 2022-09-27: Bugfix #1071 too simple 
+			//else if (!isReturn && tokens.contains("==") || isReturn && tokens.contains("<-"))
+			else if (!isReturn && !isOutput && !isProc && tokens.contains("==")
+					|| isReturn && tokens.contains("<-"))
+			// END KGU#1063 2022-09-27
 			// END KGU#297 2016-11-22
 			{
+				// FIXME KGU#1063: An equality operator within parentheses is rather not an error
 				//error  = new DetectedError("You probably made an assignment error. Please check this instruction!",(Element) _node.getElement(i));
 				addError(_errors, new DetectedError(errorMsg(Menu.error11,""), ele), 11);
-			}
-			
-			// CHECK: wrong multi-line instruction (#10 - new!)	
-			if (tokens.indexOf(inputTokens, 0, !CodeParser.ignoreCase) == 0)
-			{
-				isInput = true;
-			}
-			if (tokens.indexOf(outputTokens, 0, !CodeParser.ignoreCase) == 0)
-			{
-				isOutput = true;
 			}
 			// END KGU#65/KGU#126 2016-01-06
 
