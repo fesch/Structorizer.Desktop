@@ -137,6 +137,7 @@
  *      Kay Gürtzig         2021-10-31  Enh. #967, #1007 Texts for ARM-specific export options added
  *      Kay Gürtzig         2022-08-16  Enh. #1051: Messages for COBOL-specific import options
  *      Kay Gürtzig         2022-08-21  Enh. #1066: Caption and tooltip for InputBox.lblSuggest
+ *      Kay Gürtzig         2022-09-29  Bugfix #1072: New message InputBoxFor.msgIllegalWordInField added
  *
  ******************************************************************************************************
  *
@@ -820,6 +821,7 @@ InputBoxFor.msgEnsureVariableIsArray.text=Sicher, dass <%> ein Array bezeichnet?
 InputBoxFor.msgEnterValueList.text=Bitte Wertliste für die Schleife eingeben.
 InputBoxFor.msgDiscardData.text=Den Schleifen-Stil zu ändern bedeutet, dass die meisten Schleifendaten verloren gehen!\nDaten wirklich opfern?
 InputBoxFor.msgAttention.text=ACHTUNG!
+InputBoxFor.msgIllegalWordInField.text=Feld "%1" darf nicht das Schlüsselwort «%2» enthalten!
 
 -----[ InputBox Root ]-----
 InputBoxRoot.title[elementType:Root]=Angaben zum @n bearbeiten

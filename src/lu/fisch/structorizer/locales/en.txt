@@ -132,6 +132,7 @@
  *      Kay Gürtzig     2021-10-05      Enh. #992: Messages for Analyser brackets check
  *      Kay Gürtzig     2021-10-31      Enh. #967, #1007 Texts for ARM-specific export options added
  *      Kay Gürtzig     2022-08-21      Enh. #1066: Caption and tooltip for InputBox.lblSuggest
+ *      Kay Gürtzig     2022-09-29      Bugfix #1072: New message InputBoxFor.msgIllegalWordInField added
  *
  ******************************************************************************************************
  *
@@ -817,6 +818,7 @@ InputBoxFor.msgEnsureVariableIsArray.text=Sure that <%> designates an array?
 InputBoxFor.msgEnterValueList.text=Enter the value list for the loop.
 InputBoxFor.msgDiscardData.text=Changing the loop style means to discard most of the data!\nDo you really want to discard the data?
 InputBoxFor.msgAttention.text=ATTENTION!
+InputBoxFor.msgIllegalWordInField.text=Field "%1" must not contain keyword «%2»!
 
 -----[ InputBox Root ]-----
 InputBoxRoot.title[elementType:Root]=Edit @n
