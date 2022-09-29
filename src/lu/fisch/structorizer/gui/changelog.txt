@@ -131,6 +131,7 @@ Current development version 3.32-12 (2022-09-29)
       warnings on completely legal equality operator uses. <2>
 - 12: Bugfix #1072: The FOR loop editor now warns on entering step keyword
       in end value field <2>
+- 12: Bugfix #1073: CALL comments were exported twice to C, C++, Java etc. <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>

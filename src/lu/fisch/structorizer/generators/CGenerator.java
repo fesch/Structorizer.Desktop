@@ -115,6 +115,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2021-12-05      Bugfix #1024: Precautions against defective record initializers
  *      Kay Gürtzig             2022-08-23      Issue #1068: transformIndexLists() inserted into transformTokens(),
  *                                              transformOrGenerateArrayInit() mended (mutilated empty initialisers)
+ *      Kay Gürtzig             2022-09-29      Bugfix #1073: Call comments had always been duplicated
  *
  ******************************************************************************************************
  *
@@ -2002,10 +2003,12 @@ public class CGenerator extends Generator {
 		if (!appendAsComment(_call, _indent)) {
 
 			boolean commentInserted = false;
-			
+
 			boolean isDisabled = _call.isDisabled(false);
 
-			appendComment(_call, _indent);
+			// START KGU#1065 2022-09-29: Bugfix #1073 Case comments occurred twice
+			//appendComment(_call, _indent);
+			// END KGU#1065 2022-09-29
 			// In theory, here should be only one line, but we better be prepared...
 			StringList lines = _call.getUnbrokenText();
 			Root owningRoot = Element.getRoot(_call);
@@ -2060,6 +2063,12 @@ public class CGenerator extends Generator {
 					commentInserted = generateInstructionLine(_call, _indent, commentInserted, line);
 				}
 				else {
+					// START KGU#1065 2022-09-29: Bugfix #1073 Case comments had occurred twice
+					if (!commentInserted) {
+						appendComment(_call, _indent);
+						commentInserted = true;
+					}
+					// END KGU#1065 2022-09-29
 					addCode(transform(line, false) + ";", _indent, isDisabled);
 				}
 				// END KGU#730 2019-09-24
