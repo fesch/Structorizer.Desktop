@@ -3633,8 +3633,9 @@ public class Root extends Element {
     							String line = lines.get(l);
     							String error = checker.checkSyntax(line, ele, l);
     							if (error != null) {
-    								// FIXME: Fetch the plugin-configured message
-    								addError(_errors, new DetectedError(error.replace("error.syntax", "ARM syntax violation"), ele), -2);
+    								// FIXME: Fetch the plugin-configured messages
+    								addError(_errors, new DetectedError(error.replace("error.syntax", "ARM syntax violation")
+    										.replace("error.lexical", "ARM-unsupported symbol"), ele), -2);
     							}
     						}
     						break;
