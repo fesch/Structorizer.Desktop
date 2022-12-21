@@ -110,6 +110,7 @@ public class StringList {
      *
      * @param _string - the single element
      * @return the created StringList
+     * 
      * @see #StringList(String[])
      * @see #explode(String, String)
      */
@@ -132,12 +133,13 @@ public class StringList {
      * </tbody>
      * </table>
      *
-     * @see #explodeFirstOnly(String, String)
-     * @see #explode(StringList, String)
-     * @see #explodeWithDelimiter(String, String, boolean)
      * @param _source - the string to be split
      * @param _by - the splitting regular expression
      * @return the StringLits containing all splitting shards
+     *
+     * @see #explodeFirstOnly(String, String)
+     * @see #explode(StringList, String)
+     * @see #explodeWithDelimiter(String, String, boolean)
      */
     public static StringList explode(String _source, String _by) {
         String[] multi = _source.split(_by);
@@ -198,13 +200,14 @@ public class StringList {
      * given REGULAR EXPRESSION(!) {@code _by} and returns a single StringList
      * containing all split results of all element strngs in sequential order.
      * Trailing empty strings are not included in the resulting StringList.
+     * 
+     * @param _source - the StringList further to be split
+     * @param _by - the separator (delimiter) pattern (regex!)
+     * @return The split results as StringList
      *
      * @see #explode(String, String)
      * @see #explodeFirstOnly(String, String)
      * @see #explodeWithDelimiter(StringList, String, boolean)
-     * @param _source - the StringList further to be split
-     * @param _by - the separator (delimiter) pattern (regex!)
-     * @return The split results as StringList
      */
     public static StringList explode(StringList _source, String _by) {
         StringList sl = new StringList();

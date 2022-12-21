@@ -32,9 +32,9 @@ package lu.fisch.structorizer.parsers;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Bob Fisch       2008.01.06      First Issue
- *      Bob Fisch       2008.05.02      Added filter for (* ... *) comment filtering
- *      Kay Gürtzig     2015.10.20      New setting stepFor (KGU#3, to be made configurable!)
+ *      Bob Fisch       2008-01-06      First Issue
+ *      Bob Fisch       2008-05-02      Added filter for (* ... *) comment filtering
+ *      Kay Gürtzig     2015-10-20      New setting stepFor (KGU#3, to be made configurable!)
  *      Kay Gürtzig     2016-03-20      New settings preForIn and postForIn added (KGU#61, #84/#135)
  *      Kay Gürtzig     2016-03-25      KGU#163: New static method getAllPropeties() added for Analyser
  *                                      KGU#165: New option ignoreCase
@@ -67,13 +67,14 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2019-03-23      Enh. #56: Import of Try and Raise instructions implemented.
  *      Kay Gürtzig     2019-11-19      Enh. #739: Genuine enumeration type import (revision of #558)
  *      Kay Gürtzig     2020-03-08      Bugfix #833: Parameter parentheses ensured, superfluous Includable suppressed
- *      Kay Gürtzig     2020-03-09      Bugfix #835: Structure preference kywords must not be glued to expressions
+ *      Kay Gürtzig     2020-03-09      Bugfix #835: Structure preference keywords must not be glued to expressions
  *      Kay Gürtzig     2020-04-12      Bugfix #847 ensured that ids like 'false', 'true', and built-in functions be lowercase
  *      Kay Gürtzig     2020-04-24      Bugfix #861/2 duplicate procedure comments prevented (was revealed by
  *                                      by a modification of the block comment in PasGenerator.
  *      Kay Gürtzig     2021-02-15/16   Unicode import enabled after eliminating a grammar ambiguity, comment
- *                                      processing no longer necessary, either, hence \n substitution also dropped
+ *                                      processing no longer necessary, either, hence '\n' substitution also dropped
  *      Kay Gürtzig     2021-10-03      Mechanism to ensure case-sensitive matching of result variables with function name
+ *      Kay Gürtzig     2022-12-21      Deprecation annotation added to filterNonAscii()
  *
  ******************************************************************************************************
  *
@@ -909,11 +910,13 @@ public class D7Parser extends CodeParser
 	
 	/**
 	 * Removes all non-Ascii characters from the given string {@code inString}
+	 * 
 	 * @param inString - the string to be filtered
 	 * @return - the filter result
-	 * @deprecated No longer needed for Pascal import - if for others then it
-	 *  should go to {@link CodeParser} instead.
+	 * @deprecated No longer needed for Pascal import - if it turns out to be for others
+	 *     then it should go to {@link CodeParser} instead.
 	 */
+	@Deprecated
 	public String filterNonAscii(String inString) 
 	{
 		// Create the encoder and decoder for the character encoding
