@@ -6678,7 +6678,10 @@ public class Root extends Element {
             // END KGU#991 2021-10-03
             {
             	//error  = new DetectedError("Your function does not return any result!",this);
-            	error = new DetectedError(errorMsg(Menu.error13_1,""),this);
+            	// START KGU#1071 2023-08-01: Enh. #1082
+            	//error = new DetectedError(errorMsg(Menu.error13_1,""),this);
+            	error = new DetectedError(errorMsg(Menu.error13_1, programName),this);
+            	// END KGU#1071 2023-08-01
             	addError(errors,error,13);
             }
             // START KGU#991 2021-10-03: Issue #991 case-aware check needed.
@@ -6689,7 +6692,10 @@ public class Root extends Element {
             // END KGU#991 2021-10-03
             {
             	//error  = new DetectedError("Your function may not return a result!",this);
-            	error = new DetectedError(errorMsg(Menu.error13_2,""),this);
+            	// START KGU#1071 2023-08-01: Enh. #1082
+            	//error = new DetectedError(errorMsg(Menu.error13_2,""),this);
+            	error = new DetectedError(errorMsg(Menu.error13_2, programName),this);
+            	// END KGU#1071 2023-08-01
             	addError(errors,error,13);
             }
             // START KGU#78 2015-11-25: Check competitive approaches

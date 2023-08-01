@@ -60,6 +60,7 @@
  *      Kay Gürtzig     2018-07-02  KGU#245: all Colors stuff replaced with array keys
  *      Kay Gürtzig     2018-12-30  Enh. #492: Element name place holders introduced
  *      Kay Gürtzig     2022-08-10  Enh. #56, #492: Messages / tooltips for TRY elements added
+ *      Kay Gürtzig     2023-08-01  Enh. #1082: Function name incuded in messages Menu.error13_*
  *
  ******************************************************************************************************
  *
@@ -292,8 +293,8 @@ Menu.error10_4.text=Uma instrução simples não deverá conter saídas e atribu
 Menu.error10_5.text=Uma instrução simples não deverá conter definições de constantes e outras instruções!
 Menu.error11.text=Provavelmente houve um erro de atribuição. Favor verificar a instrução!
 Menu.error12.text=O parâmetro «%» deve iniciar-se pela letra "p" seguida por letras maiúsculas apenas!
-Menu.error13_1.text=A função não retorna qualquer resultado!
-Menu.error13_2.text=A função pode não ter retorno!
+Menu.error13_1.text=A função «%» não retorna qualquer resultado!
+Menu.error13_2.text=A função «%» pode não ter retorno!
 Menu.error13_3.text=Suas funções parecem usar vários mecanismos de retorno concorrentes entre si: «%»!
 Menu.error14_1.text=Os parâmetros da repetição (@{For}) não são consistentes com o texto do cabeçalho!
 Menu.error14_2.text=A valor da variação na repetição («%») não é constante inteira válida!

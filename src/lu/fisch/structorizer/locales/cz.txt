@@ -59,7 +59,7 @@
  *      Kay Gürtzig     2017-12-16      Element name place holders introduced
  *      Kay Gürtzig     2018-07-02      KGU#245: all Colors stuff replaced with array keys 
  *      Kay Gürtzig     2022-08-10      Enh. #56, #492: Messages for TRY elements added, Element name placeholders
- *
+ *      Kay Gürtzig     2023-08-01      Enh. #1082: Function name incuded in messages Menu.error13_* *
  ******************************************************************************************************
  *
  *      Comment:	
@@ -283,8 +283,8 @@ Menu.error10_4.text=Jeden element nemůže obsahovat současně instrukci výstu
 Menu.error10_5.text=Jeden element nemůže obsahovat současně definice konstant y jiný instrukci!
 Menu.error11.text=Možná chyba v přiřazení. Prosím zkontrolujte tuto instrukci!
 Menu.error12.text=Parametr «%» musí začínat písmenem "p" následovaný velkými písmeny!
-Menu.error13_1.text=Funkce nevrací žádnou hodnotu!
-Menu.error13_2.text=Funkce nemusí vracet žádnou hodnotu!
+Menu.error13_1.text=Funkce «%» nevrací žádnou hodnotu!
+Menu.error13_2.text=Funkce «%» nemusí vracet žádnou hodnotu!
 Menu.error13_3.text=
 Menu.error14_1.text=
 Menu.error14_2.text=

@@ -61,6 +61,7 @@
  *      Kay Gürtzig     2021-01-23      Enh. #714: InputBox.chkShowFinally added
  *      Kay Gürtzig     2021-01-25      Enh. #915: InputBoxCase messages added
  *      Kay Gürtzig     2021-09-22      Enh. #915: Some missing InputBoxCase tooltips concocted
+ *      Kay Gürtzig     2023-08-01      Enh. #1082: Function name incuded in messages Menu.error13_*
  *
  ******************************************************************************************************
  *
@@ -437,8 +438,8 @@ Menu.error10_5.text=Een enkel instructie-element kan geen definities van constan
 Menu.error10_6.text=Een enkel instructie-element kan geen definities van typen samen met andere instructies bevatten!
 Menu.error11.text=U heeft waarschijnlijk een toekennings-fout gemaakt. Controleer a.u.b. deze instructie!
 Menu.error12.text=De parameter «%» moet starten met de letter "p" gevolgd door alleen hoofdletters!
-Menu.error13_1.text=Uw functie geeft geen enkel resultaat terug!
-Menu.error13_2.text=Uw functie geeft waarschijnlijk geen resultaat terug!!
+Menu.error13_1.text=Uw functie «%» geeft geen enkel resultaat terug!
+Menu.error13_2.text=Uw functie «%» geeft waarschijnlijk geen resultaat terug!!
 Menu.error13_3.text=Uw functies lijken diverse strijdige teruggeefmechanismen te gebruiken: «%»!
 Menu.error14_1.text=De @d-lusparameters komen niet overeen met de headertekst van de lus!
 Menu.error14_2.text=De stapwaarde («%») van de lus @e is geen geldige gehele constante!!

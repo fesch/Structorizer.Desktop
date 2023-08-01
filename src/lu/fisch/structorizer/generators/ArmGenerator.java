@@ -70,6 +70,9 @@ package lu.fisch.structorizer.generators;
  *                                      address associations more consistently tracked (to avoid unnecessary
  *                                      address assignments), disabled array assignments properly handled;
  *                                      Bugfix #1020: terminal return instructions had not been processed
+ *      Kay Gürtzig     2022-09-30      Bugfix #1074: The generator code for (ARM) INSTRUCTION ran into that
+ *                                      for INPUT instructions
+ *                      2023-02-24      Bugfix #1074: Check for ARM INSTRUCTION syntax refined.
  *
  ******************************************************************************************************
  *
@@ -177,14 +180,52 @@ public class ArmGenerator extends Generator {
     // END KGU#1012 2021-11-14
     
     // START KGU#968 2021-10-06: Revised from a local variable in isArmInstruction()
+    /**
+     * This array contains all ARM assembler instruction mnemonics that do not undermine
+     * an NSD instruction element semantics, i.e. which are not genuinely related jumps
+     * (conditional or unconditional branch commands). Actually, while there is no specific
+     * support in executor, none of these instructions make a lot of sense, not in particular
+     * those dedicated to flag setting or exploration (comparison, conditional execution)
+     * as far as they aim to conditional execution or branching (e.g. by just setting or
+     * examining flags)...<br/>
+     * Moreover, it seems to be sensible to classify the instructions according to their
+     * "arity", i.e. the number of operands.
+     */
     private static final String[] ARM_INSTRUCTIONS = {
-            "lsl", "lsr", "asr", "ror", "rrx", "adcs", "and", "eor", "sub", "rsb", "add", "adc",
-            "sbc", "rsc", "bic", "orr", "mov", "tst", "teq", "cmp", "cmn", "sel", "mul", "mla",
-            "smla", "smuadx", "smlsd", "smmla", "smmls", "mrs", "msr", "b", "ldr", "str", "ldm",
-            "stm", "cpsie", "cpsid", "srs", "rfe", "setend", "cdp", "ldc", "stc", "mcr", "mrc",
-            "mrrc", "swi", "bkpt", "pkhbt", "pkhtb", "sxtb", "sxth", "uxtb", "uxth", "sxtab",
-            "sxtah", "uxtab", "uxtah", "ssat", "usat", "rev", "clz", "cpy", "cdc"
+            // Shift instructions
+            "lsl", "lsr", "asr", "ror", "rrx",
+            // Standard data-processing instructions
+            "adc", "adcs", "add", "adr", "and", "bic", "cmn", "cmp", "cpy", "eor",
+            "mov", "mvn", "orn", "orr", "rsb", "rsc", "sbc", "sub", "teq", "tst",
+            // Multiplication instructions
+            "mul", "mls", "mla",
+            // Signed multiplication instructions
+            "smla", "smlsd", "smmla", "smmls", "smuadx", // Why exactly this subset?
+            // Saturating instructions
+            "ssat", "usat",
+            // Packing and unpacking instructions
+            "pkhbt", "pkhtb",
+            "sxtab", "sxtah", "sxtb", "sxth",
+            "uxtab", "uxtah", "uxtb", "uxth",
+            // Miscellaneous data-processing instructions
+            "clz", "rev", "sel",
+            // Status register access instructions
+            "mrs", "msr", "cpsie", "cpsid",
+            // Load/Store instructions
+            "ldm", "stm", 
+            "ldr", "str",
+            // Coprocessor instructions
+            "cdc", "cdp", "ldc", "mcr", "mrc", "mrrc", "stc",
+            // Exception-related instructions
+            "bkpt", "rfe", "srs", "swi",
+            // Further instructions
+            "setend"
     };
+//    /**
+//     * This is intended for a closer look into the operand structure of ARM instructions
+//     */
+//    private static final StringList ARM_LEVEL_SHIFTS = StringList.explode(
+//            "lsl,lsr,asr,ror,rrx", ",");
     // This set will contain all the strings from ARM_INSTRUCTIONS
     private static final HashSet<String> ARM_INSTR_LOOKUP = new HashSet<String>();
     // END KGU#968 2021-10-06
@@ -211,6 +252,9 @@ public class ArmGenerator extends Generator {
 
     // Reserved words that can't be used as variables
     private static final StringList RESERVED_WORDS = StringList.explode(
+            // START KGU#1066/KGU#1067 2022-09-30: Bugfix #1074 We should reserve div and mod
+            "div,mod,"+
+            // END KGU#1066/KGU#1067 2022-09-30
             "and,or,memoria,memory,indirizzo,address,true,false,word,hword,bytes,quad,octa"/* + ",input,output,INPUT,OUTPUT"*/,
             ",");
     /**
@@ -610,7 +654,8 @@ public class ArmGenerator extends Generator {
                 if (checker != null && !isDisabled) {
                     String problem = checker.checkSyntax(line, _inst, i);
                     if (problem != null) {
-                        appendComment(problem.replace("error.syntax", "Syntax rejected"), getIndent());
+                        appendComment(problem.replace("error.syntax", "Syntax rejected")
+                                .replace("error.lexical", "Unexpected symbol"), getIndent());
                         continue;
                     }
                 }
@@ -647,7 +692,8 @@ public class ArmGenerator extends Generator {
         if (checker != null && !isDisabled) {
             String problem = checker.checkSyntax(_alt.getUnbrokenText().get(0), _alt, 0);
             if (problem != null) {
-                appendComment(problem.replace("error.syntax", "Syntax rejected"), getIndent());
+                appendComment(problem.replace("error.syntax", "Syntax rejected")
+                        .replace("error.lexical", "Unexpected symbol"), getIndent());
                 return;
             }
         }
@@ -717,7 +763,8 @@ public class ArmGenerator extends Generator {
             for (int i = 0; i < lines.count()-1; i++) {
                 String problem = checker.checkSyntax(_case.getUnbrokenText().get(i), _case, i);
                 if (problem != null) {
-                    appendComment(problem.replace("error.syntax", "Syntax rejected"), getIndent());
+                    appendComment(problem.replace("error.syntax", "Syntax rejected")
+                            .replace("error.lexical", "Unexpected symbol"), getIndent());
                     return;
                 }
             }
@@ -811,7 +858,8 @@ public class ArmGenerator extends Generator {
         if (checker != null && !isDisabled) {
             String problem = checker.checkSyntax(_for.getUnbrokenText().get(0), _for, 0);
             if (problem != null) {
-                appendComment(problem.replace("error.syntax", "Syntax rejected"), getIndent());
+                appendComment(problem.replace("error.syntax", "Syntax rejected")
+                        .replace("error.lexical", "Unexpected symbol"), getIndent());
                 return;
             }
         }
@@ -1022,7 +1070,8 @@ public class ArmGenerator extends Generator {
         if (checker != null && !isDisabled) {
             String problem = checker.checkSyntax(_while.getUnbrokenText().get(0), _while, 0);
             if (problem != null) {
-                appendComment(problem.replace("error.syntax", "Syntax rejected"), getIndent());
+                appendComment(problem.replace("error.syntax", "Syntax rejected")
+                        .replace("error.lexical", "Unexpected symbol"), getIndent());
                 return;
             }
         }
@@ -1071,7 +1120,8 @@ public class ArmGenerator extends Generator {
         if (checker != null && !isDisabled) {
             String problem = checker.checkSyntax(_repeat.getUnbrokenText().get(0), _repeat, 0);
             if (problem != null) {
-                appendComment(problem.replace("error.syntax", "Syntax rejected"), getIndent());
+                appendComment(problem.replace("error.syntax", "Syntax rejected")
+                        .replace("error.lexical", "Unexpected symbol"), getIndent());
                 return;
             }
         }
@@ -1146,7 +1196,8 @@ public class ArmGenerator extends Generator {
             if (checker != null && !isDisabled) {
                 String problem = checker.checkSyntax(lines.get(0), _call, 0);
                 if (problem != null) {
-                    appendComment(problem.replace("error.syntax", "Syntax rejected"), getIndent());
+                    appendComment(problem.replace("error.syntax", "Syntax rejected")
+                            .replace("error.lexical", "Unexpected symbol"), getIndent());
                     return;
                 }
             }
@@ -1282,7 +1333,8 @@ public class ArmGenerator extends Generator {
                     if (checker != null && !isDisabled) {
                         String problem = checker.checkSyntax(line, _jump, i);
                         if (problem != null) {
-                            appendComment(problem.replace("error.syntax", "Syntax rejected"), getIndent());
+                            appendComment(problem.replace("error.syntax", "Syntax rejected")
+                                    .replace("error.lexical", "Unexpected symbol"), getIndent());
                             continue;
                         }
                     }
@@ -1480,9 +1532,30 @@ public class ArmGenerator extends Generator {
             // END KGU#1002 2021-10-30
             break;
         case INSTRUCTION:
-            newline = variablesToRegisters(line);
+            /*
+             * The line starts with an ARM menomic code - we assume that the user knew
+             * what they did and only replace variables by register names and put a '#'
+             * prefix in front of unprefixed integer literals ...
+             */
+            // START KGU#1066 2022-09-30: Bugfix #1074
+            //newline = variablesToRegisters(line);
+            {
+                StringList tokens = Element.splitLexically(line, true);
+                for (int i = 1; i < tokens.count(); i++) {
+                    try {
+                        int val = Integer.parseInt(tokens.get(i));
+                        tokens.set(i, "#" + val);
+                    }
+                    catch (NumberFormatException ex) {}
+                }
+                newline = tokens.get(0).toUpperCase() + variablesToRegisters(tokens.concatenate("", 1));
+            }
+            // END KGU#1066 2022-09-30
             addCode(newline, getIndent(), isDisabled);
             done = !isDisabled;
+            // START KGU#1066 2022-09-30: Bugfix #1074
+            break;
+            // END KGU#1066 2022-09-30
         case INPUT:
             if (gnuEnabled) {
                 // START KGU#968 2021-04-25/2021-11-14: Remove the keyword and a possible prompt string
@@ -3122,12 +3195,16 @@ public class ArmGenerator extends Generator {
     }
 
     /**
-     * This method checks whether line is an arm instruction or not
+     * This method checks whether line is an ARM instruction or not
      *
-     * @param line contains the instruction
-     * @return whether line is an arm instruction or not
+     * @param line - contains the instruction to be checked
+     * @return whether line is an ARM instruction or not
      */
     private boolean isArmInstruction(String line) {
+        // START KGU#1066 2023-02-24: Bugfix #1074 Exclude assignments and calls
+        if (Call.isProcedureCall(line, true) || Instruction.isAssignment(line)) {
+            return false;
+        }
         // START KGU#968 2021-10-06: This was too vague and inefficient
         //String[] instruction = {
         //        "lsl", "lsr", "asr", "ror", "rrx", "adcs", "and", "eor", "sub", "rsb", "add", "adc",
@@ -3155,14 +3232,21 @@ public class ArmGenerator extends Generator {
         }
         StringList tokens = Element.splitLexically(line.toLowerCase(), true);
         tokens.removeAll(" ");
-        for (int i = 0; i < tokens.count(); i++) {
-            // FIXME: Should we ignore the position? A variable "b" would easily provoke a false positive...
-            if (ARM_INSTR_LOOKUP.contains(tokens.get(i))) {
-                return true;
-            }
-        }
+        // START KGU#1066 2022-09-30: Bugfix #1074 ARM instruction code must be at index 0
+        //for (int i = 0; i < tokens.count(); i++) {
+        //    if (ARM_INSTR_LOOKUP.contains(tokens.get(i))) {
+        //        return true;
+        //    }
+        //}
+        String token0;
+        return tokens.count() > 0
+               && ARM_INSTR_LOOKUP.contains((token0 = tokens.get(0)).toLowerCase())
+               && !this.varNames.contains(token0);
+        // END KGU#1066 2022-09-30
         // END KGU#968 2021-10-06
-        return false;
+        // START KGU#1066 2022-09-30: Bugfix #1074 ARM instruction code must be at index 0
+        //return false;
+        // END KGU#1066 2022-09-30
     }
 
     /**

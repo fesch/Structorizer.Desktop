@@ -57,7 +57,7 @@
  *      Kay Gürtzig         2017-04-05      Additions for enh. #388 and #390 (constant definition checks)
  *      Kay Gürtzig         2018-07-02      KGU#245: all Colors stuff replaced with array keys 
  *      Kay Gürtzig         2022-08-10      Enh. #56, #492: Element name placeholders / TRY messages accomplished
- *
+ *      Kay Gürtzig         2023-08-01      Enh. #1082: Function name incuded in messages Menu.error13_* *
  ******************************************************************************************************
  *
  *      Comment:	
@@ -250,8 +250,8 @@ Menu.error10_4.text=En eenzelt Instruktiouns Element sollt keng Ausgang Instrukt
 Menu.error10_5.text=En eenzelt Instruktiouns Element sollt keng Konstant Definitiounen an anere Instruktiounen enthalen!
 Menu.error11.text=Wahrscheinlech Zouwäisungsfehler! W.E.G. d'Instruktioun kontrolléieren!
 Menu.error12.text=Den Parameter muss mat engem "p" ufänken an dierf ab dann nëmmen nach Grouss buchstaawen enthalen!
-Menu.error13_1.text=Funktioun gëtt keen Resultat zréck!
-Menu.error13_2.text=Funktioun gëtt méiglecherweis keen Resultat zréck!
+Menu.error13_1.text=Funktioun «%» gëtt keen Resultat zréck!
+Menu.error13_2.text=Funktioun «%» gëtt méiglecherweis keen Resultat zréck!
 Menu.error13_3.text=Your functions seems to use several competitive return mechanisms: «%»!
 Menu.error14_1.text=The FOR loop parameters are not consistent to the loop heading text!
 Menu.error14_2.text=The FOR loop step value («%») is not a legal integer constant!

@@ -62,7 +62,7 @@
  *      Kay Gürtzig     2019-03-17      Enh. #56: Messages for the new Element class Try
  *      Kay Gürtzig     2022-08-09/10   Issue #1056 (flawed translations, defective tooltip associations)
  *      GitHub/tph002   2022-08-14      Majority of texts translated or corrected, respectively
- *
+ *      Kay Gürtzig     2023-08-01      Enh. #1082: Function name incuded in messages Menu.error13_* *
  ******************************************************************************************************
  *
  *      Comment:	
@@ -441,8 +441,8 @@ Menu.error10_5.text=Un élément d'@a unique ne doit pas contenir à la fois des
 Menu.error10_6.text=Un élément d'@a unique ne doit pas contenir à la fois des définitions de type et d'autres instructions!
 Menu.error11.text=Vous avez fait probablement une erreur d'assignation. Veuillez vérifier cette instruction!
 Menu.error12.text=Le paramètre «%» doit commencer avec la lettre "p" suivie de lettres en majuscules uniquement!
-Menu.error13_1.text=La fonction ne retourne pas de résultat!
-Menu.error13_2.text=La fonction ne retourne peut-être pas de résultat!
+Menu.error13_1.text=La fonction «%» ne retourne pas de résultat!
+Menu.error13_2.text=La fonction «%» ne retourne peut-être pas de résultat!
 Menu.error13_3.text=la fonction semble utiliser plusieurs mécanismes de retour en compétition: «%»!
 Menu.error14_1.text=Les paramètres de la boucle @d ne sont pas cohérents avec le texte de titre de la boucle.
 Menu.error14_2.text=La valeur de pas («%») de la boucle @e n'est pas une constante entière valide!
