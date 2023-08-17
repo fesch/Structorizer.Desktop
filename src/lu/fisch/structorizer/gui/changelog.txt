@@ -23,7 +23,7 @@ Known issues:
 - ARM export is still experimental and relies on a specific and very restricted
   syntax for the element contents in order to produce meaningful results.
 
-Current development version 3.32-12 (2023-08-01)
+Current development version 3.32-12 (2023-08-07)
 - 01: Bugfix #987: Duplicate subroutine comment export by Pascal generator <2>
 - 01: Bugfix #988: Syntax error in Structorizer.bat and Arranger.bat fixed <2>
 - 01: Bugfix #989: Expressions in EXIT elements (e.g. return) were forgotten
@@ -136,6 +136,7 @@ Current development version 3.32-12 (2023-08-01)
 - 12: Issues #1028, #1076: Launcher message on Java trouble improved <2>
 - 12: Issue #1077: Javadoc warnings avoided by annotation completion <2>
 - 12: Enh. #1082: More expressive Analyser warnings on defective functions <2>
+- 12: Bugfix #1083 Undue error message on batch import with "-p Pascal ..."<2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>

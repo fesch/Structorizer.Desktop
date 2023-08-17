@@ -84,6 +84,7 @@
  *      Kay Gürtzig     2021-06-08      Issue #67, #953: retrieval mechanism for plugin-specific options from ini
  *      Kay Gürtzig     2022-08-01      Enh. #1047: Batch export option -k for keeping the source files apart
  *      Kay Gürtzig     2022-08-11/12   Enh. #1047: Modified effect of -o option (also in combination with -k)
+ *      Kay Gürtzig     2023-08-17      Bugfix #1083: Undue error message on using "-p Pascal ..." eliminated
  *
  ******************************************************************************************************
  *
@@ -191,16 +192,22 @@ public class Structorizer
 				// START KGU#538 2018-07-01: Bugfix #554 - was nonsense and had to be replaced
 				// In order to disambiguate alternative parsers for the same file type, there
 				// might be a given parser or language name again (3.28-05).
-				if (i+2 < args.length) {
-					// Legacy support - parsers will now be derived from the file extensions 
-					if (args[i+1].equalsIgnoreCase("pas") || args[i+1].equalsIgnoreCase("pascal")) {
-						parser = "D7Parser";
-					}
-					else if (!args[i+1].startsWith("-")) {
-						// doesn't seem to be an option, so it might be a default parser name...
-						parser = args[i+1];
-					}
+				// START KGU#1072 2023-08-17: Bugfix #1083 (moreover, option "pas" is no longer accepted)
+				//if (i+2 < args.length) {
+				//	// Legacy support - parsers will now be derived from the file extensions 
+				//	if (args[i+1].equalsIgnoreCase("pas") || args[i+1].equalsIgnoreCase("pascal")) {
+				//		parser = "D7Parser";
+				//	}
+				//	else if (!args[i+1].startsWith("-")) {
+				//		// doesn't seem to be an option, so it might be a default parser name...
+				//		parser = args[i+1];
+				//	}
+				//}
+				if ((i+2 < args.length) && !args[i+1].startsWith("-") && !args[i+1].contains(".")) {
+					// doesn't seem to be an option, so it might be a default parser name...
+					parser = args[i+1];
 				}
+				// END KGU#1072 2023-08-17
 				// END KGU#538 2018-07-01
 			}
 			// START KGU#722 2019-08-07: Enh. #741
@@ -1061,12 +1068,22 @@ public class Structorizer
 		// START KGU#538 2018-07-01: Bugfix #554 - for the case there are alternatives
 		Vector<CodeParser> suitedParsers = new Vector<CodeParser>();
 		// END KGU#538 2018-07-01
+		// START KGU#1072 2023-08-17: Bugfix #1083 Make sure that only the first "filename" is checked against the parser name
+		boolean filename1st = true;
+		// END KGU#1072 2023-08-17
 		for (String filename : _filenames)
 		{
 			// START KGU#538 2018-07-04: Bugfix #554 - the 1st "filename" might be the parser name
-			if (specifiedParser != null && filename.equals(_parserName)) {
+			// START KGU#1072 2023-08-17: Bugfix #1083 Make sure that only the first "filename" is skipped
+			//if (specifiedParser != null && filename.equals(_parserName)) {
+			//	continue;
+			//}
+			if (specifiedParser != null && filename1st && filename.equals(_parserName)) {
+				filename1st = false;
 				continue;
 			}
+			filename1st = false;
+			// END KGU#1072 2023-08-17
 			// END KGU#538 2018-07-04
 			// START KGU#194 2016-05-08: Bugfix #185 - face more contained roots
 			//Root rootNew = null;
