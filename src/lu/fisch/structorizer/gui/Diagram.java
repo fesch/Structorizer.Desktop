@@ -240,6 +240,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2022-06-24      Bugfix #1038: Additional argument for setRoot() to suppress recursive saving requests
  *      Kay Gürtzig     2022-08-18      Enh. #1066: text auto-completion mechanism in showInputBox()
  *      Kay Gürtzig     2022-08-25      Enh. #1066: Infinity literal added to auto-complete words.
+ *      Kay Gürtzig     2023-09-12      Bugfix #1086: Defective arrangement on source import with two routines
  *
  ******************************************************************************************************
  *
@@ -927,24 +928,46 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 								List<Root> newRoots = parser.parse(filename, charSet, logPath);
 								if (parser.error.equals("")) {
 									boolean arrange = false;
+									// START KGU#1076 2023-09-12: Bugfix #1086 - for functionality a main should reside in work area
+									Root newMain = null;
+									// END KGU#1076 2023-09-12
 									for (Root rootNew : newRoots) {
 										if (arrange) {
-											arrangeNSD();
+											// START KGU#1076 2023-09-12: Bugfix #1086 - the group should be named after the file
+											//arrangeNSD();
+											arrangeNSD(theFile.getName());
+											// END KGU#1076 2023-09-12
 										}
+										// START KGU#1076 2023-09-12: Bugfix #1086 - for functionality a main should reside in work area
+										if (newMain == null && rootNew.isProgram()) {
+											newMain = rootNew;
+										}
+										// END KGU#1076 2023-09-12
+										// FIXME: Consider temporary shut-off of Arranger index notifications, see importCode()
 										setRootIfNotRunning(rootNew);
 										currentDirectory = new File(filename);
 										arrange = true;
 										//System.out.println(root.getFullText().getText());
 									}
 									// START KGU#354 2017-05-23: Enh.#354 - with many roots it's better to push the principal root to the Arranger, too
-									if (newRoots.size() > 2 || !root.isProgram()) {
-										arrangeNSD();
+									// START KGU#1076 2023-09-12: Bugfix #1086 - This must already be done if it's more than ONE root.
+									//if (newRoots.size() > 2 || !root.isProgram()) {
+									//	arrangeNSD();
+									//}
+									if (newRoots.size() >= 2) {
+										arrangeNSD(theFile.getName());
 									}
+									// END KGU#1076 2023-09-12
 									// END KGU#354 2017-05-23
 									for (Root rootNew : newRoots) {
 										rootNew.setChanged(false);
 									}
-								} else {
+									// START KGU#1076 2023-09-12: Bugfix #1086 - for functionality a main should reside in work area
+									if (newMain != null && !root.isProgram()) {
+										setRootIfNotRunning(newMain);
+									}
+									// END KGU#1076 2023-09-12
+																	} else {
 							// START KGU#354 2017-05-03: Enh #354 Safety addition part 2
 									parserError = parser.error;
 								}
@@ -7074,14 +7097,23 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							}
 						} finally {
 							endSerialMode();
+							// Now we must prevent Structorizer from loading the diagrams nevertheless
 							newRoots.clear();
 							iter = newRoots.iterator();
 							nRoots = 1;
 						}
 					}
 					// END KGU#553 2018-07-10
+					// START KGU#1076 2023-09-12: Bugfix #1086 incomplete establishment of arrangement group on C99 import
+					Root newMain = null;
+					// END KGU#1076 2023-09-12
 					while (iter.hasNext()) {
 						root = iter.next();
+						// START KGU#1076 2023-09-12: Bugfix #1086
+						if (newMain == null && root.isProgram()) {
+							newMain = root;
+						}
+						// END KGU#1076 2023-09-12
 						//root.highlightVars = hil;
 						if (Element.E_VARHIGHLIGHT) {
 							root.retrieveVarNames();	// Initialise the variable table, otherwise the highlighting won't work
@@ -7114,11 +7146,19 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						//if (nRoots > 2 || !root.isProgram()) {
 						//	this.arrangeNSD();
 						//}
-						if (nRoots > 2) {
+						// START KGU#1076 2023-09-12: Bugfix #1086 - obvious dyscalculia...
+						//if (nRoots > 2) {
+						if (nRoots >= 2) {
+						// END KGU#1076 2023-09-12
 							this.arrangeNSD(file.getName());
 						}
 						// END KGU#626 2018-12-28
 						// END KGU#354 2017-05-23
+						// START KGU#1076 2023-09-12: Bugfix #1086
+						if (!firstRoot.isProgram() && newMain != null) {
+							this.setRoot(newMain, false, false, true);
+						}
+						// END KGU#1076 2023-09-12
 					// START KGU#194 2016-05-08: Bugfix #185 - multiple routines per file
 					}
 					// END KGU#194 2016-05-08

@@ -137,7 +137,8 @@ Current development version 3.32-12 (2023-09-12)
 - 12: Issue #1077: Javadoc warnings avoided by annotation completion <2>
 - 12: Enh. #1082: More expressive Analyser warnings on defective functions <2>
 - 12: Bugfix #1083 Undue error message on batch import with "-p Pascal ..."<2>
-- 12: Bugfix #1084 Defective handling of included typedefs on C import <2>
+- 12: Bugfix #1085 Defective handling of included typedefs on C import <2>
+- 12: Bugfix #1086 Incomplete group on source import with two routines <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>
