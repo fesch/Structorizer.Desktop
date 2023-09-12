@@ -47,6 +47,7 @@ package lu.fisch.structorizer.parsers;
  *                                      Bugfix #809: retrieveComment(Reduction) overridden to reinstate type names in comments,
  *                                      Elimination of trailing "return 0" elements in main diagrams
  *      Kay Gürtzig     2021-02-12      Bugfix #556 Slash workaround for StreamTokenizer was defective itself
+ *      Kay Gürtzig     2023-09-12      Bugfix #1085 Type definitions from header files weren't correctly handled
  *
  ******************************************************************************************************
  *
@@ -201,6 +202,7 @@ public abstract class CPreParser extends CodeParser
 	 * For the C Parser e.g. the preprocessor directives must be removed and possibly
 	 * be executed (at least the defines. with #if it would get difficult).
 	 * The preprocessed file will always be saved with UTF-8 encoding.
+	 * 
 	 * @param _textToParse - name (path) of the source file
 	 * @param _encoding - the expected encoding of the source file.
 	 * @return The File object associated with the preprocessed source file.
@@ -312,7 +314,7 @@ public abstract class CPreParser extends CodeParser
 						String value = defs.getProperty(name).trim();
 						if (value.equals("type")) {
 							typedefs.add(name);
-							blockRanges.addElement(new Integer[]{0, -1});							
+							blockRanges.addElement(new Integer[]{0, -1});
 						}
 						else {
 							defines.put(name, new String[]{value});
@@ -336,9 +338,10 @@ public abstract class CPreParser extends CodeParser
 	 * file, filters it, places its contents into the given StringBuilder (if set).
 	 * For the C Parser e.g. the preprocessor directives must be removed and possibly
 	 * be executed (at least the defines. with #if it would get difficult).
+	 * 
 	 * @param _textToParse - name (path) of the source file
-	 * @param srcCodeSB - optional: StringBuilder to store the content of the preprocessing<br/>
-	 * if not given then only the preprocessor handling (including #defines) will be done  
+	 * @param srcCodeSB - optional: StringBuilder to store the content of the preprocessing;<br/>
+	 *    if not given then only the preprocessor handling (including #defines) will be done.
 	 * @return flag signaling whether the preprocessing worked
 	 * @throws ParserCancelled 
 	 */
@@ -362,6 +365,9 @@ public abstract class CPreParser extends CodeParser
 			try {
 				String strLine;
 				boolean inComment = false;
+				// START KGU#1075 2023-09-12: Bugfix #1085 typedef scopes were mixed
+				int lineNo = 0;
+				// END KGU#1075 2023-09-12
 
 				//Read File Line By Line
 				// Preprocessor directives are not tolerated by the grammar, so drop them or try to
@@ -376,6 +382,9 @@ public abstract class CPreParser extends CodeParser
 						if (srcCodeSB != null) {
 							// no processing if we only want to check for defines
 							srcCodeSB.append("\n");
+							// START KGU#1075 2023-09-12: Bugfix #1085 typedef scopes were mixed
+							lineNo++;
+							// END KGU#1075 2023-09-12
 						}
 						continue;
 					}
@@ -388,6 +397,9 @@ public abstract class CPreParser extends CodeParser
 						String otherline = "";
 						while ((otherline = br.readLine()) != null) {
 							newlines += "\n";
+							// START KGU#1075 2023-09-12: Bugfix #1085 typedef scopes were mixed
+							lineNo++;
+							// END KGU#1075 2023-09-12
 							if (otherline.endsWith("\\")) {
 								strLine += otherline.substring(0, otherline.length() - 1);
 							} else {
@@ -398,7 +410,7 @@ public abstract class CPreParser extends CodeParser
 						trimmedLine = strLine.trim();
 						// add line breaks for better line counter,
 						// works but looks strange in the case of errors when
-						// the "preceding context" consist of 8 empty lines
+						// the "preceding context" consists of e.g. 8 empty lines
 						strLine += newlines;
 					}
 
@@ -464,6 +476,9 @@ public abstract class CPreParser extends CodeParser
 							// no processing if we only want to check for defines
 							srcCodeSB.append(strLine);
 							srcCodeSB.append("\n");
+							// START KGU#1075 2023-09-12: Bugfix #1085 typedef scopes were mixed
+							lineNo++;
+							// END KGU#1075 2023-09-12
 						}
 						continue;
 					}
@@ -472,7 +487,10 @@ public abstract class CPreParser extends CodeParser
 					//        and/or add a standard (dialect specific) list of defines
 					if (trimmedLine.charAt(0) == '#') {
 						if (srcCodeSB == null) {
-							handlePreprocessorLine(trimmedLine.substring(1), defines);
+							// START KGU#1075 2023-09-12: Bugfix #1085 - We must handle recursive ranges
+							//handlePreprocessorLine(trimmedLine.substring(1), defines);
+							handlePreprocessorLine(trimmedLine.substring(1), defines, lineNo);
+							// END KGU#1075 2023-09-12
 							// no further processing if we only want to check for defines
 							continue;
 						}
@@ -483,7 +501,10 @@ public abstract class CPreParser extends CodeParser
 						// next comment lines won't be detected as such. If we could be sure then (and only then) our
 						// returned comment prefix should better start with "/*" instead of "//".
 						//srcCodeSB.append(handlePreprocessorLine(trimmedLine.substring(1), defines));
-						String prefix = handlePreprocessorLine(trimmedLine.substring(1), defines);
+						// START KGU#1075 2023-09-12: Bugfix #1085 - We must handle recursive ranges
+						//String prefix = handlePreprocessorLine(trimmedLine.substring(1), defines);
+						String prefix = handlePreprocessorLine(trimmedLine.substring(1), defines, lineNo);
+						// END KGU#1075 2023-09-12
 						if (prefix.startsWith("//") && checkComments(new String[]{strLine}, false)) {
 							prefix = "/*" + prefix.substring(2);
 						}
@@ -496,11 +517,11 @@ public abstract class CPreParser extends CodeParser
 							continue;
 						}
 						strLine = replaceDefinedEntries(strLine, defines);
-						// The grammar doesn't cope with customer-defined type names nor library-defined ones, so we will have to
-						// replace as many as possible of them in advance.
-						// We cannot guess however, what's included since include files won't be available for us.
+						// The grammar doesn't cope with customer-defined type names nor library-defined ones,
+						// so we will have to replace as many as possible of them in advance.
+						// We cannot guess, however, what's included since include files won't be available for us.
 						for (String[] pair: typeReplacements) {
-							String search = "(^|.*?\\W)"+Pattern.quote(pair[0])+"(\\W.*?|$)";
+							String search = "(^|.*?\\W)" + Pattern.quote(pair[0])+"(\\W.*?|$)";
 							if (strLine.matches(search)) {
 								strLine = strLine.replaceAll(search, "$1" + pair[1] + "$2");
 							}
@@ -512,6 +533,9 @@ public abstract class CPreParser extends CodeParser
 						srcCodeSB.append(strLine);
 					}
 					srcCodeSB.append("\n");
+					// START KGU#1075 2023-09-12: Bugfix #1085 typedef scopes were mixed
+					lineNo++;
+					// END KGU#1075 2023-09-12
 				}
 				// Input stream will be closed via finally
 				return true;
@@ -540,6 +564,7 @@ public abstract class CPreParser extends CodeParser
 	 * that a string "foo/*bar" might fool the analysis!) in the string passed in via {@code trimmed},
 	 * replaces the latter with a comment-free string part plus a line tail and returns whether a
 	 * there is a pending open comment block.
+	 * 
 	 * @param trimmed - a string array with the trimmed input string - content may be modified!
 	 * @param inComment - true if the line started within an comment block
 	 * @return true if the line ends with an opened comment block, false otherwise.
@@ -604,7 +629,9 @@ public abstract class CPreParser extends CodeParser
 	// START KGU#519 2018-06-17: Enh. #541
 	/**
 	 * Analyses the import option "redundantNames" and derives dummy defines from
-	 * them that are suited to eliminate the respective texts from the code. 
+	 * them that are suited to eliminate the respective texts from the code.
+	 * 
+	 * @param defines - the macro definition map to be enriched
 	 */
 	private void registerRedundantDefines(HashMap<String, String[]> defines) {
 		String namesToBeIgnored = (String)this.getPluginOption("redundantNames", null);
@@ -673,13 +700,19 @@ public abstract class CPreParser extends CodeParser
 
 	/**
 	 * Helper function for prepareTextfile to handle C preprocessor commands
+	 * 
 	 * @param preprocessorLine - line for the preprocessor without leading '#'
 	 * @param defines - symbols or macros mapped to their pre-processed replacement data - to be updated
+	 * @param lineNo - the number of the line to be handled in the source file
 	 * @return comment string that can be used for prefixing the original source line
 	 * @throws ParserCancelled
+	 * 
 	 * @see {@link #defines}
 	 */
-	private String handlePreprocessorLine(String preprocessorLine, HashMap<String, String[]> defines) throws ParserCancelled
+	// START KGU#1075 2023-09-12: Bugfix #1085 We needed awareness of the line number
+	//private String handlePreprocessorLine(String preprocessorLine, HashMap<String, String[]> defines) throws ParserCancelled
+	private String handlePreprocessorLine(String preprocessorLine, HashMap<String, String[]> defines, int lineNo) throws ParserCancelled
+	// END KGU#1075 2023-09-12
 	{
 		mtchDefineFunc.reset(preprocessorLine);
 		if (mtchDefineFunc.matches()) {
@@ -753,6 +786,9 @@ public abstract class CPreParser extends CodeParser
 			else {
 				String path = this.ParserPath + incName;
 				StringBuilder subSB = new StringBuilder();
+				// START KGU#1075 2023-09-12: Bugfix #1085
+				int nTypes = this.blockRanges.size();	// number of previous definitions
+				//END KGU#1075 2023-09-12
 				if (processSourceFile(path, subSB)) {
 					try {
 						collectTypedefs(subSB.toString(), path, null);
@@ -761,10 +797,20 @@ public abstract class CPreParser extends CodeParser
 						log("*** " + this.getClass().getSimpleName() + ".collectTypedefs() failed for file \"" + path + "\" with\n" + e.toString(), false);
 						this.getLogger().log(Level.WARNING, "typedef collection in file \"" + path + "\" failed!", e);
 					}
-					return "// preparser include (parsed): ";
 				} else {
 					return "// preparser include (failed): ";
 				}
+				// START KGU#1075 2023-09-12: Bugfix #1085
+				// We must forget the ranges within the include file an set the include line as start
+				// (this is not of course clean but better than before)
+				if (lineNo > -1) {
+					for (int i = nTypes; i < this.blockRanges.size(); i++) {
+						this.blockRanges.get(i)[0] = lineNo + 2;	// different counting base
+						this.blockRanges.get(i)[1] = -1;
+					}
+				}
+				//END KGU#1075 2023-09-12
+				return "// preparser include (parsed): ";
 			}
 			// END KGU#547 2018-07-09
 		}
@@ -784,11 +830,13 @@ public abstract class CPreParser extends CodeParser
 	 * them throughout their definition scopes with generic names "user_type_###" as defined in the grammar
 	 * such that the parse won't fail. The type name map is represented by the static variable {@link #typedefs}
 	 * where the i-th entry is mapped to a type id "user_type_&lt;i+1&gt;" for later backward replacement.
+	 * 
 	 * @param _srcCode - the pre-processed source code as long string
 	 * @param _textToParse - the original file name
 	 * @return the source code with replaced type names
 	 * @throws IOException
-	 * @throws ParserCancelled 
+	 * @throws ParserCancelled
+	 * 
 	 * @see #initializeTypedefs()
 	 * @see #collectTypedefs(String, String, LinkedList)
 	 */
@@ -821,7 +869,10 @@ public abstract class CPreParser extends CodeParser
 			Integer[] range = blockRanges.get(i);
 			// Global range?
 			if (range[1] < 0) {
-				range[1] = srcLines.count()-1;
+				// START KGU#1075 2023-09-12: Bugfix #1085 - we have a differing counting base here
+				//range[1] = srcLines.count()-1;
+				range[1] = srcLines.count();
+				// END KGU#1075 2023-09-12
 			}
 			//DEBUG <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 			log(typeName + ": " + range[0] + " - " + range[1] + "\n", false);
@@ -830,7 +881,10 @@ public abstract class CPreParser extends CodeParser
 			String subst = String.format(USER_TYPE_ID_MASK, i+1);
 			this.replacedIds.put(subst, typeName);
 			subst = "$1" + subst + "$3";
-			for (int j = range[0]; j <= range[1]; j++) {
+			// START KGU#1075 2023-09-12: Bugfix #1085 - we have a differing counting base here
+			//for (int j = range[0]; j <= range[1]; j++) {
+			for (int j = range[0]-1; j < range[1]; j++) {
+			// END KGU#1075 2023-09-12
 				if (srcLines.get(j).matches(pattern)) {
 					srcLines.set(j, srcLines.get(j).replaceAll(pattern, subst));
 				}
@@ -857,6 +911,7 @@ public abstract class CPreParser extends CodeParser
 	 * Initializes the typedef retrieval (which is now done recursively for header files, too).
 	 * Clears {@link #typedefs} and {@link #blockRanges} and then registers the externally declared
 	 * typedefs according to the plugin options.
+	 * 
 	 * @see #prepareTypedefs(String, String)
 	 * @see #collectTypedefs(String, String, LinkedList)
 	 */
@@ -882,14 +937,17 @@ public abstract class CPreParser extends CodeParser
 	/**
 	 * Collects all typedef declarations in given source code {@code _srcCode} from the source file
 	 * {@code _textToParse} and adds their names to {@link #typedefs} and their block ranges to
-	 * {@link #blockRanges}. 
+	 * {@link #blockRanges}.
+	 * 
 	 * @param _srcCode - the source code as slightly preprocessed long string (including newlines)
 	 * @param _textToParse - the path of the processed file.
 	 * @param _blockRanges - a vector of line number pairs denoting the definition scopes of the {@link #typedefs}
-	 * @param _typedefDecomposers - A list of patterns to decompose combined typedefs and struct definitions, may be null
+	 * @param _typedefDecomposers - A list of patterns to decompose combined {@code typedef}s and {@code struct}
+	 *     definitions, may be {@code null}
 	 * @return the exploded source code string
 	 * @throws IOException
 	 * @throws ParserCancelled
+	 * 
 	 * @see #initializeTypedefs()
 	 * @see #prepareTypedefs(String, String)
 	 */
@@ -1231,7 +1289,8 @@ public abstract class CPreParser extends CodeParser
 	/**
 	 * Part of the file preprocessing, is to replace all occurrences of any of the keys
 	 * of string map {@code defines} by their corresponding values within the target
-	 * string {@code toReplace}. 
+	 * string {@code toReplace}.
+	 * 
 	 * @param toReplace - the string representation of (a part of) the input file.
 	 * @param defines - maps certain defined identifiers to more acceptable other ones.
 	 * @return the resulting string.
@@ -1384,6 +1443,7 @@ public abstract class CPreParser extends CodeParser
 	/**
 	 * Creates an output instruction from the given arguments {@code _args} and adds it to
 	 * the {@code _parentNode}.
+	 * 
 	 * @param _reduction - the responsible rule
 	 * @param _name - the name of the encountered input function (e.g. "scanf")
 	 * @param _args - the argument expressions
@@ -1446,6 +1506,7 @@ public abstract class CPreParser extends CodeParser
 	/**
 	 * Creates an output instruction from the given arguments {@code _args} and adds it to
 	 * the {@code _parentNode}.
+	 * 
 	 * @param _reduction - the responsible rule
 	 * @param _name - the name of the encountered output function (e.g. "printf")
 	 * @param _args - the argument expressions
@@ -1513,8 +1574,9 @@ public abstract class CPreParser extends CodeParser
 	
 	/**
 	 * Converts a C initializer expression for a struct type to a corresponding
-	 * record initializer for Structorizer.
-	 * This method may not be applicable if the type info isn't available
+	 * record initializer for Structorizer.<br/>
+	 * This method may not be applicable if the type info isn't available.
+	 * 
 	 * @param _typeName - Name of the detected struct type
 	 * @param _expr - the initialiser expression to be converted
 	 * @param _typeEntry - the type entry corresponding to {@code _typeName}
@@ -1557,10 +1619,12 @@ public abstract class CPreParser extends CodeParser
 	 * {@link #checkForCond(Token, String, boolean)}, and {@link #checkForIncr(Token)} in a
 	 * grammar-dependent way. The versions of {@link CPreParser} return just null and thus avert
 	 * the generation of a {@link For} element.
+	 * 
 	 * @param initToken - {@link Token} representing the first header zone 
 	 * @param condToken - {@link Token} representing the second header zone
 	 * @param incrToken - {@link Token} representing the third header zone
 	 * @return either a {@link For} element or null.
+	 * 
 	 * @see #checkForInit(Token, String)
 	 * @see #checkForCond(Token, String, boolean)
 	 * @see #checkForIncr(Token)
@@ -1589,11 +1653,15 @@ public abstract class CPreParser extends CodeParser
 	/**
 	 * Checks the increment zone of a C {@code for} loop given by {@link #Token} {@code incrToken} 
 	 * whether the instruction is suited for a Structorizer FOR loop.<br/>
-	 * This is assumed in exactly the following cases:<br/>
-	 * 1. {@code <id>++}, {@code ++<id>}, {@code <id> += <intlit>}, or {@code <id> = <id> + <intlit>}<br/>  
-	 * 2. {@code <id>--}, {@code --<id>}, {@code <id> -= <intlit>}, or {@code <id> = <id> - <intlit>}  
+	 * This is assumed in exactly the following cases:
+	 * <ol>
+	 * <li>{@code <id>++}, {@code ++<id>}, {@code <id> += <intlit>}, or {@code <id> = <id> + <intlit>}</li>  
+	 * <li>{@code <id>--}, {@code --<id>}, {@code <id> -= <intlit>}, or {@code <id> = <id> - <intlit>}</li>
+	 * </ol>
+	 *
 	 * @param incrToken - the token representing the third zone of a {@code for} loop header
 	 * @return null or a string array of: [0] the id, [1] '+' or '-', [2] the int literal of the increment/decrement
+	 * 
 	 * @see #checkAndMakeFor(Token, Token, Token)
 	 * @see #checkForCond(Token, String, boolean)
 	 * @see #checkForInit(Token, String)
@@ -1607,15 +1675,19 @@ public abstract class CPreParser extends CodeParser
 	 * Checks the condition zone of a C {@code for} loop given by {@link #Token} {@code incrToken} 
 	 * whether the expression is suited for a Structorizer FOR loop.<br/>
 	 * Only the following cases are accepted where the expression {@code <expr>} must not contain
-	 * any comparison or logical operator like {@code &&}, {@code ||}, and {@code !}:<br/>
-	 * 1. {@code <id> < <expr>} or {@code <id> <= <expr>} where {@code <id>} is the given {@code <id>}
-	 * and {@code upward} is true<br/>  
-	 * 2. {@code <id> > <expr>} or {@code <id> >= <expr>} where {@code <id>} is the given {@code <id>}
-	 * and {@code upward} is false  
+	 * any comparison or logical operator like {@code &&}, {@code ||}, and {@code !}:
+	 * <ol>
+	 * <li>{@code <id> < <expr>} or {@code <id> <= <expr>} where {@code <id>} is the given {@code <id>}
+	 * and {@code upward} is true</li>
+	 * <li>{@code <id> > <expr>} or {@code <id> >= <expr>} where {@code <id>} is the given {@code <id>}
+	 * and {@code upward} is false</li>
+	 * </ol>
+	 * 
 	 * @param condToken - the token representing the second zone of a {@code for} loop header
 	 * @param id - the expected loop variable id to be tested
 	 * @param upward - whether there is an increment or decrement
 	 * @return the end value of the Structorizer counting FOR loop if suited, null otherwise
+	 * 
 	 * @see #checkAndMakeFor(Token, Token, Token)
 	 * @see #checkForIncr(Token)
 	 * @see #checkForInit(Token, String)
@@ -1629,13 +1701,17 @@ public abstract class CPreParser extends CodeParser
 	 * Checks the initialization zone of a C {@code for} loop given by {@link #Token} {@code initToken} 
 	 * whether the statement is suited for a Structorizer FOR loop.<br/>
 	 * Only the following cases are accepted where the expression {@code <expr>} must not be composed
-	 * of several instructions:<br/>
-	 * 1. {@code <id> = <expr>} or<br/>
-	 * 2. {@code <type> <id> = <expr>}<br/>
-	 * where {@code <id>} is the given {@code <id>}. 
+	 * of several instructions:
+	 * <ol>
+	 * <li>{@code <id> = <expr>} or</li>
+	 * <li>{@code <type> <id> = <expr>}</li>>
+	 * </ol>
+	 * where {@code <id>} is the given {@code <id>}.
+	 * 
 	 * @param initToken - the token representing the first zone of a {@code for} loop header
 	 * @param id - the expected loop variable id to be tested
 	 * @return the start value expression or null if the {@code id} doesn't match or the staeement isn't suited
+	 * 
 	 * @see #checkAndMakeFor(Token, Token, Token)
 	 * @see #checkForIncr(Token)
 	 * @see #checkForCond(Token, String, boolean)
