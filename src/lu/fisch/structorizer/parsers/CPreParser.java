@@ -49,6 +49,8 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2021-02-12      Bugfix #556 Slash workaround for StreamTokenizer was defective itself
  *      Kay Gürtzig     2023-09-12      Bugfix #1085 Type definitions from header files weren't correctly handled
  *      Kay Gürtzig     2023-09-15      Issue #809: Conversion of return elements in main diagrams to exit elements
+ *      Kay Gürtzig     2023-09-15      Enh. #1087: Obsolete typedef decomposition replaced by optional
+ *                                      typedef integration mechanism.
  *
  ******************************************************************************************************
  *
@@ -96,8 +98,10 @@ public abstract class CPreParser extends CodeParser
 	protected static final String DEFAULT_GLOBAL_NAME = "GlobalDefinitions";
 	/** Template for the generation of grammar-conform user type ids (typedef-declared) */
 	private static final String USER_TYPE_ID_MASK = "user_type_%03d";
-	/** Replacement pattern for the decomposition of composed typdefs (named struct def + type def) */
-	private static final String TYPEDEF_DECOMP_REPLACER = "$1 $2;\ntypedef $1 $3;";
+	// START KGU#1077 2023-09-15: Enh. #1087 This mechanism became obsolete after waiving C73 import
+	///** Replacement pattern for the decomposition of composed typdefs (named struct def + type def) */
+	//private static final String TYPEDEF_DECOMP_REPLACER = "$1 $2;\ntypedef $1 $3;";
+	// END KGU#1077 2023-09-15
 
 	//---------------------- Grammar specification ---------------------------
 
@@ -143,6 +147,10 @@ public abstract class CPreParser extends CodeParser
 	private static enum PreprocState {TEXT, TYPEDEF, STRUCT_UNION_ENUM, STRUCT_UNION_ENUM_ID, COMPLIST, /*ENUMLIST, STRUCTLIST,*/ TYPEID};
 	private StringList typedefs = new StringList();
 	private Vector<Integer[]> blockRanges = new Vector<Integer[]>();
+	// START KGU#1077 2023-09-15: Enh. # 1087 allow to integrate included type definitions into the C file
+	// Included type definitions pressed into a single line.
+	private StringList typeSpecs = new StringList();
+	// END KGU#1077 2023-09-15
 	// START KGU#388 2017-09-30: Enh. #423 counter for anonymous types
 	protected int typeCount = 0;
 	// END KGU#388 2017-09-30
@@ -317,6 +325,9 @@ public abstract class CPreParser extends CodeParser
 						if (value.equals("type")) {
 							typedefs.add(name);
 							blockRanges.addElement(new Integer[]{0, -1});
+							// START KGU#1077 2023-09-15: Enh. #1087
+							typeSpecs.add("");
+							// END KGU#1077 2023-09-15
 						}
 						else {
 							defines.put(name, new String[]{value});
@@ -793,7 +804,10 @@ public abstract class CPreParser extends CodeParser
 				//END KGU#1075 2023-09-12
 				if (processSourceFile(path, subSB)) {
 					try {
-						collectTypedefs(subSB.toString(), path, null);
+						// START KGU#1077 2023-09-15: Enh. #1087
+						//collectTypedefs(subSB.toString(), path, null);
+						collectTypedefs(subSB.toString(), path, true);
+						// END KGU#1077 2023-09-15
 					} catch (IOException e) {
 						// TODO Auto-generated catch block
 						log("*** " + this.getClass().getSimpleName() + ".collectTypedefs() failed for file \"" + path + "\" with\n" + e.toString(), false);
@@ -840,7 +854,7 @@ public abstract class CPreParser extends CodeParser
 	 * @throws ParserCancelled
 	 * 
 	 * @see #initializeTypedefs()
-	 * @see #collectTypedefs(String, String, LinkedList)
+	 * @see #collectTypedefs(String, String, boolean)
 	 */
 	private String prepareTypedefs(String _srcCode, String _textToParse) throws IOException, ParserCancelled
 	{
@@ -853,11 +867,14 @@ public abstract class CPreParser extends CodeParser
 		// In the second step we replace all identifiers occurring in the map with
 		// their associated generic name, respecting the definition scope.
 		
-		//Vector<Integer[]> blockRanges = new Vector<Integer[]>();
-		LinkedList<String> typedefDecomposers = new LinkedList<String>();
-		
+		// START KGU#1077 2023-09-15 Enh. #1087 Optional integration of included typedefs
+		////Vector<Integer[]> blockRanges = new Vector<Integer[]>();
+		//LinkedList<String> typedefDecomposers = new LinkedList<String>();
+		//// Scan for typedef and struct definitions 
+		//StringList srcLines = collectTypedefs(_srcCode, _textToParse, typedefDecomposers);
 		// Scan for typedef and struct definitions 
-		StringList srcLines = collectTypedefs(_srcCode, _textToParse, typedefDecomposers);
+		StringList srcLines = collectTypedefs(_srcCode, _textToParse, false);
+		// END KGU#1077 2023-09-15
 		
 		//DEBUG <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 		log("\nTYPE DEFINITIONS AND DECLARATION RANGES\n", false);
@@ -896,12 +913,12 @@ public abstract class CPreParser extends CodeParser
 		
 		// Now we try the impossible: to decompose compound struct/union/enum and type name definition
 		// FIXME this works sometimes but by far not in all cases. But this doesn't seem to matter...
-		for (String pattern: typedefDecomposers) {
-			// START KGU#537 2018-07-01: Enh. #553
-			checkCancelled();	// check that the parser thread hasn't been cancelled
-			// END KGU#537 2018-07-01
-			_srcCode = _srcCode.replaceAll(".*?" + pattern + ".*?", TYPEDEF_DECOMP_REPLACER);
-		}
+//		for (String pattern: typedefDecomposers) {
+//			// START KGU#537 2018-07-01: Enh. #553
+//			checkCancelled();	// check that the parser thread hasn't been cancelled
+//			// END KGU#537 2018-07-01
+//			_srcCode = _srcCode.replaceAll(".*?" + pattern + ".*?", TYPEDEF_DECOMP_REPLACER);
+//		}
 
 		// START KGU#546 2018-07-07: Issue #556 - If we get here then a registered error may not have been so bad
 		this.error = "";
@@ -915,7 +932,7 @@ public abstract class CPreParser extends CodeParser
 	 * typedefs according to the plugin options.
 	 * 
 	 * @see #prepareTypedefs(String, String)
-	 * @see #collectTypedefs(String, String, LinkedList)
+	 * @see #collectTypedefs(String, String, boolean)
 	 */
 	private void initializeTypedefs() {
 		typedefs.clear();
@@ -930,6 +947,9 @@ public abstract class CPreParser extends CodeParser
 				if (typeId.matches("^\\w+$")) {
 					typedefs.add(typeId);
 					blockRanges.addElement(new Integer[]{0, -1});
+					// START KGU#1077 2023-09-15: Enh. #1087
+					typeSpecs.add("");
+					// END KGU#1077 2023-09-15
 				}
 			}
 		}
@@ -944,8 +964,7 @@ public abstract class CPreParser extends CodeParser
 	 * @param _srcCode - the source code as slightly preprocessed long string (including newlines)
 	 * @param _textToParse - the path of the processed file.
 	 * @param _blockRanges - a vector of line number pairs denoting the definition scopes of the {@link #typedefs}
-	 * @param _typedefDecomposers - A list of patterns to decompose combined {@code typedef}s and {@code struct}
-	 *     definitions, may be {@code null}
+	 * @param _inHeader - whether we may have to collect the type definition texts
 	 * @return the exploded source code string
 	 * @throws IOException
 	 * @throws ParserCancelled
@@ -953,8 +972,15 @@ public abstract class CPreParser extends CodeParser
 	 * @see #initializeTypedefs()
 	 * @see #prepareTypedefs(String, String)
 	 */
+	// START KGU#1077 2023-09-15: Enh. #1087
+	// * @param _typedefDecomposers - A list of patterns to decompose combined {@code typedef}s and {@code struct}
+	// *     definitions, may be {@code null}
+	//private StringList collectTypedefs(String _srcCode, String _textToParse, 
+	//		LinkedList<String> _typedefDecomposers) throws IOException, ParserCancelled
 	private StringList collectTypedefs(String _srcCode, String _textToParse, 
-			LinkedList<String> _typedefDecomposers) throws IOException, ParserCancelled {
+			boolean _inHeader) throws IOException, ParserCancelled
+	// END KGU#1077 2023-09-15
+	{
 		
 		log("START: COLLECTING TYPEDEFS in \"" + _textToParse + "\" ...\n", false);
 		
@@ -988,14 +1014,18 @@ public abstract class CPreParser extends CodeParser
 		// Underscore must be added to word characters!
 		tokenizer.wordChars('_', '_');
 		
+		// START KGU#1077 2023-09-15: Enh. #1087 - obsolete code
 		// A regular search pattern to find and decompose type definitions with both
 		// struct/union/enum id and type id like in:
-		// typedef struct structId {...} typeId [, ...];
-		// (This is something the used grammar doesn't cope with and so it is to be 
+		//    typedef struct structId {...} typeId [, ...];
+		// (This is something the used C73 grammar didn't cope with and so it was to be 
 		// decomposed as follows for the example above:
-		// struct structId {...};
-		// typedef struct structId typeId [, ...];
-		String typedefStructPattern = "";
+		//    struct structId {...};
+		//    typedef struct structId typeId [, ...];)
+		//String typedefStructPattern = "";
+		String typeDefinition = "";
+		// END KGU#1077 2023-09-15
+
 		
 		while (tokenizer.nextToken() != StreamTokenizer.TT_EOF) {
 			String word = null;
@@ -1006,16 +1036,20 @@ public abstract class CPreParser extends CodeParser
 				// START KGU#537 2018-07-01: Enh. #553
 				checkCancelled();	// check that the parser thread hasn't been cancelled
 				// END KGU#537 2018-07-01
-				if (!typedefStructPattern.isEmpty()) {
-					typedefStructPattern += ".*?\\v";
-				}
+				// START KGU#1077 2023-09-15: Enh. #1087 - obsolete code
+				//if (!typedefStructPattern.isEmpty()) {
+				//	typedefStructPattern += ".*?\\v";
+				//}
+				// END KGU#1077 2023-09-15
 				break;
 			case StreamTokenizer.TT_NUMBER:
 				log("number: " + tokenizer.nval + "\n", false);
-				if (!typedefStructPattern.isEmpty()) {
-					// NOTE: a non-integral number literal is rather unlikely within a type definition...
-					typedefStructPattern += "\\W+[+-]?[0-9]+";
-				}
+				// START KGU#1077 2023-09-15: Enh. #1087 - obsolete code
+				//if (!typedefStructPattern.isEmpty()) {
+				//	// NOTE: a non-integral number literal is rather unlikely within a type definition...
+				//	typedefStructPattern += "\\W+[+-]?[0-9]+";
+				//}
+				// END KGU#1077 2023-09-15
 				break;
 			case StreamTokenizer.TT_WORD:
 				word = tokenizer.sval;
@@ -1023,11 +1057,16 @@ public abstract class CPreParser extends CodeParser
 				if (state == PreprocState.TYPEDEF) {
 					if (word.equals("enum") || word.equals("struct") || word.equals("union")) {
 						state = PreprocState.STRUCT_UNION_ENUM;
-						typedefStructPattern = "typedef\\s+(" + word;
+						// START KGU#1077 2023-09-15: Enh. #1087 - obsolete code
+						//typedefStructPattern = "typedef\\s+(" + word;
+						typeDefinition += word + " ";
+						// END KGU#1077 2023-09-15
 					}
 					else {
 						lastId = word;	// Might be the defined type id if no identifier will follow
-						typedefStructPattern = "";	// ...but it's definitely no combined struct/type definition
+						// START KGU#1077 2023-09-15: Enh. #1087 - obsolete code
+						//typedefStructPattern = "";	// ...but it's definitely no combined struct/type definition
+						// END KGU#1077 2023-09-15
 					}
 				}
 				else if (state == PreprocState.TYPEID && indexDepth == 0) {
@@ -1039,27 +1078,34 @@ public abstract class CPreParser extends CodeParser
 					while (lineNo < srcLines.count() && !wordMatcher.reset(srcLines.get(lineNo)).matches()) {
 						lineNo++; minLineOffset++;
 					}
-					if (_typedefDecomposers == null) {
+					// START KGU#1077 2023-09-15: Enh. #1087
+					//if (_typedefDecomposers == null) {
+					if (_inHeader) {
+					// END KGU#1077 2023-09-15
 						blockRanges.add(new Integer[]{0, -1});
 					}
 					else {
 						blockRanges.add(new Integer[]{lineNo+2, (blockStarts.isEmpty() ? -1 : blockStarts.peek())});
 					}
 					// END KGU#541 2018-07-04
-					if (!typedefStructPattern.isEmpty()) {
-						if (typedefStructPattern.matches(".*?\\W")) {
-							typedefStructPattern += "\\s*" + word;
-						}
-						else {
-							typedefStructPattern += "\\s+" + word;
-						}
-					}
+					// START KGU#1077 2023-09-15: Enh. #1087 - obsolete code
+					//if (!typedefStructPattern.isEmpty()) {
+					//	if (typedefStructPattern.matches(".*?\\W")) {
+					//		typedefStructPattern += "\\s*" + word;
+					//	}
+					//	else {
+					//		typedefStructPattern += "\\s+" + word;
+					//	}
+					//}
+					// END KGU#1077 2023-09-15
 				}
 				// START KGU 2017-05-23: Bugfix - declarations like "typedef struct structId typeId"
 				else if (state == PreprocState.STRUCT_UNION_ENUM) {
 					state = PreprocState.STRUCT_UNION_ENUM_ID;
 					// This must be the struct/union/enum id.
-					typedefStructPattern += "\\s+" + word + ")\\s*(";	// named struct/union/enum: add its id and switch to next group
+					// START KGU#1077 2023-09-15: Enh. #1087 - obsolete code
+					//typedefStructPattern += "\\s+" + word + ")\\s*(";	// named struct/union/enum: add its id and switch to next group
+					// END KGU#1077 2023-09-15
 				}
 				else if (state == PreprocState.STRUCT_UNION_ENUM_ID) {
 					// We have read the struct/union/enum id already, so this must be the first type id.
@@ -1071,14 +1117,19 @@ public abstract class CPreParser extends CodeParser
 					while (lineNo < srcLines.count() && !wordMatcher.reset(srcLines.get(lineNo)).matches()) {
 						lineNo++; minLineOffset++;
 					}
-					if (_typedefDecomposers == null) {
+					// START KGU#1077 2023-09-15: Enh. #1087
+					//if (_typedefDecomposers == null) {
+					if (_inHeader) {
+					// END KGU#1077 2023-09-15
 						blockRanges.add(new Integer[]{0, -1});
 					}
 					else {
 						blockRanges.add(new Integer[]{lineNo+1, (blockStarts.isEmpty() ? -1 : blockStarts.peek())});
 					}
 					// END KGU#541 2018-07-04
-					typedefStructPattern = "";	// ... but it's definitely no combined struct and type definition
+					// START KGU#1077 2023-09-15: Enh. #1087
+					//typedefStructPattern = "";	// ... but it's definitely no combined struct and type definition
+					// END KGU#1077 2023-09-15
 					state = PreprocState.TYPEID;
 				}
 				// END KGU 2017-05-23
@@ -1091,21 +1142,34 @@ public abstract class CPreParser extends CodeParser
 					}
 					// END KGU#541 2018-07-04
 					typedefLevel = blockStarts.size();
+					// START KGU#1077 2023-09-15: Enh. #1087 catch the type definition
+					typeDefinition = "typedef ";
+					// END KGU#1077 2023-09-15
 					state = PreprocState.TYPEDEF;
 				}
-				else if (state == PreprocState.COMPLIST && !typedefStructPattern.isEmpty()) {
-					if (typedefStructPattern.matches(".*\\w") && !typedefStructPattern.endsWith("\\v")) {
-						typedefStructPattern += "\\s+";
-					}
-					else if (typedefStructPattern.endsWith(",") || typedefStructPattern.endsWith(";")) {
-						// these are typical positions for comments...
-						typedefStructPattern += ".*?";
-					}
-					else {
-						typedefStructPattern += "\\s*";
-					}
-					typedefStructPattern += word;
+				// START KGU#1077 2023-09-15: Enh. #1087 - obsolete code !? Problem with if structure!
+				//else if (state == PreprocState.COMPLIST && !typedefStructPattern.isEmpty()) {
+				//	if (typedefStructPattern.matches(".*\\w") && !typedefStructPattern.endsWith("\\v")) {
+				//		typedefStructPattern += "\\s+";
+				//	}
+				//	else if (typedefStructPattern.endsWith(",") || typedefStructPattern.endsWith(";")) {
+				//		// these are typical positions for comments...
+				//		typedefStructPattern += ".*?";
+				//	}
+				//	else {
+				//		typedefStructPattern += "\\s*";
+				//	}
+				//	typedefStructPattern += word;
+				//}
+				else if (state == PreprocState.TEXT
+						&& (word.equals("enum") || word.equals("struct") || word.equals("union"))) {
+					// This may be an enum / struct / union definition
+					// FIXME but how to proceed now such that we don't get into confusion with typedef struct etc.?
 				}
+				else if (state == PreprocState.COMPLIST && !typeDefinition.isEmpty()) {
+					typeDefinition += " " + word;
+				}
+				// END KGU#1077 2023-09-15
 				// START KGU#541 2018-07-09: Bugfix #489 The line counting of StreamTokenizer isn't reliable - so try to synchronize
 				else if (word.length() > 8) {
 					Matcher wordMatcher = Pattern.compile("(^|.*\\W)"+word+"(\\W.*|$)").matcher("");
@@ -1118,41 +1182,66 @@ public abstract class CPreParser extends CodeParser
 				break;
 			case '\'':
 				log("character: '" + tokenizer.sval + "'\n", false);
-				if (!typedefStructPattern.isEmpty()) {
-					typedefStructPattern += Pattern.quote("'"+tokenizer.sval+"'");	// We hope that there are no parentheses inserted
+				// START KGU#1077 2023-09-15: Enh. #1087 - obsolete code
+				//if (!typedefStructPattern.isEmpty()) {
+				//	typedefStructPattern += Pattern.quote("'"+tokenizer.sval+"'");	// We hope that there are no parentheses inserted
+				//}
+				if (!typeDefinition.isEmpty()) {
+					typeDefinition += "'"+tokenizer.sval+"'";
 				}
+				// END KGU#1077 2023-09-15
 				break;
 			case '"':
 				log("string: \"" + tokenizer.sval + "\"\n", false);
-				if (!typedefStructPattern.isEmpty()) {
-					typedefStructPattern += Pattern.quote("\""+tokenizer.sval+"\"");	// We hope that there are no parentheses inserted
+				// START KGU#1077 2023-09-15: Enh. #1087 - obsolete code
+				//if (!typedefStructPattern.isEmpty()) {
+				//	typedefStructPattern += Pattern.quote("\""+tokenizer.sval+"\"");	// We hope that there are no parentheses inserted
+				//}
+				if (!typeDefinition.isEmpty()) {
+					typeDefinition += "\""+tokenizer.sval+"\"";
 				}
+				// END KGU#1077 2023-09-15
 				break;
 			case '{':
 				blockStarts.add(tokenizer.lineno());
 				if (state == PreprocState.STRUCT_UNION_ENUM || state == PreprocState.STRUCT_UNION_ENUM_ID) {
-					if (state == PreprocState.STRUCT_UNION_ENUM) {
-						typedefStructPattern = ""; 	// We don't need a decomposition
+					// START KGU#1077 2023-09-15: Enh. #1087 - obsolete code
+					//if (state == PreprocState.STRUCT_UNION_ENUM) {
+					//	typedefStructPattern = ""; 	// We don't need a decomposition
+					//}
+					//else {
+					//	typedefStructPattern += "\\s*\\{";
+					//}
+					if (!typeDefinition.isEmpty()) {
+						typeDefinition += "{";
 					}
-					else {
-						typedefStructPattern += "\\s*\\{";
-					}
+					// END KGU#1077 2023-09-15
 					state = PreprocState.COMPLIST;
 				}
 				parenthStack.push('}');
 				log("{ (" + parenthStack.size() + ")\n", false);
 				break;
 			case '(':
-				if (!typedefStructPattern.isEmpty()) {
-					typedefStructPattern += "\\s*\\(";
+				// START KGU#1077 2023-09-15: Enh. #1087 - obsolete code
+				//if (!typedefStructPattern.isEmpty()) {
+				//	typedefStructPattern += "\\s*\\(";
+				//}
+				if (!typeDefinition.isEmpty()) {
+					typeDefinition += "(";
 				}
+				// END KGU#1077 2023-09-15
 				parenthStack.push(')');
 				log("( (" + parenthStack.size() + ")\n", false);
 				break;
 			case '[':	// FIXME: Handle index lists in typedefs!
-				if (!typedefStructPattern.isEmpty()) {
-					typedefStructPattern += "\\s*\\[";
+				// START KGU#1077 2023-09-15: Enh. #1087 - obsolete code
+				//if (!typedefStructPattern.isEmpty()) {
+				//	typedefStructPattern += "\\s*\\[";
+				//}
+				if (!typeDefinition.isEmpty()) {
+					typeDefinition += "[";
 				}
+				// END KGU#1077 2023-09-15
 				if (state == PreprocState.TYPEID) {
 					indexDepth++;
 				}
@@ -1175,9 +1264,14 @@ public abstract class CPreParser extends CodeParser
 				}
 				if (state == PreprocState.COMPLIST && typedefLevel == blockStarts.size()) {
 					// After the closing brace, type ids are expected to follow
-					if (!typedefStructPattern.isEmpty()) {
-						typedefStructPattern += "\\s*\\})\\s*(";	// .. therefore open the next group
+					// START KGU#1077 2023-09-15: Enh. #1087 - obsolete code
+					//if (!typedefStructPattern.isEmpty()) {
+					//	typedefStructPattern += "\\s*\\})\\s*(";	// .. therefore open the next group
+					//}
+					if (!typeDefinition.isEmpty()) {
+						typeDefinition += "}";
 					}
+					// END KGU#1077 2023-09-15
 					state = PreprocState.TYPEID;
 				}
 				// No break here!
@@ -1210,9 +1304,14 @@ public abstract class CPreParser extends CodeParser
 					}
 					else if (tokenizer.ttype == ']' && state == PreprocState.TYPEID) {
 						indexDepth--;
-						if (!typedefStructPattern.isEmpty()) {
-							typedefStructPattern += "\\s*\\" + (char)tokenizer.ttype;
+						// START KGU#1077 2023-09-15: Enh. #1087 - obsolete code
+						//if (!typedefStructPattern.isEmpty()) {
+						//	typedefStructPattern += "\\s*\\" + (char)tokenizer.ttype;
+						//}
+						if (!typeDefinition.isEmpty()) {
+							typeDefinition += ']';
 						}
+						// END KGU#1077 2023-09-15
 					}
 				}
 					break;
@@ -1221,12 +1320,17 @@ public abstract class CPreParser extends CodeParser
 				if (state == PreprocState.TYPEDEF) {
 					state = PreprocState.TYPEID;
 				}
-				else if (state == PreprocState.STRUCT_UNION_ENUM_ID) {
-					typedefStructPattern = "";	// Cannot be a combined definition: '*' follows immediately to the struct id
+				// START KGU#1077 2023-09-15: Enh. #1087 - obsolete code
+				//else if (state == PreprocState.STRUCT_UNION_ENUM_ID) {
+				//	typedefStructPattern = "";	// Cannot be a combined definition: '*' follows immediately to the struct id
+				//}
+				//else if (!typedefStructPattern.isEmpty()) {
+				//	typedefStructPattern += "\\s*[*]";
+				//}
+				if (!typeDefinition.isEmpty()) {
+					typeDefinition += '*';
 				}
-				else if (!typedefStructPattern.isEmpty()) {
-					typedefStructPattern += "\\s*[*]";
-				}
+				// END KGU#1077 2023-09-15
 				break;
 			case ',':
 				log(",\n", false);
@@ -1236,17 +1340,27 @@ public abstract class CPreParser extends CodeParser
 					//blockRanges.add(new Integer[]{tokenizer.lineno()+1, (blockStarts.isEmpty() ? -1 : blockStarts.peek())});
 					blockRanges.add(new Integer[]{tokenizer.lineno()+minLineOffset+1, (blockStarts.isEmpty() ? -1 : blockStarts.peek())});
 					// END KGU#541 2018-07-06
-					if (!typedefStructPattern.isEmpty()) {
-						// Type name won't be replaced within the typedef clause
-						//typedefStructPattern += "\\s+" + String.format(USER_TYPE_ID_MASK, typedefs.count()) + "\\s*,";
-						typedefStructPattern += "\\s+" + lastId + "\\s*,";
+					// START KGU#1077 2023-09-15: Enh. #1087 - obsolete code
+					//if (!typedefStructPattern.isEmpty()) {
+					//	// Type name won't be replaced within the typedef clause
+					//	//typedefStructPattern += "\\s+" + String.format(USER_TYPE_ID_MASK, typedefs.count()) + "\\s*,";
+					//	typedefStructPattern += "\\s+" + lastId + "\\s*,";
+					//}
+					if (!typeDefinition.isEmpty()) {
+						typeDefinition += " " + lastId + ",";
 					}
+					// END KGU#1077 2023-09-15
 					state = PreprocState.TYPEID;
 				}
 				else if (state == PreprocState.TYPEID) {
-					if (!typedefStructPattern.isEmpty()) {
-						typedefStructPattern += "\\s*,";
+					// START KGU#1077 2023-09-15: Enh. #1087 - obsolete code
+					//if (!typedefStructPattern.isEmpty()) {
+					//	typedefStructPattern += "\\s*,";
+					//}
+					if (!typeDefinition.isEmpty()) {
+						typeDefinition += ',';
 					}
+					// END KGU#1077 2023-09-15
 				}
 				break;
 			case ';':
@@ -1257,28 +1371,51 @@ public abstract class CPreParser extends CodeParser
 					//blockRanges.add(new Integer[]{tokenizer.lineno()+1, (blockStarts.isEmpty() ? -1 : blockStarts.peek())});
 					blockRanges.add(new Integer[]{tokenizer.lineno()+minLineOffset+1, (blockStarts.isEmpty() ? -1 : blockStarts.peek())});
 					//END KGU#541 2018-07-06
-					typedefStructPattern = "";
+					// START KGU#1077 2023-09-15: Enh. #1087 - obsolete code
+					//typedefStructPattern = "";
+					typeSpecs.add(typeDefinition + ";");
+					typeDefinition = "";
+					// END KGU#1077 2023-09-15
 					state = PreprocState.TEXT;
 				}
 				else if (state == PreprocState.TYPEID) {
-					if (!typedefStructPattern.isEmpty() && !typedefStructPattern.endsWith("(")) {
-						typedefStructPattern += ")\\s*;";
-						if (_typedefDecomposers != null) {
-							_typedefDecomposers.add(typedefStructPattern);
-						}
+					// START KGU#1077 2023-09-15: Enh. #1087 - obsolete code
+					//if (!typedefStructPattern.isEmpty() && !typedefStructPattern.endsWith("(")) {
+					//	typedefStructPattern += ")\\s*;";
+					//	if (_typedefDecomposers != null) {
+					//		_typedefDecomposers.add(typedefStructPattern);
+					//	}
+					//}
+					//typedefStructPattern = "";
+					if (!typeDefinition.isEmpty()) {
+						typeDefinition += ";";
 					}
-					typedefStructPattern = "";
-					state = PreprocState.TEXT;						
+					// FIXME: possible index inconsistency?
+					if (_inHeader) {
+						typeSpecs.add(typeDefinition);
+					}
+					// END KGU#1077 2023-09-15
+					state = PreprocState.TEXT;
 				}
-				else if (state == PreprocState.COMPLIST && !typedefStructPattern.isEmpty()) {
-					typedefStructPattern += "\\s*;";
+				// START KGU#1077 2023-09-15: Enh. #1087 - obsolete code
+				//else if (state == PreprocState.COMPLIST && !typedefStructPattern.isEmpty()) {
+				//	typedefStructPattern += "\\s*;";
+				//}
+				else if (state == PreprocState.COMPLIST && !typeDefinition.isEmpty()) {
+					typeDefinition += ";";
 				}
+				// END KGU#1077 2023-09-15
 				break;
 			default:
 				char tokenChar = (char)tokenizer.ttype;
-				if (state == PreprocState.COMPLIST && !typedefStructPattern.isEmpty()) {
-					typedefStructPattern += "\\s*" + Pattern.quote(tokenChar + "");
+				// START KGU#1077 2023-09-15: Enh. #1087 - obsolete code
+				//if (state == PreprocState.COMPLIST && !typedefStructPattern.isEmpty()) {
+				//	typedefStructPattern += "\\s*" + Pattern.quote(tokenChar + "");
+				//}
+				if (state == PreprocState.COMPLIST && !typeDefinition.isEmpty()) {
+					typeDefinition += tokenChar;
 				}
+				// END KGU#1077 2023-09-15
 				log("other: " + tokenChar + "\n", false);
 			}
 		}
@@ -1789,16 +1926,17 @@ public abstract class CPreParser extends CodeParser
 				if (last instanceof Jump && last.getText().getLongString().trim().equalsIgnoreCase(getKeyword("preReturn") + " 0")) {
 					aRoot.children.removeElement(lastIx);
 				}
-				// START KGU#1077 2023-09-15: Issue #809 refined
-				// Further strewn return elements ought to be replaced by exit elements
+				// START KGU#1078 2023-09-15: Issue #809 refined
+				// Further strewn return elements with results ought to be replaced by exit elements
 				aRoot.traverse(new IElementVisitor() {
 					final String retKey = getKeyword("preReturn");
 					final String exitKey = getKeyword("preExit");
 					
 					@Override
 					public boolean visitPreOrder(Element _ele) {
-						if (_ele instanceof Jump && ((Jump)_ele).isReturn()) {
-							_ele.setText(exitKey + _ele.getText().getLongString().substring(retKey.length()));
+						if (_ele instanceof Jump && ((Jump)_ele).isReturn()
+								&& _ele.getUnbrokenText().getLongString().trim().length() > retKey.trim().length()) {
+							_ele.setText(exitKey + _ele.getUnbrokenText().getLongString().substring(retKey.length()));
 						}
 						return true;
 					}
@@ -1806,7 +1944,7 @@ public abstract class CPreParser extends CodeParser
 					public boolean visitPostOrder(Element _ele) {
 						return true;
 					}});
-				// END KGU#1077 2023-09-15
+				// END KGU#1078 2023-09-15
 			}
 			// END KGU#793 2020-02-10
 		}
