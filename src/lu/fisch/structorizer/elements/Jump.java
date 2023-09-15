@@ -285,7 +285,7 @@ public class Jump extends Instruction {
 	}
 	/**
 	 * Checks whether this element contains a return statement
-	 * @return {@code true} if this has one line and matches the leave syntax 
+	 * @return {@code true} if this has one line and matches the return syntax 
 	 */
 	public boolean isReturn()
 	{

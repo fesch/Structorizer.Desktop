@@ -48,6 +48,7 @@ package lu.fisch.structorizer.parsers;
  *                                      Elimination of trailing "return 0" elements in main diagrams
  *      Kay Gürtzig     2021-02-12      Bugfix #556 Slash workaround for StreamTokenizer was defective itself
  *      Kay Gürtzig     2023-09-12      Bugfix #1085 Type definitions from header files weren't correctly handled
+ *      Kay Gürtzig     2023-09-15      Issue #809: Conversion of return elements in main diagrams to exit elements
  *
  ******************************************************************************************************
  *
@@ -74,6 +75,7 @@ import com.creativewidgetworks.goldparser.engine.Token;
 
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
+import lu.fisch.structorizer.elements.IElementVisitor;
 import lu.fisch.structorizer.elements.Instruction;
 import lu.fisch.structorizer.elements.Jump;
 import lu.fisch.structorizer.elements.Root;
@@ -1033,7 +1035,7 @@ public abstract class CPreParser extends CodeParser
 					// START KGU#541 2018-07-04: Bugfix #489 The line counting of StreamTokenizer isn't reliable - so try to synchronize
 					//blockRanges.add(new Integer[]{tokenizer.lineno()+1, (blockStarts.isEmpty() ? -1 : blockStarts.peek())});
 					Matcher wordMatcher = Pattern.compile("(^|.*\\W)"+word+"(\\W.*|$)").matcher("");
-					int lineNo = tokenizer.lineno() + minLineOffset - 1;
+					int lineNo = tokenizer.lineno() + minLineOffset - 1;	// Mind the line counting base bias, tokenizer starts at 1
 					while (lineNo < srcLines.count() && !wordMatcher.reset(srcLines.get(lineNo)).matches()) {
 						lineNo++; minLineOffset++;
 					}
@@ -1041,7 +1043,7 @@ public abstract class CPreParser extends CodeParser
 						blockRanges.add(new Integer[]{0, -1});
 					}
 					else {
-						blockRanges.add(new Integer[]{lineNo+1, (blockStarts.isEmpty() ? -1 : blockStarts.peek())});
+						blockRanges.add(new Integer[]{lineNo+2, (blockStarts.isEmpty() ? -1 : blockStarts.peek())});
 					}
 					// END KGU#541 2018-07-04
 					if (!typedefStructPattern.isEmpty()) {
@@ -1737,15 +1739,20 @@ public abstract class CPreParser extends CodeParser
 				fileName = fileName.toUpperCase();
 			}
 			fileName = fileName.replaceAll("(.*?)[^A-Za-z0-9_](.*?)", "$1_$2");
-			if (aRoot.getParameterNames().count() > 0) {
+			StringList paramNames = aRoot.getParameterNames();
+			StringList usedVars;
+			if (paramNames.count() == 0
+					|| paramNames.concatenate(",").equals("argc,argv")
+					&& !(usedVars = aRoot.getUsedVarNames(aRoot.children, false, false)).contains("argc")
+					&& !usedVars.contains("argv")) {
+				aRoot.setText(fileName);
+				aRoot.setProgram(true);
+			}
+			else {
 				String header = aRoot.getText().getText();
 				header = header.replaceFirst("(.*?)main([((].*)", "$1" + fileName + "$2");
 				aRoot.setText(header);
 				aRoot.comment.add("The original name was \"main\"!");
-			}
-			else {
-				aRoot.setText(fileName);
-				aRoot.setProgram(true);
 			}
 			// Are there some global definitions to be imported?
 			if (this.globalRoot != null && this.globalRoot.children.getSize() > 0 && this.globalRoot != aRoot) {
@@ -1777,11 +1784,29 @@ public abstract class CPreParser extends CodeParser
 			// START KGU#793 2020-02-10: Issue #809
 			// A trailing "return 0;" should be eliminated in main programs
 			int lastIx = aRoot.children.getSize() - 1;
-			if (lastIx >= 0) {
+			if (aRoot.isProgram() && lastIx >= 0) {
 				Element last = aRoot.children.getElement(lastIx);
 				if (last instanceof Jump && last.getText().getLongString().trim().equalsIgnoreCase(getKeyword("preReturn") + " 0")) {
 					aRoot.children.removeElement(lastIx);
 				}
+				// START KGU#1077 2023-09-15: Issue #809 refined
+				// Further strewn return elements ought to be replaced by exit elements
+				aRoot.traverse(new IElementVisitor() {
+					final String retKey = getKeyword("preReturn");
+					final String exitKey = getKeyword("preExit");
+					
+					@Override
+					public boolean visitPreOrder(Element _ele) {
+						if (_ele instanceof Jump && ((Jump)_ele).isReturn()) {
+							_ele.setText(exitKey + _ele.getText().getLongString().substring(retKey.length()));
+						}
+						return true;
+					}
+					@Override
+					public boolean visitPostOrder(Element _ele) {
+						return true;
+					}});
+				// END KGU#1077 2023-09-15
 			}
 			// END KGU#793 2020-02-10
 		}

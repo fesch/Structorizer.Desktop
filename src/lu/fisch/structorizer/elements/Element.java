@@ -938,7 +938,7 @@ public abstract class Element {
 	 * Generic diagram traversal to be called with an IElementVisitor implementor
 	 * in order to gather information or to modify the status of this Element and
 	 * all its substructure.
-	 * The _visitor may break the traveral on any visit.
+	 * The _visitor may break the traversal on any visit.
 	 * 
 	 * @param _visitor - the visiting instance (must have access to the required
 	 *          attributes or methods, of course)
