@@ -92,7 +92,7 @@ public class TypeMapEntry {
 	private static TypeMapEntry dummy = null;
 	// END KGU#388 2017-09-18
 	// "Canonical" scalar type names
-	// START KGU#1057 2022-08-23: Issue #1066 renamed and chnaged from String[] to StringList
+	// START KGU#1057 2022-08-23: Issue #1066 renamed and changed from String[] to StringList
 	//private static final String[] CANONICAL_NUMERIC_TYPES = {
 	//		"byte",
 	//		"short",

@@ -1789,16 +1789,17 @@ public abstract class CPreParser extends CodeParser
 				if (last instanceof Jump && last.getText().getLongString().trim().equalsIgnoreCase(getKeyword("preReturn") + " 0")) {
 					aRoot.children.removeElement(lastIx);
 				}
-				// START KGU#1077 2023-09-15: Issue #809 refined
-				// Further strewn return elements ought to be replaced by exit elements
+				// START KGU#1078 2023-09-15: Issue #809 refined
+				// Further strewn return elements with results ought to be replaced by exit elements
 				aRoot.traverse(new IElementVisitor() {
 					final String retKey = getKeyword("preReturn");
 					final String exitKey = getKeyword("preExit");
 					
 					@Override
 					public boolean visitPreOrder(Element _ele) {
-						if (_ele instanceof Jump && ((Jump)_ele).isReturn()) {
-							_ele.setText(exitKey + _ele.getText().getLongString().substring(retKey.length()));
+						if (_ele instanceof Jump && ((Jump)_ele).isReturn()
+								&& _ele.getUnbrokenText().getLongString().trim().length() > retKey.trim().length()) {
+							_ele.setText(exitKey + _ele.getUnbrokenText().getLongString().substring(retKey.length()));
 						}
 						return true;
 					}
@@ -1806,7 +1807,7 @@ public abstract class CPreParser extends CodeParser
 					public boolean visitPostOrder(Element _ele) {
 						return true;
 					}});
-				// END KGU#1077 2023-09-15
+				// END KGU#1078 2023-09-15
 			}
 			// END KGU#793 2020-02-10
 		}
