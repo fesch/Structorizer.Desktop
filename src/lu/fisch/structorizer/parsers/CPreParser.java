@@ -1107,7 +1107,7 @@ public abstract class CPreParser extends CodeParser
 					typedefStructPattern += word;
 				}
 				// START KGU#541 2018-07-09: Bugfix #489 The line counting of StreamTokenizer isn't reliable - so try to synchronize
-				else if (word.length() > 8) {
+				else if (word.length() > 8) { // heuristic length threshold for recognition certainty
 					Matcher wordMatcher = Pattern.compile("(^|.*\\W)"+word+"(\\W.*|$)").matcher("");
 					int lineNo = tokenizer.lineno() + minLineOffset - 1;
 					while (lineNo < srcLines.count() && !wordMatcher.reset(srcLines.get(lineNo)).matches()) {
