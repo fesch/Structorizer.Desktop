@@ -1024,6 +1024,7 @@ public abstract class CPreParser extends CodeParser
 		//    typedef struct structId typeId [, ...];)
 		//String typedefStructPattern = "";
 		String typeDefinition = "";
+		boolean isTypedef = false; // We want to register mere struct/union/enum defs, too, now
 		// END KGU#1077 2023-09-15
 
 		
@@ -1059,15 +1060,15 @@ public abstract class CPreParser extends CodeParser
 						state = PreprocState.STRUCT_UNION_ENUM;
 						// START KGU#1077 2023-09-15: Enh. #1087 - obsolete code
 						//typedefStructPattern = "typedef\\s+(" + word;
-						typeDefinition += word + " ";
 						// END KGU#1077 2023-09-15
 					}
-					else {
-						lastId = word;	// Might be the defined type id if no identifier will follow
-						// START KGU#1077 2023-09-15: Enh. #1087 - obsolete code
-						//typedefStructPattern = "";	// ...but it's definitely no combined struct/type definition
-						// END KGU#1077 2023-09-15
-					}
+					// START KGU#1077 2023-09-18: Enh. #1087 - obsolete code
+					//else {
+					//	typedefStructPattern = "";	// ...but it's definitely no combined struct/type definition
+					//	// Stay in the state
+					//}
+					typeDefinition += word + " ";
+					// END KGU#1077 2023-09-18
 				}
 				else if (state == PreprocState.TYPEID && indexDepth == 0) {
 					typedefs.add(word);
@@ -1108,7 +1109,8 @@ public abstract class CPreParser extends CodeParser
 					// END KGU#1077 2023-09-15
 				}
 				else if (state == PreprocState.STRUCT_UNION_ENUM_ID) {
-					// We have read the struct/union/enum id already, so this must be the first type id.
+					// We have read the struct/union/enum id already, so this must be the first type id,
+					// i.e., it is a mere alias to an already defined struct/union/enum.
 					typedefs.add(word);
 					// START KGU#541 2018-07-04: Bugfix #489 The line counting of StreamTokenizer isn't reliable - so try to synchronize
 					//blockRanges.add(new Integer[]{tokenizer.lineno()+1, (blockStarts.isEmpty() ? -1 : blockStarts.peek())});
