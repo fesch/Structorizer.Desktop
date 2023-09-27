@@ -49,6 +49,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2021-02-12      Bugfix #556 Slash workaround for StreamTokenizer was defective itself
  *      Kay Gürtzig     2023-09-12      Bugfix #1085 Type definitions from header files weren't correctly handled
  *      Kay Gürtzig     2023-09-15      Issue #809: Conversion of return elements in main diagrams to exit elements
+ *      Kay Gürtzig     2023-09-27      Bugfix #1089.1: Support for struct initializers with named components
  *
  ******************************************************************************************************
  *
@@ -1587,19 +1588,47 @@ public abstract class CPreParser extends CodeParser
 	protected String convertStructInitializer(String _typeName, String _expr, TypeMapEntry _typeEntry) {
 		StringList parts = Element.splitExpressionList(_expr.substring(1), ",", true);
 		LinkedHashMap<String, TypeMapEntry> compInfo = _typeEntry.getComponentInfo(false);
-		if (parts.count() > 1 && compInfo.size() >= parts.count() - 1) {
+		// START KGU#1080a 2023-09-27: Bugfix #1089.1 handle trailing commas
+		//if (parts.count() > 1 && compInfo.size() >= parts.count() - 1) {
+		int nParts = parts.count() - 1;
+		if (nParts > 0 && parts.get(nParts-1).isBlank()) {
+			nParts--;
+		}
+		if (nParts > 0 && compInfo.size() >= nParts) {
+		// END KGU#1080a 2023-09-27
 			int ix = 0;
 			_expr = _typeName + "{";
+			// START KGU#1080a 2023-09-27 Bugfix #1089.1 check for named assignments
+			boolean named = false;
+			// END KGU#1080a 2023-09-27
 			for (Entry<String, TypeMapEntry> comp: compInfo.entrySet()) {
 				String part = parts.get(ix).trim();
 				// Check for recursive structure initializers
 				TypeMapEntry compType = comp.getValue();
+				// START KGU#1080a 2023-09-27 Bugfix #1089.1 check for named assignments
+				String compName = comp.getKey();
+				if (part.startsWith(".")) {
+					named = true;
+					StringList sides = Element.splitExpressionList(part, "<-");
+					if (sides.count() == 2 && compInfo.containsKey(compName = sides.get(0).trim().substring(1))) {
+						compType = compInfo.get(compName);
+						part = sides.get(1).trim();
+					}
+				}
+				else if (named) {
+					// Skip any unnamed component initialisation from now on
+					continue;
+				}
+				// END KGU#1080a 2023-09-27
 				if (part.startsWith("{") && part.endsWith("}") &&
 						compType != null && compType.isRecord() && compType.isNamed()) {
 					part = convertStructInitializer(compType.typeName, part, compType);
 				}
-				_expr += comp.getKey() + ": " + part;
-				if (++ix >= parts.count()-1) {
+				// START KGU#1080a 2023-09-27 Bugfix #1089.1 care for named assignments
+				_expr += compName + ": " + part;
+				// END KGU#1080a 2023-09-27
+				if (++ix >= nParts) {
+					// Append the expression list tail
 					_expr += parts.get(parts.count()-1);
 					break;
 				}

@@ -23,7 +23,7 @@ Known issues:
 - ARM export is still experimental and relies on a specific and very restricted
   syntax for the element contents in order to produce meaningful results.
 
-Current development version 3.32-12 (2023-09-15)
+Current development version 3.32-12 (2023-09-27)
 - 01: Bugfix #987: Duplicate subroutine comment export by Pascal generator <2>
 - 01: Bugfix #988: Syntax error in Structorizer.bat and Arranger.bat fixed <2>
 - 01: Bugfix #989: Expressions in EXIT elements (e.g. return) were forgotten
@@ -140,6 +140,10 @@ Current development version 3.32-12 (2023-09-15)
 - 12: Bugfix #1083 Undue error message on batch import with "-p Pascal ..."<2>
 - 12: Bugfix #1085 Defective handling of included typedefs on C import <2>
 - 12: Bugfix #1086 Incomplete group on source import with two routines <2>
+- 12: Bugfix #1089 C99 import support for 1. struct initializers with named
+      components, 2. typedefs with anonymous enum specifications, 3. typedefs
+      with anonymous struct specifications, 4. typedefs defining more than
+      one typeid <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>

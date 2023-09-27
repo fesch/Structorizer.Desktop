@@ -58,10 +58,10 @@ package lu.fisch.structorizer.elements;
  *      arrays of records etc.). Maybe the multi-level index ranges could evene be preserved if the intermediate
  *      levels are of no individual meaning, though this obviously complicates type comparability.
  *      
- *      Further on, the use of the same structure for type definitions which may be shard among variables
- *      provoked an inconsistency: the sets of defining and modifying elements are misleading fpr shared type
+ *      Further on, the use of the same structure for type definitions which may be shared among variables
+ *      provoked an inconsistency: the sets of defining and modifying elements are misleading for shared type
  *      entries.
- *      In the event there should be a (recursive) type table withiut references to modifying elements
+ *      In the event there should be a (recursive) type table without references to modifying elements
  *      and a separate map from variable names to entries, which collect data over the live cycle of the
  *      variable where one of the data items is a type link (or a list of type links, wth a declaring element
  *      each). The type entry itself will only need a link to the (first) defining element. 
@@ -149,9 +149,9 @@ public class TypeMapEntry {
 		 * {@link Root} constants map by the caller.<br/>
 		 * Usually, you should not call this directly but use one of the {@link TypeMapEntry}
 		 * constructors or methods referred to below.
-		 * @param _descriptor
-		 * @param _element
-		 * @param _lineNo
+		 * @param _descriptor - the type description from the Element text
+		 * @param _element - the {@link Element} this declaration (or definition) originates from
+		 * @param _lineNo - the line number of the description within the unbroken Element text
 		 * @see VarDeclaration#VarDeclaration(String, Element, int, LinkedHashMap)
 		 * @see TypeMapEntry#TypeMapEntry(String, String, HashMap, Element, int, boolean, boolean)
 		 * @see TypeMapEntry#addDeclaration(String, Element, int, boolean)
@@ -213,7 +213,7 @@ public class TypeMapEntry {
 		 * Usually, you should not call this directly but use one of the {@link TypeMapEntry}
 		 * constructors or methods referred to below.
 		 * @param _descriptor - textual description of the type
-		 * @param _element - originating element (should be an Instruction with a type definition)
+		 * @param _element - originating {@link Element} (should be an {@link Instruction} with a type definition)
 		 * @param _lineNo - line no within the element
 		 * @param _components - the ordered map of declared components
 		 * @see VarDeclaration#VarDeclaration(String, Element, int)

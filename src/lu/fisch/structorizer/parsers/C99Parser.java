@@ -58,6 +58,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2019-03-29      KGU#702: Index range exception in method getPointers() fixed.
  *      Kay Gürtzig     2019-11-18      Enh. #739: Direct enum type import
  *      Kay Gürtzig     2020-03-09      Issue #835: Revised mechanism for the insertion of optional structure keywords
+ *      Kay Gürtzig     2023-09-27      Bugfix #1089.2-4 three flaws on typedef imports
  *
  ******************************************************************************************************
  *
@@ -1744,6 +1745,11 @@ public class C99Parser extends CPreParser
 			}
 			if (_asTypeDef) {
 				content = "type " + id + " = " + _type;
+				// START KGU#1080b 2023-09-27: Bugfix #1089.2 Avoid redundant entries
+				if (id.equals(_type)) {
+					content = "";
+				}
+				// END KGU#1080b 2023-09-27
 			}
 			else if (isConstant) {
 				content = "const " + id + ": " + _type;
@@ -1763,7 +1769,10 @@ public class C99Parser extends CPreParser
 				}
 				content += " <- " + expr;
 			}
-			if (_parentNode != null) {
+			// START KGU#1080b 2023-09-27: Bugfix #1089.2 Suppress empty elements
+			//if (_parentNode != null) {
+			if (_parentNode != null && !content.isEmpty()) {
+			// END KGU#1080b 2023-09-27
 				Element instr = new Instruction(translateContent(content));
 				if (_comment != null) {
 					instr.setComment(_comment);
@@ -1917,10 +1926,16 @@ public class C99Parser extends CPreParser
 							if (structRed.size() == 4) {
 								// <StructOrUnion> '{' <StructDeclnList> '}'
 								// It is actually totally ambiguous, in which of the reductions the identifier occurs! 
-								if (isTypedef && _initDeclRed != null || !(type = getContent_R(_reduction.get(1).asReduction(), "")).trim().isEmpty()) {
+								if (isTypedef && _initDeclRed != null || !(type = getContent_R(_reduction.get(1).asReduction(), "").trim()).isEmpty()) {
 									// FIXME: We must separate indices and pointers
 									if (_initDeclRed != null) {
-										type = getContent_R(_initDeclRed, "").trim();
+										// START KGU#1080d 2023-09-27 Bugfix #1089.4 Substitute only if unique
+										//type = getContent_R(_initDeclRed, "").trim();
+										type = String.format("AnonStruct%1$03d", typeCount++);
+										if (_initDeclRed.getParent().getTableIndex() != RuleConstants.PROD_INITDECLLIST_COMMA) {
+											type = getContent_R(_initDeclRed, "").trim();
+										}
+										// END KGU#1080.d 2023-09--27
 									}
 									if (MATCH_PTR_DECL.reset(type).matches()) {
 										ptrs = MATCH_PTR_DECL.group(1).trim();
@@ -1962,11 +1977,15 @@ public class C99Parser extends CPreParser
 					case RuleConstants.PROD_TYPESPECIFIER2:	// rather unlikely (represented by one of the following)
 						// <Type Specifier> ::= <Enumerator Spec>
 					case RuleConstants.PROD_ENUMERATORSPEC_ENUM_IDENTIFIER_LBRACE_RBRACE:
+						// <Enumerator Spec> ::= enum Identifier '{' <EnumList> '}'
 					case RuleConstants.PROD_ENUMERATORSPEC_ENUM_IDENTIFIER_LBRACE_COMMA_RBRACE:
+						// <Enumerator Spec> ::= enum Identifier '{' <EnumList> ',' '}'
 					case RuleConstants.PROD_ENUMERATORSPEC_ENUM_LBRACE_RBRACE:
+						// <Enumerator Spec> ::= enum '{' <EnumList> '}'
 					case RuleConstants.PROD_ENUMERATORSPEC_ENUM_LBRACE_COMMA_RBRACE:
+						// <Enumerator Spec> ::= enum '{' <EnumList> ',' '}'
 					{
-						// FIXME actual enum type support? Define the constants at least
+						// actual enum type support
 						String typeName = null;
 						int ixEnum = 3;
 						if (prefixId == RuleConstants.PROD_ENUMERATORSPEC_ENUM_LBRACE_COMMA_RBRACE
@@ -2029,6 +2048,28 @@ public class C99Parser extends CPreParser
 							if (names.count() > 10) {
 								sepa = ",\\\n";
 							}
+							// START KGU#1080b 2023-09-27: Bugfix #1089.2 Try to fetch the typeid
+							if (typeName == null) {
+								// enum '{' <EnumList> [','] '}'
+								// It is actually rather ambiguous, in which of the reductions the identifier occurs!
+								if (isTypedef && _initDeclRed != null || !(typeName = getContent_R(_reduction.get(1).asReduction(), "").trim()).isEmpty()) {
+									// We must separate indices and pointers
+									if (_initDeclRed != null) {
+										if (_initDeclRed.getParent().getTableIndex() != RuleConstants.PROD_INITDECLLIST_COMMA) {
+											typeName = getContent_R(_initDeclRed, "").trim();
+										}
+										else {
+											// More than one defined typeids - don't substitute.
+											typeName = "[";	// Makes it invalid without causing NullPointerException
+										}
+									}
+									if (typeName.indexOf('[') >= 0
+											|| MATCH_PTR_DECL.reset(typeName).matches()) {
+										typeName = null;
+									}
+								}
+							}
+							// END KGU#1080b 2023-09-27
 							if (typeName == null) {
 								typeName = "Enum" + Math.abs(System.nanoTime());
 							}
@@ -2042,12 +2083,26 @@ public class C99Parser extends CPreParser
 							enumDef.setColor(colorConst);
 							_parentNode.addElement(enumDef);
 						}
-						_typeSpecs.add("int");
+						// START KGU#1080c 2023-09-27: Bugfix #739,#1089.3 Defective enum type support
+						//_typeSpecs.add("int");
+						if (typeName == null) {
+							_typeSpecs.add("int");	// Shouldn't happen anymore
+						}
+						else {
+							_typeSpecs.add(typeName);
+						}
+						// END KGU#1080c 2023-09-27
 					}	
 						break;
 					case RuleConstants.PROD_ENUMERATORSPEC_ENUM_IDENTIFIER:
-						// FIXME actual enum type support?
-						_typeSpecs.add("int");
+						// <Enumerator Spec> ::= enum Identifier
+						// START KGU#1080c 2023-09-27: Bugfix #739,#1089.3 Defective enum type support
+						//_typeSpecs.add("int");
+					{
+						String typeid = prefix.asReduction().get(1).asString();
+						_typeSpecs.add(typeid);
+					}
+						// END KGU#1080c
 						break;
 					case RuleConstants.PROD_TYPEDEFNAME_USERTYPEID:
 						// <Typedef Name> ::= UserTypeId
@@ -2063,6 +2118,7 @@ public class C99Parser extends CPreParser
 							_typeSpecs.add(getContent_R(prefix.asReduction(), "").trim());
 						}
 						else {
+							// FIXME Debug print?
 							System.out.println("C99Parser.getDeclSpecifiers() default - Type specifier: " + prefix.asReduction().getParent().getTableIndex());
 						}
 					}
@@ -2086,8 +2142,8 @@ public class C99Parser extends CPreParser
 	 * @param _arrays - a {@link StringList} to be filled with the postfix (right of the identifier)
 	 * @param _asPascal - a {@link StringList} to be filled with a Pascal like type specification
 	 * @param _parentNode - a {@link Subqueue} to append possible type definitions to 
-	 * @param _declListRed TODO
-	 * @return the isolated identifier or null of ther is none oder if it's ambiguous.
+	 * @param _declListRed - possibly a reduction representing the outer context (i.e. {@code <DelarationList>})
+	 * @return the isolated identifier or null of there is none oder if it's ambiguous.
 	 * @throws ParserCancelled 
 	 */
 	String getDeclarator(Reduction _reduction, StringList _pointers, StringList _arrays, StringList _asPascal, Subqueue _parentNode, Reduction _declListRed) throws ParserCancelled
