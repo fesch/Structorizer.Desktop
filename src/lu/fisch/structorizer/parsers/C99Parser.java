@@ -59,6 +59,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2019-11-18      Enh. #739: Direct enum type import
  *      Kay Gürtzig     2020-03-09      Issue #835: Revised mechanism for the insertion of optional structure keywords
  *      Kay Gürtzig     2023-09-27      Bugfix #1089.2-4 three flaws on typedef imports
+ *      Kay Gürtzig     2023-09-28      Issue #1091: Correct handling of alias, enum, and array type definitions
  *
  ******************************************************************************************************
  *
@@ -756,8 +757,10 @@ public class C99Parser extends CPreParser
 			else if (
 					// Variable declaration with or without initialization? Might also be a typedef though!
 					ruleId == RuleConstants.PROD_DECLARATION_SEMI
+					// <Declaration> ::= <Decl Specifiers> <InitDeclList> ';'
 					||
 					ruleId == RuleConstants.PROD_DECLARATION_SEMI2
+					// <Declaration> ::= <Decl Specifiers> ';'
 					)
 			{
 				// If declaration import is allowed then we make an instruction in
@@ -1197,7 +1200,7 @@ public class C99Parser extends CPreParser
 	 * @return {@link StringList} of the declaration strings in Structorizer syntax
 	 * @throws ParserCancelled 
 	 */
-	StringList getDeclsFromDeclList(Reduction _declRed) throws ParserCancelled
+	private StringList getDeclsFromDeclList(Reduction _declRed) throws ParserCancelled
 	{
 		// FIXME!
 		StringList decls = new StringList();
@@ -1272,7 +1275,7 @@ public class C99Parser extends CPreParser
 	 * @return
 	 * @throws ParserCancelled 
 	 */
-	String getTypeSpec(Reduction _declSpecRed) throws ParserCancelled {
+	private String getTypeSpec(Reduction _declSpecRed) throws ParserCancelled {
 		// FIXME: Drop superfluous stuff
 		StringList parts = new StringList();
 		while (_declSpecRed.getParent().getHead().toString().equals("<Decl Specifiers>")) {
@@ -1656,7 +1659,7 @@ public class C99Parser extends CPreParser
 	 * @param _parentNode - the {@link Subqueue} the built Instruction is to be appended to or null
 	 * @param _comment - a retrieved source code comment to be placed in the element or null
 	 * @param _forceDecl - if a declaration must be produced (e.g. in case of a struct type)
-	 * @param _asTypeDef - if a type definitin is to be created
+	 * @param _asTypeDef - if a type definition is to be created
 	 * @return the built declaration or assignment
 	 * @throws ParserCancelled 
 	 */
@@ -1801,9 +1804,19 @@ public class C99Parser extends CPreParser
 				else if (expr == null && !_asTypeDef) {
 					instr.setColor(colorDecl);	// local declarations with a smooth green
 				}
-				if (_asTypeDef && expr != null) {
-					instr.setColor(Color.RED);
+				// START KGU#1080/KGU#1081 2023-09-28: Bugfix #1089/#1091 We must register aliases
+				//if (_asTypeDef && expr != null) {
+				//	instr.setColor(Color.RED);
+				//}
+				if (_asTypeDef) {
+					if (expr == null) {
+						instr.updateTypeMap(typeMap);
+					}
+					else {
+						instr.setColor(Color.RED);
+					}
 				}
+				// END KGU#1080/KGU#1081 2023-09-28
 				// Constant colour has priority
 				if (isConstant && !_asTypeDef) {
 					instr.setColor(colorConst);
@@ -1890,6 +1903,7 @@ public class C99Parser extends CPreParser
 				}
 				break;
 			case RuleConstants.PROD_DECLSPECIFIERS3:
+				// <Decl Specifiers> ::= <Type Qualifier> <Decl Specs>
 				// START KGU#670 2019-03-01: Bugfix #692 Wrong test let const detection fail
 				//if (prefix.asString().equals("const")) {
 				if (prefix.asString().equals("[const]")) {
@@ -1897,7 +1911,8 @@ public class C99Parser extends CPreParser
 					_typeSpecs.add("const");
 				}
 				break;
-			case RuleConstants.PROD_DECLSPECIFIERS2: // <Decl Specifiers> ::= <Type Specifier> <Decl Specs>
+			case RuleConstants.PROD_DECLSPECIFIERS2:
+				// <Decl Specifiers> ::= <Type Specifier> <Decl Specs>
 				if (prefix.getType() == SymbolType.NON_TERMINAL) {
 					int prefixId = prefix.asReduction().getParent().getTableIndex();
 					switch (prefixId) {
@@ -1953,7 +1968,7 @@ public class C99Parser extends CPreParser
 							}
 							else {
 								// <StructOrUnion> Identifier '{' <StructDeclnList> '}'
-								// FIXME: Is this a NON_TERMINAL, such hat we should use getContent_R()?
+								// FIXME: Is this a NON_TERMINAL, such that we should use getContent_R()?
 								type = structRed.get(1).asString();
 							}
 							StringList components = getCompsFromStructDef(structRed.get(structRed.size()-2).asReduction());
@@ -2077,11 +2092,14 @@ public class C99Parser extends CPreParser
 									StringList.explode("type " + typeName + " = enum{" + names.concatenate(sepa) + "}", "\n"));
 							// END KGU#542 2019-11-18
 							this.equipWithSourceComment(enumDef, prefix.asReduction());
-							if (typeName != null) {
-								enumDef.getComment().add("Enumeration type " + typeName);
-							}
+							//if (typeName != null) {
+							//	enumDef.getComment().add("Enumeration type " + typeName);
+							//}
 							enumDef.setColor(colorConst);
 							_parentNode.addElement(enumDef);
+							// START KGU#1080/KGU#1081 2023-09-28: Bugfix #1089/#1091
+							enumDef.updateTypeMap(typeMap);
+							// END KGU#1080/KGU#1089
 						}
 						// START KGU#1080c 2023-09-27: Bugfix #739,#1089.3 Defective enum type support
 						//_typeSpecs.add("int");

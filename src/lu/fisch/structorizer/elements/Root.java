@@ -179,6 +179,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2021-12-13      Bugfix #1025: Lacking evaluation of binary, octal and hexadecimal literals in check 27
  *      Kay Gürtzig     2022-01-04      Bugfix #1026: Analyser defect on broken lines in Jump or Instruction elements
  *      Kay Gürtzig     2022-09-27      Bugfix #1071: Less vague Analyser check 11 (assignment error)
+ *      Kay Gürtzig     2023-09-28      Issue #1091: Analyser no longer rejects alias and array type definitions
  *      
  ******************************************************************************************************
  *
@@ -4984,17 +4985,7 @@ public class Root extends Element {
 								// Clear off array specifiers, but the check is still too restrictive...
 								if (type != null) {
 									type = type.trim();
-									String typeLower;
-									if (type.endsWith("]") && type.contains("[")) {
-										type = type.substring(0, type.indexOf("[")).trim();
-									}
-									else if ((typeLower = type.toLowerCase()).startsWith("array") && typeLower.contains("of ")) {
-										type = type.substring(typeLower.lastIndexOf("of ")+3).trim();
-									}
-									if (!TypeMapEntry.isStandardType(type) && !_types.containsKey(":" + type) && !type.equals(typename)) {
-										//error  = new DetectedError("Type name «" + type + "» is illegal or unknown.", _instr);
-										addError(_errors, new DetectedError(errorMsg(Menu.error24_4, type), _instr), 24);								
-									}
+									checkArrayType(_instr, _errors, _types, typename, type);
 								}
 							}
 						// START KGU#542 2019-11-17: Enh. #739 support enum types now
@@ -5002,11 +4993,20 @@ public class Root extends Element {
 						// END KGU#542 2019-11-17
 					// START KGU#543 2018-07-05 - check if it is a valid type reference
 					}
-					else if (Function.testIdentifier(typeSpec, false, null) && !_types.containsKey(":" + typeSpec)) {
+					// START KGU#1081 2023-09-28: Issue #1091 allow aliases of base types
+					//else if (Function.testIdentifier(typeSpec, false, null) && !_types.containsKey(":" + typeSpec)) {
+					else if (Function.testIdentifier(typeSpec, false, null) && !_types.containsKey(":" + typeSpec) && !TypeMapEntry.isStandardType(typeSpec)) {
+					// END KGU#1081 2023-09-28
 						//error  = new DetectedError("Type name «" + type + "» is illegal or unknown.", _instr);
-						addError(_errors, new DetectedError(errorMsg(Menu.error24_4, typeSpec), _instr), 24);														
+						addError(_errors, new DetectedError(errorMsg(Menu.error24_4, typeSpec), _instr), 24);
 					}
 					// END KGU#543 2018-07-05
+					// START KGU#1081 2023-09-28: Enh. #1091 Allow array types
+					else if (typeSpec.equalsIgnoreCase("array")
+							|| TypeMapEntry.MATCHER_ARRAY.reset(typeSpec).matches()) {
+						checkArrayType(_instr, _errors, _types, typename, typeSpec);
+					}
+					// END KGU#1081 2023-09-28
 				}
 			}
 			// END KGU#388 2017-09-13
@@ -5076,6 +5076,29 @@ public class Root extends Element {
 		// START KGU#388 2017-09-17: Enh. #423 record analysis support
 		_instr.updateTypeMap(_types);
 		// END KGU#388 2017-09-17
+	}
+	
+	/**
+	 * Checks valid array type specification (as submethod for analyse_22_24).
+	 * @param _instr - originating {@link Instruction} element
+	 * @param _errors - gloabl error list
+	 * @param _types - type definitions (key starting with ":") and declarations so far
+	 * @param typename - 
+	 * @param type
+	 */
+	private void checkArrayType(Instruction _instr, Vector<DetectedError> _errors, HashMap<String, TypeMapEntry> _types,
+			String typename, String type) {
+		String typeLower;
+		if (type.endsWith("]") && type.contains("[")) {
+			type = type.substring(0, type.indexOf("[")).trim();
+		}
+		else if ((typeLower = type.toLowerCase()).startsWith("array") && typeLower.contains("of ")) {
+			type = type.substring(typeLower.lastIndexOf("of ")+3).trim();
+		}
+		if (!TypeMapEntry.isStandardType(type) && !_types.containsKey(":" + type) && !type.equals(typename)) {
+			//error  = new DetectedError("Type name «" + type + "» is illegal or unknown.", _instr);
+			addError(_errors, new DetectedError(errorMsg(Menu.error24_4, type), _instr), 24);
+		}
 	}
 
 	/**
