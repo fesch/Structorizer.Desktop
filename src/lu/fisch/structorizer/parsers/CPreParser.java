@@ -49,7 +49,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2021-02-12      Bugfix #556 Slash workaround for StreamTokenizer was defective itself
  *      Kay Gürtzig     2023-09-12      Bugfix #1085 Type definitions from header files weren't correctly handled
  *      Kay Gürtzig     2023-09-15      Issue #809: Conversion of return elements in main diagrams to exit elements
- *      Kay Gürtzig     2023-09-27      Bugfix #1089.1: Support for struct initializers with named components
+ *      Kay Gürtzig     2023-09-27/28   Bugfix #1089.1: Support for struct initializers with named components
  *
  ******************************************************************************************************
  *
@@ -1598,26 +1598,30 @@ public abstract class CPreParser extends CodeParser
 		// END KGU#1080a 2023-09-27
 			int ix = 0;
 			_expr = _typeName + "{";
-			// START KGU#1080a 2023-09-27 Bugfix #1089.1 check for named assignments
+			// START KGU#1080a 2023-09-27 Bugfix #1089.1 check for named component assignments
+			// Once a named component has occurred we will handle subsequent unnamed ones differently
 			boolean named = false;
 			// END KGU#1080a 2023-09-27
 			for (Entry<String, TypeMapEntry> comp: compInfo.entrySet()) {
 				String part = parts.get(ix).trim();
 				// Check for recursive structure initializers
 				TypeMapEntry compType = comp.getValue();
-				// START KGU#1080a 2023-09-27 Bugfix #1089.1 check for named assignments
+				// START KGU#1080a 2023-09-27 Bugfix #1089.1 check for named component assignments
 				String compName = comp.getKey();
 				if (part.startsWith(".")) {
 					named = true;
 					StringList sides = Element.splitExpressionList(part, "<-");
 					if (sides.count() == 2 && compInfo.containsKey(compName = sides.get(0).trim().substring(1))) {
+						// This can be converted directly, so 
 						compType = compInfo.get(compName);
 						part = sides.get(1).trim();
 					}
 				}
 				else if (named) {
-					// Skip any unnamed component initialisation from now on
-					continue;
+					// Shall we ignore unnamed component initialisation from now on?
+					//continue;
+					// Seems better just to suppress the component name (to preserve info)
+					compName = null;
 				}
 				// END KGU#1080a 2023-09-27
 				if (part.startsWith("{") && part.endsWith("}") &&
@@ -1625,7 +1629,11 @@ public abstract class CPreParser extends CodeParser
 					part = convertStructInitializer(compType.typeName, part, compType);
 				}
 				// START KGU#1080a 2023-09-27 Bugfix #1089.1 care for named assignments
-				_expr += compName + ": " + part;
+				//_expr += comp.getKey() + ": " + part;
+				if (compName != null) {
+					_expr += compName + ": ";
+				}
+				_expr += part;
 				// END KGU#1080a 2023-09-27
 				if (++ix >= nParts) {
 					// Append the expression list tail
