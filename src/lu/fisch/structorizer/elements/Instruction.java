@@ -73,6 +73,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2021-02-04      Enh. #905, #926: Warning symbol for hidden declarations, support for backlink
  *      Kay Gürtzig     2021-02-26      Bugfix #946: Endless loop in getAssignedVarname()
  *      Kay Gürtzig     2021-11-02      Bugfix #1014: Detection of java array declarations was flawed
+ *      Kay Gürtzig     2021-09-28      Issue #1091: Type definition detection mended (aliases and array types)
  *
  ******************************************************************************************************
  *
@@ -922,7 +923,9 @@ public class Instruction extends Element {
 	 * c) type &lt;id&gt; = record{ &lt;type&gt; &lt;id&gt; {, &lt;id&gt;}; {; &lt;type&gt; &lt;id&gt; {, &lt;id&gt;}} };<br>
 	 * d)...f) same as a)...c) but with struct instead of record;<br/>
 	 * g) type &lt;id&gt; = enum{ &lt;id&gt [ = &lt;value&gt; ] {, &lt;id&gt [ = &lt;value&gt; ]} };<br/>
-	 * h) type &lt;id&gt; = &lt;type&gt.<br/>
+	 * h) type &lt;id&gt; = &lt;type&gt;;<br/>
+	 * i) type &lt;id&gt; = array [...] of &lt;type&gt;;<br/>
+	 * j) type &lt;id&gt; = &lt;typeid&gt[...].<br/>
 	 * @param line - String comprising one line of code
 	 * @return true iff line is of one of the forms a) through e)
 	 * @see #isTypeDefinition(String, HashMap)
@@ -941,7 +944,9 @@ public class Instruction extends Element {
 	 * c) type &lt;id&gt; = record{ &lt;type&gt; &lt;id&gt; {, &lt;id&gt;}; {; &lt;type&gt; &lt;id&gt; {, &lt;id&gt;}} };<br/>
 	 * d)...f) same as a)...c) but with struct instead of record;<br/>
 	 * g) type &lt;id&gt; = enum{ &lt;id&gt [ = &lt;value&gt; ] {, &lt;id&gt [ = &lt;value&gt; ]} };<br/>
-	 * h) type &lt;id&gt; = &lt;type&gt.<br/>
+	 * h) type &lt;id&gt; = &lt;typeid&gt;;<br/>
+	 * i) type &lt;id&gt; = array [...] of &lt;type&gt;;<br/>
+	 * j) type &lt;id&gt; = &lt;typeid&gt[...].<br/>
 	 * Type names and descriptions &lt;type&gt; are checked against existing types in {@code typeMap} if given.
 	 * @param line - String comprising one line of code
 	 * @param typeMap - if given then the type name must have been registered in typeMap in order to be accepted (otherwise
@@ -965,15 +970,28 @@ public class Instruction extends Element {
 		// FIXME why would we allow to define multi-word type names?
 		String typename = tokens.concatenate("", 1, posDef).trim();
 		tokens = tokens.subSequence(posDef+1, tokens.count());
+		// START KGU#1081 2023-09-28: Enh. #1091 Accept array type definitions
+		String typeDescr = tokens.concatenate().trim();
+		boolean isArray = typeDescr.matches("\\w+\\s*\\[.*\\].*")
+				|| typeDescr.equalsIgnoreCase("array")
+				|| typeDescr.matches("^" + BString.breakup("array", false) + "((\\s*(\\[.*?\\]\\s*)+)|\\s+)" + BString.breakup("of", false) + "\\W.*");
+		// END KGU#1081 2023-09-28
 		tokens.removeAll(" ");
-		String tag = tokens.get(0).toLowerCase();
+		// START KGU#1081 2023-09-28: Enh. #1091 The type existence test is not case-ignorant
+		//String tag = tokens.get(0).toLowerCase();
+		String tag = tokens.get(0);
+		// END KGU#1081 2023-09-28
 		return Function.testIdentifier(typename, false, null) &&
 				// START KGU#542 2019-11-17: Enh. #739 - also consider enumeration types
 				//((tag.equals("record") || tag.equals("struct")) && tokens.get(1).equals("{") && tokens.get(tokens.count()-1).equals("}")
-				((tag.equals("record") || tag.equals("struct") || tag.equals("enum")) && tokens.get(1).equals("{") && tokens.get(tokens.count()-1).equals("}")
+				((tag.equalsIgnoreCase("record") || tag.equalsIgnoreCase("struct") || tag.equalsIgnoreCase("enum"))
+						&& tokens.get(1).equals("{") && tokens.get(tokens.count()-1).equals("}")
 				// END KGU#542 2019-11-17
-				|| tokens.count() == 1 && (typeMap != null && typeMap.containsKey(":" + tag) || typeMap == null && Function.testIdentifier(tag, false, null)));
-		
+				// START KGU#1081 2023-09-28 Enh. #1091 also accept array type definitions
+				//|| tokens.count() == 1 && (typeMap != null && typeMap.containsKey(":" + tag) || typeMap == null && Function.testIdentifier(tag, false, null)));
+				|| isArray
+				|| tokens.count() == 1 && (typeMap != null && (typeMap.containsKey(":" + tag) || TypeMapEntry.isStandardType(tag)) || typeMap == null && Function.testIdentifier(tag, false, null)));
+				// END KGU#1081 2023-09-28
 	}
 	/** @return true if all non-empty lines comply to {@link #isTypeDefinition(String)} */
 	public boolean isTypeDefinition()
@@ -1285,9 +1303,22 @@ public class Instruction extends Element {
 				}
 				// END KGU#542 2019-1-17
 			}
+			// START KGU#1081 2023-09-28: Enh. #1091 Accept array type definitions
+			else if (typeSpec.equalsIgnoreCase("array")
+					|| TypeMapEntry.MATCHER_ARRAY.reset(typeSpec).matches()) {
+				typeMap.put(":" + typename, new TypeMapEntry(typeSpec, typename, typeMap, this, lineNo, false, true));
+			}
+			// END KGU#1081 2023-09-28
 			else {
-				// According to isTypeefinition() this must now be an alias for an existing type
-				typeMap.put(":" + typename, typeMap.get(":" + tokens.get(3)));
+				// According to isTypeDefinition() this must now be an alias for an existing type
+				// START KGU#1081 2023-09-28: Issue #1091 Aliases for standard types didn't work
+				//typeMap.put(":" + typename, typeMap.get(":" + tokens.get(3)));
+				TypeMapEntry refType = typeMap.get(":" + tokens.get(3));
+				if (refType == null) {
+					refType = new TypeMapEntry(tokens.get(3), typename, typeMap, this, lineNo, false, true);
+				}
+				typeMap.put(":" + typename, refType);
+				// END KGU#1081 2023-09-28
 			}
 		}
 		// END KGU#388 2017-08-07

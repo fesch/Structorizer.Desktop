@@ -137,7 +137,8 @@
  *      Kay Gürtzig     2021-06-07  Enh. #953: Translations for new generator plugin options added
  *      Kay Gürtzig     2021-10-31  Enh. #967, #1007 Texts for ARM-specific export options added
  *      Kay Gürtzig     2022-08-21  Enh. #1066: Caption and tooltip for InputBox.lblSuggest
- *
+ *      Kay Gürtzig     2022-09-29  Bugfix #1072: New message InputBoxFor.msgIllegalWordInField added
+ *      Kay Gürtzig     2023-08-01  Enh. #1082: Function name incuded in messages Menu.error13_* *
  ******************************************************************************************************
  *
  *      Comment:
@@ -518,8 +519,8 @@ Menu.error10_5.text=Un elemento de @a no debe mezclar definiciones de constantes
 Menu.error10_6.text=Un elemento de @a no debe mezclar definiciones de tipos con otras instrucciones.
 Menu.error11.text=Probablemente cometiste un error de asignación. ¡Por favor comprueba esta instrucción!
 Menu.error12.text=El parámetro «%» debe comenzar con la letra "p" seguido únicamente de letras MAYUSCULAS.
-Menu.error13_1.text=¡La función no retorna ningún resultado!
-Menu.error13_2.text=¡Su función no siempre retorna un resultado!
+Menu.error13_1.text=¡La función «%» no retorna ningún resultado!
+Menu.error13_2.text=¡La función «%» no siempre retorna un resultado!
 Menu.error13_3.text=¡La función emplea diferentes métodos para retornar un valor a la vez: «%»!
 Menu.error14_1.text=¡Los componentes separados no se convienen con el texto del encabiezamiento!
 Menu.error14_2.text=¡El paso «%» del bucle @e no es una constante entera!
@@ -822,6 +823,7 @@ InputBoxFor.msgEnsureVariableIsArray.text=¿Cierto que <%> designa un array?
 InputBoxFor.msgEnterValueList.text=Inserte la lista de valores para el bucle.
 InputBoxFor.msgDiscardData.text=¡Alterando el estilo del bucle la mayoría de los datos se va a perder!%¿Cierto que quiere abandonar los datos?
 InputBoxFor.msgAttention.text=¡CUIDADO!
+InputBoxFor.msgIllegalWordInField.text=¡La casilla "%1" no debe contener la palabra clave «%2»!
 
 -----[ InputBox Root ]-----
 InputBoxRoot.title[elementType:Root]=Editar @n

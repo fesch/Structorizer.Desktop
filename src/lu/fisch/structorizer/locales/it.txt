@@ -71,7 +71,7 @@
  *      Kay Gürtzig     2018-08-03      Enh. #577: OutputConsole keys renamed and new messages added
  *      Kay Gürtzig     2019-06-16      Enh. #373: Translations for Find & Replace dialog added
  *      A. Simonetta    2021-03-06      Substantial progress in filling the gaps
- *
+ *      Kay Gürtzig     2023-08-01      Enh. #1082: Function name incuded in messages Menu.error13_* *
  ******************************************************************************************************
  *
  *      Comment:	
@@ -450,8 +450,8 @@ Menu.error10_5.text=Una singola @{Instruction} non potrebbe contenere definizion
 Menu.error10_6.text=Un singolo elemento di istruzione non dovrebbe mischiare la definizione del tipo con altre istruzioni!
 Menu.error11.text=Hai probabilmente commesso un errore di assegnamento. Leggi questa @{Instruction}!
 Menu.error12.text=Il parametro «%» deve iniziare con la lettera "p" seguita da sole lettere maiuscole!
-Menu.error13_1.text=La tua funzione non ritorna alcun valore!
-Menu.error13_2.text=La tua funzione potrebbe non ritornare alcun risultato!
+Menu.error13_1.text=La tua funzione «%» non ritorna alcun valore!
+Menu.error13_2.text=La tua funzione «%» potrebbe non ritornare alcun risultato!
 Menu.error13_3.text=La tua funzione sembra usare diversi meccanismi di return in competizione: «%»!
 Menu.error14_1.text=Parametri del ciclo @{For} non sono consistenti con la intestazione dello medesimo!
 Menu.error14_2.text=Il passo del ciclo @{For} non è una costante intera!

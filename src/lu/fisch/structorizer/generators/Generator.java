@@ -123,6 +123,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2022-08-12      Issue #1047: Bug in deriveCodeFileName() fixed
  *      Kay Gürtzig     2022-08-14      Issues #441, #1047: usesTurtleizer must be reset at the beginning of exportCode
  *      Kay Gürtzig     2022-08-23      Issue #1068: Auxiliary method transformIndexLists(StringList) added
+ *      Kay Gürtzig     2023-09-28      Bugfix #1092: Sensible export of alias type definitions enabled
  *
  ******************************************************************************************************
  *
@@ -1900,13 +1901,20 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * 
 	 * @param typeInfo - the defining or derived TypeMapInfo of the type 
 	 * @param definingType - the enclosing type just being defined or null
+	 * @param preferName - whether the type name is to be preferred over the structure
 	 * @return a String suited as type description in declarations etc. of the
 	 *      target language 
 	 */
-	protected String transformTypeFromEntry(TypeMapEntry typeInfo, TypeMapEntry definingType) {
+	// START KGU#1082 2023-09-28: Bugfix #1092 Sensible handling of alias types
+	//protected String transformTypeFromEntry(TypeMapEntry typeInfo, TypeMapEntry definingType) {
+	//	// Just a dummy, to be overridden by subclasses
+	//	return typeInfo.getCanonicalType(true, true);
+	//}
+	protected String transformTypeFromEntry(TypeMapEntry typeInfo, TypeMapEntry definingType, boolean preferName) {
 		// Just a dummy, to be overridden by subclasses
-		return typeInfo.getCanonicalType(true, true);
+		return typeInfo.getCanonicalType(true, preferName);
 	}
+	// END KGU#1082 2023-09-28
 	// END KGU#388 2017-09-26
 	
 	// START KGU#261 2017-01-26: Enh. #259/#335

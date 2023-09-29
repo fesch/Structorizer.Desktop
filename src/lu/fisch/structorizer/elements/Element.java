@@ -304,7 +304,7 @@ public abstract class Element {
 	public static final long E_HELP_FILE_SIZE = 12300000;
 	public static final String E_DOWNLOAD_PAGE = "https://www.fisch.lu/Php/download.php";
 	// END KGU#791 2020-01-20
-	public static final String E_VERSION = "3.32-11";
+	public static final String E_VERSION = "3.32-12";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -938,7 +938,7 @@ public abstract class Element {
 	 * Generic diagram traversal to be called with an IElementVisitor implementor
 	 * in order to gather information or to modify the status of this Element and
 	 * all its substructure.
-	 * The _visitor may break the traveral on any visit.
+	 * The _visitor may break the traversal on any visit.
 	 * 
 	 * @param _visitor - the visiting instance (must have access to the required
 	 *          attributes or methods, of course)

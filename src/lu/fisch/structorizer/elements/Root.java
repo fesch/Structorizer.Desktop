@@ -178,6 +178,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2021-12-05      Bugfix #1024: Malformed record initializer killed Analyser in check 24
  *      Kay Gürtzig     2021-12-13      Bugfix #1025: Lacking evaluation of binary, octal and hexadecimal literals in check 27
  *      Kay Gürtzig     2022-01-04      Bugfix #1026: Analyser defect on broken lines in Jump or Instruction elements
+ *      Kay Gürtzig     2022-09-27      Bugfix #1071: Less vague Analyser check 11 (assignment error)
+ *      Kay Gürtzig     2023-09-28      Issue #1091: Analyser no longer rejects alias and array type definitions
  *      
  ******************************************************************************************************
  *
@@ -3632,8 +3634,9 @@ public class Root extends Element {
     							String line = lines.get(l);
     							String error = checker.checkSyntax(line, ele, l);
     							if (error != null) {
-    								// FIXME: Fetch the plugin-configured message
-    								addError(_errors, new DetectedError(error.replace("error.syntax", "ARM syntax violation"), ele), -2);
+    								// FIXME: Fetch the plugin-configured messages
+    								addError(_errors, new DetectedError(error.replace("error.syntax", "ARM syntax violation")
+    										.replace("error.lexical", "ARM-unsupported symbol"), ele), -2);
     							}
     						}
     						break;
@@ -4271,6 +4274,25 @@ public class Root extends Element {
 			//if (tokens.contains("<-"))
 			boolean isReturn = tokens.indexOf(returnTokens, 0, !CodeParser.ignoreCase) == 0;
 			// END KGU#297 2016-11-22
+			// START KGU#1063 2022-09-27: Bugfix #1071 too simple check 10
+			boolean isProc = false;
+			// END KGU#1063 2022-09-27
+			
+			// CHECK: wrong multi-line instruction (#10 - new!)	
+			if (tokens.indexOf(inputTokens, 0, !CodeParser.ignoreCase) == 0)
+			{
+				isInput = true;
+			}
+			else if (tokens.indexOf(outputTokens, 0, !CodeParser.ignoreCase) == 0)
+			{
+				isOutput = true;
+			}
+			// START KGU#1063 2022-09-27: Bugfix #1071 too simple check 11
+			else if (tokens.count() > 2) {
+				isProc = Function.testIdentifier(tokens.get(0), false, null) && tokens.get(1).equals("(");
+			}
+			// END KGU#1063 2022-09-27
+			
 			if (tokens.contains("<-") && !isReturn)
 			{
 				// START KGU#375 2017-04-05: Enh. #388
@@ -4290,21 +4312,16 @@ public class Root extends Element {
 			// END KGU#388 2017-09-13
 			// START KGU#297 2016-11-22: Issue #295: Instructions starting with the return keyword must be handled separately
 			//else if (tokens.contains("=="))
-			else if (!isReturn && tokens.contains("==") || isReturn && tokens.contains("<-"))
+			// START KGU#1063 2022-09-27: Bugfix #1071 too simple 
+			//else if (!isReturn && tokens.contains("==") || isReturn && tokens.contains("<-"))
+			else if (!isReturn && !isOutput && !isProc && tokens.contains("==")
+					|| isReturn && tokens.contains("<-"))
+			// END KGU#1063 2022-09-27
 			// END KGU#297 2016-11-22
 			{
+				// FIXME KGU#1063: An equality operator within parentheses is rather not an error
 				//error  = new DetectedError("You probably made an assignment error. Please check this instruction!",(Element) _node.getElement(i));
 				addError(_errors, new DetectedError(errorMsg(Menu.error11,""), ele), 11);
-			}
-			
-			// CHECK: wrong multi-line instruction (#10 - new!)	
-			if (tokens.indexOf(inputTokens, 0, !CodeParser.ignoreCase) == 0)
-			{
-				isInput = true;
-			}
-			if (tokens.indexOf(outputTokens, 0, !CodeParser.ignoreCase) == 0)
-			{
-				isOutput = true;
 			}
 			// END KGU#65/KGU#126 2016-01-06
 
@@ -4968,17 +4985,7 @@ public class Root extends Element {
 								// Clear off array specifiers, but the check is still too restrictive...
 								if (type != null) {
 									type = type.trim();
-									String typeLower;
-									if (type.endsWith("]") && type.contains("[")) {
-										type = type.substring(0, type.indexOf("[")).trim();
-									}
-									else if ((typeLower = type.toLowerCase()).startsWith("array") && typeLower.contains("of ")) {
-										type = type.substring(typeLower.lastIndexOf("of ")+3).trim();
-									}
-									if (!TypeMapEntry.isStandardType(type) && !_types.containsKey(":" + type) && !type.equals(typename)) {
-										//error  = new DetectedError("Type name «" + type + "» is illegal or unknown.", _instr);
-										addError(_errors, new DetectedError(errorMsg(Menu.error24_4, type), _instr), 24);								
-									}
+									checkArrayType(_instr, _errors, _types, typename, type);
 								}
 							}
 						// START KGU#542 2019-11-17: Enh. #739 support enum types now
@@ -4986,11 +4993,20 @@ public class Root extends Element {
 						// END KGU#542 2019-11-17
 					// START KGU#543 2018-07-05 - check if it is a valid type reference
 					}
-					else if (Function.testIdentifier(typeSpec, false, null) && !_types.containsKey(":" + typeSpec)) {
+					// START KGU#1081 2023-09-28: Issue #1091 allow aliases of base types
+					//else if (Function.testIdentifier(typeSpec, false, null) && !_types.containsKey(":" + typeSpec)) {
+					else if (Function.testIdentifier(typeSpec, false, null) && !_types.containsKey(":" + typeSpec) && !TypeMapEntry.isStandardType(typeSpec)) {
+					// END KGU#1081 2023-09-28
 						//error  = new DetectedError("Type name «" + type + "» is illegal or unknown.", _instr);
-						addError(_errors, new DetectedError(errorMsg(Menu.error24_4, typeSpec), _instr), 24);														
+						addError(_errors, new DetectedError(errorMsg(Menu.error24_4, typeSpec), _instr), 24);
 					}
 					// END KGU#543 2018-07-05
+					// START KGU#1081 2023-09-28: Enh. #1091 Allow array types
+					else if (typeSpec.equalsIgnoreCase("array")
+							|| TypeMapEntry.MATCHER_ARRAY.reset(typeSpec).matches()) {
+						checkArrayType(_instr, _errors, _types, typename, typeSpec);
+					}
+					// END KGU#1081 2023-09-28
 				}
 			}
 			// END KGU#388 2017-09-13
@@ -5060,6 +5076,29 @@ public class Root extends Element {
 		// START KGU#388 2017-09-17: Enh. #423 record analysis support
 		_instr.updateTypeMap(_types);
 		// END KGU#388 2017-09-17
+	}
+	
+	/**
+	 * Checks valid array type specification (as submethod for analyse_22_24).
+	 * @param _instr - originating {@link Instruction} element
+	 * @param _errors - gloabl error list
+	 * @param _types - type definitions (key starting with ":") and declarations so far
+	 * @param typename - 
+	 * @param type
+	 */
+	private void checkArrayType(Instruction _instr, Vector<DetectedError> _errors, HashMap<String, TypeMapEntry> _types,
+			String typename, String type) {
+		String typeLower;
+		if (type.endsWith("]") && type.contains("[")) {
+			type = type.substring(0, type.indexOf("[")).trim();
+		}
+		else if ((typeLower = type.toLowerCase()).startsWith("array") && typeLower.contains("of ")) {
+			type = type.substring(typeLower.lastIndexOf("of ")+3).trim();
+		}
+		if (!TypeMapEntry.isStandardType(type) && !_types.containsKey(":" + type) && !type.equals(typename)) {
+			//error  = new DetectedError("Type name «" + type + "» is illegal or unknown.", _instr);
+			addError(_errors, new DetectedError(errorMsg(Menu.error24_4, type), _instr), 24);
+		}
 	}
 
 	/**
@@ -6662,7 +6701,10 @@ public class Root extends Element {
             // END KGU#991 2021-10-03
             {
             	//error  = new DetectedError("Your function does not return any result!",this);
-            	error = new DetectedError(errorMsg(Menu.error13_1,""),this);
+            	// START KGU#1071 2023-08-01: Enh. #1082
+            	//error = new DetectedError(errorMsg(Menu.error13_1,""),this);
+            	error = new DetectedError(errorMsg(Menu.error13_1, programName),this);
+            	// END KGU#1071 2023-08-01
             	addError(errors,error,13);
             }
             // START KGU#991 2021-10-03: Issue #991 case-aware check needed.
@@ -6673,7 +6715,10 @@ public class Root extends Element {
             // END KGU#991 2021-10-03
             {
             	//error  = new DetectedError("Your function may not return a result!",this);
-            	error = new DetectedError(errorMsg(Menu.error13_2,""),this);
+            	// START KGU#1071 2023-08-01: Enh. #1082
+            	//error = new DetectedError(errorMsg(Menu.error13_2,""),this);
+            	error = new DetectedError(errorMsg(Menu.error13_2, programName),this);
+            	// END KGU#1071 2023-08-01
             	addError(errors,error,13);
             }
             // START KGU#78 2015-11-25: Check competitive approaches

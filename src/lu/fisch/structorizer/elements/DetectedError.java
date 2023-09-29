@@ -37,6 +37,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016-07-27      Enh. #207: New general substitutions to support warnings introduced
  *      Kay Gürtzig     2021-01-06/09   Enh. #905: New field to tell hints from errors/warnings, field
  *                                      error renamed to message, new method getMessage() introduced
+ *      Kay Gürtzig     2022-12-21      Deprecation annotation added to getError()
  *
  ******************************************************************************************************
  *
@@ -62,9 +63,10 @@ public class DetectedError
 		/**
 		 * Creates a true error or warning entry with the given text {@code _error}
 		 * associated to Element {@code _ele}
+		 * 
 		 * @param _error - the error or warning message
 		 * @param _ele - the affected {@link Element} (or {@code null} for general
-		 * warnings)
+		 *     warnings)
 		 */
 		public DetectedError(String _error, Element _ele)
 		{
@@ -76,11 +78,12 @@ public class DetectedError
 		/**
 		 * Creates an entry for an error, a warning or a hint with the given text
 		 * {@code _error} associated to Element {@code _ele}
+		 * 
 		 * @param _error - the error or warning message
 		 * @param _ele - the affected {@link Element} (or {@code null} for general
-		 * warnings)
+		 *     warnings)
 		 * @param _isWarning - whether the entry is a true warning (related to an error
-		 * or mode, otherwise it would be treated as a mere tutorial hint)
+		 *     or mode, otherwise it would be treated as a mere tutorial hint)
 		 */
 		public DetectedError(String _error, Element _ele, boolean _isWarning)
 		{
@@ -95,6 +98,7 @@ public class DetectedError
 		/**
 		 * @deprecated Use {@link #getMessage()} instead
 		 */
+		@Deprecated
 		public String getError()
 		{
 			return getMessage();
@@ -108,6 +112,9 @@ public class DetectedError
 		}
 		// END KGU#906 2021-01-09
 		
+		/**
+		 * @return the associated (causing) diagram {@link Element}
+		 */
 		public Element getElement()
 		{
 			return element;
@@ -116,7 +123,7 @@ public class DetectedError
 		// START KGU#906 2021-01-06: Enh. #905
 		/**
 		 * @return {@code true} if this is a regular Analyser complaint, 
-		 * {@code false} in case of a tutorial hint
+		 *    {@code false} in case of a tutorial hint
 		 */
 		public boolean isWarning()
 		{
@@ -152,6 +159,7 @@ public class DetectedError
 		// tester
 		/**
 		 * Compares the messages of {@code this} and {@code _error}.
+		 * 
 		 * @param _error - another instance of this class
 		 * @return {@code true} iff both messages are equal
 		 */

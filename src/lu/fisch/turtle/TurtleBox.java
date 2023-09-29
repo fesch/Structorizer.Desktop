@@ -2519,6 +2519,7 @@ public class TurtleBox implements DelayableDiagramController
      * in integral (!?) degrees
      * @deprecated
      */
+    @Deprecated
     public double getAngleToHome()
     {
         // START #272 2016-10-16 (KGU)

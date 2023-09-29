@@ -56,6 +56,7 @@
  *      Kay Gürtzig     2017-04-05      Additions for enh. #388 and #390 (constant definition checks)
  *      Kay Gürtzig     2018-07-02      KGU#245: all Colors stuff replaced with array keys 
  *      Kay Gürtzig     2022-08-10      Enh. #56, #492: Element name placeholders and TRY blocks considered
+ *      Kay Gürtzig     2023-08-01      Enh. #1082: Function name incuded in messages Menu.error13_*
  *
  ******************************************************************************************************
  *
@@ -246,8 +247,8 @@ Menu.error10_4.text=Pojedynczy blok nie może zawierać jednocześnie instrukcji
 Menu.error10_5.text=Pojedynczy blok nie może zawierać jednocześnie definicji stał i inni instrukcji!
 Menu.error11.text=Prawdopodobny błąd przypisania. Proszę sprawdzić tę instrukcję!
 Menu.error12.text=Argument «%» musi zaczynać się od litery "p" a następne litery powinny być duże!
-Menu.error13_1.text=Twoja funkcja nie ma nadanej wartości!
-Menu.error13_2.text=Twoja funcja nie może zwracać wartości!
+Menu.error13_1.text=Twoja funkcja «%» nie ma nadanej wartości!
+Menu.error13_2.text=Twoja funkcja «%» nie może zwracać wartości!
 Menu.errorLineReference.text= (wiersz %)
 
 -----[ AnalyserPreferences ]-----

@@ -46,6 +46,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2021-02-03      Bugfix #923: Method isNamed() corrected ("unnamed" types are often named "???")
  *      Kay Gürtzig     2022-08-22      Bugfix #1068: Type description inconsistency on declaration comparison
  *      Kay Gürtzig     2022-08-23      Enh. #1066: New method getStandardTypeNames()
+ *      Kay Gürtzig     2023-09-28      Enh. #1091: Facilities for the definition of array types
  *
  ******************************************************************************************************
  *
@@ -58,10 +59,10 @@ package lu.fisch.structorizer.elements;
  *      arrays of records etc.). Maybe the multi-level index ranges could evene be preserved if the intermediate
  *      levels are of no individual meaning, though this obviously complicates type comparability.
  *      
- *      Further on, the use of the same structure for type definitions which may be shard among variables
- *      provoked an inconsistency: the sets of defining and modifying elements are misleading fpr shared type
+ *      Further on, the use of the same structure for type definitions which may be shared among variables
+ *      provoked an inconsistency: the sets of defining and modifying elements are misleading for shared type
  *      entries.
- *      In the event there should be a (recursive) type table withiut references to modifying elements
+ *      In the event there should be a (recursive) type table without references to modifying elements
  *      and a separate map from variable names to entries, which collect data over the live cycle of the
  *      variable where one of the data items is a type link (or a list of type links, wth a declaring element
  *      each). The type entry itself will only need a link to the (first) defining element. 
@@ -92,7 +93,7 @@ public class TypeMapEntry {
 	private static TypeMapEntry dummy = null;
 	// END KGU#388 2017-09-18
 	// "Canonical" scalar type names
-	// START KGU#1057 2022-08-23: Issue #1066 renamed and chnaged from String[] to StringList
+	// START KGU#1057 2022-08-23: Issue #1066 renamed and changed from String[] to StringList
 	//private static final String[] CANONICAL_NUMERIC_TYPES = {
 	//		"byte",
 	//		"short",
@@ -115,9 +116,14 @@ public class TypeMapEntry {
 	//private static final Pattern RANGE_PATTERN = Pattern.compile("^([0-9]+)[.][.][.]?([0-9]+)$");
 	private static final Pattern RANGE_PATTERN = Pattern.compile("^([0-9]+)\\s*?[.][.][.]?\\s*?([0-9]+)$");
 	// START KGU#542 2019-11-17: Enh. #739
+	/** A type description matcher to accept an enumerator type specification */
 	public static final Matcher MATCHER_ENUM = Pattern.compile("^" + BString.breakup("enum", true) 
 	+ "\\s*[{]\\s*[A-Za-z_][A-Za-z_0-9]*\\s*([=]\\s*[^=,}]*?)?(,\\s*[A-Za-z_][A-Za-z_0-9]*(\\s*[=]\\s*[^=,}]*?)?)*\\s*[}]$").matcher("");
 	// END KGU#542 2019-11-17
+	// START KGU#1081 2023-09-28: Issue #1091 Consistent array type detection
+	/** A type description matcher to accept an array type specification */
+	public static final Matcher MATCHER_ARRAY = Pattern.compile("(\\w+\\s*\\[.*\\].*)|(^" + BString.breakup("array", false) + "((\\s*(\\[.*?\\]\\s*)+)|\\s+)" + BString.breakup("of", false) + "\\W.*)").matcher("");
+	// END KGU#1081 2023-09-28
 	
 	// START KGU#686 2019-03-16: Enh. #56 - facilitate type retrieval by a backlink to the type map
 	private HashMap<String, TypeMapEntry> typeMap = null;
@@ -149,9 +155,11 @@ public class TypeMapEntry {
 		 * {@link Root} constants map by the caller.<br/>
 		 * Usually, you should not call this directly but use one of the {@link TypeMapEntry}
 		 * constructors or methods referred to below.
-		 * @param _descriptor
-		 * @param _element
-		 * @param _lineNo
+		 * 
+		 * @param _descriptor - the type description from the Element text
+		 * @param _element - the {@link Element} this declaration (or definition) originates from
+		 * @param _lineNo - the line number of the description within the unbroken Element text
+		 * 
 		 * @see VarDeclaration#VarDeclaration(String, Element, int, LinkedHashMap)
 		 * @see TypeMapEntry#TypeMapEntry(String, String, HashMap, Element, int, boolean, boolean)
 		 * @see TypeMapEntry#addDeclaration(String, Element, int, boolean)
@@ -212,10 +220,12 @@ public class TypeMapEntry {
 		 * {@link VarDeclaration#VarDeclaration(String, Element, int)}.<br/>
 		 * Usually, you should not call this directly but use one of the {@link TypeMapEntry}
 		 * constructors or methods referred to below.
+		 * 
 		 * @param _descriptor - textual description of the type
-		 * @param _element - originating element (should be an Instruction with a type definition)
+		 * @param _element - originating {@link Element} (should be an {@link Instruction} with a type definition)
 		 * @param _lineNo - line no within the element
 		 * @param _components - the ordered map of declared components
+		 * 
 		 * @see VarDeclaration#VarDeclaration(String, Element, int)
 		 * @see TypeMapEntry#TypeMapEntry(String, String, HashMap, LinkedHashMap, Element, int)
 		 * @see TypeMapEntry#addDeclaration(String, Element, int, boolean)
@@ -541,10 +551,11 @@ public class TypeMapEntry {
 	 * the value names (constant ids) separated by commas within braces following
 	 * to an '€' prefix.<br/>
 	 * If the type information is too ambiguous then an empty string is returned.
+	 * 
 	 * @param _canonicalizeTypeNames - if contained element types are to be
-	 * canonicalized, too.
+	 *    canonicalized, too.
 	 * @param _asName - set this true if in case of a named type the name is to be
-	 * returned (otherwise the structural description would be returned)
+	 *    returned (otherwise the structural description would be returned)
 	 * @return name or structural description
 	 */
 	public String getCanonicalType(boolean _canonicalizeTypeNames, boolean _asName) {

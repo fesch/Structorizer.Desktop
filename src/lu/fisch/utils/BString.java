@@ -30,11 +30,11 @@ package lu.fisch.utils;
  *
  *      Revision List
  *
- *      Author          Date			Description
- *      ------			----			-----------
+ *      Author          Date            Description
+ *      ------          ----            -----------
  *      Bob Fisch       2003-05-10      First Issue
- *		Bob Fisch		2007-12-09		Moved to another package and adapted for Structorizer
- *		Kay Gürtzig		2015-10-31		Performance improvements
+ *      Bob Fisch       2007-12-09      Moved to another package and adapted for Structorizer
+ *      Kay Gürtzig     2015-10-31      Performance improvements
  *      Kay Gürtzig     2017-03-13      New method pair encodeToXML and decodeFromXML added for enh. #372,
  *                                      Some code revisions where it ached too much looking at.
  *      Kay Gürtzig     2017-06-18      Method breakup refined to cope with meta symbols in the string to
@@ -45,6 +45,7 @@ package lu.fisch.utils;
  *      Kay Gürtzig     2019-11-22      Dead code in encodeToHtml() disabled, bugfix in explode()
  *      Kay Gürtzig     2020-04-21      Bugfix #852: method breakup completely rewritten, signature changed
  *      Kay Gürtzig     2022-08-18      replaceInsensitive() rewritten, croissantStrict() hardened against empty strings
+ *      Kay Gürtzig     2022-12-21      Deprecated method explodeWithDelimiter removed, deprecation annotations added
  *
  ******************************************************************************************************
  *
@@ -60,8 +61,10 @@ public abstract class BString
 		
 		/**
 		 * Encodes some characters to HTML-encoded symbols
+		 * 
+		 * @param str - The string to encode
 		 * @return The encoded string
-		 * @param str The string to encode
+		 * 
 		 * @see #encodeVectorToHtml(Vector)
 		 * @see #encodeToXML(String)
 		 */
@@ -93,9 +96,11 @@ public abstract class BString
 		// START KGU#363 2017-03-13: Enh. #372 - workaround for XML coding of potentially very long texts
 		/**
 		 * Returns a string from text where all characters with special meaning in XML and all non-
-		 * ASCII characters are converted into XML escapes. 
+		 * ASCII characters are converted into XML escapes.
+		 * 
 		 * @param text - the source string 
 		 * @return the XML-escaped string
+		 * 
 		 * @see #decodeFromXML(String)
 		 * @see #encodeToHtml(String)
 		 */
@@ -125,9 +130,11 @@ public abstract class BString
 		 * are converted back to the original characters with that code.
 		 * This method is less likely to be needed than {@link #encodeToXML(String)} (because usually an XML
 		 * framework will be usd to parse XML files. But well, for symmetry reasons, it's provided here.)
-		 * @see #encodeToXML(String)
+		 * 
 		 * @param text - the XML-escaped string 
 		 * @return the decoded original string
+		 * 
+		 * @see #encodeToXML(String)
 		 */
 		public static String decodeFromXML(String text) {
 			int state = 0;
@@ -176,9 +183,10 @@ public abstract class BString
 		
 		/**
 		 * Replaces '.' and '_' throughout the string with spaces and then turns all characters
-		 * behind spaces into upper-case ones
+		 * behind spaces into upper-case ones.
+		 * 
+		 *@param myS - The string to encode
 		 *@return The encoded string
-		 *@param myS The string to encode
 		 */
 		public static String phrase(String myS)
 		{
@@ -201,8 +209,10 @@ public abstract class BString
 		
 		/**
 		 * Encodes an entire STRING-Vector to HTML-encoded STRING-Vector
+		 * 
+		 * @param vec - The vector to encode
 		 * @return The encoded vector
-		 * @param vec The vector to encode
+		 * 
 		 * @see #encodeToHtml(String)
 		 * @see #encodeToXML(String)
 		 */
@@ -229,34 +239,42 @@ public abstract class BString
 		
 		/**
 		 * Checks whether a string contains any non-blank characters.
+		 * 
 		 *@param str - The string to check
 		 *@return true iff there is at least one non-blank character
-		 *@deprecated Use {@code !str.trim().isEmpty()} instead
+		 *@deprecated Use {@code !str.isBlank()} or {@code !str.trim().isEmpty()} instead
 		 */
+		@Deprecated
 		public static boolean containsSomething(String str)
 		{
-			boolean result = false;
-			
-			for (int i = 0; i < str.length(); i++)
-			{
-				if (!Character.isWhitespace(str.charAt(i)))
-				{
-					result = true;
-					break;
-				}
-			}
-			
-			return result;
+			// START KGU 2022-12-21: Content delegated
+			//boolean result = false;
+			//
+			//for (int i = 0; i < str.length(); i++)
+			//{
+			//	if (!Character.isWhitespace(str.charAt(i)))
+			//	{
+			//		result = true;
+			//		break;
+			//	}
+			//}
+			//
+			//return result;
+			return !str.isBlank();
+			// END KGU 2022-12-21
 		}
 		
 		/**
 		 * Replaces all substrings with another substring
-		 *@param str The original string
-		 *@param substr The substring to be replaced
-		 *@param with The substring to put in
+		 * 
+		 *@param str - The original string
+		 *@param substr - The substring to be replaced
+		 *@param with - The substring to put in
 		 *@return The replaced string
-		 *@deprecated Use {@link String#replace(CharSequence, CharSequence)} instead.
+		 *
+		 *@deprecated Use {@code str.replace(substr, with)} instead.
 		 */
+		@Deprecated
 		public static String replace(String str, String substr, String with)
 		{
 			String outi = new String("");
@@ -307,8 +325,9 @@ public abstract class BString
 
 		/**
 		 * Checks that the character codes of string {@code s} are strictly monotonous,
-		 * i.e. i &le; j --&gt; s[i] &le; s[j], but not all equal (if there are
+		 * i.e. i &le; j &rarr; s[i] &le; s[j], but not all equal (if there are
 		 * at least two characters).
+		 * 
 		 * @param s - the string to be analysed
 		 * @return {@code true} iff the monotony described above holds
 		 */
@@ -324,21 +343,20 @@ public abstract class BString
 					return false;
 				}
 			}
-			if (s.charAt(0) >= s.charAt(s.length()-1))
-			{
-				return false;
-			}
-			return true;
+			return (s.charAt(0) < s.charAt(s.length()-1));
 		}
 		
 		/**
 		 * Checks whether {@code str} starts with {@code pre}.
+		 * 
 		 * @param pre - the prefix to be confirmed
 		 * @param str - the analysed string
 		 * @return true iff {@code str} starts with prefix {@code pre}
+		 * 
 		 * @see String#startsWith(String)
 		 * @deprecated Use {@code str.startsWith(pre)} instead.
 		 */
+		@Deprecated
 		public static boolean isPrefixOf(String pre, String str)
 		{
 //			boolean ret = false;
@@ -358,11 +376,13 @@ public abstract class BString
 		 * Splits the string {@code _source} around occurrences of delimiter string {@code _by}
 		 * and returns a {@link StringList} consisting of the split parts (without the separating
 		 * delimiters) in order of occurrence.<br/>
+		 * 
 		 * @param _source - the string to be split
 		 * @param _by - the separating string (not interpreted as regular expression!)
 		 * @return the split result
+		 * 
 		 * @see StringList#explode(String, String)
-		 * @see String#explodeWithDelimiter(String, String)
+		 * @see StringList#explodeWithDelimiter(String, String)
 		 */
 		public static StringList explode(String _source, String _by)
 		{
@@ -389,40 +409,6 @@ public abstract class BString
 		}
 
 		/**
-		 * Splits the string {@code _source} around occurrences of delimiter string {@code _by}
-		 * and returns a StringList consisting of the split parts and the separating
-		 * delimiters in order of occurrence.
-		 * @param _source - the string to be split
-		 * @param _by - the separating string
-		 * @return the split result
-		 * @deprecated Use method {@link StringList#explodeWithDelimiter(String, String)} instead.
-		 */
-		public static StringList explodeWithDelimiter(String _source, String _by)
-		{
-			// START KGU 2017-06-18: Delegated to StringList.explode() where it belongs
-//			StringList sl = new StringList();
-//			int lenBy = _by.length();
-//			while(!_source.equals(""))
-//			{
-//				int pos = _source.indexOf(_by); 
-//				if (pos >= 0)
-//				{
-//					sl.add(_source.substring(0, pos));
-//					sl.add(_by);
-//					_source = _source.substring(pos + lenBy, _source.length());
-//				}
-//				else
-//				{
-//					sl.add(_source);
-//					_source = "";
-//				}
-//			}
-//			return sl;
-			return StringList.explodeWithDelimiter(_source, _by);
-			// END KGU 2017-06-18
-		}
-		
-		/**
 		 * Produces a regular expression allowing to match the given string in a case-insensitive way.
 		 * All letters 'x' are replaced by "[xX]", meta symbols like '[', ']', '^', '$' are escaped or
 		 * quoted, others (like '(', ')') just enclosed in brackets.<br/>
@@ -432,7 +418,8 @@ public abstract class BString
 		 * groups (this may be important if the pattern is to be used as part of a regex replacement
 		 * with several groups following, as it will compromise the group counting). The disadvantage
 		 * is that possible matches may be missed for letters the lowercase or uppercase representation
-		 * of which would require more than one character as is the case with 'ß' (uppercase --> "SS").
+		 * of which would require more than one character as is the case with 'ß' (uppercase &rarr; "SS").
+		 * 
 		 * @param _searched - the string (not supposed to be regular expression)!
 		 * @param _noGroups - if true then capturing groups are to be avoided by all means (see above).
 		 * @return a regular expression pattern as string
@@ -532,8 +519,6 @@ public abstract class BString
 			}
 			return result.toString();
 // END KGU#850 2020-04-21
-
 		}
-		
 		
 	}

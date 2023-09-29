@@ -55,6 +55,7 @@ package lu.fisch.utils;
  *      A. Simonetta    2021-03-25      Issue #967: New method replaceIfContains
  *      Kay Gürtzig     2021-04-09      Renamed method replaceIfContains to replaceInElements
  *      Kay Gürtzig     2021-10-29      Method comments for all indexOf methods added.
+ *      Kay Gürtzig     2022-08-24      Method toLinearPos() adopted from Unimozer and corrected.
  *
  ******************************************************************************************************
  *
@@ -109,6 +110,7 @@ public class StringList {
      *
      * @param _string - the single element
      * @return the created StringList
+     * 
      * @see #StringList(String[])
      * @see #explode(String, String)
      */
@@ -131,12 +133,13 @@ public class StringList {
      * </tbody>
      * </table>
      *
-     * @see #explodeFirstOnly(String, String)
-     * @see #explode(StringList, String)
-     * @see #explodeWithDelimiter(String, String, boolean)
      * @param _source - the string to be split
      * @param _by - the splitting regular expression
      * @return the StringLits containing all splitting shards
+     *
+     * @see #explodeFirstOnly(String, String)
+     * @see #explode(StringList, String)
+     * @see #explodeWithDelimiter(String, String, boolean)
      */
     public static StringList explode(String _source, String _by) {
         String[] multi = _source.split(_by);
@@ -197,13 +200,14 @@ public class StringList {
      * given REGULAR EXPRESSION(!) {@code _by} and returns a single StringList
      * containing all split results of all element strngs in sequential order.
      * Trailing empty strings are not included in the resulting StringList.
+     * 
+     * @param _source - the StringList further to be split
+     * @param _by - the separator (delimiter) pattern (regex!)
+     * @return The split results as StringList
      *
      * @see #explode(String, String)
      * @see #explodeFirstOnly(String, String)
      * @see #explodeWithDelimiter(StringList, String, boolean)
-     * @param _source - the StringList further to be split
-     * @param _by - the separator (delimiter) pattern (regex!)
-     * @return The split results as StringList
      */
     public static StringList explode(StringList _source, String _by) {
         StringList sl = new StringList();
@@ -1188,6 +1192,40 @@ public class StringList {
             System.err.println("StringListsaveToFile(): " + ex.getMessage());
         }
     }
+
+    // START FISRO 2019-02-24 (Added in Unimozer version)
+    /**
+     * Retrieves the total character position of the {@code index}th character in
+     * element (line) with number {@code line}.<br/>
+     * <b>Note:</b> If the StringList has less than {@code line + 1} elements or
+     * the {@code line}th element is shorter than {@code index} then the function
+     * will return {@link #getLongString()}{@code .length()}.
+     * 
+     * @param line - number of the line (counts from 0)
+     * @param index - index of the character within the line
+     * @return the total position (see "caution" above!)
+     */
+    public int toLinearPos(int line, int index)
+    {
+        int ret = 0;
+        for(int i = 0; i < count() && i <= line; i++)
+        {
+            if (i == line)
+            {
+                // START KGU 2022-08-24 Could get greater than total length
+                //ret += index;
+                ret += Math.min(get(i).length(), index);
+                // END KGU 2022-08-24
+            }
+            else
+            {
+                // add 1 for the newline character to the sum
+                ret += get(i).length() + 1;
+            }
+        }
+        return ret;
+    }
+    // END FISRO 2019-02-24
 
     public String copyFrom(int beginLine, int beginIndex, int endLine, int endIndex) {
         String ret = "";

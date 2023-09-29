@@ -132,6 +132,8 @@
  *      Kay Gürtzig     2021-10-05      Enh. #992: Messages for Analyser brackets check
  *      Kay Gürtzig     2021-10-31      Enh. #967, #1007 Texts for ARM-specific export options added
  *      Kay Gürtzig     2022-08-21      Enh. #1066: Caption and tooltip for InputBox.lblSuggest
+ *      Kay Gürtzig     2022-09-29      Bugfix #1072: New message InputBoxFor.msgIllegalWordInField added
+ *      Kay Gürtzig     2023-08-01      Enh. #1082: Function name incuded in messages Menu.error13_*
  *
  ******************************************************************************************************
  *
@@ -513,9 +515,9 @@ Menu.error10_5.text=A single instruction element should not mix constant definit
 Menu.error10_6.text=A single instruction element should not mix type definitions with other instructions!
 Menu.error11.text=You probably made an assignment error. Please check this instruction!
 Menu.error12.text=The parameter «%» must start with the letter "p" followed by only uppercase letters!
-Menu.error13_1.text=Your function does not return any result!
-Menu.error13_2.text=Your function may not return a result!
-Menu.error13_3.text=Your functions seems to use several competitive return mechanisms: «%»!
+Menu.error13_1.text=Your function «%» does not return any result!
+Menu.error13_2.text=Your function «%» may not return a result!
+Menu.error13_3.text=Your function seems to use several competitive return mechanisms: «%»!
 Menu.error14_1.text=The @d loop parameters are not consistent to the loop heading text!
 Menu.error14_2.text=The @e loop step value («%») is not a legal integer constant!
 Menu.error14_3.text=Variable name «%» may collide with one of the configured FOR loop heading keywords!
@@ -817,6 +819,7 @@ InputBoxFor.msgEnsureVariableIsArray.text=Sure that <%> designates an array?
 InputBoxFor.msgEnterValueList.text=Enter the value list for the loop.
 InputBoxFor.msgDiscardData.text=Changing the loop style means to discard most of the data!\nDo you really want to discard the data?
 InputBoxFor.msgAttention.text=ATTENTION!
+InputBoxFor.msgIllegalWordInField.text=Field "%1" must not contain keyword «%2»!
 
 -----[ InputBox Root ]-----
 InputBoxRoot.title[elementType:Root]=Edit @n

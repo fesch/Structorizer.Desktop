@@ -525,10 +525,10 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	// END KGU#388 2017-09-13
 	public static final LangTextHolder error11 = new LangTextHolder("You probably made an assignment error. Please check this instruction!");
 	public static final LangTextHolder error12 = new LangTextHolder("The parameter «%» must start with the letter \"p\" followed by only uppercase letters!");
-	public static final LangTextHolder error13_1 = new LangTextHolder("Your function does not return any result!");
-	public static final LangTextHolder error13_2 = new LangTextHolder("Your function may not return a result!");
+	public static final LangTextHolder error13_1 = new LangTextHolder("Your function «%» does not return any result!");
+	public static final LangTextHolder error13_2 = new LangTextHolder("Your function «%» may not return a result!");
 	// START KGU#78 (#23) 2015-11-25: Check for competitive return mechanisms
-	public static final LangTextHolder error13_3 = new LangTextHolder("Your functions seems to use several competitive return mechanisms: «%»!");
+	public static final LangTextHolder error13_3 = new LangTextHolder("Your function seems to use several competitive return mechanisms: «%»!");
 	// END KGU#78 (#23) 2015-11-25
 	// START KGU#3 2015-11-03: New checks for the enhanced For loop
 	public static final LangTextHolder error14_1 = new LangTextHolder("The FOR loop parameters are not consistent to the loop heading text!");
