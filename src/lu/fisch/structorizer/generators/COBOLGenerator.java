@@ -555,7 +555,7 @@ public class COBOLGenerator extends Generator {
 			// FIXME: This doesn't make sense at all for COBOL!
 			addCode("struct " + _type.typeName + " {", _indent, _asComment);
 			for (Entry<String, TypeMapEntry> compEntry: _type.getComponentInfo(false).entrySet()) {
-				addCode(transformTypeFromEntry(compEntry.getValue(), _type) + "\t" + compEntry.getKey() + ";",
+				addCode(transformTypeFromEntry(compEntry.getValue(), _type, true) + "\t" + compEntry.getKey() + ";",
 						indentPlus1, _asComment);
 			}
 			addCode("};", _indent, _asComment);

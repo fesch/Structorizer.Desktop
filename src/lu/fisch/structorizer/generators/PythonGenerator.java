@@ -87,6 +87,7 @@ package lu.fisch.structorizer.generators;
  *                                              Bugfix #1042: Wrong syntax for catch clauses with variable
  *      Kay Gürtzig             2022-08-14      Bugfix #1061: Suppression of content conversions #423, #623, #680, #782, #812
  *      Kay Gürtzig             2022-08-23      Issue #1068: transformIndexLists() inserted in transformTokens()
+ *      Kay Gürtzig             2023-09-29      Issues #1091, #1092: Alias and array type defs now simply suppressed
  *
  ******************************************************************************************************
  *
@@ -1255,6 +1256,12 @@ public class PythonGenerator extends Generator
 			done = true;
 		}
 		// END KGU#542 2019-12-01
+		// START KGU#1081/KGU#1082 2023-09-29: Issue #1091, #1092 handle remaining cases
+		else {
+			// Just ignore type definition
+			done = true;
+		}
+		// END KGU#1081/KGU#1082 2023-09-29
 		return done;
 	}
 

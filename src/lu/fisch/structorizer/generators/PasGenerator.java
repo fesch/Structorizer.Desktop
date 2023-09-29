@@ -98,6 +98,7 @@ package lu.fisch.structorizer.generators;
  *                                          Bugfix #993: Wrong handling of constant parameters
  *                                          Fix KGU#994: Strange array index ranges like [-1..49] could occur
  *      Kay Gürtzig         2021-12-05      Bugfix #1024: Precautions against defective record initializers
+ *      Kay Gürtzig         2023-09-28      Bugfix #1092: Sensible export of alias type definitions enabled
  *
  ******************************************************************************************************
  *
@@ -479,7 +480,7 @@ public class PasGenerator extends Generator
 		if (_typeDescr.toLowerCase().startsWith("array") || _typeDescr.endsWith("]")) {
 			// TypeMapEntries are really good at analysing array definitions
 			TypeMapEntry typeInfo = new TypeMapEntry(_typeDescr, null, null, null, 0, false, true);
-			_typeDescr = transformTypeFromEntry(typeInfo, null);
+			_typeDescr = transformTypeFromEntry(typeInfo, null, true);
 		}
 		return _typeDescr;
 	}
@@ -490,11 +491,17 @@ public class PasGenerator extends Generator
 	 * @return a String suited as Pascal type description in declarations etc. 
 	 */
 	@Override
-	protected String transformTypeFromEntry(TypeMapEntry typeInfo, TypeMapEntry definingWithin) {
+	// START KGU#1082 2023-09-28: Bugfix #1092 Sensible handling of alias types
+	//protected String transformTypeFromEntry(TypeMapEntry typeInfo, TypeMapEntry definingWithin) {
+	protected String transformTypeFromEntry(TypeMapEntry typeInfo, TypeMapEntry definingWithin, boolean preferName) {
+	// END KGU#1082 2023-09-28
 		// Record type descriptions won't usually occur here (rather names)
 		String _typeDescr;
 //		String canonType = typeInfo.getTypes().get(0);
-		String canonType = typeInfo.getCanonicalType(true, true);
+		// START KGU#1082 2023-09-28: Bugfix #1092 Sensible handling of alias types
+		//String canonType = typeInfo.getCanonicalType(true, true);
+		String canonType = typeInfo.getCanonicalType(true, preferName);
+		// END KGU#1082 2023-09-28
 		int nLevels = canonType.lastIndexOf('@')+1;
 		String elType = (canonType.substring(nLevels)).trim();
 		elType = transformType(elType, "(*???*)");
@@ -2012,7 +2019,7 @@ public class PasGenerator extends Generator
 						appendDeclComment(_root, "", constName);
 						// END KGU#424 2017-09-25
 						if (constType.isArray()) {
-							generateArrayInit(constEntry.getKey(), expr, "", transformTypeFromEntry(constType, null), false);
+							generateArrayInit(constEntry.getKey(), expr, "", transformTypeFromEntry(constType, null, true), false);
 						}
 						else {
 							generateRecordInit(constEntry.getKey(), expr, "", true, false, constType);
@@ -2045,62 +2052,87 @@ public class PasGenerator extends Generator
 
 	/**
 	 * Adds type definitions for all types in {@link #typeMap}.
-	 * @param _root - originating Root
+	 * @param _root - originating {@link Root}
 	 * @param _indent - current indentation level (as String)
 	 * @param _sectionBegun - whether the TYPE section had already been introduced by keyword CONST
 	 * @return true if TYPE section has been introduced (no matter whether before or here)
 	 */
 	protected boolean generateTypeDefs(Root _root, String _indent, boolean _sectionBegun) {
-		String indentPlus1 = _indent + this.getIndent();
-		String indentPlus2 = indentPlus1 + this.getIndent();
-		String indentPlus3 = indentPlus2 + this.getIndent();
 		// START KGU#774 2019-11-29: Bugfix #787 - On top level, any Includable declared any types known to main
 		//for (Entry<String, TypeMapEntry> typeEntry: typeMap.entrySet()) {
 		for (Entry<String, TypeMapEntry> typeEntry: _root.getTypeInfo(routinePool).entrySet()) {
 		// END KGU#774 2019-11-29
 			String key = typeEntry.getKey();
 			if (key.startsWith(":") /*&& typeEntry.getValue().isDeclaredWithin(_root)*/) {
-				if (wasDefHandled(_root, key, true)) {
-					continue;
-				}
-				if (!_sectionBegun) {
-					code.add(_indent + "type");
-					_sectionBegun = true;
-				}
-				// START KGU#424 2017-09-25
-				appendDeclComment(_root, indentPlus1, key);
-				// END KGU#424 2017-09-25
-				TypeMapEntry type = typeEntry.getValue();
-				if (type.isRecord()) {
-					code.add(indentPlus1 + key.substring(1) + " = RECORD");
-					for (Entry<String, TypeMapEntry> compEntry: type.getComponentInfo(false).entrySet()) {
-						code.add(indentPlus3 + compEntry.getKey() + ":\t" + transformTypeFromEntry(compEntry.getValue(), null) + ";");
-					}
-					code.add(indentPlus2 + "END;");
-				}
-				// START KGU#542 2019-11-17: Enh. #739
-				else if (type.isEnum()) {
-					StringList items = type.getEnumerationInfo();
-					String itemList = items.concatenate(", ");
-					if (itemList.length() > 70) {
-						code.add(indentPlus1 + key.substring(1) + " = (");
-						for (int i = 0; i < items.count(); i++) {
-							// FIXME: We might have to transform the value...
-							code.add(indentPlus3 + items.get(i) + (i < items.count()-1 ? "," : ""));
-						}
-						code.add(indentPlus2 + ");");
-					}
-					else {
-						code.add(indentPlus1 + key.substring(1) + " = (" + itemList + ");");
-					}
-				}
-				// END KGU#542 2019-11-17
-				else {
-					code.add(indentPlus1 + key.substring(1) + " = " + this.transformTypeFromEntry(type, null) + ";");					
-				}
-				addSepaLine();
+				_sectionBegun = generateTypeDef(_root, key.substring(1), typeEntry.getValue(), _indent, _sectionBegun);
 			}
 		}
+		return _sectionBegun;
+	}
+
+	/**
+	 * Adds the type definition for the given type {@code _typeEntry} to the code
+	 * 
+	 * @param _root - originating {@link Root}
+	 * @param _typeName - name of the type to be defined
+	 * @param _type - the {@link TypeMapEntry} for the type to be defined
+	 * @param _indent - current indentation level (as String)
+	 * @param _sectionBegun - had the keyword TYPE already been inserted?
+	 * @return {@code true} iff the keyword TYPE had already been inserted
+	 */
+	private boolean generateTypeDef(Root _root, String _typeName, TypeMapEntry _type, String _indent, boolean _sectionBegun) {
+		String indentPlus1 = _indent + this.getIndent();
+		String indentPlus2 = indentPlus1 + this.getIndent();
+		String indentPlus3 = indentPlus2 + this.getIndent();
+		if (wasDefHandled(_root, ":"+_typeName, true)) {
+			return _sectionBegun;
+		}
+		if (!_sectionBegun) {
+			code.add(_indent + "type");
+			_sectionBegun = true;
+		}
+		// START KGU#424 2017-09-25
+		appendDeclComment(_root, indentPlus1, ":"+_typeName);
+		// END KGU#424 2017-09-25
+		// START KGU#1082 2023-09-28: Bugfix #1092 sensible support for alias types
+		if (_type.typeName != null && !_typeName.equals(_type.typeName)) {
+			// Seems to be an alias - so make sure the referred type is defined
+			_sectionBegun = generateTypeDef(_root, _type.typeName, _type, _indent, _sectionBegun);
+			code.add(indentPlus1 + _typeName + " = " + _type.typeName);
+			return _sectionBegun;
+		}
+		// END KGU#1082 2023-09-28
+		if (_type.isRecord()) {
+			code.add(indentPlus1 + _typeName + " = RECORD");
+			for (Entry<String, TypeMapEntry> compEntry: _type.getComponentInfo(false).entrySet()) {
+				code.add(indentPlus3 + compEntry.getKey() + ":\t" + transformTypeFromEntry(compEntry.getValue(), null, true) + ";");
+			}
+			code.add(indentPlus2 + "END;");
+		}
+		// START KGU#542 2019-11-17: Enh. #739
+		else if (_type.isEnum()) {
+			StringList items = _type.getEnumerationInfo();
+			String itemList = items.concatenate(", ");
+			if (itemList.length() > 70) {
+				code.add(indentPlus1 + _typeName + " = (");
+				for (int i = 0; i < items.count(); i++) {
+					// FIXME: We might have to transform the value...
+					code.add(indentPlus3 + items.get(i) + (i < items.count()-1 ? "," : ""));
+				}
+				code.add(indentPlus2 + ");");
+			}
+			else {
+				code.add(indentPlus1 + _typeName + " = (" + itemList + ");");
+			}
+		}
+		// END KGU#542 2019-11-17
+		else {
+			// START KGU#1082 2023-09-28: Bugfix #1092 Sensible handling of alias types
+			//code.add(indentPlus1 + _typeName + " = " + this.transformTypeFromEntry(_type, null, true) + ";");					
+			code.add(indentPlus1 + _typeName + " = " + this.transformTypeFromEntry(_type, null, !_typeName.equals(_type.typeName)) + ";");					
+			// END KGU#1082 2023-09-28
+		}
+		addSepaLine();
 		return _sectionBegun;
 	}
 

@@ -589,7 +589,7 @@ public class CPlusPlusGenerator extends CGenerator {
 				if (typeSpecs.count() == 1) {
 					// START KGU#784 2019-12-02
 					//typeSpec = typeSpecs.get(0);
-					typeSpec = this.transformTypeFromEntry(typeEntry, null);
+					typeSpec = this.transformTypeFromEntry(typeEntry, null, true);
 					int posBrack = typeSpec.indexOf("[");
 					if (posBrack > 0) {
 						varName += typeSpec.substring(posBrack);

@@ -60,6 +60,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2020-03-09      Issue #835: Revised mechanism for the insertion of optional structure keywords
  *      Kay Gürtzig     2023-09-27      Bugfix #1089.2-4 three flaws on typedef imports
  *      Kay Gürtzig     2023-09-28      Issue #1091: Correct handling of alias, enum, and array type definitions
+ *      Kay Gürtzig     2023-09-29      Bugfix #678: Unwanted side-effect on pointer types mended
  *
  ******************************************************************************************************
  *
@@ -1731,7 +1732,10 @@ public class C99Parser extends CPreParser
 			//id = this.getDeclarator(_reduc, null, null, null, _parentNode, null);
 			StringList asPascal = new StringList();
 			id = this.getDeclarator(_reduc, null, null, asPascal, _parentNode, null);
-			if (!asPascal.isEmpty()) {
+			// START KGU#651/KGU#1080 2023-09-29: Bugfix #678,#1089 Don't insert both pascal and C pointer symbols
+			//if (!asPascal.isEmpty()) {
+			if (!asPascal.isEmpty() && (ruleId != RuleConstants.PROD_DECLARATOR || !_forceDecl && !this.optionImportVarDecl)) {
+			// END KGU#651/KGU#1080 2023-09-29
 				_type = asPascal.getLongString() + " " + _type;
 			}
 			// END KGU#651 2019-02-13

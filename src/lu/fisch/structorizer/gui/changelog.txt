@@ -125,6 +125,8 @@ Current development version 3.32-12 (2023-09-28)
 - 11: Issue #1068: Executor now accepts index lists like my_array[i,j], <2>
       Generators updated to cope with index lists
 - 11: TeX exports (algo/StrukTex) now ensured to contain the version no. <2>
+- 12: Bugfix #678: Flaw in C99 pointer type definition import mended <2>
+- 12: Bugfix #739: Enumeration type support was forgotten for C# export <2>
 - 12: Issue #809: Main function import from C refined (return -> exit) <2>
 - 12: Enh. #1066: Auto-complete suggestion precision for Calls improved <2>
 - 12: Bugfix #1067: Further execution errors used to slip through <2>
@@ -144,6 +146,7 @@ Current development version 3.32-12 (2023-09-28)
       components, 2. typedefs with anonymous enum specifications, 3. typedefs
       with anonymous struct specifications, 4. typedefs defining more than
       one typeid <2>
+  12: Bugfix #1092 Code export of alias types implemented where needed <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>

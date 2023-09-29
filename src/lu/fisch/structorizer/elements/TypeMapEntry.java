@@ -551,10 +551,11 @@ public class TypeMapEntry {
 	 * the value names (constant ids) separated by commas within braces following
 	 * to an '€' prefix.<br/>
 	 * If the type information is too ambiguous then an empty string is returned.
+	 * 
 	 * @param _canonicalizeTypeNames - if contained element types are to be
-	 * canonicalized, too.
+	 *    canonicalized, too.
 	 * @param _asName - set this true if in case of a named type the name is to be
-	 * returned (otherwise the structural description would be returned)
+	 *    returned (otherwise the structural description would be returned)
 	 * @return name or structural description
 	 */
 	public String getCanonicalType(boolean _canonicalizeTypeNames, boolean _asName) {
