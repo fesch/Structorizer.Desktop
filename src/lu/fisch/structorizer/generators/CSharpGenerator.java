@@ -587,7 +587,8 @@ public class CSharpGenerator extends CGenerator
 		if (_type.isRecord()) {
 			// START KGU#1082 2023-09-29: Bugfix #1092 - ensure component types to be defined before use
 			for (TypeMapEntry compType: _type.getComponentInfo(false).values()) {
-				if (compType.typeName != null) {
+				if (compType.typeName != null && !TypeMapEntry.isStandardType(compType.typeName)
+						&& !compType.typeName.equals(compType.getCanonicalType(false, false))) {
 					generateTypeDef(_root, compType.typeName, compType, _indent, _asComment);
 				}
 			}
