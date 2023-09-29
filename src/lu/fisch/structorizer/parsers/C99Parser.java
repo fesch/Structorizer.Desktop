@@ -58,6 +58,9 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2019-03-29      KGU#702: Index range exception in method getPointers() fixed.
  *      Kay Gürtzig     2019-11-18      Enh. #739: Direct enum type import
  *      Kay Gürtzig     2020-03-09      Issue #835: Revised mechanism for the insertion of optional structure keywords
+ *      Kay Gürtzig     2023-09-27      Bugfix #1089.2-4 three flaws on typedef imports
+ *      Kay Gürtzig     2023-09-28      Issue #1091: Correct handling of alias, enum, and array type definitions
+ *      Kay Gürtzig     2023-09-29      Bugfix #678: Unwanted side-effect on pointer types mended
  *
  ******************************************************************************************************
  *
@@ -755,8 +758,10 @@ public class C99Parser extends CPreParser
 			else if (
 					// Variable declaration with or without initialization? Might also be a typedef though!
 					ruleId == RuleConstants.PROD_DECLARATION_SEMI
+					// <Declaration> ::= <Decl Specifiers> <InitDeclList> ';'
 					||
 					ruleId == RuleConstants.PROD_DECLARATION_SEMI2
+					// <Declaration> ::= <Decl Specifiers> ';'
 					)
 			{
 				// If declaration import is allowed then we make an instruction in
@@ -1196,7 +1201,7 @@ public class C99Parser extends CPreParser
 	 * @return {@link StringList} of the declaration strings in Structorizer syntax
 	 * @throws ParserCancelled 
 	 */
-	StringList getDeclsFromDeclList(Reduction _declRed) throws ParserCancelled
+	private StringList getDeclsFromDeclList(Reduction _declRed) throws ParserCancelled
 	{
 		// FIXME!
 		StringList decls = new StringList();
@@ -1271,7 +1276,7 @@ public class C99Parser extends CPreParser
 	 * @return
 	 * @throws ParserCancelled 
 	 */
-	String getTypeSpec(Reduction _declSpecRed) throws ParserCancelled {
+	private String getTypeSpec(Reduction _declSpecRed) throws ParserCancelled {
 		// FIXME: Drop superfluous stuff
 		StringList parts = new StringList();
 		while (_declSpecRed.getParent().getHead().toString().equals("<Decl Specifiers>")) {
@@ -1655,7 +1660,7 @@ public class C99Parser extends CPreParser
 	 * @param _parentNode - the {@link Subqueue} the built Instruction is to be appended to or null
 	 * @param _comment - a retrieved source code comment to be placed in the element or null
 	 * @param _forceDecl - if a declaration must be produced (e.g. in case of a struct type)
-	 * @param _asTypeDef - if a type definitin is to be created
+	 * @param _asTypeDef - if a type definition is to be created
 	 * @return the built declaration or assignment
 	 * @throws ParserCancelled 
 	 */
@@ -1727,7 +1732,10 @@ public class C99Parser extends CPreParser
 			//id = this.getDeclarator(_reduc, null, null, null, _parentNode, null);
 			StringList asPascal = new StringList();
 			id = this.getDeclarator(_reduc, null, null, asPascal, _parentNode, null);
-			if (!asPascal.isEmpty()) {
+			// START KGU#651/KGU#1080 2023-09-29: Bugfix #678,#1089 Don't insert both pascal and C pointer symbols
+			//if (!asPascal.isEmpty()) {
+			if (!asPascal.isEmpty() && (ruleId != RuleConstants.PROD_DECLARATOR || !_forceDecl && !this.optionImportVarDecl)) {
+			// END KGU#651/KGU#1080 2023-09-29
 				_type = asPascal.getLongString() + " " + _type;
 			}
 			// END KGU#651 2019-02-13
@@ -1744,6 +1752,11 @@ public class C99Parser extends CPreParser
 			}
 			if (_asTypeDef) {
 				content = "type " + id + " = " + _type;
+				// START KGU#1080b 2023-09-27: Bugfix #1089.2 Avoid redundant entries
+				if (id.equals(_type)) {
+					content = "";
+				}
+				// END KGU#1080b 2023-09-27
 			}
 			else if (isConstant) {
 				content = "const " + id + ": " + _type;
@@ -1763,7 +1776,10 @@ public class C99Parser extends CPreParser
 				}
 				content += " <- " + expr;
 			}
-			if (_parentNode != null) {
+			// START KGU#1080b 2023-09-27: Bugfix #1089.2 Suppress empty elements
+			//if (_parentNode != null) {
+			if (_parentNode != null && !content.isEmpty()) {
+			// END KGU#1080b 2023-09-27
 				Element instr = new Instruction(translateContent(content));
 				if (_comment != null) {
 					instr.setComment(_comment);
@@ -1792,9 +1808,19 @@ public class C99Parser extends CPreParser
 				else if (expr == null && !_asTypeDef) {
 					instr.setColor(colorDecl);	// local declarations with a smooth green
 				}
-				if (_asTypeDef && expr != null) {
-					instr.setColor(Color.RED);
+				// START KGU#1080/KGU#1081 2023-09-28: Bugfix #1089/#1091 We must register aliases
+				//if (_asTypeDef && expr != null) {
+				//	instr.setColor(Color.RED);
+				//}
+				if (_asTypeDef) {
+					if (expr == null) {
+						instr.updateTypeMap(typeMap);
+					}
+					else {
+						instr.setColor(Color.RED);
+					}
 				}
+				// END KGU#1080/KGU#1081 2023-09-28
 				// Constant colour has priority
 				if (isConstant && !_asTypeDef) {
 					instr.setColor(colorConst);
@@ -1881,6 +1907,7 @@ public class C99Parser extends CPreParser
 				}
 				break;
 			case RuleConstants.PROD_DECLSPECIFIERS3:
+				// <Decl Specifiers> ::= <Type Qualifier> <Decl Specs>
 				// START KGU#670 2019-03-01: Bugfix #692 Wrong test let const detection fail
 				//if (prefix.asString().equals("const")) {
 				if (prefix.asString().equals("[const]")) {
@@ -1888,7 +1915,8 @@ public class C99Parser extends CPreParser
 					_typeSpecs.add("const");
 				}
 				break;
-			case RuleConstants.PROD_DECLSPECIFIERS2: // <Decl Specifiers> ::= <Type Specifier> <Decl Specs>
+			case RuleConstants.PROD_DECLSPECIFIERS2:
+				// <Decl Specifiers> ::= <Type Specifier> <Decl Specs>
 				if (prefix.getType() == SymbolType.NON_TERMINAL) {
 					int prefixId = prefix.asReduction().getParent().getTableIndex();
 					switch (prefixId) {
@@ -1917,10 +1945,16 @@ public class C99Parser extends CPreParser
 							if (structRed.size() == 4) {
 								// <StructOrUnion> '{' <StructDeclnList> '}'
 								// It is actually totally ambiguous, in which of the reductions the identifier occurs! 
-								if (isTypedef && _initDeclRed != null || !(type = getContent_R(_reduction.get(1).asReduction(), "")).trim().isEmpty()) {
+								if (isTypedef && _initDeclRed != null || !(type = getContent_R(_reduction.get(1).asReduction(), "").trim()).isEmpty()) {
 									// FIXME: We must separate indices and pointers
 									if (_initDeclRed != null) {
-										type = getContent_R(_initDeclRed, "").trim();
+										// START KGU#1080d 2023-09-27 Bugfix #1089.4 Substitute only if unique
+										//type = getContent_R(_initDeclRed, "").trim();
+										type = String.format("AnonStruct%1$03d", typeCount++);
+										if (_initDeclRed.getParent().getTableIndex() != RuleConstants.PROD_INITDECLLIST_COMMA) {
+											type = getContent_R(_initDeclRed, "").trim();
+										}
+										// END KGU#1080.d 2023-09--27
 									}
 									if (MATCH_PTR_DECL.reset(type).matches()) {
 										ptrs = MATCH_PTR_DECL.group(1).trim();
@@ -1938,7 +1972,7 @@ public class C99Parser extends CPreParser
 							}
 							else {
 								// <StructOrUnion> Identifier '{' <StructDeclnList> '}'
-								// FIXME: Is this a NON_TERMINAL, such hat we should use getContent_R()?
+								// FIXME: Is this a NON_TERMINAL, such that we should use getContent_R()?
 								type = structRed.get(1).asString();
 							}
 							StringList components = getCompsFromStructDef(structRed.get(structRed.size()-2).asReduction());
@@ -1962,11 +1996,15 @@ public class C99Parser extends CPreParser
 					case RuleConstants.PROD_TYPESPECIFIER2:	// rather unlikely (represented by one of the following)
 						// <Type Specifier> ::= <Enumerator Spec>
 					case RuleConstants.PROD_ENUMERATORSPEC_ENUM_IDENTIFIER_LBRACE_RBRACE:
+						// <Enumerator Spec> ::= enum Identifier '{' <EnumList> '}'
 					case RuleConstants.PROD_ENUMERATORSPEC_ENUM_IDENTIFIER_LBRACE_COMMA_RBRACE:
+						// <Enumerator Spec> ::= enum Identifier '{' <EnumList> ',' '}'
 					case RuleConstants.PROD_ENUMERATORSPEC_ENUM_LBRACE_RBRACE:
+						// <Enumerator Spec> ::= enum '{' <EnumList> '}'
 					case RuleConstants.PROD_ENUMERATORSPEC_ENUM_LBRACE_COMMA_RBRACE:
+						// <Enumerator Spec> ::= enum '{' <EnumList> ',' '}'
 					{
-						// FIXME actual enum type support? Define the constants at least
+						// actual enum type support
 						String typeName = null;
 						int ixEnum = 3;
 						if (prefixId == RuleConstants.PROD_ENUMERATORSPEC_ENUM_LBRACE_COMMA_RBRACE
@@ -2029,6 +2067,28 @@ public class C99Parser extends CPreParser
 							if (names.count() > 10) {
 								sepa = ",\\\n";
 							}
+							// START KGU#1080b 2023-09-27: Bugfix #1089.2 Try to fetch the typeid
+							if (typeName == null) {
+								// enum '{' <EnumList> [','] '}'
+								// It is actually rather ambiguous, in which of the reductions the identifier occurs!
+								if (isTypedef && _initDeclRed != null || !(typeName = getContent_R(_reduction.get(1).asReduction(), "").trim()).isEmpty()) {
+									// We must separate indices and pointers
+									if (_initDeclRed != null) {
+										if (_initDeclRed.getParent().getTableIndex() != RuleConstants.PROD_INITDECLLIST_COMMA) {
+											typeName = getContent_R(_initDeclRed, "").trim();
+										}
+										else {
+											// More than one defined typeids - don't substitute.
+											typeName = "[";	// Makes it invalid without causing NullPointerException
+										}
+									}
+									if (typeName.indexOf('[') >= 0
+											|| MATCH_PTR_DECL.reset(typeName).matches()) {
+										typeName = null;
+									}
+								}
+							}
+							// END KGU#1080b 2023-09-27
 							if (typeName == null) {
 								typeName = "Enum" + Math.abs(System.nanoTime());
 							}
@@ -2036,18 +2096,35 @@ public class C99Parser extends CPreParser
 									StringList.explode("type " + typeName + " = enum{" + names.concatenate(sepa) + "}", "\n"));
 							// END KGU#542 2019-11-18
 							this.equipWithSourceComment(enumDef, prefix.asReduction());
-							if (typeName != null) {
-								enumDef.getComment().add("Enumeration type " + typeName);
-							}
+							//if (typeName != null) {
+							//	enumDef.getComment().add("Enumeration type " + typeName);
+							//}
 							enumDef.setColor(colorConst);
 							_parentNode.addElement(enumDef);
+							// START KGU#1080/KGU#1081 2023-09-28: Bugfix #1089/#1091
+							enumDef.updateTypeMap(typeMap);
+							// END KGU#1080/KGU#1089
 						}
-						_typeSpecs.add("int");
+						// START KGU#1080c 2023-09-27: Bugfix #739,#1089.3 Defective enum type support
+						//_typeSpecs.add("int");
+						if (typeName == null) {
+							_typeSpecs.add("int");	// Shouldn't happen anymore
+						}
+						else {
+							_typeSpecs.add(typeName);
+						}
+						// END KGU#1080c 2023-09-27
 					}	
 						break;
 					case RuleConstants.PROD_ENUMERATORSPEC_ENUM_IDENTIFIER:
-						// FIXME actual enum type support?
-						_typeSpecs.add("int");
+						// <Enumerator Spec> ::= enum Identifier
+						// START KGU#1080c 2023-09-27: Bugfix #739,#1089.3 Defective enum type support
+						//_typeSpecs.add("int");
+					{
+						String typeid = prefix.asReduction().get(1).asString();
+						_typeSpecs.add(typeid);
+					}
+						// END KGU#1080c
 						break;
 					case RuleConstants.PROD_TYPEDEFNAME_USERTYPEID:
 						// <Typedef Name> ::= UserTypeId
@@ -2063,6 +2140,7 @@ public class C99Parser extends CPreParser
 							_typeSpecs.add(getContent_R(prefix.asReduction(), "").trim());
 						}
 						else {
+							// FIXME Debug print?
 							System.out.println("C99Parser.getDeclSpecifiers() default - Type specifier: " + prefix.asReduction().getParent().getTableIndex());
 						}
 					}
@@ -2086,8 +2164,8 @@ public class C99Parser extends CPreParser
 	 * @param _arrays - a {@link StringList} to be filled with the postfix (right of the identifier)
 	 * @param _asPascal - a {@link StringList} to be filled with a Pascal like type specification
 	 * @param _parentNode - a {@link Subqueue} to append possible type definitions to 
-	 * @param _declListRed TODO
-	 * @return the isolated identifier or null of ther is none oder if it's ambiguous.
+	 * @param _declListRed - possibly a reduction representing the outer context (i.e. {@code <DelarationList>})
+	 * @return the isolated identifier or null of there is none oder if it's ambiguous.
 	 * @throws ParserCancelled 
 	 */
 	String getDeclarator(Reduction _reduction, StringList _pointers, StringList _arrays, StringList _asPascal, Subqueue _parentNode, Reduction _declListRed) throws ParserCancelled

@@ -94,7 +94,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2019-10-03      Bugfix #756: Transformation damage on expressions containing "<-" and brackets
  *      Kay Gürtzig             2019-11-08      Bugfix #769: Undercomplex selector list splitting in CASE generation mended
  *      Kay Gürtzig             2019-11-12      Bugfix #752: Outcommenting of incomplete declarations ended
- *      Kay Gürtzig             2019-11-17      Enh. #739: Modifications for support of enum type definitions (TODO)
+ *      Kay Gürtzig             2019-11-17      Enh. #739: Modifications for support of enum type definitions
  *      Kay Gürtzig             2019-11-24      Bugfix #783: Defective record initializers were simply skipped without trace
  *      Kay Gürtzig             2019-11-30      Bugfix #782: Handling of global/local declarations mended
  *      Kay Gürtzig             2019-12-02      KGU#784 Type descriptor transformation improved.
@@ -116,6 +116,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2022-08-23      Issue #1068: transformIndexLists() inserted into transformTokens(),
  *                                              transformOrGenerateArrayInit() mended (mutilated empty initialisers)
  *      Kay Gürtzig             2022-09-29      Bugfix #1073: Call comments had always been duplicated
+ *      Kay Gürtzig             2023-09-28      Bugfix #1092: Sensible export of alias type definitions enabled
  *
  ******************************************************************************************************
  *
@@ -706,7 +707,7 @@ public class CGenerator extends Generator {
 							}
 							else if (typeMap.containsKey(token)) {
 								TypeMapEntry type = typeMap.get(token);
-								String typeName = transformTypeFromEntry(type, null);
+								String typeName = transformTypeFromEntry(type, null, true);
 								if (type.isEnum()) {
 									fSpec = "d";
 								}
@@ -948,23 +949,35 @@ public class CGenerator extends Generator {
 	 * Creates a type description suited for C code from the given TypeMapEntry {@code typeInfo}
 	 * The returned type description will have to be split before the first
 	 * occurring opening bracket in order to place the variable or type name there.
+	 * 
 	 * @param typeInfo - the defining or derived TypeMapInfo of the type 
 	 * @param definingWithin - a possible outer type context
+	 * @param preferName - whether the type name is to be preferred over the structure
 	 * @return a String suited as C type description in declarations etc. 
 	 */
 	@Override
-	protected String transformTypeFromEntry(TypeMapEntry typeInfo, TypeMapEntry definingWithin) {
+	// START KGU#1082 2023-09-28: Bugfix #1092 Sensible handling of alias types
+	//protected String transformTypeFromEntry(TypeMapEntry typeInfo, TypeMapEntry definingWithin) {
+	protected String transformTypeFromEntry(TypeMapEntry typeInfo, TypeMapEntry definingWithin, boolean preferName) {
+	// END KGU#1082 2023-09-28
 		// Record type description won't usually occur (rather names)
 		String _typeDescr;
 //		String canonType = typeInfo.getTypes().get(0);
-		String canonType = typeInfo.getCanonicalType(true, true);
+		// START KGU#1082 2023-09-28: Bugfix #1092 Sensible handling of alias types
+		//String canonType = typeInfo.getCanonicalType(true, true);
+		String canonType = typeInfo.getCanonicalType(true, preferName);
+		// END KGU#1082 2023-09-28
 		int nLevels = canonType.lastIndexOf('@')+1;
 		String elType = (canonType.substring(nLevels)).trim();
-		if (typeInfo.isRecord()) {
-			elType = transformRecordTypeRef(elType, typeInfo == definingWithin);
+		TypeMapEntry elTypeInfo = typeInfo;
+		if (nLevels > 0 && typeInfo.getTypeMap() != null && typeInfo.getTypeMap().containsKey(":"+elType)) {
+			elTypeInfo = typeInfo.getTypeMap().get(":" + elType);
+		}
+		if (elTypeInfo.isRecord() && elType.equals(elTypeInfo.typeName)) {
+			elType = transformRecordTypeRef(elType, elTypeInfo == definingWithin);
 		}
 		// START KGU#542 2019-11-17: Enh. #739 - support for enum types
-		else if (typeInfo.isEnum()) {
+		else if (elTypeInfo.isEnum() && elType.equals(elTypeInfo.typeName)) {
 			elType = transformEnumTypeRef(elType);
 		}
 		// END KGU#542 2019-11-17
@@ -1042,16 +1055,34 @@ public class CGenerator extends Generator {
 	 * Appends a typedef or struct definition for the type passed in by {@code _typeEnry}
 	 * if it hadn't been defined globally or in the preamble before.
 	 * @param _root - the originating Root
+	 * @param _typeName - the designated name for the type to be defined
 	 * @param _type - the type map entry the definition for which is requested here
 	 * @param _indent - the current indentation
 	 * @param _asComment - if the type definition is only to be added as comment (disabled)
 	 */
 	protected void generateTypeDef(Root _root, String _typeName, TypeMapEntry _type, String _indent, boolean _asComment) {
-		// FIXME: Content just copied from CGenerator
 		String typeKey = ":" + _typeName;
 		if (this.wasDefHandled(_root, typeKey, true)) {
 			return;
 		}
+		// START KGU#1082 2023-09-28: Bugfix #1092 sensible support for alias types
+		if (_type.typeName != null && !_typeName.equals(_type.typeName)) {
+			// Seems to be an alias - so make sure the referred type is defined
+			generateTypeDef(_root, _type.typeName, _type, _indent, _asComment);
+			String prefix = "";
+			if ("CGenerator".equals(this.getClass().getSimpleName())) {
+				if (_type.isRecord()) {
+					prefix = "struct ";
+				}
+				else if (_type.isEnum()) {
+					prefix = "enum ";
+				}
+			}
+			addCode("typedef " + prefix + _type.typeName + " " + _typeName + ";",
+					_indent, _asComment);
+			return;
+		}
+		// END KGU#1082 2023-09-28
 		String indentPlus1 = _indent + this.getIndent();
 		appendDeclComment(_root, _indent, typeKey);
 		if (_type.isRecord()) {
@@ -1061,7 +1092,7 @@ public class CGenerator extends Generator {
 				//addCode(transformTypeFromEntry(compEntry.getValue(), _type) + "\t" + compEntry.getKey() + ";",
 				//		indentPlus1, _asComment);
 				TypeMapEntry compType = compEntry.getValue();
-				String transType = transformTypeFromEntry(compType, _type).trim();
+				String transType = transformTypeFromEntry(compType, _type, true).trim();
 				int posBrack0 = -1, posBrack1 = -1;
 				String bracks = "";
 				if (compType.isArray() && transType != null
@@ -1095,8 +1126,11 @@ public class CGenerator extends Generator {
 		}
 		// END KGU#542 2019-11-17
 		else {
-			addCode("typedef " + this.transformTypeFromEntry(_type, null) + " " + _typeName + ";",
-					_indent, _asComment);					
+			// START KGU#1082 2023-09-28: Bugfix #1092 Sensible handling of alias types
+			//addCode("typedef " + this.transformTypeFromEntry(_type, null, true) + " " + _typeName + ";",
+			addCode("typedef " + this.transformTypeFromEntry(_type, null, !_typeName.equals(_type.typeName)) + " " + _typeName + ";",
+			// END KGU#1082 2023-09-28
+					_indent, _asComment);
 		}
 	}
 	// END KGU#388 2017-09-26
@@ -1314,7 +1348,7 @@ public class CGenerator extends Generator {
 					TypeMapEntry type = this.typeMap.get(varName);
 					String typeName = "???";
 					if (type != null) {
-						typeName = transformTypeFromEntry(type, null);
+						typeName = transformTypeFromEntry(type, null, true);
 						if (type.isRecord()) {
 							isDecl = true;
 						}
@@ -1556,7 +1590,7 @@ public class CGenerator extends Generator {
 		};
 		TypeMapEntry type = this.typeMap.get(inputItem);
 		if (type != null) {
-			String typeName = this.transformTypeFromEntry(type, null);
+			String typeName = this.transformTypeFromEntry(type, null, true);
 			if (typeName.equals("char*")) {
 				pair[0] = "%s";
 				pair[1] = inputItem;	// No address operator!

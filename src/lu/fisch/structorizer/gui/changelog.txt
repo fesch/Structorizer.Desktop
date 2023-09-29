@@ -23,7 +23,7 @@ Known issues:
 - ARM export is still experimental and relies on a specific and very restricted
   syntax for the element contents in order to produce meaningful results.
 
-Current development version 3.32-12 (2023-09-26)
+Current development version 3.32-13 (2023-09-29)
 - 01: Bugfix #987: Duplicate subroutine comment export by Pascal generator <2>
 - 01: Bugfix #988: Syntax error in Structorizer.bat and Arranger.bat fixed <2>
 - 01: Bugfix #989: Expressions in EXIT elements (e.g. return) were forgotten
@@ -125,6 +125,8 @@ Current development version 3.32-12 (2023-09-26)
 - 11: Issue #1068: Executor now accepts index lists like my_array[i,j], <2>
       Generators updated to cope with index lists
 - 11: TeX exports (algo/StrukTex) now ensured to contain the version no. <2>
+- 12: Bugfix #678: Flaw in C99 pointer type definition import mended <2>
+- 12: Bugfix #739: Enumeration type support was forgotten for C# export <2>
 - 12: Issue #809: Main function import from C refined (return -> exit) <2>
 - 12: Enh. #1066: Auto-complete suggestion precision for Calls improved <2>
 - 12: Bugfix #1067: Further execution errors used to slip through <2>
@@ -140,7 +142,13 @@ Current development version 3.32-12 (2023-09-26)
 - 12: Bugfix #1083 Undue error message on batch import with "-p Pascal ..."<2>
 - 12: Bugfix #1085 Defective handling of included typedefs on C import <2>
 - 12: Bugfix #1086 Incomplete group on source import with two routines <2>
-- 12: Enh. #1087: Substantial const and type import from C99 header files <2>
+- 12: Bugfix #1089 C99 import support for 1. struct initializers with named
+      components, 2. typedefs with anonymous enum specifications, 3. typedefs
+      with anonymous struct specifications, 4. typedefs defining more than
+      one typeid <2>
+- 12: Enh. #1091 Structorizer now accepts alias and array type definitions <2>
+- 12: Bugfix #1092 Code export of alias types implemented where needed <2>
+- 13: Enh. #1087: Substantial const and type import from C99 header files <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>

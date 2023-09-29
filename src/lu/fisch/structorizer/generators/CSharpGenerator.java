@@ -74,6 +74,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2021-02-03      Issue #920: Transformation for "Infinity" literal
  *      Kay Gürtzig             2021-10-03      Bugfix #993: Wrong handling of constant parameters
  *      Kay Gürtzig             2021-12-05      Bugfix #1024: Precautions against defective record initializers
+ *      Kay Gürtzig             2023-09-29      Bugfix #739: Forgotten support of enum type definitions added,
+ *                                              Bugfix #1092: Approach for more sensible export of type aliases
  *
  ******************************************************************************************************
  *
@@ -567,13 +569,30 @@ public class CSharpGenerator extends CGenerator
 	 */
 	@Override
 	protected void generateTypeDef(Root _root, String _typeName, TypeMapEntry _type, String _indent, boolean _asComment) {
+		String indentPlus1 = _indent + this.getIndent();
 		String typeKey = ":" + _typeName;
 		if (this.wasDefHandled(_root, typeKey, true)) {
 			return;
 		}
+		// START KGU#1082 2023-09-28: Bugfix #1092 sensible support for alias types
+		if (_type.typeName != null && !_typeName.equals(_type.typeName)) {
+			// Seems to be an alias - so make sure the referred type is defined
+			generateTypeDef(_root, _type.typeName, _type, _indent, _asComment);
+			addCode("using " + _typeName + " = " + _type.typeName + ";",
+					_indent, _asComment);
+			return;
+		}
+		// END KGU#1082 2023-09-28
 		appendDeclComment(_root, _indent, typeKey);
 		if (_type.isRecord()) {
-			String indentPlus1 = _indent + this.getIndent();
+			// START KGU#1082 2023-09-29: Bugfix #1092 - ensure component types to be defined before use
+			for (TypeMapEntry compType: _type.getComponentInfo(false).values()) {
+				if (compType.typeName != null && !TypeMapEntry.isStandardType(compType.typeName)
+						&& !compType.typeName.equals(compType.getCanonicalType(false, false))) {
+					generateTypeDef(_root, compType.typeName, compType, _indent, _asComment);
+				}
+			}
+			// END KGU#1082 2023-09-29
 			String indentPlus2 = indentPlus1 + this.getIndent();
 			addCode((_root.isInclude() ? "public " : "") + "struct " + _typeName + "{", _indent, _asComment);
 			boolean isFirst = true;
@@ -582,7 +601,7 @@ public class CSharpGenerator extends CGenerator
 			constructor.append("public " + _typeName + "(");
 			for (Entry<String, TypeMapEntry> compEntry: _type.getComponentInfo(false).entrySet()) {
 				String compName = compEntry.getKey();
-				String typeStr = transformTypeFromEntry(compEntry.getValue(), null);
+				String typeStr = transformTypeFromEntry(compEntry.getValue(), null, true);
 				addCode("public " + typeStr + "\t" + compName + ";",
 						indentPlus1, _asComment);
 				if (!isFirst) constructor.append(", ");
@@ -599,10 +618,31 @@ public class CSharpGenerator extends CGenerator
 			addCode("}", indentPlus1, _asComment);
 			addCode("};", _indent, _asComment);
 		}
+		// START KGU#542 2023-09-29: Enh. #739
+		else if (_type.isEnum()) {
+			StringList items = _type.getEnumerationInfo();
+			String itemList = items.concatenate(", ");
+			if (itemList.length() > 70) {
+				addCode("enum " + _type.typeName + "{", _indent, _asComment);
+				for (int i = 0; i < items.count(); i++) {
+					// FIXME: We might have to transform the value...
+					addCode(items.get(i) + (i < items.count() -1 ? "," : ""), indentPlus1, _asComment);
+				}
+				addCode("};", _indent, _asComment);
+			}
+			else {
+				addCode("enum " + _type.typeName + "{" + itemList + "};", _indent, _asComment);
+			}
+		}
+		// END KGU#542 2023-09-29
 		else {
-			// FIXME: What do we here in C#? This must be placed at another position
-			addCode("using "  + _typeName + " = " + this.transformTypeFromEntry(_type, null) + ";",
-					_indent, true);
+			// FIXME: What do we here in C#? This must be placed at another (earlier) position
+			// START KGU#1082 2023-09-28: Bugfix #1092 Sensible handling of alias types
+			//addCode("using "  + _typeName + " = " + this.transformTypeFromEntry(_type, null, true) + ";",
+			//		_indent, true);
+			addCode("using " + _typeName + " = " + this.transformTypeFromEntry(_type, null, !_typeName.equals(_type.typeName)) + ";",
+					_indent, _asComment);
+			// END KGU#1082 2023-09-28
 		}
 	}
 	// END KGU#388 2017-09-28
@@ -944,7 +984,7 @@ public class CSharpGenerator extends CGenerator
 				if (typeSpecs.count() == 1) {
 					// START KGU#784 2019-12-02
 					//typeSpec = typeSpecs.get(0);
-					typeSpec = this.transformTypeFromEntry(typeEntry, null);
+					typeSpec = this.transformTypeFromEntry(typeEntry, null, true);
 					// END KGU#784 2019-12-02
 				}
 			}
@@ -1239,6 +1279,13 @@ public class CSharpGenerator extends CGenerator
 		return structName;
 	}
 
+	// START KGU#542 2023-09-29: Bugfix #739 Forgotten overriding
+	@Override
+	protected String transformEnumTypeRef(String enumName) {
+		return enumName;
+	}
+	// END KGU#542 2023-09-29
+	
 	@Override
 	protected String makeArrayDeclaration(String _elementType, String _varName, TypeMapEntry typeInfo)
 	{

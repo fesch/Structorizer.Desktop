@@ -1,4 +1,4 @@
-; Generated with Structorizer 3.32-06 on Tue Feb 08 12:02:46 CET 2022 
+; Generated with Structorizer 3.32-12 on Fri Sep 29 03:49:21 CEST 2023 
 ;AREA data, DATA, READWRITE
 V_3	DCD '.',',',';','!','?'
 result	DCD -1,0
@@ -311,16 +311,14 @@ for_10
 		CMP R1, #1
 		BGT end_10
 		LDR R6, [R7, R1, LSL #2]
-		R11 <- (R6, R9)
-		; ERROR: INPUT operation only supported with GNU code 
+		; ERROR: Not implemented yet 
 		; position <- pos(str, result) 
 while_11
 		CMP R11, #0
 		BLE end_11
 		; ERROR: Not implemented yet 
 		; result <- copy(result, 1, position-1) + copy(result, position+1, length(result)) 
-		R11 <- (R6, R9)
-		; ERROR: INPUT operation only supported with GNU code 
+		; ERROR: Not implemented yet 
 		; position <- pos(str, result) 
 		B while_11
 end_11

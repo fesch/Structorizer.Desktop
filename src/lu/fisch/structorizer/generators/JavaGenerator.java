@@ -81,6 +81,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2021-02-03      Issue #920: Transformation for "Infinity" literal
  *      Kay Gürtzig             2021-10-03      Bugfix #993: Wrong handling of constant parameters
  *      Kay Gürtzig             2021-12-05      Bugfix #1024: Precautions against defective record initializers
+ *      Kay Gürtzig             2023-09-28      Bugfix #1092: Type alias export flaws mended, at least as comment
  *
  ******************************************************************************************************
  *
@@ -732,7 +733,7 @@ public class JavaGenerator extends CGenerator
 			constructor.append("public " + _typeName + "(");
 			for (Entry<String, TypeMapEntry> compEntry: _type.getComponentInfo(false).entrySet()) {
 				String compName = compEntry.getKey();
-				String typeStr = transformTypeFromEntry(compEntry.getValue(), null);
+				String typeStr = transformTypeFromEntry(compEntry.getValue(), null, true);
 				addCode("public " + typeStr + "\t" + compName + ";",
 						indentPlus1, _asComment);
 				if (!isFirst) constructor.append(", ");
@@ -771,8 +772,11 @@ public class JavaGenerator extends CGenerator
 		// END KGU#542 2019-11-17
 		else {
 			// FIXME: What do we here in Java? Replace this type name all over the code?
-			addCode("typedef " + this.transformTypeFromEntry(_type, null) + " " + _typeName + ";",
-					_indent, true);					
+			// START KGU#1082 2023-09-28: Bugfix #1092 Sensible handling of alias types
+			//addCode("typedef " + this.transformTypeFromEntry(_type, null) + " " + _typeName + ";",
+			addCode("typedef " + this.transformTypeFromEntry(_type, null, !_typeName.equals(_type.typeName)) + " " + _typeName + ";",
+			// END KGU#1082 2023-09-28
+					_indent, true);
 		}
 	}
 	// END KGU#388 2017-09-28
@@ -1135,7 +1139,7 @@ public class JavaGenerator extends CGenerator
 				if (typeSpecs.count() == 1) {
 					// START KGU#784 2019-12-02
 					//typeSpec = typeSpecs.get(0);
-					typeSpec = this.transformTypeFromEntry(typeEntry, null);
+					typeSpec = this.transformTypeFromEntry(typeEntry, null, true);
 					// END KGU#784 2019-12-02
 				}
 			}
@@ -1416,6 +1420,7 @@ public class JavaGenerator extends CGenerator
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.CGenerator#transformRecordTypeRef(java.lang.String, boolean)
 	 */
+	@Override
 	protected String transformRecordTypeRef(String structName, boolean isRecursive) {
 		return structName;
 	}

@@ -51,6 +51,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2023-09-15      Issue #809: Conversion of return elements in main diagrams to exit elements
  *      Kay Gürtzig     2023-09-15      Enh. #1087: Obsolete typedef decomposition replaced by optional
  *                                      typedef integration mechanism.
+ *      Kay Gürtzig     2023-09-27/28   Bugfix #1089.1: Support for struct initializers with named components
  *
  ******************************************************************************************************
  *
@@ -1173,7 +1174,7 @@ public abstract class CPreParser extends CodeParser
 				}
 				// END KGU#1077 2023-09-15
 				// START KGU#541 2018-07-09: Bugfix #489 The line counting of StreamTokenizer isn't reliable - so try to synchronize
-				else if (word.length() > 8) {
+				else if (word.length() > 8) { // heuristic length threshold for recognition certainty
 					Matcher wordMatcher = Pattern.compile("(^|.*\\W)"+word+"(\\W.*|$)").matcher("");
 					int lineNo = tokenizer.lineno() + minLineOffset - 1;
 					while (lineNo < srcLines.count() && !wordMatcher.reset(srcLines.get(lineNo)).matches()) {
@@ -1726,19 +1727,55 @@ public abstract class CPreParser extends CodeParser
 	protected String convertStructInitializer(String _typeName, String _expr, TypeMapEntry _typeEntry) {
 		StringList parts = Element.splitExpressionList(_expr.substring(1), ",", true);
 		LinkedHashMap<String, TypeMapEntry> compInfo = _typeEntry.getComponentInfo(false);
-		if (parts.count() > 1 && compInfo.size() >= parts.count() - 1) {
+		// START KGU#1080a 2023-09-27: Bugfix #1089.1 handle trailing commas
+		//if (parts.count() > 1 && compInfo.size() >= parts.count() - 1) {
+		int nParts = parts.count() - 1;
+		if (nParts > 0 && parts.get(nParts-1).isBlank()) {
+			nParts--;
+		}
+		if (nParts > 0 && compInfo.size() >= nParts) {
+		// END KGU#1080a 2023-09-27
 			int ix = 0;
 			_expr = _typeName + "{";
+			// START KGU#1080a 2023-09-27 Bugfix #1089.1 check for named component assignments
+			// Once a named component has occurred we will handle subsequent unnamed ones differently
+			boolean named = false;
+			// END KGU#1080a 2023-09-27
 			for (Entry<String, TypeMapEntry> comp: compInfo.entrySet()) {
 				String part = parts.get(ix).trim();
 				// Check for recursive structure initializers
 				TypeMapEntry compType = comp.getValue();
+				// START KGU#1080a 2023-09-27 Bugfix #1089.1 check for named component assignments
+				String compName = comp.getKey();
+				if (part.startsWith(".")) {
+					named = true;
+					StringList sides = Element.splitExpressionList(part, "<-");
+					if (sides.count() == 2 && compInfo.containsKey(compName = sides.get(0).trim().substring(1))) {
+						// This can be converted directly, so 
+						compType = compInfo.get(compName);
+						part = sides.get(1).trim();
+					}
+				}
+				else if (named) {
+					// Shall we ignore unnamed component initialisation from now on?
+					//continue;
+					// Seems better just to suppress the component name (to preserve info)
+					compName = null;
+				}
+				// END KGU#1080a 2023-09-27
 				if (part.startsWith("{") && part.endsWith("}") &&
 						compType != null && compType.isRecord() && compType.isNamed()) {
 					part = convertStructInitializer(compType.typeName, part, compType);
 				}
-				_expr += comp.getKey() + ": " + part;
-				if (++ix >= parts.count()-1) {
+				// START KGU#1080a 2023-09-27 Bugfix #1089.1 care for named assignments
+				//_expr += comp.getKey() + ": " + part;
+				if (compName != null) {
+					_expr += compName + ": ";
+				}
+				_expr += part;
+				// END KGU#1080a 2023-09-27
+				if (++ix >= nParts) {
+					// Append the expression list tail
 					_expr += parts.get(parts.count()-1);
 					break;
 				}
