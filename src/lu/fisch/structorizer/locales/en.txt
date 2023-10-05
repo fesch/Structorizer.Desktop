@@ -133,7 +133,7 @@
  *      Kay Gürtzig     2021-10-31      Enh. #967, #1007 Texts for ARM-specific export options added
  *      Kay Gürtzig     2022-08-21      Enh. #1066: Caption and tooltip for InputBox.lblSuggest
  *      Kay Gürtzig     2022-09-29      Bugfix #1072: New message InputBoxFor.msgIllegalWordInField added
- *      Kay Gürtzig     2023-08-01      Enh. #1082: Function name incuded in messages Menu.error13_*
+ *      Kay Gürtzig     2023-08-01      Enh. #1082: Function name now included in messages Menu.error13_*
  *
  ******************************************************************************************************
  *
@@ -552,7 +552,7 @@ Menu.error23_7.text=There is a name conflict between local and imported type def
 Menu.error24_1.text=Type definition in (composed) line % is malformed.
 Menu.error24_2.text=Type name «%» is illegal or colliding with another identifier.
 Menu.error24_3.text=Component name «%» is illegal or duplicate.
-Menu.error24_4.text=Component type «%» is undefined or unknown.
+Menu.error24_4.text=Underlying type «%» is undefined or unknown.
 Menu.error24_5.text=There is no defined record type «%»!
 Menu.error24_6.text=Record component «%» will not be modified/initialized!
 Menu.error24_7.text=Record type «%1» hasn't got a component «%2»!

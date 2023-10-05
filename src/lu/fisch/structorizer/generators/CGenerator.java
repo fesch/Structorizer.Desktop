@@ -117,6 +117,7 @@ package lu.fisch.structorizer.generators;
  *                                              transformOrGenerateArrayInit() mended (mutilated empty initialisers)
  *      Kay Gürtzig             2022-09-29      Bugfix #1073: Call comments had always been duplicated
  *      Kay Gürtzig             2023-09-28      Bugfix #1092: Sensible export of alias type definitions enabled
+ *      Kay Gürtzig             2023-10-04      Bugfix #1093 Undue final return 0 on function diagrams
  *
  ******************************************************************************************************
  *
@@ -3095,6 +3096,11 @@ public class CGenerator extends Generator {
 				int vx = varNames.indexOf("result", false);
 				result = varNames.get(vx);
 			}
+			// START KGU#1084 2023-10-04: Bugfix #1093 Don't invent an undue return statement here
+			else {
+				return _indent;
+			}
+			// END KGU#1084 2023-10-24
 			addSepaLine();
 			code.add(_indent + "return " + result + ";");
 		}

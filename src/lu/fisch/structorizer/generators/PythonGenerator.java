@@ -88,6 +88,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2022-08-14      Bugfix #1061: Suppression of content conversions #423, #623, #680, #782, #812
  *      Kay Gürtzig             2022-08-23      Issue #1068: transformIndexLists() inserted in transformTokens()
  *      Kay Gürtzig             2023-09-29      Issues #1091, #1092: Alias and array type defs now simply suppressed
+ *      Kay Gürtzig             2023-10-04      Bugfix #1093 Undue final return 0 on function diagrams
  *
  ******************************************************************************************************
  *
@@ -1529,6 +1530,11 @@ public class PythonGenerator extends Generator
 				int vx = varNames.indexOf("result", false);
 				result = varNames.get(vx);
 			}
+			// START KGU#1084 2023-10-04: Bugfix #1093 Don't invent an undue return statement here
+			else {
+				return _indent;
+			}
+			// END KGU#1084 2023-10-24
 			addSepaLine(_indent);;
 			code.add(_indent + "return " + result);
 		}

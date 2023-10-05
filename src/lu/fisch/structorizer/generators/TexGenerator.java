@@ -75,7 +75,6 @@ import lu.fisch.structorizer.parsers.CodeParser;
 public class TexGenerator extends Generator {
 	
 	/** Conversion factor from pixels to millimeters (assuming 72 dpi) */
-	// FIXME: This factor might also depend on the current Structorizer font size!
 	private final double PIXEL_TO_MM = 25.4 / 72.0;
 	/** Mirror of Element.E_PADDING */
 	private final int E_PADDING = 20;

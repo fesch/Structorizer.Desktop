@@ -93,6 +93,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2020-10-16      Bugfix #874: Nullpointer exception on Calls with non-ASCII letters in name
  *      Kay Gürtzig             2021-12-05      Bugfix #1024: Precautions against defective record initializers
  *      Kay Gürtzig             2023-09-28      Bugfix #1092: Sensible export of alias type definitions enabled
+ *      Kay Gürtzig             2023-10-04      Bugfix #1093 Undue final return 0 on function diagrams
  *
  ******************************************************************************************************
  *
@@ -2232,6 +2233,11 @@ public class OberonGenerator extends Generator {
 				int vx = varNames.indexOf("result", false);
 				result = varNames.get(vx);
 			}
+			// START KGU#1084 2023-10-04: Bugfix #1093 Don't invent an undue return statement here
+			else {
+				return _indent;
+			}
+			// END KGU#1084 2023-10-24
 			//addSepaLine();
 			code.add(_indent + this.getIndent() + "RETURN " + result + ";");
 		}

@@ -596,7 +596,7 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	public static final LangTextHolder error24_1 = new LangTextHolder("Type definition in (composed) line % is malformed.");
 	public static final LangTextHolder error24_2 = new LangTextHolder("Type name «%» is illegal or colliding with another identifier.");
 	public static final LangTextHolder error24_3 = new LangTextHolder("Component name «%» is illegal or duplicate.");
-	public static final LangTextHolder error24_4 = new LangTextHolder("Component type «%» is undefined or unknown.");
+	public static final LangTextHolder error24_4 = new LangTextHolder("Underlying type «%» is undefined or unknown.");
 	public static final LangTextHolder error24_5 = new LangTextHolder("There is no defined record type «%»!");
 	public static final LangTextHolder error24_6 = new LangTextHolder("Record component «%» will not be modified/initialized!");
 	public static final LangTextHolder error24_7 = new LangTextHolder("Record type «%1» hasn't got a component «%2»!");

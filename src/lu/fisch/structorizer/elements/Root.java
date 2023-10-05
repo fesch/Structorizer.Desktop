@@ -4979,7 +4979,7 @@ public class Root extends Element {
 								String compName = compNames.get(j);
 								if (!Function.testIdentifier(compName, false, null) || compNames.subSequence(0, j-1).contains(compName)) {
 									//error  = new DetectedError("Component name «" + compName + "» is illegal or duplicate.", _instr);
-									addError(_errors, new DetectedError(errorMsg(Menu.error24_3, compName), _instr), 24);					
+									addError(_errors, new DetectedError(errorMsg(Menu.error24_3, compName), _instr), 24);
 								}
 								String type = compTypes.get(j);
 								// Clear off array specifiers, but the check is still too restrictive...
@@ -4997,7 +4997,7 @@ public class Root extends Element {
 					//else if (Function.testIdentifier(typeSpec, false, null) && !_types.containsKey(":" + typeSpec)) {
 					else if (Function.testIdentifier(typeSpec, false, null) && !_types.containsKey(":" + typeSpec) && !TypeMapEntry.isStandardType(typeSpec)) {
 					// END KGU#1081 2023-09-28
-						//error  = new DetectedError("Type name «" + type + "» is illegal or unknown.", _instr);
+						//error  = new DetectedError("Component type name «" + type + "» is undefined or unknown.", _instr);
 						addError(_errors, new DetectedError(errorMsg(Menu.error24_4, typeSpec), _instr), 24);
 					}
 					// END KGU#543 2018-07-05
@@ -5079,12 +5079,14 @@ public class Root extends Element {
 	}
 	
 	/**
-	 * Checks valid array type specification (as submethod for analyse_22_24).
+	 * Checks valid array type specification (as submethod for analyse_22_24) within a
+	 * type definition.
 	 * @param _instr - originating {@link Instruction} element
 	 * @param _errors - gloabl error list
 	 * @param _types - type definitions (key starting with ":") and declarations so far
-	 * @param typename - 
-	 * @param type
+	 * @param typename - name of the defined type
+	 * @param type - specification of a (component) type t be checked for correct array
+	 *     structure
 	 */
 	private void checkArrayType(Instruction _instr, Vector<DetectedError> _errors, HashMap<String, TypeMapEntry> _types,
 			String typename, String type) {
@@ -5096,7 +5098,7 @@ public class Root extends Element {
 			type = type.substring(typeLower.lastIndexOf("of ")+3).trim();
 		}
 		if (!TypeMapEntry.isStandardType(type) && !_types.containsKey(":" + type) && !type.equals(typename)) {
-			//error  = new DetectedError("Type name «" + type + "» is illegal or unknown.", _instr);
+			//error  = new DetectedError("Component type name «" + type + "» is undefined or unknown.", _instr);
 			addError(_errors, new DetectedError(errorMsg(Menu.error24_4, type), _instr), 24);
 		}
 	}
