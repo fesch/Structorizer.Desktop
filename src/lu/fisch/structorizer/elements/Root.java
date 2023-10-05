@@ -180,6 +180,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2022-01-04      Bugfix #1026: Analyser defect on broken lines in Jump or Instruction elements
  *      Kay Gürtzig     2022-09-27      Bugfix #1071: Less vague Analyser check 11 (assignment error)
  *      Kay Gürtzig     2023-09-28      Issue #1091: Analyser no longer rejects alias and array type definitions
+ *      Kay Gürtzig     2023-10-05      Bugfix #1094: splitKeywords initialisation enforced in getUsedVars()
  *      
  ******************************************************************************************************
  *
@@ -2801,6 +2802,15 @@ public class Root extends Element {
 		if (_keywords == null) {
 			_keywords = CodeParser.getAllProperties();
 		}
+		// START KGU#1087 2023-10-05: Bugfix #1094 In certain cases, splitKeywords wasn't initialised
+		if (splitKeywords.size() != _keywords.length) {
+			splitKeywords.clear();
+			for (int k = 0; k < _keywords.length; k++)
+			{
+				splitKeywords.add(Element.splitLexically(_keywords[k], false));
+			}
+		}
+		// END KGU#1087 2023-10-05
 //		Regex r;
 
 		// modify "inc" and "dec" function (Pascal)

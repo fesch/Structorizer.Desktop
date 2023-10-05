@@ -1776,6 +1776,8 @@ public abstract class CPreParser extends CodeParser
 				fileName = fileName.toUpperCase();
 			}
 			fileName = fileName.replaceAll("(.*?)[^A-Za-z0-9_](.*?)", "$1_$2");
+			// START KGU#1078 2023-09-15: Issue #809 (modification)
+			//if (aRoot.getParameterNames().count() > 0) {
 			StringList paramNames = aRoot.getParameterNames();
 			StringList usedVars;
 			if (paramNames.count() == 0
@@ -1786,11 +1788,18 @@ public abstract class CPreParser extends CodeParser
 				aRoot.setProgram(true);
 			}
 			else {
+			// END KGU#1078 2023-09-15
 				String header = aRoot.getText().getText();
 				header = header.replaceFirst("(.*?)main([((].*)", "$1" + fileName + "$2");
 				aRoot.setText(header);
 				aRoot.comment.add("The original name was \"main\"!");
 			}
+			// START KGU#1078 2023-09-15: Issue #809 (modification)
+			//else {
+			//	aRoot.setText(fileName);
+			//	aRoot.setProgram(true);
+			//}			
+			// END KGU#1078 2023-09-15
 			// Are there some global definitions to be imported?
 			if (this.globalRoot != null && this.globalRoot.children.getSize() > 0 && this.globalRoot != aRoot) {
 				String oldName = this.globalRoot.getMethodName();
