@@ -60,6 +60,7 @@
  *      Kay Gürtzig     2018-07-02      KGU#245: all Colors stuff replaced with array keys 
  *      Kay Gürtzig     2022-08-10      Enh. #56, #492: Messages for TRY elements added, Element name placeholders
  *      Kay Gürtzig     2023-08-01      Enh. #1082: Function name incuded in messages Menu.error13_* *
+ *      Kay Gürtzig     2023-10-06      Issue #311: Menu reorganisation (menuDiagram split)
  ******************************************************************************************************
  *
  *      Comment:	
@@ -185,13 +186,16 @@ Menu.menuDiagramTypeProgram.text=@{Root.DT_MAIN}
 Menu.menuDiagramTypeFunction.text=@{Root.DT_SUB}
 Menu.menuDiagramTypeInclude.text=@{Root.DT_INCL}
 Menu.menuDiagramUnboxed.text=Nezarámovaný diagram?
-Menu.menuDiagramComment.text=Ukazovat komentáře?
-Menu.menuDiagramSwitchComments.text=
-Menu.menuDiagramCommentsPlusText.text=
-Menu.menuDiagramSwitchTCTooltip.text=
-Menu.menuDiagramMarker.text=Zvýraznit proměnné?
-Menu.menuDiagramDIN.text=DIN?
-Menu.menuDiagramAnalyser.text=
+// Menu "View"
+Menu.menuView.text=Prezentace
+Menu.menuView.mnemonic=z
+Menu.menuViewComment.text=Ukazovat komentáře?
+Menu.menuViewSwitchComments.text=
+Menu.menuViewCommentsPlusText.text=
+Menu.menuViewSwitchTCTooltip.text=
+Menu.menuViewMarker.text=Zvýraznit proměnné?
+Menu.menuViewDIN.text=DIN?
+Menu.menuViewAnalyser.text=
 // Menu "Preferences"
 Menu.menuPreferences.text=Nastavení
 Menu.menuPreferences.mnemonic=n
@@ -223,9 +227,6 @@ Menu.menuPreferencesSave.text=Uložit nyní všechna nastavení
 Menu.menuPreferencesSaveAll.text=Uložit
 Menu.menuPreferencesSaveDump.text=Uložit jako ...
 Menu.menuPreferencesSaveLoad.text=Všechna ...
-
-// Menu "View" (not in use right now!)
-Menu.menuView.text=
 
 // Menu "Debug"
 Menu.menuDebug.text=Debug

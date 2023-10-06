@@ -139,6 +139,7 @@
  *      Kay Gürtzig         2022-08-21  Enh. #1066: Caption and tooltip for InputBox.lblSuggest
  *      Kay Gürtzig         2022-09-29  Bugfix #1072: New message InputBoxFor.msgIllegalWordInField added
  *      Kay Gürtzig         2023-08-01  Enh. #1082: Function name incuded in messages Menu.error13_* *
+ *      Kay Gürtzig         2023-10-06  Issue #311: Menu reorganisation (menuDiagram split)
  ******************************************************************************************************
  *
  *      Comment:	
@@ -278,19 +279,22 @@ Menu.menuDiagramTypeProgram.text=@n
 Menu.menuDiagramTypeFunction.text=@o
 Menu.menuDiagramTypeInclude.text=@p
 Menu.menuDiagramUnboxed.text=Ungerahmtes Diagramm?
-Menu.menuDiagramComment.text=Zeige Kommentare?
-Menu.menuDiagramSwitchComments.text=Tausche Text/Kommentare?
-Menu.menuDiagramCommentsPlusText.text=Kommentare plus Text?
-Menu.menuDiagramSwitchTCTooltip.text=Zum Aktivieren dieses Menüpunkts "%1" abwählen
-Menu.menuDiagramHideDeclarations.text=Bloße Deklarationen verbergen?
-Menu.menuDiagramMarker.text=Variable hervorheben?
-Menu.menuDiagramOperatorsC.text=Operatoranzeige wie in C?
-Menu.menuDiagramOperatorsC.tooltip=Zeigt Operatoren im Diagramm entsprechend der C-Syntax an (nur in Verbindung mit "Variable hervorheben?").
-Menu.menuDiagramDIN.text=DIN 66261?
-Menu.menuDiagramDIN.tooltip=Wechselt das Erscheinungsbild von @d-Schleifen zwischen DIN 66261 (Form wie @g-Schleife) und Nicht-Standard (Form wie @i-Schleife).
-Menu.menuDiagramAnalyser.text=Struktogramm überprüfen?
-Menu.menuDiagramIndex.text=Arranger-Index anzeigen?
-Menu.menuDiagramPreview.text=Code-Voransicht zeigen?
+// Menu "Ansicht"
+Menu.menuView.text=Ansicht
+Menu.menuView.mnemonic=a
+Menu.menuViewComment.text=Zeige Kommentare?
+Menu.menuViewSwitchComments.text=Tausche Text/Kommentare?
+Menu.menuViewCommentsPlusText.text=Kommentare plus Text?
+Menu.menuViewSwitchTCTooltip.text=Zum Aktivieren dieses Menüpunkts "%1" abwählen
+Menu.menuViewHideDeclarations.text=Bloße Deklarationen verbergen?
+Menu.menuViewMarker.text=Variable hervorheben?
+Menu.menuViewOperatorsC.text=Operatoranzeige wie in C?
+Menu.menuViewOperatorsC.tooltip=Zeigt Operatoren im Diagramm entsprechend der C-Syntax an (nur in Verbindung mit "Variable hervorheben?").
+Menu.menuViewDIN.text=DIN 66261?
+Menu.menuViewDIN.tooltip=Wechselt das Erscheinungsbild von @d-Schleifen zwischen DIN 66261 (Form wie @g-Schleife) und Nicht-Standard (Form wie @i-Schleife).
+Menu.menuViewAnalyser.text=Struktogramm überprüfen?
+Menu.menuViewIndex.text=Arranger-Index anzeigen?
+Menu.menuViewPreview.text=Code-Voransicht zeigen?
 
 // Menu "Preferences"
 Menu.menuPreferences.text=Einstellungen
@@ -339,9 +343,6 @@ Menu.menuPreferencesSaveLoad.text=Laden aus Datei ...
 Menu.menuPreferencesSaveLoad.tooltip=Das Laden von Einstellungen aus einer INI Datei erstellt automatisch ein Backup der vorherigen Einstellungen in einer temporären Datei.
 Menu.menuPreferencesSaveRestore.text=Letztes Backup wiederherstellen
 Menu.menuPreferencesSaveRestore.tooltip=Stellt die Einstellungen aus dem Backup wieder her, das beim letzten Laden einer INI-Datei in dieser Sitzung angelegt wurde.
-
-// Menu "View" (not in use right now!)
-Menu.menuView.text=
 
 // Menu "Debug"
 Menu.menuDebug.text=Debug
@@ -537,7 +538,7 @@ Menu.error16_8.text=Möglicherweise ungeeigneter Parameter für «%»-Befehl (so
 Menu.error17.text=Konsistenzgefahr wegen konkurrierender Zugriffe auf Variable «%» aus mehreren Threads!
 Menu.error18.text=Variable «%1» könnte in manchen Sprachen mit Variable(n) «%2» zusammenfallen!
 Menu.error19_1.text=Der Variablenname «%1» kann in Sprachen wie %2 mit reservierten Wörtern kollidieren!
-Menu.error19_2.text=Der Variablenname «%» ist in Structrizer reserviert und dürfte Probleme beim Ausführen bewirken!
+Menu.error19_2.text=Der Variablenname «%» ist in Structorizer reserviert und dürfte Probleme beim Ausführen bewirken!
 Menu.error20_1.text=Ein Unterprogrammkopf muss mindestens die Klammern einer (evtl. leeren) Parameterliste haben.
 Menu.error20_2.text=Parameter mit Defaultwerten müssen zusammenhängend am Ende der Parameterliste stehen.
 Menu.error20_3.text=Ein Diagramm des Typs %1 sollte keine Parameterliste haben. Zu %2 ändern?

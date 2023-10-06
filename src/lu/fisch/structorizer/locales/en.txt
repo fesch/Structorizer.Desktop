@@ -134,6 +134,7 @@
  *      Kay Gürtzig     2022-08-21      Enh. #1066: Caption and tooltip for InputBox.lblSuggest
  *      Kay Gürtzig     2022-09-29      Bugfix #1072: New message InputBoxFor.msgIllegalWordInField added
  *      Kay Gürtzig     2023-08-01      Enh. #1082: Function name now included in messages Menu.error13_*
+ *      Kay Gürtzig     2023-10-06      Issue #311: Menu reorganisation (menuDiagram split)
  *
  ******************************************************************************************************
  *
@@ -276,19 +277,22 @@ Menu.menuDiagramTypeProgram.text=@n
 Menu.menuDiagramTypeFunction.text=@o
 Menu.menuDiagramTypeInclude.text=@p
 Menu.menuDiagramUnboxed.text=Unframed diagram?
-Menu.menuDiagramComment.text=Show comments?
-Menu.menuDiagramSwitchComments.text=Switch text/comments?
-Menu.menuDiagramCommentsPlusText.text=Comments plus texts?
-Menu.menuDiagramSwitchTCTooltip.text=Unselect "%1" to enable this item
-Menu.menuDiagramHideDeclarations.text=Hide mere declarations?
-Menu.menuDiagramMarker.text=Highlight variables?
-Menu.menuDiagramOperatorsC.text=Show operators in C style?
-Menu.menuDiagramOperatorsC.tooltip=Displays operator symbols according to C syntax in the diagrams (requires mode "Highlight variable?").
-Menu.menuDiagramDIN.text=DIN 66261?
-Menu.menuDiagramDIN.tooltip=Switches the appearance of @d loops between DIN 66261 (shape like @g loop) and non-standard (shape like @i loop).
-Menu.menuDiagramAnalyser.text=Analyse structogram?
-Menu.menuDiagramIndex.text=Show Arranger index?
-Menu.menuDiagramPreview.text=Show Code preview?
+// Menu "View"
+Menu.menuView.text=View
+Menu.menuView.mnemonic=v
+Menu.menuViewComment.text=Show comments?
+Menu.menuViewSwitchComments.text=Switch text/comments?
+Menu.menuViewCommentsPlusText.text=Comments plus texts?
+Menu.menuViewSwitchTCTooltip.text=Unselect "%1" to enable this item
+Menu.menuViewHideDeclarations.text=Hide mere declarations?
+Menu.menuViewMarker.text=Highlight variables?
+Menu.menuViewOperatorsC.text=Show operators in C style?
+Menu.menuViewOperatorsC.tooltip=Displays operator symbols according to C syntax in the diagrams (requires mode "Highlight variable?").
+Menu.menuViewDIN.text=DIN 66261?
+Menu.menuViewDIN.tooltip=Switches the appearance of @d loops between DIN 66261 (shape like @g loop) and non-standard (shape like @i loop).
+Menu.menuViewAnalyser.text=Analyse structogram?
+Menu.menuViewIndex.text=Show Arranger index?
+Menu.menuViewPreview.text=Show Code preview?
 
 // Menu "Preferences"
 Menu.menuPreferences.text=Preferences
@@ -337,9 +341,6 @@ Menu.menuPreferencesSaveLoad.text=Load from file ...
 Menu.menuPreferencesSaveLoad.tooltip=Loading preferences from some INI file automatically backups the entire set of previous preferences in a temporary file.
 Menu.menuPreferencesSaveRestore.text=Restore last backup
 Menu.menuPreferencesSaveRestore.tooltip=Reloads the preferences backed up when you last loaded preferences from some INI file during the session.
-
-// Menu "View" (not in use right now!)
-Menu.menuView.text=
 
 // Menu "Debug"
 Menu.menuDebug.text=Debug

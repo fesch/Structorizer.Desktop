@@ -54,6 +54,7 @@
  *      Kay Gürtzig     2016-12-14  Enh. #311: New menu "Debug"
  *      Kay Gürtzig     2018-07-02  KGU#245: all Colors stuff replaced with array keys 
  *      Kay Gürtzig     2022-08-11  Enh. #84/#250: Parser configuration for FOR loops updated
+ *      Kay Gürtzig     2023-10-06  Issue #311: Menu reorganisation (menuDiagram split)
  *
  ******************************************************************************************************
  *
@@ -163,9 +164,11 @@ Menu.menuDiagramTypeProgram.text=@n
 Menu.menuDiagramTypeFunction.text=@o
 Menu.menuDiagramTypeInclude.text=@p
 Menu.menuDiagramUnboxed.text=有分隔線的圖?
-Menu.menuDiagramComment.text=顯示註解?
-Menu.menuDiagramMarker.text=高亮度變數?
-Menu.menuDiagramDIN.text=DIN連接器?
+// Menu "View"
+Menu.menuView.text=视图
+Menu.menuViewComment.text=顯示註解?
+Menu.menuViewMarker.text=高亮度變數?
+Menu.menuViewDIN.text=DIN連接器?
 // Menu "Preferences"
 Menu.menuPreferences.text=選項設定
 // Submenu of "Preferences"

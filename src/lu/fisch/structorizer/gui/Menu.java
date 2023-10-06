@@ -129,6 +129,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-03-03      Issue #954: Modified behaviour of "Clear all Breakpoints" button
  *      Kay Gürtzig     2021-04-15      Enh. #967: menu item menuDiagramARM as introduced by A. Simonetta disabled 
  *      Kay Gürtzig     2021-10-05      Enh. #992: Messages for new Analyser check 30 against bracket faults
+ *      Kay Gürtzig     2023-10-06      Issue #311: Parts of the "Diagram" menu moved to a new "View" menu
  *
  ******************************************************************************************************
  *
@@ -271,6 +272,28 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	// END KGU#667 2019-02-26
 
 	protected final JMenu menuView = new JMenu("View");
+	// START KGU#310 2023-10-06: Issue #311 Moved to new menuView
+	protected final JCheckBoxMenuItem menuViewComment = new JCheckBoxMenuItem("Show comments?", IconLoader.getIcon(77));
+	protected final JCheckBoxMenuItem menuViewMarker = new JCheckBoxMenuItem("Highlight variables?", IconLoader.getIcon(79));
+	// START KGU#872 2020-10-17: Enh. #872 - New display mode or operators
+	protected final JCheckBoxMenuItem menuViewOperatorsC = new JCheckBoxMenuItem("Show operators in C style?", IconLoader.getIcon(124));
+	// END KGU#872 2020-10-17
+	protected final JCheckBoxMenuItem menuViewDIN = new JCheckBoxMenuItem("DIN 66261?", IconLoader.getIcon(82));
+	protected final JCheckBoxMenuItem menuViewAnalyser = new JCheckBoxMenuItem("Analyse structogram?", IconLoader.getIcon(83));
+	protected final JCheckBoxMenuItem menuViewSwitchComments = new JCheckBoxMenuItem("Switch text/comments?", IconLoader.getIcon(102));
+	// START KGU#227 2016-07-31: Enh. #128
+	protected final JCheckBoxMenuItem menuViewCommentsPlusText = new JCheckBoxMenuItem("Comments plus texts?", IconLoader.getIcon(111));
+	// END KGU#227 2016-07-31
+	// START KGU#477 2017-12-06: Enh. #487
+	protected final JCheckBoxMenuItem menuViewHideDeclarations = new JCheckBoxMenuItem("Hide declarations?", IconLoader.getIcon(85));
+	// END KGU#477 2017-12-06
+	// START KGU#305 2016-12-14: Enh. #305
+	protected final JCheckBoxMenuItem menuViewIndex = new JCheckBoxMenuItem("Show Arranger index?", IconLoader.getIcon(29));
+	// END KGU#305 2016-12-14
+	// START KGU#705 2019-09-23: Enh. #738
+	protected final JCheckBoxMenuItem menuViewPreview = new JCheckBoxMenuItem("Show Code preview?", IconLoader.getIcon(87));
+	// END KGU#705 2019-09-23
+	// END KGU#310 2023-10-06
 
 	// Menu "Diagram"
 	protected final JMenu menuDiagram = new JMenu("Diagram");
@@ -352,26 +375,28 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	protected final JCheckBoxMenuItem menuDiagramTypeInclude = new JCheckBoxMenuItem("Includable", IconLoader.getIcon(71));
 	//END KGU#376 2017-05-16
 	protected final JCheckBoxMenuItem menuDiagramUnboxed = new JCheckBoxMenuItem("Unframed diagram?", IconLoader.getIcon(40));
-	protected final JCheckBoxMenuItem menuDiagramComment = new JCheckBoxMenuItem("Show comments?", IconLoader.getIcon(77));
-	protected final JCheckBoxMenuItem menuDiagramMarker = new JCheckBoxMenuItem("Highlight variables?", IconLoader.getIcon(79));
-	// START KGU#872 2020-10-17: Enh. #872 - New display mode or operators
-	protected final JCheckBoxMenuItem menuDiagramOperatorsC = new JCheckBoxMenuItem("Show operators in C style?", IconLoader.getIcon(124));
-	// END KGU#872 2020-10-17
-	protected final JCheckBoxMenuItem menuDiagramDIN = new JCheckBoxMenuItem("DIN 66261?", IconLoader.getIcon(82));
-	protected final JCheckBoxMenuItem menuDiagramAnalyser = new JCheckBoxMenuItem("Analyse structogram?", IconLoader.getIcon(83));
-	protected final JCheckBoxMenuItem menuDiagramSwitchComments = new JCheckBoxMenuItem("Switch text/comments?", IconLoader.getIcon(102));
-	// START KGU#227 2016-07-31: Enh. #128
-	protected final JCheckBoxMenuItem menuDiagramCommentsPlusText = new JCheckBoxMenuItem("Comments plus texts?", IconLoader.getIcon(111));
-	// END KGU#227 2016-07-31
-	// START KGU#477 2017-12-06: Enh. #487
-	protected final JCheckBoxMenuItem menuDiagramHideDeclarations = new JCheckBoxMenuItem("Hide declarations?", IconLoader.getIcon(85));
-	// END KGU#477 2017-12-06
-	// START KGU#305 2016-12-14: Enh. #305
-	protected final JCheckBoxMenuItem menuDiagramIndex = new JCheckBoxMenuItem("Show Arranger index?", IconLoader.getIcon(29));
-	// END KGU#305 2016-12-14
-	// START KGU#705 2019-09-23: Enh. #738
-	protected final JCheckBoxMenuItem menuDiagramPreview = new JCheckBoxMenuItem("Show Code preview?", IconLoader.getIcon(87));
-	// END KGU#705 2019-09-23
+	// START KGU#310 2023-10-06: Issue #311 Moved to new menuView
+//	protected final JCheckBoxMenuItem menuDiagramComment = new JCheckBoxMenuItem("Show comments?", IconLoader.getIcon(77));
+//	protected final JCheckBoxMenuItem menuDiagramMarker = new JCheckBoxMenuItem("Highlight variables?", IconLoader.getIcon(79));
+//	// START KGU#872 2020-10-17: Enh. #872 - New display mode or operators
+//	protected final JCheckBoxMenuItem menuDiagramOperatorsC = new JCheckBoxMenuItem("Show operators in C style?", IconLoader.getIcon(124));
+//	// END KGU#872 2020-10-17
+//	protected final JCheckBoxMenuItem menuDiagramDIN = new JCheckBoxMenuItem("DIN 66261?", IconLoader.getIcon(82));
+//	protected final JCheckBoxMenuItem menuDiagramAnalyser = new JCheckBoxMenuItem("Analyse structogram?", IconLoader.getIcon(83));
+//	protected final JCheckBoxMenuItem menuDiagramSwitchComments = new JCheckBoxMenuItem("Switch text/comments?", IconLoader.getIcon(102));
+//	// START KGU#227 2016-07-31: Enh. #128
+//	protected final JCheckBoxMenuItem menuDiagramCommentsPlusText = new JCheckBoxMenuItem("Comments plus texts?", IconLoader.getIcon(111));
+//	// END KGU#227 2016-07-31
+//	// START KGU#477 2017-12-06: Enh. #487
+//	protected final JCheckBoxMenuItem menuDiagramHideDeclarations = new JCheckBoxMenuItem("Hide declarations?", IconLoader.getIcon(85));
+//	// END KGU#477 2017-12-06
+//	// START KGU#305 2016-12-14: Enh. #305
+//	protected final JCheckBoxMenuItem menuDiagramIndex = new JCheckBoxMenuItem("Show Arranger index?", IconLoader.getIcon(29));
+//	// END KGU#305 2016-12-14
+//	// START KGU#705 2019-09-23: Enh. #738
+//	protected final JCheckBoxMenuItem menuDiagramPreview = new JCheckBoxMenuItem("Show Code preview?", IconLoader.getIcon(87));
+//	// END KGU#705 2019-09-23
+	// END KGU#310 2023-10-06
 
 	// Menu "Preferences"
 	// START KGU#466 2019-08-02: Issue #733 - prepare a selective preferences export, lazy initialisation
@@ -652,7 +677,10 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	public static final LangTextHolder msgRepeatSaveAttempt = new LangTextHolder("Your file has not been saved. Please repeat the save operation!");
 	// END KGU#218 2016-07-28
 	// START KGU#227 2016-07-31: Enh. #128
-	public static final LangTextHolder menuDiagramSwitchTCTooltip = new LangTextHolder("Unselect \"%1\" to enable this item");
+	// START KGU#310 2023-10-06: Issue #311 menu reorganisation
+	//public static final LangTextHolder menuDiagramSwitchTCTooltip = new LangTextHolder("Unselect \"%1\" to enable this item");
+	public static final LangTextHolder menuViewSwitchTCTooltip = new LangTextHolder("Unselect \"%1\" to enable this item");
+	// END KGU#310 2023-10-06
 	// END KGU#227 2016-07-31
 	// START KGU#213 2016-08-02: Enh. #215
 	public static final LangTextHolder msgBreakTriggerPrompt = new LangTextHolder("Specify an execution count triggering a break (0 = always).");
@@ -1417,61 +1445,120 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		menuDiagram.add(menuDiagramUnboxed);
 		menuDiagramUnboxed.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setUnboxed(menuDiagramUnboxed.isSelected()); doButtons(); } } );
 
-		menuDiagram.addSeparator();
+		// START KGU#310 2023-10-06: Issue #311 Menu reorganisation
+//		menuDiagram.addSeparator();
+//
+//		menuDiagram.add(menuDiagramComment);
+//		menuDiagramComment.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setComments(menuDiagramComment.isSelected()); doButtons(); } } );
+//
+//		// START KGU#227 2016-07-31: Enh. #128
+//		menuDiagram.add(menuDiagramCommentsPlusText);
+//		menuDiagramCommentsPlusText.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setCommentsPlusText(menuDiagramCommentsPlusText.isSelected()); doButtons(); } } );
+//		// END KGU#227 2016-07-31
+//
+//		menuDiagram.add(menuDiagramSwitchComments);
+//		menuDiagramSwitchComments.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleTextComments(); doButtons(); } } );
+//		// START KGU#169 2016-04-01: Enh. #142 (accelerator key added)
+//		menuDiagramSwitchComments.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, (java.awt.event.InputEvent.ALT_DOWN_MASK | menuShortcutKeyMask)));
+//		// START KGU#169 2016-04-01
+//
+//		// START KGU#477 2017-12-06: Enh. #487
+//		menuDiagram.add(menuDiagramHideDeclarations);
+//		menuDiagramHideDeclarations.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setHideDeclarations(menuDiagramHideDeclarations.isSelected()); doButtons(); } } );
+//		// END KGU#477 2016-12-06
+//
+//		menuDiagram.add(menuDiagramMarker);
+//		menuDiagramMarker.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setHightlightVars(menuDiagramMarker.isSelected()); doButtons(); } } );
+//		menuDiagramMarker.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F4, 0));
+//
+//		// START KGU#872 2020-10-17>: Enh. #872
+//		menuDiagram.add(menuDiagramOperatorsC);
+//		menuDiagramOperatorsC.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setOperatorDisplayC(menuDiagramOperatorsC.isSelected()); doButtons(); } } );
+//		// START KGU#872 2020-10-17
+//
+//		menuDiagram.add(menuDiagramDIN);
+//		menuDiagramDIN.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleDIN(); doButtons(); } } );
+//
+//		menuDiagram.add(menuDiagramAnalyser);
+//		menuDiagramAnalyser.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleAnalyser(); doButtons(); } } );
+//		menuDiagramAnalyser.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F3, 0));
+//		
+//		// START KGU#305 2016-12-14: Enh. #305
+//		menuDiagram.add(menuDiagramIndex);
+//		menuDiagramIndex.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setArrangerIndex(menuDiagramIndex.isSelected()); } } );
+//		menuDiagramIndex.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F3, java.awt.event.InputEvent.SHIFT_DOWN_MASK));
+//		// END KGU#305 2016-12-14
+//
+//		// START KGU#705 2019-09-23: Enh. #738
+//		menuDiagram.add(menuDiagramPreview);
+//		// START KGU#868 2020-06-03: Bugfix #868 - consider reduced mode 
+//		//menuDiagramPreview.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setCodePreview(menuDiagramPreview.isSelected()); } } );
+//		menuDiagramPreview.addActionListener(new ActionListener() {
+//			public void actionPerformed(ActionEvent event) {
+//				diagram.setCodePreview(!noExportImport && menuDiagramPreview.isSelected());
+//				}
+//			} );
+//		// END KGU#868 2020-06-03
+//		menuDiagramPreview.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F4, java.awt.event.InputEvent.SHIFT_DOWN_MASK));
+//		// END KGU#305 2016-12-14
+		
+		// Setting up Menu "View" with all submenus and shortcuts and actions
+		menubar.add(menuView);
 
-		menuDiagram.add(menuDiagramComment);
-		menuDiagramComment.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setComments(menuDiagramComment.isSelected()); doButtons(); } } );
+		menuView.add(menuViewComment);
+		menuViewComment.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setComments(menuViewComment.isSelected()); doButtons(); } } );
 
 		// START KGU#227 2016-07-31: Enh. #128
-		menuDiagram.add(menuDiagramCommentsPlusText);
-		menuDiagramCommentsPlusText.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setCommentsPlusText(menuDiagramCommentsPlusText.isSelected()); doButtons(); } } );
+		menuView.add(menuViewCommentsPlusText);
+		menuViewCommentsPlusText.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setCommentsPlusText(menuViewCommentsPlusText.isSelected()); doButtons(); } } );
 		// END KGU#227 2016-07-31
 
-		menuDiagram.add(menuDiagramSwitchComments);
-		menuDiagramSwitchComments.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleTextComments(); doButtons(); } } );
+		menuView.add(menuViewSwitchComments);
+		menuViewSwitchComments.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleTextComments(); doButtons(); } } );
 		// START KGU#169 2016-04-01: Enh. #142 (accelerator key added)
-		menuDiagramSwitchComments.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, (java.awt.event.InputEvent.ALT_DOWN_MASK | menuShortcutKeyMask)));
+		menuViewSwitchComments.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, (java.awt.event.InputEvent.ALT_DOWN_MASK | menuShortcutKeyMask)));
 		// START KGU#169 2016-04-01
 
 		// START KGU#477 2017-12-06: Enh. #487
-		menuDiagram.add(menuDiagramHideDeclarations);
-		menuDiagramHideDeclarations.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setHideDeclarations(menuDiagramHideDeclarations.isSelected()); doButtons(); } } );
+		menuView.add(menuViewHideDeclarations);
+		menuViewHideDeclarations.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setHideDeclarations(menuViewHideDeclarations.isSelected()); doButtons(); } } );
 		// END KGU#477 2016-12-06
 
-		menuDiagram.add(menuDiagramMarker);
-		menuDiagramMarker.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setHightlightVars(menuDiagramMarker.isSelected()); doButtons(); } } );
-		menuDiagramMarker.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F4, 0));
+		menuView.add(menuViewMarker);
+		menuViewMarker.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setHightlightVars(menuViewMarker.isSelected()); doButtons(); } } );
+		menuViewMarker.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F4, 0));
 
 		// START KGU#872 2020-10-17>: Enh. #872
-		menuDiagram.add(menuDiagramOperatorsC);
-		menuDiagramOperatorsC.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setOperatorDisplayC(menuDiagramOperatorsC.isSelected()); doButtons(); } } );
+		menuView.add(menuViewOperatorsC);
+		menuViewOperatorsC.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setOperatorDisplayC(menuViewOperatorsC.isSelected()); doButtons(); } } );
 		// START KGU#872 2020-10-17
 
-		menuDiagram.add(menuDiagramDIN);
-		menuDiagramDIN.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleDIN(); doButtons(); } } );
+		menuView.add(menuViewDIN);
+		menuViewDIN.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleDIN(); doButtons(); } } );
 
-		menuDiagram.add(menuDiagramAnalyser);
-		menuDiagramAnalyser.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleAnalyser(); doButtons(); } } );
-		menuDiagramAnalyser.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F3, 0));
+		menuView.add(menuViewAnalyser);
+		menuViewAnalyser.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleAnalyser(); doButtons(); } } );
+		menuViewAnalyser.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F3, 0));
 		
 		// START KGU#305 2016-12-14: Enh. #305
-		menuDiagram.add(menuDiagramIndex);
-		menuDiagramIndex.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setArrangerIndex(menuDiagramIndex.isSelected()); } } );
-		menuDiagramIndex.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F3, java.awt.event.InputEvent.SHIFT_DOWN_MASK));
+		menuView.add(menuViewIndex);
+		menuViewIndex.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setArrangerIndex(menuViewIndex.isSelected()); } } );
+		menuViewIndex.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F3, java.awt.event.InputEvent.SHIFT_DOWN_MASK));
 		// END KGU#305 2016-12-14
 
 		// START KGU#705 2019-09-23: Enh. #738
-		menuDiagram.add(menuDiagramPreview);
+		menuView.add(menuViewPreview);
 		// START KGU#868 2020-06-03: Bugfix #868 - consider reduced mode 
-		//menuDiagramPreview.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setCodePreview(menuDiagramPreview.isSelected()); } } );
-		menuDiagramPreview.addActionListener(new ActionListener() {
+		//menuViewPreview.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setCodePreview(menuViewPreview.isSelected()); } } );
+		menuViewPreview.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent event) {
-				diagram.setCodePreview(!noExportImport && menuDiagramPreview.isSelected());
+				diagram.setCodePreview(!noExportImport && menuViewPreview.isSelected());
 				}
 			} );
 		// END KGU#868 2020-06-03
-		menuDiagramPreview.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F4, java.awt.event.InputEvent.SHIFT_DOWN_MASK));
+		menuViewPreview.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F4, java.awt.event.InputEvent.SHIFT_DOWN_MASK));
 		// END KGU#305 2016-12-14
+		// END KGU#310 2023-10-06
 
 		// Setting up Menu "Preferences" with all submenus and shortcuts and actions
 		menubar.add(menuPreferences);
@@ -2014,13 +2101,22 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 			menuDiagramTypeProgram.setSelected(diagram.isProgram());
 			menuDiagramTypeInclude.setSelected(diagram.isInclude());
 			menuDiagramUnboxed.setSelected(!diagram.getRoot().isBoxed);
-			menuDiagramAnalyser.setSelected(Element.E_ANALYSER);
+			// START KGU#310 2023-10-06: Issue #311 menu reorgaisation
+//			menuDiagramAnalyser.setSelected(Element.E_ANALYSER);
+//			// START KGU#305 2016-12-14: Enh. #305
+//			menuDiagramIndex.setSelected(diagram.showingArrangerIndex());
+//			// END KGU#305 2016-12-14
+//			// START KGU#705 2019-09-24: Enh. #738
+//			menuDiagramPreview.setSelected(diagram.showingCodePreview());
+//			// END KGU#705 2019-09-24
+			menuViewAnalyser.setSelected(Element.E_ANALYSER);
 			// START KGU#305 2016-12-14: Enh. #305
-			menuDiagramIndex.setSelected(diagram.showingArrangerIndex());
+			menuViewIndex.setSelected(diagram.showingArrangerIndex());
 			// END KGU#305 2016-12-14
 			// START KGU#705 2019-09-24: Enh. #738
-			menuDiagramPreview.setSelected(diagram.showingCodePreview());
+			menuViewPreview.setSelected(diagram.showingCodePreview());
 			// END KGU#705 2019-09-24
+			// END KGU#310 2023-10-06
 
 			// elements
 			// START KGU#87 2015-11-22: Why enable the main entry if no action is enabled?
@@ -2094,7 +2190,10 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 			menuDiagramCollapse.setVisible(!Element.E_REDUCED_TOOLBARS);
 			menuDiagramExpand.setVisible(!Element.E_REDUCED_TOOLBARS);
 
-			menuDiagramHideDeclarations.setVisible(!Element.E_REDUCED_TOOLBARS);
+			// START KGU#310 2023-10-06: Issue #311 menu reorganisation
+			//menuDiagramHideDeclarations.setVisible(!Element.E_REDUCED_TOOLBARS);
+			menuViewHideDeclarations.setVisible(!Element.E_REDUCED_TOOLBARS);
+			// END KGU#310 2023-10-06
 			
 			menuPreferencesColors.setVisible(!Element.E_REDUCED_TOOLBARS);
 			menuPreferencesElements.setVisible(!Element.E_REDUCED_TOOLBARS);
@@ -2152,46 +2251,89 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 			// nice
 			menuDiagramUnboxed.setSelected(diagram.isUnboxed());
 
+			// START KGU#310 2023-10-06: Issue #311 menu reorganisation
+//			// variable highlighting
+//			menuDiagramMarker.setSelected(Element.E_VARHIGHLIGHT);
+//			
+//			// START KGU#872 2020-10-17: Enh. #872
+//			menuDiagramOperatorsC.setSelected(Element.E_SHOW_C_OPERATORS);
+//			// START KGU#887 2020-12-15: Bugfix #885
+//			//menuDiagramOperatorsC.setEnabled(Element.E_VARHIGHLIGHT && !Element.E_TOGGLETC);
+//			// START KGU#902 2021-01-01: Enh. #903 May now also work in StichTextComment mode
+//			//menuDiagramOperatorsC.setEnabled(Element.E_VARHIGHLIGHT && !Element.isSwitchTextCommentMode());
+//			menuDiagramOperatorsC.setEnabled(Element.E_VARHIGHLIGHT);
+//			// END KGU#902 2021-01-01
+//			// END KGU#887 2020-12-15
+//			// END KGU#872 2020-10-17
+//
+//			// show comments?
+//			menuDiagramComment.setSelected(Element.E_SHOWCOMMENTS);
+//
+//			// START KGU#227 2016-07-31: Enh. #128
+//			// draw elements with both comments and diagram?
+//			menuDiagramCommentsPlusText.setSelected(Element.E_COMMENTSPLUSTEXT);
+//			menuDiagramSwitchComments.setEnabled(!Element.E_COMMENTSPLUSTEXT);
+//			if (Element.E_COMMENTSPLUSTEXT)
+//			{
+//				menuDiagramSwitchComments.setToolTipText(menuDiagramSwitchTCTooltip.getText().replace("%1", menuDiagramCommentsPlusText.getText()));
+//			}
+//			else
+//			{
+//				menuDiagramSwitchComments.setToolTipText(null);
+//			}
+//			// END KGU#227 2016-07-31
+//			
+//			// swap texts against comments?
+//			menuDiagramSwitchComments.setSelected(Element.E_TOGGLETC);
+//
+//			// START KGU#477 2017-12-11: Enh. #487
+//			menuDiagramHideDeclarations.setSelected(Element.E_HIDE_DECL);
+//			// END KGU#477 2017-12-11
+//
+//			// DIN 66261
+//			menuDiagramDIN.setSelected(Element.E_DIN);
 			// variable highlighting
-			menuDiagramMarker.setSelected(Element.E_VARHIGHLIGHT);
+			menuViewMarker.setSelected(Element.E_VARHIGHLIGHT);
 			
 			// START KGU#872 2020-10-17: Enh. #872
-			menuDiagramOperatorsC.setSelected(Element.E_SHOW_C_OPERATORS);
+			menuViewOperatorsC.setSelected(Element.E_SHOW_C_OPERATORS);
 			// START KGU#887 2020-12-15: Bugfix #885
-			//menuDiagramOperatorsC.setEnabled(Element.E_VARHIGHLIGHT && !Element.E_TOGGLETC);
+			//menuViewOperatorsC.setEnabled(Element.E_VARHIGHLIGHT && !Element.E_TOGGLETC);
 			// START KGU#902 2021-01-01: Enh. #903 May now also work in StichTextComment mode
-			//menuDiagramOperatorsC.setEnabled(Element.E_VARHIGHLIGHT && !Element.isSwitchTextCommentMode());
-			menuDiagramOperatorsC.setEnabled(Element.E_VARHIGHLIGHT);
+			//menuViewOperatorsC.setEnabled(Element.E_VARHIGHLIGHT && !Element.isSwitchTextCommentMode());
+			menuViewOperatorsC.setEnabled(Element.E_VARHIGHLIGHT);
 			// END KGU#902 2021-01-01
 			// END KGU#887 2020-12-15
 			// END KGU#872 2020-10-17
 
 			// show comments?
-			menuDiagramComment.setSelected(Element.E_SHOWCOMMENTS);
+			menuViewComment.setSelected(Element.E_SHOWCOMMENTS);
 
 			// START KGU#227 2016-07-31: Enh. #128
 			// draw elements with both comments and diagram?
-			menuDiagramCommentsPlusText.setSelected(Element.E_COMMENTSPLUSTEXT);
-			menuDiagramSwitchComments.setEnabled(!Element.E_COMMENTSPLUSTEXT);
+			menuViewCommentsPlusText.setSelected(Element.E_COMMENTSPLUSTEXT);
+			menuViewSwitchComments.setEnabled(!Element.E_COMMENTSPLUSTEXT);
 			if (Element.E_COMMENTSPLUSTEXT)
 			{
-				menuDiagramSwitchComments.setToolTipText(menuDiagramSwitchTCTooltip.getText().replace("%1", menuDiagramCommentsPlusText.getText()));
+				menuViewSwitchComments.setToolTipText(menuViewSwitchTCTooltip.getText().replace("%1", menuViewCommentsPlusText.getText()));
 			}
 			else
 			{
-				menuDiagramSwitchComments.setToolTipText(null);
+				menuViewSwitchComments.setToolTipText(null);
 			}
 			// END KGU#227 2016-07-31
 			
 			// swap texts against comments?
-			menuDiagramSwitchComments.setSelected(Element.E_TOGGLETC);
+			menuViewSwitchComments.setSelected(Element.E_TOGGLETC);
 
 			// START KGU#477 2017-12-11: Enh. #487
-			menuDiagramHideDeclarations.setSelected(Element.E_HIDE_DECL);
+			menuViewHideDeclarations.setSelected(Element.E_HIDE_DECL);
 			// END KGU#477 2017-12-11
 
 			// DIN 66261
-			menuDiagramDIN.setSelected(Element.E_DIN);
+			menuViewDIN.setSelected(Element.E_DIN);
+			// END KGU#310 2023-10-06
+			
 			ImageIcon iconFor = IconLoader.getIcon(Element.E_DIN ? 74 : 53);
 			menuDiagramAddBeforeFor.setIcon(iconFor);
 			menuDiagramAddAfterFor.setIcon(iconFor);
@@ -2580,7 +2722,10 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		menuFileExportCode.setVisible(false);
 		menuFileExportCodeFavorite.setVisible(false);
 		menuFileImportCode.setVisible(false);
-		menuDiagramPreview.setVisible(false);
+		// START KGU#310 2023-10-06: Issue #311
+		//menuDiagramPreview.setVisible(false);
+		menuViewPreview.setVisible(false);
+		// END KGU#310 2023-10-06
 	}
 	// END KGU#868 2020-06-03
 	// END BOB 2020-05-25

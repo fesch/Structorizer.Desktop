@@ -72,6 +72,7 @@
  *      Kay Gürtzig     2022-08-10  Enh. #56: Some missing message for insertion of TRY blocks added,
  *                                  issue #492 more consequent use of element name placeholders
  *      Kay Gürtzig     2023-08-01  Enh. #1082: Function name incuded in messages Menu.error13_*
+ *      Kay Gürtzig     2023-10-06  Issue #311: Menu reorganisation (menuDiagram split)
  *
  ******************************************************************************************************
  *
@@ -213,18 +214,22 @@ Menu.menuDiagramTypeProgram.text=@{Root.DT_MAIN}
 Menu.menuDiagramTypeFunction.text=@{Root.DT_SUB}
 Menu.menuDiagramTypeInclude.text=@{Root.DT_INCL}
 Menu.menuDiagramUnboxed.text=Схема без рамки
-Menu.menuDiagramComment.text=Показывать комментарии
-Menu.menuDiagramSwitchComments.text=Обменить тексты/комментарии
-Menu.menuDiagramCommentsPlusText.text=И тексты и комментарии
-Menu.menuDiagramSwitchTCTooltip.text=Выключите "%1" чтобы допускать этот пункт меню
-Menu.menuDiagramHideDeclarations.text=Прятать сущие декларации
-Menu.menuDiagramMarker.text=Подсвечивать переменные
-Menu.menuDiagramOperatorsC.text=Изобразить операторы как в C
-Menu.menuDiagramOperatorsC.tooltip=Изображает операторы в схемах в соответствии с языком C (предполагает модус "Подсвечивать переменные").
-Menu.menuDiagramDIN.text=DIN (ДИН 66261)?
-Menu.menuDiagramAnalyser.text=Анализировать схему
-Menu.menuDiagramIndex.text=Вставить индекс Arranger?
-Menu.menuDiagramPreview.text=Вставить просмотр кодa?
+
+// Menu "View"
+Menu.menuView.text=Bид
+Menu.menuView.mnemonic=д
+Menu.menuViewComment.text=Показывать комментарии
+Menu.menuViewSwitchComments.text=Обменить тексты/комментарии
+Menu.menuViewCommentsPlusText.text=И тексты и комментарии
+Menu.menuViewSwitchTCTooltip.text=Выключите "%1" чтобы допускать этот пункт меню
+Menu.menuViewHideDeclarations.text=Прятать сущие декларации
+Menu.menuViewMarker.text=Подсвечивать переменные
+Menu.menuViewOperatorsC.text=Изобразить операторы как в C
+Menu.menuViewOperatorsC.tooltip=Изображает операторы в схемах в соответствии с языком C (предполагает модус "Подсвечивать переменные").
+Menu.menuViewDIN.text=DIN (ДИН 66261)?
+Menu.menuViewAnalyser.text=Анализировать схему
+Menu.menuViewIndex.text=Вставить индекс Arranger?
+Menu.menuViewPreview.text=Вставить просмотр кодa?
 
 // Menu "Preferences"
 Menu.menuPreferences.text=Настройки
@@ -273,9 +278,6 @@ Menu.menuPreferencesSaveLoad.text=Ввезти из файла ...
 Menu.menuPreferencesSaveLoad.tooltip=Прежде ввозе настройк из файла изготовит резервную копию теперешних настройк
 Menu.menuPreferencesSaveRestore.text=Ввосстановить последный резерв
 Menu.menuPreferencesSaveRestore.tooltip=Ввосстановит настройки из резерва, который был изготовлен когда ввозил файл с настройками последный раз
-
-// Menu "View" (not in use right now!)
-Menu.menuView.text=
 
 // Menu "Debug"
 Menu.menuDebug.text=Выполнение
