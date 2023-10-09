@@ -6812,6 +6812,11 @@ public class Root extends Element {
 	// END KGU#239 2016-06-12
 	
 	// START KGU#466 2019-08-02: Issue #733
+	/**
+	 * @return an array of Analyser-related property keys (for selective preference export)
+	 * 
+	 * @see #saveToINI()
+	 */
 	public static String[] getPreferenceKeys()
 	{
 		// START KGU#906 2021-01-02: Enh. #905
@@ -6835,6 +6840,11 @@ public class Root extends Element {
 	}
 	// END KGU#466 2019-08-02
 
+    /**
+     * Saves Analyser and plugin settings to the Ini file.
+     * 
+     * @see #getPreferenceKeys()
+     */
     public static void saveToINI()
     {
         try

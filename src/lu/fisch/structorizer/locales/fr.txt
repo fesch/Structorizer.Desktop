@@ -63,6 +63,8 @@
  *      Kay Gürtzig     2022-08-09/10   Issue #1056 (flawed translations, defective tooltip associations)
  *      GitHub/tph002   2022-08-14      Majority of texts translated or corrected, respectively
  *      Kay Gürtzig     2023-08-01      Enh. #1082: Function name incuded in messages Menu.error13_* *
+ *      Kay Gürtzig     2023-10-07      Issue #311: Menu reorganisation (menuDiagram split)
+ *
  ******************************************************************************************************
  *
  *      Comment:	
@@ -202,19 +204,23 @@ Menu.menuDiagramTypeProgram.text=@n
 Menu.menuDiagramTypeFunction.text=@o
 Menu.menuDiagramTypeInclude.text=@p
 Menu.menuDiagramUnboxed.text=Diagramme sans cadre?
-Menu.menuDiagramComment.text=Montrer les commentaires?
-Menu.menuDiagramSwitchComments.text=Basculer entre code et commentaires?
-Menu.menuDiagramCommentsPlusText.text=Commentaires et textes?
-Menu.menuDiagramSwitchTCTooltip.text=Désélectionner "%1" afin d'activer ce point
-Menu.menuDiagramHideDeclarations.text=Cacher les déclarations simples?
-Menu.menuDiagramMarker.text=Marquer les variables?
-Menu.menuDiagramOperatorsC.text=Afficher les opérateurs dans le style de C?
-Menu.menuDiagramOperatorsC.tooltip=Affiche dans les diagrammes les symboles d'opérateur selon la syntaxe de C (nécessite le mode "Highlight variable?").
-Menu.menuDiagramDIN.text=DIN 66261?
-Menu.menuDiagramDIN.tooltip=Commute l'apparence des boucles @d entre la norme DIN 66261 (forme comme la boucle @g) et la norme non standard (forme comme la boucle @i).
-Menu.menuDiagramAnalyser.text=Analyser le structogramme?
-Menu.menuDiagramIndex.text=Afficher l'index de l'Arrangeur?
-Menu.menuDiagramPreview.text=Montrer la prévisualisation du code?
+
+// Menu "View"
+Menu.menuView.text=Vue
+Menu.menuView.mnemonic=v
+Menu.menuViewComment.text=Montrer les commentaires?
+Menu.menuViewSwitchComments.text=Basculer entre code et commentaires?
+Menu.menuViewCommentsPlusText.text=Commentaires et textes?
+Menu.menuViewSwitchTCTooltip.text=Désélectionner "%1" afin d'activer ce point
+Menu.menuViewHideDeclarations.text=Cacher les déclarations simples?
+Menu.menuViewMarker.text=Marquer les variables?
+Menu.menuViewOperatorsC.text=Afficher les opérateurs dans le style de C?
+Menu.menuViewOperatorsC.tooltip=Affiche dans les diagrammes les symboles d'opérateur selon la syntaxe de C (nécessite le mode "Highlight variable?").
+Menu.menuViewDIN.text=DIN 66261?
+Menu.menuViewDIN.tooltip=Commute l'apparence des boucles @d entre la norme DIN 66261 (forme comme la boucle @g) et la norme non standard (forme comme la boucle @i).
+Menu.menuViewAnalyser.text=Analyser le structogramme?
+Menu.menuViewIndex.text=Afficher l'index de l'Arrangeur?
+Menu.menuViewPreview.text=Montrer la prévisualisation du code?
 
 // Menu "Preferences"
 Menu.menuPreferences.text=Préférences

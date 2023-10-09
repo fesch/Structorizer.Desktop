@@ -139,14 +139,14 @@ public class InputBoxFor extends InputBox implements ItemListener {
 	// START KGU#247 2016-09-23: Issue #243 Forgotten translation
 	protected LangTextHolder lblVariable = new LangTextHolder("Counter variable");
 	protected LangTextHolder lblTraversingVariable = new LangTextHolder("Element variable");
-	protected LangTextHolder lblValueList = new LangTextHolder("Value list or array");
+	protected LangTextHolder lblValueList = new LangTextHolder("Value list, array, or string");
 	protected LangTextHolder lblStartVal = new LangTextHolder("Start value");
 	protected LangTextHolder msgInvalidIncrement = new LangTextHolder("<%> is no valid integer constant");
 	protected LangTextHolder msgMissingBrace1 = new LangTextHolder("Value list must begin with '{'");
 	protected LangTextHolder msgMissingBrace2 = new LangTextHolder("Value list must end with '}'");
 	protected LangTextHolder msgSeparateWithComma = new LangTextHolder("Within braces, commas must separate values.");
-	protected LangTextHolder msgEnsureReturnedArray = new LangTextHolder("Ensure the function returns an array.");
-	protected LangTextHolder msgEnsureVariableIsArray = new LangTextHolder("Ensure that <%> is an array.");
+	protected LangTextHolder msgEnsureReturnedArray = new LangTextHolder("Ensure the function returns an array or string.");
+	protected LangTextHolder msgEnsureVariableIsArray = new LangTextHolder("Ensure that <%> is an array or string.");
 	protected LangTextHolder msgEnterValueList = new LangTextHolder("Enter the value list for the loop.");
 	protected LangTextHolder msgDiscardData = new LangTextHolder("Changing the loop style means to discard most of the data!%Do you really want to discard the data?");
 	protected LangTextHolder msgAttention = new LangTextHolder("ATTENTION!");

@@ -37,6 +37,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-06-07      Issue #726: array ELEMENT_KEYS introduced
  *      Kay Gürtzig     2019-06-10      Issue #726: All resolution methods equipped with an optional translations argument
  *      Kay Gürtzig     2019-08-02      Issue #733: New method getPreferenceKeys() for partial preference export
+ *      Kay Gürtzig     2023-10-09      Bugfix #1095: Precautions against null in configuredNames
  *
  ******************************************************************************************************
  *
@@ -193,21 +194,31 @@ public class ElementNames extends Component {
 	/**
 	 * Returns an external name for the element class or flavour indexed by {@code _index},
 	 * where user configuration has priority over locale default, unless {@code _defaultOnly}
-	 * is true.
+	 * is {@code true}.
+	 * 
 	 * @param _index - the index into the name tables
-	 * @param _defaultOnly - if true then user-configured names otherwise prioritized will
-	 * be ignored.
+	 * @param _defaultOnly - if {@code true} then user-configured names otherwise prioritized
+	 *    will be ignored.
 	 * @param _translations - Array of translated element names.
-	 * @return the element name for GUI purposes if available, null otherwise.
+	 * @return the element name for GUI purposes if available, {@code null} otherwise.
 	 */
 	public static String getElementName(int _index, boolean _defaultOnly, String[] _translations)
 	{
 		String name = null;
 		if (!_defaultOnly && useConfiguredNames && _index >= 0 && _index < configuredNames.length) {
-			name = configuredNames[_index].trim();
-			if (name.isEmpty()) {
+			// START KGU#1088 2023-10-09: Bugfix #1095 configuredNames may contain null values
+			//name = configuredNames[_index].trim();
+			//if (name.isEmpty()) {
+			//	name = null;
+			//}
+			name = configuredNames[_index];
+			if (name != null && name.isBlank()) {
 				name = null;
 			}
+			else {
+				name = name.trim();
+			}
+			// END KGU#1088 2023-10-09
 		}
 		if (name == null && _index >= 0 && _index < localizedNames.length) {
 			// START KGU#709 2019-06-08: Issue #726
@@ -229,30 +240,36 @@ public class ElementNames extends Component {
 	/**
 	 * Returns an external name for the element class or flavor encoded by placeholder
 	 * letter {@code _formatCode}, where user configuration has priority over locale
-	 * default, unless {@code _defaultOnly} is true..
+	 * default, unless {@code _defaultOnly} is {@code true}.
+	 * 
 	 * @param _formatCode - a letter in [a-p] according to the mapping listed in the 
-	 * {@link ElementNames} comment.
-	 * @param _defaultOnly - if true then user-configured names otherwise prioritized will
-	 * be ignored.
+	 *    {@link ElementNames} comment.
+	 * @param _defaultOnly - if {@code true} then user-configured names otherwise prioritized
+	 *    will be ignored.
 	 * @param _translations - possibly an array of localised element names (may be
-	 * {@code null}).
-	 * @return the element name for GUI purposes if available, null otherwise.
+	 *    {@code null}).
+	 * @return the element name for GUI purposes if available, {@code null} otherwise.
 	 */
 	public static String getElementName(char _formatCode, boolean _defaultOnly, String[] _translations)
 	{
-		return getElementName((int)Character.toLowerCase(_formatCode) - (int)'a', false, _translations);
+		// START KGU#1088 2023-10-09: Bugfix #1085 Preview in Translator used to fail with NullPointerException
+		//return getElementName((int)Character.toLowerCase(_formatCode) - (int)'a', false, _translations);
+		return getElementName((int)Character.toLowerCase(_formatCode) - (int)'a', _defaultOnly, _translations);
+		// END KGU#1088 2023-10-09
 	}
 	
 	/**
 	 * Derives an external name for the class of given element {@code _element}, where
 	 * user configuration has priority over locale default, unless {@code _defaultOnly}
 	 * is true.
+	 * 
 	 * @param _element - a Structorizer {@link Element} instance
-	 * @param _defaultOnly - if true then user-configurations otherwise prioritized will
-	 * be ignored.
+	 * @param _defaultOnly - if {@code true} then user-configurations otherwise prioritized
+	 *    will be ignored.
 	 * @param _translations - a possible array of localized element names (may be
-	 * {@code null}).
+	 *    {@code null}).
 	 * @return the element name for GUI purposes if available, null otherwise.
+	 * 
 	 * @see #getElementName(char, boolean, Locale)
 	 * @see #getElementName(int, boolean, Locale)
 	 * @see #resolveElementNames(String, Locale)
@@ -293,10 +310,12 @@ public class ElementNames extends Component {
 	 * current locale default unless {@code _translations} are explicitly given).<br/>
 	 * See {@link ElementNames} class comment for the mapping of letters to
 	 * element classes or flavours.
+	 * 
 	 * @param _rawString - the string with possibly unresolved placeholders
 	 * @param _translations - possible array of localised Element names (may be
-	 * {@code null}).
+	 *    {@code null}).
 	 * @return the string with resolved element names.
+	 * 
 	 * @see #getElementName(char, boolean, Locale)
 	 * @see #getElementName(int, boolean, Locale)
 	 * @see #getElementName(Element, boolean, Locale)
@@ -336,9 +355,14 @@ public class ElementNames extends Component {
 		}
 		return result.toString();
 	}
+	
 	/**
 	 * Synchronises {@link ElementNames#configuredNames} settings from {@code ini} properties.  
 	 * @param ini - the loaded INI file contents.
+	 * 
+	 * @see #putToIni(Ini)
+	 * @see #saveToINI()
+	 * @see #getPreferenceKeys()
 	 */
 	public static void getFromIni(Ini ini) {
 		for (int i = 0; i < configuredNames.length; i++) {
@@ -349,6 +373,10 @@ public class ElementNames extends Component {
 	/**
 	 * Synchronises {@link ElementNames#configuredNames} settings to {@code ini} properties.  
 	 * @param ini - the loaded INI file contents.
+	 * 
+	 * @see #getPreferenceKeys()
+	 * @see #getFromIni(Ini)
+	 * @see #saveToINI()
 	 */
 	public static void putToIni(Ini ini) {
 		for (int i = 0; i < configuredNames.length; i++) {
@@ -357,7 +385,11 @@ public class ElementNames extends Component {
 		ini.setProperty("ElementNames", useConfiguredNames ? "1" : "0");
 	}
 	/**
-	 * Saves {@link ElementNames#configuredNames} settings to the Ini file.  
+	 * Saves {@link ElementNames#configuredNames} settings to the Ini file.
+	 * 
+	 * @see #getPreferenceKeys()
+	 * @see #getFromIni(Ini)
+	 * @see #putToIni(Ini)
 	 */
 	public static void saveToINI()
 	{
@@ -373,7 +405,16 @@ public class ElementNames extends Component {
 			logger.log(Level.WARNING, "Ini", e);
 		}
 	}
+	
 	// START KGU#466 2019-08-02: Issue #733 - Support selective preference export
+	/**
+	 * @return an array of element-name-related property keys or patterns (for selective
+	 *    preference export)
+	 * 
+	 * @see #getFromIni(Ini)
+	 * @see #putToIni(Ini)
+	 * @see #saveToINI()
+	 */
 	public static String[] getPreferenceKeys()
 	{
 		return new String[] {"ElementNames.*"};

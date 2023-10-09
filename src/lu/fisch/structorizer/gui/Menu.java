@@ -1536,10 +1536,14 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		menuView.add(menuViewDIN);
 		menuViewDIN.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleDIN(); doButtons(); } } );
 
+		menuView.addSeparator();
+
 		menuView.add(menuViewAnalyser);
 		menuViewAnalyser.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleAnalyser(); doButtons(); } } );
 		menuViewAnalyser.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F3, 0));
 		
+		menuView.addSeparator();
+
 		// START KGU#305 2016-12-14: Enh. #305
 		menuView.add(menuViewIndex);
 		menuViewIndex.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setArrangerIndex(menuViewIndex.isSelected()); } } );
