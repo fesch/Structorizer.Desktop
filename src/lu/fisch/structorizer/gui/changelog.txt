@@ -149,6 +149,9 @@ Current development version 3.32-13 (2023-10-10)
 - 12: Enh. #1091 Structorizer now accepts alias and array type definitions <2>
 - 12: Bugfix #1092 Code export of alias types implemented where needed <2>
 - 13: Issue #311 Menu reorganised (mere representation stuff --> "View") <2>
+- 13: Issue #980 Multi-variable declarations supported on
+      - export to C, C++, Java, C#, Javascript
+      - export to Python, PHP <2>
 - 13: Bugfix #1093 Code export unduly inserted "return 0" instructions <2>
 - 13: Bugfix #1094 C99 batch import failed with index range error <2>
 - 13: Many translations (webtran.de) added to Luxemburgish locale <2>

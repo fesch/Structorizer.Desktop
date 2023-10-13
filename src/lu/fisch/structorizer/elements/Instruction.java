@@ -826,6 +826,7 @@ public class Instruction extends Element {
 	 * a) var &lt;id&gt; {, &lt;id&gt;} : &lt;type&gt; [&lt;- &lt;expr&gt;]<br/>
 	 * b) dim &lt;id&gt; {, &lt;id&gt;} as &lt;type&gt; [&lt;- &lt;expr&gt;]<br/>
 	 * c) &lt;type&gt; &lt;id&gt; &lt;- &lt;expr&gt;
+	 * 
 	 * @param line - String comprising one line of code
 	 * @return true iff line is of one of the forms a), b), c)
 	 */
@@ -1173,11 +1174,6 @@ public class Instruction extends Element {
 	// END KGU#258 2016-09-26
 	
 	// START KGU#261 2017-01-26: Enh. #259 (type map)
-	/**
-	 * Adds own variable declarations (only this element, no substructure!) to the given
-	 * map (varname -> typeinfo).
-	 * @param typeMap
-	 */
 	@Override
 	public void updateTypeMap(HashMap<String, TypeMapEntry> typeMap)
 	{
@@ -1192,6 +1188,14 @@ public class Instruction extends Element {
 		// END KGU#413 2017-06-09
 	}
 	
+	/**
+	 * Adds type map entries for the variable declarations contained in the given
+	 * line to the passed-in type map (varname -> typeinfo).
+	 * 
+	 * @param typeMap - the type map to be used and extended
+	 * @param line - the (unbroken) line to be processed
+	 * @param lineNo - number of the (unbroken) {@code line} within the element text
+	 */
 	public void updateTypeMapFromLine(HashMap<String, TypeMapEntry> typeMap, String line, int lineNo)
 	{
 		StringList tokens = Element.splitLexically(line, true);
@@ -1212,16 +1216,50 @@ public class Instruction extends Element {
 			isAssigned = posAsgnmt > posColon;
 			typeSpec = tokens.concatenate(" ", posColon+1, (isAssigned ? posAsgnmt : tokens.count()));
 			// There may be one or more variable names between "var" and ':' if there is no assignment
-			StringList varTokens = tokens.subSequence(1, posColon);
-			varTokens.removeAll(" ");
-			for (int i = 0; i < varTokens.count(); i++)
-			{
-				if (Function.testIdentifier(varTokens.get(i), false, null) && (i + 1 >= varTokens.count() || varTokens.get(i+1).equals(","))) {
-					addToTypeMap(typeMap, varTokens.get(i), typeSpec, lineNo, isAssigned, true);
+			// START KGU#1089 2023-10-12: Issue #980 - There may also be array specifiers
+			//StringList varTokens = tokens.subSequence(1, posColon);
+			//varTokens.removeAll(" ");
+			//for (int i = 0; i < varTokens.count(); i++)
+			//{
+			//	if (Function.testIdentifier(varTokens.get(i), false, null) && (i + 1 >= varTokens.count() || varTokens.get(i+1).equals(","))) {
+			//		addToTypeMap(typeMap, varTokens.get(i), typeSpec, lineNo, isAssigned, true);
+			//	}
+			//}
+			StringList varList = Element.splitExpressionList(tokens.subSequence(1, posColon), ",", false);
+			if (!isAssigned || varList.count() == 1) {
+				for (int i = 0; i < varList.count(); i++) {
+					String var = varList.get(i).trim();
+					StringList dims = new StringList();
+					int posBrack = var.indexOf('[');
+					if (posBrack >= 0) {
+						String tail = var.substring(posBrack);
+						var = var.substring(0, posBrack).trim();
+						while (tail.startsWith("[")) {
+							StringList ranges = Element.splitExpressionList(tail.substring(1), ",", true);
+							dims.add(ranges.subSequence(0, ranges.count()-1));
+							tail = ranges.get(ranges.count()-1);
+							if (tail.length() > 1) {
+								tail = tail.substring(1);
+							}
+						}
+					}
+					if (Function.testIdentifier(var, false, null)) {
+						String typeSpec1 = typeSpec;
+						if (!dims.isEmpty()) {
+							if (dims.count() == 1 && dims.get(0).isBlank()) {
+								typeSpec1 = "array of " + typeSpec1;
+							}
+							else {
+								typeSpec1 = "array [" + dims.concatenate(",") + "] of " + typeSpec1;
+							}
+						}
+						addToTypeMap(typeMap, var, typeSpec1, lineNo, isAssigned, true);
+					}
 				}
 			}
+			// END KGU#1089 2023-10-12
 		}
-		// Next we try to extract type information from an initial assignment (without "var" keyword)
+		// Next we try to extract type information from an initial assignment (without "var"/"dim" keyword)
 		else if (posAsgnmt > 0 && !token0.equals("var") && !token0.equals("dim")) {
 			// Type information might be found left of the variable name or be derivable from the initial value
 			// START KGU#375 2017-09-20: Enh. #388 - a "const" keyword might be here, drop it
@@ -1332,10 +1370,12 @@ public class Instruction extends Element {
 	 * Possible end-standing indices will not be part of the returned string, e.g. the result for
 	 * {@code foo.bar[i][j]} will be "foo.bar", whereas for a mixed expression {@code foo[i].bar[j]}
 	 * the result would be just "foo".
-	 * @param tokens - unified tokens of an assignment instruction without whitespace (otherwise the result may be nonsense)
-	 * @param entireTarget if this is true then index expressions etc. will remain in the result
-	 * (so it is no longer the pure name)
-	 * @return the extracted variable name or null
+	 * 
+	 * @param tokens - unified tokens of an assignment instruction without whitespace (otherwise
+	 *     the result may be nonsense)
+	 * @param entireTarget - if this is {@code true} then index expressions etc. will remain in
+	 *    the result (so it is no longer the pure name)
+	 * @return the extracted variable name/specification or {@code null}
 	 */
 	// KGU#686 2019-03-17: Enh. #56 - made static to facilitate implementation of Try
 	public static String getAssignedVarname(StringList tokens, boolean entireTarget) {
@@ -1361,6 +1401,7 @@ public class Instruction extends Element {
 			tokens = tokens.subSequence(0, posColon);
 		}
 		// END KGU#388 2017-09-15
+		// FIXME (#980): What to do with a mere multi-variable declaration
 		// The last sequence of dot-separated ids should be the variable name
 		if (tokens.count() > 0) {
 			int i = tokens.count()-1;
@@ -1368,10 +1409,10 @@ public class Instruction extends Element {
 			// START KGU#780 2019-12-01: Bugfix - endstanding index access was erroneously returned
 			// FIXME But it might be even more complicated, e.g. foo[i].bar[j]!
 			while (varName.startsWith("[") && varName.endsWith("]") && i > 0) {
-				if (posColon >= 0) {
-					// Something is wrong here - there should not be be both a declaration and a bracket(?)
-					return null;
-				}
+//				if (posColon >= 0) {
+//					// Something is wrong here - there should not be be both a declaration and a bracket(?)
+//					return null;
+//				}
 				// It is a coagulated index access - skip it
 				varName = tokens.get(--i);
 			}
@@ -1457,9 +1498,10 @@ public class Instruction extends Element {
 	// START KGU#261 2017-02-20: Enh. #259 Allow CALL elements to override this...
 	/**
 	 * Tries to extract type information from the right side of an assignment.
+	 * 
 	 * @param rightSide - tokens of the assigned expression
 	 * @param knownTypes - the typeMap as filled so far (won't be changed here)
-	 * @return - A type specification or an empty string (no clue) or "???" (ambiguous)
+	 * @return a type specification, an empty string (no clue), or "???" (ambiguous)
 	 */
 	protected String getTypeFromAssignedValue(StringList rightSide, HashMap<String, TypeMapEntry> knownTypes)
 	{
@@ -1506,7 +1548,7 @@ public class Instruction extends Element {
 	 * Tries to extract type information from the right side of an assignment.
 	 * @param typeDef - tokens of the type definition
 	 * @param knownTypes - the typeMap as filled so far (won't be changed here)
-	 * @return - A type specification or an empty string (no clue) or "???" (ambiguous)
+	 * @return a type specification, an empty string (no clue), or "???" (ambiguous)
 	 */
 	protected String getTypeFromTypeDefinition(StringList rightSide, HashMap<String, TypeMapEntry> knownTypes)
 	{
@@ -1578,10 +1620,11 @@ public class Instruction extends Element {
 	 * mode {@link Element#E_HIDE_DECL} is active or {@code _force} is {@code true}
 	 * then the complete declaration sequence virtually amalgamated under its
 	 * first member will be returned, otherwise null.
-	 * @param _modeIndependent - if true then an existing declaration sequence
-	 * will also be returned if mode {@link Element#E_HIDE_DECL} is off.
+	 * 
+	 * @param _modeIndependent - if {@code true} then an existing declaration sequence
+	 *    will also be returned if mode {@link Element#E_HIDE_DECL} is off.
 	 * @return the sequence of hidden declaration elements including its surrogate
-	 * element or null.
+	 *    element or {@code null}.
 	 */
 	public IElementSequence getEclipsedDeclarations(boolean _modeIndependent)
 	{
@@ -1718,8 +1761,10 @@ public class Instruction extends Element {
 		
 	}
 	/**
-	 * Returns the summed up execution steps of this element and - if {@code _combined} is true and
-	 * this is not an eclipsing declaration - all its substructure.
+	 * Returns the summed up number of execution steps of this element and - if
+	 * {@code _combined} is {@code true} and this is not an eclipsing declaration -
+	 * all its substructure.
+	 * 
 	 * @param _combined - ignored
 	 * @return the requested step count
 	 */

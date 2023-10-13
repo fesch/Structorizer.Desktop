@@ -118,6 +118,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2022-09-29      Bugfix #1073: Call comments had always been duplicated
  *      Kay Gürtzig             2023-09-28      Bugfix #1092: Sensible export of alias type definitions enabled
  *      Kay Gürtzig             2023-10-04      Bugfix #1093 Undue final return 0 on function diagrams
+ *      Kay Gürtzig             2023-10-12      Issue #980: Cope with multi-variable declarations
  *
  ******************************************************************************************************
  *
@@ -1263,18 +1264,66 @@ public class CGenerator extends Generator {
 						// Compose the lval without type
 						codeLine = transform(tokens.subSequence(1, posColon).concatenate().trim());
 						if (this.isInternalDeclarationAllowed()) {
-							// START KGU#711 2019-10-01: Enh. #721 Precaution for Javascript
-							if (exprTokens == null && wasDefHandled(root, varName, false)) {
-								return commentInserted;
-							}
-							// END KGU#711 2019-10-01
-							// Insert the type description
+						// START KGU#1089 2023-10-12: Issue #980 Face a list of variables
+							//// START KGU#711 2019-10-01: Enh. #721 Precaution for Javascript
+							//if (exprTokens == null && wasDefHandled(root, varName, false)) {
+							//	return commentInserted;
+							//}
+							//// END KGU#711 2019-10-01
+							//// Insert the type description
+							//String type = tokens.subSequence(posColon+1, posAsgn).concatenate().trim();
+							//// START KGU#561 2018-07-21: Bugfix #564
+							////codeLine = transform(transformType(type, "")) + " " + codeLine;
+							//type = transformType(type, "");
+							//codeLine = this.transformArrayDeclaration(type, codeLine);
+							//// END KGU#561 2018-07-21
 							String type = tokens.subSequence(posColon+1, posAsgn).concatenate().trim();
-							// START KGU#561 2018-07-21: Bugfix #564
-							//codeLine = transform(transformType(type, "")) + " " + codeLine;
-							type = transformType(type, "");
-							codeLine = this.transformArrayDeclaration(type, codeLine);
-							// END KGU#561 2018-07-21
+							StringList declItems = Element.splitExpressionList(tokens.subSequence(1, posColon), ",", false);
+							for (int i = 0; i < declItems.count(); i++) {
+								varName = declItems.get(i).trim();
+								// FIXME there could be asterisks and more!
+								int posBrack = varName.indexOf('[');
+								String brackets = "";
+								if (posBrack >= 0) {
+									brackets = varName.substring(posBrack);
+									varName = varName.substring(0, posBrack).trim();
+								}
+								// START KGU#711 2019-10-01: Enh. #721 Precaution for Javascript
+								if (varName.isEmpty() || exprTokens == null && wasDefHandled(root, varName, false)) {
+									codeLine = null;	// If this was the last loop cycle then ensure nothing gets coded.
+									continue;
+								}
+								// END KGU#711 2019-10-01
+								StringList dims = new StringList();
+								while (brackets.startsWith("[")) {
+									StringList ranges = Element.splitExpressionList(brackets.substring(1), ",", true);
+									dims.add(ranges.subSequence(0, ranges.count()-1));
+									brackets = ranges.get(ranges.count()-1).trim();
+									if (brackets.startsWith("]")) {
+										brackets = brackets.substring(1).trim();
+									}
+								}
+								String type1 = type;
+								if (!dims.isEmpty()) {
+									type1 = "array [ " + dims.concatenate(",") + " ] of " + type;
+								}
+								// Insert the type description
+								// START KGU#561 2018-07-21: Bugfix #564
+								//codeLine = transform(transformType(type, "")) + " " + codeLine;
+								type1 = transformType(type1, "");
+								codeLine = this.transformArrayDeclaration(type1, varName);
+								// END KGU#561 2018-07-21
+								if (!commentInserted) {
+									appendComment(_inst, _indent);
+									commentInserted = true;
+								}
+								if (exprTokens == null || declItems.count() > 1) {
+									addCode(codeLine + ";", _indent, isDisabled);
+									wasDefHandled(root, varName, true);
+									codeLine = null;
+								}
+							}
+							// END KGU#1089 2023-10-12: Issue #980
 						}
 					}
 				}

@@ -894,13 +894,14 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	/**
 	 * Checks whether the given {@code _id} has already been defined by one
 	 * of the diagrams included by {@code _root} or this diagram itself.<br/>
-	 * If not and {@code _setDefindIfNot} is true then registers the {@code _id}
+	 * If not and {@code _setDefinedIfNot} is true then registers the {@code _id}
 	 * with {@code _root} in {@link #declaredStuff}.
 	 * 
 	 * @param _root - the currently exported Root
 	 * @param _id - the name of a constant, variable, or type (in the latter case prefixed with ':')
 	 * @param _setDefinedIfNot - whether the name is to be registered for {@code _root} now if not
 	 * @return true if there had already been a definition before
+	 * 
 	 * @see #wasDefHandled(Root, String, boolean, boolean)
 	 * @see #setDefHandled(String, String)
 	 */
@@ -919,6 +920,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * </ol>
 	 * If not and {@code _setDefinedIfNot} is {@code true} then registers
 	 * the {@code _id} with {@code _root} in {@link #declaredStuff}.
+	 * 
 	 * @param _root - the currently exported {@link Root}
 	 * @param _id - the name of a constant, variable, or type (in the latter case prefixed with ':')
 	 * @param _setDefinedIfNot - whether the name is to be registered for {@code _root} now if not

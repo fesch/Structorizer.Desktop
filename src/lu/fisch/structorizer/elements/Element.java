@@ -5083,12 +5083,13 @@ public abstract class Element {
 	
 	/**
 	 * Adds own variable declarations (only this element, no substructure!) to the given
-	 * map (varname -> typeinfo).
-	 * @param typeMap
+	 * type map (varname -> typeinfo).
+	 * 
+	 * @param typeMap - the type map to be used an extended
 	 */
 	public void updateTypeMap(HashMap<String, TypeMapEntry> typeMap)
 	{
-		// Does nothing - to be sub-classed if necessary
+		// Does nothing - to be sub-classed where necessary
 	}
 	// END KGU#261 2017-01-19
 	

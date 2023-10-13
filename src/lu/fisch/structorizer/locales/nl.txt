@@ -202,19 +202,23 @@ Menu.menuDiagramTypeProgram.text=@n
 Menu.menuDiagramTypeFunction.text=@o
 Menu.menuDiagramTypeInclude.text=@p
 Menu.menuDiagramUnboxed.text=Diagram zonder rand?
-Menu.menuDiagramComment.text=Commentaar weergeven?
-Menu.menuDiagramSwitchComments.text=Tekst/commentaar wisselen
-Menu.menuDiagramCommentsPlusText.text=Commentaar plus teksten?
-Menu.menuDiagramSwitchTCTooltip.text=Deselecteer "%1" om dit in te schakelen
-Menu.menuDiagramHideDeclarations.text=Simpele declaraties verbergen?
-Menu.menuDiagramMarker.text=Variabelen markeren?
-Menu.menuDiagramOperatorsC.text=Operatoren in C-stijl tonen?
-Menu.menuDiagramOperatorsC.tooltip=Operator-symbolen in de diagrammen tonen volgens de C-syntaxis (vereist modus "Variabelen markeren?").
-Menu.menuDiagramDIN.text=DIN 66261?
-Menu.menuDiagramDIN.tooltip=Schakelt uiterlijk van @d-lussen tussen DIN 66261 (gevormd als @g-lus) en niet-standaard (gevormd als @i-lus).
-Menu.menuDiagramAnalyser.text=Structogram analyseren?
-Menu.menuDiagramIndex.text=Index Arranger tonen?
-Menu.menuDiagramPreview.text=Code-preview tonen?
+// Menu "View"
+Menu.menuView.text=Weergave
+Menu.menuView.mnemonic=w
+// Submenus of "View"
+Menu.menuViewComment.text=Commentaar weergeven?
+Menu.menuViewSwitchComments.text=Tekst/commentaar wisselen
+Menu.menuViewCommentsPlusText.text=Commentaar plus teksten?
+Menu.menuViewSwitchTCTooltip.text=Deselecteer "%1" om dit in te schakelen
+Menu.menuViewHideDeclarations.text=Simpele declaraties verbergen?
+Menu.menuViewMarker.text=Variabelen markeren?
+Menu.menuViewOperatorsC.text=Operatoren in C-stijl tonen?
+Menu.menuViewOperatorsC.tooltip=Operator-symbolen in de diagrammen tonen volgens de C-syntaxis (vereist modus "Variabelen markeren?").
+Menu.menuViewDIN.text=DIN 66261?
+Menu.menuViewDIN.tooltip=Schakelt uiterlijk van @d-lussen tussen DIN 66261 (gevormd als @g-lus) en niet-standaard (gevormd als @i-lus).
+Menu.menuViewAnalyser.text=Structogram analyseren?
+Menu.menuViewIndex.text=Index Arranger tonen?
+Menu.menuViewPreview.text=Code-preview tonen?
 
 // Menu "Preferences"
 Menu.menuPreferences.text=Instellingen

@@ -3379,9 +3379,13 @@ public class Root extends Element {
 
     // START KGU#672 2019-11-13: Introduced for Bugfix #776
     /**
-     * @param allowMethodName if true then the method name will be included if among the keys in {@link #getTypeInfo()}, with false it will be suppressed
+     * Retrieves the names of merely declared variables, i.e. those never assigned.
+     * 
+     * @param allowMethodName - if {@code true} then the function name will be included
+     *     if among the keys in {@link #getTypeInfo()}, with {@code false} it will be suppressed
      * @return A list of the names of uninitialized, i.e. merely declared, variables
-     * (of this diagram and all included diagrams).
+     *    (of this diagram and all included diagrams).
+     *    
      * @see #getVarNames()
      * @see #getTypeInfo()
      */
