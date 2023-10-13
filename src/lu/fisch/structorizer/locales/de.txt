@@ -140,6 +140,8 @@
  *      Kay Gürtzig         2022-09-29  Bugfix #1072: New message InputBoxFor.msgIllegalWordInField added
  *      Kay Gürtzig         2023-08-01  Enh. #1082: Function name incuded in messages Menu.error13_* *
  *      Kay Gürtzig         2023-10-06  Issue #311: Menu reorganisation (menuDiagram split)
+ *      Kay Gürtzig         2023-10-13  Issue #980: New messages for declaration syntax check (error31_*)
+ *
  ******************************************************************************************************
  *
  *      Comment:	
@@ -578,6 +580,13 @@ Menu.error29.text=Der Auswahlwert «%» ist von strukturiertem Typ und somit ung
 Menu.error30_1.text=In Zeile %2 gibt es %1 öffnende Klammer(n) mehr als schließende, als nächstes '%3' erwartet!
 Menu.error30_2.text=In Zeile %2 gibt es mindestens eine schließende '%1' mehr als öffnende Klammern!
 Menu.error30_3.text=In Zeile %2 gibt es eine Klammer '%1', wo '%3' erwartet würde!
+Menu.error31_1.text=Eine mit «%1» anfangende Deklaration muss ein Symbol «%2» enthalten, gefolgt von einer Typspezifikation!
+Menu.error31_2.text=Unerwartete Zeichenfolge «%» in der Liste deklarierter Variablen!
+Menu.error31_3.text=Diese Deklarationsobjekte sind keine geeigneten Bezeichner: «%»!
+Menu.error31_4.text=Versuch, die bereits existierende(n) Variable(n) «%» erneut zu deklarieren!
+Menu.error31_5.text=Unzulässiger oder defekter Deklarationszusatz (Array-Dimensionierung): «%»!
+Menu.error31_6.text=Wenigstens eine ungültige Größe für eine Array-Dimensionierung (must Ganzzahlkonstante > 0 sein): «%»!
+Menu.error31_7.text=Für eine Initialisierung muss die Declaration genau EINE Variable enthalten, nicht %!
 Menu.errorLineReference.text= (Zeile %)
 
 -----[ AnalyserPreferences ]-----

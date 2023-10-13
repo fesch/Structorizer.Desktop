@@ -181,6 +181,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2022-09-27      Bugfix #1071: Less vague Analyser check 11 (assignment error)
  *      Kay Gürtzig     2023-09-28      Issue #1091: Analyser no longer rejects alias and array type definitions
  *      Kay Gürtzig     2023-10-05      Bugfix #1094: splitKeywords initialisation enforced in getUsedVars()
+ *      Kay Gürtzig     2023-10-13      Issue #980 New analyser check 31 for declaration syntax implemented
  *      
  ******************************************************************************************************
  *
@@ -775,7 +776,8 @@ public class Root extends Element {
 		true,	false,	true,	true,	true,	// 11 .. 15
 		true,	true,	true,	true,	true,	// 16 .. 20
 		true,	true,	true,	true,	false,	// 21 .. 25
-		false,	true,	true,	true,	true	// 26 .. 30
+		false,	true,	true,	true,	true,	// 26 .. 30
+		true									// 31
 		// Add another element for every new check...
 		// and DON'T FORGET to append its description to
 		// AnalyserPreferences.checkCaptions
@@ -3693,7 +3695,10 @@ public class Root extends Element {
     			// START KGU#375 2017-04-04: Enh. #388
     			// START KGU#388 2017-09-16: Enh. #423 record analysis
     			//analyse_22((Instruction)ele, _errors, _vars, _uncertainVars, _constants);
-    			analyse_22_24((Instruction)ele, _errors, _vars, _uncertainVars, _constants, _types);
+    			// START KGU#1089 2023-10-13: Issue #980 declaration syntax
+    			//analyse_22_24((Instruction)ele, _errors, _vars, _uncertainVars, _constants, _types);
+    			analyse_22_24_31((Instruction)ele, _errors, _vars, _uncertainVars, _constants, _types);
+    			// END KGU#1089 2023-1-13
     			// END KGU#388 2017-09-16
     			// END KGU#375 2017-04-04
     		}
@@ -4902,6 +4907,7 @@ public class Root extends Element {
 	/**
 	 * CHECK #22: constants depending on non-constants and constant modifications<br/>
 	 * CHECK #24: type definitions
+	 * CHECK #31: variable declarations and initialisation
 	 * @param _instr - Instruction element to be analysed
 	 * @param _errors - global error list
 	 * @param _vars - variables with certain initialisation
@@ -4910,8 +4916,9 @@ public class Root extends Element {
 	 * @param _types - type definitions (key starting with ":") and declarations so far
 	 * @see #analyse_24(Element, Vector, HashMap)
 	 * @see #analyse_24_tokens(Element, Vector, HashMap, StringList)
+	 * @see #analyse_31(Instruction, Vector, String, int, StringList, StringList, HashMap, HashMap)
 	 */
-	private void analyse_22_24(Instruction _instr, Vector<DetectedError> _errors, StringList _vars, StringList _uncertainVars, HashMap<String, String> _definedConsts, HashMap<String, TypeMapEntry> _types)
+	private void analyse_22_24_31(Instruction _instr, Vector<DetectedError> _errors, StringList _vars, StringList _uncertainVars, HashMap<String, String> _definedConsts, HashMap<String, TypeMapEntry> _types)
 	{
 		StringList knownVars = _vars.copy();
 		String[] keywords = CodeParser.getAllProperties();
@@ -5038,6 +5045,14 @@ public class Root extends Element {
 					}
 				}
 				// END KGU#375 2017-04-20
+				// START KGU#1089 2023-10-13: Issue #980 variable declaration syntax check
+				if (check(31)) {
+					String lineLower = line.toLowerCase();
+					if (lineLower.startsWith("var ") || lineLower.startsWith("dim ")) {
+						analyse_31(_instr, _errors, line, i, _vars, _uncertainVars, _definedConsts, _types);
+					}
+				}
+				// END KGU#1089 2023-10-13
 				// START KGU#388 2017-09-17: Enh. #423 Check the definition of type names and components
 				if (check(24)) {
 					StringList tokens = Element.splitLexically(line, true);
@@ -5123,7 +5138,7 @@ public class Root extends Element {
 	 * @param _errors - global error list
 	 * @param _types - type definitions (key starting with ":") and declarations so far
 	 * @param _tokens - tokens of the current line, ideally without any instruction keywords
-	 * @see #analyse_22_24(Instruction, Vector, StringList, StringList, HashMap, HashMap)
+	 * @see #analyse_22_24_31(Instruction, Vector, StringList, StringList, HashMap, HashMap)
 	 * @see #analyse_24(Element, Vector, HashMap)
 	 */
 	private void analyse_24_tokens(Element _ele, Vector<DetectedError> _errors,
@@ -5576,6 +5591,109 @@ public class Root extends Element {
 		}
 	}
 	// END KGU#992 2021-10-05
+	
+	
+	/**
+	 * CHECK #31: Variable declaration and initialisation syntax
+	 * @param _instr - {@link Instruction} to be analysed
+	 * @param _errors - global error list
+	 * @param _line - current instruction line
+	 * @param _lineNo - number of the obtained line {@code _line} within {@code _instr} text
+	 * @param _vars - variables with certain initialisation
+	 * @param _uncertainVars - variables with uncertain initialisation (e.g. in a branch)
+	 * @param _constants - incremental constant definition map
+	 * @param _types - type definitions and declarations
+	 */
+	private void analyse_31(Instruction _instr, Vector<DetectedError> _errors,
+			String _line, int _lineNo,
+			StringList _vars, StringList _uncertainVars, HashMap<String, String> _constants,
+			HashMap<String, TypeMapEntry> _types)
+	{
+		StringList tokens = Element.splitLexically(_line, true);
+		tokens.removeAll(" ");
+		int posCol = tokens.indexOf(":");
+		int posAs = tokens.indexOf("as", false);
+		if (posCol < 0 && posAs < 0) {
+			String prefCol = tokens.get(0).equalsIgnoreCase("var") ? ":" : "as";
+			//error  = new DetectedError("A declaration starting with %1 must contain a symbol %2, followed be a type specification!", _instr);
+			addError(_errors, new DetectedError(errorMsg(Menu.error31_1, new String[] {tokens.get(0), prefCol}), _instr), 31);
+		}
+		else {
+			boolean isInit = Instruction.isAssignment(_line);
+			int posType = posCol;
+			if (posType < 0 || posAs >= 0 && posAs < posCol) {
+				posType = posAs;
+			}
+			StringList declItems = Element.splitExpressionList(tokens.subSequence(1, posType), ",", true);
+			if (!declItems.get(declItems.count()-1).isBlank()) {
+				//error  = new DetectedError("Unexpected character sequence % in the list of declared variables", _instr);
+				addError(_errors, new DetectedError(errorMsg(Menu.error31_2, declItems.get(declItems.count()-1)), _instr), 31);
+			}
+			declItems.remove(declItems.count()-1);
+			StringList noId = new StringList();
+			StringList defective = new StringList();
+			StringList redeclared = new StringList();
+			StringList badSizes = new StringList();
+			for (int i = 0; i < declItems.count(); i++) {
+				String[] declSplits = declItems.get(i).trim().split("\\[");
+				StringList dims = new StringList();
+				String varName = "<empty>";
+				if (declSplits.length < 1 || !Function.testIdentifier((varName = declSplits[0]), false, null)) {
+					noId.add(varName);
+				}
+				else {
+					if (_vars.contains(varName)
+							|| _uncertainVars.contains(varName)
+							|| _constants.containsKey(varName)
+							|| _types.containsKey(varName)) {
+						redeclared.add(varName);
+					}
+					for (int j = 1; j < declSplits.length; j++) {
+						StringList ranges = Element.splitExpressionList(declSplits[j], ",", true);
+						if (!"]".equals(ranges.get(ranges.count()-1))) {
+							defective.add(declItems.get(i));
+							break;
+						}
+						dims.add(ranges.subSequence(0, ranges.count() - 1));
+					}
+					for (int j = 0; j < dims.count(); j++) {
+						String dim = dims.get(j);
+						if (_constants.containsKey(dim)) {
+							dim = _constants.get(dim);
+						}
+						try {
+							Integer.parseUnsignedInt(dim);
+						}
+						catch (NumberFormatException ex) {
+							badSizes.add(dim);
+						}
+					}
+				}
+			}
+			if (!noId.isEmpty()) {
+				//error  = new DetectedError("These declaration items are bad or no identifiers: %!", _instr);
+				addError(_errors, new DetectedError(errorMsg(Menu.error31_3, noId.concatenate("», «")), _instr), 31);
+			}
+			if (!redeclared.isEmpty()) {
+				//error  = new DetectedError("Attempt to re-declare existing variables %!", _instr);
+				addError(_errors, new DetectedError(errorMsg(Menu.error31_4, redeclared.concatenate("», «")), _instr), 31);
+			}
+			if (!defective.isEmpty()) {
+				//error  = new DetectedError("Illegal or defective dimension specifications: %!", _instr);
+				addError(_errors, new DetectedError(errorMsg(Menu.error31_5, defective.concatenate("», «")), _instr), 31);
+			}
+			if (!badSizes.isEmpty()) {
+				//error  = new DetectedError("At least one invalid array dimension size (must be integer constant): %!", _instr);
+				addError(_errors, new DetectedError(errorMsg(Menu.error31_6, badSizes.concatenate("», «")), _instr), 31);
+			}
+			if (isInit && declItems.count() != 0) {
+				//error  = new DetectedError("For an initialization, the declaration must list must contain exactly ONE variable, not %!", _instr);
+				addError(_errors, new DetectedError(errorMsg(Menu.error31_7, Integer.toString(declItems.count())), _instr), 31);
+			}
+			//_instr.updateTypeMapFromLine(_types, _line, _lineNo);
+		}
+	}
+
 	
 	// START KGU#456 2017-11-06: Enh. #452
 	/**

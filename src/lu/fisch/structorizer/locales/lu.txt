@@ -61,6 +61,7 @@
  *      Kay Gürtzig         2023-10-09      Issue #311: Menu reorganisation (menuDiagram split)
  *      Kay Gürtzig         2023-10-10      Large number of translations added (by means of
  *                                          https://www.webtran.de/luxembourgish/)
+ *      Kay Gürtzig         2023-10-13      Issue #980: New messages for declaration syntax check (error31_*) 
  *
  ******************************************************************************************************
  *
@@ -500,6 +501,13 @@ Menu.error29.text=De Selektiounswäert «%» ass vum strukturéierten Typ an dof
 Menu.error30_1.text=An der Linn %2 sinn %1 méi Ëffnungsklammer(n) wéi déi ofschléissen, '%3' erwaart als nächst!
 Menu.error30_2.text=An der Linn %2 gëtt et op d'mannst ee méi Ofschloss '%1' wéi Ëffnungsklammern!
 Menu.error30_3.text=An der Linn %2 gëtt et eng Klammer '%1' wou '%3' erwaart gëtt!
+Menu.error31_1.text=Eng Deklaratioun, déi mat "%1" ufänkt, muss e Symbol "%2" enthalen, gefollegt vun enger Typspezifikatioun
+Menu.error31_2.text=Onerwaart String «%» an der Lëscht vun deklaréierte Variablen!
+Menu.error30_3.text=Dës Deklaratiounsobjekter sinn net gëeegent Identifizéierer: «%»!
+Menu.error31_4.text=Versuch, déi scho existent Variabel(en) «%» nei ze deklaréieren!
+Menu.error31_5.text=Illegal oder defekt Deklaratioun Zousatz (Array Dimensioun): «%»!
+Menu.error31_6.text=Op d'mannst eng ongëlteg Gréisst fir d'Array-Gréisst (muss eng konstant ganz Zuel > 0 sinn): «%»!
+Menu.error31_7.text=Fir d'Initialiséierung muss d'Deklaratioun genee ENG Variabel enthalen, net %!
 Menu.errorLineReference.text=(Zeil %)
 
 -----[ AnalyserPreferences ]-----

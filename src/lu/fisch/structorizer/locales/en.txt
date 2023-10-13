@@ -135,6 +135,7 @@
  *      Kay Gürtzig     2022-09-29      Bugfix #1072: New message InputBoxFor.msgIllegalWordInField added
  *      Kay Gürtzig     2023-08-01      Enh. #1082: Function name now included in messages Menu.error13_*
  *      Kay Gürtzig     2023-10-06      Issue #311: Menu reorganisation (menuDiagram split)
+ *      Kay Gürtzig     2023-10-13      Issue #980: New messages for declaration syntax check (error31_*) 
  *
  ******************************************************************************************************
  *
@@ -576,6 +577,13 @@ Menu.error29.text=The choice value «%» is of a structured type and hence unsui
 Menu.error30_1.text=There are %1 more opening than closing brackets in line %2, '%3' was expected next!
 Menu.error30_2.text=There is at least one more closing '%1' than opening brackets in line %2!
 Menu.error30_3.text=There is a closing '%1' where '%3' is expected in line %2!
+Menu.error31_1.text=A declaration starting with «%1» must contain a symbol «%2», followed be a type specification!
+Menu.error31_2.text=Unexpected character sequence «%» in the list of declared variables!
+Menu.error31_3.text=These declaration items are bad or no identifiers: «%»!
+Menu.error31_4.text=Attempt to re-declare existing variable(s) «%»!
+Menu.error31_5.text=Illegal or defective declaration appendices (array specification): «%»!
+Menu.error31_6.text=At least one invalid array dimension size (must be integer constant > 0): «%»!
+Menu.error31_7.text=For an initialization, the declaration list must contain exactly ONE variable, not %!
 Menu.errorLineReference.text= (line %)
 
 -----[ AnalyserPreferences ]-----

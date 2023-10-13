@@ -62,6 +62,7 @@
  *      Kay Gürtzig     2021-01-25      Enh. #915: InputBoxCase messages added
  *      Kay Gürtzig     2021-09-22      Enh. #915: Some missing InputBoxCase tooltips concocted
  *      Kay Gürtzig     2023-08-01      Enh. #1082: Function name incuded in messages Menu.error13_*
+ *      Kay Gürtzig     2023-10-13      Issue #980: New messages for declaration syntax check (error31_*) 
  *
  ******************************************************************************************************
  *
@@ -498,10 +499,17 @@ Menu.hint26.3.text=U kunt nu bijv. uw diagram exporteren naar een programmeertaa
 Menu.hint26.4.text=U kunt nu bijv. uw diagram exporteren als afbeeldingsbestand: → Menu "%1 ► %2 ► %3"
 Menu.error27.text=Enkele @c-keuzewaarden (zoals «%») lijken geen gehele getallen te zijn.
 Menu.error28.text=Er zijn meerdere (botsende) keuze-elementen (%) in het @c-element!
-Menu.error29.text=
-Menu.error30_1.text=
-Menu.error30_2.text=
-Menu.error30_3.text=
+Menu.error29.text=De selectiewaarde «%» is van het gestructureerde type en daarom niet geschikt voor @c!
+Menu.error30_1.text=In regel %2 zijn er %1 meer haakjes openen dan haakjes sluiten, '%3' wordt als volgende verwacht!
+Menu.error30_2.text=In regel %2 staat er minstens één meer sluitende '%1' dan openen haakjes!
+Menu.error30_3.text=In regel %2 staat een haakje '%1' waar '%3' zou worden verwacht!
+Menu.error31_1.text=Een declaratie die begint met «%1» moet een symbool «%2» bevatten, gevolgd door een typespecificatie.
+Menu.error31_2.text=Onverwachte tekenreeks «%» in de lijst met gedeclareerde variabelen!
+Menu.error31_3.text=Deze declaratieobjecten zijn geen geschikte identificatiegegevens: «%»!
+Menu.error31_4.text=Dit is een poging om de reeds bestaande variabele(n) «%» opnieuw te declareren!
+Menu.error31_5.text=Illegale of gebrekkige declaratietoevoeging (arraydimensionering): «%»!
+Menu.error31_6.text=Tenminste één ongeldige grootte voor de arraygrootte (moet een geheel getalconstante > 0 zijn): «%»!
+Menu.error31_7.text=Voor een initialisatie moet de declaratie precies EEN variabele bevatten, niet %!
 Menu.errorLineReference.text=(regel %)
 
 -----[ AnalyserPreferences ]-----

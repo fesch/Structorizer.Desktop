@@ -64,6 +64,7 @@
  *      GitHub/tph002   2022-08-14      Majority of texts translated or corrected, respectively
  *      Kay Gürtzig     2023-08-01      Enh. #1082: Function name incuded in messages Menu.error13_* *
  *      Kay Gürtzig     2023-10-07      Issue #311: Menu reorganisation (menuDiagram split)
+ *      Kay Gürtzig     2023-10-13      Issue #980: New messages for declaration syntax check (error31_*) 
  *
  ******************************************************************************************************
  *
@@ -507,6 +508,13 @@ Menu.error29.text=La valeur de choix «%» est d'un type structuré et par cons�
 Menu.error30_1.text=Il y a %1 parenthèses ouvrantes de plus que de parenthèses fermantes dans la ligne %2, '%3' était attendu après!
 Menu.error30_2.text=Il y a au moins une parenthèse fermante de plus que de parenthèses ouvrantes dans la ligne %2!
 Menu.error30_3.text=Il y a un '%1' fermant(e) où un '%3' est attendu dans la ligne %2!
+Menu.error31_1.text=Une déclaration commençant par «%1» doit contenir un symbole «%2» suivi d'une spécification de type.
+Menu.error31_2.text=Chaîne inattendue «%» dans la liste des variables déclarées!
+Menu.error31_3.text=Ces objets de déclaration ne sont pas des identifiants adaptés : «%»!
+Menu.error31_4.text=Une tentative de re-déclarer la ou les variables déjà existantes «%»!
+Menu.error31_5.text=Ajout de déclaration illégale ou défectueuse (dimensionnement du tableau) : «%»!
+Menu.error31_6.text=Au moins une taille invalide pour le dimensionnement du tableau (doit être une constante entière > 0) : «%»!
+Menu.error31_7.text=Pour une initialisation, la déclaration doit contenir exactement UNE variable, pas %!
 Menu.errorLineReference.text=(ligne %)
 
 -----[ AnalyserPreferences ]-----

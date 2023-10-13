@@ -72,6 +72,8 @@
  *      Kay Gürtzig     2019-06-16      Enh. #373: Translations for Find & Replace dialog added
  *      A. Simonetta    2021-03-06      Substantial progress in filling the gaps
  *      Kay Gürtzig     2023-08-01      Enh. #1082: Function name incuded in messages Menu.error13_* *
+ *      Kay Gürtzig     2023-10-13      Issue #980: New messages for declaration syntax check (error31_*) 
+ *
  ******************************************************************************************************
  *
  *      Comment:	
@@ -510,6 +512,13 @@ Menu.error29.text=
 Menu.error30_1.text=
 Menu.error30_2.text=
 Menu.error30_3.text=
+Menu.error31_1.text=Una dichiarazione che inizia con «%1» deve contenere un simbolo «%2» seguito da una specificazione del tipo.
+Menu.error31_2.text=Stringa imprevista «%» nell'elenco delle variabili dichiarate!
+Menu.error31_3.text=Questi oggetti di dichiarazione non sono identificatori adatti: «%»!
+Menu.error31_4.text=No debe dichiarare nuovamente le variabili già esistenti «%»!
+Menu.error31_5.text=Aggiunta di dichiarazioni illegali o errate (dimensionamento dell'array): «%»!
+Menu.error31_6.text=Almeno una dimensione non valida per il dimensionamento dell'array (deve essere una costante intera > 0): «%»!
+Menu.error31_7.text=Per un'inizializzazione, la dichiarazione deve contenere esattamente UNA variabile, non %!
 Menu.errorLineReference.text=(riga %)
 
 -----[ AnalyserPreferences ]-----

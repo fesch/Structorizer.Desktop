@@ -130,6 +130,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-04-15      Enh. #967: menu item menuDiagramARM as introduced by A. Simonetta disabled 
  *      Kay Gürtzig     2021-10-05      Enh. #992: Messages for new Analyser check 30 against bracket faults
  *      Kay Gürtzig     2023-10-06      Issue #311: Parts of the "Diagram" menu moved to a new "View" menu
+ *      Kay Gürtzig     2023-10-13      Issue #980: New messages for declaration syntax check (error31_*) 
  *
  ******************************************************************************************************
  *
@@ -654,6 +655,15 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	public static final LangTextHolder error30_2 = new LangTextHolder("There is at least one more closing '%1' than opening brackets in line %2!");
 	public static final LangTextHolder error30_3 = new LangTextHolder("There is a closing '%1' where '%3' is expected in line %2!");
 	// END KGU#992 2021-10-05
+	// START KGU#1089 2023-10-13: Issue #980 Variable declaration check
+	public static final LangTextHolder error31_1 = new LangTextHolder("A declaration starting with «%1» must contain a symbol «%2», followed be a type specification!");
+	public static final LangTextHolder error31_2 = new LangTextHolder("Unexpected character sequence «%» in the list of declared variables!");
+	public static final LangTextHolder error31_3 = new LangTextHolder("These declaration items are bad or no identifiers: «%»!");
+	public static final LangTextHolder error31_4 = new LangTextHolder("Attempt to re-declare existing variable(s) «%»!");
+	public static final LangTextHolder error31_5 = new LangTextHolder("Illegal or defective array dimension specifications: «%»!");
+	public static final LangTextHolder error31_6 = new LangTextHolder("At least one invalid array dimension size (must be integer constant): «%»!");
+	public static final LangTextHolder error31_7 = new LangTextHolder("For an initialization, the declaration list must contain exactly ONE variable, not %!");
+	// END KGU#1089 2023-10-13
 	// START KGU#459 2017-11-14: Enh. #459
 	public static final LangTextHolder msgGuidedTours = new LangTextHolder("You activated guided tours.\n\nWatch out for recommendations\nor instructions\nin the bottom text pane\n(Analyser report list)."
 			+ "\nLittle blue or red triangles in\nthe elements will remind you.");

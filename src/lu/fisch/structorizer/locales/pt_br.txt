@@ -62,6 +62,7 @@
  *      Kay Gürtzig     2022-08-10  Enh. #56, #492: Messages / tooltips for TRY elements added
  *      Kay Gürtzig     2023-08-01  Enh. #1082: Function name incuded in messages Menu.error13_*
  *      Kay Gürtzig     2023-10-06  Issue #311: Menu reorganisation (menuDiagram split)
+ *      Kay Gürtzig     2023-10-13  Issue #980: New messages for declaration syntax check (error31_*) 
  *
  ******************************************************************************************************
  *
@@ -311,6 +312,13 @@ Menu.error16_6.text=Argumento impróprio para desvio do tipo «%» (tene que ser
 Menu.error16_7.text=Instrução fora de alcance após desvio (JUMP)!
 Menu.error16_8.text=Argumento possivelmente impróprio para desvio do tipo «%» (deve ser constante inteira)!
 Menu.error17.text=Risco de inconsistência devido a acesso concorrente à variável «%» por várias threads paralelas!
+Menu.error31_1.text=Uma declaração começando com «%1» deve conter um símbolo «%2» seguido por uma especificação de tipo.
+Menu.error31_2.text=String inesperada «%» na lista de variáveis ​​declaradas!
+Menu.error31_3.text=Estes objetos de declaração não são identificadores adequados: «%»!
+Menu.error31_4.text=Esta é uma tentativa de declarar novamente as variáveis ​​já existentes «%»!
+Menu.error31_5.text=Adição de declaração ilegal ou defeituosa (dimensionamento do array): «%»!
+Menu.error31_6.text=Pelo menos um tamanho inválido para dimensionamento de array (deve ser constante inteira > 0): «%»!
+Menu.error31_7.text=Para uma inicialização, a declaração deve conter exatamente UMA variável, e não %!
 Menu.errorLineReference.text= (linha %)
 
 -----[ AnalyserPreferences ]-----

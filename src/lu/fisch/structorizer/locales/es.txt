@@ -139,6 +139,8 @@
  *      Kay Gürtzig     2022-08-21  Enh. #1066: Caption and tooltip for InputBox.lblSuggest
  *      Kay Gürtzig     2022-09-29  Bugfix #1072: New message InputBoxFor.msgIllegalWordInField added
  *      Kay Gürtzig     2023-08-01  Enh. #1082: Function name incuded in messages Menu.error13_* *
+ *      Kay Gürtzig     2023-10-13  Issue #980: New messages for declaration syntax check (error31_*)
+ * 
  ******************************************************************************************************
  *
  *      Comment:
@@ -579,6 +581,13 @@ Menu.error29.text=El tipo de la expresión de selección «%» es estructurado, 
 Menu.error30_1.text=¡Hay %1 paréntesis izquierdas más que paréntesis derechas en linea %2, '%3' había esperado!
 Menu.error30_2.text=¡Hay (por lo menos) un '%1' más que paréntesis derechos en línea %2!
 Menu.error30_3.text=¡Encontrado un '%1' donde '%3' debería estar esperado en línea %2!
+Menu.error31_1.text=Una declaración que comienza con "%1" debe contener un símbolo "%2" seguido de una especificación de tipo.
+Menu.error31_2.text=¡Cadena inesperada «%» en la lista de variables declaradas!
+Menu.error31_3.text=Estos objetos de declaración no son identificadores adecuados: «%»!
+Menu.error31_4.text=¡No es leyal volver a declarar las variables ya existentes «%»!
+Menu.error31_5.text=Adición de declaración ilegal o defectuosa (dimensionamiento de matriz): «%»!
+Menu.error31_6.text=Al menos un valor inválido para el tamaño de la matriz (debe ser una constante entera > 0): «%»!
+Menu.error31_7.text=Para una inicialización, la declaración debe contener exactamente UNA variable, ¡no %!
 Menu.errorLineReference.text= (línea %)
 
 -----[ AnalyserPreferences ]-----
