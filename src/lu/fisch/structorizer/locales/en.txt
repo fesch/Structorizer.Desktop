@@ -623,6 +623,7 @@ AnalyserPreferences.checkboxes.27.text=Check that @c selector items are integer 
 AnalyserPreferences.checkboxes.28.text=Check that @c selector lists are disjoint.
 AnalyserPreferences.checkboxes.29.text=Check that the @c choice value is not of a structured type.
 AnalyserPreferences.checkboxes.30.text=Check that brackets are balanced and correctly nested.
+AnalyserPreferences.checkboxes.31.text=Check variable declaration and initialisation syntax.
 AnalyserPreferences.lblDrawWarningSign.text=Draw warning sign in affected elements
 AnalyserPreferences.okButton.text=OK
 
