@@ -157,6 +157,8 @@ Current development version 3.32-13 (2023-10-16)
 - 13: Bugfix #1094 C99 batch import failed with index range error <2>
 - 13: Bugfix #1096 Several problems with type definitions and variable
       declarations (esp. C/Java style) in Analyser and code generation <2>
+- 13: Bugfix #1098 Javascript export didn't transform array and record
+      initializer expressions recursively. <2>
 - 13: Many translations (webtran.de) added to Luxemburgish locale <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
