@@ -135,7 +135,7 @@
  *      Kay Gürtzig     2022-09-29      Bugfix #1072: New message InputBoxFor.msgIllegalWordInField added
  *      Kay Gürtzig     2023-08-01      Enh. #1082: Function name now included in messages Menu.error13_*
  *      Kay Gürtzig     2023-10-06      Issue #311: Menu reorganisation (menuDiagram split)
- *      Kay Gürtzig     2023-10-13      Issue #980: New messages for declaration syntax check (error31_*) 
+ *      Kay Gürtzig     2023-10-16      Issue #980/#1096: New messages for declaration syntax check (error31_*) 
  *
  ******************************************************************************************************
  *
@@ -559,6 +559,8 @@ Menu.error24_5.text=There is no defined record type «%»!
 Menu.error24_6.text=Record component «%» will not be modified/initialized!
 Menu.error24_7.text=Record type «%1» hasn't got a component «%2»!
 Menu.error24_8.text=Variable «%1» hasn't got a component «%2»!
+Menu.error24_9.text=Illegal or defective declaration appendices (array specification): «%»!
+Menu.error24_10.text=At least one array dimension size possibly no integer constant > 0: «%»!
 Menu.hint07_1.text=What is your algorithm to do? Replace «%» with a good name for it!
 Menu.hint25_1.text=Select the diagram centre and place a first element, e.g. an input instruction like «%1 %2».
 Menu.hint25_2.text=You might want to input data, e.g. with an instruction like «%1 %2». → Menu "%3"
@@ -581,9 +583,8 @@ Menu.error31_1.text=A declaration starting with «%1» must contain a symbol «%
 Menu.error31_2.text=Unexpected character sequence «%» in the list of declared variables!
 Menu.error31_3.text=These declaration items are bad or no identifiers: «%»!
 Menu.error31_4.text=Attempt to re-declare existing variable(s) «%»!
-Menu.error31_5.text=Illegal or defective declaration appendices (array specification): «%»!
-Menu.error31_6.text=At least one invalid array dimension size (must be integer constant > 0): «%»!
-Menu.error31_7.text=For an initialization, the declaration list must contain exactly ONE variable, not %!
+Menu.error31_5.text=For an initialization, the declaration list must contain exactly ONE variable, not %!
+Menu.error31_6.text=Anonymous type construction «%» is illegal here!
 Menu.errorLineReference.text= (line %)
 
 -----[ AnalyserPreferences ]-----

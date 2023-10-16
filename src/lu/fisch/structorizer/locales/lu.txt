@@ -61,7 +61,7 @@
  *      Kay Gürtzig         2023-10-09      Issue #311: Menu reorganisation (menuDiagram split)
  *      Kay Gürtzig         2023-10-10      Large number of translations added (by means of
  *                                          https://www.webtran.de/luxembourgish/)
- *      Kay Gürtzig         2023-10-13      Issue #980: New messages for declaration syntax check (error31_*) 
+ *      Kay Gürtzig         2023-10-16      Issue #980/#1096: New messages for declaration syntax check (error31_*) 
  *
  ******************************************************************************************************
  *
@@ -483,6 +483,8 @@ Menu.error24_5.text=Et gëtt keng definéiert Record Typ «%»!
 Menu.error24_6.text=Komposit Komponent «%» gëtt net geännert oder initialiséiert!
 Menu.error24_7.text=Komposit Typ «%1» huet kee Komponent «%2»!
 Menu.error24_8.text=Variabel «%1» huet kee Komponent «%2»!
+Menu.error24_9.text=Illegal oder defekt Deklaratioun Zousatz (Array Dimensioun): «%»!
+Menu.error24_10.text=Op d'mannst eng ongëlteg Gréisst fir d'Array-Gréisst (muss eng konstant ganz Zuel > 0 sinn): «%»!
 Menu.hint07_1.text=Wat wëllt Dir Ären Algorithmus maachen? Ersetzt "%" mat engem opfällegen Numm dofir!
 Menu.hint25_1.text=Wielt d'Mëtt vum Diagramm an setzt en éischt Element an, z.B. eng Input @a wéi «%1 %2».
 Menu.hint25_2.text=Dir kéint Daten aginn hunn, zum Beispill mat enger @a wéi «%1 %2». → Menu "% 3"
@@ -505,9 +507,8 @@ Menu.error31_1.text=Eng Deklaratioun, déi mat "%1" ufänkt, muss e Symbol "%2" 
 Menu.error31_2.text=Onerwaart String «%» an der Lëscht vun deklaréierte Variablen!
 Menu.error30_3.text=Dës Deklaratiounsobjekter sinn net gëeegent Identifizéierer: «%»!
 Menu.error31_4.text=Versuch, déi scho existent Variabel(en) «%» nei ze deklaréieren!
-Menu.error31_5.text=Illegal oder defekt Deklaratioun Zousatz (Array Dimensioun): «%»!
-Menu.error31_6.text=Op d'mannst eng ongëlteg Gréisst fir d'Array-Gréisst (muss eng konstant ganz Zuel > 0 sinn): «%»!
-Menu.error31_7.text=Fir d'Initialiséierung muss d'Deklaratioun genee ENG Variabel enthalen, net %!
+Menu.error31_5.text=Fir d'Initialiséierung muss d'Deklaratioun genee ENG Variabel enthalen, net %!
+Menu.error31_6.text=Eng anonym Typ Konstruktioun "%" ass  dëser Positioun net erlaabt!
 Menu.errorLineReference.text=(Zeil %)
 
 -----[ AnalyserPreferences ]-----

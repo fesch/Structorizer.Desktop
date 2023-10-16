@@ -119,6 +119,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2023-09-28      Bugfix #1092: Sensible export of alias type definitions enabled
  *      Kay Gürtzig             2023-10-04      Bugfix #1093 Undue final return 0 on function diagrams
  *      Kay Gürtzig             2023-10-12      Issue #980: Cope with multi-variable declarations
+ *      Kay Gürtzig             2023-10-15      Bugfix #1096 Handles complicated C-/Java-style declarations
  *
  ******************************************************************************************************
  *
@@ -1341,8 +1342,8 @@ public class CGenerator extends Generator {
 						//codeLine = transform(tokens.subSequence(0, posAsgn).concatenate().trim());
 						TypeMapEntry type = this.typeMap.get(varName);
 						if (type != null && type.isArray()) {
-							String elemType = type.getCanonicalType(true, false);
-							codeLine = this.makeArrayDeclaration(this.transformType(elemType, "int"), varName, type);
+							String canonType = type.getCanonicalType(true, false);
+							codeLine = this.makeArrayDeclaration(this.transformType(canonType, "int"), varName, type);
 						}
 						else {
 							// START KGU#711 2019-09-30: Enh. #721: Consider Javascript
@@ -1424,7 +1425,7 @@ public class CGenerator extends Generator {
 				if (posBrace >= 0 && posBrace <= 1 && pureExprTokens.get(pureExprTokens.count()-1).equals("}")) {
 					// Case 1.1 or 1.2.1 (either array or record initializer)
 					if (posBrace == 1 && pureExprTokens.count() >= 3 && Function.testIdentifier(pureExprTokens.get(0), false, null)) {
-						String typeName = pureExprTokens.get(0);							
+						String typeName = pureExprTokens.get(0);
 						TypeMapEntry recType = this.typeMap.get(":"+typeName);
 						if (isDecl && this.isInternalDeclarationAllowed() && recType != null) {
 							// transforms the Structorizer record initializer into a C-conform one
@@ -3025,19 +3026,19 @@ public class CGenerator extends Generator {
 
 	// START KGU#332 2017-01-30: Decomposition of generatePreamble() to ease sub-classing
 	/**
-	 * Returns the language-specific Array-declarator (element type description plus name plus
+	 * Returns the language-specific array declarator (element type description plus name plus
 	 * index range specifiers) in the respective order.
-	 * @param _elementType - canonicalized internal type string for the array elements.
-	 * @param _varName - Name of the array variable to be declared
-	 * @param typeInfo - the type map entry for the array variable (to retrieve index ranges)
+	 * @param _canonType - canonicalized type string to extract the array element type.
+	 * @param _varName - name of the array variable to be declared
+	 * @param _typeInfo - the type map entry for the array variable (to retrieve index ranges)
 	 * @return the transformed declarator
 	 */
-	protected String makeArrayDeclaration(String _elementType, String _varName, TypeMapEntry typeInfo)
+	protected String makeArrayDeclaration(String _canonType, String _varName, TypeMapEntry _typeInfo)
 	{
-		int nLevels = _elementType.lastIndexOf('@')+1;
-		_elementType = (_elementType.substring(nLevels) + " " + _varName).trim();
+		int nLevels = _canonType.lastIndexOf('@')+1;
+		String _elementType = (_canonType.substring(nLevels) + " " + _varName).trim();
 		for (int i = 0; i < nLevels; i++) {
-			int maxIndex = typeInfo.getMaxIndex(i);
+			int maxIndex = _typeInfo.getMaxIndex(i);
 			// START KGU#854 2020-04-22: Enh. #855
 			if (maxIndex < 0) {
 				maxIndex = this.optionDefaultArraySize() - 1;

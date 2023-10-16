@@ -83,6 +83,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2021-12-05      Bugfix #1024: Precautions against defective record initializers
  *      Kay Gürtzig             2023-09-28      Bugfix #1092: Type alias export flaws mended, at least as comment
  *      Kay Gürtzig             2023-10-04      Bugfix #1093 Undue final return 0 on function diagrams
+ *      Kay Gürtzig             2023-10-15      Bugfix #1096 Initialisation for multidimensional arrays fixed
  *
  ******************************************************************************************************
  *
@@ -694,6 +695,12 @@ public class JavaGenerator extends CGenerator
 		if (initializerC == null) {
 			if (_lValue != null) return _lValue;	// Assignment sequence already generated (???)
 		}
+		// START KGU#1090 2023-10-15: Bugfix #1096
+		int endAt = _elemType.lastIndexOf('@');
+		if (endAt >= 0) {
+			_elemType = _elemType.substring(endAt+1) + "[]".repeat(endAt+1);
+		}
+		// END KGU#1090 2023-10-15
 		return "new " + this.transformType(_elemType, "Object") + "[]" + initializerC;
 		// END KGU#732 2019-10-03
 	}
@@ -1437,12 +1444,12 @@ public class JavaGenerator extends CGenerator
 	// END KGU#542 2019-11-17
 
 	@Override
-	protected String makeArrayDeclaration(String _elementType, String _varName, TypeMapEntry typeInfo)
+	protected String makeArrayDeclaration(String _canonType, String _varName, TypeMapEntry _typeInfo)
 	{
-		while (_elementType.startsWith("@")) {
-			_elementType = _elementType.substring(1) + "[]";
+		while (_canonType.startsWith("@")) {
+			_canonType = _canonType.substring(1) + "[]";
 		}
-		return (_elementType + " " + _varName).trim(); 
+		return (_canonType + " " + _varName).trim(); 
 	}
 	@Override
 	protected void generateIOComment(Root _root, String _indent)

@@ -2404,45 +2404,113 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		//Regex r = new Regex("(.*?)\\[(.*?)\\](.*?)","$1 $3");
 		// END KGU#334 2017-01-30
 		String type = "";
-		String name = null;
+		// START KGU#1090 2023-10-15: Bugfix #1096
+		//String name = null;
 		String index = "";
 		String comp = "";
-		String before = _lval;
-		String after = "";
-		int posL = _lval.indexOf("[");
-		int posR = _lval.lastIndexOf("]");
+		//String before = _lval;
+		//String after = "";
+		//int posL = _lval.indexOf("[");
+		//int posR = _lval.lastIndexOf("]");
+		StringList name = new StringList();
+		StringList tokens = Element.splitLexically(_lval, true);
+		StringList after = new StringList();
+		tokens.removeAll(" ");
+		int posColon = -1;
+		if ((tokens.indexOf("var", false) == 0 || tokens.indexOf("dim", false) == 0)
+				&& ((posColon = tokens.indexOf(":")) > 0 || (posColon = tokens.indexOf("as", false)) > 0 )) {
+			type = tokens.concatenate(null, posColon+1, tokens.count()).trim();
+			tokens.remove(posColon, tokens.count());
+			tokens.remove(0);
+			tokens.trim();
+		}
+		// END KGU#1090 2023-10-15
+		int posL = tokens.indexOf("[");
+		int posR = tokens.lastIndexOf("]");
 		if (posL >= 0 && posR > posL) {
-			index = _lval.substring(posL + 1, posR);
-			before = _lval.substring(0, posL);
-			after = _lval.substring(posR + 1);
+			// START KGU#1090 2023-12-15: Bugfix #1096 Didn't cope with mixed Java/C declarations
+			//index = _lval.substring(posL + 1, posR);
+			//before = _lval.substring(0, posL);
+			//after = _lval.substring(posR + 1);
+			tokens = Element.coagulateSubexpressions(tokens);
+			for (int i = tokens.count()-1; i >= 0; i--) {
+				String token = tokens.get(i);
+				if (token.startsWith("[") && token.endsWith("]")) {
+					if (name.isEmpty()) {
+						if (!index.isEmpty()) {
+							index = "," + index;
+						}
+						index = token.substring(1, token.length()-1) + index;
+						tokens.remove(i, tokens.count());
+					}
+					else if (name.get(0).startsWith(".") || name.get(0).startsWith("[")) {
+						// It must be a part of the access path
+						name.insert(token, 0);
+						break;
+					}
+					else {
+						type += tokens.concatenate(null, 0, i+1);
+						tokens.remove(0, i+1);
+						break;
+					}
+				}
+				else if (index.isEmpty()) {
+					if (name.isEmpty()) {
+						after.insert(token, 0);
+					}
+					else {
+						name.insert(token, 0);
+					}
+				}
+				else {
+					name.insert(token, 0);
+				}
+			}
+			// END KGU#1090 2023-12-15
 		}
-		if (after.startsWith(".") && Function.testIdentifier(after.substring(1), false, ".")) {
-			comp = after;
-			name = before;
+		// If after is a component access sequence then it shall be placed in comp
+		if (after.indexOf(".") == 0 && Function.testIdentifier(after.concatenate(null, 1), false, ".")) {
+			comp = after.concatenate();
+			// START KGU#1090 2023-10-15: Bugfix #1096
+			//name = before;
+			if (name.isEmpty()) {
+				name = tokens;
+			}
+			// END KGU#1090 2023-10-15
 		}
-		else {
-			name = (before + " " + after).trim();	// This is somewhat strange in general
+		// START KGU#1090 2023-10-15: Bugfix #1096
+		//else {
+		//	name = (before + " " + after).trim();	// This is somewhat strange in general
+		//}
+		else if (name.isEmpty() && !after.isEmpty()) {
+			name.add(after);
+			after.clear();
 		}
+		else if (name.isEmpty()) {
+			name = tokens;
+		}
+		// END KGU#1090 2023-10-15
 		// END KGU#388 2017-09-27
-		// Check Pascal and BASIC style of type specifications
-		int subPos = name.indexOf(":");
-		if (subPos > 0)
-		{
-			type = name.substring(subPos + 1).trim() + " ";
-			name = name.substring(0, subPos).trim();
-		}
-		else if ((subPos = name.toLowerCase().indexOf(" as ")) > 0)
-		{
-			type = name.substring(subPos + " as ".length()).trim() + " ";
-			name = name.substring(0, subPos).trim();
-		}
+		// START KGU#1090 2023-10-15: Bugfix #1096 Now already done at the beginning
+		//// Check Pascal and BASIC style of type specifications
+		//int subPos = name.indexOf(":");
+		//if (subPos > 0)
+		//{
+		//	type = name.substring(subPos + 1).trim() + " ";
+		//	name = name.substring(0, subPos).trim();
+		//}
+		//else if ((subPos = name.toLowerCase().indexOf(" as ")) > 0)
+		//{
+		//	type = name.substring(subPos + " as ".length()).trim() + " ";
+		//	name = name.substring(0, subPos).trim();
+		//}
 		// Now split the assumed name to check C-style type specifications
-		StringList nameParts = StringList.explode(name, " ");
-		if (type.isEmpty() || nameParts.count() > 1)
-		{
-			type = nameParts.concatenate(" ", 0, nameParts.count()-1).trim() + " ";
-		}
-		name = nameParts.get(nameParts.count()-1);
+		//StringList nameParts = StringList.explode(name, " ");
+		//if (type.isEmpty() || nameParts.count() > 1)
+		//{
+		//	type = nameParts.concatenate(" ", 0, nameParts.count()-1).trim() + " ";
+		//}
+		//name = nameParts.get(nameParts.count()-1);" "
 		//r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$2");
 		// START KGU#388 2017-09-27: Enh. #423 Didn't work, since often appended a "tail"
 		//String index = "";
@@ -2456,7 +2524,17 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		//}
 		//String[] typeNameIndex = {type, name, index};
 		//return typeNameIndex;
-		String[] typeNameIndexPath = {type, name, index, comp};
+		//String[] typeNameIndexPath = {type, name, index, comp};
+		// END KGU#1090 2023-101-15
+		StringList nameParts = StringList.explode(name.concatenate(null), " ");
+		if (type.isEmpty() || nameParts.count() > 1) {
+			type += " " + nameParts.concatenate(" ", 0, nameParts.count()-1).trim() + " ";
+			if (type.isBlank()) {
+				type = "";
+			}
+		}
+		name = nameParts.subSequence(nameParts.count()-1, nameParts.count());
+		String[] typeNameIndexPath = {type, name.concatenate(), index, comp};
 		return typeNameIndexPath;
 		// END KGU#388 2017-09-27
 	}

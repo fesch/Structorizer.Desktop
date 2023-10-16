@@ -62,7 +62,7 @@
  *      Kay Gürtzig     2021-01-25      Enh. #915: InputBoxCase messages added
  *      Kay Gürtzig     2021-09-22      Enh. #915: Some missing InputBoxCase tooltips concocted
  *      Kay Gürtzig     2023-08-01      Enh. #1082: Function name incuded in messages Menu.error13_*
- *      Kay Gürtzig     2023-10-13      Issue #980: New messages for declaration syntax check (error31_*) 
+ *      Kay Gürtzig     2023-10-16      Issues #980/#1096: New messages for declaration syntax check (error31_*) 
  *
  ******************************************************************************************************
  *
@@ -485,6 +485,8 @@ Menu.error24_5.text=Er is geen bekend recordtype «%»!
 Menu.error24_6.text=Recordcomponent «%» wordt niet gewijzigd/geïnitialiseerd!
 Menu.error24_7.text=Recordtype «%1» heeft geen component «%2»!
 Menu.error24_8.text=Variabele «%1» heeft geen component «%2»!
+Menu.error24_9.text=Illegale of gebrekkige declaratietoevoeging (arraydimensionering): «%»!
+Menu.error24_10.text=Tenminste één ongeldige grootte voor de arraygrootte (moet een geheel getalconstante > 0 zijn): «%»!
 Menu.hint07_1.text=Wat moet uw algoritme doen? Vervang «%» met een goede naam!
 Menu.hint25_1.text=Selecteer het midden van het diagram en plaats er een eerste element, bijv. een invoeropdracht zoals «%1 %2».
 Menu.hint25_2.text=Misschien wilt u gegevens invoeren, bijv. met een instructie zoals «%1 %2». → Menu "%3"
@@ -507,9 +509,8 @@ Menu.error31_1.text=Een declaratie die begint met «%1» moet een symbool «%2»
 Menu.error31_2.text=Onverwachte tekenreeks «%» in de lijst met gedeclareerde variabelen!
 Menu.error31_3.text=Deze declaratieobjecten zijn geen geschikte identificatiegegevens: «%»!
 Menu.error31_4.text=Dit is een poging om de reeds bestaande variabele(n) «%» opnieuw te declareren!
-Menu.error31_5.text=Illegale of gebrekkige declaratietoevoeging (arraydimensionering): «%»!
-Menu.error31_6.text=Tenminste één ongeldige grootte voor de arraygrootte (moet een geheel getalconstante > 0 zijn): «%»!
-Menu.error31_7.text=Voor een initialisatie moet de declaratie precies EEN variabele bevatten, niet %!
+Menu.error31_5.text=Voor een initialisatie moet de declaratie precies EEN variabele bevatten, niet %!
+Menu.error31_6.text=Een anonieme typeconstructie «%» is in deze positie niet toegestaan!!
 Menu.errorLineReference.text=(regel %)
 
 -----[ AnalyserPreferences ]-----

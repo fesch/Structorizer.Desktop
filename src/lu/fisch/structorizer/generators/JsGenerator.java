@@ -306,7 +306,7 @@ public class JsGenerator extends CGenerator {
 	 * @see lu.fisch.structorizer.generators.CGenerator#makeArrayDeclaration(java.lang.String, java.lang.String, lu.fisch.structorizer.elements.TypeMapEntry)
 	 */
 	@Override
-	protected String makeArrayDeclaration(String _elementType, String _varName, TypeMapEntry typeInfo)
+	protected String makeArrayDeclaration(String _canonType, String _varName, TypeMapEntry _typeInfo)
 	{
 		return ("var " + _varName).trim(); 
 	}

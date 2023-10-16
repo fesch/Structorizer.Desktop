@@ -182,6 +182,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2023-09-28      Issue #1091: Analyser no longer rejects alias and array type definitions
  *      Kay Gürtzig     2023-10-05      Bugfix #1094: splitKeywords initialisation enforced in getUsedVars()
  *      Kay Gürtzig     2023-10-13      Issue #980 New analyser check 31 for declaration syntax implemented
+ *      Kay Gürtzig     2023-10-15      Bugfix #1096 More precise type and declaration handling
  *      
  ******************************************************************************************************
  *
@@ -306,6 +307,9 @@ public class Root extends Element {
 	// START KGU#580 2018-09-24: Bugfix #605
 	private final static Pattern VAR_PATTERN = Pattern.compile("(^|.*?\\W)var\\s(.*?)");
 	// END KGU#580 2018-09-24
+	// START KGU#1090 2023-10-15: Bugfix #1096
+	private final static StringList ILLEGAL_SUBTYPES = StringList.explode("record,struct,enum", ",");
+	// END KGU#1090 2023-10-15
 	
 	// START KGU#376 2017-05-16: Enh. #389 - we introduce a third diagram type now
 	public static final int R_CORNER = 15;
@@ -2651,6 +2655,7 @@ public class Root extends Element {
     /**
      * Extracts the variable name out of a more complex string possibly also
      * containing index brackets, component access operator or type specifications
+     * 
      * @param _s the raw lvalue string
      * @return the pure variable name
      */
@@ -3108,7 +3113,19 @@ public class Root extends Element {
             int asgnPos = tokens.indexOf("<-");
             if (asgnPos > 0)
             {
-                String s = tokens.subSequence(0, asgnPos).concatenate();
+                String s = tokens.concatenate(null, 0, asgnPos);
+
+                // START KGU#1089 2023-10-14: Issue #980 Skip possible multi-var declarations
+                if (tokens.indexOf("var", false) == 0 || tokens.indexOf("dim", false) == 0) {
+                    int posColon = tokens.indexOf(":");
+                    if ((posColon > 2 && posColon < asgnPos
+                            || (posColon = tokens.indexOf("as", false)) > 2 && posColon < asgnPos)) {
+                        // More than one identifier or whatever between var/dim and :/as - skip
+                        continue;
+                    }
+                    s = tokens.concatenate(null, 1, posColon < 0 || posColon > asgnPos ? asgnPos : posColon);
+                }
+                // END KGU#1089 2023-10-14
                 // (KGU#141 2016-01-16: type elimination moved to extractVarName())
                 //System.out.println("Adding to initialised var names: " + extractVarName(allText.trim()));
                 String varName = extractVarName(s.trim());
@@ -3282,6 +3299,9 @@ public class Root extends Element {
                 			lines.remove(i);
                 		}
                 		else {
+                			// START KGU#1090 2023-10-15: Bugfix #1096
+                			lines.set(i, Instruction.removeCDeclType(lines.get(i)));
+                			// END KGU#1090 2023-10-15
                 			i++;
                 		}
                 	}
@@ -4908,12 +4928,14 @@ public class Root extends Element {
 	 * CHECK #22: constants depending on non-constants and constant modifications<br/>
 	 * CHECK #24: type definitions
 	 * CHECK #31: variable declarations and initialisation
+	 * 
 	 * @param _instr - Instruction element to be analysed
 	 * @param _errors - global error list
 	 * @param _vars - variables with certain initialisation
 	 * @param _uncertainVars - variables with uncertain initialisation (e.g. in a branch)
 	 * @param _definedConsts - constant definitions registered so far
 	 * @param _types - type definitions (key starting with ":") and declarations so far
+	 * 
 	 * @see #analyse_24(Element, Vector, HashMap)
 	 * @see #analyse_24_tokens(Element, Vector, HashMap, StringList)
 	 * @see #analyse_31(Instruction, Vector, String, int, StringList, StringList, HashMap, HashMap)
@@ -4952,30 +4974,57 @@ public class Root extends Element {
 				knownVars.add(myDefs);
 			}
 			// START KGU#388 2017-09-13: Enh. #423 - check type definitions
-			else if (line.startsWith("type ") || isTypedef) {
+			else if (line.toLowerCase().startsWith("type ") || isTypedef) {
 				if (!isTypedef) {
 					//error  = new DetectedError("Type definition in line"+i+"is malformed!", _instr);
 					addError(_errors, new DetectedError(errorMsg(Menu.error24_1, String.valueOf(i)), _instr), 24);
 				}
 				else {
+					// Unfortunately we cannot be sure that isTypedef excludes all syntax errors
 					StringList tokens = splitLexically(line, true);
-					int posAsgnmt = tokens.indexOf("=");
-					String typename = tokens.concatenate("", 1, posAsgnmt).trim();
-					String typeSpec = tokens.concatenate("", posAsgnmt + 1, tokens.count()).trim();
-					int posBrace = typeSpec.indexOf("{");
-					// START KGU#543 2018-07-05 We have to face indirections now.
-					if (posBrace >= 0) {
-					// END KGU#543 2018-07-05
-						StringList compNames = new StringList();
-						StringList compTypes = new StringList();
-						// We test here against type-associated variable names and an existing type name
-						if (!Function.testIdentifier(typename, false, null) || _types.containsKey(typename) || _types.containsKey(":" + typename)) {
-							//error  = new DetectedError("Type name «" + typename + "» is illegal or colliding with another identifier.", _instr);
-							addError(_errors, new DetectedError(errorMsg(Menu.error24_2, typename), _instr), 24);					
+					// START KGU#1090 2023-10-14: Bugfix #1096 There must be exactly one token before
+					tokens.removeAll(" ");
+					// END KGU1090 2023-10-14
+					int posDef = tokens.indexOf("=");
+					// START KGU#1090 2023-10-14: Issue #1096 There must be exactly one token before
+//					String typename = tokens.concatenate("", 1, posDef).trim();
+//					String typeSpec = tokens.concatenate("", posDef + 1, tokens.count()).trim();
+//					int posBrace = typeSpec.indexOf("{");
+//					// START KGU#543 2018-07-05 We have to face indirections now.
+//					if (posBrace >= 0) {
+//					// END KGU#543 2018-07-05
+//						StringList compNames = new StringList();
+//						StringList compTypes = new StringList();
+//						// We test here against type-associated variable names and an existing type name
+//						if (!Function.testIdentifier(typename, false, null) || _types.containsKey(typename) || _types.containsKey(":" + typename)) {
+//							//error  = new DetectedError("Type name «" + typename + "» is illegal or colliding with another identifier.", _instr);
+//							addError(_errors, new DetectedError(errorMsg(Menu.error24_2, typename), _instr), 24);					
+//						}
+//						// START KGU#542 2019-11-17: Enh. #739 support enum types now
+//						String tag = typeSpec.substring(0, posBrace).toLowerCase();
+//						if (tag.equals("enum")) {
+					String typename = "";
+					if (posDef != 2 || tokens.count() < 2
+							|| !Function.testIdentifier(typename = tokens.get(1), false, null)
+							|| _types.containsKey(typename)
+							|| _types.containsKey(":" + typename)) {
+						//error  = new DetectedError("Type name «" + typename + "» is illegal or colliding with another identifier.", _instr);
+						addError(_errors, new DetectedError(errorMsg(Menu.error24_2, typename), _instr), 24);
+					}
+					else if (posDef >= 0) {
+						// Reduce tokens to type specification
+						tokens.remove(0, posDef+1);
+						// Now there are three legal continuations:
+						// 1. (record|struct) { <comp_spec_list> }
+						// 2. enum { <enum_item_list> }
+						// 3. array ... of {array ... of} <typeid> [<dim_sizes>]
+						// 4. <typeid> [<dim_sizes>]
+						String tag = null;
+						if (tokens.isEmpty() || !Function.testIdentifier(tag = tokens.get(0), false, null)) {
+							//error  = new DetectedError("Type definition in line"+i+"is malformed!", _instr);
+							addError(_errors, new DetectedError(errorMsg(Menu.error24_1, String.valueOf(i)), _instr), 24);					
 						}
-						// START KGU#542 2019-11-17: Enh. #739 support enum types now
-						String tag = typeSpec.substring(0, posBrace).toLowerCase();
-						if (tag.equals("enum")) {
+						else if (tag.equals("enum")) {
 							HashMap<String,String> enumDefs = this.extractEnumerationConstants(line);
 							if (enumDefs == null) {
 								//error  = new DetectedError("Type definition in line"+i+"is malformed!", _instr);
@@ -4993,41 +5042,73 @@ public class Root extends Element {
 								}
 							}
 						}
-						else {	// tag assumed to be "record" or "struct"
+						// START KGU#1090 2023-10-15: Bugfix #1096
+						//else {	// tag assumed to be "record" or "struct"
 						// END KGU#542 2019-11-17
-							extractDeclarationsFromList(typeSpec.substring(posBrace+1, typeSpec.length()-1), compNames, compTypes, null);
-							for (int j = 0; j < compNames.count(); j++) {
-								String compName = compNames.get(j);
-								if (!Function.testIdentifier(compName, false, null) || compNames.subSequence(0, j-1).contains(compName)) {
-									//error  = new DetectedError("Component name «" + compName + "» is illegal or duplicate.", _instr);
-									addError(_errors, new DetectedError(errorMsg(Menu.error24_3, compName), _instr), 24);
+						//	extractDeclarationsFromList(typeSpec.substring(posBrace+1, typeSpec.length()-1), compNames, compTypes, null);
+						else if (tag.equals("record") || tag.equals("struct")) {	// tag assumed to be "record" or "struct"
+							int posBrace = tokens.indexOf("{");
+							if (posBrace != 1 || !tokens.get(tokens.count()-1).equals("}")) {
+								//error  = new DetectedError("Type definition in line"+i+"is malformed!", _instr);
+								addError(_errors, new DetectedError(errorMsg(Menu.error24_1, String.valueOf(i)), _instr), 24);					
+							} else {
+								StringList compNames = new StringList();
+								StringList compTypes = new StringList();
+								extractDeclarationsFromList(tokens.concatenate(null, posBrace+1, tokens.count()-1),
+										compNames, compTypes, null);
+						// END KGU#1090 2023-10-15
+								for (int j = 0; j < compNames.count(); j++) {
+									String compName = compNames.get(j);
+									if (!Function.testIdentifier(compName, false, null) || compNames.subSequence(0, j-1).contains(compName)) {
+										//error  = new DetectedError("Component name «" + compName + "» is illegal or duplicate.", _instr);
+										addError(_errors, new DetectedError(errorMsg(Menu.error24_3, compName), _instr), 24);
+									}
+									String type = compTypes.get(j);
+									// Clear off array specifiers, but the check is still too restrictive...
+									if (type != null) {
+										// START KGU#1089 2023-10-14: Issue #980 more sophisticated check
+										//type = type.trim();
+										//checkArrayType(_instr, _errors, _types, typename, type);
+										StringList typeTokens = Element.splitLexically(type, true);
+										typeTokens.removeAll(" ");
+										checkArrayType_24_31(_instr, _errors, typeTokens, _definedConsts, _types, typename);
+										// END KGU#1089 2023-10-14
+									}
 								}
-								String type = compTypes.get(j);
-								// Clear off array specifiers, but the check is still too restrictive...
-								if (type != null) {
-									type = type.trim();
-									checkArrayType(_instr, _errors, _types, typename, type);
-								}
+							// START KGU#1090 2023-10-15: Bugfix #1096
 							}
+							// END KGU#1090 2023-10-15
 						// START KGU#542 2019-11-17: Enh. #739 support enum types now
 						}
 						// END KGU#542 2019-11-17
+						// START KGU#1081 2023-09-28: Enh. #1091 Allow array types
+						else {
+							checkArrayType_24_31(_instr, _errors, tokens, _definedConsts, _types, typename);
+						}
+						// END KGU#1081 2023-09-28
 					// START KGU#543 2018-07-05 - check if it is a valid type reference
 					}
-					// START KGU#1081 2023-09-28: Issue #1091 allow aliases of base types
-					//else if (Function.testIdentifier(typeSpec, false, null) && !_types.containsKey(":" + typeSpec)) {
-					else if (Function.testIdentifier(typeSpec, false, null) && !_types.containsKey(":" + typeSpec) && !TypeMapEntry.isStandardType(typeSpec)) {
-					// END KGU#1081 2023-09-28
-						//error  = new DetectedError("Component type name «" + type + "» is undefined or unknown.", _instr);
-						addError(_errors, new DetectedError(errorMsg(Menu.error24_4, typeSpec), _instr), 24);
-					}
-					// END KGU#543 2018-07-05
-					// START KGU#1081 2023-09-28: Enh. #1091 Allow array types
-					else if (typeSpec.equalsIgnoreCase("array")
-							|| TypeMapEntry.MATCHER_ARRAY.reset(typeSpec).matches()) {
-						checkArrayType(_instr, _errors, _types, typename, typeSpec);
-					}
-					// END KGU#1081 2023-09-28
+					// START KGU#1090 2023-10-15: Bugfix #1096 Now test done in above block
+//					// START KGU#1081 2023-09-28: Issue #1091 allow aliases of base types
+//					//else if (Function.testIdentifier(typeSpec, false, null) && !_types.containsKey(":" + typeSpec)) {
+//					else if (Function.testIdentifier(typeSpec, false, null) && !_types.containsKey(":" + typeSpec) && !TypeMapEntry.isStandardType(typeSpec)) {
+//					// END KGU#1081 2023-09-28
+//						//error  = new DetectedError("Component type name «" + type + "» is undefined or unknown.", _instr);
+//						addError(_errors, new DetectedError(errorMsg(Menu.error24_4, typeSpec), _instr), 24);
+//					}
+//					// END KGU#543 2018-07-05
+//					// START KGU#1081 2023-09-28: Enh. #1091 Allow array types
+//					else if (typeSpec.equalsIgnoreCase("array")
+//							|| TypeMapEntry.MATCHER_ARRAY.reset(typeSpec).matches()) {
+//						// START KGU#1089 2023-10-14: Issue #980 more sophisticated check
+//						//checkArrayType(_instr, _errors, _types, typename, typeSpec);
+//						StringList typeTokens = Element.splitLexically(typeSpec, true);
+//						typeTokens.removeAll(" ");
+//						checkArrayType_24_31(_instr, _errors, typeTokens, _definedConsts, _types, typename);
+//						// END KGU#1089 2023-10-14
+//					}
+//					// END KGU#1081 2023-09-28
+					// END KGU#1090 2023-10-15
 				}
 			}
 			// END KGU#388 2017-09-13
@@ -5107,37 +5188,169 @@ public class Root extends Element {
 		// END KGU#388 2017-09-17
 	}
 	
+	// START KGU#1089 2023-10-14: Issue #980 Obsolete method replaced
+//	/**
+//	 * Checks valid array type specification (as submethod for analyse_22_24) within a
+//	 * type definition.
+//	 * 
+//	 * @param _instr - originating {@link Instruction} element
+//	 * @param _errors - gloabl error list
+//	 * @param _types - type definitions (key starting with ":") and declarations so far
+//	 * @param typename - name of the defined type
+//	 * @param type - specification of a (component) type to be checked for correct array
+//	 *     structure
+//	 */
+//	private void checkArrayType(Instruction _instr, Vector<DetectedError> _errors, HashMap<String, TypeMapEntry> _types,
+//			String typename, String type) {
+//		String typeLower;
+//		if (type.endsWith("]") && type.contains("[")) {
+//			type = type.substring(0, type.indexOf("[")).trim();
+//		}
+//		else if ((typeLower = type.toLowerCase()).startsWith("array") && typeLower.contains("of ")) {
+//			type = type.substring(typeLower.lastIndexOf("of ")+3).trim();
+//		}
+//		if (!TypeMapEntry.isStandardType(type) && !_types.containsKey(":" + type) && !type.equals(typename)) {
+//			//error  = new DetectedError("Component type name «" + type + "» is undefined or unknown.", _instr);
+//			addError(_errors, new DetectedError(errorMsg(Menu.error24_4, type), _instr), 24);
+//		}
+//	}
 	/**
-	 * Checks valid array type specification (as submethod for analyse_22_24) within a
-	 * type definition.
-	 * @param _instr - originating {@link Instruction} element
-	 * @param _errors - gloabl error list
-	 * @param _types - type definitions (key starting with ":") and declarations so far
-	 * @param typename - name of the defined type
-	 * @param type - specification of a (component) type t be checked for correct array
-	 *     structure
+	 * Checks valid array type specification (as submethod for analyse_22_24 within a
+	 * type definition or for analyse_31 within a variable declaration).
+	 * 
+	 * @param _instr - {@link Instruction} to be analysed
+	 * @param _errors - global error list
+	 * @param _tokens - the tokenized type specification to be checked
+	 * @param _constants - incremental constant definition map
+	 * @param _types - type definitions and declarations
+	 * @param _definedRecTypeId - possibly the id of a record type just being
+	 *     defined (for recursive structures), or {@code null}
 	 */
-	private void checkArrayType(Instruction _instr, Vector<DetectedError> _errors, HashMap<String, TypeMapEntry> _types,
-			String typename, String type) {
-		String typeLower;
-		if (type.endsWith("]") && type.contains("[")) {
-			type = type.substring(0, type.indexOf("[")).trim();
+	private void checkArrayType_24_31(Instruction _instr, Vector<DetectedError> _errors,
+			StringList _tokens, HashMap<String, String> _constants, HashMap<String, TypeMapEntry> _types, String _definedRecTypeId) {
+		StringList tokens = _tokens.copy();
+		String typeSpec;
+		StringList defective = new StringList();
+		StringList badSizes = new StringList();
+		while (tokens.indexOf("array", false) == 0) {
+			// "array" should always go pairwise with "of" unless it is standing alone
+			int posOf = tokens.indexOf("of", 1, false);
+			if (posOf >= 0) {
+				boolean complain = false;
+				if (posOf > 1) {
+					if (!tokens.get(1).equals("[")) {
+						complain = true;
+					}
+					else {
+						StringList indexRanges = Element.splitExpressionList(tokens.subSequence(2, posOf), ",", true);
+						if (!indexRanges.get(indexRanges.count()-1).equals("]")) {
+							complain = true;
+						}
+						for (int i = 0; i < indexRanges.count()-1; i++) {
+							String[] minmax = indexRanges.get(i).split("\\.\\.\\.?", -1);
+							if (minmax.length > 2) {
+								complain = true;
+							}
+							else {
+								int ix0 = 0;
+								for (String index: minmax) {
+									if (_constants.containsKey(index)) {
+										index = _constants.get(index);
+										if (index.startsWith(":") && index.contains("€")) {
+											// Skim off the enumerator type name
+											index = index.substring(index.indexOf('€')+1);
+										}
+									}
+									try {
+										int ix = Integer.parseUnsignedInt(index);
+										if (ix < ix0) {
+											complain = true;
+										}
+										ix0 = ix;
+									}
+									catch (NumberFormatException ex) {
+										complain = true;
+									}
+								}
+							}
+						}
+					}
+				}
+				if (complain) {
+					defective.add(tokens.concatenate(null, 1, posOf));
+				}
+			}
+			else if (tokens.count() == 1) {
+				// A stand-alone "array" will be accepted
+				tokens.set(0, "int");	// This just averts further complaints
+			}
+			else {
+				// Missing "of" - obviously defective.
+				defective.add(tokens.concatenate(null));
+				posOf = tokens.count()-1;
+			}
+			// Go ahead to array element type specification (might again be an array)
+			tokens.remove(0, posOf + 1);
 		}
-		else if ((typeLower = type.toLowerCase()).startsWith("array") && typeLower.contains("of ")) {
-			type = type.substring(typeLower.lastIndexOf("of ")+3).trim();
+		// Now an identifier must follow, and it should name a known type.
+		typeSpec = "";
+		if (tokens.isEmpty()
+				|| !_types.containsKey(":"+(typeSpec = tokens.get(0)))
+				&& !TypeMapEntry.isStandardType(typeSpec)
+				&& !typeSpec.equals(_definedRecTypeId)) {
+			LangTextHolder errorText = Menu.error24_4;
+			if (ILLEGAL_SUBTYPES.contains(typeSpec, false)) {
+				errorText = Menu.error31_6;
+				typeSpec += "{...}";
+			}
+			//error  = new DetectedError("Type specification: %! is illegal here or an unknown type", _instr);
+			addError(_errors, new DetectedError(errorMsg(errorText, typeSpec), _instr), 31);
 		}
-		if (!TypeMapEntry.isStandardType(type) && !_types.containsKey(":" + type) && !type.equals(typename)) {
-			//error  = new DetectedError("Component type name «" + type + "» is undefined or unknown.", _instr);
-			addError(_errors, new DetectedError(errorMsg(Menu.error24_4, type), _instr), 24);
+		if (tokens.count() > 1) {
+			// Now C-like dimension sizes might follow
+			tokens.remove(0);
+			while (!tokens.isEmpty() && tokens.get(0).equals("[")) {
+				StringList dimSizes = Element.splitExpressionList(tokens.subSequence(1, tokens.count()), ",", true);
+				if (!dimSizes.get(dimSizes.count()-1).startsWith("]")) {
+					defective.add(tokens.concatenate(null));
+					tokens.clear();
+				}
+				else {
+					for (int j = 0; j < dimSizes.count()-1; j++) {
+						String dim = dimSizes.get(j);
+						if (_constants.containsKey(dim)) {
+							dim = _constants.get(dim);
+						}
+						try {
+							Integer.parseUnsignedInt(dim);
+						}
+						catch (NumberFormatException ex) {
+							badSizes.add(dim);
+						}
+					}
+				}
+				tokens = Element.splitLexically(dimSizes.get(dimSizes.count()-1).substring(1), true);
+			}
+		}
+		if (!defective.isEmpty()) {
+			//error  = new DetectedError("Illegal or defective dimension specifications: %!", _instr);
+			addError(_errors, new DetectedError(errorMsg(Menu.error24_9, defective.concatenate("», «")), _instr), 24);
+		}
+		if (!badSizes.isEmpty()) {
+			//error  = new DetectedError("At least one invalid array dimension size (must be integer constant): %!", _instr);
+			addError(_errors, new DetectedError(errorMsg(Menu.error34_10, badSizes.concatenate("», «")), _instr), 24);
 		}
 	}
+	// END KGU#1089 2023-10-14
 
 	/**
 	 * CHECK 24: does the detailed record component access analysis for the given token sequence
+	 * 
 	 * @param _ele - the originating element
 	 * @param _errors - global error list
 	 * @param _types - type definitions (key starting with ":") and declarations so far
 	 * @param _tokens - tokens of the current line, ideally without any instruction keywords
+	 * 
 	 * @see #analyse_22_24_31(Instruction, Vector, StringList, StringList, HashMap, HashMap)
 	 * @see #analyse_24(Element, Vector, HashMap)
 	 */
@@ -5218,6 +5431,7 @@ public class Root extends Element {
 	
 	/**
 	 * CHECK #23: Diagram includes
+	 * 
 	 * @param _errors - global error list
 	 * @param _vars - variables with certain initialisation
 	 * @param _uncertainVars - variables with uncertain initialisation (e.g. in a branch)
@@ -5227,6 +5441,7 @@ public class Root extends Element {
 	 * @param _callerSet - in case of indirect cycles via routine call, the set of calling roots,
 	 *        otherwise {@code null}
 	 * @param _types - type definitions and declarations
+	 * 
 	 * @see #analyse_23_inCalledRoutines(Vector, Root, StringList, HashMap, HashMap, HashSet)
 	 */
 	private void analyse_23(Vector<DetectedError> _errors,
@@ -5402,6 +5617,7 @@ public class Root extends Element {
 	/**
 	 * CHECK #23: Helper method to check indirect cyclic includes (via subroutine calls)
 	 * for {@link #analyse_23(Vector, StringList, StringList, HashMap, StringList, HashMap, HashSet, HashMap)}
+	 * 
 	 * @param _errors - global error list
 	 * @param _root - the calling {@link Root}
 	 * @param _importStack - names of already imported includables
@@ -5409,6 +5625,7 @@ public class Root extends Element {
 	 * @param _callerSet - the set of calling roots to avoid eternal recursion
 	 * @param _types - type definitions and declarations
 	 * @param _callers - set of direct or indirect callers of routine {@code _root}
+	 * 
 	 * @see #analyse_23(Vector, StringList, StringList, HashMap, StringList, HashMap, HashSet, HashMap)
 	 */
 	private void analyse_23_inCalledRoutines(Vector<DetectedError> _errors, Root _root, StringList _importStack,
@@ -5436,6 +5653,7 @@ public class Root extends Element {
 	// START KGU#514 2018-04-03: Bugfix #528
 	/**
 	 * CHECK #24: correct record access
+	 * 
 	 * @param _ele - element to be analysed
 	 * @param _errors - global error list
 	 * @param _types - type definitions (key starting with ":") and declarations so far
@@ -5612,85 +5830,103 @@ public class Root extends Element {
 		StringList tokens = Element.splitLexically(_line, true);
 		tokens.removeAll(" ");
 		int posCol = tokens.indexOf(":");
-		int posAs = tokens.indexOf("as", false);
-		if (posCol < 0 && posAs < 0) {
-			String prefCol = tokens.get(0).equalsIgnoreCase("var") ? ":" : "as";
+		if (posCol < 0 && (posCol = tokens.indexOf("as", false)) < 0) {
+			String token0 = tokens.get(0);
+			String prefCol = token0.equalsIgnoreCase("var") ? ":" : "as";
+			if (token0.equals(token0.toUpperCase())) {
+				prefCol = prefCol.toUpperCase();
+			}
 			//error  = new DetectedError("A declaration starting with %1 must contain a symbol %2, followed be a type specification!", _instr);
-			addError(_errors, new DetectedError(errorMsg(Menu.error31_1, new String[] {tokens.get(0), prefCol}), _instr), 31);
+			addError(_errors, new DetectedError(errorMsg(Menu.error31_1, new String[] {token0, prefCol}), _instr), 31);
+			return;
+		}
+		boolean isInit = Instruction.isAssignment(_line);
+		
+		// Check the declaration items (should be new variable identifiers)
+		StringList declItems = Element.splitExpressionList(tokens.subSequence(1, posCol), ",", true);
+		if (!declItems.get(declItems.count()-1).isBlank()) {
+			//error  = new DetectedError("Unexpected character sequence % in the list of declared variables", _instr);
+			addError(_errors, new DetectedError(errorMsg(Menu.error31_2, declItems.get(declItems.count()-1)), _instr), 31);
+		}
+		// Remove the (possibly empty) tail
+		declItems.remove(declItems.count()-1);
+		StringList noId = new StringList();
+		//StringList defective = new StringList();
+		StringList redeclared = new StringList();
+		//StringList badSizes = new StringList();
+		for (int i = 0; i < declItems.count(); i++) {
+			// This is (discarded) code for temporarily allowed array specifiers
+			//String[] declSplits = declItems.get(i).trim().split("\\[");
+			//StringList dims = new StringList();
+			//String varName = "<empty>";
+			//if (declSplits.length < 1 || !Function.testIdentifier((varName = declSplits[0]), false, null)) {
+			String varName = declItems.get(i);
+			if (!Function.testIdentifier(varName, false, null)) {
+				noId.add(varName);
+			}
+			else {
+				if (_vars.contains(varName)
+						|| _uncertainVars.contains(varName)
+						|| _constants.containsKey(varName)
+						|| _types.containsKey(varName)) {
+					redeclared.add(varName);
+				}
+				// Obsolete code for the temporary idea to allow array specifiers here
+				//for (int j = 1; j < declSplits.length; j++) {
+				//	StringList ranges = Element.splitExpressionList(declSplits[j], ",", true);
+				//	if (!"]".equals(ranges.get(ranges.count()-1))) {
+				//		defective.add(declItems.get(i));
+				//		break;
+				//	}
+				//	dims.add(ranges.subSequence(0, ranges.count() - 1));
+				//}
+				//for (int j = 0; j < dims.count(); j++) {
+				//	String dim = dims.get(j);
+				//	if (_constants.containsKey(dim)) {
+				//		dim = _constants.get(dim);
+				//	}
+				//	try {
+				//		Integer.parseUnsignedInt(dim);
+				//	}
+				//	catch (NumberFormatException ex) {
+				//		badSizes.add(dim);
+				//	}
+				//}
+			}
+		}
+		if (!noId.isEmpty()) {
+			//error  = new DetectedError("These declaration items are bad or no identifiers: %!", _instr);
+			addError(_errors, new DetectedError(errorMsg(Menu.error31_3, noId.concatenate("», «")), _instr), 31);
+		}
+		if (!redeclared.isEmpty()) {
+			//error  = new DetectedError("Attempt to re-declare existing variables %!", _instr);
+			addError(_errors, new DetectedError(errorMsg(Menu.error31_4, redeclared.concatenate("», «")), _instr), 31);
+		}
+		//if (!defective.isEmpty()) {
+		//	//error  = new DetectedError("Illegal or defective dimension specifications: %!", _instr);
+		//	addError(_errors, new DetectedError(errorMsg(Menu.error31_5, defective.concatenate("», «")), _instr), 31);
+		//}
+		//if (!badSizes.isEmpty()) {
+		//	//error  = new DetectedError("At least one invalid array dimension size (must be integer constant): %!", _instr);
+		//	addError(_errors, new DetectedError(errorMsg(Menu.error31_6, badSizes.concatenate("», «")), _instr), 31);
+		//}
+		if (isInit && declItems.count() != 1) {
+			//error  = new DetectedError("For an initialization, the declaration list must contain exactly ONE variable, not %!", _instr);
+			addError(_errors, new DetectedError(errorMsg(Menu.error31_5, Integer.toString(declItems.count())), _instr), 31);
+		}
+		
+		// Check the type structure
+		tokens.remove(0, posCol + 1);
+		String typeSpec = "";
+		if (tokens.isEmpty() || ILLEGAL_SUBTYPES.contains(tokens.get(0), false)) {
+			if (!tokens.isEmpty()) {
+				typeSpec = tokens.get(0) + "{...}";
+			}
+			//error  = new DetectedError("Illegal or defective type specification: %!", _instr);
+			addError(_errors, new DetectedError(errorMsg(Menu.error31_6, typeSpec), _instr), 31);
 		}
 		else {
-			boolean isInit = Instruction.isAssignment(_line);
-			int posType = posCol;
-			if (posType < 0 || posAs >= 0 && posAs < posCol) {
-				posType = posAs;
-			}
-			StringList declItems = Element.splitExpressionList(tokens.subSequence(1, posType), ",", true);
-			if (!declItems.get(declItems.count()-1).isBlank()) {
-				//error  = new DetectedError("Unexpected character sequence % in the list of declared variables", _instr);
-				addError(_errors, new DetectedError(errorMsg(Menu.error31_2, declItems.get(declItems.count()-1)), _instr), 31);
-			}
-			declItems.remove(declItems.count()-1);
-			StringList noId = new StringList();
-			StringList defective = new StringList();
-			StringList redeclared = new StringList();
-			StringList badSizes = new StringList();
-			for (int i = 0; i < declItems.count(); i++) {
-				String[] declSplits = declItems.get(i).trim().split("\\[");
-				StringList dims = new StringList();
-				String varName = "<empty>";
-				if (declSplits.length < 1 || !Function.testIdentifier((varName = declSplits[0]), false, null)) {
-					noId.add(varName);
-				}
-				else {
-					if (_vars.contains(varName)
-							|| _uncertainVars.contains(varName)
-							|| _constants.containsKey(varName)
-							|| _types.containsKey(varName)) {
-						redeclared.add(varName);
-					}
-					for (int j = 1; j < declSplits.length; j++) {
-						StringList ranges = Element.splitExpressionList(declSplits[j], ",", true);
-						if (!"]".equals(ranges.get(ranges.count()-1))) {
-							defective.add(declItems.get(i));
-							break;
-						}
-						dims.add(ranges.subSequence(0, ranges.count() - 1));
-					}
-					for (int j = 0; j < dims.count(); j++) {
-						String dim = dims.get(j);
-						if (_constants.containsKey(dim)) {
-							dim = _constants.get(dim);
-						}
-						try {
-							Integer.parseUnsignedInt(dim);
-						}
-						catch (NumberFormatException ex) {
-							badSizes.add(dim);
-						}
-					}
-				}
-			}
-			if (!noId.isEmpty()) {
-				//error  = new DetectedError("These declaration items are bad or no identifiers: %!", _instr);
-				addError(_errors, new DetectedError(errorMsg(Menu.error31_3, noId.concatenate("», «")), _instr), 31);
-			}
-			if (!redeclared.isEmpty()) {
-				//error  = new DetectedError("Attempt to re-declare existing variables %!", _instr);
-				addError(_errors, new DetectedError(errorMsg(Menu.error31_4, redeclared.concatenate("», «")), _instr), 31);
-			}
-			if (!defective.isEmpty()) {
-				//error  = new DetectedError("Illegal or defective dimension specifications: %!", _instr);
-				addError(_errors, new DetectedError(errorMsg(Menu.error31_5, defective.concatenate("», «")), _instr), 31);
-			}
-			if (!badSizes.isEmpty()) {
-				//error  = new DetectedError("At least one invalid array dimension size (must be integer constant): %!", _instr);
-				addError(_errors, new DetectedError(errorMsg(Menu.error31_6, badSizes.concatenate("», «")), _instr), 31);
-			}
-			if (isInit && declItems.count() != 0) {
-				//error  = new DetectedError("For an initialization, the declaration must list must contain exactly ONE variable, not %!", _instr);
-				addError(_errors, new DetectedError(errorMsg(Menu.error31_7, Integer.toString(declItems.count())), _instr), 31);
-			}
-			//_instr.updateTypeMapFromLine(_types, _line, _lineNo);
+			checkArrayType_24_31(_instr, _errors, tokens, _constants, _types, null);
 		}
 	}
 
@@ -6729,7 +6965,7 @@ public class Root extends Element {
         // START KGU#239 2016-08-12: Enh. #231: Test for name collisions
         // If check 23 is enabled then the below check will already have produced check 19 results for
         // imported variables, otherwise these will have been suppressed, so we check all imported variables, too
-       	analyse_18_19_21(this, errors, vars, new StringList(), (check(23) ? rootVars : vars));
+        analyse_18_19_21(this, errors, vars, new StringList(), (check(23) ? rootVars : vars));
         // END KGU#239 2016-08-12
 
         // CHECK: two checks in one loop: (#12 - new!) & (#7)

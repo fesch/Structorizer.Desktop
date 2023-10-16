@@ -494,6 +494,8 @@ Menu.error24_5.text=Non c'è definito tipo composito «%»!
 Menu.error24_6.text=Componente «%» non sarà modificato/inizializzato!
 Menu.error24_7.text=Tipo composito «%1» non ha nessun componente «%2»!
 Menu.error24_8.text=Variabile «%1» non ha nessun componente «%2»!
+Menu.error24_9.text=Aggiunta di dichiarazioni illegali o errate (dimensionamento dell'array): «%»!
+Menu.error24_10.text=Almeno una dimensione non valida per il dimensionamento dell'array (deve essere una costante intera > 0): «%»!
 Menu.hint07_1.text=Cosa deve fare il tuo algoritmo? Sostituisci «%» con un nome valido!
 Menu.hint25_1.text=
 Menu.hint25_2.text=
@@ -516,9 +518,8 @@ Menu.error31_1.text=Una dichiarazione che inizia con «%1» deve contenere un si
 Menu.error31_2.text=Stringa imprevista «%» nell'elenco delle variabili dichiarate!
 Menu.error31_3.text=Questi oggetti di dichiarazione non sono identificatori adatti: «%»!
 Menu.error31_4.text=No debe dichiarare nuovamente le variabili già esistenti «%»!
-Menu.error31_5.text=Aggiunta di dichiarazioni illegali o errate (dimensionamento dell'array): «%»!
-Menu.error31_6.text=Almeno una dimensione non valida per il dimensionamento dell'array (deve essere una costante intera > 0): «%»!
-Menu.error31_7.text=Per un'inizializzazione, la dichiarazione deve contenere esattamente UNA variabile, non %!
+Menu.error31_5.text=Per un'inizializzazione, la dichiarazione deve contenere esattamente UNA variabile, non %!
+Menu.error31_6.text=Una costruzione di tipo anonimo «%» non è consentita a questo punto!
 Menu.errorLineReference.text=(riga %)
 
 -----[ AnalyserPreferences ]-----

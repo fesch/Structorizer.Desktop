@@ -3554,14 +3554,14 @@ public abstract class Element {
 	 * Tries to derive the data type of expression {@code expr} by means of analysing literal
 	 * syntax, built-in functions and the types associated to variables registered in
 	 * the {@code typeMap}.<br/>
-	 * The returned type description (if not empty) will be structurally canonicalized (i.e. array
-	 * levels will be symbolized by a sequence of "@" prefixes, the element type names may also be
-	 * heuristically canonicalized to assumed Java equivalents.
+	 * The returned type description (if not empty) will be structurally canonicalised (i.e. array
+	 * levels will be symbolised by a sequence of "@" prefixes, the element type names may also be
+	 * heuristically canonicalised to assumed Java equivalents.
 	 * Record (struct) initializers will be replaced by their respective type name (which must have
 	 * been declared before). 
 	 * @param typeMap - current mapping of variable names to statically concluded type information (may be null)
-	 * @param expr - the expression to be categorized
-	 * @param canonicalizeTypeNames - specifies whether contained type names are to be canonicalized
+	 * @param expr - the expression to be categorised
+	 * @param canonicalizeTypeNames - specifies whether contained type names are to be canonicalised
 	 * (i.e. replaced by guessed Java equivalents) 
 	 * @return a type description if available and unambiguous or an empty string otherwise
 	 */

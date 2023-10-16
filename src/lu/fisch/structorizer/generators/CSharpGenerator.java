@@ -77,6 +77,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2023-09-29      Bugfix #739: Forgotten support of enum type definitions added,
  *                                              Bugfix #1092: Approach for more sensible export of type aliases
  *      Kay Gürtzig             2023-10-04      Bugfix #1093 Undue final return 0 on function diagrams
+ *      Kay Gürtzig             2023-10-15      Bugfix #1096 Initialisation for multidimensional arrays fixed
  *
  ******************************************************************************************************
  *
@@ -557,7 +558,17 @@ public class CSharpGenerator extends CGenerator
 		// The C-like initializer
 		String initializerC = super.transformOrGenerateArrayInit(_lValue, _arrayItems, _indent, _isDisabled, _elemType, true);
 		if (initializerC != null) {
-			return "new " + this.transformType(_elemType, "object") + "[]" + initializerC;
+			// START KGU#1090 2023-10-15: Bugfix #1096
+			//return "new " + this.transformType(_elemType, "object") + "[]" + initializerC;
+			String commas = "";
+			int endAt = _elemType.lastIndexOf('@');
+			if (endAt >= 0) {
+				_elemType = _elemType.substring(endAt+1);
+				commas = ",".repeat(endAt+1);
+			}
+			// END KGU#1090 2023-10-15
+			return "new " + this.transformType(_elemType, "object") +
+					"[" + commas + "]" + initializerC;
 		}
 		return null;
 		// END KGU#732 2019-10-03
@@ -1288,17 +1299,17 @@ public class CSharpGenerator extends CGenerator
 	// END KGU#542 2023-09-29
 	
 	@Override
-	protected String makeArrayDeclaration(String _elementType, String _varName, TypeMapEntry typeInfo)
+	protected String makeArrayDeclaration(String _canonType, String _varName, TypeMapEntry _typeInfo)
 	{
 		String sepa = " ";
-		if (_elementType.startsWith("@")) {
-			_elementType = _elementType.substring(1) + "[";
+		if (_canonType.startsWith("@")) {
+			_canonType = _canonType.substring(1) + "[";
 			sepa = "] ";
 		}
-		while (_elementType.startsWith("@")) {
-			_elementType = _elementType.substring(1) + ",";
+		while (_canonType.startsWith("@")) {
+			_canonType = _canonType.substring(1) + ",";
 		}
-		return (transformType(_elementType, _elementType) + sepa + _varName).trim(); 
+		return (transformType(_canonType, _canonType) + sepa + _varName).trim(); 
 	}
 	@Override
 	protected void generateIOComment(Root _root, String _indent)

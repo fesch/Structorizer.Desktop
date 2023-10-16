@@ -628,6 +628,10 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	public static final LangTextHolder error24_7 = new LangTextHolder("Record type «%1» hasn't got a component «%2»!");
 	public static final LangTextHolder error24_8 = new LangTextHolder("Variable «%1» hasn't got a component «%2»!");
 	// END KGU#388 2017-09-13
+	// START KGU#1089/KGU#1090 2023-10-15: Issus #890, #1096
+	public static final LangTextHolder error24_9 = new LangTextHolder("Illegal or defective array dimension specifications: «%»!");
+	public static final LangTextHolder error34_10 = new LangTextHolder("At least one invalid array dimension size (must be integer constant): «%»!");
+	// END KGU#1089/KGU#1090 2023-10-15
 	// START KGU#456 2017-11-04: Enh. #452 - Be more helpful to newbees
 	public static final LangTextHolder hint25_1 = new LangTextHolder("Select the diagram centre and place a first element, e.g. an input instruction like «%1 %2»");
 	public static final LangTextHolder hint25_2 = new LangTextHolder("You might want to input data, e.g. with an instruction like «%1 %2». → Menu \"%3\"");
@@ -660,9 +664,8 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	public static final LangTextHolder error31_2 = new LangTextHolder("Unexpected character sequence «%» in the list of declared variables!");
 	public static final LangTextHolder error31_3 = new LangTextHolder("These declaration items are bad or no identifiers: «%»!");
 	public static final LangTextHolder error31_4 = new LangTextHolder("Attempt to re-declare existing variable(s) «%»!");
-	public static final LangTextHolder error31_5 = new LangTextHolder("Illegal or defective array dimension specifications: «%»!");
-	public static final LangTextHolder error31_6 = new LangTextHolder("At least one invalid array dimension size (must be integer constant): «%»!");
-	public static final LangTextHolder error31_7 = new LangTextHolder("For an initialization, the declaration list must contain exactly ONE variable, not %!");
+	public static final LangTextHolder error31_5 = new LangTextHolder("For an initialization, the declaration list must contain exactly ONE variable, not %!");
+	public static final LangTextHolder error31_6 = new LangTextHolder("Anonymous type construction «%» is illegal here!");
 	// END KGU#1089 2023-10-13
 	// START KGU#459 2017-11-14: Enh. #459
 	public static final LangTextHolder msgGuidedTours = new LangTextHolder("You activated guided tours.\n\nWatch out for recommendations\nor instructions\nin the bottom text pane\n(Analyser report list)."

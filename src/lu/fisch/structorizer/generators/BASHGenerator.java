@@ -97,6 +97,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2021-10-03      Issue #990: Precautions against wrong result type associations
  *      Kay Gürtzig         2021-11-02      Bugfix #1014: Declarations in C and Java style hadn't been processed correctly
  *      Kay Gürtzig         2022-08-23      Issue #1068: transformIndexLists() inserted in transformTokens()
+ *      Kay Gürtzig         2023-10-16      Bugfx #1096: transformTokens revised for mixed C / Java declarations
  *
  ******************************************************************************************************
  *
@@ -579,20 +580,28 @@ public class BASHGenerator extends Generator {
 				/* Assumption: the type description ends with a name or a closing bracket
 				 * followed by an identifier
 				 */
-				int posVar = posAsgnOpr - 1;
+				int pos = posAsgnOpr - 1;
+				int posVar = -1;
 				boolean wasId = false;
-				while (posVar >= 0) {
-					String token = tokens.get(posVar);
+				while (pos >= 0) {
+					String token = tokens.get(pos);
 					if (!token.trim().isEmpty()) {
 						boolean isId = Function.testIdentifier(token, false, null);
 						if (wasId && (isId || token.equals("]"))) {
-							tokens.remove(0, posVar+1);
-							posAsgnOpr -= posVar + 1;
+							tokens.remove(0, posVar);
+							posAsgnOpr -= posVar;
+							// START KGU#1090 2023-10-15: Bugfix #1096
+							// We must now also get rid of index stuff beyond the variable
+							tokens.remove(1, posAsgnOpr);
+							posAsgnOpr = 1;
+							// END KGU#1090 2023-10-15
 							break;
 						}
-						wasId = isId;
+						if (wasId = isId) {
+							posVar = pos;
+						}
 					}
-					posVar--;
+					pos--;
 				}
 			}
 			// END KGU#1009 2021-10-02

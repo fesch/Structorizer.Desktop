@@ -74,6 +74,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2021-02-26      Bugfix #946: Endless loop in getAssignedVarname()
  *      Kay Gürtzig     2021-11-02      Bugfix #1014: Detection of java array declarations was flawed
  *      Kay Gürtzig     2021-09-28      Issue #1091: Type definition detection mended (aliases and array types)
+ *      Kay Gürtzig     2023-10-10/13   Issue #980: Declaration-related stuff revised
+ *      Kay Gürtzig     2023-10-15      Bugfix #1096: More precise type and C-style declaration handling
  *
  ******************************************************************************************************
  *
@@ -533,6 +535,10 @@ public class Instruction extends Element {
 			for (int i = 0; i < myLines.count(); i++) {
 				String line = myLines.get(i);
 				if (!isTypeDefinition(line, null)) {
+					// START KGU#1090 2023-10-15: Bugfix #1096
+					// In case of a C-type declaration remove the type specification
+					line = removeCDeclType(line);
+					// END KGU#1090 2023-10-15
 					_lines.add(line);
 				}
 				// START KGU#542 2019-11-17: Enh. #739 special treatment for enum type definitions
@@ -554,6 +560,35 @@ public class Instruction extends Element {
 		}
 	}
 	// END KGU 2015-10-16
+
+	// START KGU#1090 2023-10-15: Bugfix #1096 publicly provided for consistency, e.g. in Root.getVarNames()
+	/**
+	 * Removes the type specification from the line if it's a C or Java style declaration.
+	 * This is to help extract assigned variable names in syntactically complicated
+	 * cases like "{@code elem_type[size1] var_name [size2] <- array_initialiser}"
+	 * @param line - the instruction line
+	 * @return a mutilated line (in the example: "{@code var_name <- array_initialiser}")
+	 */
+	public static String removeCDeclType(String line) {
+		if (isDeclaration(line)
+				&& !line.toLowerCase().startsWith("var ")
+				&& !line.toLowerCase().startsWith("dim ")) {
+			// Must be C-type declaration, so drop all confusing type prefix
+			StringList tokens = Element.splitLexically(line, true);
+			tokens.removeAll(" ");
+			String varName = getAssignedVarname(tokens, false);
+			int posVar = tokens.indexOf(varName);
+			if (posVar > 0) {
+				int posAsgn = tokens.indexOf("<-");
+				if (posAsgn > posVar) {
+					tokens.remove(posVar+1, posAsgn);
+				}
+				line = tokens.concatenate(null, posVar).trim();
+			}
+		}
+		return line;
+	}
+	// END KGU#1090 2023-10-15
 
 	// START KGU#117 2016-03-10: Enh. #77
 	/* (non-Javadoc)
@@ -834,12 +869,17 @@ public class Instruction extends Element {
 	{
 		StringList tokens = Element.splitLexically(line, true);
 		unifyOperators(tokens, true);
-		boolean typeA = tokens.indexOf("var") == 0 && tokens.indexOf(":") > 1;
-		boolean typeB = tokens.indexOf("dim") == 0 && tokens.indexOf("as") > 1;
+		// START KGU#1089 2023-10-12: Bugfix #980 Accept uppercase, too
+		//boolean typeA = tokens.indexOf("var") == 0 && tokens.indexOf(":") > 1;
+		//boolean typeB = tokens.indexOf("dim") == 0 && tokens.indexOf("as") > 1;
+		boolean typeA = tokens.indexOf("var", false) == 0 && tokens.indexOf(":") > 1;
+		boolean typeB = tokens.indexOf("dim", false) == 0 && tokens.indexOf("as", false) > 1;
+		// END KGU#1089 2023-10-13
 		int posAsgn = tokens.indexOf("<-");
 		boolean typeC = false;
 		if (posAsgn > 1) {
 			tokens = tokens.subSequence(0, posAsgn);
+			tokens.removeAll(" ");
 			int posLBrack = tokens.indexOf("[");
 			// START KGU#1009 2021-11-02: Bugfix #1014: We must handle java array types, too
 			//if (posLBrack > 0 && posLBrack < tokens.lastIndexOf("]")) {
@@ -847,21 +887,30 @@ public class Instruction extends Element {
 			//}
 			int posRBrack = tokens.lastIndexOf("]");
 			if (posLBrack > 0 && posLBrack < posRBrack) {
-				if (posRBrack < posAsgn-1
-						&& tokens.concatenate(null, posLBrack+1, posRBrack).trim().isEmpty()
-						&& Function.testIdentifier(tokens.concatenate(null, posRBrack+1).trim(), true, null)) {
-					tokens.remove(posLBrack, posRBrack+1);
+				// Remove all brackets
+				// START KGU#1090 2023-10-15: Bugfix #1096
+				//if (posRBrack < posAsgn-1
+				//		&& tokens.concatenate(null, posLBrack+1, posRBrack).trim().isEmpty()
+				//		&& Function.testIdentifier(tokens.concatenate(null, posRBrack+1).trim(), true, null)) {
+				//	tokens.remove(posLBrack, posRBrack+1);
+				//}
+				//else {
+				//	tokens = tokens.subSequence(0, posLBrack);
+				//}
+				tokens = Element.coagulateSubexpressions(tokens);
+				for (int i = tokens.count()-1; i >= 0; i--) {
+					if (tokens.get(i).startsWith("[")) {
+						tokens.remove(i);
+					}
 				}
-				else {
-					tokens = tokens.subSequence(0, posLBrack);
-				}
+				tokens = Element.splitLexically(tokens.concatenate(null), true);
+				// END KGU#1090 2023-10-15
 			}
 			// END KGU#1009 2021-11-02
-			tokens.removeAll(" ");
 			// START KGU#388 2017-09-27: Enh. #423 there might be a qualified name
 			if (tokens.contains(".")) {
 				int i = 1;
-				// FIXME (KGU#553): The exact idea here isn't so clear anymore
+				// Remove component accessors (reduce qualified names to the base identifier)
 				while (i < tokens.count() - 1) {
 					if (tokens.get(i).equals(".") && Function.testIdentifier(tokens.get(i-1), false, null) && Function.testIdentifier(tokens.get(i+1), false, null)) {
 						tokens.remove(i, i+2);
@@ -874,7 +923,17 @@ public class Instruction extends Element {
 				}
 			}
 			// END KGU#388 2017-09-27
-			typeC = tokens.count() > 1;
+			// So, now if more than one identifier remains then it must be a C declaration
+			// START KGU#1090 2023-10-15 Bugfix #1096
+			//typeC = tokens.count() > 1;
+			int nIds = 0;
+			for (int i = 0; i < tokens.count() && !typeC; i++) {
+				if (Function.testIdentifier(tokens.get(i), false, null)
+						&& (i > 0 || !tokens.get(i).equalsIgnoreCase("const"))
+						&& (++nIds > 1))
+					typeC = true;
+			}
+			// END KGU#1090 2023-10-15
 		}
 		return typeA || typeB || typeC;
 	}
@@ -949,10 +1008,12 @@ public class Instruction extends Element {
 	 * i) type &lt;id&gt; = array [...] of &lt;type&gt;;<br/>
 	 * j) type &lt;id&gt; = &lt;typeid&gt[...].<br/>
 	 * Type names and descriptions &lt;type&gt; are checked against existing types in {@code typeMap} if given.
+	 * 
 	 * @param line - String comprising one line of code
 	 * @param typeMap - if given then the type name must have been registered in typeMap in order to be accepted (otherwise
 	 * an appropriate syntax is sufficient).
 	 * @return true iff line is of one of the forms a) through e)
+	 * 
 	 * @see #isTypeDefinition(String)
 	 * @see #isTypeDefinition(HashMap, boolean)
 	 * @see #isTypeDefinition()
@@ -960,16 +1021,24 @@ public class Instruction extends Element {
 	public static boolean isTypeDefinition(String line, HashMap<String, TypeMapEntry> typeMap)
 	{
 		StringList tokens = Element.splitLexically(line.trim(), true);
-		if (tokens.count() == 0 || !tokens.get(0).equalsIgnoreCase("type")) {
+		// START KGU#1090 2023-10-15: Bugfix #1096
+		tokens.removeAll(" ");
+		// END KGU#1090 2023-10-15
+		if (tokens.isEmpty() || !tokens.get(0).equalsIgnoreCase("type")) {
 			return false;
 		}
 		unifyOperators(tokens, true);
 		int posDef = tokens.indexOf("=");
-		if (posDef < 2 || posDef == tokens.count()-1) {
+		// START KGU#1090 2023-10-15: Bugfix #1096
+		//if (posDef < 2 || posDef == tokens.count()-1) {
+		// The second condition checks that a type specification still follows
+		if (posDef != 2 || posDef == tokens.count()-1) {
+		// END KGU#1090 2023-10-15
 			return false;
 		}
-		// FIXME why would we allow to define multi-word type names?
-		String typename = tokens.concatenate("", 1, posDef).trim();
+		// START KGU#1090 2023-10-15: Bugfix #1096
+		String typename = tokens.get(1);
+		// END KGU#1090 2023-10-15
 		tokens = tokens.subSequence(posDef+1, tokens.count());
 		// START KGU#1081 2023-09-28: Enh. #1091 Accept array type definitions
 		String typeDescr = tokens.concatenate().trim();
@@ -977,7 +1046,9 @@ public class Instruction extends Element {
 				|| typeDescr.equalsIgnoreCase("array")
 				|| typeDescr.matches("^" + BString.breakup("array", false) + "((\\s*(\\[.*?\\]\\s*)+)|\\s+)" + BString.breakup("of", false) + "\\W.*");
 		// END KGU#1081 2023-09-28
-		tokens.removeAll(" ");
+		// START KGU#1090 2023-10-15: Bugfix #1096 Now done at the beginning
+		//tokens.removeAll(" ");
+		// END KGU#1090 2023-10-15
 		// START KGU#1081 2023-09-28: Enh. #1091 The type existence test is not case-ignorant
 		//String tag = tokens.get(0).toLowerCase();
 		String tag = tokens.get(0);
@@ -1215,8 +1286,8 @@ public class Instruction extends Element {
 		if (tokens.count() > 3 && (token0.equals("var") || token0.equals("dim") || token0.equals("const")) && posColon >= 2) {
 			isAssigned = posAsgnmt > posColon;
 			typeSpec = tokens.concatenate(" ", posColon+1, (isAssigned ? posAsgnmt : tokens.count()));
-			// There may be one or more variable names between "var" and ':' if there is no assignment
-			// START KGU#1089 2023-10-12: Issue #980 - There may also be array specifiers
+			// There may be more than one variable name between "var" and ':' if there is no assignment
+			// START KGU#1089 2023-10-12: Issue #980 - This was for the discarded idea of array specifiers
 			//StringList varTokens = tokens.subSequence(1, posColon);
 			//varTokens.removeAll(" ");
 			//for (int i = 0; i < varTokens.count(); i++)
@@ -1229,30 +1300,32 @@ public class Instruction extends Element {
 			if (!isAssigned || varList.count() == 1) {
 				for (int i = 0; i < varList.count(); i++) {
 					String var = varList.get(i).trim();
-					StringList dims = new StringList();
-					int posBrack = var.indexOf('[');
-					if (posBrack >= 0) {
-						String tail = var.substring(posBrack);
-						var = var.substring(0, posBrack).trim();
-						while (tail.startsWith("[")) {
-							StringList ranges = Element.splitExpressionList(tail.substring(1), ",", true);
-							dims.add(ranges.subSequence(0, ranges.count()-1));
-							tail = ranges.get(ranges.count()-1);
-							if (tail.length() > 1) {
-								tail = tail.substring(1);
-							}
-						}
-					}
+					// The following part addressed a mixed list of scalar and array declarations
+					//StringList dims = new StringList();
+					//int posBrack = var.indexOf('[');
+					//if (posBrack >= 0) {
+					//	String tail = var.substring(posBrack);
+					//	var = var.substring(0, posBrack).trim();
+					//	while (tail.startsWith("[")) {
+					//		StringList ranges = Element.splitExpressionList(tail.substring(1), ",", true);
+					//		dims.add(ranges.subSequence(0, ranges.count()-1));
+					//		tail = ranges.get(ranges.count()-1);
+					//		if (tail.length() > 1) {
+					//			tail = tail.substring(1);
+					//		}
+					//	}
+					//}
 					if (Function.testIdentifier(var, false, null)) {
 						String typeSpec1 = typeSpec;
-						if (!dims.isEmpty()) {
-							if (dims.count() == 1 && dims.get(0).isBlank()) {
-								typeSpec1 = "array of " + typeSpec1;
-							}
-							else {
-								typeSpec1 = "array [" + dims.concatenate(",") + "] of " + typeSpec1;
-							}
-						}
+						// The following part addressed a mixed list of scalar and array declarations
+						//if (!dims.isEmpty()) {
+						//	if (dims.count() == 1 && dims.get(0).isBlank()) {
+						//		typeSpec1 = "array of " + typeSpec1;
+						//	}
+						//	else {
+						//		typeSpec1 = "array [" + dims.concatenate(",") + "] of " + typeSpec1;
+						//	}
+						//}
 						addToTypeMap(typeMap, var, typeSpec1, lineNo, isAssigned, true);
 					}
 				}
@@ -1281,10 +1354,18 @@ public class Instruction extends Element {
 				// C-style type declaration left of the variable name?
 				typeSpec = leftSide.concatenate(null, 0, pos);
 				// Check for array declaration (or array element access)
-				while (!typeSpec.isEmpty() && (pos = leftSide.indexOf("[")) > 1) {
-					typeSpec += leftSide.concatenate(null, pos, leftSide.indexOf("]")+1);
-					leftSide.remove(pos, leftSide.indexOf("]")+1);
+				// START KGU#1090 2023-10-15: Bugfix we must not compromise the typeSpec part
+				//while (!typeSpec.isEmpty() && (pos = leftSide.indexOf("[")) > 1) {
+				//	typeSpec += leftSide.concatenate(null, pos, leftSide.indexOf("]")+1);
+				//	leftSide.remove(pos, leftSide.indexOf("]")+1);
+				//}
+				leftSide.remove(0, pos);
+				if (!typeSpec.isEmpty() && (pos = leftSide.indexOf("[")) > 0) {
+					// Left side should end with a closing bracket now
+					typeSpec = "array " + leftSide.concatenate(null, pos) + " of " + typeSpec;
+					leftSide.remove(pos, leftSide.count());
 				}
+				// END KGU#1090 2023-10-15
 				// No explicit type specification but new variable?
 				if (typeSpec.isEmpty() && !typeMap.containsKey(varName)) {
 					//String expr = rightSide.concatenate(" ");
@@ -1369,7 +1450,9 @@ public class Instruction extends Element {
 	 * The variable name may be qualified, i.e. be a sequence of identifiers separated by dots.
 	 * Possible end-standing indices will not be part of the returned string, e.g. the result for
 	 * {@code foo.bar[i][j]} will be "foo.bar", whereas for a mixed expression {@code foo[i].bar[j]}
-	 * the result would be just "foo".
+	 * the result would be just "foo".<br/>
+	 * In case of a multi-variable declaration, the result will be {@code null} as a potential
+	 * initialisation would be rejected.
 	 * 
 	 * @param tokens - unified tokens of an assignment instruction without whitespace (otherwise
 	 *     the result may be nonsense)
@@ -1395,22 +1478,41 @@ public class Instruction extends Element {
 		//}
 		// END KGU#689 2019-03-21
 		// START KGU#388 2017-09-15: Enh. #423 avoid accidental return of type information
+		// START KGU#1098 2023-10-13: Issue #980 in case of declarations be careful
+		boolean isDecl = tokens.indexOf("type", false) == 0;
+		// END KGU#1098 2023-10-13
 		int posColon = tokens.indexOf(":");
 		if (posColon > 0 || (posColon = tokens.indexOf("as", false)) > 0) {
 			// It contains a declaration part
 			tokens = tokens.subSequence(0, posColon);
+			// START KGU#1089 2023-10-13: Issue #980 Don't return a name in a multi-var declaration
+			isDecl = true;
+			// END KGU#1089 2023-10-13
 		}
 		// END KGU#388 2017-09-15
-		// FIXME (#980): What to do with a mere multi-variable declaration
-		// The last sequence of dot-separated ids should be the variable name
+		// START KGU#1089 2023-10-13: Issue #980 Don't return a name in a multi-var declaration
+		if (!tokens.isEmpty() && (tokens.get(0).equalsIgnoreCase("var") || tokens.get(0).equalsIgnoreCase("dim"))) {
+			// This should be the case, otherwise we had a syntax violation here
+			tokens.remove(0);
+			isDecl = true;
+		}
+		if (isDecl && tokens.count() != 1) {
+			// Too few or too many variables
+			return null;
+		}
+		// Now we have handled multi-variable declarations (where in initialisation attempt is ignored)
+		// END KGU#1089 2023-10-13
+
+		// The last sequence of dot-separated identifiers should be the target variable designator
 		if (tokens.count() > 0) {
 			int i = tokens.count()-1;
 			varName = tokens.get(i);
 			// START KGU#780 2019-12-01: Bugfix - endstanding index access was erroneously returned
 			// FIXME But it might be even more complicated, e.g. foo[i].bar[j]!
+			// FIXME And face something like: int[2] mix[3] <- {{1,2,3},{4,5,6}}
 			while (varName.startsWith("[") && varName.endsWith("]") && i > 0) {
 //				if (posColon >= 0) {
-//					// Something is wrong here - there should not be be both a declaration and a bracket(?)
+//					// Something is wrong here - there should not be both a declaration and a bracket(?)
 //					return null;
 //				}
 				// It is a coagulated index access - skip it
@@ -1481,7 +1583,19 @@ public class Instruction extends Element {
 			// END KGU#780 2019-12-01
 			// END KGU#388 2017-09-14
 			// START KGU#784 2019-12-02
-			if (entireTarget) {
+			// START KGU#1090 2023-10-15: Bugfix #1096
+			if (i > 0 && varName != null) {
+				String preNameToken = tokens.get(i-1);
+				if (Function.testIdentifier(preNameToken, false, null)
+						|| preNameToken.startsWith("[") && preNameToken.endsWith("]")) {
+					/* If another identifier or a bracket precedes the variable name then this
+					 * must be a C declaration
+					 */
+					isDecl = true;
+				}
+			}
+			// END KGU#1090 2023-10-15
+			if (entireTarget && !isDecl) {
 				varName = tokens.concatenate(null, i);
 			}
 			// START KGU#944 2021-02-26: Bugfix #946

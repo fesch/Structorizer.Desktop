@@ -490,6 +490,8 @@ Menu.error24_5.text=Il n'y a pas de type de record «%» défini!
 Menu.error24_6.text=Le composant de record «%» ne sera pas modifié/initialisé!
 Menu.error24_7.text=Le type de record «%1» n'a pas de composant «%2»!
 Menu.error24_8.text=La variable «%1» n'a pas de composant «%2»!
+Menu.error24_9.text=Ajout de déclaration illégale ou défectueuse (dimensionnement du tableau) : «%»!
+Menu.error24_10.text=Au moins une taille invalide pour le dimensionnement du tableau (doit être une constante entière > 0) : «%»!
 Menu.hint07_1.text=Que doit faire votre algorithme? Remplacer «%» par un nom correct pour lui!
 Menu.hint25_1.text=Sélectionner le centre du diagramme et placer un premier élément, par ex. une instruction d'entrée comme «%1 %2».
 Menu.hint25_2.text=Vous pourriez vouloir entrer des données , par ex. avec une instruction comme «%1 %2». → Menu "%3"
@@ -512,9 +514,8 @@ Menu.error31_1.text=Une déclaration commençant par «%1» doit contenir un sym
 Menu.error31_2.text=Chaîne inattendue «%» dans la liste des variables déclarées!
 Menu.error31_3.text=Ces objets de déclaration ne sont pas des identifiants adaptés : «%»!
 Menu.error31_4.text=Une tentative de re-déclarer la ou les variables déjà existantes «%»!
-Menu.error31_5.text=Ajout de déclaration illégale ou défectueuse (dimensionnement du tableau) : «%»!
-Menu.error31_6.text=Au moins une taille invalide pour le dimensionnement du tableau (doit être une constante entière > 0) : «%»!
-Menu.error31_7.text=Pour une initialisation, la déclaration doit contenir exactement UNE variable, pas %!
+Menu.error31_5.text=Pour une initialisation, la déclaration doit contenir exactement UNE variable, pas %!
+Menu.error31_6.text=Une construction de type anonyme «%» n'est pas autorisée à ce stade!
 Menu.errorLineReference.text=(ligne %)
 
 -----[ AnalyserPreferences ]-----

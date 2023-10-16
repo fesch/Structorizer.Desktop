@@ -743,7 +743,7 @@ public class PasGenerator extends Generator
 						// START KGU#504 2018-03-13 A: Bugfix #520, #521
 						if (!this.suppressTransformation) {
 						// END KGU#504 2018-03-13 A
-							String potTypeName = expr.substring(0,  posBrace);
+							String potTypeName = expr.substring(0, posBrace);
 							isArrayOrRecordInit = posBrace == 0 && expr.endsWith("}");	// only true at this moment on array init
 							if (isArrayOrRecordInit)
 							{
@@ -958,7 +958,7 @@ public class PasGenerator extends Generator
 	 * @param _indent - current indentation level (as String)
 	 * @param _isDisabled - indicates whether the code is o be commented out
 	 */
-    private void generateAssignment(String _target, String _expr, String _indent, boolean _isDisabled) {
+	private void generateAssignment(String _target, String _expr, String _indent, boolean _isDisabled) {
 		if (_expr.contains("{") && _expr.endsWith("}")) {
 			StringList pureExprTokens = Element.splitLexically(_expr, true);
 			pureExprTokens.removeAll(" ");
@@ -966,7 +966,7 @@ public class PasGenerator extends Generator
 			if (pureExprTokens.count() >= 3 && posBrace <= 1) {
 				if (posBrace == 1 && Function.testIdentifier(pureExprTokens.get(0), false, null)) {
 					// Record initializer
-					String typeName = pureExprTokens.get(0);							
+					String typeName = pureExprTokens.get(0);
 					TypeMapEntry recType = this.typeMap.get(":"+typeName);
 					this.generateRecordInit(_target, _expr, _indent, false, _isDisabled, recType);
 				}
@@ -986,139 +986,139 @@ public class PasGenerator extends Generator
 	// END KGU#560 2018-07-22
 
 	@Override
-    protected void generateCode(Alternative _alt, String _indent)
-    {
-    	boolean isDisabled = _alt.isDisabled(false);
+	protected void generateCode(Alternative _alt, String _indent)
+	{
+		boolean isDisabled = _alt.isDisabled(false);
 
-    	// START KGU 2014-11-16
-    	appendComment(_alt, _indent);
-    	// END KGU 2014-11-16
+		// START KGU 2014-11-16
+		appendComment(_alt, _indent);
+		// END KGU 2014-11-16
 
-    	//String condition = BString.replace(transform(_alt.getText().getText()),"\n","").trim();
-    	String condition = transform(_alt.getUnbrokenText().getLongString()).trim();
-    	// START KGU#311 2016-12-26: Enh. #314 File API support
-    	if (this.usesFileAPI) {
-    		StringList tokens = Element.splitLexically(condition, true);
-    		for (int i = 0; i < this.fileVarNames.count(); i++) {
-    			if (tokens.contains(this.fileVarNames.get(i))) {
-    				this.appendComment("TODO: Consider replacing this file test using IOResult!", _indent);
-    			}
-    		}
-    	}
-    	// END KGU#311 2016-12-26
-    	if(!condition.startsWith("(") && !condition.endsWith(")")) condition="("+condition+")";
+		//String condition = BString.replace(transform(_alt.getText().getText()),"\n","").trim();
+		String condition = transform(_alt.getUnbrokenText().getLongString()).trim();
+		// START KGU#311 2016-12-26: Enh. #314 File API support
+		if (this.usesFileAPI) {
+			StringList tokens = Element.splitLexically(condition, true);
+			for (int i = 0; i < this.fileVarNames.count(); i++) {
+				if (tokens.contains(this.fileVarNames.get(i))) {
+					this.appendComment("TODO: Consider replacing this file test using IOResult!", _indent);
+				}
+			}
+		}
+		// END KGU#311 2016-12-26
+		if(!condition.startsWith("(") && !condition.endsWith(")")) condition="("+condition+")";
 
-    	addCode("if "+condition+" then", _indent, isDisabled);
-    	addCode("begin", _indent, isDisabled);
-    	generateCode(_alt.qTrue,_indent+this.getIndent());
-    	if(_alt.qFalse.getSize()!=0)
-    	{
-    		addCode("end", _indent, isDisabled);
-    		addCode("else", _indent, isDisabled);
-    		addCode("begin", _indent, isDisabled);
-    		generateCode(_alt.qFalse,_indent+this.getIndent());
-    	}
-    	addCode("end;", _indent, isDisabled);
-    }
+		addCode("if "+condition+" then", _indent, isDisabled);
+		addCode("begin", _indent, isDisabled);
+		generateCode(_alt.qTrue,_indent+this.getIndent());
+		if(_alt.qFalse.getSize()!=0)
+		{
+			addCode("end", _indent, isDisabled);
+			addCode("else", _indent, isDisabled);
+			addCode("begin", _indent, isDisabled);
+			generateCode(_alt.qFalse,_indent+this.getIndent());
+		}
+		addCode("end;", _indent, isDisabled);
+	}
 
-    @Override
-    protected void generateCode(Case _case, String _indent)
-    {
-    	boolean isDisabled = _case.isDisabled(false);
+	@Override
+	protected void generateCode(Case _case, String _indent)
+	{
+		boolean isDisabled = _case.isDisabled(false);
 
-    	// START KGU 2014-11-16
-    	appendComment(_case, _indent);
-    	// END KGU 2014-11-16
+		// START KGU 2014-11-16
+		appendComment(_case, _indent);
+		// END KGU 2014-11-16
 
-    	// START KGU#453 2017-11-02: Issue #447
-    	//String condition = transform(_case.getText().get(0));
-    	StringList unbrokenText = _case.getUnbrokenText();
-    	String condition = transform(unbrokenText.get(0));
-    	// END KGU#453 2017-11-02
-    	if (!condition.startsWith("(") && !condition.endsWith(")")) {
-    		condition = "("+condition+")";
-    	}
+		// START KGU#453 2017-11-02: Issue #447
+		//String condition = transform(_case.getText().get(0));
+		StringList unbrokenText = _case.getUnbrokenText();
+		String condition = transform(unbrokenText.get(0));
+		// END KGU#453 2017-11-02
+		if (!condition.startsWith("(") && !condition.endsWith(")")) {
+			condition = "("+condition+")";
+		}
 
-    	addCode("case "+condition+" of", _indent, isDisabled);
+		addCode("case "+condition+" of", _indent, isDisabled);
 
-    	for (int i = 0; i < _case.qs.size()-1; i++)
-    	{
-    		// START KGU#453 2017-11-02: Issue #447
-    		//addCode(_case.getText().get(i+1).trim()+":", _indent+this.getIndent(), isDisabled);
-    		addCode(unbrokenText.get(i+1).trim()+":", _indent+this.getIndent(), isDisabled);
-    		// END KGU#453 2017-11-02
-    		addCode("begin", _indent+this.getIndent()+this.getIndent(), isDisabled);
-    		generateCode(_case.qs.get(i),_indent+this.getIndent()+this.getIndent()+this.getIndent());
-    		addCode("end;", _indent+this.getIndent()+this.getIndent(), isDisabled);
-    	}
+		for (int i = 0; i < _case.qs.size()-1; i++)
+		{
+			// START KGU#453 2017-11-02: Issue #447
+			//addCode(_case.getText().get(i+1).trim()+":", _indent+this.getIndent(), isDisabled);
+			addCode(unbrokenText.get(i+1).trim()+":", _indent+this.getIndent(), isDisabled);
+			// END KGU#453 2017-11-02
+			addCode("begin", _indent+this.getIndent()+this.getIndent(), isDisabled);
+			generateCode(_case.qs.get(i),_indent+this.getIndent()+this.getIndent()+this.getIndent());
+			addCode("end;", _indent+this.getIndent()+this.getIndent(), isDisabled);
+		}
 
-    	// START KGU#453 2017-11-02: Issue #447
-    	//if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
-    	if(!unbrokenText.get(_case.qs.size()).trim().equals("%"))
-    	// END KGU#453 2017-11-02
-    	{
-    		addCode("else", _indent+this.getIndent(), isDisabled);
-    		generateCode(_case.qs.get(_case.qs.size()-1), _indent+this.getIndent()+this.getIndent());
-    	}
-    	addCode("end;", _indent, isDisabled);
-    }
+		// START KGU#453 2017-11-02: Issue #447
+		//if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
+		if(!unbrokenText.get(_case.qs.size()).trim().equals("%"))
+			// END KGU#453 2017-11-02
+		{
+			addCode("else", _indent+this.getIndent(), isDisabled);
+			generateCode(_case.qs.get(_case.qs.size()-1), _indent+this.getIndent()+this.getIndent());
+		}
+		addCode("end;", _indent, isDisabled);
+	}
 
-    @Override
-    protected void generateCode(For _for, String _indent)
-    {
-    	// START KGU 2014-11-16
-    	appendComment(_for, _indent);
-    	// END KGU 2014-11-16
+	@Override
+	protected void generateCode(For _for, String _indent)
+	{
+		// START KGU 2014-11-16
+		appendComment(_for, _indent);
+		// END KGU 2014-11-16
 
-    	// START KGU#61 2016-03-23: Enh. 84
-    	if (_for.isForInLoop() && generateForInCode(_for, _indent))
-    	{
-    		// All done
-    		return;
-    	}
-    	// END KGU#61 2016-03-23
+		// START KGU#61 2016-03-23: Enh. 84
+		if (_for.isForInLoop() && generateForInCode(_for, _indent))
+		{
+			// All done
+			return;
+		}
+		// END KGU#61 2016-03-23
 
-    	boolean isDisabled = _for.isDisabled(false);
-    	// START KGU#3 2015-11-02: New reliable loop parameter mechanism
-    	//code.add(_indent+"for "+BString.replace(transform(_for.getText().getText()),"\n","").trim()+" do");
-    	//code.add(_indent + "begin");
-    	//generateCode(_for.q, _indent+this.getIndent());
-    	String counter = _for.getCounterVar();
-    	int step = _for.getStepConst();
-    	if (Math.abs(step) == 1)
-    	{
-    		// We may employ a For loop
-    		String incr = (step == 1) ? " to " : " downto ";
-    		addCode("for " + counter + " := " + transform(_for.getStartValue(), false) +
-    				incr + transform(_for.getEndValue(), false) + " do",
-    				_indent, isDisabled);
-    	}
-    	else
-    	{
-    		// While loop required
-    		addCode(counter + " := " + transform(_for.getStartValue(), false),
-    				_indent, isDisabled);
-    		addCode("while " + counter + ((step > 0) ? " <= " : " >= ") + transform(_for.getEndValue(), false) + " do",
-    				_indent, isDisabled);
-    	}
-    	addCode("begin", _indent, isDisabled);
-    	generateCode(_for.q, _indent+this.getIndent());
-    	if (Math.abs(step) != 1)
-    	{
-    		addCode(counter + " := " + counter + ((step > 0) ? " + " : " ") + step,
-    				_indent + this.getIndent(), isDisabled); 
-    	}
-    	// END KGU#3 2015-11-02
-    	addCode("end;", _indent, isDisabled);
+		boolean isDisabled = _for.isDisabled(false);
+		// START KGU#3 2015-11-02: New reliable loop parameter mechanism
+		//code.add(_indent+"for "+BString.replace(transform(_for.getText().getText()),"\n","").trim()+" do");
+		//code.add(_indent + "begin");
+		//generateCode(_for.q, _indent+this.getIndent());
+		String counter = _for.getCounterVar();
+		int step = _for.getStepConst();
+		if (Math.abs(step) == 1)
+		{
+			// We may employ a For loop
+			String incr = (step == 1) ? " to " : " downto ";
+			addCode("for " + counter + " := " + transform(_for.getStartValue(), false) +
+					incr + transform(_for.getEndValue(), false) + " do",
+					_indent, isDisabled);
+		}
+		else
+		{
+			// While loop required
+			addCode(counter + " := " + transform(_for.getStartValue(), false),
+					_indent, isDisabled);
+			addCode("while " + counter + ((step > 0) ? " <= " : " >= ") + transform(_for.getEndValue(), false) + " do",
+					_indent, isDisabled);
+		}
+		addCode("begin", _indent, isDisabled);
+		generateCode(_for.q, _indent+this.getIndent());
+		if (Math.abs(step) != 1)
+		{
+			addCode(counter + " := " + counter + ((step > 0) ? " + " : " ") + step,
+					_indent + this.getIndent(), isDisabled); 
+		}
+		// END KGU#3 2015-11-02
+		addCode("end;", _indent, isDisabled);
 
-    	// START KGU#74 2015-11-30: The following instruction is goto target
-    	if (this.jumpTable.containsKey(_for))
-    	{
-    		addCode("StructorizerLabel_" + this.jumpTable.get(_for).intValue() + ": ;",
-    				_indent, isDisabled);
-    	}
-    	// END KGU 2015-11-30
-    }
+		// START KGU#74 2015-11-30: The following instruction is goto target
+		if (this.jumpTable.containsKey(_for))
+		{
+			addCode("StructorizerLabel_" + this.jumpTable.get(_for).intValue() + ": ;",
+					_indent, isDisabled);
+		}
+		// END KGU 2015-11-30
+	}
 
 	// START KGU#61 2016-03-23: Enh. #84 - Support for FOR-IN loops
 	/**

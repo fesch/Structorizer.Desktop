@@ -23,7 +23,7 @@ Known issues:
 - ARM export is still experimental and relies on a specific and very restricted
   syntax for the element contents in order to produce meaningful results.
 
-Current development version 3.32-13 (2023-10-13)
+Current development version 3.32-13 (2023-10-16)
 - 01: Bugfix #987: Duplicate subroutine comment export by Pascal generator <2>
 - 01: Bugfix #988: Syntax error in Structorizer.bat and Arranger.bat fixed <2>
 - 01: Bugfix #989: Expressions in EXIT elements (e.g. return) were forgotten
@@ -155,6 +155,8 @@ Current development version 3.32-13 (2023-10-13)
       Syntax check for declarations added to Analyser <2>
 - 13: Bugfix #1093 Code export unduly inserted "return 0" instructions <2>
 - 13: Bugfix #1094 C99 batch import failed with index range error <2>
+- 13: Bugfix #1096 Several problems with type definitions and variable
+      declarations (esp. C/Java style) in Analyser and code generation <2>
 - 13: Many translations (webtran.de) added to Luxemburgish locale <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer

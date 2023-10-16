@@ -312,13 +312,14 @@ Menu.error16_6.text=Argumento impróprio para desvio do tipo «%» (tene que ser
 Menu.error16_7.text=Instrução fora de alcance após desvio (JUMP)!
 Menu.error16_8.text=Argumento possivelmente impróprio para desvio do tipo «%» (deve ser constante inteira)!
 Menu.error17.text=Risco de inconsistência devido a acesso concorrente à variável «%» por várias threads paralelas!
+Menu.error24_9.text=Adição de declaração ilegal ou defeituosa (dimensionamento do array): «%»!
+Menu.error24_10.text=Pelo menos um tamanho inválido para dimensionamento de array (deve ser constante inteira > 0): «%»!
 Menu.error31_1.text=Uma declaração começando com «%1» deve conter um símbolo «%2» seguido por uma especificação de tipo.
 Menu.error31_2.text=String inesperada «%» na lista de variáveis ​​declaradas!
 Menu.error31_3.text=Estes objetos de declaração não são identificadores adequados: «%»!
 Menu.error31_4.text=Esta é uma tentativa de declarar novamente as variáveis ​​já existentes «%»!
-Menu.error31_5.text=Adição de declaração ilegal ou defeituosa (dimensionamento do array): «%»!
-Menu.error31_6.text=Pelo menos um tamanho inválido para dimensionamento de array (deve ser constante inteira > 0): «%»!
-Menu.error31_7.text=Para uma inicialização, a declaração deve conter exatamente UMA variável, e não %!
+Menu.error31_5.text=Para uma inicialização, a declaração deve conter exatamente UMA variável, e não %!
+Menu.error31_6.text=Uma construção anônima do tipo «%» não é permitida nesta posição!
 Menu.errorLineReference.text= (linha %)
 
 -----[ AnalyserPreferences ]-----
