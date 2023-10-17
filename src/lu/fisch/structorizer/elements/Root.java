@@ -5128,10 +5128,7 @@ public class Root extends Element {
 				// END KGU#375 2017-04-20
 				// START KGU#1089 2023-10-13: Issue #980 variable declaration syntax check
 				if (check(31)) {
-					String lineLower = line.toLowerCase();
-					if (lineLower.startsWith("var ") || lineLower.startsWith("dim ")) {
-						analyse_31(_instr, _errors, line, i, _vars, _uncertainVars, _definedConsts, _types);
-					}
+					analyse_31(_instr, _errors, line, i, _vars, _uncertainVars, _definedConsts, _types);
 				}
 				// END KGU#1089 2023-10-13
 				// START KGU#388 2017-09-17: Enh. #423 Check the definition of type names and components
@@ -5813,6 +5810,7 @@ public class Root extends Element {
 	
 	/**
 	 * CHECK #31: Variable declaration and initialisation syntax
+	 * declaration (has to be checked before)
 	 * @param _instr - {@link Instruction} to be analysed
 	 * @param _errors - global error list
 	 * @param _line - current instruction line
@@ -5827,106 +5825,152 @@ public class Root extends Element {
 			StringList _vars, StringList _uncertainVars, HashMap<String, String> _constants,
 			HashMap<String, TypeMapEntry> _types)
 	{
+		int nDeclVars = 0;
 		StringList tokens = Element.splitLexically(_line, true);
 		tokens.removeAll(" ");
-		int posCol = tokens.indexOf(":");
-		if (posCol < 0 && (posCol = tokens.indexOf("as", false)) < 0) {
-			String token0 = tokens.get(0);
-			String prefCol = token0.equalsIgnoreCase("var") ? ":" : "as";
-			if (token0.equals(token0.toUpperCase())) {
-				prefCol = prefCol.toUpperCase();
+		if (tokens.indexOf("var ", false) == 0 || tokens.indexOf("dim ", false) == 0) {
+			int posCol = tokens.indexOf(":");
+			if (posCol < 0 && (posCol = tokens.indexOf("as", false)) < 0) {
+				String token0 = tokens.get(0);
+				String prefCol = token0.equalsIgnoreCase("var") ? ":" : "as";
+				if (token0.equals(token0.toUpperCase())) {
+					prefCol = prefCol.toUpperCase();
+				}
+				//error  = new DetectedError("A declaration starting with %1 must contain a symbol %2, followed be a type specification!", _instr);
+				addError(_errors, new DetectedError(errorMsg(Menu.error31_1, new String[] {token0, prefCol}), _instr), 31);
+				return;
 			}
-			//error  = new DetectedError("A declaration starting with %1 must contain a symbol %2, followed be a type specification!", _instr);
-			addError(_errors, new DetectedError(errorMsg(Menu.error31_1, new String[] {token0, prefCol}), _instr), 31);
-			return;
-		}
-		boolean isInit = Instruction.isAssignment(_line);
-		
-		// Check the declaration items (should be new variable identifiers)
-		StringList declItems = Element.splitExpressionList(tokens.subSequence(1, posCol), ",", true);
-		if (!declItems.get(declItems.count()-1).isBlank()) {
-			//error  = new DetectedError("Unexpected character sequence % in the list of declared variables", _instr);
-			addError(_errors, new DetectedError(errorMsg(Menu.error31_2, declItems.get(declItems.count()-1)), _instr), 31);
-		}
-		// Remove the (possibly empty) tail
-		declItems.remove(declItems.count()-1);
-		StringList noId = new StringList();
-		//StringList defective = new StringList();
-		StringList redeclared = new StringList();
-		//StringList badSizes = new StringList();
-		for (int i = 0; i < declItems.count(); i++) {
-			// This is (discarded) code for temporarily allowed array specifiers
-			//String[] declSplits = declItems.get(i).trim().split("\\[");
-			//StringList dims = new StringList();
-			//String varName = "<empty>";
-			//if (declSplits.length < 1 || !Function.testIdentifier((varName = declSplits[0]), false, null)) {
-			String varName = declItems.get(i);
-			if (!Function.testIdentifier(varName, false, null)) {
-				noId.add(varName);
+			boolean isInit = Instruction.isAssignment(_line);
+
+			// Check the declaration items (should be new variable identifiers)
+			StringList declItems = Element.splitExpressionList(tokens.subSequence(1, posCol), ",", true);
+			if (!declItems.get(declItems.count()-1).isBlank()) {
+				//error  = new DetectedError("Unexpected character sequence % in the list of declared variables", _instr);
+				addError(_errors, new DetectedError(errorMsg(Menu.error31_2, declItems.get(declItems.count()-1)), _instr), 31);
+			}
+			// Remove the (possibly empty) tail
+			declItems.remove(declItems.count()-1);
+			StringList noId = new StringList();
+			//StringList defective = new StringList();
+			StringList redeclared = new StringList();
+			//StringList badSizes = new StringList();
+			for (int i = 0; i < declItems.count(); i++) {
+				// This is (discarded) code for temporarily allowed array specifiers
+				//String[] declSplits = declItems.get(i).trim().split("\\[");
+				//StringList dims = new StringList();
+				//String varName = "<empty>";
+				//if (declSplits.length < 1 || !Function.testIdentifier((varName = declSplits[0]), false, null)) {
+				String varName = declItems.get(i);
+				if (!Function.testIdentifier(varName, false, null)) {
+					noId.add(varName);
+				}
+				else {
+					if (_vars.contains(varName)
+							|| _uncertainVars.contains(varName)
+							|| _constants.containsKey(varName)
+							|| _types.containsKey(varName)) {
+						redeclared.add(varName);
+					}
+					// Obsolete code for the temporary idea to allow array specifiers here
+					//for (int j = 1; j < declSplits.length; j++) {
+					//	StringList ranges = Element.splitExpressionList(declSplits[j], ",", true);
+					//	if (!"]".equals(ranges.get(ranges.count()-1))) {
+					//		defective.add(declItems.get(i));
+					//		break;
+					//	}
+					//	dims.add(ranges.subSequence(0, ranges.count() - 1));
+					//}
+					//for (int j = 0; j < dims.count(); j++) {
+					//	String dim = dims.get(j);
+					//	if (_constants.containsKey(dim)) {
+					//		dim = _constants.get(dim);
+					//	}
+					//	try {
+					//		Integer.parseUnsignedInt(dim);
+					//	}
+					//	catch (NumberFormatException ex) {
+					//		badSizes.add(dim);
+					//	}
+					//}
+				}
+			}
+			if (!noId.isEmpty()) {
+				//error  = new DetectedError("These declaration items are bad or no identifiers: %!", _instr);
+				addError(_errors, new DetectedError(errorMsg(Menu.error31_3, noId.concatenate("», «")), _instr), 31);
+			}
+			if (!redeclared.isEmpty()) {
+				//error  = new DetectedError("Attempt to re-declare existing variables %!", _instr);
+				addError(_errors, new DetectedError(errorMsg(Menu.error31_4, redeclared.concatenate("», «")), _instr), 31);
+			}
+			//if (!defective.isEmpty()) {
+			//	//error  = new DetectedError("Illegal or defective dimension specifications: %!", _instr);
+			//	addError(_errors, new DetectedError(errorMsg(Menu.error31_5, defective.concatenate("», «")), _instr), 31);
+			//}
+			//if (!badSizes.isEmpty()) {
+			//	//error  = new DetectedError("At least one invalid array dimension size (must be integer constant): %!", _instr);
+			//	addError(_errors, new DetectedError(errorMsg(Menu.error31_6, badSizes.concatenate("», «")), _instr), 31);
+			//}
+			if (isInit && declItems.count() != 1) {
+				//error  = new DetectedError("For an initialization, the declaration list must contain exactly ONE variable, not %!", _instr);
+				addError(_errors, new DetectedError(errorMsg(Menu.error31_5, Integer.toString(declItems.count())), _instr), 31);
+			}
+
+			// Check the type structure
+			tokens.remove(0, posCol + 1);
+			String typeSpec = "";
+			if (tokens.isEmpty() || ILLEGAL_SUBTYPES.contains(tokens.get(0), false)) {
+				if (!tokens.isEmpty()) {
+					typeSpec = tokens.get(0) + "{...}";
+				}
+				//error  = new DetectedError("Illegal or defective type specification: %!", _instr);
+				addError(_errors, new DetectedError(errorMsg(Menu.error31_6, typeSpec), _instr), 31);
 			}
 			else {
-				if (_vars.contains(varName)
-						|| _uncertainVars.contains(varName)
-						|| _constants.containsKey(varName)
-						|| _types.containsKey(varName)) {
-					redeclared.add(varName);
+				checkArrayType_24_31(_instr, _errors, tokens, _constants, _types, null);
+			}
+		}
+		else if (Instruction.isAssignment(_line)
+				&& (nDeclVars = Instruction.getDeclaredVariables(tokens).count()) > 0) {
+			// C/Java-style declaration
+			if (nDeclVars != 1) {
+				//error  = new DetectedError("For an initialization, the declaration list must contain exactly ONE variable, not %!", _instr);
+				addError(_errors, new DetectedError(errorMsg(Menu.error31_5, Integer.toString(nDeclVars)), _instr), 31);						
+			}
+			else {
+				// Let's check the index lists now
+				var defective = new StringList();
+				var badSizes = new StringList();
+				tokens = Element.coagulateSubexpressions(tokens);
+				for (int j = 0; j < tokens.count(); j++) {
+					String token = tokens.get(j);
+					if (token.startsWith("[")) {
+						StringList sizes = Element.splitExpressionList(token.substring(1), ",", true);
+						if (!"]".equals(sizes.get(sizes.count()-1))) {
+							defective.add(token);
+						}
+						for (int k = 0; k < sizes.count(); k++) {
+							String dim = sizes.get(k);
+							if (_constants.containsKey(dim)) {
+								dim = this.getConstValueString(dim);
+							}
+							try {
+								Integer.parseUnsignedInt(dim);
+							}
+							catch (NumberFormatException ex) {
+								badSizes.add(dim);
+							}
+						}
+					}
 				}
-				// Obsolete code for the temporary idea to allow array specifiers here
-				//for (int j = 1; j < declSplits.length; j++) {
-				//	StringList ranges = Element.splitExpressionList(declSplits[j], ",", true);
-				//	if (!"]".equals(ranges.get(ranges.count()-1))) {
-				//		defective.add(declItems.get(i));
-				//		break;
-				//	}
-				//	dims.add(ranges.subSequence(0, ranges.count() - 1));
-				//}
-				//for (int j = 0; j < dims.count(); j++) {
-				//	String dim = dims.get(j);
-				//	if (_constants.containsKey(dim)) {
-				//		dim = _constants.get(dim);
-				//	}
-				//	try {
-				//		Integer.parseUnsignedInt(dim);
-				//	}
-				//	catch (NumberFormatException ex) {
-				//		badSizes.add(dim);
-				//	}
-				//}
+				if (!defective.isEmpty()) {
+					//error  = new DetectedError("Illegal or defective dimension specifications: %!", _instr);
+					addError(_errors, new DetectedError(errorMsg(Menu.error31_5, defective.concatenate("», «")), _instr), 31);
+				}
+				if (!badSizes.isEmpty()) {
+					//error  = new DetectedError("At least one invalid array dimension size (must be integer constant): %!", _instr);
+					addError(_errors, new DetectedError(errorMsg(Menu.error31_6, badSizes.concatenate("», «")), _instr), 31);
+				}
 			}
-		}
-		if (!noId.isEmpty()) {
-			//error  = new DetectedError("These declaration items are bad or no identifiers: %!", _instr);
-			addError(_errors, new DetectedError(errorMsg(Menu.error31_3, noId.concatenate("», «")), _instr), 31);
-		}
-		if (!redeclared.isEmpty()) {
-			//error  = new DetectedError("Attempt to re-declare existing variables %!", _instr);
-			addError(_errors, new DetectedError(errorMsg(Menu.error31_4, redeclared.concatenate("», «")), _instr), 31);
-		}
-		//if (!defective.isEmpty()) {
-		//	//error  = new DetectedError("Illegal or defective dimension specifications: %!", _instr);
-		//	addError(_errors, new DetectedError(errorMsg(Menu.error31_5, defective.concatenate("», «")), _instr), 31);
-		//}
-		//if (!badSizes.isEmpty()) {
-		//	//error  = new DetectedError("At least one invalid array dimension size (must be integer constant): %!", _instr);
-		//	addError(_errors, new DetectedError(errorMsg(Menu.error31_6, badSizes.concatenate("», «")), _instr), 31);
-		//}
-		if (isInit && declItems.count() != 1) {
-			//error  = new DetectedError("For an initialization, the declaration list must contain exactly ONE variable, not %!", _instr);
-			addError(_errors, new DetectedError(errorMsg(Menu.error31_5, Integer.toString(declItems.count())), _instr), 31);
-		}
-		
-		// Check the type structure
-		tokens.remove(0, posCol + 1);
-		String typeSpec = "";
-		if (tokens.isEmpty() || ILLEGAL_SUBTYPES.contains(tokens.get(0), false)) {
-			if (!tokens.isEmpty()) {
-				typeSpec = tokens.get(0) + "{...}";
-			}
-			//error  = new DetectedError("Illegal or defective type specification: %!", _instr);
-			addError(_errors, new DetectedError(errorMsg(Menu.error31_6, typeSpec), _instr), 31);
-		}
-		else {
-			checkArrayType_24_31(_instr, _errors, tokens, _constants, _types, null);
 		}
 	}
 

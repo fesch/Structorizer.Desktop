@@ -514,7 +514,7 @@ Menu.error31_1.text=Une déclaration commençant par «%1» doit contenir un sym
 Menu.error31_2.text=Chaîne inattendue «%» dans la liste des variables déclarées!
 Menu.error31_3.text=Ces objets de déclaration ne sont pas des identifiants adaptés : «%»!
 Menu.error31_4.text=Une tentative de re-déclarer la ou les variables déjà existantes «%»!
-Menu.error31_5.text=Pour une initialisation, la déclaration doit contenir exactement UNE variable, pas %!
+Menu.error31_5.text=Pour une initialisation, la déclaration doit contenir exactement UNE variable, pas % !
 Menu.error31_6.text=Une construction de type anonyme «%» n'est pas autorisée à ce stade!
 Menu.errorLineReference.text=(ligne %)
 
@@ -1514,6 +1514,7 @@ Control.msgSignatureConflicts.text=Il y a des conflits d'API parmi les plugins d
 Control.msgGUISyncFault.text=Erreur de synchronisation possible de l'interface graphique lors de l'exécution de «%».\nEssayer de reprendre l'exécution?
 Control.msgErrorInSubroutine.text=Une erreur est survenue lors de l'exécution de «%1» au niveau %2:\n	%3!
 Control.msgThrown.text=Exception lancée dans «%1» au niveau %2: %3
+Control.msgInvalidInitialization.text=La variable à initialiser est manquante ou ambiguë: «%»! 
 Control.tblVar.header.0=Nom de variable
 Control.tblVar.header.2=Contenu
 

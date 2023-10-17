@@ -506,7 +506,7 @@ Menu.error31_1.text=Объявление, начинающееся с «%1», д
 Menu.error31_2.text=Неожиданная строка «%» в списке объявленных переменных!
 Menu.error31_3.text=Этим объектам объявления не подходят идентификаторы: «%»!
 Menu.error31_4.text=Это попытка переопределить уже существующую переменную(и) «%»!
-Menu.error31_5.text=Для инициализации объявление должно содержать ровно ОДНУ переменную, а не %!
+Menu.error31_5.text=Для инициализации объявление должно содержать ровно ОДНУ переменную, а не % !
 Menu.error31_6.text=В этой позиции недопустима конструкция анонимного типа «%»!
 Menu.errorLineReference.text=(строка %)
 
@@ -1412,6 +1412,7 @@ Control.msgSignatureConflicts.text=
 Control.msgGUISyncFault.text=
 Control.msgErrorInSubroutine.text=
 Control.msgThrown.text=
+Control.msgInvalidInitialization.text=Переменная, которую нужно инициализировать, отсутствует или неоднозначна: «%»!
 Control.tblVar.header.0=Название переменной
 Control.tblVar.header.2=Данные переменной
 

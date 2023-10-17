@@ -597,6 +597,12 @@ public class BasGenerator extends Generator
 						StringList leftSide = tokens.subSequence(0, asgnPos);
 						leftSide.removeAll(" ");
 						String varName = Instruction.getAssignedVarname(leftSide, false);
+						// START KGU#1089 2023-10-17: Issue #980 Suppress defective initialisations
+						if (varName == null) {
+							this.appendComment("***ILLEGAL LINE SKIPPED: " + line, _indent);
+							continue;
+						}
+						// END KGU#1089 2023-10-17: Issue #980
 						StringList exprTokens = tokens.subSequence(asgnPos+1, tokens.count()).trim();
 						isArrayInit = !exprTokens.isEmpty() && exprTokens.get(0).equals("{") && exprTokens.get(exprTokens.count()-1).equals("}");
 						// START KGU#780 2019-12-01 - trouble with complicated left sides fixed

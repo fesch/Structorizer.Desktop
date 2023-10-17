@@ -1284,16 +1284,16 @@ public class CGenerator extends Generator {
 							String type = tokens.subSequence(posColon+1, posAsgn).concatenate().trim();
 							StringList declItems = Element.splitExpressionList(tokens.subSequence(1, posColon), ",", false);
 							for (int i = 0; i < declItems.count(); i++) {
-								varName = declItems.get(i).trim();
+								String declItem = declItems.get(i).trim();
 								// FIXME there could be asterisks and more!
-								int posBrack = varName.indexOf('[');
+								int posBrack = declItem.indexOf('[');
 								String brackets = "";
 								if (posBrack >= 0) {
-									brackets = varName.substring(posBrack);
-									varName = varName.substring(0, posBrack).trim();
+									brackets = declItem.substring(posBrack);
+									declItem = declItem.substring(0, posBrack).trim();
 								}
 								// START KGU#711 2019-10-01: Enh. #721 Precaution for Javascript
-								if (varName.isEmpty() || exprTokens == null && wasDefHandled(root, varName, false)) {
+								if (declItem.isEmpty() || exprTokens == null && wasDefHandled(root, declItem, false)) {
 									codeLine = null;	// If this was the last loop cycle then ensure nothing gets coded.
 									continue;
 								}
@@ -1315,7 +1315,7 @@ public class CGenerator extends Generator {
 								// START KGU#561 2018-07-21: Bugfix #564
 								//codeLine = transform(transformType(type, "")) + " " + codeLine;
 								type1 = transformType(type1, "");
-								codeLine = this.transformArrayDeclaration(type1, varName);
+								codeLine = this.transformArrayDeclaration(type1, declItem);
 								// END KGU#561 2018-07-21
 								if (!_commentInserted) {
 									appendComment(_inst, _indent);
@@ -1323,7 +1323,7 @@ public class CGenerator extends Generator {
 								}
 								if (exprTokens == null || declItems.count() > 1) {
 									addCode(codeLine + ";", _indent, isDisabled);
-									wasDefHandled(root, varName, true);
+									wasDefHandled(root, declItem, true);
 									codeLine = null;
 								}
 							}
@@ -1337,29 +1337,68 @@ public class CGenerator extends Generator {
 					if (this.isInternalDeclarationAllowed()) {
 						// Case 2.2c (allowed) or 1.1.2c
 						// START KGU#711 2019-10-01: Enh. #721 Avoid nonsense declarations in Javascript
-						if (exprTokens == null && this.wasDefHandled(root, varName, false)) {
-							return _commentInserted;
-						}
-						// END KGU#711 2019-10-01
-						// START KGU#560 2018-07-22: Bugfix #564
-						//codeLine = transform(tokens.subSequence(0, posAsgn).concatenate().trim());
-						TypeMapEntry type = this.typeMap.get(varName);
-						if (type != null && type.isArray()) {
-							String canonType = type.getCanonicalType(true, false);
-							codeLine = this.makeArrayDeclaration(this.transformType(canonType, "int"), varName, type);
+						// START KGU#1089 2023-10-16: Bugfix #980 Handle multi-variable declarations sensibly
+						//if (exprTokens == null && this.wasDefHandled(root, varName, false)) {
+						//	return _commentInserted;
+						//}
+						//String declVar = varName;
+						StringList declVars = null;
+						if (varName != null) {
+							declVars = StringList.getNew(varName);
 						}
 						else {
-							// START KGU#711 2019-09-30: Enh. #721: Consider Javascript
-							// Combine type and variable as is
-							//codeLine = transform(tokens.subSequence(0, posAsgn).concatenate().trim());
-							int posVar = tokens.indexOf(varName);
-							codeLine = this.composeTypeAndNameForDecl(
-									tokens.subSequence(0, posVar).concatenate().trim(),
-									tokens.subSequence(posVar, posAsgn).concatenate().trim());
-							codeLine = transform(codeLine);
-							// END KGU#711 2019-09-30
+							// Apparently many declared variables, ambiguous assignment
+							declVars = Instruction.getDeclaredVariables(pureTokens);
+							if (declVars.count() > 1) {
+								exprTokens = null;
+							}
 						}
-						// END KGU#560 2018-07-22
+						int posVar0 = 0;
+						StringList declZones = new StringList();
+						for (int i = 0; i < declVars.count(); i++) {
+							String declVar = declVars.get(i);
+							// END KGU#1089 2023-10-16
+							if (exprTokens == null && declVar != null
+									&& this.wasDefHandled(root, declVar, false)) {
+								return _commentInserted;
+							}
+							// END KGU#711 2019-10-01
+							// START KGU#560 2018-07-22: Bugfix #564
+							//codeLine = transform(tokens.subSequence(0, posAsgn).concatenate().trim());
+							TypeMapEntry type = this.typeMap.get(declVar);
+							if (type != null && type.isArray()) {
+								String canonType = type.getCanonicalType(true, false);
+								codeLine = this.makeArrayDeclaration(this.transformType(canonType, "int"), declVar, type);
+							}
+							else {
+								// START KGU#711 2019-09-30: Enh. #721: Consider Javascript
+								// Combine type and variable as is
+								//codeLine = transform(tokens.subSequence(0, posAsgn).concatenate().trim());
+								int posVar = tokens.indexOf(declVar);
+								if (i == 0) {
+									posVar0 = posVar;
+									declZones = Element.splitExpressionList(tokens.subSequence(posVar0, posAsgn), ",", true);
+								}
+								StringList typeStr = tokens.subSequence(0, posVar0);
+								int posLBrack = declZones.get(i).indexOf('[');
+								int posRBrack = declZones.get(i).lastIndexOf(']');
+								if (!typeStr.isEmpty() && posLBrack > 0 && posRBrack > posLBrack) {
+									typeStr.insert("array "
+											+ declZones.get(i).substring(posLBrack, posRBrack+1) + " of ", 0);
+								}
+								else if (typeStr.isEmpty() && exprTokens != null) {
+									declVar = declZones.get(i);
+								}
+								codeLine = this.composeTypeAndNameForDecl(
+										typeStr.concatenate(null).trim(),
+										declVar.trim());
+								codeLine = transform(codeLine);
+								// END KGU#711 2019-09-30
+							}
+							// END KGU#560 2018-07-22
+							addCode(codeLine + ";", _indent, isDisabled);
+							codeLine = null;
+						}
 					}
 					else if (exprTokens != null) {
 						// Case 1.1.2c (2.2c not allowed)

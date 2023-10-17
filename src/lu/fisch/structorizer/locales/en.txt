@@ -583,7 +583,7 @@ Menu.error31_1.text=A declaration starting with «%1» must contain a symbol «%
 Menu.error31_2.text=Unexpected character sequence «%» in the list of declared variables!
 Menu.error31_3.text=These declaration items are bad or no identifiers: «%»!
 Menu.error31_4.text=Attempt to re-declare existing variable(s) «%»!
-Menu.error31_5.text=For an initialization, the declaration list must contain exactly ONE variable, not %!
+Menu.error31_5.text=For an initialization, the declaration list must contain exactly ONE variable, not % !
 Menu.error31_6.text=Anonymous type construction «%» is illegal here!
 Menu.errorLineReference.text= (line %)
 
@@ -1589,6 +1589,7 @@ Control.msgSignatureConflicts.text=There are API conflicts among the chosen cont
 Control.msgGUISyncFault.text=Possible GUI synchronisation fault on executing «%».\nTry to resume execution?
 Control.msgErrorInSubroutine.text=Caught error on executing «%1» at level %2:\n	%3!
 Control.msgThrown.text=Exception thrown in «%1» at level %2: %3
+Control.msgInvalidInitialization.text=Initialization target missing or ambiguous: «%»!
 Control.tblVar.header.0=Variable Name
 Control.tblVar.header.2=Content
 

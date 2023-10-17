@@ -450,7 +450,8 @@ public class TypeMapEntry {
 		
 		private void setElementTypeAndIndexRanges(Root constProvider)
 		{
-			StringList tokens = Element.splitLexically(this.typeDescriptor, true);
+			String descr = this.typeDescriptor.replaceAll("\\]\\s*\\[", ",");
+			StringList tokens = Element.splitLexically(descr, true);
 			tokens.removeAll(" ");
 			this.indexRanges = new Vector<int[]>();
 			while (!tokens.isEmpty() && tokens.get(0).equalsIgnoreCase("array")) {

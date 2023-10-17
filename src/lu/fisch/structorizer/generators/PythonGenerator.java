@@ -714,6 +714,13 @@ public class PythonGenerator extends Generator
 				// START KGU#1053 2022-08-14: Bugfix #1061 - hands off in "no conversion" mode!
 				}
 				// END KGU#1053 2022-08-14
+				// START KGU#1089 2023-10-17: Issue #980
+				if (!done && (line.contains("<-") || line.contains(":="))
+						&& this.getAssignedVarname(line, false) == null) {
+					this.appendComment("*** ILLEGAL LINE SKIPPED: " + line, _indent);
+					done = true;
+				}
+				// END KGU#1089 2023-10-17
 				if (!done) {
 					addCode(codeLine, _indent, isDisabled);
 				}
@@ -1647,7 +1654,7 @@ public class PythonGenerator extends Generator
 	}
 	// END KGU 2015-12-15
 	
-	// START KGU#799 2020-02-13: Auxiliary fpor bugfix #812
+	// START KGU#799 2020-02-13: Auxiliary for bugfix #812
 	private String getAssignedVarname(String line, boolean pureBasename)
 	{
 		StringList tokens = Element.splitLexically(line, true);

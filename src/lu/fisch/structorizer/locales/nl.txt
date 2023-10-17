@@ -509,7 +509,7 @@ Menu.error31_1.text=Een declaratie die begint met «%1» moet een symbool «%2»
 Menu.error31_2.text=Onverwachte tekenreeks «%» in de lijst met gedeclareerde variabelen!
 Menu.error31_3.text=Deze declaratieobjecten zijn geen geschikte identificatiegegevens: «%»!
 Menu.error31_4.text=Dit is een poging om de reeds bestaande variabele(n) «%» opnieuw te declareren!
-Menu.error31_5.text=Voor een initialisatie moet de declaratie precies EEN variabele bevatten, niet %!
+Menu.error31_5.text=Voor een initialisatie moet de declaratie precies EEN variabele bevatten, niet % !
 Menu.error31_6.text=Een anonieme typeconstructie «%» is in deze positie niet toegestaan!!
 Menu.errorLineReference.text=(regel %)
 
@@ -1462,6 +1462,7 @@ Control.msgSignatureConflicts.text=Er zijn API-conflicten met de gekozen plugins
 Control.msgGUISyncFault.text=Mogelijke GUI-synchronisatiefout tijdens uitvoeren van «%».\nHervatten uitvoeren proberen?
 Control.msgErrorInSubroutine.text=Fout gevonden bij uitvoeren «%1» op niveau %2:\n	%3!
 Control.msgThrown.text=Exceptie-fout in «%1» op niveau %2: %3
+Control.msgInvalidInitialization.text=De te initialiseren variabele ontbreekt of is dubbelzinnig: «%»!
 Control.tblVar.header.0=Naam variabele
 Control.tblVar.header.2=Inhoud
 

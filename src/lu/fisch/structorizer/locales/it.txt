@@ -518,7 +518,7 @@ Menu.error31_1.text=Una dichiarazione che inizia con «%1» deve contenere un si
 Menu.error31_2.text=Stringa imprevista «%» nell'elenco delle variabili dichiarate!
 Menu.error31_3.text=Questi oggetti di dichiarazione non sono identificatori adatti: «%»!
 Menu.error31_4.text=No debe dichiarare nuovamente le variabili già esistenti «%»!
-Menu.error31_5.text=Per un'inizializzazione, la dichiarazione deve contenere esattamente UNA variabile, non %!
+Menu.error31_5.text=Per un'inizializzazione, la dichiarazione deve contenere esattamente UNA variabile, non % !
 Menu.error31_6.text=Una costruzione di tipo anonimo «%» non è consentita a questo punto!
 Menu.errorLineReference.text=(riga %)
 
@@ -1489,6 +1489,7 @@ Control.msgSignatureConflicts.text=
 Control.msgGUISyncFault.text=
 Control.msgErrorInSubroutine.text=
 Control.msgThrown.text=
+Control.msgInvalidInitialization.text=La variabile da inizializzare è mancante o ambigua: «%»!
 Control.tblVar.header.0=Nome della variabile
 Control.tblVar.header.2=Contenuto
 

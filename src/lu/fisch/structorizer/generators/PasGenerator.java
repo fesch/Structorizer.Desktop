@@ -681,6 +681,9 @@ public class PasGenerator extends Generator
 			// END KGU#424 2017-09-25
 			for (int i=0; i<lines.count(); i++)
 			{
+				// START KGU#1089 2023-10-17: Issue #980  Ensure line-specific suppression is lifted
+				isDisabled = _inst.isDisabled(false);
+				// END KGU#1089 2023-10-17
 				// START KGU#74 2015-12-20: Bug #22 There might be a return outside of a Jump element, handle it!
 				//code.add(_indent+transform(_inst.getText().get(i))+";");
 				String line = lines.get(i).trim();
@@ -728,6 +731,13 @@ public class PasGenerator extends Generator
 					//code.add(_indent + transform(line) + ";");
 					String transline = transform(line);
 					int asgnPos = transline.indexOf(":=");
+					// START KGU#1089 2023-10-17: Issue #980 Suppress defective declarations
+					StringList tokens =Element.splitLexically(line, true);
+					tokens.removeAll(" ");
+					if (asgnPos > 0 && Instruction.getAssignedVarname(tokens, false) == null) {
+						isDisabled = true;
+					}
+					// END KGU#1089 2023-10-17
 					boolean isArrayOrRecordInit = false;
 					if (asgnPos > 0 && transline.contains("{") && transline.contains("}"))
 					{
@@ -752,7 +762,9 @@ public class PasGenerator extends Generator
 									varName = varName.substring(0, varName.indexOf('['));
 								}
 								// END KGU#560 2018-07-22
+								// START KGU#1098 2023-10-17: Issue #980
 								generateArrayInit(varName, expr, _indent, null, isDisabled);
+								// END KGU#1098 2023-10-17
 							}
 							else if (posBrace > 0 && Function.testIdentifier(potTypeName, false, ".") && expr.endsWith("}"))
 							{
@@ -952,7 +964,7 @@ public class PasGenerator extends Generator
 	// START KGU#560 2018-07-22: Bugfix #564 Array initializers have to be decomposed if not occurring in a declaration
 	/**
 	 * Generates code that decomposes possible initializers into a series of separate assignments if
-	 * there no compact translation, otherwise just adds appropriate transformed code.
+	 * there is no compact translation, otherwise just adds appropriate transformed code.
 	 * @param _target - the left side of the assignment (without modifiers!)
 	 * @param _expr - the expression in Structorizer syntax
 	 * @param _indent - current indentation level (as String)

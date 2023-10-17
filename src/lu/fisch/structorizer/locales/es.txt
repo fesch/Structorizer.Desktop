@@ -587,7 +587,7 @@ Menu.error31_1.text=Una declaración que comienza con "%1" debe contener un sím
 Menu.error31_2.text=¡Cadena inesperada «%» en la lista de variables declaradas!
 Menu.error31_3.text=Estos objetos de declaración no son identificadores adecuados: «%»!
 Menu.error31_4.text=¡No es leyal volver a declarar las variables ya existentes «%»!
-Menu.error31_5.text=Para una inicialización, la declaración debe contener exactamente UNA variable, ¡no %!
+Menu.error31_5.text=Para una inicialización, la declaración debe contener exactamente UNA variable, ¡no % !
 Menu.error31_6.text=¡Construcción de un tipo anónimo «%» no es permitido en este lugar!
 Menu.errorLineReference.text= (línea %)
 
@@ -1592,6 +1592,7 @@ Control.msgSignatureConflicts.text=Hay conflictos en el API entre los elegidos m
 Control.msgGUISyncFault.text=Problemas con la sincronización de la ventana ejecutando «%».\n¿Tratar de continuar ejecución?
 Control.msgErrorInSubroutine.text=Error atrapado ejecutando «%1» en nivel %2:\n	%3
 Control.msgThrown.text=Excepción desatada dentro de «%1» en nivel %2: %3
+Control.msgInvalidInitialization.text=Falta la variable a inicializar o es ambigua: «%»!
 Control.tblVar.header.0=Nombre de variable
 Control.tblVar.header.2=Contenido
 
