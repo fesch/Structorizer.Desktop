@@ -714,13 +714,13 @@ public class PythonGenerator extends Generator
 				// START KGU#1053 2022-08-14: Bugfix #1061 - hands off in "no conversion" mode!
 				}
 				// END KGU#1053 2022-08-14
-				// START KGU#1089 2023-10-17: Issue #980
+				// START KGU#1089 2023-10-18: Issue #980 Reject a multi-var declaration
 				if (!done && (Instruction.isAssignment(line))
 						&& this.getAssignedVarname(line, false) == null) {
 					this.appendComment("*** ILLEGAL LINE SKIPPED: " + line, _indent);
 					done = true;
 				}
-				// END KGU#1089 2023-10-17
+				// END KGU#1089 2023-10-18
 				if (!done) {
 					addCode(codeLine, _indent, isDisabled);
 				}
