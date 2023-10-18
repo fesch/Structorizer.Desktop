@@ -89,7 +89,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2022-08-23      Issue #1068: transformIndexLists() inserted in transformTokens()
  *      Kay Gürtzig             2023-09-29      Issues #1091, #1092: Alias and array type defs now simply suppressed
  *      Kay Gürtzig             2023-10-04      Bugfix #1093 Undue final return 0 on function diagrams eliminated
- *      Kay Gürtzig             2023-10-12      Issue #980 Code generation for multi-variable and array declarations revised
+ *      Kay Gürtzig             2023-10-12/18   Issue #980 Code generation for multi-variable and array declarations revised
  *
  ******************************************************************************************************
  *
@@ -715,7 +715,7 @@ public class PythonGenerator extends Generator
 				}
 				// END KGU#1053 2022-08-14
 				// START KGU#1089 2023-10-17: Issue #980
-				if (!done && (line.contains("<-") || line.contains(":="))
+				if (!done && (Instruction.isAssignment(line))
 						&& this.getAssignedVarname(line, false) == null) {
 					this.appendComment("*** ILLEGAL LINE SKIPPED: " + line, _indent);
 					done = true;
