@@ -3117,6 +3117,8 @@ public class Root extends Element {
 
                 // START KGU#1089 2023-10-14: Issue #980 Skip possible multi-var declarations
                 if (tokens.indexOf("var", false) == 0 || tokens.indexOf("dim", false) == 0) {
+                    tokens.removeAll(" ");
+                    asgnPos = tokens.indexOf("<-");
                     int posColon = tokens.indexOf(":");
                     if ((posColon > 2 && posColon < asgnPos
                             || (posColon = tokens.indexOf("as", false)) > 2 && posColon < asgnPos)) {
@@ -5335,7 +5337,7 @@ public class Root extends Element {
 		}
 		if (!badSizes.isEmpty()) {
 			//error  = new DetectedError("At least one invalid array dimension size (must be integer constant): %!", _instr);
-			addError(_errors, new DetectedError(errorMsg(Menu.error34_10, badSizes.concatenate("», «")), _instr), 24);
+			addError(_errors, new DetectedError(errorMsg(Menu.error24_10, badSizes.concatenate("», «")), _instr), 24);
 		}
 	}
 	// END KGU#1089 2023-10-14
@@ -5810,7 +5812,8 @@ public class Root extends Element {
 	
 	/**
 	 * CHECK #31: Variable declaration and initialisation syntax
-	 * declaration (has to be checked before)
+	 * (that it is a declaration has to be checked before)
+	 * 
 	 * @param _instr - {@link Instruction} to be analysed
 	 * @param _errors - global error list
 	 * @param _line - current instruction line
@@ -5825,10 +5828,10 @@ public class Root extends Element {
 			StringList _vars, StringList _uncertainVars, HashMap<String, String> _constants,
 			HashMap<String, TypeMapEntry> _types)
 	{
-		int nDeclVars = 0;
+		StringList declItems = null;
 		StringList tokens = Element.splitLexically(_line, true);
 		tokens.removeAll(" ");
-		if (tokens.indexOf("var ", false) == 0 || tokens.indexOf("dim ", false) == 0) {
+		if (tokens.indexOf("var", false) == 0 || tokens.indexOf("dim", false) == 0) {
 			int posCol = tokens.indexOf(":");
 			if (posCol < 0 && (posCol = tokens.indexOf("as", false)) < 0) {
 				String token0 = tokens.get(0);
@@ -5843,73 +5846,16 @@ public class Root extends Element {
 			boolean isInit = Instruction.isAssignment(_line);
 
 			// Check the declaration items (should be new variable identifiers)
-			StringList declItems = Element.splitExpressionList(tokens.subSequence(1, posCol), ",", true);
+			declItems = Element.splitExpressionList(tokens.subSequence(1, posCol), ",", true);
 			if (!declItems.get(declItems.count()-1).isBlank()) {
 				//error  = new DetectedError("Unexpected character sequence % in the list of declared variables", _instr);
 				addError(_errors, new DetectedError(errorMsg(Menu.error31_2, declItems.get(declItems.count()-1)), _instr), 31);
 			}
 			// Remove the (possibly empty) tail
 			declItems.remove(declItems.count()-1);
-			StringList noId = new StringList();
-			//StringList defective = new StringList();
-			StringList redeclared = new StringList();
-			//StringList badSizes = new StringList();
-			for (int i = 0; i < declItems.count(); i++) {
-				// This is (discarded) code for temporarily allowed array specifiers
-				//String[] declSplits = declItems.get(i).trim().split("\\[");
-				//StringList dims = new StringList();
-				//String varName = "<empty>";
-				//if (declSplits.length < 1 || !Function.testIdentifier((varName = declSplits[0]), false, null)) {
-				String varName = declItems.get(i);
-				if (!Function.testIdentifier(varName, false, null)) {
-					noId.add(varName);
-				}
-				else {
-					if (_vars.contains(varName)
-							|| _uncertainVars.contains(varName)
-							|| _constants.containsKey(varName)
-							|| _types.containsKey(varName)) {
-						redeclared.add(varName);
-					}
-					// Obsolete code for the temporary idea to allow array specifiers here
-					//for (int j = 1; j < declSplits.length; j++) {
-					//	StringList ranges = Element.splitExpressionList(declSplits[j], ",", true);
-					//	if (!"]".equals(ranges.get(ranges.count()-1))) {
-					//		defective.add(declItems.get(i));
-					//		break;
-					//	}
-					//	dims.add(ranges.subSequence(0, ranges.count() - 1));
-					//}
-					//for (int j = 0; j < dims.count(); j++) {
-					//	String dim = dims.get(j);
-					//	if (_constants.containsKey(dim)) {
-					//		dim = _constants.get(dim);
-					//	}
-					//	try {
-					//		Integer.parseUnsignedInt(dim);
-					//	}
-					//	catch (NumberFormatException ex) {
-					//		badSizes.add(dim);
-					//	}
-					//}
-				}
-			}
-			if (!noId.isEmpty()) {
-				//error  = new DetectedError("These declaration items are bad or no identifiers: %!", _instr);
-				addError(_errors, new DetectedError(errorMsg(Menu.error31_3, noId.concatenate("», «")), _instr), 31);
-			}
-			if (!redeclared.isEmpty()) {
-				//error  = new DetectedError("Attempt to re-declare existing variables %!", _instr);
-				addError(_errors, new DetectedError(errorMsg(Menu.error31_4, redeclared.concatenate("», «")), _instr), 31);
-			}
-			//if (!defective.isEmpty()) {
-			//	//error  = new DetectedError("Illegal or defective dimension specifications: %!", _instr);
-			//	addError(_errors, new DetectedError(errorMsg(Menu.error31_5, defective.concatenate("», «")), _instr), 31);
-			//}
-			//if (!badSizes.isEmpty()) {
-			//	//error  = new DetectedError("At least one invalid array dimension size (must be integer constant): %!", _instr);
-			//	addError(_errors, new DetectedError(errorMsg(Menu.error31_6, badSizes.concatenate("», «")), _instr), 31);
-			//}
+			
+			analyse_31_declared_ids(_instr, _errors, declItems, _vars, _uncertainVars, _types);
+			
 			if (isInit && declItems.count() != 1) {
 				//error  = new DetectedError("For an initialization, the declaration list must contain exactly ONE variable, not %!", _instr);
 				addError(_errors, new DetectedError(errorMsg(Menu.error31_5, Integer.toString(declItems.count())), _instr), 31);
@@ -5930,16 +5876,21 @@ public class Root extends Element {
 			}
 		}
 		else if (Instruction.isAssignment(_line)
-				&& (nDeclVars = Instruction.getDeclaredVariables(tokens).count()) > 0) {
+				&& (declItems = Instruction.getDeclaredVariables(tokens)).count() > 0) {
 			// C/Java-style declaration
-			if (nDeclVars != 1) {
+			if (tokens.indexOf(declItems.get(0)) > 0) {
+				analyse_31_declared_ids(_instr, _errors, declItems, _vars, _uncertainVars, _types);
+			}
+			if (declItems.count() != 1) {
 				//error  = new DetectedError("For an initialization, the declaration list must contain exactly ONE variable, not %!", _instr);
-				addError(_errors, new DetectedError(errorMsg(Menu.error31_5, Integer.toString(nDeclVars)), _instr), 31);						
+				addError(_errors, new DetectedError(errorMsg(Menu.error31_5, Integer.toString(declItems.count())), _instr), 31);
 			}
 			else {
 				// Let's check the index lists now
 				var defective = new StringList();
 				var badSizes = new StringList();
+				unifyOperators(tokens, true);
+				tokens.remove(tokens.indexOf("<-"), tokens.count());
 				tokens = Element.coagulateSubexpressions(tokens);
 				for (int j = 0; j < tokens.count(); j++) {
 					String token = tokens.get(j);
@@ -5964,15 +5915,91 @@ public class Root extends Element {
 				}
 				if (!defective.isEmpty()) {
 					//error  = new DetectedError("Illegal or defective dimension specifications: %!", _instr);
-					addError(_errors, new DetectedError(errorMsg(Menu.error31_5, defective.concatenate("», «")), _instr), 31);
+					addError(_errors, new DetectedError(errorMsg(Menu.error24_9, defective.concatenate("», «")), _instr), 31);
 				}
 				if (!badSizes.isEmpty()) {
 					//error  = new DetectedError("At least one invalid array dimension size (must be integer constant): %!", _instr);
-					addError(_errors, new DetectedError(errorMsg(Menu.error31_6, badSizes.concatenate("», «")), _instr), 31);
+					addError(_errors, new DetectedError(errorMsg(Menu.error24_10, badSizes.concatenate("», «")), _instr), 31);
 				}
 			}
 		}
 	}
+	
+	// START KGU#1090 2023-10-17: Issue #1096
+	/**
+	 * CHECK #31: Variable id syntax and re-declaration test
+	 * 
+	 * @param _instr - {@link Instruction} to be analysed
+	 * @param _errors - global error list
+	 * @param _declItems - the text parts forming the variables to be declared, should be
+	 *     a list of new identfiers
+	 * @param _vars - variables with certain initialisation
+	 * @param _uncertainVars - variables with uncertain initialisation (e.g. in a branch)
+	 * @param _types - type definitions and declarations
+	 */
+	public void analyse_31_declared_ids(Instruction _instr, Vector<DetectedError> _errors, StringList _declItems,
+			StringList _vars, StringList _uncertainVars, HashMap<String, TypeMapEntry> _types) {
+		StringList noId = new StringList();
+		//StringList defective = new StringList();
+		StringList redeclared = new StringList();
+		//StringList badSizes = new StringList();
+		for (int i = 0; i < _declItems.count(); i++) {
+			// This is (discarded) code for temporarily allowed array specifiers
+			//String[] declSplits = declItems.get(i).trim().split("\\[");
+			//StringList dims = new StringList();
+			//String varName = "<empty>";
+			//if (declSplits.length < 1 || !Function.testIdentifier((varName = declSplits[0]), false, null)) {
+			String varName = _declItems.get(i);
+			if (!Function.testIdentifier(varName, false, null)) {
+				noId.add(varName);
+			}
+			else {
+				if (_vars.contains(varName)
+						|| _uncertainVars.contains(varName)
+						|| _types.containsKey(varName)) {
+					redeclared.add(varName);
+				}
+				// Obsolete code for the temporary idea to allow array specifiers here
+				//for (int j = 1; j < declSplits.length; j++) {
+				//	StringList ranges = Element.splitExpressionList(declSplits[j], ",", true);
+				//	if (!"]".equals(ranges.get(ranges.count()-1))) {
+				//		defective.add(declItems.get(i));
+				//		break;
+				//	}
+				//	dims.add(ranges.subSequence(0, ranges.count() - 1));
+				//}
+				//for (int j = 0; j < dims.count(); j++) {
+				//	String dim = dims.get(j);
+				//	if (_constants.containsKey(dim)) {
+				//		dim = _constants.get(dim);
+				//	}
+				//	try {
+				//		Integer.parseUnsignedInt(dim);
+				//	}
+				//	catch (NumberFormatException ex) {
+				//		badSizes.add(dim);
+				//	}
+				//}
+			}
+		}
+		if (!noId.isEmpty()) {
+			//error  = new DetectedError("These declaration items are bad or no identifiers: %!", _instr);
+			addError(_errors, new DetectedError(errorMsg(Menu.error31_3, noId.concatenate("», «")), _instr), 31);
+		}
+		if (!redeclared.isEmpty()) {
+			//error  = new DetectedError("Attempt to re-declare existing variables %!", _instr);
+			addError(_errors, new DetectedError(errorMsg(Menu.error31_4, redeclared.concatenate("», «")), _instr), 31);
+		}
+		//if (!defective.isEmpty()) {
+		//	//error  = new DetectedError("Illegal or defective dimension specifications: %!", _instr);
+		//	addError(_errors, new DetectedError(errorMsg(Menu.error31_5, defective.concatenate("», «")), _instr), 31);
+		//}
+		//if (!badSizes.isEmpty()) {
+		//	//error  = new DetectedError("At least one invalid array dimension size (must be integer constant): %!", _instr);
+		//	addError(_errors, new DetectedError(errorMsg(Menu.error31_6, badSizes.concatenate("», «")), _instr), 31);
+		//}
+	}
+	// END KGU#1090 2023-10-17
 
 	
 	// START KGU#456 2017-11-06: Enh. #452

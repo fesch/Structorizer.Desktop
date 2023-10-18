@@ -5132,7 +5132,7 @@ public abstract class Element {
 				// add an alternative declaration to the type map entry
 				entry.addDeclaration(typeSpec, this, lineNo, isAssigned);
 			}
-		}				
+		}
 	}
 	
 	// START KGU#388 2017-09-13: Enh. #423

@@ -1560,10 +1560,19 @@ public class Instruction extends Element {
 						if (typeSpec1.isEmpty()) {
 							typeSpec1 = "???";
 						}
-						String declZone = declZones.get(i);
+						StringList declZone = Element.splitLexically(declZones.get(i), true);
 						// Maybe it's a multidimensional array, then reformulate it as "array of [array of ...]"
-						if ((pos = declZone.indexOf("[")) == 1) {
-							typeSpec1 = "array " + declZone.substring(1, declZone.lastIndexOf("]")+1) + " of " + typeSpec1;
+						// Don't mistake an index as a size, so better don't specify size
+						while ((pos = declZone.indexOf("[")) == 1) {
+							// There might be more than one index in the bracket
+							StringList indices = Element.splitExpressionList(declZone.subSequence(2, declZone.count()), ",", true);
+							if (indices.get(indices.count()-1).startsWith("]")) {
+								declZone.remove(0, declZone.indexOf("]"));
+							}
+							else {
+								declZone.clear();
+							}
+							typeSpec1 = "array of ".repeat(indices.count()-1) + typeSpec1;
 						}
 					}
 					if (declVar != null) {

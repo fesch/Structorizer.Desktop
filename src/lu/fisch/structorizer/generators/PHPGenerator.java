@@ -78,6 +78,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2022-08-23      Issue #1068: transformIndexLists() inserted in transformTokens()
  *      Kay Gürtzig             2023-10-04      Bugfix #1093 Undue final return 0 on function diagrams
  *      Kay Gürtzig             2023-10-13      Issue #980 Export of multi-variable declaration revised
+ *      Kay Gürtzig             2023-10-18      Bugfix #1099: Handling of constants was not correct.
  *
  ******************************************************************************************************
  *
@@ -154,6 +155,13 @@ public class PHPGenerator extends Generator
 	// (KGU 2015-11-02) We must know all variable names in order to prefix them with '$'.
 	//StringList varNames = new StringList();
 	// END KGU#61 2016-03-22
+	
+	// START KGU#1094 2023-10-18: Bugfix #1099 Constants must be handled differently
+	/**
+	 * Just a reference to the currently exported Root
+	 */
+	private Root root = null;
+	// END KGU#1094 2023-10-18
 
     /************ Fields ***********************/
     protected String getDialogTitle()
@@ -370,6 +378,17 @@ public class PHPGenerator extends Generator
 		for (int i = 0; i < varNames.count(); i++)
 		{
 			String varName = varNames.get(i);
+			// START KGU#1094 2023-10-18: Bugfix #1099 Don't prefix scalar constants
+			if (root.constants.containsKey(varName)) {
+				String constVal = root.getConstValueString(varName);
+				if (constVal != null) {
+					StringList valTokens = Element.splitLexically(constVal, true).trim();
+					if (valTokens.count() == 1) {
+						// Don't prefix a name that will be defined view const or define()
+						continue;
+					}}
+			}
+			// END KGU#1094 2023-10-18
 			//System.out.println("Looking for " + varName + "...");	// FIXME (KGU): Remove after Test!
 			//_input = _input.replaceAll("(.*?[^\\$])" + varName + "([\\W$].*?)", "$1" + "\\$" + varName + "$2");
 			tokens.replaceAll(varName, "$"+varName);
@@ -610,13 +629,12 @@ public class PHPGenerator extends Generator
 							//if (varName != null) {
 							//	type = this.typeMap.get(varName);
 							//}
-							Root thisRoot = Element.getRoot(_inst);
 							HashMap<String,TypeMapEntry> tempTypeMap = new LinkedHashMap<String,TypeMapEntry>();
 							// This revised method should reveal all declared variables
 							_inst.updateTypeMapFromLine(tempTypeMap, line, i);
 							for (Entry<String, TypeMapEntry> entry: tempTypeMap.entrySet()) {
 								varName = entry.getKey();
-								if (wasDefHandled(thisRoot, varName, true, false)) {
+								if (wasDefHandled(root, varName, true, false)) {
 									continue;
 								}
 								type = this.typeMap.get(varName);
@@ -673,6 +691,16 @@ public class PHPGenerator extends Generator
 						// END KGU#1089 203-10-13
 					}
 					// END KGU#839 2020-04-06
+					// START KGU#1094 2023-10-18: Bugfix #1099 Handle constant definitions
+					else if (transf.toLowerCase().startsWith("const ")) {
+						String transfTail = transf.substring("const ".length()).trim();
+						// If it is not a scalar value then the name won't have been prefixed
+						if (transfTail.startsWith("$")) {
+							// ... otherwise it cannot be defined as constant, so cut "const" off
+							transf = transfTail;
+						}
+					}
+					// END KGU#1094 2023-10-18
 					addCode(transf,	_indent, isDisabled);
 					// END KGU#281 2016-10-16
 				// START KGU#653 2019-02-14: Enh. #680 (part 2)
@@ -903,7 +931,14 @@ public class PHPGenerator extends Generator
 		{
 			// START KGU#319 2017-01-03: Bugfix #320 - Obsolete postfixing removed
 			//addCode(transform(_call.getText().get(i))+"();", _indent, isDisabled);
-			addCode(transform(lines.get(i))+";", _indent, isDisabled);
+			// START KGU#1094 2023-10-18: Bugfix #1099 a routine result may not be a constant
+			//addCode(transform(lines.get(i))+";", _indent, isDisabled);
+			String transf = transform(lines.get(i));
+			if (transf.toLowerCase().startsWith("const ")) {
+				transf = transf.substring("const ".length());
+			}
+			addCode(transf+";", _indent, isDisabled);
+			// END KGU#1094 2023-10-18
 			// END KGU#319 2017-01-03
 		}
 	}
@@ -1015,6 +1050,9 @@ public class PHPGenerator extends Generator
         // START KGU 2015-11-02: First of all, fetch all variable names from the entire diagram
         varNames = _root.retrieveVarNames();
         // END KGU 2015-11-02
+        // START KGU#1093 2023--10-18: Bugfix #1099: We need Root for const check in transform
+        root = _root;
+        // END KGU#1093 2023-10-18
         String procName = _root.getMethodName();
         // START KGU#74/KGU#78 2016-12-30: Issues #22/#23: Return mechanisms hadn't been fixed here until now
         boolean alwaysReturns = mapJumps(_root.children);
@@ -1215,9 +1253,23 @@ public class PHPGenerator extends Generator
 		if (topLevel) {
 			for (int i = 0; i < _varNames.count(); i++) {
 				String varName = _varNames.get(i);
-				if (_root.constants.containsKey(varName)) {
+				if (root.constants.containsKey(varName)) {
 					// This should also solve the enumerator type problem - does it?
-					code.add(_indent + "define('" + varName + "', " + this.transform(_root.getConstValueString(varName))+ ")");
+					//code.add(_indent + "define('" + varName + "', " + this.transform(_root.getConstValueString(varName))+ ")");
+					// START KGU#1094 2023-10-18: Bugfix #1099
+					String constVal = _root.getConstValueString(varName);
+					StringList valTokens = new StringList();
+					if (constVal != null) {
+						valTokens = Element.splitLexically(constVal, true);
+					}
+					// Only if the value is a simple literal, this may be used as constant
+					if (valTokens.count() == 1) {
+						code.add(_indent + "define('" + varName + "', " + this.transform(constVal)+ ")");
+					}
+					else {
+						code.add(_indent + this.transform(varName + " <- " + constVal));
+					}
+					// END KGU#1094 2023-10-18
 				}
 				// Simply declare it formally
 				this.wasDefHandled(_root, varName, true);

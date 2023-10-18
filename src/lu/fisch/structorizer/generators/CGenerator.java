@@ -120,6 +120,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2023-10-04      Bugfix #1093 Undue final return 0 on function diagrams
  *      Kay Gürtzig             2023-10-12      Issue #980: Cope with multi-variable declarations
  *      Kay Gürtzig             2023-10-15      Bugfix #1096 Handles complicated C-/Java-style declarations
+ *      Kay Gürtzig             2023-10-17      Bugfix #1099: Constants defined by an external routine call no longer moved
+ *                                              to top (to change execution order could severely compromise the algorithm!)
  *
  ******************************************************************************************************
  *
@@ -759,8 +761,9 @@ public class CGenerator extends Generator {
 	 */
 	@Override
 	protected String transformType(String _type, String _default) {
-		if (_type == null)
+		if (_type == null) {
 			_type = _default;
+		}
 		// START KGU 2017-04-12: We must not generally flatten the case (consider user types!)
 		//_type = _type.toLowerCase();
 		//_type = _type.replace("integer", "int");
@@ -2773,6 +2776,19 @@ public class CGenerator extends Generator {
 			return;	// If the value string starts with a colon then it originates in an enumeration type.
 		}
 		// END KGU#542 2019-11-17
+		// START KGU#1092 2023-10-17: Bugfix #1099 We shouldn't simply shift around an external call
+		if (!_fullDecl && constValue != null && Function.isFunction(constValue, true)) {
+			Function call = new Function(constValue);
+			if (this.routinePool != null) {
+				java.util.Vector<Root> callCandidates = routinePool.findRoutinesBySignature(
+						call.getName(), call.paramCount(), _root, false);
+				if (!callCandidates.isEmpty()) {
+					// Better leave it for now...
+					return;
+				}
+			}
+		}
+		// END KGU#1092 2023-10-17
 		String transfConst = transformType("const", "");
 		if (typeInfo != null) {
 			// START KGU#388 2017-09-30: Enh. #423
@@ -3082,7 +3098,11 @@ public class CGenerator extends Generator {
 	protected String makeArrayDeclaration(String _canonType, String _varName, TypeMapEntry _typeInfo)
 	{
 		int nLevels = _canonType.lastIndexOf('@')+1;
-		String _elementType = (_canonType.substring(nLevels) + " " + _varName).trim();
+		// START KGU#388 2023-10-17: Enh. #423 Care for recursivity
+		//String _elementType = (_canonType.substring(nLevels) + " " + _varName).trim();
+		String _elementType = _canonType.substring(nLevels);
+		String typeStr = (this.transformTypeWithLookup(_elementType, _elementType) + " " + _varName).trim();
+		// END KGU#388 2023-10-17
 		for (int i = 0; i < nLevels; i++) {
 			int maxIndex = _typeInfo.getMaxIndex(i);
 			// START KGU#854 2020-04-22: Enh. #855
@@ -3090,9 +3110,9 @@ public class CGenerator extends Generator {
 				maxIndex = this.optionDefaultArraySize() - 1;
 			}
 			// END KGU#854 2020-04-22
-			_elementType += "[" + (maxIndex >= 0 ? Integer.toString(maxIndex+1) : (i == 0 ? "" : "/*???*/") ) + "]";
+			typeStr += "[" + (maxIndex >= 0 ? Integer.toString(maxIndex+1) : (i == 0 ? "" : "/*???*/") ) + "]";
 		}
-		return _elementType;
+		return typeStr;
 	}
 	
 	protected void generateIOComment(Root _root, String _indent)

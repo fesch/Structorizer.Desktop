@@ -451,6 +451,7 @@ public class TypeMapEntry {
 		private void setElementTypeAndIndexRanges(Root constProvider)
 		{
 			String descr = this.typeDescriptor.replaceAll("\\]\\s*\\[", ",");
+			descr = descr.replace("???", "§§§");	// "???" would be broken
 			StringList tokens = Element.splitLexically(descr, true);
 			tokens.removeAll(" ");
 			this.indexRanges = new Vector<int[]>();
@@ -459,6 +460,8 @@ public class TypeMapEntry {
 				if (tokens.count() == 1) {
 					this.indexRanges.add(new int[]{0, -1});
 					// Nothing will follow, not even an element type name, so we are done
+					tokens.clear();
+					this.elementType = "???";
 					break;
 				}
 				if (posOf < 0) {
@@ -480,18 +483,21 @@ public class TypeMapEntry {
 				tokens.remove(0, posOf+1);
 			}
 			// We have to expect types like "unsigned int" or pointer types, e.g. "int*" or "ref int" (after import)?
-			if (!tokens.isEmpty() && Function.testIdentifier(tokens.get(0), false, null)) {
+			String token = "";
+			if (!tokens.isEmpty() && (Function.testIdentifier(token = tokens.get(0), false, null)
+					|| token.equals("§§§"))) {
 				StringList elTypeTokens = StringList.getNew(tokens.get(0));
-				// Fetch all successive words that might form the element type
+				// Fetch all successive words/parts that might form the element type
 				int pos = 1;
 				while (pos < tokens.count() &&
-						(Function.testIdentifier(tokens.get(pos), false, null)
+						(Function.testIdentifier(token = tokens.get(pos), false, null)
 								||
-								(pos > 0 && tokens.get(pos).equals("*"))
-								) ) {
+								token.equals("*")
+								)
+						) {
 					elTypeTokens.add(tokens.get(pos++));
 				}
-				this.elementType = elTypeTokens.concatenate(null);
+				this.elementType = elTypeTokens.concatenate(null).replace("§§§", "???");
 				tokens.remove(0, pos);
 				while (!tokens.isEmpty() && tokens.get(0).equals("[")) {
 					StringList dimRanges = Element.splitExpressionList(tokens.subSequence(1, tokens.count()), ",", true);
@@ -654,9 +660,9 @@ public class TypeMapEntry {
 	 * 
 	 * @param _canonicalizeTypeNames - if contained element types are to be
 	 *    canonicalized, too.
-	 * @param _asName - set this true if in case of a named type the name is to be
-	 *    returned (otherwise the structural description would be returned)
-	 * @return name or structural description
+	 * @param _asName - set this {@code true} if in case of a named type the name is
+	 *    to be returned (otherwise the structural description would be returned)
+	 * @return name or structural description or an empty string
 	 */
 	public String getCanonicalType(boolean _canonicalizeTypeNames, boolean _asName) {
 		String type = "";
@@ -669,6 +675,7 @@ public class TypeMapEntry {
 				type = types.get(0);
 			}
 			else if (_canonicalizeTypeNames && this.isArray(true)) {
+				// FIXME should we add as many '@' as there are levels at least?
 				type = "@???";
 			}
 		}
