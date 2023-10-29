@@ -52,7 +52,7 @@ package lu.fisch.structorizer.locales;
  *      Kay Gürtzig     2021-01-28  New static convenience method getValue(String, String, boolean)
  *      Kay Gürtzig     2021-02-11  Enh. #893 Now also registers and serves LangEventListeners
  *      Kay Gürtzig     2021-03-07  Bugfix in setLocale() w.r.t. hash tables (on occasion of KGU#961)
- *      Kay Gürtzig     2023-10-29  Issue #1101: Defective log message repaired.
+ *      Kay Gürtzig     2023-10-29  Issue #1102: Defective log message repaired.
  *
  ******************************************************************************************************
  *
@@ -740,7 +740,7 @@ public class Locales {
                             }
                         }
                         if (errorMessage != null) {
-                            // START KGU#1096 2023-10-29: Bugfix #1101 defective text template
+                            // START KGU#1096 2023-10-29: Bugfix #1102 defective text template
                             //logger.log(Level.WARNING, "LANG: Error accessing element <{0}.{1}>!\n{}",
                             logger.log(Level.WARNING, "LANG: Error accessing element «{0}.{1}»!\n{2}",
                             // END KGU#1096 2023-10-29

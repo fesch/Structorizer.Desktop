@@ -164,7 +164,7 @@ Current development version 3.32-13 (2023-10-29)
       C, C++, Java etc. the repositioning of constant calls was wrong <2>
 - 13: Many translations (webtran.de) added to Luxemburgish locale <2>
 - 13: Issue #1100: Precaution against insufficient Java RE on start <2>
-- 13: Issue #1101: Obsolete start hint translations removed from locales,
+- 13: Issue #1102: Obsolete start hint translations removed from locales,
       Defective log record configuration fixed <2>.
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
