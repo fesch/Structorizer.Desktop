@@ -52,6 +52,7 @@ package lu.fisch.structorizer.locales;
  *      Kay Gürtzig     2021-01-28  New static convenience method getValue(String, String, boolean)
  *      Kay Gürtzig     2021-02-11  Enh. #893 Now also registers and serves LangEventListeners
  *      Kay Gürtzig     2021-03-07  Bugfix in setLocale() w.r.t. hash tables (on occasion of KGU#961)
+ *      Kay Gürtzig     2023-10-29  Issue #1101: Defective log message repaired.
  *
  ******************************************************************************************************
  *
@@ -586,7 +587,7 @@ public class Locales {
                     errorMessage = e.getMessage();
                     // START KGU#484 2018-04-05: Issue #463
                     //e.printStackTrace();
-                    logger.log(Level.WARNING, "Field access to "+ fieldName + " failed.", e);
+                    logger.log(Level.WARNING, "Field access to «"+ fieldName + "» failed.", e);
                     // END KGU#484 2018-04-05
                 }
                 if (field == null) {
@@ -618,7 +619,7 @@ public class Locales {
                         errorMessage = e.getMessage();
                         // START KGU#484 2018-04-05: Issue #463
                         //e.printStackTrace();
-                        logger.log(Level.WARNING, "Field access to "+ component + " failed.", e);
+                        logger.log(Level.WARNING, "Field access to «"+ component + "» failed.", e);
                         // END KGU#484 2018-04-05
                     }
                 }
@@ -739,7 +740,10 @@ public class Locales {
                             }
                         }
                         if (errorMessage != null) {
-                            logger.log(Level.WARNING, "LANG: Error accessing element <{0}.{1}>!\n{}",
+                            // START KGU#1096 2023-10-29: Bugfix #1101 defective text template
+                            //logger.log(Level.WARNING, "LANG: Error accessing element <{0}.{1}>!\n{}",
+                            logger.log(Level.WARNING, "LANG: Error accessing element «{0}.{1}»!\n{2}",
+                            // END KGU#1096 2023-10-29
                                     new Object[]{pieces.get(0), pieces.get(1), errorMessage});
                         } else if (field != null) {
                             // END KGU#3 2015-11-03
@@ -800,7 +804,7 @@ public class Locales {
                                         else
                                         {
                                             logger.log(Level.WARNING,
-                                                    "LANG: Error while setting property <{0}> for element <{1}.{2}.{3}>!\n"
+                                                    "LANG: Error while setting property «{0}» for element «{1}.{2}.{3}»!\n"
                                                             + "Index out of range (0...{4})!",
                                                             new Object[]{pieces.get(3), pieces.get(0), pieces.get(1), piece2, length-1});
                                         }
@@ -827,13 +831,13 @@ public class Locales {
                                             // END KGU#961 2021-03-07
                                             if (target == null)
                                             {
-                                                logger.log(Level.WARNING, "LANG: No Element <{0}.{1}> found!",
+                                                logger.log(Level.WARNING, "LANG: No Element «{0}.{1}» found!",
                                                         new Object[]{pieces.get(0), piece1_2});
                                             }
                                         }
                                         catch (Exception e) {
                                             // FIXME: No idea why this always goes off just on startup
-                                            logger.log(Level.WARNING, "LANG: Trouble accessing <{0}.{1}>",
+                                            logger.log(Level.WARNING, "LANG: Trouble accessing «{0}.{1}»",
                                                     new Object[]{pieces.get(0), piece1_2});
                                         }
                                     }
@@ -911,11 +915,11 @@ public class Locales {
                                     logger.log(Level.WARNING, "", e);	// FIXME: really that important?
                                     // END KGU#484 2018-04-05
                                 }
-                                logger.log(Level.WARNING, "LANG: Error while setting property <{0}> for element <{1}>!\n",
+                                logger.log(Level.WARNING, "LANG: Error while setting property «{0}» for element «{1}»!\n",
                                         new Object[]{pieces.get(2), pieces.get(0), pieces.get(1), reason});
                             }
                         } else {
-                            logger.log(Level.WARNING, "LANG: Field not found <{0}.{1}>",
+                            logger.log(Level.WARNING, "LANG: Field not found «{0}.{1}»",
                                     new Object[]{pieces.get(0), pieces.get(1)});
                         }
                     }

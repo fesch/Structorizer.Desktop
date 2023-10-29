@@ -408,8 +408,6 @@ Menu.msgErrorSettingLaF.text=Problem beim Änneren vum Look and Feel op %1: %2
 Menu.msgRootCloned.text=Diagramm «%1» gouf gekloont.\n\nDir schafft elo mat enger onofhängeger Kopie:\n%2
 Menu.msgAnalyserHint_3_30_14.text=Nei Symboler an e puer Elementer weisen elo\ndatt et Analysatorwarnunge\nfir dës Elementer sinn.\n\nDir kënnt den Ecran ausschalten iwwer:\n%
 Menu.msgVersionHint_3_30_15.text=Dëse nei designt @c Element Editor ass fakultativ.\nEt kann d'Verbindung tëscht Falllëschten an hiren\nassoziéierte Zweigen erhalen wann se nei sortéiert.\n\nWann Dir den traditionellen Element Editor léiwer hutt,\nkënnt Dir\n"% 1"\nan % 2 ausschalten.
-Menu.msgJavaUpgradeHint_3_30_18.text=D'Structorizer Entwéckler plangen d'Java 8 Kompatibilitéit\nronderëm Mëtt 2021 opzeginn an d'Codebasis ze erneieren, wat op d'mannst\ne Java 11 VM erfuerdert.\nStructorizer leeft schonn op Java 11+, awer zukünfteg Versiounen\nwäerten net méi op legacy Java Ëmfeld <11 lafen.\nEt ass egal ob Oracle Java oder en OpenJDK benotzt gëtt.
-Menu.msgJavaUpgradeHint_3_30_18a.text=\nNotéiert datt d'Ënnerstëtzung fir Java WebStart offiziell mat Java opgehalen ass,\nawer et ginn gläichwäerteg Alternativen wéi Open Webstart (https://openwebstart.com),\nwann Dir wëllt mat der JNLP Verdeelung vum Structorizer bleiwen.
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Routine Signatur
 Menu.msgTabHdrAlias.text=Alias Numm
