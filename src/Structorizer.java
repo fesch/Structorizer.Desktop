@@ -358,10 +358,9 @@ public class Structorizer
 								"Java version error",
 								JOptionPane.ERROR_MESSAGE);
 					}
-					System.exit(1);;
+					System.exit(1);
 				}
 			}
-			
 		}
 		// END KGU#1095 2023-10-29
 		
@@ -1652,6 +1651,7 @@ public class Structorizer
 	/**
 	 * Performs a linewise filtered copy of {@code sourceStrm} to {@code targetFile}. Closes
 	 * {@code sourceStrm} afterwards.
+	 * 
 	 * @param sourceStrm - opened source {@link InputStream}
 	 * @param targetFile - {@link File} object for the copy target
 	 * @return a string describing occurred errors or an empty string.
@@ -1713,6 +1713,5 @@ public class Structorizer
 		return problems;
 	}
 // END KGU#595 2018-10-07
-
 
 }
