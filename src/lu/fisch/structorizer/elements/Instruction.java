@@ -1010,7 +1010,7 @@ public class Instruction extends Element {
 	 */
 	public static StringList getDeclaredVariables(StringList _tokens)
 	{
-		var declVars = new StringList();
+		StringList declVars = new StringList();
 		if (_tokens.indexOf("var", false) == 0 || _tokens.indexOf("dim", false) == 0) {
 			int posColon = _tokens.indexOf(":", 2);
 			if (posColon > 1 || (posColon = _tokens.indexOf("as", false)) > 1) {
