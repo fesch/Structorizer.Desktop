@@ -57,6 +57,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-02-08      Enh. #928: New CASE check 29 (unstructured discriminator expression)
  *      Kay Gürtzig     2021-10-05      Enh. #992: New tab with check 30 for parentheses, brackets, and braces.
  *      Kay Gürtzig     2021-11-14      Enh. #967: Mechanism for new plugin-specific analyser checks added
+ *      Kay Gürtzig     2023-10-13      Issue #980 New syntax check for variable declarations added
  *
  ******************************************************************************************************
  *
@@ -121,7 +122,8 @@ public class AnalyserPreferences extends LangDialog {
 		/*27*/"Check that CASE selector items are integer constants.",
 		/*28*/"Check that CASE selector lists are disjoint.",
 		/*29*/"Check that the CASE choice value is not of a structured type.",
-		/*30*/"Check that brackets are balanced and correctly nested."
+		/*30*/"Check that brackets are balanced and correctly nested.",
+		/*31*/"Check variable declaration and initialisation syntax."
 		// Just append the descriptions for new check types here and insert their
 		// numbers at the appropriate place in array checkboxOrder below.
 		// DON'T FORGET to add a new entry to Root.analyserChecks for every
@@ -147,6 +149,7 @@ public class AnalyserPreferences extends LangDialog {
 		// START KGU#992 2021-10-05: Enh. #992
 		checkboxTabs.put("General Syntax", new int[]{
 				30,
+				31,
 				// START KGU#1012 2021-11-14: Enh. #967: New plugin-specific syntax checks
 				0,// plugin-specific syntax checks
 				-2

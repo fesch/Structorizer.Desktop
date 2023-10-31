@@ -72,6 +72,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2019-11-25      Enh. #739: Protection against pending EnumeratorCellEditor on stop
  *      Kay Gürtzig     2020-04-28      Issue #822: New message for empty lines in CALL elements
  *      Kay Gürtzig     2021-01-04      Enh. #906: Allow to run through a routine Call with pause afterwards
+ *      Kay Gürtzig     2023-10-16      Issue #980: New error message for ambiguous initialisations
  *
  ******************************************************************************************************
  *
@@ -1181,6 +1182,9 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     // START KGU#809 2020-04-28: Issue #822
     public static final LangTextHolder msgIllegalEmptyLine = new LangTextHolder("Empty lines within a @j are illegal!");
     // END KGU#809 2020-04-28
+    // START KGU#1089 2023-10-16: Bugfix #980 Trouble with "initialized" multi-variable declaration
+	public static final LangTextHolder  msgInvalidInitialization = new LangTextHolder("Initialization target missing or ambiguous: «%»!");
+	// END KGU#1089 2023-10-16
 
     // START KGU#68 2015-11-06: Register variable value editing events
     private final ConcurrentMap<String, Object> varUpdates = new ConcurrentHashMap<String, Object>();

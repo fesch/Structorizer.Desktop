@@ -139,6 +139,9 @@
  *      Kay Gürtzig         2022-08-21  Enh. #1066: Caption and tooltip for InputBox.lblSuggest
  *      Kay Gürtzig         2022-09-29  Bugfix #1072: New message InputBoxFor.msgIllegalWordInField added
  *      Kay Gürtzig         2023-08-01  Enh. #1082: Function name incuded in messages Menu.error13_* *
+ *      Kay Gürtzig         2023-10-06  Issue #311: Menu reorganisation (menuDiagram split)
+ *      Kay Gürtzig         2023-10-13  Issues #980,#1096: New messages for declaration syntax check (error31_*)
+ *
  ******************************************************************************************************
  *
  *      Comment:	
@@ -278,19 +281,22 @@ Menu.menuDiagramTypeProgram.text=@n
 Menu.menuDiagramTypeFunction.text=@o
 Menu.menuDiagramTypeInclude.text=@p
 Menu.menuDiagramUnboxed.text=Ungerahmtes Diagramm?
-Menu.menuDiagramComment.text=Zeige Kommentare?
-Menu.menuDiagramSwitchComments.text=Tausche Text/Kommentare?
-Menu.menuDiagramCommentsPlusText.text=Kommentare plus Text?
-Menu.menuDiagramSwitchTCTooltip.text=Zum Aktivieren dieses Menüpunkts "%1" abwählen
-Menu.menuDiagramHideDeclarations.text=Bloße Deklarationen verbergen?
-Menu.menuDiagramMarker.text=Variable hervorheben?
-Menu.menuDiagramOperatorsC.text=Operatoranzeige wie in C?
-Menu.menuDiagramOperatorsC.tooltip=Zeigt Operatoren im Diagramm entsprechend der C-Syntax an (nur in Verbindung mit "Variable hervorheben?").
-Menu.menuDiagramDIN.text=DIN 66261?
-Menu.menuDiagramDIN.tooltip=Wechselt das Erscheinungsbild von @d-Schleifen zwischen DIN 66261 (Form wie @g-Schleife) und Nicht-Standard (Form wie @i-Schleife).
-Menu.menuDiagramAnalyser.text=Struktogramm überprüfen?
-Menu.menuDiagramIndex.text=Arranger-Index anzeigen?
-Menu.menuDiagramPreview.text=Code-Voransicht zeigen?
+// Menu "Ansicht"
+Menu.menuView.text=Ansicht
+Menu.menuView.mnemonic=a
+Menu.menuViewComment.text=Zeige Kommentare?
+Menu.menuViewSwitchComments.text=Tausche Text/Kommentare?
+Menu.menuViewCommentsPlusText.text=Kommentare plus Text?
+Menu.menuViewSwitchTCTooltip.text=Zum Aktivieren dieses Menüpunkts "%1" abwählen
+Menu.menuViewHideDeclarations.text=Bloße Deklarationen verbergen?
+Menu.menuViewMarker.text=Variable hervorheben?
+Menu.menuViewOperatorsC.text=Operatoranzeige wie in C?
+Menu.menuViewOperatorsC.tooltip=Zeigt Operatoren im Diagramm entsprechend der C-Syntax an (nur in Verbindung mit "Variable hervorheben?").
+Menu.menuViewDIN.text=DIN 66261?
+Menu.menuViewDIN.tooltip=Wechselt das Erscheinungsbild von @d-Schleifen zwischen DIN 66261 (Form wie @g-Schleife) und Nicht-Standard (Form wie @i-Schleife).
+Menu.menuViewAnalyser.text=Struktogramm überprüfen?
+Menu.menuViewIndex.text=Arranger-Index anzeigen?
+Menu.menuViewPreview.text=Code-Voransicht zeigen?
 
 // Menu "Preferences"
 Menu.menuPreferences.text=Einstellungen
@@ -339,9 +345,6 @@ Menu.menuPreferencesSaveLoad.text=Laden aus Datei ...
 Menu.menuPreferencesSaveLoad.tooltip=Das Laden von Einstellungen aus einer INI Datei erstellt automatisch ein Backup der vorherigen Einstellungen in einer temporären Datei.
 Menu.menuPreferencesSaveRestore.text=Letztes Backup wiederherstellen
 Menu.menuPreferencesSaveRestore.tooltip=Stellt die Einstellungen aus dem Backup wieder her, das beim letzten Laden einer INI-Datei in dieser Sitzung angelegt wurde.
-
-// Menu "View" (not in use right now!)
-Menu.menuView.text=
 
 // Menu "Debug"
 Menu.menuDebug.text=Debug
@@ -417,7 +420,7 @@ Menu.msgRefactorNow.text=Das Diagramm kann jetzt an die Parser-Einstellungen ang
 Menu.msgAdoptPreferences.text=Sie können die mit dem Diagramm geladenen Schlüsselwörter als neue Parser-Einstellungen übernehmen\n   (was allerdings das Anpassen aller anderen geladenen Diagramme bewirkt!)
 Menu.msgLeaveAsIs.text=Sie können das Diagramm unverändert lassen, wodurch jedoch das Debuggen behindert wird\n   und Exporte fehlerhaft werden können (Anpassen kann nachgeholt werden)
 Menu.msgAllowChanges.text=Sie können die Veränderung des Diagramms zulassen, wobei allerdings die Schlüsselwortinformationen unwiederbringlich verloren gehen
-Menu.lblRefactorNow.text=Diagram angleichen
+Menu.lblRefactorNow.text=Diagramm angleichen
 Menu.lblAdoptPreferences.text=Schlüsselwörter übernehmen
 Menu.lblLeaveAsIs.text=Diagramm so belassen
 Menu.lblAllowChanges.text=Diagrammänderung erlauben
@@ -484,15 +487,13 @@ Menu.msgErrorSettingLaF.text=Problem beim Wechsel von Aussehen & Bedienung zu %1
 Menu.msgRootCloned.text=Diagramm «%1» wurde geklont.\n\nSie arbeiten jetzt mit einer unabhängigen Kopie:\n%2
 Menu.msgAnalyserHint_3_30_14.text=Neue Symbole in manchen Elementen\nmachen jetzt darauf aufmerksam,\ndass Analyser-Warnungen\nfür diese Elemente vorliegen.\n\nSie können die Anzeige abschalten über:\n%
 Menu.msgVersionHint_3_30_15.text=Dieser neu entworfene Editor für @c-Elemente\nist optional.\nEr kann den Zusammenhang zwischen\nFall-Listen und den zugehörigen Zweigen\nbeim Umordnen bewahren.\n\nWenn Sie den traditionellen Elementeditor\nbevorzugen, dann können Sie das Häkchen bei\n"%1"\nin den %2 entfernen.
-Menu.msgJavaUpgradeHint_3_30_18.text=Die Structorizer-Entwickler haben vor, die Kombatibilität zu Java 8\ngegen Mitte 2021 aufzugeben und die Code-Basis zu erneuern, wodurch wenigstens\neine Java-11-VM vorausgesetzt wird.\nStructorizer läuft bereits jetzt auch auf Java 11+, aber zukünftige Versionen\nwerden nicht länger auf veralteten Java-Umgebungen < 11 ausführbar sein. Dabei\nspielt es keine Rolle, ob Oracle Java oder ein OpenJDK verwendet wird.
-Menu.msgJavaUpgradeHint_3_30_18a.text=\nBeachte, dass die Unterstützung von Java WebStart offiziell mit Java endete,\nes gibt aber äquivalente Alternativen wie Open Webstart (https://openwebstart.com),\nfalls du an der JNLP-Verteilung von Structorizer festhalten magst.
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Routinensignatur
 Menu.msgTabHdrAlias.text=Alias (Ersatzname)
 
 // Error messages for analyser
 Menu.warning_1.text=ACHTUNG: TEXTE UND KOMMENTARE IN DER ANZEIGE VERTAUSCHT! → Menüpunkt "%1 ► %2".
-Menu.warning_2.text=BEACHTE: «%4» ist aktiv. Zum Ausschalten → Menu "%1 ► %2 ► %3".
+Menu.warning_2.text=BEACHTE: «%4» ist aktiv. Zum Ausschalten → Menüpunkt "%1 ► %2 ► %3".
 Menu.error01_1.text=ACHTUNG: Keine Kontrollvariable gefunden ...
 Menu.error01_2.text=ACHTUNG: Mehrere Kontrollvariablen gefunden: «%»
 Menu.error01_3.text=Es ist nicht zulässig, die Kontrollvariable «%» im Körper der Schleife zu verändern!
@@ -537,7 +538,7 @@ Menu.error16_8.text=Möglicherweise ungeeigneter Parameter für «%»-Befehl (so
 Menu.error17.text=Konsistenzgefahr wegen konkurrierender Zugriffe auf Variable «%» aus mehreren Threads!
 Menu.error18.text=Variable «%1» könnte in manchen Sprachen mit Variable(n) «%2» zusammenfallen!
 Menu.error19_1.text=Der Variablenname «%1» kann in Sprachen wie %2 mit reservierten Wörtern kollidieren!
-Menu.error19_2.text=Der Variablenname «%» ist in Structrizer reserviert und dürfte Probleme beim Ausführen bewirken!
+Menu.error19_2.text=Der Variablenname «%» ist in Structorizer reserviert und dürfte Probleme beim Ausführen bewirken!
 Menu.error20_1.text=Ein Unterprogrammkopf muss mindestens die Klammern einer (evtl. leeren) Parameterliste haben.
 Menu.error20_2.text=Parameter mit Defaultwerten müssen zusammenhängend am Ende der Parameterliste stehen.
 Menu.error20_3.text=Ein Diagramm des Typs %1 sollte keine Parameterliste haben. Zu %2 ändern?
@@ -554,29 +555,37 @@ Menu.error23_7.text=Namenskonflikt zwischen lokaler and importierter Typedefinit
 Menu.error24_1.text=Form der Typdefinition in (zusammengesetzter) Zeile % nicht korrekt.
 Menu.error24_2.text=Typname «%» ist unzulässig oder kollidiert mit anderem Bezeichner.
 Menu.error24_3.text=Komponentenname «%» ist unzulässig oder doppelt.
-Menu.error24_4.text=Komponententyp «%» ist undefiniert oder unbekannt.
+Menu.error24_4.text=Zugrundeliegender Typ «%» ist undefiniert oder unbekannt.
 Menu.error24_5.text=Es gibt keinen definierten Verbund-Typ «%»!
 Menu.error24_6.text=Verbund-Komponente «%» wird nicht geändert bzw. initialisiert!
 Menu.error24_7.text=Verbundtyp «%1» besitzt keine Komponente «%2»!
 Menu.error24_8.text=Variable «%1» besitzt keine Komponente «%2»!
+Menu.error24_9.text=Unzulässiger oder defekter Deklarationszusatz (Array-Dimensionierung): «%»!
+Menu.error24_10.text=Wenigstens eine der Größen zur Array-Dimensionierung möglicherweise keine Ganzzahlkonstante > 0: «%»!
 Menu.hint07_1.text=Was soll Ihr Algorithmus tun? Ersetzen Sie «%» durch einen griffigen Namen dafür!
 Menu.hint25_1.text=Wählen Sie die Mitte des Diagramms aus und fügen Sie ein erstes Element ein, z.B. eine Eingabeanweisung wie «%1 %2»
 Menu.hint25_2.text=Sie könnten Daten eingeben lassen, z.B. mit einer Anweisung wie «%1 %2». → Menü "%3"
 Menu.hint25_3.text=Sie könnten Resultate ausgeben wollen, z.B. mit einer Anweisung wie «%1 %2». → Menü "%3"
-Menu.hint25_4.text=Wählen Sie die Mitte des Diagramms aus und fügen Sie ein erstes Element ein, z.B. eine Anweisung.
-Menu.hint25_5.text=Wählem Sie die Mitte des Diagramms aus fügen Sie z.B. ein Anweisungselement mit einer Typ- oder Konstantendefinition ein.
-Menu.hint25_6.text=Sie könnten eine Verarbeitungsanweisung wie «%» zwischen Eingabe und Ausgabe platzieren.
+Menu.hint25_4.text=Wählen Sie die Mitte des Diagramms aus und fügen Sie ein erstes Element ein, z.B. eine @a.
+Menu.hint25_5.text=Wählem Sie die Mitte des Diagramms aus fügen Sie z.B. ein @a-Element mit einer Typ- oder Konstantendefinition ein.
+Menu.hint25_6.text=Sie könnten eine Verarbeitungsanweisung wie «%1» zwischen Eingabe und Ausgabe platzieren. → Menü "%2"
 Menu.hint26.0.text=Wählen Sie die Mitte des Diagramms aus, dann doppelklicken, Enter oder F5 drücken und den Anweisungstext «% "Hallo Welt!"» eingeben.
-Menu.hint26.1.text=Jetzt können Sie z.B. Ihr Diagramm testen → Menu "%1 ► %2".
-Menu.hint26.2.text=Jetzt können Sie z.B. Ihr Diagramm speichern → Menu "%1 ► %2"
-Menu.hint26.3.text=Jetzt können Sie z.B. Ihr Diagramm in eine Programmiersprache exportieren → Menu "%1 ► %2 ► %3"
-Menu.hint26.4.text=Jetzt können Sie z.B. Ihr Diagramm als Grafikdatei exportieren → Menu "%1 ► %2 ► %3"
+Menu.hint26.1.text=Jetzt können Sie z.B. Ihr Diagramm testen → Menüpunkt "%1 ► %2".
+Menu.hint26.2.text=Jetzt können Sie z.B. Ihr Diagramm speichern → Menüpunkt "%1 ► %2"
+Menu.hint26.3.text=Jetzt können Sie z.B. Ihr Diagramm in eine Programmiersprache exportieren → Menü "%1 ► %2 ► %3"
+Menu.hint26.4.text=Jetzt können Sie z.B. Ihr Diagramm als Grafikdatei exportieren → Menü "%1 ► %2 ► %3"
 Menu.error27.text=Einige Auswahlwerte (z.B. «%») scheinen keine Ganzzahlkonstanten zu sein.
 Menu.error28.text=Einige Werte (%) kommen mehrfach in den Auswahllisten vor!
 Menu.error29.text=Der Auswahlwert «%» ist von strukturiertem Typ und somit ungeeignet für @c!
 Menu.error30_1.text=In Zeile %2 gibt es %1 öffnende Klammer(n) mehr als schließende, als nächstes '%3' erwartet!
 Menu.error30_2.text=In Zeile %2 gibt es mindestens eine schließende '%1' mehr als öffnende Klammern!
 Menu.error30_3.text=In Zeile %2 gibt es eine Klammer '%1', wo '%3' erwartet würde!
+Menu.error31_1.text=Eine mit «%1» anfangende Deklaration muss ein Symbol «%2» enthalten, gefolgt von einer Typspezifikation!
+Menu.error31_2.text=Unerwartete Zeichenfolge «%» in der Liste deklarierter Variablen!
+Menu.error31_3.text=Diese Deklarationsobjekte sind keine geeigneten Bezeichner: «%»!
+Menu.error31_4.text=Versuch, die bereits existierende(n) Variable(n) «%» erneut zu deklarieren!
+Menu.error31_5.text=Für eine Initialisierung muss die Deklaration genau EINE Variable enthalten, nicht % !
+Menu.error31_6.text=Eine anonyme Typkonstruction «%» ist an dieser Stelle unzulässig!
 Menu.errorLineReference.text= (Zeile %)
 
 -----[ AnalyserPreferences ]-----
@@ -615,6 +624,7 @@ AnalyserPreferences.checkboxes.27.text=Prüfen, dass Fallauswahl-Werte Ganzzahlk
 AnalyserPreferences.checkboxes.28.text=Prüfen, dass keine Fallauswahl-Überschneidungen vorkommen.
 AnalyserPreferences.checkboxes.29.text=Prüfen, dass der @c-Auswahlausdruck keinem strukturierten Typ angehört.
 AnalyserPreferences.checkboxes.30.text=Prüfen, dass Klammern ausgeglichen und richtig verschachtelt sind.
+AnalyserPreferences.checkboxes.31.text=Syntax von Variablendeklarationen mit und ohne Initialisierung prüfen.
 AnalyserPreferences.lblDrawWarningSign.text=Zeichne Warndreieck in betroffenen Elementen
 AnalyserPreferences.okButton.text=OK
 
@@ -798,7 +808,7 @@ InputBoxFor.lblStartVal.text=Anfangswert
 InputBoxFor.lblEndVal.text=Endwert
 InputBoxFor.lblIncr.text=Schrittweite
 InputBoxFor.lblTraversingVariable.text=Elementvariable
-InputBoxFor.lblValueList.text=Werteliste oder Array
+InputBoxFor.lblValueList.text=Werteliste, Array oder String
 InputBoxFor.chkTextInput.text=Als Textzeile editieren
 InputBoxFor.chkTextInput.tooltip=Falls gesetzt, werden die obigen Felder beim Eingeben aus dem Text extrahiert, sonst wird der Text aus obigen Feldern zusammengestellt.
 InputBoxFor.lblComment.text=Einzugebender Kommentar
@@ -816,8 +826,8 @@ InputBoxFor.msgInvalidIncrement.text=<%> ist keine gültige Ganzzahlkonstante
 InputBoxFor.msgMissingBrace1.text=Wertliste muss mit '{' beginnen
 InputBoxFor.msgMissingBrace2.text=Wertliste muss mit '}' enden
 InputBoxFor.msgSeparateWithComma.text=Zwischen '{' und '}' sind Werte mit Kommas zu trennen.
-InputBoxFor.msgEnsureReturnedArray.text=Sicher, dass die Funktion ein Array zurückgibt?
-InputBoxFor.msgEnsureVariableIsArray.text=Sicher, dass <%> ein Array bezeichnet?
+InputBoxFor.msgEnsureReturnedArray.text=Sicher, dass die Funktion ein Array oder String zurückgibt?
+InputBoxFor.msgEnsureVariableIsArray.text=Sicher, dass <%> ein Array oder String bezeichnet?
 InputBoxFor.msgEnterValueList.text=Bitte Wertliste für die Schleife eingeben.
 InputBoxFor.msgDiscardData.text=Den Schleifen-Stil zu ändern bedeutet, dass die meisten Schleifendaten verloren gehen!\nDaten wirklich opfern?
 InputBoxFor.msgAttention.text=ACHTUNG!
@@ -1396,14 +1406,14 @@ Arranger.msgDiagramsSelected.text=%1, ausgewählt: %2
 Arranger.msgBrowseFailed.text=Anzeige von "%" im Browser gescheitert.
 Arranger.msgShowingOfflineGuide.text=Das jüngst als PDF heruntergeladene Nutzerhandbuch wird ersatzweise angezeigt (PDF-Betrachter).\nBitte zum Abschnitt "Arranger" in Kapitel "Features" gehen.
 Arranger.msgTitleURLError.text=URL-Fehler
-Arranger.msgSelectionExpanded.text=% aufgerufene/einbezogene Diagrame zurAuswahl hinzugefügt.
+Arranger.msgSelectionExpanded.text=% aufgerufene/einbezogene Diagramme zur Auswahl hinzugefügt.
 Arranger.msgMissingDiagrams.text=\n\nVerweise auf %1 Diagramme nicht aufgelöst (Diagramme nicht gefunden):\n- %2
 Arranger.msgAmbiguousSignatures.text=\nEs gibt %1 mehrdeutige Signaturen in der Auswahl, zu denen also jeweils mehr als ein Diagramm passt:\n- %2
 Arranger.msgEmptySelection.text=Kann keine Diagramme %: nichts ausgewählt.
 Arranger.msgActionGroup.text=gruppieren
 Arranger.msgGroupName.text=%1Name der Gruppe, der die %2 ausgewählten Diagramme angehören sollen:
 Arranger.msgGroupNameRejected.text=Gruppenname "%" nicht akzeptiert.
-Arranger.msgGroupExists.text=Es gibt bereits eine Gruppen mit dem Namen "%". Was wollen Sie tun?
+Arranger.msgGroupExists.text=Es gibt bereits eine Gruppe mit dem Namen "%". Was wollen Sie tun?
 Arranger.msgGroupingOptions.0.text=Diagramme hinzufügen
 Arranger.msgGroupingOptions.1.text=Gruppe überschreiben
 Arranger.msgGroupingOptions.2.text=Gruppennamen neu eingeben
@@ -1580,6 +1590,7 @@ Control.msgSignatureConflicts.text=Es treten API-Konflikte zwischen den gewählt
 Control.msgGUISyncFault.text=Synchronisationsprobleme im Ausgabefenster bei Ausführung von «%».\nAbarbeitung versuchsweise fortsetzen?
 Control.msgErrorInSubroutine.text=Gefangener Fehler bei der Ausführung von «%1» in Tiefe %2:\n	%3
 Control.msgThrown.text=Ausnahme ausgelöst in «%1» in Tiefe %2: %3
+Control.msgInvalidInitialization.text=Zu initialisierende Variable ist nicht eindeutig: «%»!
 Control.tblVar.header.0=Variablenname
 Control.tblVar.header.2=Inhalt
 

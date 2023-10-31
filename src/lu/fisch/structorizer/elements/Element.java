@@ -304,7 +304,7 @@ public abstract class Element {
 	public static final long E_HELP_FILE_SIZE = 12300000;
 	public static final String E_DOWNLOAD_PAGE = "https://www.fisch.lu/Php/download.php";
 	// END KGU#791 2020-01-20
-	public static final String E_VERSION = "3.32-12";
+	public static final String E_VERSION = "3.32-13";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -3554,14 +3554,14 @@ public abstract class Element {
 	 * Tries to derive the data type of expression {@code expr} by means of analysing literal
 	 * syntax, built-in functions and the types associated to variables registered in
 	 * the {@code typeMap}.<br/>
-	 * The returned type description (if not empty) will be structurally canonicalized (i.e. array
-	 * levels will be symbolized by a sequence of "@" prefixes, the element type names may also be
-	 * heuristically canonicalized to assumed Java equivalents.
+	 * The returned type description (if not empty) will be structurally canonicalised (i.e. array
+	 * levels will be symbolised by a sequence of "@" prefixes, the element type names may also be
+	 * heuristically canonicalised to assumed Java equivalents.
 	 * Record (struct) initializers will be replaced by their respective type name (which must have
 	 * been declared before). 
 	 * @param typeMap - current mapping of variable names to statically concluded type information (may be null)
-	 * @param expr - the expression to be categorized
-	 * @param canonicalizeTypeNames - specifies whether contained type names are to be canonicalized
+	 * @param expr - the expression to be categorised
+	 * @param canonicalizeTypeNames - specifies whether contained type names are to be canonicalised
 	 * (i.e. replaced by guessed Java equivalents) 
 	 * @return a type description if available and unambiguous or an empty string otherwise
 	 */
@@ -5083,12 +5083,13 @@ public abstract class Element {
 	
 	/**
 	 * Adds own variable declarations (only this element, no substructure!) to the given
-	 * map (varname -> typeinfo).
-	 * @param typeMap
+	 * type map (varname -> typeinfo).
+	 * 
+	 * @param typeMap - the type map to be used an extended
 	 */
 	public void updateTypeMap(HashMap<String, TypeMapEntry> typeMap)
 	{
-		// Does nothing - to be sub-classed if necessary
+		// Does nothing - to be sub-classed where necessary
 	}
 	// END KGU#261 2017-01-19
 	
@@ -5131,7 +5132,7 @@ public abstract class Element {
 				// add an alternative declaration to the type map entry
 				entry.addDeclaration(typeSpec, this, lineNo, isAssigned);
 			}
-		}				
+		}
 	}
 	
 	// START KGU#388 2017-09-13: Enh. #423

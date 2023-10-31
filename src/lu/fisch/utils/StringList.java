@@ -689,10 +689,10 @@ public class StringList {
      * With {@code _matchCase = false} the search will be case-ignorant.
      *
      * @param _string - String to search for
-     * @param _from - index to start searching from
      * @param _matchCase - whether case is to play a role in comparison
      * @return the index of the first occurrence of {@code _string};
      *         {@code -1} if {@code _string} is not found.
+     * 
      * @see #indexOf(String)
      * @see #indexOf(String, int)
      * @see #indexOf(String, int, boolean)
@@ -753,6 +753,7 @@ public class StringList {
      * @return the index of the first occurrence of {@code _subList} from index
      *         {@code _from} on; {@code -1} if {@code _subList} is not found.
      * @throws IndexOutOfBoundsException if the specified index is negative
+     * 
      * @see #indexOf(String)
      * @see #indexOf(String, boolean)
      * @see #indexOf(String, int)

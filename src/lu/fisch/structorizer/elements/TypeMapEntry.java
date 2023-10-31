@@ -47,6 +47,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2022-08-22      Bugfix #1068: Type description inconsistency on declaration comparison
  *      Kay Gürtzig     2022-08-23      Enh. #1066: New method getStandardTypeNames()
  *      Kay Gürtzig     2023-09-28      Enh. #1091: Facilities for the definition of array types
+ *      Kay Gürtzig     2023-10-15      Bugfix #1096: Array type parsing completely rewritten
  *
  ******************************************************************************************************
  *
@@ -79,6 +80,7 @@ import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import lu.fisch.structorizer.executor.Function;
 import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
 
@@ -107,14 +109,16 @@ public class TypeMapEntry {
 	private static final StringList CANONICAL_NON_NUMERIC_TYPES = StringList.explode(
 			"string,char,boolean", ",");
 	// END KGU#1057 2022-08-23
-	private static final Pattern ARRAY_PATTERN1 = Pattern.compile("^[Aa][Rr][Rr][Aa][Yy]\\s*?[Oo][Ff](\\s.*)");
-	private static final Pattern ARRAY_PATTERN1o = Pattern.compile("^[Aa][Rr][Rr][Aa][Yy]\\s*?(\\d*)\\s*?[Oo][Ff](\\s.*)");	// Oberon style
-	private static final Pattern ARRAY_PATTERN2 = Pattern.compile("^[Aa][Rr][Rr][Aa][Yy]\\s*?\\[(.*)\\]\\s*?[Oo][Ff](\\s.*)");
-	private static final Pattern ARRAY_PATTERN3 = Pattern.compile("(.*?)\\[(.*?)\\](.*)");
-	private static final Pattern ARRAY_PATTERN4 = Pattern.compile("^[Aa][Rr][Rr][Aa][Yy](\\W.*?\\W|\\s*?)[Oo][Ff](\\s.*)");
-	private static final Pattern ARRAY_PATTERN5 = Pattern.compile("(.*?)\\[.*?\\]$");
-	//private static final Pattern RANGE_PATTERN = Pattern.compile("^([0-9]+)[.][.][.]?([0-9]+)$");
-	private static final Pattern RANGE_PATTERN = Pattern.compile("^([0-9]+)\\s*?[.][.][.]?\\s*?([0-9]+)$");
+	// START KGU#1090 2023-10-15: Bugfix #1096 No longer needed
+//	private static final Pattern ARRAY_PATTERN1 = Pattern.compile("^[Aa][Rr][Rr][Aa][Yy]\\s*?[Oo][Ff](\\s.*)");
+//	private static final Pattern ARRAY_PATTERN1o = Pattern.compile("^[Aa][Rr][Rr][Aa][Yy]\\s*?(\\d*)\\s*?[Oo][Ff](\\s.*)");	// Oberon style
+//	private static final Pattern ARRAY_PATTERN2 = Pattern.compile("^[Aa][Rr][Rr][Aa][Yy]\\s*?\\[(.*)\\]\\s*?[Oo][Ff](\\s.*)");
+//	private static final Pattern ARRAY_PATTERN3 = Pattern.compile("(.*?)\\[(.*?)\\](.*)");
+//	private static final Pattern ARRAY_PATTERN4 = Pattern.compile("^[Aa][Rr][Rr][Aa][Yy](\\W.*?\\W|\\s*?)[Oo][Ff](\\s.*)");
+//	private static final Pattern ARRAY_PATTERN5 = Pattern.compile("(.*?)\\[.*?\\]$");
+//	//private static final Pattern RANGE_PATTERN = Pattern.compile("^([0-9]+)[.][.][.]?([0-9]+)$");
+//	private static final Pattern RANGE_PATTERN = Pattern.compile("^([0-9]+)\\s*?[.][.][.]?\\s*?([0-9]+)$");
+	// END KGU#1090 2023-10-15
 	// START KGU#542 2019-11-17: Enh. #739
 	/** A type description matcher to accept an enumerator type specification */
 	public static final Matcher MATCHER_ENUM = Pattern.compile("^" + BString.breakup("enum", true) 
@@ -172,8 +176,17 @@ public class TypeMapEntry {
 			// FIXME: shouldn't we apply the ARRAY_PATTERNs here?
 			boolean isArray = (typeDescriptor.matches(".+\\[.*\\].*") || typeDescriptor.matches("(^|\\W.*)" + BString.breakup("array", true) + "($|\\W.*)"));
 			if (isArray) {
-				this.setElementType();
-				this.setIndexRanges();
+				// START KGU#1090 2023-10-15: Bugfix #1096 Need a more precise parsing
+				//this.setElementType();
+				//this.setIndexRanges();
+				// FIXME: This is an inappropriate workaround to replace constants
+				// (Actually, we would need an incremental constant table)
+				Root theRoot = null;
+				if (_element != null) {
+					theRoot = Element.getRoot(_element);
+				}
+				this.setElementTypeAndIndexRanges(theRoot);
+				// END KGU#1090 2023-10-15
 			}
 			// START KGU#542 2019-11-17
 			else if (MATCHER_ENUM.reset(typeDescriptor).matches()) {
@@ -337,105 +350,195 @@ public class TypeMapEntry {
 		}
 		// END KGU#380 2017-04-14
 		
-		private void setElementType()
+		// START KGU#1090 2023-10-15: Bugfix #1096 regular expressions are too weak for array type syntax
+//		private void setElementType()
+//		{
+//			// Possible cases we have to cope with might e.g. be:
+//			// array of unsigned int[12]
+//			// array[1..6] of ARRAY 9 OF BOOLEAN
+//			// double[5][8]
+//			// array [2..9, columns] of array of char
+//			// array
+//			String typeDescr = this.typeDescriptor;
+//			Matcher matcher;
+//			// START KGU#923 2021-02-04: Bugfix #923 matcher don't catch pure "array" string
+//			if (typeDescr.trim().equalsIgnoreCase("array")) {
+//				typeDescr = "";	// will result in "???"
+//			}
+//			// END KGU#923 2021-02-04
+//			while ((matcher = ARRAY_PATTERN4.matcher(typeDescr)).matches()) {
+//				typeDescr = matcher.replaceAll( "$2").trim();
+//			}
+//			while ((matcher = ARRAY_PATTERN5.matcher(typeDescr)).matches()) {
+//				typeDescr = matcher.replaceAll( "$1").trim();
+//			}
+//			if (typeDescr.isEmpty()) {
+//				typeDescr = "???";
+//			}
+//			this.elementType = typeDescr;
+//		}
+//
+//		private void setIndexRanges()
+//		{
+//			//final String arrayPattern1 = "^" + BString.breakup("array") + "\\s*?" +  BString.breakup("of") + "(\\s.*)";
+//			//final String arrayPattern1o = "^" + BString.breakup("array") + "\\s*?(\\d*)\\s*?" +  BString.breakup("of") + "(\\s.*)";	// Oberon style
+//			//final String arrayPattern2 = "^" + BString.breakup("array") + "\\s*?\\[(.*)\\]\\s*?" +  BString.breakup("of") + "(\\s.*)";
+//			//final String arrayPattern3 = "(.*?)\\[(.*?)\\](.*)";
+//			String typeDescr = this.typeDescriptor;
+//			this.indexRanges = new Vector<int[]>();
+//			Matcher matcher1, matcher1o = null, matcher2 = null;
+//			boolean matches1 = false, matches1o = false;
+//			while ((matches1 = (matcher1 = ARRAY_PATTERN1.matcher(typeDescr)).matches())
+//					|| (matches1o = (matcher1o = ARRAY_PATTERN1o.matcher(typeDescr)).matches())
+//					|| (matcher2 = ARRAY_PATTERN2.matcher(typeDescr)).matches()) {
+//				if (matches1) {
+//					typeDescr = matcher1.replaceFirst("$1").trim();
+//					this.indexRanges.add(new int[]{0, -1});
+//				}
+//				else if (matches1o) {
+//					String dimensions = matcher1o.replaceFirst("$1").trim();
+//					typeDescr = matcher1o.replaceFirst("$2").trim();
+//					StringList counts = StringList.explode(dimensions, ",");
+//					for (int i = 0; i < counts.count(); i++) {
+//						try {
+//							int count = Integer.parseInt(counts.get(i));
+//							this.indexRanges.add(new int[]{0, count-1});
+//						}
+//						catch (NumberFormatException ex) {
+//							this.indexRanges.add(new int[]{0, -1});
+//						}
+//					}
+//				}
+//				else {
+//					String dimens = matcher2.replaceFirst("$1").trim();
+//					typeDescr = matcher2.replaceFirst("$2").trim();
+//					StringList ranges = StringList.explode(dimens, "\\]\\s*\\[");
+//					addIndexRanges(StringList.explode(ranges, ","));
+//				}
+//				matches1 = matches1o = false;
+//			};
+//			Matcher matcher3 = ARRAY_PATTERN3.matcher(typeDescr);
+//			while (typeDescr.endsWith("]") && matcher3.matches()) {
+//				String dimens = matcher3.replaceFirst("$2").trim();
+//				typeDescr = matcher3.replaceFirst("$1$3").trim();
+//				addIndexRanges(StringList.explode(dimens, ","));
+//				matcher3.reset(typeDescr);
+//			}
+//		}
+//		private void addIndexRanges(StringList ranges)
+//		{
+//			Matcher matcher = RANGE_PATTERN.matcher("");
+//
+//			for (int i = 0; i < ranges.count(); i++) {
+//				int[] indexRange = new int[]{0, -1};
+//				String range = ranges.get(i).trim();
+//				matcher.reset(range);
+//				if (matcher.matches()) {
+//					indexRange[0] = Integer.parseInt(matcher.replaceAll("$1"));
+//					indexRange[1] = Integer.parseInt(matcher.replaceAll("$2"));
+//				}
+//				else {
+//					try {
+//						indexRange[1] = Integer.parseInt(range) - 1;
+//					}
+//					catch (NumberFormatException ex) {}
+//				}
+//				this.indexRanges.add(indexRange);
+//			}
+//			
+//		}
+		
+		private void setElementTypeAndIndexRanges(Root constProvider)
 		{
-			// Possible cases we have to cope with might e.g. be:
-			// array of unsigned int[12]
-			// array[1..6] of ARRAY 9 OF BOOLEAN
-			// double[5][8]
-			// array [2..9, columns] of array of char
-			// array
-			String typeDescr = this.typeDescriptor;
-			Matcher matcher;
-			// START KGU#923 2021-02-04: Bugfix #923 matcher don't catch pure "array" string
-			if (typeDescr.trim().equalsIgnoreCase("array")) {
-				typeDescr = "";	// will result in "???"
-			}
-			// END KGU#923 2021-02-04
-			while ((matcher = ARRAY_PATTERN4.matcher(typeDescr)).matches()) {
-				typeDescr = matcher.replaceAll( "$2").trim();
-			}
-			while ((matcher = ARRAY_PATTERN5.matcher(typeDescr)).matches()) {
-				typeDescr = matcher.replaceAll( "$1").trim();
-			}
-			if (typeDescr.isEmpty()) {
-				typeDescr = "???";
-			}
-			this.elementType = typeDescr;
-		}
-
-		private void setIndexRanges()
-		{
-			//final String arrayPattern1 = "^" + BString.breakup("array") + "\\s*?" +  BString.breakup("of") + "(\\s.*)";
-			//final String arrayPattern1o = "^" + BString.breakup("array") + "\\s*?(\\d*)\\s*?" +  BString.breakup("of") + "(\\s.*)";	// Oberon style
-			//final String arrayPattern2 = "^" + BString.breakup("array") + "\\s*?\\[(.*)\\]\\s*?" +  BString.breakup("of") + "(\\s.*)";
-			//final String arrayPattern3 = "(.*?)\\[(.*?)\\](.*)";
-			String typeDescr = this.typeDescriptor;
+			String descr = this.typeDescriptor.replaceAll("\\]\\s*\\[", ",");
+			descr = descr.replace("???", "§§§");	// "???" would be broken
+			StringList tokens = Element.splitLexically(descr, true);
+			tokens.removeAll(" ");
 			this.indexRanges = new Vector<int[]>();
-			Matcher matcher1, matcher1o = null, matcher2 = null;
-			boolean matches1 = false, matches1o = false;
-			while ((matches1 = (matcher1 = ARRAY_PATTERN1.matcher(typeDescr)).matches())
-					|| (matches1o = (matcher1o = ARRAY_PATTERN1o.matcher(typeDescr)).matches())
-					|| (matcher2 = ARRAY_PATTERN2.matcher(typeDescr)).matches()) {
-				if (matches1) {
-					typeDescr = matcher1.replaceFirst("$1").trim();
+			while (!tokens.isEmpty() && tokens.get(0).equalsIgnoreCase("array")) {
+				int posOf = tokens.indexOf("of", false);
+				if (tokens.count() == 1) {
+					this.indexRanges.add(new int[]{0, -1});
+					// Nothing will follow, not even an element type name, so we are done
+					tokens.clear();
+					this.elementType = "???";
+					break;
+				}
+				if (posOf < 0) {
+					posOf = tokens.count();
+				}
+				boolean hasBrackets = tokens.get(1).equals("[");
+				if (hasBrackets) {
+					tokens.remove(0);
+					posOf--;
+				}
+				else if (posOf == 1) {
 					this.indexRanges.add(new int[]{0, -1});
 				}
-				else if (matches1o) {
-					String dimensions = matcher1o.replaceFirst("$1").trim();
-					typeDescr = matcher1o.replaceFirst("$2").trim();
-					StringList counts = StringList.explode(dimensions, ",");
-					for (int i = 0; i < counts.count(); i++) {
-						try {
-							int count = Integer.parseInt(counts.get(i));
-							this.indexRanges.add(new int[]{0, count-1});
-						}
-						catch (NumberFormatException ex) {
-							this.indexRanges.add(new int[]{0, -1});							
-						}
+				// We ignore potential syntactic errors at the end...
+				StringList dimRanges = Element.splitExpressionList(tokens.subSequence(1, posOf), ",", false);
+				for (int i = 0; i < dimRanges.count(); i++) {
+					addIndexRange(dimRanges.get(i), constProvider);
+				}
+				tokens.remove(0, posOf+1);
+			}
+			// We have to expect types like "unsigned int" or pointer types, e.g. "int*" or "ref int" (after import)?
+			String token = "";
+			if (!tokens.isEmpty() && (Function.testIdentifier(token = tokens.get(0), false, null)
+					|| token.equals("§§§"))) {
+				StringList elTypeTokens = StringList.getNew(tokens.get(0));
+				// Fetch all successive words/parts that might form the element type
+				int pos = 1;
+				while (pos < tokens.count() &&
+						(Function.testIdentifier(token = tokens.get(pos), false, null)
+								||
+								token.equals("*")
+								)
+						) {
+					elTypeTokens.add(tokens.get(pos++));
+				}
+				this.elementType = elTypeTokens.concatenate(null).replace("§§§", "???");
+				tokens.remove(0, pos);
+				while (!tokens.isEmpty() && tokens.get(0).equals("[")) {
+					StringList dimRanges = Element.splitExpressionList(tokens.subSequence(1, tokens.count()), ",", true);
+					for (int i = 0; i < dimRanges.count()-1; i++) {
+						addIndexRange(dimRanges.get(i), constProvider);
+					}
+					tokens = Element.splitLexically(dimRanges.get(dimRanges.count()-1), true);
+					if (!tokens.isEmpty() && tokens.get(0).equals("]")) {
+						// drop ], another bracket may follow, otherwise we will stop then
+						tokens.remove(0);
+					}
+					else {
+						// Discard all other stuff
+						tokens.clear();
 					}
 				}
-				else {
-					String dimens = matcher2.replaceFirst("$1").trim();
-					typeDescr = matcher2.replaceFirst("$2").trim();
-					StringList ranges = StringList.explode(dimens, "\\]\\s*\\[");
-					addIndexRanges(StringList.explode(ranges, ","));
-				}
-				matches1 = matches1o = false;
-			};
-			Matcher matcher3 = ARRAY_PATTERN3.matcher(typeDescr);
-			while (typeDescr.endsWith("]") && matcher3.matches()) {
-				String dimens = matcher3.replaceFirst("$2").trim();
-				typeDescr = matcher3.replaceFirst("$1$3").trim();
-				addIndexRanges(StringList.explode(dimens, ","));
-				matcher3.reset(typeDescr);
 			}
-			
 		}
-		
-		private void addIndexRanges(StringList ranges)
-		{
-			Matcher matcher = RANGE_PATTERN.matcher("");
+		private void addIndexRange(String rangeOrSize, Root constProvider) {
+			String[] terms = rangeOrSize.split("[.][.][.]?", 2);
+			int[] indexRange = new int[]{0, -1};
+			for (int i = 0; i < terms.length; i++) {
+				try {
+					String index = terms[i];
+					if (constProvider != null) {
+						String valStr = constProvider.getConstValueString(index);
+						if (valStr != null) {
+							index = valStr;
+						}
+					}
+					indexRange[indexRange.length - terms.length + i] = Integer.parseInt(index);
+					if (terms.length == 1) {
+						indexRange[1]--;
+					}
+				}
+				catch (NumberFormatException ex) {}
+			}
+			this.indexRanges.add(indexRange);
+		}
+		// END KGU#1090 2023-10-15
 
-			for (int i = 0; i < ranges.count(); i++) {
-				int[] indexRange = new int[]{0, -1};
-				String range = ranges.get(i).trim();
-				matcher.reset(range);
-				if (matcher.matches()) {
-					indexRange[0] = Integer.parseInt(matcher.replaceAll("$1"));
-					indexRange[1] = Integer.parseInt(matcher.replaceAll("$2"));
-				}
-				else {
-					try {
-						indexRange[1] = Integer.parseInt(range) - 1;
-					}
-					catch (NumberFormatException ex) {}
-				}
-				this.indexRanges.add(indexRange);
-			}
-			
-		}
-			
 	}
 	// START KGU#388 2017-07-04: Enh. #423 New structure for record types  
 	public String typeName = null;			// to distinguish and identify named types
@@ -456,9 +559,9 @@ public class TypeMapEntry {
 	/**
 	 * Analyses the given declaration information and creates a corresponding
 	 * entry (with a single declaration object).<br/>
-	 * NOTE: For record types use
-	 * {@link TypeMapEntry#TypeMapEntry(String, String, HashMap, LinkedHashMap, Element, int)}
-	 * instead.
+	 * NOTE: For record types use {@link TypeMapEntry#TypeMapEntry(String, String,
+	 * HashMap, LinkedHashMap, Element, int)} instead.
+	 * 
 	 * @param _descriptor - the found type-describing or -specifying string
 	 * @param _typeName - the type name if this is a type definition, {@code null} otherwise
 	 *         (enh. #423, 2017-07-12)
@@ -469,6 +572,7 @@ public class TypeMapEntry {
 	 * @param _initialized - whether the variable is initialized or assigned here
 	 * @param _explicit - whether this is an explicit variable declaration (or just
 	 *         derived from some value)
+	 * 
 	 * @see #addDeclaration(String _descriptor, Element _element, int _lineNo, boolean _initialized)
 	 * @see TypeMapEntry#TypeMapEntry(String, String, HashMap, LinkedHashMap, Element, int) 
 	 */
@@ -495,14 +599,16 @@ public class TypeMapEntry {
 	// START KGU#388 2017-07-12: Enh. #423
 	/**
 	 * Creates a record type entry as explicitly declared (with a single declaration record).<br/>
-	 * For non-record types use {@link TypeMapEntry#TypeMapEntry(String, String, HashMap, Element, int, boolean, boolean)}
-	 * instead.
+	 * For non-record types use {@link TypeMapEntry#TypeMapEntry(String, String, HashMap, Element,
+	 * int, boolean, boolean)} instead.
+	 * 
 	 * @param _descriptor - the found type-describing or -specifying string
 	 * @param _typeName - the type name if this is a type definition (mandatory!)
 	 * @param _owningMap - the type map this entry is going to be put to
 	 * @param _components - the component type map - FIXME - may we replace this by a simple type name list now?
 	 * @param _element - the originating Structorizer element
 	 * @param _lineNo - the line number within the element text
+	 * 
 	 * @see TypeMapEntry#TypeMapEntry(String, String, HashMap, Element, int, boolean, boolean)
 	 * @see #addDeclaration(String _descriptor, Element _element, int _lineNo, boolean _initialized) 
 	 */
@@ -554,9 +660,9 @@ public class TypeMapEntry {
 	 * 
 	 * @param _canonicalizeTypeNames - if contained element types are to be
 	 *    canonicalized, too.
-	 * @param _asName - set this true if in case of a named type the name is to be
-	 *    returned (otherwise the structural description would be returned)
-	 * @return name or structural description
+	 * @param _asName - set this {@code true} if in case of a named type the name is
+	 *    to be returned (otherwise the structural description would be returned)
+	 * @return name or structural description or an empty string
 	 */
 	public String getCanonicalType(boolean _canonicalizeTypeNames, boolean _asName) {
 		String type = "";
@@ -569,6 +675,7 @@ public class TypeMapEntry {
 				type = types.get(0);
 			}
 			else if (_canonicalizeTypeNames && this.isArray(true)) {
+				// FIXME should we add as many '@' as there are levels at least?
 				type = "@???";
 			}
 		}

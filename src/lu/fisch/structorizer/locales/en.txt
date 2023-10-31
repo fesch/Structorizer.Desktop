@@ -133,7 +133,9 @@
  *      Kay Gürtzig     2021-10-31      Enh. #967, #1007 Texts for ARM-specific export options added
  *      Kay Gürtzig     2022-08-21      Enh. #1066: Caption and tooltip for InputBox.lblSuggest
  *      Kay Gürtzig     2022-09-29      Bugfix #1072: New message InputBoxFor.msgIllegalWordInField added
- *      Kay Gürtzig     2023-08-01      Enh. #1082: Function name incuded in messages Menu.error13_*
+ *      Kay Gürtzig     2023-08-01      Enh. #1082: Function name now included in messages Menu.error13_*
+ *      Kay Gürtzig     2023-10-06      Issue #311: Menu reorganisation (menuDiagram split)
+ *      Kay Gürtzig     2023-10-16      Issue #980/#1096: New messages for declaration syntax check (error31_*) 
  *
  ******************************************************************************************************
  *
@@ -276,19 +278,22 @@ Menu.menuDiagramTypeProgram.text=@n
 Menu.menuDiagramTypeFunction.text=@o
 Menu.menuDiagramTypeInclude.text=@p
 Menu.menuDiagramUnboxed.text=Unframed diagram?
-Menu.menuDiagramComment.text=Show comments?
-Menu.menuDiagramSwitchComments.text=Switch text/comments?
-Menu.menuDiagramCommentsPlusText.text=Comments plus texts?
-Menu.menuDiagramSwitchTCTooltip.text=Unselect "%1" to enable this item
-Menu.menuDiagramHideDeclarations.text=Hide mere declarations?
-Menu.menuDiagramMarker.text=Highlight variables?
-Menu.menuDiagramOperatorsC.text=Show operators in C style?
-Menu.menuDiagramOperatorsC.tooltip=Displays operator symbols according to C syntax in the diagrams (requires mode "Highlight variable?").
-Menu.menuDiagramDIN.text=DIN 66261?
-Menu.menuDiagramDIN.tooltip=Switches the appearance of @d loops between DIN 66261 (shape like @g loop) and non-standard (shape like @i loop).
-Menu.menuDiagramAnalyser.text=Analyse structogram?
-Menu.menuDiagramIndex.text=Show Arranger index?
-Menu.menuDiagramPreview.text=Show Code preview?
+// Menu "View"
+Menu.menuView.text=View
+Menu.menuView.mnemonic=v
+Menu.menuViewComment.text=Show comments?
+Menu.menuViewSwitchComments.text=Switch text/comments?
+Menu.menuViewCommentsPlusText.text=Comments plus texts?
+Menu.menuViewSwitchTCTooltip.text=Unselect "%1" to enable this item
+Menu.menuViewHideDeclarations.text=Hide mere declarations?
+Menu.menuViewMarker.text=Highlight variables?
+Menu.menuViewOperatorsC.text=Show operators in C style?
+Menu.menuViewOperatorsC.tooltip=Displays operator symbols according to C syntax in the diagrams (requires mode "Highlight variable?").
+Menu.menuViewDIN.text=DIN 66261?
+Menu.menuViewDIN.tooltip=Switches the appearance of @d loops between DIN 66261 (shape like @g loop) and non-standard (shape like @i loop).
+Menu.menuViewAnalyser.text=Analyse structogram?
+Menu.menuViewIndex.text=Show Arranger index?
+Menu.menuViewPreview.text=Show Code preview?
 
 // Menu "Preferences"
 Menu.menuPreferences.text=Preferences
@@ -337,9 +342,6 @@ Menu.menuPreferencesSaveLoad.text=Load from file ...
 Menu.menuPreferencesSaveLoad.tooltip=Loading preferences from some INI file automatically backups the entire set of previous preferences in a temporary file.
 Menu.menuPreferencesSaveRestore.text=Restore last backup
 Menu.menuPreferencesSaveRestore.tooltip=Reloads the preferences backed up when you last loaded preferences from some INI file during the session.
-
-// Menu "View" (not in use right now!)
-Menu.menuView.text=
 
 // Menu "Debug"
 Menu.menuDebug.text=Debug
@@ -482,8 +484,6 @@ Menu.msgErrorSettingLaF.text=Problem on changing Look & Feel to %1: %2
 Menu.msgRootCloned.text=Diagram «%1» was cloned.\n\nYou are working with an independent copy now:\n%2
 Menu.msgAnalyserHint_3_30_14.text=New indicator symbols\nwill remind you\nthat there are Analyser\nwarnings for the marked elements.\n\nYou may switch them off via:\n%
 Menu.msgVersionHint_3_30_15.text=This new-designed editor for @c elements\nis optional.\nIt promises to maintain the bond between cases\nand their branches on permutating them.\n\nIf you prefer the traditional element editor,\nhowever, then you may unselect the checkbox\n"%1"\nin the %2.
-Menu.msgJavaUpgradeHint_3_30_18.text=The Structorizer developers plan to give up Java version 8 compatibility\nby mid 2021 and to upgrade the code base such that it will require a Java 11 VM\nat least.\nYou can run Structorizer already now with Java VMs 11+, but future versions\nwill no longer be usable on obsolete Java versions < 11. It does not matter\nwhether Oracle Java or an OpenJDK is used.
-Menu.msgJavaUpgradeHint_3_30_18a.text=\nBe aware that Java WebStart support officially ended with Java 8,\nbut there are alternatives like Open Webstart (https://openwebstart.com)\nif you want to adhere to the Structorizer JNLP delivery.
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Routine Signature
 Menu.msgTabHdrAlias.text=Alias Name
@@ -504,15 +504,15 @@ Menu.error07_1.text=«%» is not a valid name for a program or method!
 Menu.error07_2.text=«%» is not a valid name for a parameter!
 Menu.error07_3.text=«%» is not a valid name for a variable or constant!
 Menu.error07_4.text=Diagram names should not contain blanks, better put underscores between the words: «%».
-Menu.error07_5.text=Identifier «%» contains non-ascii letters; this should better be avoided.
+Menu.error07_5.text=Identifier «%» contains non-Ascii letters; this should better be avoided.
 Menu.error08.text=It is not allowed to make an assignment inside a condition.
 Menu.error09.text=Your program («%») may not share its name with a variable or parameter!
-Menu.error10_1.text=A single instruction element should not contain input/output instructions and assignments!
-Menu.error10_2.text=A single instruction element should not contain input and output instructions!
-Menu.error10_3.text=A single instruction element should not contain input instructions and assignments!
-Menu.error10_4.text=A single instruction element should not contain output instructions and assignments!
-Menu.error10_5.text=A single instruction element should not mix constant definitions with other instructions!
-Menu.error10_6.text=A single instruction element should not mix type definitions with other instructions!
+Menu.error10_1.text=A single @a element should not contain input/output instructions and assignments!
+Menu.error10_2.text=A single @a element should not contain input and output instructions!
+Menu.error10_3.text=A single @a element should not contain input instructions and assignments!
+Menu.error10_4.text=A single @a element should not contain output instructions and assignments!
+Menu.error10_5.text=A single @a element should not mix constant definitions with other instructions!
+Menu.error10_6.text=A single @a element should not mix type definitions with other instructions!
 Menu.error11.text=You probably made an assignment error. Please check this instruction!
 Menu.error12.text=The parameter «%» must start with the letter "p" followed by only uppercase letters!
 Menu.error13_1.text=Your function «%» does not return any result!
@@ -520,7 +520,7 @@ Menu.error13_2.text=Your function «%» may not return a result!
 Menu.error13_3.text=Your function seems to use several competitive return mechanisms: «%»!
 Menu.error14_1.text=The @d loop parameters are not consistent to the loop heading text!
 Menu.error14_2.text=The @e loop step value («%») is not a legal integer constant!
-Menu.error14_3.text=Variable name «%» may collide with one of the configured FOR loop heading keywords!
+Menu.error14_3.text=Variable name «%» may collide with one of the configured @d loop heading keywords!
 Menu.error15_1.text=The @j hasn't got form «[ <var> <- ] <routine_name>(<arg_list>)»!
 Menu.error15_2.text=The called @o diagram «%» is currently not available.
 Menu.error15_3.text=There are several @o diagrams matching signature «%».
@@ -552,17 +552,19 @@ Menu.error23_7.text=There is a name conflict between local and imported type def
 Menu.error24_1.text=Type definition in (composed) line % is malformed.
 Menu.error24_2.text=Type name «%» is illegal or colliding with another identifier.
 Menu.error24_3.text=Component name «%» is illegal or duplicate.
-Menu.error24_4.text=Component type «%» is undefined or unknown.
+Menu.error24_4.text=Underlying type «%» is undefined or unknown.
 Menu.error24_5.text=There is no defined record type «%»!
 Menu.error24_6.text=Record component «%» will not be modified/initialized!
 Menu.error24_7.text=Record type «%1» hasn't got a component «%2»!
 Menu.error24_8.text=Variable «%1» hasn't got a component «%2»!
+Menu.error24_9.text=Illegal or defective declaration appendices (array specification): «%»!
+Menu.error24_10.text=At least one array dimension size possibly no integer constant > 0: «%»!
 Menu.hint07_1.text=What is your algorithm to do? Replace «%» with a good name for it!
 Menu.hint25_1.text=Select the diagram centre and place a first element, e.g. an input instruction like «%1 %2».
 Menu.hint25_2.text=You might want to input data, e.g. with an instruction like «%1 %2». → Menu "%3"
 Menu.hint25_3.text=You might want to print results, e.g. with an instruction like «%1 %2». → Menu "%3"
-Menu.hint25_4.text=Select the diagram centre and place a first element, e.g. an Instruction.
-Menu.hint25_5.text=Select the diagram centre and place e.g. an Instruction element with a type or constant definition.
+Menu.hint25_4.text=Select the diagram centre and place a first element, e.g. an @a.
+Menu.hint25_5.text=Select the diagram centre and place e.g. an @a element with a type or constant definition.
 Menu.hint25_6.text=You might want to place some processing instruction like «%1» between input and output. → Menu "%2"
 Menu.hint26.0.text=Select the diagram centre, double-click, press Enter or F5, and put in the instruction text «% "Hello world!"».
 Menu.hint26.1.text=Now you may e.g. test your diagram: → Menu "%1 ► %2"
@@ -575,6 +577,12 @@ Menu.error29.text=The choice value «%» is of a structured type and hence unsui
 Menu.error30_1.text=There are %1 more opening than closing brackets in line %2, '%3' was expected next!
 Menu.error30_2.text=There is at least one more closing '%1' than opening brackets in line %2!
 Menu.error30_3.text=There is a closing '%1' where '%3' is expected in line %2!
+Menu.error31_1.text=A declaration starting with «%1» must contain a symbol «%2», followed be a type specification!
+Menu.error31_2.text=Unexpected character sequence «%» in the list of declared variables!
+Menu.error31_3.text=These declaration items are bad or no identifiers: «%»!
+Menu.error31_4.text=Attempt to re-declare existing variable(s) «%»!
+Menu.error31_5.text=For an initialization, the declaration list must contain exactly ONE variable, not % !
+Menu.error31_6.text=Anonymous type construction «%» is illegal here!
 Menu.errorLineReference.text= (line %)
 
 -----[ AnalyserPreferences ]-----
@@ -613,6 +621,7 @@ AnalyserPreferences.checkboxes.27.text=Check that @c selector items are integer 
 AnalyserPreferences.checkboxes.28.text=Check that @c selector lists are disjoint.
 AnalyserPreferences.checkboxes.29.text=Check that the @c choice value is not of a structured type.
 AnalyserPreferences.checkboxes.30.text=Check that brackets are balanced and correctly nested.
+AnalyserPreferences.checkboxes.31.text=Check variable declaration and initialisation syntax.
 AnalyserPreferences.lblDrawWarningSign.text=Draw warning sign in affected elements
 AnalyserPreferences.okButton.text=OK
 
@@ -1578,6 +1587,7 @@ Control.msgSignatureConflicts.text=There are API conflicts among the chosen cont
 Control.msgGUISyncFault.text=Possible GUI synchronisation fault on executing «%».\nTry to resume execution?
 Control.msgErrorInSubroutine.text=Caught error on executing «%1» at level %2:\n	%3!
 Control.msgThrown.text=Exception thrown in «%1» at level %2: %3
+Control.msgInvalidInitialization.text=Initialization target missing or ambiguous: «%»!
 Control.tblVar.header.0=Variable Name
 Control.tblVar.header.2=Content
 

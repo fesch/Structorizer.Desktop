@@ -72,6 +72,8 @@
  *      Kay Gürtzig     2022-08-10  Enh. #56: Some missing message for insertion of TRY blocks added,
  *                                  issue #492 more consequent use of element name placeholders
  *      Kay Gürtzig     2023-08-01  Enh. #1082: Function name incuded in messages Menu.error13_*
+ *      Kay Gürtzig     2023-10-06  Issue #311: Menu reorganisation (menuDiagram split)
+ *      Kay Gürtzig     2023-10-16  Issue #980, #1096: New messages for declaration syntax check (error31_*) 
  *
  ******************************************************************************************************
  *
@@ -213,18 +215,22 @@ Menu.menuDiagramTypeProgram.text=@{Root.DT_MAIN}
 Menu.menuDiagramTypeFunction.text=@{Root.DT_SUB}
 Menu.menuDiagramTypeInclude.text=@{Root.DT_INCL}
 Menu.menuDiagramUnboxed.text=Схема без рамки
-Menu.menuDiagramComment.text=Показывать комментарии
-Menu.menuDiagramSwitchComments.text=Обменить тексты/комментарии
-Menu.menuDiagramCommentsPlusText.text=И тексты и комментарии
-Menu.menuDiagramSwitchTCTooltip.text=Выключите "%1" чтобы допускать этот пункт меню
-Menu.menuDiagramHideDeclarations.text=Прятать сущие декларации
-Menu.menuDiagramMarker.text=Подсвечивать переменные
-Menu.menuDiagramOperatorsC.text=Изобразить операторы как в C
-Menu.menuDiagramOperatorsC.tooltip=Изображает операторы в схемах в соответствии с языком C (предполагает модус "Подсвечивать переменные").
-Menu.menuDiagramDIN.text=DIN (ДИН 66261)?
-Menu.menuDiagramAnalyser.text=Анализировать схему
-Menu.menuDiagramIndex.text=Вставить индекс Arranger?
-Menu.menuDiagramPreview.text=Вставить просмотр кодa?
+
+// Menu "View"
+Menu.menuView.text=Bид
+Menu.menuView.mnemonic=д
+Menu.menuViewComment.text=Показывать комментарии
+Menu.menuViewSwitchComments.text=Обменить тексты/комментарии
+Menu.menuViewCommentsPlusText.text=И тексты и комментарии
+Menu.menuViewSwitchTCTooltip.text=Выключите "%1" чтобы допускать этот пункт меню
+Menu.menuViewHideDeclarations.text=Прятать сущие декларации
+Menu.menuViewMarker.text=Подсвечивать переменные
+Menu.menuViewOperatorsC.text=Изобразить операторы как в C
+Menu.menuViewOperatorsC.tooltip=Изображает операторы в схемах в соответствии с языком C (предполагает модус "Подсвечивать переменные").
+Menu.menuViewDIN.text=DIN (ДИН 66261)?
+Menu.menuViewAnalyser.text=Анализировать схему
+Menu.menuViewIndex.text=Вставить индекс Arranger?
+Menu.menuViewPreview.text=Вставить просмотр кодa?
 
 // Menu "Preferences"
 Menu.menuPreferences.text=Настройки
@@ -273,9 +279,6 @@ Menu.menuPreferencesSaveLoad.text=Ввезти из файла ...
 Menu.menuPreferencesSaveLoad.tooltip=Прежде ввозе настройк из файла изготовит резервную копию теперешних настройк
 Menu.menuPreferencesSaveRestore.text=Ввосстановить последный резерв
 Menu.menuPreferencesSaveRestore.tooltip=Ввосстановит настройки из резерва, который был изготовлен когда ввозил файл с настройками последный раз
-
-// Menu "View" (not in use right now!)
-Menu.menuView.text=
 
 // Menu "Debug"
 Menu.menuDebug.text=Выполнение
@@ -483,6 +486,8 @@ Menu.error24_5.text=
 Menu.error24_6.text=
 Menu.error24_7.text=
 Menu.error24_8.text=
+Menu.error24_9.text=Недопустимое или некорректное добавление объявления (размер массива): «%»!
+Menu.error24_10.text=По крайней мере один недопустимый размер массива (должен быть целым числом > 0): «%»!
 Menu.hint07_1.text=Что должен сделать ваш алгоритм? Замените "???" описательным названием.
 Menu.hint25_1.text=
 Menu.hint25_2.text=
@@ -497,6 +502,12 @@ Menu.hint26.3.text=
 Menu.hint26.4.text=
 Menu.error27.text=Некоторые показатели выбора (напр. «%») не являются целочисленными постоянными.
 Menu.error28.text=Некоторые показатели выбора (%) стоят над различными ветками!
+Menu.error31_1.text=Объявление, начинающееся с «%1», должно содержать символ «%2», за которым следует спецификация типа.
+Menu.error31_2.text=Неожиданная строка «%» в списке объявленных переменных!
+Menu.error31_3.text=Этим объектам объявления не подходят идентификаторы: «%»!
+Menu.error31_4.text=Это попытка переопределить уже существующую переменную(и) «%»!
+Menu.error31_5.text=Для инициализации объявление должно содержать ровно ОДНУ переменную, а не % !
+Menu.error31_6.text=В этой позиции недопустима конструкция анонимного типа «%»!
 Menu.errorLineReference.text=(строка %)
 
 -----[ AnalyserPreferences ]-----
@@ -1401,6 +1412,7 @@ Control.msgSignatureConflicts.text=
 Control.msgGUISyncFault.text=
 Control.msgErrorInSubroutine.text=
 Control.msgThrown.text=
+Control.msgInvalidInitialization.text=Переменная, которую нужно инициализировать, отсутствует или неоднозначна: «%»!
 Control.tblVar.header.0=Название переменной
 Control.tblVar.header.2=Данные переменной
 

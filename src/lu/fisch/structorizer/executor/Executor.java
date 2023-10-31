@@ -219,6 +219,8 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2022-09-29      Bugfix #1067: There had still been many occasions where an EvalError slipped
  *                                      through because of an empty raw method and missing fallback mechanisms, new
  *                                      method getEvalErrorMessage() generated.
+ *      Kay Gürtzig     2023-10-16      Bugfix #980/#1096: Simple but effective workaround for complicated C-style
+ *                                      initialisation (declaration + assignment) case where setVar used to fail.
  *
  ******************************************************************************************************
  *
@@ -3583,7 +3585,8 @@ public class Executor implements Runnable
 	 * declare the target variable or constant.<br/>
 	 * Also ensures that no loop variable manipulation is performed (the entire loop stack is checked,
 	 * so use {@link #setVar(String, Object, int, boolean)} for a regular loop variable update).<br/>
-	 * There are the following sensible cases w.r.t. {@code target} here (unquoted brackets enclose optional parts):<br/>
+	 * There are the following sensible cases w.r.t. {@code target} here (unquoted brackets enclose
+	 * optional parts):<br/>
 	 * a) {@code [const] <id>}<br/>
 	 * b) {@code <id>'['<expr>']'}<br/>
 	 * c) {@code [const] <typespec1> <id>}<br/>
@@ -3606,6 +3609,9 @@ public class Executor implements Runnable
 	 * &nbsp;&nbsp;&nbsp;&nbsp;{@code <typeid> |}<br/>
 	 * &nbsp;&nbsp;&nbsp;&nbsp;{@code array ['['<range>']'] of <typespec>}<br/>
 	 * {@code <range> ::= <id> | <intliteral> .. <intliteral>}<br/>
+	 * <b>Note</b>: setVar definitively not copes with complicated mixes of C and Java array declarations
+	 * like {@code <typeid>'['[<expr>(,<expr>)*]']' <id> '['[<expr>(,<expr>)*]']'}, but these cases
+	 * should now already have been addressed by tryAssignment().
 	 * 
 	 * @param target - an assignment lvalue, may contain modifiers, type info and access specifiers
 	 * @param content - the value to be assigned
@@ -6158,8 +6164,19 @@ public class Executor implements Runnable
 		
 		if (value != null)
 		{
-			// START KGU#910 2021-01-10: Bugfix #909 We must postpone the display to ensure type info
-			// END KGU#910 2021-01-10
+			// START KGU#1089/KGU#1090 2023-10-16: Bugfix #980, #1096
+			StringList leftTokens = Element.splitLexically(leftSide, true);
+			leftTokens.removeAll(" ");
+		// Simplify the task for setVar
+			if (Instruction.isDeclaration(cmd)) {
+				// Can only be an initialisation, so the variable name is easier to obtain
+				instr.updateTypeMapFromLine(this.context.dynTypeMap, cmd, lineNo);
+				leftSide = Instruction.getAssignedVarname(leftTokens, false);
+				if (leftSide == null) {
+					return Control.msgInvalidInitialization.getText().replace("%", leftTokens.concatenate(null));
+				}
+			}
+			// END KGU#1089/KGU#1090 2023-10-16
 			// Assign the value and handle provided declaration
 			// START KGU#910 2021-01-10: Bugfix #909 We must postpone the display until we fixed the type
 			//setVar(leftSide, value);
@@ -6170,7 +6187,10 @@ public class Executor implements Runnable
 			//instr.updateTypeMapFromLine(context.dynTypeMap, cmd, lineNo);
 			if (!leftSide.contains(".") && !leftSide.contains("[")) {
 				TypeMapEntry oldEntry = null;
-				String target = Instruction.getAssignedVarname(Element.splitLexically(leftSide, true), false) + "";
+				// START KGU#1089/KGU#1090 2023-10-16: Bugfix #980, #1096 Couldn't work
+				//String target = Instruction.getAssignedVarname(Element.splitLexically(leftSide, true), false) + "";
+				String target = Instruction.getAssignedVarname(leftTokens, false) + "";
+				// END KGU#1089/KGU#1090 2023-10-16
 				if (!context.dynTypeMap.containsKey(target) || !(oldEntry = context.dynTypeMap.get(target)).isDeclared) {
 					String typeDescr = Instruction.identifyExprType(context.dynTypeMap, expression, true);
 					if (oldEntry == null) {

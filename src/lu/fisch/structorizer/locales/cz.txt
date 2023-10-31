@@ -60,6 +60,9 @@
  *      Kay Gürtzig     2018-07-02      KGU#245: all Colors stuff replaced with array keys 
  *      Kay Gürtzig     2022-08-10      Enh. #56, #492: Messages for TRY elements added, Element name placeholders
  *      Kay Gürtzig     2023-08-01      Enh. #1082: Function name incuded in messages Menu.error13_* *
+ *      Kay Gürtzig     2023-10-06      Issue #311: Menu reorganisation (menuDiagram split)
+ *      Kay Gürtzig     2023-10-16      Missing error messages automatically generated via https://www.webtran.de/
+ *
  ******************************************************************************************************
  *
  *      Comment:	
@@ -185,13 +188,16 @@ Menu.menuDiagramTypeProgram.text=@{Root.DT_MAIN}
 Menu.menuDiagramTypeFunction.text=@{Root.DT_SUB}
 Menu.menuDiagramTypeInclude.text=@{Root.DT_INCL}
 Menu.menuDiagramUnboxed.text=Nezarámovaný diagram?
-Menu.menuDiagramComment.text=Ukazovat komentáře?
-Menu.menuDiagramSwitchComments.text=
-Menu.menuDiagramCommentsPlusText.text=
-Menu.menuDiagramSwitchTCTooltip.text=
-Menu.menuDiagramMarker.text=Zvýraznit proměnné?
-Menu.menuDiagramDIN.text=DIN?
-Menu.menuDiagramAnalyser.text=
+// Menu "View"
+Menu.menuView.text=Prezentace
+Menu.menuView.mnemonic=z
+Menu.menuViewComment.text=Ukazovat komentáře?
+Menu.menuViewSwitchComments.text=
+Menu.menuViewCommentsPlusText.text=
+Menu.menuViewSwitchTCTooltip.text=
+Menu.menuViewMarker.text=Zvýraznit proměnné?
+Menu.menuViewDIN.text=DIN?
+Menu.menuViewAnalyser.text=
 // Menu "Preferences"
 Menu.menuPreferences.text=Nastavení
 Menu.menuPreferences.mnemonic=n
@@ -200,8 +206,9 @@ Menu.menuPreferencesFont.text=Písmo ...
 Menu.menuPreferencesColors.text=Barvy ...
 Menu.menuPreferencesOptions.text=Struktury ...
 Menu.menuPreferencesParser.text=Rozbor ...
-Menu.menuPreferencesAnalyser.text=
-Menu.menuPreferencesExport.text=
+Menu.menuPreferencesAnalyser.text=Analyzátor ...
+Menu.menuPreferencesExport.text=Export ...
+Menu.menuPreferencesImport.text=Import ...
 Menu.menuPreferencesLanguage.text=Jazyk
 Menu.menuPreferencesLanguageItems.en.text=Angličtina
 Menu.menuPreferencesLanguageItems.de.text=Němčina
@@ -223,9 +230,6 @@ Menu.menuPreferencesSave.text=Uložit nyní všechna nastavení
 Menu.menuPreferencesSaveAll.text=Uložit
 Menu.menuPreferencesSaveDump.text=Uložit jako ...
 Menu.menuPreferencesSaveLoad.text=Všechna ...
-
-// Menu "View" (not in use right now!)
-Menu.menuView.text=
 
 // Menu "Debug"
 Menu.menuDebug.text=Debug
@@ -261,9 +265,10 @@ Menu.lblReduced.text=Yes, reduced mode
 Menu.lblNormal.text=No, normal mode
 
 // Error messages for analyser
-Menu.warning_1.text=
-Menu.error01_1.text=WARNING: Nenalezena proměnná cyklu ...
-Menu.error01_2.text=WARNING: Více než jedna proměnná cyklu nalezena: «%»
+Menu.warning_1.text=UPOZORNĚNÍ: TEXTY A KOMENTÁŘE SE VYMĚŇUJÍ NA ZOBRAZENÍ! → Nabídka "%1 ► %2".
+Menu.warning_2.text=POZNÁMKA: «%4» je aktivní. Vypnutí: → Menu "%1 ► %2 ► %3".
+Menu.error01_1.text=UPOZORNĚNÍ: Nenalezena proměnná cyklu ...
+Menu.error01_2.text=UPOZORNĚNÍ: Více než jedna proměnná cyklu nalezena: «%»
 Menu.error01_3.text=Není povoleno měnit proměnnou cyklu  «%» uvnitř cyklu!
 Menu.error02.text=Žádná změna proměnné v podmínce. Je možné zacyklení ...
 Menu.error03_1.text=Proměnná «%1» nebyla nastavena%2!
@@ -281,29 +286,81 @@ Menu.error10_2.text=Jeden element nemůže obsahovat současně instrukci vstupu
 Menu.error10_3.text=Jeden element nemůže obsahovat současně instrukci vstupu a přiřazení!
 Menu.error10_4.text=Jeden element nemůže obsahovat současně instrukci výstupu a přiřazení!
 Menu.error10_5.text=Jeden element nemůže obsahovat současně definice konstant y jiný instrukci!
+Menu.error10_6.text=Jeden prvek @a by neměl míchat definice typů s jinými instrukcemi!
 Menu.error11.text=Možná chyba v přiřazení. Prosím zkontrolujte tuto instrukci!
 Menu.error12.text=Parametr «%» musí začínat písmenem "p" následovaný velkými písmeny!
 Menu.error13_1.text=Funkce «%» nevrací žádnou hodnotu!
 Menu.error13_2.text=Funkce «%» nemusí vracet žádnou hodnotu!
-Menu.error13_3.text=
-Menu.error14_1.text=
-Menu.error14_2.text=
-Menu.error14_3.text=
-Menu.error15_1.text=
-Menu.error15_2.text=
-Menu.error16_1.text=
-Menu.error16_2.text=
-Menu.error16_3.text=
-Menu.error16_4.text=
-Menu.error16_5.text=
-Menu.error16_6.text=
-Menu.error16_7.text=
-Menu.error16_8.text=
-Menu.error17.text=
+Menu.error13_3.text=Zdá se, že vaše funkce používá několik konkurenčních návratových mechanismů: «%»!
+Menu.error14_1.text=Parametry smyčky @d nejsou konzistentní s textem záhlaví smyčky!
+Menu.error14_2.text=Hodnota kroku @e smyčky («%») není legální celočíselná konstanta!
+Menu.error14_3.text=Název proměnné «%» může kolidovat s jedním z nakonfigurovaných klíčových slov pro nadpis smyčky @d!
+Menu.error15_1.text=@j nemá tvar «[ <var> <- ] <název_rutiny>(<seznam_argumentů>)»!
+Menu.error15_2.text=Volaný @o diagram «%» momentálně není dostupný.
+Menu.error15_3.text=Existuje několik @o diagramů odpovídajících podpisu «%».
+Menu.error16_1.text=Prvek @k může být prázdný nebo může začínat jedním z % a může následovat argument!
+Menu.error16_2.text=Instrukce %, pokud není na konečné pozici, musí tvořit prvek @k!
+Menu.error16_3.text=Instrukce %1 nebo %2 je povolena pouze jako prvek @k!
+Menu.error16_4.text=Nelze opustit nebo přerušit více úrovní smyčky, než je vnořeno v (%)!
+Menu.error16_5.text=Nesmíte přímo přeskakovat (%1, %2) z paralelního vlákna!
+Menu.error16_6.text=Neplatný argument pro «%» @k (musí být celočíselná konstanta)!
+Menu.error16_7.text=Instrukce není dostupná po a(n) @k!
+Menu.error16_8.text=Argument pro toto «%» @k může být nevhodný (měla by to být celočíselná hodnota).Menu.error17.text=
+Menu.error17.text=Riziko konzistence kvůli současnému přístupu k proměnné «%» několika paralelními vlákny!
+Menu.error18.text=Proměnná «%1» může být zaměněna s proměnnou(y) «%2» v jazycích bez rozlišení velikosti písmen!
+Menu.error19_1.text=Název proměnné «%1» může kolidovat s vyhrazenými názvy v jazycích jako %2!
+Menu.error19_2.text=Název proměnné «%» je rezervován ve Structorizer a pravděpodobně způsobí potíže při provádění!
+Menu.error20_1.text=Hlavička @o musí mít (případně prázdný) seznam parametrů v závorkách.
+Menu.error20_2.text=Výchozí parametry musí být umístěny souvisle na konci seznamu parametrů.
+Menu.error20_3.text=Diagram typu %1 by neměl mít seznam parametrů. Změnit typ na %2?
+Menu.error21.text=Názvy proměnných I (velké i), l (malé L) a O (velké o) je těžké od sebe odlišit, 1 nebo 0.
+Menu.error22_1.text=Konstanta «%1» závisí na zjevně nekonstantních hodnotách: «%2».
+Menu.error22_2.text=Pokus o změnu hodnoty konstanty «%»!
+Menu.error23_1.text=Diagram «%» je spíše nevhodný pro volání importu, protože využívá návrat.
+Menu.error23_2.text=Import diagramu «%» je rekurzivní!
+Menu.error23_3.text=Import zde bude ignorován, protože diagram «%1» již byl importován: %2.
+Menu.error23_4.text=Konflikt názvu mezi lokální a importovanou proměnnou nebo konstantou «%»!
+Menu.error23_5.text=@p diagram «%» momentálně není dostupný!
+Menu.error23_6.text=Nalezeno více než jeden @p diagram s názvem «%»!
+Menu.error23_7.text=Mezi místní a importovanou definicí typu «%» došlo ke konfliktu názvu!
+Menu.error24_1.text=Definice typu v (složeném) řádku % je chybná.
+Menu.error24_2.text=Typ názvu «%» je nelegální nebo koliduje s jiným identifikátorem.
+Menu.error24_3.text=Název součásti «%» je nelegální nebo duplicitní.
+Menu.error24_4.text=Základní typ «%» je nedefinovaný nebo neznámý.
+Menu.error24_5.text=Není definován žádný typ záznamu «%»!
+Menu.error24_6.text=Složka záznamu «%» nebude upravena/inicializována!
+Menu.error24_7.text=Typ záznamu «%1» nemá komponentu «%2»!
+Menu.error24_8.text=Proměnná «%1» nemá komponentu «%2»!
+Menu.error24_9.text=Neplatné nebo vadné přílohy deklarace (specifikace pole): «%»!
+Menu.error24_10.text=Minimálně jedna velikost rozměru pole možná žádná celočíselná konstanta > 0: «%»!
+Menu.hint07_1.text=Jaký je váš algoritmus? Nahraďte „%“ dobrým jménem!
+Menu.hint25_1.text=Vyberte střed diagramu a umístěte první prvek, např. vstupní instrukce jako «%1 %2».
+Menu.hint25_2.text=Možná budete chtít vložit data, např. s instrukcí jako «%1 %2». → Nabídka "%3"
+Menu.hint25_3.text=Možná budete chtít vytisknout výsledky, např. s instrukcí jako «%1 %2». → Nabídka "%3"
+Menu.hint25_4.text=Vyberte střed diagramu a umístěte první prvek, např. @a.
+Menu.hint25_5.text=Vyberte střed diagramu a umístěte např. prvek @a s definicí typu nebo konstanty.
+Menu.hint25_6.text=Možná budete chtít umístit nějakou instrukci zpracování jako «%1» mezi vstup a výstup. → Nabídka "%2"
+Menu.hint26.0.text=Vyberte střed diagramu, dvakrát klikněte, stiskněte Enter nebo F5 a vložte text instrukce «% "Ahoj světe!"».
+Menu.hint26.1.text=Nyní můžete např. otestujte svůj diagram: → Nabídka "%1 ► %2"
+Menu.hint26.2.text=Nyní můžete např. uložte svůj diagram: → Nabídka "%1 ► %2"
+Menu.hint26.3.text=Nyní můžete např. exportujte svůj diagram do nějakého programovacího jazyka: → Nabídka "%1 ► %2 ► %3"
+Menu.hint26.4.text=Nyní můžete např. exportujte svůj diagram jako grafický soubor: → Nabídka "%1 ► %2 ► %3"
+Menu.error27.text=Některé @c selektorové položky (např. «%») se nezdají být celočíselné konstanty.
+Menu.error28.text=V prvku @c je více (konfliktních) selektorových položek (%)!
+Menu.error29.text=Hodnota výběru «%» je strukturovaného typu, a proto není vhodná pro @c!
+Menu.error30_1.text=V řádku %2 je o %1 více otevřených než uzavíracích závorek, jako další bylo očekáváno '%3'!
+Menu.error30_2.text=V řádku %2 je alespoň o jeden více uzavíracích '%1' než otevírací hranaté závorky!
+Menu.error30_3.text=V řádku %2 je konec '%1', kde se očekává '%3'!
+Menu.error31_1.text=Deklarace začínající «%1» musí obsahovat symbol «%2», následovaný typovou specifikací!
+Menu.error31_2.text=Neočekávaná sekvence znaků «%» v seznamu deklarovaných proměnných!
+Menu.error31_3.text=Tyto položky deklarace jsou špatné nebo nemají žádné identifikátory: «%»!
+Menu.error31_4.text=Pokus znovu deklarovat existující proměnné «%»!
+Menu.error31_5.text=Pro inicializaci musí seznam deklarací obsahovat přesně JEDNU proměnnou, nikoli %!
+Menu.error31_6.text=Anonymní typ konstrukce «%» je zde nelegální!
 Menu.errorLineReference.text= (řádek %)
 
 -----[ AnalyserPreferences ]-----
-AnalyserPreferences.title=
+AnalyserPreferences.title=Předvolby analyzátoru
 AnalyserPreferences.checkboxes.1.text=Kontrola proměnné cyklu.
 AnalyserPreferences.checkboxes.2.text=Kontrola zacyklení. (pokud to jde!))
 AnalyserPreferences.checkboxes.3.text=Kontrola nenastavené proměnné.
@@ -317,13 +374,25 @@ AnalyserPreferences.checkboxes.10.text=Kontrola instrukcí s více příkazy.
 AnalyserPreferences.checkboxes.11.text=Kontrola chyb u přiřazení.
 AnalyserPreferences.checkboxes.12.text=Kontrola standardizovaných jmen parametrů. (LUX/MEN)
 AnalyserPreferences.checkboxes.13.text=Kontrola zda funkce vrací hodnotu.
-AnalyserPreferences.checkboxes.14.text=
-AnalyserPreferences.checkboxes.15.text=
-AnalyserPreferences.checkboxes.16.text=
-AnalyserPreferences.checkboxes.17.text=
-AnalyserPreferences.checkboxes.18.text=
-AnalyserPreferences.checkboxes.19.text=
-AnalyserPreferences.checkboxes.20.text=
+AnalyserPreferences.checkboxes.14.text=Zkontrolujte konzistenci parametrů smyčky @d.
+AnalyserPreferences.checkboxes.15.text=Zkontrolujte nevhodný podprogram @js a chybějící cíle volání.
+AnalyserPreferences.checkboxes.16.text=Zkontrolujte nesprávné použití prvku @k.
+AnalyserPreferences.checkboxes.17.text=Zkontrolujte rizika nekonzistence v @l sekcích.
+AnalyserPreferences.checkboxes.18.text=Zkontrolujte, zda se identifikátory neliší pouze velkými/malými písmeny.
+AnalyserPreferences.checkboxes.19.text=Zkontrolujte, zda může identifikátor kolidovat s vyhrazenými slovy.
+AnalyserPreferences.checkboxes.20.text=Zkontrolujte, zda záhlaví @o obsahuje seznam parametrů.
+AnalyserPreferences.checkboxes.21.text=Odrazujte od používání zaměnitelných názvů proměnných «I», «l» a «O».
+AnalyserPreferences.checkboxes.22.text=Zkontrolujte možná porušení konstant.
+AnalyserPreferences.checkboxes.23.text=Kontrola proti chybným importům diagramů.
+AnalyserPreferences.checkboxes.24.text=Zkontrolujte definice typů a přístup ke komponentě záznamu.
+AnalyserPreferences.checkboxes.25.text=Průvodce pokyny k prvnímu programu (model IPO)
+AnalyserPreferences.checkboxes.26.text=Krátká prohlídka "ahoj světe".
+AnalyserPreferences.checkboxes.27.text=Zkontrolujte, zda položky @c selektoru jsou celočíselné konstanty.
+AnalyserPreferences.checkboxes.28.text=Zkontrolujte, zda jsou seznamy selektorů @c nesouvislé.
+AnalyserPreferences.checkboxes.29.text=Zkontrolujte, zda hodnota @c choice není strukturovaného typu.
+AnalyserPreferences.checkboxes.30.text=Zkontrolujte, zda jsou závorky vyvážené a správně vnořené.
+AnalyserPreferences.checkboxes.31.text=Zkontrolujte deklaraci proměnné a inicializační syntaxi.
+AnalyserPreferences.lblDrawWarningSign.text=Nakreslete varovné znamení do ovlivněných prvků
 AnalyserPreferences.okButton.text=OK
 
 

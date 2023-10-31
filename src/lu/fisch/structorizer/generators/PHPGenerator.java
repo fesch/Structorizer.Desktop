@@ -76,6 +76,9 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2021-02-03      Issue #920: Transformation for "Infinity" literal
  *      Kay Gürtzig             2021-12-05      Bugfix #1024: Precautions against defective record initializers
  *      Kay Gürtzig             2022-08-23      Issue #1068: transformIndexLists() inserted in transformTokens()
+ *      Kay Gürtzig             2023-10-04      Bugfix #1093 Undue final return 0 on function diagrams
+ *      Kay Gürtzig             2023-10-13      Issue #980 Export of multi-variable declaration revised
+ *      Kay Gürtzig             2023-10-18      Bugfix #1099: Handling of constants was not correct.
  *
  ******************************************************************************************************
  *
@@ -135,6 +138,7 @@ import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 
 import lu.fisch.structorizer.elements.*;
@@ -151,6 +155,13 @@ public class PHPGenerator extends Generator
 	// (KGU 2015-11-02) We must know all variable names in order to prefix them with '$'.
 	//StringList varNames = new StringList();
 	// END KGU#61 2016-03-22
+	
+	// START KGU#1094 2023-10-18: Bugfix #1099 Constants must be handled differently
+	/**
+	 * Just a reference to the currently exported Root
+	 */
+	private Root root = null;
+	// END KGU#1094 2023-10-18
 
     /************ Fields ***********************/
     protected String getDialogTitle()
@@ -367,6 +378,17 @@ public class PHPGenerator extends Generator
 		for (int i = 0; i < varNames.count(); i++)
 		{
 			String varName = varNames.get(i);
+			// START KGU#1094 2023-10-18: Bugfix #1099 Don't prefix scalar constants
+			if (root.constants.containsKey(varName)) {
+				String constVal = root.getConstValueString(varName);
+				if (constVal != null) {
+					StringList valTokens = Element.splitLexically(constVal, true).trim();
+					if (valTokens.count() == 1) {
+						// Don't prefix a name that will be defined view const or define()
+						continue;
+					}}
+			}
+			// END KGU#1094 2023-10-18
 			//System.out.println("Looking for " + varName + "...");	// FIXME (KGU): Remove after Test!
 			//_input = _input.replaceAll("(.*?[^\\$])" + varName + "([\\W$].*?)", "$1" + "\\$" + varName + "$2");
 			tokens.replaceAll(varName, "$"+varName);
@@ -391,6 +413,7 @@ public class PHPGenerator extends Generator
 	/**
 	 * Recursively transforms all record and array initializers within the token sequence
 	 * {@code _tokens}
+	 * 
 	 * @param tokens - the lexically split instruction line (may be partially transformed)
 	 * @return the tokens sequence with transformed initializer expressions
 	 */
@@ -522,7 +545,7 @@ public class PHPGenerator extends Generator
 			appendComment(_inst, _indent);
 
 			StringList lines = _inst.getUnbrokenText();
-			for (int i=0; i<lines.count(); i++)
+			for (int i = 0; i < lines.count(); i++)
 			{
 				// START KGU#281 2016-10-16: Enh. #271
 				//addCode(transform(_inst.getText().get(i))+";",
@@ -563,75 +586,121 @@ public class PHPGenerator extends Generator
 					else if (Instruction.isDeclaration(line)) {
 						StringList tokens = Element.splitLexically(transf, true);
 						// identify declared variable - the token will start with a dollar
-						int posVar = 0;
 						boolean mereDecl = Instruction.isMereDeclaration(line);
-						while (posVar < tokens.count() && !tokens.get(posVar).startsWith("$")) {
-							posVar++;
-						}
-						if (posVar >= tokens.count() && mereDecl) {
-							posVar = 0;
-							while (posVar < tokens.count() && !varNames.contains(tokens.get(posVar)) && !declVars.contains(tokens.get(posVar))) {
+						String varName = null;
+						// START KGU#1089 2023-10-13: Issue #980
+						if (!mereDecl) {
+						// END KGU#1089 2023-10-13
+							int posVar = 0;
+							while (posVar < tokens.count() && !tokens.get(posVar).startsWith("$")) {
 								posVar++;
 							}
-						}
-						int posEqu = tokens.indexOf("=");
-						String varName = null;
-						if (posVar < tokens.count() && (posEqu < 0 || posEqu > posVar)) {
-							varName = tokens.get(posVar);
-							if (varName.startsWith("$")) { varName = varName.substring(1); }
-							wasDefHandled(Element.getRoot(_inst), varName, true, false);
-						}
-						if (mereDecl) {
-							TypeMapEntry type = null;
-							if (varName != null) {
-								type = this.typeMap.get(varName);
-							}
-							if (type != null) {
-								if ((type.isRecord() || type.isArray())) {
-									transf = "$" + varName + " = array();";
+							if (posVar >= tokens.count() && mereDecl) {
+								posVar = 0;
+								while (posVar < tokens.count() && !varNames.contains(tokens.get(posVar)) && !declVars.contains(tokens.get(posVar))) {
+									posVar++;
 								}
-								else {
-									String typeSpec = type.getCanonicalType(true, false);
-									if (typeSpec.equalsIgnoreCase("string")) {
-										transf = "$" + varName + " = \"\";";
-									}
-									else if (typeSpec.equals("int") || typeSpec.equals("long")) {
-										transf = "$" + varName + " = 0;";
-									}
-									else if (typeSpec.equals("double") || typeSpec.equals("float")) {
-										transf = "$" + varName + " = 0.0;";
-									}
-									else if (typeSpec.equals("boolean")) {
-										transf = "$" + varName + " = False;";
+							}
+							int posEqu = tokens.indexOf("=");
+							if (posVar < tokens.count() && (posEqu < 0 || posEqu > posVar)) {
+								varName = tokens.get(posVar);
+								if (varName.startsWith("$")) { varName = varName.substring(1); }
+								wasDefHandled(Element.getRoot(_inst), varName, true, false);
+							}
+						// START KGU#1089 2023-10-13: Issue #980
+						//if (mereDecl) {
+							// Now we cut off all remnants of the declaration.
+							posEqu -= (posVar);	// Should still be >= 0 as there must be an assignment
+							tokens.remove(0, posVar);	// This way we should get rid of "var" or "dim"
+							int posColon = tokens.indexOf(":");
+							if (posColon < 0 || posColon > posEqu) {
+								posColon = tokens.indexOf("as", false);
+							}
+							if (posColon > 0 && posColon < posEqu) {
+								tokens.remove(posColon, posEqu);
+								tokens.insert(" ", posColon);
+							}
+							transf = tokens.concatenate(null);
+						}
+						else {
+						// END KGU#1089 2023-10-13
+							TypeMapEntry type = null;
+							// START KGU#1089 2023-10-13: Issue #980 Cope with multi-var declarations
+							//if (varName != null) {
+							//	type = this.typeMap.get(varName);
+							//}
+							HashMap<String,TypeMapEntry> tempTypeMap = new LinkedHashMap<String,TypeMapEntry>();
+							// This revised method should reveal all declared variables
+							_inst.updateTypeMapFromLine(tempTypeMap, line, i);
+							for (Entry<String, TypeMapEntry> entry: tempTypeMap.entrySet()) {
+								varName = entry.getKey();
+								if (wasDefHandled(root, varName, true, false)) {
+									continue;
+								}
+								type = this.typeMap.get(varName);
+								if (type == null) {
+									type = entry.getValue();
+								}
+							// END KGU#1089 2023-10-13
+								if (type != null) {
+									if ((type.isRecord() || type.isArray())) {
+										transf = "$" + varName + " = array();";
 									}
 									else {
-										// We can't do so much more.
-										type = null;
+										String typeSpec = type.getCanonicalType(true, false);
+										if (typeSpec.equalsIgnoreCase("string")) {
+											transf = "$" + varName + " = \"\";";
+										}
+										else if (typeSpec.equals("int") || typeSpec.equals("long")) {
+											transf = "$" + varName + " = 0;";
+										}
+										else if (typeSpec.equals("double") || typeSpec.equals("float")) {
+											transf = "$" + varName + " = 0.0;";
+										}
+										else if (typeSpec.equals("boolean")) {
+											transf = "$" + varName + " = False;";
+										}
+										else {
+											// We can't do so much more.
+											type = null;
+										}
 									}
+									addCode(transf, _indent, isDisabled);
 								}
+								else {
+									appendComment(line, _indent);
+								}
+							// START KGU#1089 2023-10-13: Issue #980
 							}
-							if (type == null) {
-								appendComment(line, _indent);
-							}
-							else {
-								addCode(transf, _indent, isDisabled);
-							}
+							// END KGU#1089 2023-10-13
 							continue;	// No further action here
 						}
+						// START KGU#1089 2023-10-13: Issue #980 Moved into if branch
 						// Now we cut off all remnants of the declaration.
-						posEqu -= (posVar);	// Should still be >= 0 as there must be an assignment
-						tokens.remove(0, posVar);	// This way we should get rid of "var" or "dim"
-						int posColon = tokens.indexOf(":");
-						if (posColon < 0 || posColon > posEqu) {
-							posColon = tokens.indexOf("as", false);
-						}
-						if (posColon > 0 && posColon < posEqu) {
-							tokens.remove(posColon, posEqu);
-							tokens.insert(" ", posColon);
-						}
-						transf = tokens.concatenate(null);
+						//posEqu -= (posVar);	// Should still be >= 0 as there must be an assignment
+						//tokens.remove(0, posVar);	// This way we should get rid of "var" or "dim"
+						//int posColon = tokens.indexOf(":");
+						//if (posColon < 0 || posColon > posEqu) {
+						//	posColon = tokens.indexOf("as", false);
+						//}
+						//if (posColon > 0 && posColon < posEqu) {
+						//	tokens.remove(posColon, posEqu);
+						//	tokens.insert(" ", posColon);
+						//}
+						//transf = tokens.concatenate(null);
+						// END KGU#1089 203-10-13
 					}
 					// END KGU#839 2020-04-06
+					// START KGU#1094 2023-10-18: Bugfix #1099 Handle constant definitions
+					else if (transf.toLowerCase().startsWith("const ")) {
+						String transfTail = transf.substring("const ".length()).trim();
+						// If it is not a scalar value then the name won't have been prefixed
+						if (transfTail.startsWith("$")) {
+							// ... otherwise it cannot be defined as constant, so cut "const" off
+							transf = transfTail;
+						}
+					}
+					// END KGU#1094 2023-10-18
 					addCode(transf,	_indent, isDisabled);
 					// END KGU#281 2016-10-16
 				// START KGU#653 2019-02-14: Enh. #680 (part 2)
@@ -862,7 +931,14 @@ public class PHPGenerator extends Generator
 		{
 			// START KGU#319 2017-01-03: Bugfix #320 - Obsolete postfixing removed
 			//addCode(transform(_call.getText().get(i))+"();", _indent, isDisabled);
-			addCode(transform(lines.get(i))+";", _indent, isDisabled);
+			// START KGU#1094 2023-10-18: Bugfix #1099 a routine result may not be a constant
+			//addCode(transform(lines.get(i))+";", _indent, isDisabled);
+			String transf = transform(lines.get(i));
+			if (transf.toLowerCase().startsWith("const ")) {
+				transf = transf.substring("const ".length());
+			}
+			addCode(transf+";", _indent, isDisabled);
+			// END KGU#1094 2023-10-18
 			// END KGU#319 2017-01-03
 		}
 	}
@@ -974,6 +1050,9 @@ public class PHPGenerator extends Generator
         // START KGU 2015-11-02: First of all, fetch all variable names from the entire diagram
         varNames = _root.retrieveVarNames();
         // END KGU 2015-11-02
+        // START KGU#1093 2023--10-18: Bugfix #1099: We need Root for const check in transform
+        root = _root;
+        // END KGU#1093 2023-10-18
         String procName = _root.getMethodName();
         // START KGU#74/KGU#78 2016-12-30: Issues #22/#23: Return mechanisms hadn't been fixed here until now
         boolean alwaysReturns = mapJumps(_root.children);
@@ -1174,9 +1253,23 @@ public class PHPGenerator extends Generator
 		if (topLevel) {
 			for (int i = 0; i < _varNames.count(); i++) {
 				String varName = _varNames.get(i);
-				if (_root.constants.containsKey(varName)) {
+				if (root.constants.containsKey(varName)) {
 					// This should also solve the enumerator type problem - does it?
-					code.add(_indent + "define('" + varName + "', " + this.transform(_root.getConstValueString(varName))+ ")");
+					//code.add(_indent + "define('" + varName + "', " + this.transform(_root.getConstValueString(varName))+ ")");
+					// START KGU#1094 2023-10-18: Bugfix #1099
+					String constVal = _root.getConstValueString(varName);
+					StringList valTokens = new StringList();
+					if (constVal != null) {
+						valTokens = Element.splitLexically(constVal, true);
+					}
+					// Only if the value is a simple literal, this may be used as constant
+					if (valTokens.count() == 1) {
+						code.add(_indent + "define('" + varName + "', " + this.transform(constVal)+ ")");
+					}
+					else {
+						code.add(_indent + this.transform(varName + " <- " + constVal));
+					}
+					// END KGU#1094 2023-10-18
 				}
 				// Simply declare it formally
 				this.wasDefHandled(_root, varName, true);
@@ -1212,6 +1305,11 @@ public class PHPGenerator extends Generator
 					result = "$" + result;
 				}
 			}
+			// START KGU#1084 2023-10-04: Bugfix #1093 Don't invent an undue return statement here
+			else {
+				return _indent;
+			}
+			// END KGU#1084 2023-10-24
 			addSepaLine();
 			code.add(_indent + "return " + result + ";");
 		}

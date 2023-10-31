@@ -40,6 +40,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2020-04-22      Bugfix #854: Deterministic topological order of type definitions ensured
  *      Kay Gürtzig     2021-02-03      Issue #920: Transformation for "Infinity" literal, see comment
  *      Kay Gürtzig     2021-12-05      Bugfix #1024: Precautions against defective record initializers
+ *      Kay Gürtzig     2023-10-04      Bugfix #1093 Undue final return 0 on function diagrams
+ *      Kay Gürtzig     2023-10-16      Bugfix #1098 Recursive application of initializer transformation ensured
  *
  ******************************************************************************************************
  *
@@ -63,6 +65,7 @@ import lu.fisch.structorizer.elements.Instruction;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Try;
 import lu.fisch.structorizer.elements.TypeMapEntry;
+import lu.fisch.structorizer.executor.Function;
 import lu.fisch.utils.StringList;
 
 /**
@@ -210,16 +213,43 @@ public class JsGenerator extends CGenerator {
 		// This is a little trick to hinder super from replacing Infinity.
 		tokens.replaceAll("Infinity", "Infinity ");
 		// END KGU#920 2021-02-03
+		// START KGU#1091 2023-10-16: Bugfix #1098
+		if (tokens.contains("{") && tokens.lastIndexOf("}") == tokens.count()-1) {
+			StringList pureExprTokens = tokens.copy();
+			pureExprTokens.removeAll(" ");
+			int posBrace = pureExprTokens.indexOf("{");
+			if (pureExprTokens.count() >= 3 && posBrace <= 1) {
+				if (posBrace == 1 && Function.testIdentifier(pureExprTokens.get(0), false, null)) {
+					// Record initializer
+					String typeName = pureExprTokens.get(0);
+					TypeMapEntry recType = this.typeMap.get(":"+typeName);
+					if (recType != null) {
+						return this.transformRecordInit(tokens.concatenate(), recType);
+					}
+				}
+				else if (posBrace == 0) {
+					// Array initializer
+					StringList items = Element.splitExpressionList(pureExprTokens.subSequence(1, pureExprTokens.count()-1), ",", true);
+					return this.transformOrGenerateArrayInit("", items.subSequence(0, items.count()-1), null, false, null, false);
+				}
+			}
+		}
+		// END KGU#1091 2023-10-16
 		return super.transformTokens(tokens);
 	}
 
 	/**
-	 * Generates code that decomposes an array initializer into a series of element assignments if there no
-	 * compact translation.
-	 * @param _lValue - the left side of the assignment (without modifiers!), i.e. the array name
-	 * @param _arrayItems - the {@link StringList} of element expressions to be assigned (in index order)
-	 * @param _indent - the current indentation level
-	 * @param _isDisabled - whether the code is commented out
+	 * Composes and returns a syntax-conform array initializer expression for the
+	 * passed-in {@code _arrayItems}, recursively transforming these as well if
+	 * necessary.<br/>
+	 * In contrast to super this method will never directly generate code but always
+	 * return the transformed initializer.
+	 * 
+	 * @param _lValue - the left side of the assignment (ignored here)
+	 * @param _arrayItems - the {@link StringList} of element expressions to be
+	 *    applied (in index order)
+	 * @param _indent - the current indentation level (ignored here)
+	 * @param _isDisabled - whether the code is commented out (ignored here)
 	 * @param _elemType - the {@link TypeMapEntry} of the element type is available
 	 * @param _isDecl - if this is part of a declaration (i.e. a true initialization)
 	 */
@@ -305,7 +335,7 @@ public class JsGenerator extends CGenerator {
 	 * @see lu.fisch.structorizer.generators.CGenerator#makeArrayDeclaration(java.lang.String, java.lang.String, lu.fisch.structorizer.elements.TypeMapEntry)
 	 */
 	@Override
-	protected String makeArrayDeclaration(String _elementType, String _varName, TypeMapEntry typeInfo)
+	protected String makeArrayDeclaration(String _canonType, String _varName, TypeMapEntry _typeInfo)
 	{
 		return ("var " + _varName).trim(); 
 	}
@@ -355,13 +385,13 @@ public class JsGenerator extends CGenerator {
 	 * @see lu.fisch.structorizer.generators.CGenerator#generateInstructionLine(lu.fisch.structorizer.elements.Instruction, java.lang.String, boolean, java.lang.String)
 	 */
 	@Override
-	protected boolean generateInstructionLine(Instruction _inst, String _indent, boolean commentInserted, String line)
+	protected boolean generateInstructionLine(Instruction _inst, String _indent, boolean _commentInserted, String _line)
 	{
 		// Don't do anything with type definitions
-		if (Instruction.isTypeDefinition(line, typeMap)) {
+		if (Instruction.isTypeDefinition(_line, typeMap)) {
 			return false;
 		}
-		return super.generateInstructionLine(_inst, _indent, commentInserted, line);
+		return super.generateInstructionLine(_inst, _indent, _commentInserted, _line);
 	}
 	
 	/**
@@ -710,6 +740,11 @@ public class JsGenerator extends CGenerator {
 				int vx = varNames.indexOf("result", false);
 				result = varNames.get(vx);
 			}
+			// START KGU#1084 2023-10-04: Bugfix #1093 Don't invent an undue return statement here
+			else {
+				return _indent;
+			}
+			// END KGU#1084 2023-10-24
 			addSepaLine();
 			code.add(_indent + "return " + result + ";");
 		}

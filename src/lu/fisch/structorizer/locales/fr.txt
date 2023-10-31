@@ -63,6 +63,9 @@
  *      Kay Gürtzig     2022-08-09/10   Issue #1056 (flawed translations, defective tooltip associations)
  *      GitHub/tph002   2022-08-14      Majority of texts translated or corrected, respectively
  *      Kay Gürtzig     2023-08-01      Enh. #1082: Function name incuded in messages Menu.error13_* *
+ *      Kay Gürtzig     2023-10-07      Issue #311: Menu reorganisation (menuDiagram split)
+ *      Kay Gürtzig     2023-10-13      Issue #980: New messages for declaration syntax check (error31_*) 
+ *
  ******************************************************************************************************
  *
  *      Comment:	
@@ -202,19 +205,23 @@ Menu.menuDiagramTypeProgram.text=@n
 Menu.menuDiagramTypeFunction.text=@o
 Menu.menuDiagramTypeInclude.text=@p
 Menu.menuDiagramUnboxed.text=Diagramme sans cadre?
-Menu.menuDiagramComment.text=Montrer les commentaires?
-Menu.menuDiagramSwitchComments.text=Basculer entre code et commentaires?
-Menu.menuDiagramCommentsPlusText.text=Commentaires et textes?
-Menu.menuDiagramSwitchTCTooltip.text=Désélectionner "%1" afin d'activer ce point
-Menu.menuDiagramHideDeclarations.text=Cacher les déclarations simples?
-Menu.menuDiagramMarker.text=Marquer les variables?
-Menu.menuDiagramOperatorsC.text=Afficher les opérateurs dans le style de C?
-Menu.menuDiagramOperatorsC.tooltip=Affiche dans les diagrammes les symboles d'opérateur selon la syntaxe de C (nécessite le mode "Highlight variable?").
-Menu.menuDiagramDIN.text=DIN 66261?
-Menu.menuDiagramDIN.tooltip=Commute l'apparence des boucles @d entre la norme DIN 66261 (forme comme la boucle @g) et la norme non standard (forme comme la boucle @i).
-Menu.menuDiagramAnalyser.text=Analyser le structogramme?
-Menu.menuDiagramIndex.text=Afficher l'index de l'Arrangeur?
-Menu.menuDiagramPreview.text=Montrer la prévisualisation du code?
+
+// Menu "View"
+Menu.menuView.text=Vue
+Menu.menuView.mnemonic=v
+Menu.menuViewComment.text=Montrer les commentaires?
+Menu.menuViewSwitchComments.text=Basculer entre code et commentaires?
+Menu.menuViewCommentsPlusText.text=Commentaires et textes?
+Menu.menuViewSwitchTCTooltip.text=Désélectionner "%1" afin d'activer ce point
+Menu.menuViewHideDeclarations.text=Cacher les déclarations simples?
+Menu.menuViewMarker.text=Marquer les variables?
+Menu.menuViewOperatorsC.text=Afficher les opérateurs dans le style de C?
+Menu.menuViewOperatorsC.tooltip=Affiche dans les diagrammes les symboles d'opérateur selon la syntaxe de C (nécessite le mode "Highlight variable?").
+Menu.menuViewDIN.text=DIN 66261?
+Menu.menuViewDIN.tooltip=Commute l'apparence des boucles @d entre la norme DIN 66261 (forme comme la boucle @g) et la norme non standard (forme comme la boucle @i).
+Menu.menuViewAnalyser.text=Analyser le structogramme?
+Menu.menuViewIndex.text=Afficher l'index de l'Arrangeur?
+Menu.menuViewPreview.text=Montrer la prévisualisation du code?
 
 // Menu "Preferences"
 Menu.menuPreferences.text=Préférences
@@ -408,8 +415,6 @@ Menu.msgErrorSettingLaF.text=Problème lors du changement du Look & Feel to %1: 
 Menu.msgRootCloned.text=Le diagramme «%1» a été cloné.\n\nVous travaillez à présent avec une copie indépendante:\n%2
 Menu.msgAnalyserHint_3_30_14.text=De nouveaux symboles indicateurs\nvous rappelleront\nqu'il y a des avertissements de l'analyseur\npour les éléments marqués.\n\nVous pouvez les désactiver via:\n%
 Menu.msgVersionHint_3_30_15.text=Si vous préférez l'éditeur d'éléments traditionnel,\ncependant, vous pouvez désélectionner la case à cocher\n"%1"\ndans la section %2.
-Menu.msgJavaUpgradeHint_3_30_18.text=Les développeurs de Structorizer prévoient d'abandonner la compatibilité avec la version 8 de Java\nd'ici la mi-2021 et de mettre à niveau la base de code de manière à ce qu'elle nécessite une VM Java 11\nau moins.\nVous pouvez d'ores et déjà exécuter Structorizer avec les VM Java 11+, mais les futures versions\nne seront plus utilisables sur les versions obsolètes de Java < 11. Peu importe\nsi Oracle Java ou un OpenJDK est utilisé.
-Menu.msgJavaUpgradeHint_3_30_18a.text=\nSachez que la prise en charge de Java WebStart a officiellement pris fin avec Java 8,\nmais il existe des alternatives comme Open Webstart (https://openwebstart.com)\nsi vous souhaitez adhérer à la livraison de Structorizer JNLP.
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Signature de routine
 Menu.msgTabHdrAlias.text=Nom d'alias
@@ -478,11 +483,13 @@ Menu.error23_7.text=Il existe un conflit de nom entre définitions de type «%»
 Menu.error24_1.text=La définition de type dans la ligne (composée) (%) est malformée.
 Menu.error24_2.text=Le nom de type «%» est invalide ou est en conflit avec un autre identifiant.
 Menu.error24_3.text=Le nom de composant «%» est invalide ou dupliqué.
-Menu.error24_4.text=Le type de composant «%» est indéfini ou inconnu.
+Menu.error24_4.text=Le type sous-tendant «%» est indéfini ou inconnu.
 Menu.error24_5.text=Il n'y a pas de type de record «%» défini!
 Menu.error24_6.text=Le composant de record «%» ne sera pas modifié/initialisé!
 Menu.error24_7.text=Le type de record «%1» n'a pas de composant «%2»!
 Menu.error24_8.text=La variable «%1» n'a pas de composant «%2»!
+Menu.error24_9.text=Ajout de déclaration illégale ou défectueuse (dimensionnement du tableau) : «%»!
+Menu.error24_10.text=Au moins une taille invalide pour le dimensionnement du tableau (doit être une constante entière > 0) : «%»!
 Menu.hint07_1.text=Que doit faire votre algorithme? Remplacer «%» par un nom correct pour lui!
 Menu.hint25_1.text=Sélectionner le centre du diagramme et placer un premier élément, par ex. une instruction d'entrée comme «%1 %2».
 Menu.hint25_2.text=Vous pourriez vouloir entrer des données , par ex. avec une instruction comme «%1 %2». → Menu "%3"
@@ -501,6 +508,12 @@ Menu.error29.text=La valeur de choix «%» est d'un type structuré et par cons�
 Menu.error30_1.text=Il y a %1 parenthèses ouvrantes de plus que de parenthèses fermantes dans la ligne %2, '%3' était attendu après!
 Menu.error30_2.text=Il y a au moins une parenthèse fermante de plus que de parenthèses ouvrantes dans la ligne %2!
 Menu.error30_3.text=Il y a un '%1' fermant(e) où un '%3' est attendu dans la ligne %2!
+Menu.error31_1.text=Une déclaration commençant par «%1» doit contenir un symbole «%2» suivi d'une spécification de type.
+Menu.error31_2.text=Chaîne inattendue «%» dans la liste des variables déclarées!
+Menu.error31_3.text=Ces objets de déclaration ne sont pas des identifiants adaptés : «%»!
+Menu.error31_4.text=Une tentative de re-déclarer la ou les variables déjà existantes «%»!
+Menu.error31_5.text=Pour une initialisation, la déclaration doit contenir exactement UNE variable, pas % !
+Menu.error31_6.text=Une construction de type anonyme «%» n'est pas autorisée à ce stade!
 Menu.errorLineReference.text=(ligne %)
 
 -----[ AnalyserPreferences ]-----
@@ -1499,6 +1512,7 @@ Control.msgSignatureConflicts.text=Il y a des conflits d'API parmi les plugins d
 Control.msgGUISyncFault.text=Erreur de synchronisation possible de l'interface graphique lors de l'exécution de «%».\nEssayer de reprendre l'exécution?
 Control.msgErrorInSubroutine.text=Une erreur est survenue lors de l'exécution de «%1» au niveau %2:\n	%3!
 Control.msgThrown.text=Exception lancée dans «%1» au niveau %2: %3
+Control.msgInvalidInitialization.text=La variable à initialiser est manquante ou ambiguë: «%»! 
 Control.tblVar.header.0=Nom de variable
 Control.tblVar.header.2=Contenu
 

@@ -85,6 +85,7 @@
  *      Kay Gürtzig     2022-08-01      Enh. #1047: Batch export option -k for keeping the source files apart
  *      Kay Gürtzig     2022-08-11/12   Enh. #1047: Modified effect of -o option (also in combination with -k)
  *      Kay Gürtzig     2023-08-17      Bugfix #1083: Undue error message on using "-p Pascal ..." eliminated
+ *      Kay Gürtzig     2023-10-29      Bugfix #1100: Precaution against insufficient Java version.
  *
  ******************************************************************************************************
  *
@@ -147,6 +148,9 @@ import lu.fisch.utils.StringList;
 
 public class Structorizer
 {
+	// START KGU#1095 2023-10-29: Issue #1100 report insufficient JRE
+	private static final int REQUIRED_JAVA_VERSION = 11;
+	// END KGU#1095 2023-10-29
 
 	// entry point
 	public static void main(String args[])
@@ -332,6 +336,34 @@ public class Structorizer
 				fileNames.add(args[i]);
 			}
 		}
+		
+		// START KGU#1095 2023-10-29: Workaround #1100 Try to warn if we are run with an obsolete JRE
+		String javaVer = System.getProperty("java.version");
+		if (javaVer != null) {
+			String[] parts = javaVer.split("\\.", 2);
+			if (parts.length > 0) {
+				int mainVer = 0;
+				try {
+					mainVer = Integer.parseInt(parts[0]);
+				}
+				catch (NumberFormatException ex) {}
+				if (mainVer < REQUIRED_JAVA_VERSION) {
+					String verMsg = "*** Java runtime environment " + javaVer + " not suited to start Structorizer! We need Java "
+							+ REQUIRED_JAVA_VERSION + " at least.";
+					System.err.println(verMsg);
+					Logger.getLogger(Structorizer.class.getName()).log(Level.SEVERE, verMsg);
+					if (generator == null && parser == null) {
+						JOptionPane.showMessageDialog(null,
+								verMsg, 
+								"Java version error",
+								JOptionPane.ERROR_MESSAGE);
+					}
+					System.exit(1);
+				}
+			}
+		}
+		// END KGU#1095 2023-10-29
+		
 		// START KGU#722 2019-08-06: Enh. #741
 		if (settings != null) {
 			if (generator != null || parser != null) {
@@ -364,7 +396,7 @@ public class Structorizer
 			return;
 		}
 		// END KGU#187 2016-04-28
-		
+				
 		// START KGU#521 2018-06-12: Workaround for #536 (corrupted rendering on certain machines) 
 		System.setProperty("sun.java2d.noddraw", "true");
 		// END KGU#521 2018-06-12
@@ -1619,6 +1651,7 @@ public class Structorizer
 	/**
 	 * Performs a linewise filtered copy of {@code sourceStrm} to {@code targetFile}. Closes
 	 * {@code sourceStrm} afterwards.
+	 * 
 	 * @param sourceStrm - opened source {@link InputStream}
 	 * @param targetFile - {@link File} object for the copy target
 	 * @return a string describing occurred errors or an empty string.
@@ -1680,6 +1713,5 @@ public class Structorizer
 		return problems;
 	}
 // END KGU#595 2018-10-07
-
 
 }

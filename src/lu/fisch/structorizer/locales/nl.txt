@@ -62,6 +62,7 @@
  *      Kay Gürtzig     2021-01-25      Enh. #915: InputBoxCase messages added
  *      Kay Gürtzig     2021-09-22      Enh. #915: Some missing InputBoxCase tooltips concocted
  *      Kay Gürtzig     2023-08-01      Enh. #1082: Function name incuded in messages Menu.error13_*
+ *      Kay Gürtzig     2023-10-16      Issues #980/#1096: New messages for declaration syntax check (error31_*) 
  *
  ******************************************************************************************************
  *
@@ -202,19 +203,23 @@ Menu.menuDiagramTypeProgram.text=@n
 Menu.menuDiagramTypeFunction.text=@o
 Menu.menuDiagramTypeInclude.text=@p
 Menu.menuDiagramUnboxed.text=Diagram zonder rand?
-Menu.menuDiagramComment.text=Commentaar weergeven?
-Menu.menuDiagramSwitchComments.text=Tekst/commentaar wisselen
-Menu.menuDiagramCommentsPlusText.text=Commentaar plus teksten?
-Menu.menuDiagramSwitchTCTooltip.text=Deselecteer "%1" om dit in te schakelen
-Menu.menuDiagramHideDeclarations.text=Simpele declaraties verbergen?
-Menu.menuDiagramMarker.text=Variabelen markeren?
-Menu.menuDiagramOperatorsC.text=Operatoren in C-stijl tonen?
-Menu.menuDiagramOperatorsC.tooltip=Operator-symbolen in de diagrammen tonen volgens de C-syntaxis (vereist modus "Variabelen markeren?").
-Menu.menuDiagramDIN.text=DIN 66261?
-Menu.menuDiagramDIN.tooltip=Schakelt uiterlijk van @d-lussen tussen DIN 66261  (gevormd als @g-lus) en niet-standaard (gevormd als @i-lus).
-Menu.menuDiagramAnalyser.text=Structogram analyseren?
-Menu.menuDiagramIndex.text=Index Arranger tonen?
-Menu.menuDiagramPreview.text=Code-preview tonen?
+// Menu "View"
+Menu.menuView.text=Weergave
+Menu.menuView.mnemonic=w
+// Submenus of "View"
+Menu.menuViewComment.text=Commentaar weergeven?
+Menu.menuViewSwitchComments.text=Tekst/commentaar wisselen
+Menu.menuViewCommentsPlusText.text=Commentaar plus teksten?
+Menu.menuViewSwitchTCTooltip.text=Deselecteer "%1" om dit in te schakelen
+Menu.menuViewHideDeclarations.text=Simpele declaraties verbergen?
+Menu.menuViewMarker.text=Variabelen markeren?
+Menu.menuViewOperatorsC.text=Operatoren in C-stijl tonen?
+Menu.menuViewOperatorsC.tooltip=Operator-symbolen in de diagrammen tonen volgens de C-syntaxis (vereist modus "Variabelen markeren?").
+Menu.menuViewDIN.text=DIN 66261?
+Menu.menuViewDIN.tooltip=Schakelt uiterlijk van @d-lussen tussen DIN 66261 (gevormd als @g-lus) en niet-standaard (gevormd als @i-lus).
+Menu.menuViewAnalyser.text=Structogram analyseren?
+Menu.menuViewIndex.text=Index Arranger tonen?
+Menu.menuViewPreview.text=Code-preview tonen?
 
 // Menu "Preferences"
 Menu.menuPreferences.text=Instellingen
@@ -480,6 +485,8 @@ Menu.error24_5.text=Er is geen bekend recordtype «%»!
 Menu.error24_6.text=Recordcomponent «%» wordt niet gewijzigd/geïnitialiseerd!
 Menu.error24_7.text=Recordtype «%1» heeft geen component «%2»!
 Menu.error24_8.text=Variabele «%1» heeft geen component «%2»!
+Menu.error24_9.text=Illegale of gebrekkige declaratietoevoeging (arraydimensionering): «%»!
+Menu.error24_10.text=Tenminste één ongeldige grootte voor de arraygrootte (moet een geheel getalconstante > 0 zijn): «%»!
 Menu.hint07_1.text=Wat moet uw algoritme doen? Vervang «%» met een goede naam!
 Menu.hint25_1.text=Selecteer het midden van het diagram en plaats er een eerste element, bijv. een invoeropdracht zoals «%1 %2».
 Menu.hint25_2.text=Misschien wilt u gegevens invoeren, bijv. met een instructie zoals «%1 %2». → Menu "%3"
@@ -494,10 +501,16 @@ Menu.hint26.3.text=U kunt nu bijv. uw diagram exporteren naar een programmeertaa
 Menu.hint26.4.text=U kunt nu bijv. uw diagram exporteren als afbeeldingsbestand: → Menu "%1 ► %2 ► %3"
 Menu.error27.text=Enkele @c-keuzewaarden (zoals «%») lijken geen gehele getallen te zijn.
 Menu.error28.text=Er zijn meerdere (botsende) keuze-elementen (%) in het @c-element!
-Menu.error29.text=
-Menu.error30_1.text=
-Menu.error30_2.text=
-Menu.error30_3.text=
+Menu.error29.text=De selectiewaarde «%» is van het gestructureerde type en daarom niet geschikt voor @c!
+Menu.error30_1.text=In regel %2 zijn er %1 meer haakjes openen dan haakjes sluiten, '%3' wordt als volgende verwacht!
+Menu.error30_2.text=In regel %2 staat er minstens één meer sluitende '%1' dan openen haakjes!
+Menu.error30_3.text=In regel %2 staat een haakje '%1' waar '%3' zou worden verwacht!
+Menu.error31_1.text=Een declaratie die begint met «%1» moet een symbool «%2» bevatten, gevolgd door een typespecificatie.
+Menu.error31_2.text=Onverwachte tekenreeks «%» in de lijst met gedeclareerde variabelen!
+Menu.error31_3.text=Deze declaratieobjecten zijn geen geschikte identificatiegegevens: «%»!
+Menu.error31_4.text=Dit is een poging om de reeds bestaande variabele(n) «%» opnieuw te declareren!
+Menu.error31_5.text=Voor een initialisatie moet de declaratie precies EEN variabele bevatten, niet % !
+Menu.error31_6.text=Een anonieme typeconstructie «%» is in deze positie niet toegestaan!!
 Menu.errorLineReference.text=(regel %)
 
 -----[ AnalyserPreferences ]-----
@@ -1449,6 +1462,7 @@ Control.msgSignatureConflicts.text=Er zijn API-conflicten met de gekozen plugins
 Control.msgGUISyncFault.text=Mogelijke GUI-synchronisatiefout tijdens uitvoeren van «%».\nHervatten uitvoeren proberen?
 Control.msgErrorInSubroutine.text=Fout gevonden bij uitvoeren «%1» op niveau %2:\n	%3!
 Control.msgThrown.text=Exceptie-fout in «%1» op niveau %2: %3
+Control.msgInvalidInitialization.text=De te initialiseren variabele ontbreekt of is dubbelzinnig: «%»!
 Control.tblVar.header.0=Naam variabele
 Control.tblVar.header.2=Inhoud
 

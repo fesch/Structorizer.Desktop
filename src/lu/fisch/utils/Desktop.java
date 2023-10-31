@@ -57,7 +57,7 @@ import java.util.List;
  * a browser, an editor, or some other standard application for given
  * files.<br/>
  * In contrast to java.awt.Desktop it is not a singleton but provides static
- * methods only. 
+ * methods only.
  * @author jjYBdx4IL
  * @author codemanyak
  */
@@ -317,7 +317,7 @@ public class Desktop {
         //return gdmSession != null && gdmSession.toLowerCase().contains("kde");
         String kdeSessionUid = System.getenv("KDE_SESSION_UID");
         return (gdmSession != null && gdmSession.toLowerCase().contains("kde"))
-        		|| (kdeSessionUid != null && !kdeSessionUid.isEmpty());
+                 || (kdeSessionUid != null && !kdeSessionUid.isEmpty());
         // END KGU#250 2016-09-19
     }
 }

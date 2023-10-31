@@ -58,6 +58,11 @@
  *      Kay Gürtzig         2018-07-02      KGU#245: all Colors stuff replaced with array keys 
  *      Kay Gürtzig         2022-08-10      Enh. #56, #492: Element name placeholders / TRY messages accomplished
  *      Kay Gürtzig         2023-08-01      Enh. #1082: Function name incuded in messages Menu.error13_* *
+ *      Kay Gürtzig         2023-10-09      Issue #311: Menu reorganisation (menuDiagram split)
+ *      Kay Gürtzig         2023-10-10      Large number of translations added (by means of
+ *                                          https://www.webtran.de/luxembourgish/)
+ *      Kay Gürtzig         2023-10-16      Issue #980/#1096: New messages for declaration syntax check (error31_*) 
+ *
  ******************************************************************************************************
  *
  *      Comment:	
@@ -98,35 +103,60 @@
 >>>
 -----> Structorizer
 -----[ Menu ]-----
-//Menu File
+// Menu "File"
 Menu.menuFile.text=Fichier
+Menu.menuFile.mnemonic=f
 // Submenus of "File"
 Menu.menuFileNew.text=Nei
 Menu.menuFileOpen.text=Opmaachen...
-Menu.menuFileOpenRecent.text=Läscht opgemaachten Dateien
+Menu.menuFileOpenRecent.text=Lescht opgemaachten Dateien
 Menu.menuFileSave.text=Späicheren
 Menu.menuFileSaveAs.text=Späicheren ënner...
+Menu.menuFileSaveAll.text=Alles späicheren
 Menu.menuFileExport.text=Exportéieren
 // Submenu of "File -> Export"
 Menu.menuFileExportPicture.text=Biller
 Menu.menuFileExportCode.text=Code
+Menu.menuFileExportPicturePNG.text=
+Menu.menuFileExportPicturePNGmulti.text=
+Menu.menuFileExportPictureEMF.text=
+Menu.menuFileExportPictureSWF.text=
+Menu.menuFileExportPicturePDF.text=
+Menu.menuFileExportPictureSVG.text=
+Menu.lbFileExportCodeFavorite.text=Exportéieren als % code
+Menu.menuFileExportCodeFavorite.tooltip=Déi gewënschte Exportsprooch kann an den Export Astellunge gewielt ginn.
 Menu.menuFileImport.text=Importéieren
 // Submenu of "File -> Import"
-Menu.menuFileImportCode.text=Code ...
+Menu.menuFileImportCode.text=Code...
 Menu.menuFilePrint.text=Drécken...
+Menu.menuFileArrange.text=Am Arranger plazéieren
+Menu.menuFileAttributes.text=Eegeschaften weisen...
+Menu.menuFileTranslator.text=Iwwersetzer...
 Menu.menuFileQuit.text=Verloossen
+
 // Menu "Edit"
 Menu.menuEdit.text=Editéieren
+Menu.menuEdit.mnemonic=e
 // Submenu of "Edit"
 Menu.menuEditUndo.text=Réckgängeg maachen
 Menu.menuEditRedo.text=Erëm hierstellen
 Menu.menuEditCut.text=Ausschneiden
 Menu.menuEditCopy.text=Kopéieren
 Menu.menuEditPaste.text=Apechen
+Menu.menuEditSummonSub.text=@o editéieren ...
+Menu.menuEditSummonSub.tooltip=Kréien oprufft @o oder abegraff Diagramm fir Redaktioun.
+Menu.menuEditFindReplace.text=Find/Ersetzen ...
+Menu.menuEditUpgradeTurtle.text=
+Menu.menuEditUpgradeTurtle.tooltip=
+Menu.menuEditDowngradeTurtle.text=
+Menu.menuEditDowngradeTurtle.tooltip=
+Menu.menuEditBreakLines.text=Re-wrap Linnen...
+Menu.menuEditBreakLines.tooltip=Erlaabt d'Textlinne vun den ausgewielten Elementer (an optional hir Ënnerstruktur) op eng spezifizéierter maximal Längt nei gewéckelt ze ginn.
 Menu.menuEditCopyDiagramPNG.text=D'Bild als PNG kopéieren
 Menu.menuEditCopyDiagramEMF.text=D'Bild als EMF kopéieren
 // Menu "Diagram"
 Menu.menuDiagram.text=Diagramm
+Menu.menuDiagram.mnemonic=d
 // Submenus of "Diagram"
 Menu.menuDiagramAdd.text=Bäisetzen
 // Submenu "Diagram -> Add -> Before"
@@ -161,25 +191,49 @@ Menu.menuDiagramEdit.text=Editéieren
 Menu.menuDiagramDelete.text=Läschen
 Menu.menuDiagramMoveUp.text=No uewen réckelen
 Menu.menuDiagramMoveDown.text=No ënnen réckelen
+Menu.menuDiagramTransmute.text=Transforméieren
+Menu.menuDiagramOutsource.text=Outsource ...
+Menu.menuDiagramOutsource.tooltip=Beweegt ausgewielt Element Sequenz op neit Ënnerdiagramm.
+Menu.menuDiagramCollapse.text=Klappt
+Menu.menuDiagramExpand.text=Ausklappt
+// Diagram Appearance
 Menu.menuDiagramType.text=Typ
 Menu.menuDiagramTypeProgram.text=@{Root.DT_MAIN}
 Menu.menuDiagramTypeFunction.text=@{Root.DT_SUB}
 Menu.menuDiagramTypeInclude.text=@{Root.DT_INCL}
 Menu.menuDiagramUnboxed.text=Diagramm net boxed?
-Menu.menuDiagramComment.text=Kommentaren uwëisen?
-Menu.menuDiagramSwitchComments.text=Tëschent Text an Kommentaren wiesselen
-Menu.menuDiagramMarker.text=Variabelen markéieren?
-Menu.menuDiagramDIN.text=DIN 66261?
-Menu.menuDiagramAnalyser.text=Structogramm analyséieren
-// Menu "Help"
+// Menu "View"
+Menu.menuView.text=Usiicht
+Menu.menuView.mnemonic=u
+Menu.menuViewComment.text=Kommentaren uwëisen?
+Menu.menuViewSwitchComments.text=Tëschent Text an Kommentaren wiesselen
+Menu.menuViewCommentsPlusText.text=Kommentaren an Text?
+Menu.menuViewSwitchTCTooltip.text=Fir dëst Menüpunkt ze aktivéieren, deaktivéiert "%1"
+Menu.menuViewHideDeclarations.text=Verstoppen reng Deklaratiounen?
+Menu.menuViewMarker.text=Variabelen markéieren?
+Menu.menuViewOperatorsC.text=Operateur Symbolen am C Stil uwëisen?
+Menu.menuViewOperatorsC.tooltip=Weist Operateur Symbolen am Diagramm no C Syntax (nëmmen a Verbindung mat "Variabelen markéieren?").
+Menu.menuViewDIN.text=DIN 66261?
+Menu.menuViewDIN.tooltip=Wiesselt d'Erscheinung vu Schläifen tëscht DIN 66261 (Form wéi @g Schläif) an Net-Standard (Form wéi @i Loop).
+Menu.menuViewAnalyser.text=Structogramm analyséieren
+Menu.menuViewIndex.text=Arranger Index uwëisen?
+Menu.menuViewPreview.text=Code Virschau uwëisen?
+
+// Menu "Preferences"
 Menu.menuPreferences.text=Astellungen
 Menu.menuPreferences.mnemonic=a
-// Submenu of "Help"
+// Submenu of "Preferences"
+Menu.menuPreferencesNotifyUpdate.text=Neie Versiounen avertéieren?
+Menu.menuPreferencesNotifyUpdate.tooltip=Erlaabt Structorizer fir Updates ze kontrolléieren an Iech op nei Versiounen op der Structorizer Homepage ze alarméieren.
+Menu.menuPreferencesSimplified.text=Vereinfacht Menü Baren?
 Menu.menuPreferencesFont.text=Schrëft...
 Menu.menuPreferencesColors.text=Faarf...
 Menu.menuPreferencesOptions.text=Strukturen...
 Menu.menuPreferencesParser.text=Parser...
+Menu.menuPreferencesElements.text=Element Nimm ...
+Menu.menuPreferencesCtrlAliases.text=Controller Ersatz Nimm ...
 Menu.menuPreferencesAnalyser.text=Analyser …
+Menu.menuPreferencesSaving.text=Späicheren ...
 Menu.menuPreferencesExport.text=Export …
 Menu.menuPreferencesImport.text=Import …
 Menu.menuPreferencesLanguage.text=Sprooch
@@ -196,13 +250,22 @@ Menu.menuPreferencesLanguageItems.zh-tw.text=Chinesesch (traditionell)
 Menu.menuPreferencesLanguageItems.cz.text=Tschechesch
 Menu.menuPreferencesLanguageItems.ru.text=Russesch
 Menu.menuPreferencesLanguageItems.pl.text=Polnesch
-
+Menu.menuPreferencesLanguageFromFile.text=Vun Fichier ...
+Menu.menuPreferencesLanguageFromFile.tooltip=Dir kënnt Sproochdateien selwer erstellen mam 'Iwwersetzer' am Fichier Menü.
 Menu.menuPreferencesLookAndFeel.text=Look & Feel
+Menu.menuPreferencesWheel.text=Maus Rad
+Menu.menuPreferencesWheelCollapse.text=Maus Rad fir Klappt?
+Menu.menuPreferencesWheelZoom.text=Ëmgedréint Zoomverhalen mam Ctrl + Maus Rad?
+Menu.menuPreferencesWheelUnit.text=Maus Rad Scroll Eenheet ...
+Menu.menuPreferencesScalePreset.text=GUI skaléieren ...
 
 Menu.menuPreferencesSave.text=Späicheren oder lueden ...
 Menu.menuPreferencesSaveAll.text=Späicheren
-Menu.menuPreferencesSaveDump.text=Späicheren als Datei ...
-Menu.menuPreferencesSaveLoad.text=Aus Datei lueden
+Menu.menuPreferencesSaveDump.text=Späicheren als Fichier ...
+Menu.menuPreferencesSaveLoad.text=Vun Fichier lueden ...
+Menu.menuPreferencesSaveLoad.tooltip=Lueden Astellunge vun enger INI-Datei erstellt automatesch e Backup vun de fréiere Astellungen an enger temporärer Datei.
+Menu.menuPreferencesSaveRestore.text=Restauréiert leschte Backup.
+Menu.menuPreferencesSaveRestore.tooltip=Restauréiert d'Astellunge vum Backup erstallt déi leschte Kéier wou eng INI Datei an dëser Sessioun gelueden gouf.
 
 // Menu "Debug"
 Menu.menuDebug.text=Debug
@@ -210,25 +273,148 @@ Menu.menuDebug.mnemonic=b
 // Submenu of "Debug"
 Menu.menuDebugTurtle.text=Turtleizer ...
 Menu.menuDebugExecute.text=Executor ...
-Menu.menuDebugDropBrkpts.text=Breakpoints ausschalten
-Menu.menuDebugBreakpoint.text=Breakpoint un/ausschalten
-Menu.menuDebugBreakTrigger.text=Break trigger ...
-Menu.menuDebugDisable.text=
+Menu.menuDebugDropBrkpts.text=Breakpunkter ausschalten
+Menu.menuDebugBreakpoint.text=Breakpunkt un/ausschalten
+Menu.menuDebugBreakTrigger.text=Breakpunkt Ausléiser setzen ...
+Menu.menuDebugDisable.text=Deaktivéieren/Aktivéieren
 
 // Menu "Help"
-Menu.menuHelp.text=Hellef
+Menu.menuHelp.text=Hëllef
 Menu.menuHelp.mnemonic=h
 // Submenu of "Help"
+Menu.menuHelpOnline.text=User Guide
+Menu.menuHelpOnline.tooltip=Öffnen d'Benotzerhandbuch am Browser
+Menu.menuHelpDownload.text=Download Manual als PDF.
+Menu.menuHelpDownload.tooltip=Luet déi lescht PDF Benotzerhandbuch erof fir Hëllef ze weisen wann d'Netzverbindung ënnerbrach ass.
 Menu.menuHelpAbout.text=Iwwert ...
 Menu.menuHelpUpdate.text=Update. ..
 
 // Dialog messages
-Menu.msgWelcomeMessage1.text=Welcome to Structorizer, your comfortable free Nassi-Shneiderman diagram editor.\nWith this tool you may design, test, analyse, export algorithms, and many things more.\n(Unfortunately, this localization isn't complete. But you may help accomplishing it → Menu "%1 ► %2")\nPlease choose your initial dialog language (you may always change this later via the menu):
-Menu.msgWelcomeMessage2.text=Structorizer was designed for intuitive handling but has already been enhanced with a lot of extras.\n\nIf you are an absolute beginner then you may start with a reduced menu and a «%».\nDo you want to start in the simplified and guided mode? (You can always switch to full mode.)
-Menu.lblReduced.text=Yes, reduced mode
-Menu.lblNormal.text=No, normal mode
+Menu.msgDialogExpCols.text=A wéi vill Kolonnen soll d'Bild opgedeelt ginn?
+Menu.msgDialogExpRows.text=A wéi vill Linnen soll d'Bild opgedeelt ginn?
+Menu.msgOverwriteFile.text=Bestehend Datei iwwerschreiwe?
+Menu.msgOverwriteFiles.text=Datei(en) mam selwechten Numm existéieren. Iwwerschreiwe?
+Menu.msgOverwriteFile1.text=Bestehend Datei "%" iwwerschreiwe?
+Menu.msgCancelAll.text=Backupsatellit vun all verbleiwen Fichieren annuléieren?
+Menu.btnConfirmOverwrite.text=Confirméieren iwwerschreiwe
+Menu.msgRepeatSaveAttempt.text=De Fichier konnt net gespäichert ginn. Probéiert w.e.g. nach eng Kéier!
+Menu.msgErrorFileSave.text=Feeler beim Späicheren vun der Datei: %!
+Menu.msgErrorFileRename.text=Feeler beim Beweegen vun de gespäicherten Datei:\n%1Fannt w.e.g. de Fichier "%2" an ëmbenannt se selwer.
+Menu.msgBreakTriggerPrompt.text=Setzt d'Zuel vun den Ausféierunge fir d'Ausléisung vun engem Arrêt (0 = ëmmer).
+Menu.msgBreakTriggerIgnored.text=Input ignoréiert - muss eng Kardinolnummer sinn.
+Menu.msgOpenLangFile.text=Iwwersetzungsdatei opmaachen
+Menu.msgLangFile.text=Structorizer Iwwersetzungsdatei
+Menu.msgGotoHomepage.text=Kuckt % fir erofzelueden Updates<br/>an Neiegkeeten iwwer Structorizer.
+Menu.msgTitleError.text=Feeler
+Menu.msgTitleWarning.text=WARNUNG
+Menu.msgTitleLoadingError.text=Lueden Feeler
+Menu.msgTitleParserError.text=Parser Feeler
+Menu.msgTitleURLError.text=URL Feeler
+Menu.msgTitleQuestion.text=Frot
+Menu.msgTitleOpen.text=Fichier opmaachen ...
+Menu.msgTitleSave.text=Fichier späicheren ...
+Menu.msgTitleSaveAs.text=Fichier späicheren ënner...
+Menu.msgTitleImport.text=Code Import - wielt Quelldatei (Notiz Dateitypfilter) ...
+Menu.msgTitleNSDImport.text=Diagrammdatei vun % ... importéieren
+Menu.msgTitleWrongInput.text=Falsch Entrée
+Menu.msgSaveChanges.text=Wëllt Dir déi aktuell Diagrammdatei späicheren?
+Menu.msgErrorImageSave.text=Feeler beim späicheren als Bild/Biller!
+Menu.msgErrorUsingGenerator.text=Feeler beim Export zu %
+Menu.msgErrorNoFile.text=Datei net fonnt
+Menu.msgBrowseFailed.text=Kann "%" am Browser net weisen
+Menu.msgShowingOfflineGuide.text=D'Benotzerhandbuch dat viru kuerzem als PDF erofgeluede gouf gëtt als Ersatz ugewisen (am PDF Viewer).
+Menu.msgDownloadFailed.text=D'Download vun der Benotzerhandbuch als PDF ass gescheitert:\n%
+Menu.msgCancelled.text=Annuléiert
+Menu.msgHostNotAvailable.text=D'Adress "%" kann net erreecht ginn.
+Menu.hdrRefactoringTable.0.text=Referenz
+Menu.hdrRefactoringTable.1.text=Al
+Menu.hdrRefactoringTable.2.text=Nei
+Menu.msgRefactoringOffer1.text=Schlësselwieder an de Parser Astellunge goufen ersat:
+Menu.msgRefactoringOffer2.text=Sollen oppe Diagrammer deementspriechend ugepasst ginn?
+Menu.lblRefactorNone.text=nee
+Menu.lblRefactorCurrent.text=aktuellen Diagramm
+Menu.lblRefactorAll.text=all Diagrammer
+Menu.msgDiscardParserPrefs.text=Wierklech all nei Parser Astellunge verworf?
+Menu.msgAdaptStructPrefs.text=Struktur Astellunge (Standard Texter) un nei Parser Astellungen upassen?\n(z.B.: %)
+Menu.msgKeywordsDiffer.text=Original Schlësselwuert Kontext vum geluedenen Diagramm ënnerscheet sech vun den aktuellen Parser-Astellungen:%1\nAutomatesch Upassung beim Luede ass ausgeschalt.\n\nDir hutt elo déi folgend Optiounen:\n%2
+Menu.msgRefactorNow.text=D'Diagramm kann elo un d'Parser-Astellunge ugepasst ginn (recommandéiert)
+Menu.msgAdoptPreferences.text=Dir kënnt d'Schlësselwierder, déi mam Diagramm gelueden sinn, als nei Parser-Astellunge uwenden\n (awer dëst wäert all aner gelueden Charts personaliséieren!)
+Menu.msgLeaveAsIs.text=Dir kënnt d'Diagramm verloossen wéi et ass, awer dëst  wäert Debugging behënneren\n   an Exporter kënne korrupt ginn (Customiséierung kann méi spéit gemaach ginn)
+Menu.msgAllowChanges.text=Dir kënnt erlaabt datt d'Diagramm geännert gëtt, awer d'Schlësselwuert Informatioun gëtt irretrievably verluer
+Menu.lblRefactorNow.text=Diagramm personaliséieren
+Menu.lblAdoptPreferences.text=Schlësselwierder adoptéieren
+Menu.lblLeaveAsIs.text=Loosst d'Diagramm wéi et ass
+Menu.lblAllowChanges.text=Erlaabt d'Chartmodifikatioun
+Menu.msgReplacementsDone.text=% Uweisungen ersat.
+Menu.msgNewerVersionAvail.text=Méi nei Versioun % verfügbar fir erofzelueden.
+Menu.msgUpdateInfoHint.text=Fir d'Disponibilitéit vun neie Versioune beim Start ze gesinn,\n Dir kënnt d'Online-Ufro fir Aktualiséierungen op der Structorizer-Homepage mat dem Menüpunkt "%1" ► "%2"\n aktivéieren.\n(Dateschutz Notiz: Fir den HTML Ufro Är IP Adress gëtt iwwerdroen, awer net gespäichert.\nPerséinlech Donnéeë gi weder gesammelt, iwwerdroen, nach op eng aner Manéier veraarbecht.)
+Menu.msgWelcomeMessage1.text=Wëllkomm am Structorizer, Äre bequemen gratis Struktogramm Editor.\nMat dësem Programm kënnt Dir Algorithmen designen, testen, analyséieren, se an d'Programméiersprooch exportéieren\na vill méi.\nW.e.g. wielt elo Är Dialogsprooch (Dir kënnt se zu all Moment änneren via de Menü):
+Menu.msgWelcomeMessage2.text=Structorizer gouf fir intuitiv Handhabung entwéckelt, awer scho mat villen Extras ausgebaut.\nHutt Dir nach wéineg Erfahrung mat Algorithmen an Entwécklungsëmfeld?\nDa kënnt Dir mat der vereinfachter Toolbar ufänken an «%» aktivéieren.\nWëllt Dir schaffen am vereinfacht Ufänger Modus éischt?
+Menu.lblOk.text=OK
+Menu.lblYes.text=Jo
+Menu.lblNo.text=Nee
+Menu.lblContinue.text=Jo, weider
+Menu.lblCancel.text=Nee, annuléieren
+Menu.lblSkip.text=Nee, iwwergoen
+Menu.lblModify.text=Nee, änneren
+Menu.lblYesToAll.text=Jo fir all
+Menu.lblNoToAll.text=Nee fir all
+Menu.lblSuppressUpdateHint.text=Gitt dës Notiz net erëm
+Menu.lblHint.text=Notiz
+Menu.lblCopyToClipBoard.text=OK, kopéiert Text op Clipboard
+Menu.lblReduced.text=Jo, vereinfacht Modus
+Menu.lblNormal.text=Nee, normal Modus
+Menu.ttlCodeImport.text=Quelltext Import
+Menu.msgSelectParser.text=D'Quellcode Sprooch vun "%" ass net eenzegaarteg.\nWielt w.e.g. déi gëeegent Import Sprooch / Parser
+Menu.msgImportCancelled.text=Quelltext Import fir Fichier "%" annuléiert.
+Menu.msgSubroutineName.text=Numm fir den neien Ënnerprogramm
+Menu.msgIncludableName.text=Numm fir den (neien) abegraffable Diagramm fir déi gemeinsam Typen
+Menu.msgMustBeIdentifier.text=Den gewielt Numm war net gëeegent als Identifizéierer!
+Menu.msgJumpsOutwardsScope.text=Et gi @k Instruktioune no baussen an der gewielter Diagrammabschnëtt.\nD'Extraktioun vun hinnen géif d'Programmlogik zerstéieren oder e falschen Algorithmus erstellen!\nDéi entspriechend @k Elementen sinn hei ënnendrënner opgezielt an am Diagramm ROUT markéiert:\n%\n\nTrotzdem weider extrahéieren?
+Menu.msgImportTooltip.text=<html>Diagrammdateien erstallt vum Structogram/PAP Editor<br/>vun <a href="%">%</a></html>
+Menu.msgExportTooltip.text=<html>Diagrammdateien erstellen déi vum PAP Editor<br/>aus <a href="%">%</a><br/>ugeholl ginn.</html>
+Menu.msgImportFileReadError.text=De Fichier "%" gëtt et net oder ass onliesbar.
+Menu.msgUnsupportedFileFormat.text=Dës Datei(e) konnten net geluede ginn, well hiert Format onbekannt oder net ënnerstëtzt ass:\n%
+Menu.msgGuidedTours.text=Dir hutt guidéiert Coursen aktivéiert.\n\nSich no Empfehlungen oder Virschléi am\nënneschten Textberäich\n(iwwerpréiwen Messagen).\nKleng Dräieck an den\nElementer erënneren\neis un dat.
+Menu.msgGuidedTourDone.text=Gratulatioun - Dir hutt de Cours "%" ofgeschloss.
+Menu.msgGuidedTourNext.text=%1\nDe Cours «%2» fänkt geschwënn un.\nDir kënnt dat maachen andeems Dir en neit Diagramm starten → Menu "% 3"
+Menu.ttlGuidedTours.text=Guidéiert Coursen
+Menu.msgTooManyDiagrams.text=D'Zuel vun de generéierte Charts iwwerschreift déi konfiguréiert Limit (%) fir direkt Display.\nAll Diagrammer déi Dir kritt direkt späicheren?
+Menu.lblAcceptProposedNames.text=All proposéiert Dateinimm akzeptéieren.
+Menu.ttlBreakTextLines.text=Limitéieren der Linn Längt mat Wuert Wrapping
+Menu.msgMaxLineLengthSelected.text=Maximal Linn Längt an ausgewielt Element: %
+Menu.msgMaxLineLengthSubstructure.text=Maximal Linn Längt, dorënner Ënnerstruktur: %
+Menu.lblNewMaxLineLength.text=Nei maximal Linn Längt:
+Menu.lblInvolveSubtree.text=Gëlle rekursiv op Ënnerstrukturen
+Menu.lblPreserveContinuators.text=Erhaalen bestehend Linn Pausen
+Menu.msgVetoClose.text=Structorizer ass um Enn selwer. Contestatioun?
+Menu.msgSetAsPreferredGenerator.text=Dir hutt déi lescht %2 Molde %1 Code  exportéiert.\nWëllt Dir elo %1 als déi gewënschte Exportsprooch am Dateimenü setzen?
+Menu.msgChooseSubroutine.text=Wielt w.e.g. @o Diagramm fir z'änneren:
+Menu.msgCreateSubroutine.text=En neit @o Diagramm «%» erstellen?
+Menu.msgEditSubroutine.text=@o editéieren ...
+Menu.msgEditIncludable.text=@p Diagramm editéieren...
+Menu.msgChooseIncludable.text=Wielt w.e.g. @p Diagramm fir z'änneren:
+Menu.msgCreateIncludable.text=En neit @p Diagramm «%» erstellen?
+Menu.msgCyclicInclusion.text=Cyclesch Referenz geläscht - keng weider abegraff Diagrammer!
+Menu.ttlMouseScrollUnit.text=Maus Rad Scroll Eenheet
+Menu.msgSelectPreferences.text=Astellunge fir ze exportéieren (Kategorien)
+Menu.msgAllPreferences.text=All Astellunge
+Menu.msgInvertSelection.text=Wielt ëmdréinen
+Menu.ttDiagramMenuSettings.text="%" Menü Astellunge
+Menu.msgIniBackupFailed.text=D'Schafe vun enger Backupdatei vun den aktuellen Astellungen ass gescheitert.\nWëllt Dir nach ëmmer "%" lueden?
+Menu.msgIniRestoreFailed.text=De leschte Backup konnt net geluede ginn%
+Menu.prefsArranger.text=Arrangeur
+Menu.msgErrorSettingLaF.text=Problem beim Änneren vum Look and Feel op %1: %2
+Menu.msgRootCloned.text=Diagramm «%1» gouf gekloont.\n\nDir schafft elo mat enger onofhängeger Kopie:\n%2
+Menu.msgAnalyserHint_3_30_14.text=Nei Symboler an e puer Elementer weisen elo\ndatt et Analysatorwarnunge\nfir dës Elementer sinn.\n\nDir kënnt den Ecran ausschalten iwwer:\n%
+Menu.msgVersionHint_3_30_15.text=Dëse nei designt @c Element Editor ass fakultativ.\nEt kann d'Verbindung tëscht Falllëschten an hiren\nassoziéierte Zweigen erhalen wann se nei sortéiert.\n\nWann Dir den traditionellen Element Editor léiwer hutt,\nkënnt Dir\n"% 1"\nan % 2 ausschalten.
+// Table column headers for DiagramControllerAliases
+Menu.msgTabHdrSignature.text=Routine Signatur
+Menu.msgTabHdrAlias.text=Alias Numm
 
 // Error messages for analyser
+Menu.warning_1.text=OPGEPASST: TEXT AN KOMMENTAREN AN DER AFFICHÉIEREN INVERTED! → Menupunkt "%1 ► %2".
+Menu.warning_2.text=NOTÉIERT: «%4» ass aktiv. Ausschalten → Menu "%1 ► %2 ► %3".
 Menu.error01_1.text=WARNUNG: Keng Schläifvariabel fonnt
 Menu.error01_2.text=WARNUNG: Méi wei eng Schläifvariabel fonnt: «%»
 Menu.error01_3.text=D'Schläifvariabel «%» dierf net geännert ginn!
@@ -241,35 +427,94 @@ Menu.error06.text=Den Programmnumm «%» muss grouss geschriwwen sinn!
 Menu.error07_1.text=«%» ass keen validen Numm fir en Programm oder eng Method!
 Menu.error07_2.text=«%» ass keen validen Numm fir en Parameter!
 Menu.error07_3.text=«%» ass keen validen Numm fir eng Variabel oder eng Konstant!
+Menu.error07_4.text=Diagrammnimm däerfen keng Plazen enthalen; et ass besser Ënnersträicher ze enthalen: «%».
+Menu.error07_5.text=Identifizéierer «%» enthält net-ASCII Buschtawen; dat soll evitéiert ginn.
 Menu.error08.text=Et dierf keng Zouwäisung an enger Konditioun gemaach ginn.
 Menu.error09.text=Den Programm («%») dierf net den selwechten Numm wei eng Variabel oder en Parameter hunn!
-Menu.error10_1.text=En eenzelt Instruktiouns Element sollt keng Agang/Ausgang Instruktiounen oder Zouwäisungen enthalen!
-Menu.error10_2.text=En eenzelt Instruktiouns Element sollt keng Agang/Ausgang Instruktiounen enthalen!
-Menu.error10_3.text=En eenzelt Instruktiouns Element sollt keng Agang Instruktiounen oder Zouwäisungen enthalen!
-Menu.error10_4.text=En eenzelt Instruktiouns Element sollt keng Ausgang Instruktiounen oder Zouwäisungen enthalen!
-Menu.error10_5.text=En eenzelt Instruktiouns Element sollt keng Konstant Definitiounen an anere Instruktiounen enthalen!
+Menu.error10_1.text=En eenzelt @as Element sollt keng Agang/Ausgang Instruktiounen oder Zouwäisungen enthalen!
+Menu.error10_2.text=En eenzelt @as Element sollt keng Agang/Ausgang Instruktiounen enthalen!
+Menu.error10_3.text=En eenzelt @as Element sollt keng Agang Instruktiounen oder Zouwäisungen enthalen!
+Menu.error10_4.text=En eenzelt @as Element sollt keng Ausgang Instruktiounen oder Zouwäisungen enthalen!
+Menu.error10_5.text=En eenzelt @as Element sollt keng Konstant Definitiounen an anere Instruktiounen enthalen!
+Menu.error10_6.text=En @a Element däerf keng Typdefinitioune mat aneren Instruktiounen vermëschen!
 Menu.error11.text=Wahrscheinlech Zouwäisungsfehler! W.E.G. d'Instruktioun kontrolléieren!
 Menu.error12.text=Den Parameter muss mat engem "p" ufänken an dierf ab dann nëmmen nach Grouss buchstaawen enthalen!
 Menu.error13_1.text=Funktioun «%» gëtt keen Resultat zréck!
 Menu.error13_2.text=Funktioun «%» gëtt méiglecherweis keen Resultat zréck!
-Menu.error13_3.text=Your functions seems to use several competitive return mechanisms: «%»!
-Menu.error14_1.text=The FOR loop parameters are not consistent to the loop heading text!
-Menu.error14_2.text=The FOR loop step value («%») is not a legal integer constant!
-Menu.error14_3.text=Variable name «%» may collide with one of the configured FOR loop heading keywords!
-Menu.error15_1.text=The CALL has neither form «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)» nor «import <progr_name>»!
-Menu.error16_1.text=A JUMP element may be empty or start with one of %, possibly followed by an argument!
-Menu.error16_2.text=A «%» instruction, unless at final position, must form a JUMP element!
-Menu.error16_3.text=A «%1» or «%2» instruction is only allowed as JUMP element!
-Menu.error16_4.text=Cannot leave or break more loop levels than being nested in (%)!
+Menu.error13_3.text=D'Funktioun benotzt verschidde Wäerter zréck Mechanismen zur selwechter Zäit: «%»!
+Menu.error14_1.text=D'Detailer vun der @d Schläif an dem Text passen net!
+Menu.error14_2.text=D'Schrëttgréisst («%») vun der Zielenschläif ass net e konstante ganze Zuel!
+Menu.error14_3.text=Variabel «%» huet e méiglechen Nummkonflikt mat engem vun de konfiguréierte @d Schläif Schlësselwieder!
+Menu.error15_1.text=Den Ënnerprogramm Uruff huet d'Form «[ <var>  <- ] <routine_name>(<arg_list>)» net!
+Menu.error15_2.text=Den Diagramm vun der oprufft Routine «%» ass momentan net verfügbar.
+Menu.error15_3.text=Méi wéi een Diagramm entsprécht Routineopruff «%».
+Menu.error16_1.text=Den @k muss eidel sinn oder mat engem vun de Schlësselwieder % ufänken, gefollegt vun engem Wäert wann néideg!
+Menu.error16_2.text=Eng «%» @a muss en @k Element sinn (ausser um Enn vum Diagramm)!
+Menu.error16_3.text=«%1» oder «%2» Instruktiounen sinn nëmmen als @k Elementer erlaabt!
+Menu.error16_4.text=A @k ass nëmme vun engem Maximum vun der Unzuel vun Ëmgéigend Schläifen erlaabt (%)!
 Menu.error16_5.text=You must not directly jump (%1, %2) out of a parallel thread!
 Menu.error16_6.text=Illegal argument for a «%» JUMP (must be an integer constant)!
 Menu.error16_7.text=Instruction isn't reachable after a JUMP!
 Menu.error16_8.text=The argument for this «%» JUMP might be unsuited (should be an integer value)!
 Menu.error17.text=Consistency risk due to concurrent access to variable «%» by several parallel threads!
-Menu.errorLineReference.text= (Zeil %)
+Menu.error18.text=Variabel «%1» kéint mat Variabel(en) «%2» an e puer Sproochen zesummefalen!
+Menu.error19_1.text=De Variabel Numm «%1» ka mat reservéierte Wierder a Sprooche wéi %2 kollidéieren!
+Menu.error19_2.text=De Variabel Numm «%» ass am Structorizer reservéiert a ka Problemer verursaachen beim Laafen!
+Menu.error20_1.text=En @o Header muss op d'mannst d'Klammern vun enger (méiglecherweis eidel) Parameterlëscht hunn.
+Menu.error20_2.text=Parameteren mat Standardwäerter musse kontinuéierlech um Enn vun der Parameterlëscht erscheinen.
+Menu.error20_3.text=En Diagramm vum Typ %1 sollt keng Parameterlëscht hunn. Änneren op %2?
+Menu.error21.text=Variabel Nimm I (Kapital i), l (kleng L) an O (Kapital o) si kaum vuneneen oder vun 1 oder 0 z'ënnerscheeden.
+Menu.error22_1.text=Konstant «%1» hänkt vun anscheinend net-konstante Wäerter of: «%2».
+Menu.error22_2.text=Illegale Versuch de konstante «%» z’änneren oder neizesetzen.
+Menu.error23_1.text=Diagramm «%» ass éischter net gëeegent als @p Diagramm well et Spréng benotzt.
+Menu.error23_2.text=Import vum Diagramm «%» ass rekursiv!
+Menu.error23_3.text=Import hei gëtt ignoréiert well Diagramm «%1» scho mat abegraff ass: %2.
+Menu.error23_4.text=Numm Konflikt tëscht lokal an importéiert Variabel oder Konstante «%»!
+Menu.error23_5.text=Keen @p Diagramm «%» fonnt.
+Menu.error23_6.text=Multiple @p Charts «%» fonnt!
+Menu.error23_7.text=Numm Konflikt tëscht lokal an importéiert Typ Definitioun «%»!
+Menu.error24_1.text=Form vun Typ Definitioun an (komponéiert) Linn % falsch.
+Menu.error24_2.text=Typ Numm «%» ass ongëlteg oder konflikt mat engem aneren Identifizéierer.
+Menu.error24_3.text=Komponent Numm «%» ass illegal oder duplizéiert.
+Menu.error24_4.text=Ënnergrond Typ «%» ass ondefinéiert oder onbekannt.
+Menu.error24_5.text=Et gëtt keng definéiert Record Typ «%»!
+Menu.error24_6.text=Komposit Komponent «%» gëtt net geännert oder initialiséiert!
+Menu.error24_7.text=Komposit Typ «%1» huet kee Komponent «%2»!
+Menu.error24_8.text=Variabel «%1» huet kee Komponent «%2»!
+Menu.error24_9.text=Illegal oder defekt Deklaratioun Zousatz (Array Dimensioun): «%»!
+Menu.error24_10.text=Op d'mannst eng ongëlteg Gréisst fir d'Array-Gréisst (muss eng konstant ganz Zuel > 0 sinn): «%»!
+Menu.hint07_1.text=Wat wëllt Dir Ären Algorithmus maachen? Ersetzt "%" mat engem opfällegen Numm dofir!
+Menu.hint25_1.text=Wielt d'Mëtt vum Diagramm an setzt en éischt Element an, z.B. eng Input @a wéi «%1 %2».
+Menu.hint25_2.text=Dir kéint Daten aginn hunn, zum Beispill mat enger @a wéi «%1 %2». → Menu "% 3"
+Menu.hint25_3.text=Dir wëllt vläicht Resultater erausginn, zum Beispill mat enger @a wéi «%1 %2». → Menu "%3"
+Menu.hint25_4.text=Wielt d'Mëtt vum Diagramm an setzt en éischt Element, wéi eng @a.
+Menu.hint25_5.text=Wielt den Zentrum vum Diagramm an setzt zB en @a Element mat enger Typ oder Konstant Definitioun an.
+Menu.hint25_6.text=Dir kënnt eng Veraarbechtungsinstruktioun wéi «%1» tëscht Input an Output placéieren. → Menü "%2"
+Menu.hint26.0.text=Wielt den Zentrum vun der Diagramm, duebelklickt dann, dréckt Enter oder F5 a gitt den Instruktiounstext «% "Moien Welt!"».
+Menu.hint26.1.text=Elo kënnt Dir zum Beispill Äert Diagramm testen → Menu "%1 ► %2".
+Menu.hint26.2.text=Elo kënnt Dir zum Beispill Äert Diagramm späicheren → Menu "% 1 ► % 2"
+Menu.hint26.3.text=Elo kënnt Dir zum Beispill Äert Diagramm an eng Programméierungssprooch exportéieren → Menu "%1 ► %2 ► %3"
+Menu.hint26.4.text=Elo kënnt Dir zum Beispill Äert Diagramm als Grafikdatei exportéieren → Menu "%1 ► %2 ► %3"
+Menu.error27.text=E puer Selektiounswäerter (zB «%») schéngen net ganz Zuelkonstanten ze sinn.
+Menu.error28.text=E puer Wäerter (%) schéngen e puer Mol an de Selektiounslëschten!
+Menu.error29.text=De Selektiounswäert «%» ass vum strukturéierten Typ an dofir net gëeegent fir @c!
+Menu.error30_1.text=An der Linn %2 sinn %1 méi Ëffnungsklammer(n) wéi déi ofschléissen, '%3' erwaart als nächst!
+Menu.error30_2.text=An der Linn %2 gëtt et op d'mannst ee méi Ofschloss '%1' wéi Ëffnungsklammern!
+Menu.error30_3.text=An der Linn %2 gëtt et eng Klammer '%1' wou '%3' erwaart gëtt!
+Menu.error31_1.text=Eng Deklaratioun, déi mat "%1" ufänkt, muss e Symbol "%2" enthalen, gefollegt vun enger Typspezifikatioun
+Menu.error31_2.text=Onerwaart String «%» an der Lëscht vun deklaréierte Variablen!
+Menu.error30_3.text=Dës Deklaratiounsobjekter sinn net gëeegent Identifizéierer: «%»!
+Menu.error31_4.text=Versuch, déi scho existent Variabel(en) «%» nei ze deklaréieren!
+Menu.error31_5.text=Fir d'Initialiséierung muss d'Deklaratioun genee ENG Variabel enthalen, net % !
+Menu.error31_6.text=Eng anonym Typ Konstruktioun "%" ass  dëser Positioun net erlaabt!
+Menu.errorLineReference.text=(Zeil %)
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Analyser Astellungen
+AnalyserPreferences.contentPanel.tab.0=Algorithmesch
+AnalyserPreferences.contentPanel.tab.1=Syntax, général
+AnalyserPreferences.contentPanel.tab.2=Nimm / Konventiounen
+AnalyserPreferences.contentPanel.tab.3=Notizen / Tutorat
 AnalyserPreferences.checkboxes.1.text=Op verännert Schläif Variabel préiwen.
 AnalyserPreferences.checkboxes.2.text=Op endlos Schläif préiwen. (Souwäit wei méiglech!)
 AnalyserPreferences.checkboxes.3.text=Op net initialiséiert Variabel préiwen.
@@ -287,6 +532,20 @@ AnalyserPreferences.checkboxes.14.text=Op Konsistenz vun den Schläifen Paramete
 AnalyserPreferences.checkboxes.15.text=Op feelerhaft Ennerroutine CALLs préiwen.
 AnalyserPreferences.checkboxes.16.text=Op falsch JUMP Element benotzen préiwen
 AnalyserPreferences.checkboxes.17.text=Op Inkonsistenz an PARALLEL Sektioun préiwen.
+AnalyserPreferences.checkboxes.18.text=Iwwerpréift ob Variabelen nëmmen duerch iewescht / kleng Buschtawen ënnerscheeden.
+AnalyserPreferences.checkboxes.19.text=Kontrolléiert ob Variabel Nimm mat reservéierte Wierder kollidéiere kënnen.
+AnalyserPreferences.checkboxes.20.text=Kontrolléiert datt en @o (Header) eng Parameterlëscht huet.
+AnalyserPreferences.checkboxes.21.text=Warnt wann Dir déi konfus Variabel Nimm "I", "l" an "O" benotzt.
+AnalyserPreferences.checkboxes.22.text=Kontrolléiert datt de Schutz vu Konstanten net ënnergruewe gëtt.
+AnalyserPreferences.checkboxes.23.text=Vergewëssert Iech datt d'Lëscht vun den Charts déi sollt abegraff sinn richteg ass.
+AnalyserPreferences.checkboxes.24.text=Z'iwwerpréiwen Typ Definitiounen an Zougang zu Komposit Komponente.
+AnalyserPreferences.checkboxes.25.text=Empfehlungen fir initial Programminstruktiounen (EVA Prinzip)
+AnalyserPreferences.checkboxes.26.text=Kuerz "Moien Welt" Cours
+AnalyserPreferences.checkboxes.27.text=Vergewëssert Iech datt d'Wäerter vun de Fallauswiel ganz Zuelkonstanten sinn.
+AnalyserPreferences.checkboxes.28.text=Kontrolléiert datt et kee Fallauswiel iwwerlappt.
+AnalyserPreferences.checkboxes.29.text=Kontrolléiert datt den @c Selektiounsausdrock net zu engem strukturéierten Typ gehéiert.
+AnalyserPreferences.checkboxes.30.text=Kontrolléiert datt d'Klammern equilibréiert a korrekt nestéiert sinn.
+AnalyserPreferences.lblDrawWarningSign.text=Zeechnen Warnungsdräieck an betroffenen Elementer
 AnalyserPreferences.okButton.text=OK
 
 
@@ -297,7 +556,8 @@ AnalyserPreferences.okButton.text=OK
 Editor.btnNew.tooltip=En neien Diagramm ufänken.
 Editor.btnOpen.tooltip=En Diagramm opmaachen.
 Editor.btnSave.tooltip=Den aktuellenDiagramm späicheren.
-// InsertAfter (+shift: Before)
+Editor.btnSaveAll.tooltip=Späichert all nei a geännert Diagrammer a Gruppen.
+// InsertAfter (+shift: before)
 Editor.btnAfterInst.tooltip=Eng nei @{Instruction} hannert (+Shift: virun) dat ausgewielten Element setzen.
 Editor.btnAfterAlt.tooltip=En neien @{Alternative} statement hannert (+Shift: virun) dat ausgewielten Element setzen.
 Editor.btnAfterCase.tooltip=Eng nei @{Case}-Struktur hannert (+Shift: virun) dat ausgewielten Element setzen.
@@ -308,15 +568,17 @@ Editor.btnAfterForever.tooltip=Eng nei @{Forever}-Schläif hannert (+Shift: viru
 Editor.btnAfterCall.tooltip=Eng nei @{Call}-Instruktioun hannert (+Shift: virun) dat ausgewielten Element setzen.
 Editor.btnAfterJump.tooltip=Eng nei @{Jump}-Instruktioun hannert (+Shift: virun) dat ausgewielten Element setzen.
 Editor.btnAfterPara.tooltip=En neien @{Parallel} statement hannert (+Shift: virun) dat ausgewielten Element setzen.
-Editor.btnAfterPara.tooltip=Eng nei @{Try}-Struktur hannert (+Shift: virun) dat ausgewielten Element setzen.
+Editor.btnAfterTry.tooltip=En neie @q Block hannert (+Shift: virum) dat ausgewielten Element setzen.
 // undo & redo
-Editor.btnUndo.tooltip=Déi läscht Aktioun réckgängeg maachen.
-Editor.btnRedo.tooltip=Déi läscht Aktioun erëm hierstellen.
+Editor.btnUndo.tooltip=Déi lescht Aktioun réckgängeg maachen.
+Editor.btnRedo.tooltip=Déi lescht Aktioun erëm hierstellen.
+// find & replace
+Editor.btnFindReplace.tooltip=Öffnen den Dialog Find/Ersetzen.
 // copy & paste
 Editor.btnCut.tooltip=Dat ausgewielten Element erausschneiden.
 Editor.btnCopy.tooltip=Dat ausgewielten Element kopéieren.
 Editor.btnPaste.tooltip=Dat kopéiert oder erausgeschnidden Element hannert dat ausgewielten Element apechen.
-// style 
+// style
 Editor.btnUnboxed.tooltip=Déi Form vum Diagramm ëmänneren.
 Editor.btnFunction.tooltip=@{Root.DT_SUB} Diagramm (ronn Ecker).
 Editor.btnProgram.tooltip=@{Root.DT_MAIN} Diagramm (spatz Ecker).
@@ -326,19 +588,32 @@ Editor.btnEdit.tooltip=Dat ausgewielten Element editéieren.
 Editor.btnDelete.tooltip=Läschen vum ausgewielten Element.
 Editor.btnMoveUp.tooltip=Dat ausgewielten Element no uewen réckelen.
 Editor.btnMoveDown.tooltip=Dat ausgewielten Element no ënnen réckelen.
+Editor.btnTransmute.tooltip=Instruktiounen an @j oder @k konvertéieren, kombinéieren oder decompose.
+Editor.btnOutsource.tooltip=Extrait ausgewielt Element Sequenz an neien Ënnerdiagramm.
 //printing
 Editor.btnPrint.tooltip=Den Diagramm ausdrécken.
+Editor.btnArrange.tooltip=Füügt Diagramm op Arrangement Board.
 // font
 Editor.btnFontUp.tooltip=D'Schrëft vergréisseren.
 Editor.btnFontDown.tooltip=D'Schrëft verklengeren.
-// copyright 
+// copyright & help
 Editor.btnAbout.tooltip=Iwwert den Structorizer.
+Editor.btnHelp.tooltip=Öffnen d'Online Benotzerhandbuch am Browser
 // colors
 Editor.btnColors.*.tooltip=Dat ausgewieltend Element mat dëser Faarf fierwen.
-// turtleizer & executor
+// collapsing
+Editor.btnCollapse.tooltip=Zesummeklappt de gewielten Element.
+Editor.btnExpand.tooltip=Ausklappt de gewielten Element.
+// debug
 Editor.btnTurtle.tooltip=Turtleizer opmaachen …
 Editor.btnMake.tooltip=Executor opmaachen …
 Editor.btnDropBrk.tooltip=Breakpoints ausschalten
+Editor.btnDisable.tooltip=(Des-)aktivéiere vun der gewielter Elementer.
+// display mode
+Editor.ttSwitchComments.text=Texter a Kommentarer ginn ausgetauscht!
+Editor.ttOperatorsC.text=Operateuren sinn an der C Syntax gewisen!
+Editor.msgInactiveMode.text=(Inaktive Displaymodus)
+Editor.msgMenuHint.text=Menu Element
 // Popup menu
 Editor.popupCut.text=Ausschneiden
 Editor.popupCopy.text=Kopéieren
@@ -377,31 +652,256 @@ Editor.popupEdit.text=Editéieren
 Editor.popupDelete.text=Läschen
 Editor.popupMoveUp.text=No uewen réckelen
 Editor.popupMoveDown.text=No ënnen réckelen
-// Breakpoint
-Editor.popupBreakpoint.text=Breakpoint un/ausschalten
-
+Editor.popupTransmute.text=Transforméieren
+Editor.popupOutsource.text=Extrahéieren
+Editor.popupOutsource.tooltip=Déi gewielte Elementsequenz op nei @o extrahéieren.
+Editor.popupEditSub.text=@o editéieren
+Editor.popupEditSub.tooltip=Kréien oprufft @o oder abegraff Diagramm fir Redaktioun.
+// Collapsing
+Editor.popupCollapse.text=Zesummeklappt
+Editor.popupExpand.text=Ausklappt
+Editor.popupDisable.text=(Des-)aktivéiere
+// Debug
+Editor.popupBreakpoint.text=Breakpunkt un/ausschalten
+Editor.popupBreakTrigger.text=Breakpunkt Ausléiser setzen ...
+// Tabbed pane
+Editor.pnlTabbed.tab.0=Arrangeur Index
+Editor.pnlTabbed.tab.1=Code Virschau
+Editor.popupCodeExport.text=Exportéieren ...
+Editor.popupCodeExport.tooltip=Export de Code an eng Datei.
+Editor.popupCodeHide.text=Code Virschau verstoppen
+Editor.ttPopupCodePreview.text=Schalt de Code Virschau op % a setzt % als déi gewënschte Exportsprooch.
 
 -----[ InputBox ]-----
+InputBox.title[getInsertionType():insert]=
+InputBox.title[getInsertionType():update]=
 InputBox.lblText.text=W.e.g. en neien Text aginn
-InputBox.lblText.tooltip
+InputBox.lblText.tooltip=
 InputBox.lblComment.text=Kommentar
-InputBox.lblComment.tooltip
+InputBox.lblComment.tooltip=
+InputBox.lblSuggest.text=Schwell fir Virschléi
+InputBox.lblSuggest.tooltip=Maximal Unzuel vun Zeechen aginn fir Wuertvirschléi auszeléisen (0 schalt d'Assistenz aus).
 InputBox.txtText.tooltip=Den Inhalt vum Element.
 InputBox.txtComment.tooltip=Den Kommentar vum Element.
 InputBox.btnOK.text=OK
 InputBox.btnOK.tooltip=D'Auswahl bestätegen.
 InputBox.btnCancel.text=Ofbriechen
 InputBox.btnCancel.tooltip=D'Auswahl ofbriechen.
+InputBox.chkDisabled.text=Desaktivéiert (Ausféierung an Export)
+InputBox.chkBreakpoint.text=Breakpunkt
+InputBox.chkShowFinally.text=Weisen ëmmer Botzblock (FINALLY), och wann eidel
+InputBox.lblBreakTriggerText.text=Stop virun %. Ausféierung
 InputBox.lblText.text[elementType:Alternative]=W.e.g. eng Konditioun aginn
 InputBox.lblText.text[elementType:While]=W.e.g. eng ufanks Konditioun aginn
 InputBox.lblText.text[elementType:Repeat]=W.e.g. eng ausgangs Konditioun aginn
 InputBox.lblText.text[elementType:Case]=W.e.g. Auswahl Expressiounen an Fall Konstanten aginn (Eng pro Linn)
 InputBox.lblText.text[elementType:Parallel]=Nummer vun parallellen Threads
+InputBox.lblText.text[elementType:Try]=Numm vun der Ausnam Variabel
+InputBox.title[elementType:Instruction,getInsertionType():insert]=Füügt nei @a ...
+InputBox.title[elementType:Alternative,getInsertionType():insert]=Füügt nei @b Element ...
+InputBox.title[elementType:Case,getInsertionType():insert]=Füügt nei @c Element ...
+InputBox.title[elementType:Forever,getInsertionType():insert]=Füügt nei @i Schläif ...
+InputBox.title[elementType:Repeat,getInsertionType():insert]=Füügt nei @h Schläif ...
+InputBox.title[elementType:While,getInsertionType():insert]=Füügt nei @g Schläif ...
+InputBox.title[elementType:Call,getInsertionType():insert]=Füügt nei @j ...
+InputBox.title[elementType:Jump,getInsertionType():insert]=Füügt nei @k ...
+InputBox.title[elementType:Parallel,getInsertionType():insert]=Füügt nei @l Element ...
+InputBox.title[elementType:Try,getInsertionType():insert]=Füügt nei @q Block ...
+InputBox.title[elementType:Instruction,getInsertionType():update]=@a änneren ...
+InputBox.title[elementType:Alternative,getInsertionType():update]=@b Element änneren ...
+InputBox.title[elementType:Case,getInsertionType():update]=@c Element änneren ...
+InputBox.title[elementType:Forever,getInsertionType():update]=@i Schläif änneren ...
+InputBox.title[elementType:Repeat,getInsertionType():update]=@h Schläif änneren ...
+InputBox.title[elementType:While,getInsertionType():update]=@g Schläif änneren ...
+InputBox.title[elementType:Call,getInsertionType():update]=@j änneren ...
+InputBox.title[elementType:Jump,getInsertionType():update]=@k änneren ...
+InputBox.title[elementType:Parallel,getInsertionType():update]=@l Element änneren ...
+InputBox.title[elementType:Try,getInsertionType():update]=@q Block änneren ...
+
+-----[ InputBox For ]-----
+InputBoxFor.title[getInsertionType():insert]=Füügt nei @d Schläif ...
+InputBoxFor.title[getInsertionType():update]=@d Schläif änneren ...
+InputBoxFor.rbCounting.tooltip=Wielt fir vun engem Start bis zum Ennwäert ze zielen.
+InputBoxFor.rbTraversing.tooltip=Wielt fir duerch all Elementer vun enger Lëscht vu Wäerter ze iteréieren.
+InputBoxFor.lblVariable.text=Zuel Variabel
+InputBoxFor.lblStartVal.text=Startwäert
+InputBoxFor.lblEndVal.text=Ennwäert
+InputBoxFor.lblIncr.text=Schrëtt Gréisst
+InputBoxFor.lblTraversingVariable.text=Element Variabel
+InputBoxFor.lblValueList.text=Lëscht vu Wäerter, Array oder String
+InputBoxFor.chkTextInput.text=Änneren als Zeil vum Text
+InputBoxFor.chkTextInput.tooltip=Wann agestallt, ginn déi uewe genannte Felder aus dem Text extrahéiert wann Dir agitt, soss gëtt den Text aus den uewe genannte Felder zesummegesat.
+InputBoxFor.lblComment.text=Kommentar
+InputBoxFor.lblComment.tooltip=Gitt hei e Kommentar.
+InputBoxFor.txtText.tooltip=
+InputBoxFor.txtComment.tooltip=De Kommentar zu dësem Element.
+InputBoxFor.btnOK.text=
+InputBoxFor.btnOK.tooltip=
+InputBoxFor.btnCancel.text=
+InputBoxFor.btnCancel.tooltip=
+InputBoxFor.chkDisabled.text=Desaktivéiert (Ausféierung an Export)
+InputBoxFor.chkBreakpoint.text=Breakpunkt
+InputBoxFor.lblBreakTriggerText.text=Stop virun %. Ausféierung
+InputBoxFor.msgInvalidIncrement.text=<%> ass net e konstante ganze Zuel!
+InputBoxFor.msgMissingBrace1.text=
+InputBoxFor.msgMissingBrace2.text=
+InputBoxFor.msgSeparateWithComma.text=
+InputBoxFor.msgEnsureReturnedArray.text=
+InputBoxFor.msgEnsureVariableIsArray.text=
+InputBoxFor.msgEnterValueList.text=
+InputBoxFor.msgDiscardData.text=
+InputBoxFor.msgAttention.text=
+InputBoxFor.msgIllegalWordInField.text=
+
+-----[ InputBox Root ]-----
+InputBoxRoot.title[elementType:Root]=
+InputBoxRoot.title[elementType:Function]=
+InputBoxRoot.title[elementType:Includable]=
+InputBoxRoot.lblIncludeList.text=
+InputBoxRoot.txtIncludeList.tooltip=
+InputBoxRoot.lblText.text=
+InputBoxRoot.txtText.tooltip=
+InputBoxRoot.lblComment.text=
+InputBoxRoot.txtComment.tooltip=
+InputBoxRoot.btnOK.text=
+InputBoxRoot.btnOK.tooltip=
+InputBoxRoot.btnCancel.text=
+InputBoxRoot.btnCancel.tooltip=
+InputBoxRoot.btnAttributes.text=
+InputBoxRoot.btnAttributes.tooltip=
+InputBoxRoot.btnAddIncludable.text=
+InputBoxRoot.lblNamespace.text=
+InputBoxRoot.lblNamespace.tooltip=
+
+-----[ InputBoxCase ]-----
+InputBoxCase.title[getInsertionType():insert]=
+InputBoxCase.title[getInsertionType():update]=
+InputBoxCase.lblDiscriminator.text=
+InputBoxCase.lblSelectors.text=
+InputBoxCase.btnAddRow.tooltip=
+InputBoxCase.btnDelRows.tooltip=
+InputBoxCase.btnUpRow.tooltip=
+InputBoxCase.btnDnRow.tooltip=
+InputBoxCase.btnMergeRows.tooltip=
+InputBoxCase.btnSplitRow.tooltip=
+InputBoxCase.btnEnumAssist.tooltip=
+InputBoxCase.btnCheckRows.tooltip=
+InputBoxCase.chkMoveBranches.text=
+InputBoxCase.chkMoveBranches.tooltip=
+InputBoxCase.chkDefaultBranch.text=
+InputBoxCase.chkDefaultBranch.tooltip=
+InputBoxCase.txtDefaultLabel.tooltip=
+InputBoxCase.lblComment.text=
+InputBoxCase.lblComment.tooltip=
+InputBoxCase.txtComment.tooltip=
+InputBoxCase.btnOK.text=
+InputBoxCase.btnOK.tooltip=
+InputBoxCase.btnCancel.text=
+InputBoxCase.btnCancel.tooltip=
+InputBoxCase.chkDisabled.text=
+InputBoxCase.chkBreakpoint.text=
+InputBoxCase.lblBreakTriggerText.text=
+InputBoxCase.msgSelectorMustNotBeEmpty.text=
+InputBoxCase.msgRedundantRows.text=
+InputBoxCase.msgMissingValues.text=
+InputBoxCase.msgConflictsDetected.text=
+InputBoxCase.msgOrphanedBranches.text=
+InputBoxCase.msgDubiousSelectors.text=
+InputBoxCase.msgStructuredDiscriminator.text=
+InputBoxCase.msgNoProblems.text=
+InputBoxCase.msgRows.text=
+
+-----[ AttributeInspector ]-----
+AttributeInspector.title=
+AttributeInspector.lblCreatedBy.text=
+AttributeInspector.lblCreatedOn.text=
+AttributeInspector.lblModifiedBy.text=
+AttributeInspector.lblModifiedOn.text=
+AttributeInspector.lblFilePath.text=
+AttributeInspector.lblShadowPath.text=
+AttributeInspector.txtShadowPath.tooltip=
+AttributeInspector.lblOrigin.text=
+AttributeInspector.btnClearOrigin.text=
+AttributeInspector.btnClearOrigin.tooltip=
+AttributeInspector.lblElements.tooltip=
+AttributeInspector.lblInstrs.tooltip=
+AttributeInspector.lblAlts.tooltip=
+AttributeInspector.lblCases.tooltip=
+AttributeInspector.lblFors.tooltip=
+AttributeInspector.lblWhiles.tooltip=
+AttributeInspector.lblRepeats.tooltip=
+AttributeInspector.lblForevers.tooltip=
+AttributeInspector.lblCalls.tooltip=
+AttributeInspector.lblJumps.tooltip=
+AttributeInspector.lblPars.tooltip=
+AttributeInspector.lblTries.tooltip=
+AttributeInspector.btnShowLicense.text=
+AttributeInspector.btnShowLicense.tooltip=
+AttributeInspector.cbLicenseName.tooltip=
+AttributeInspector.lblPrefsAlt.text=
+AttributeInspector.lblPrefsCase.text=
+AttributeInspector.lblPrefsFor.text=
+AttributeInspector.lblPrefsForIn.text=
+AttributeInspector.lblPrefsWhile.text=
+AttributeInspector.lblPrefsRepeat.text=
+AttributeInspector.lblPrefsIO.text=
+AttributeInspector.lblPrefsJump.text=
+AttributeInspector.lblPrefsLeave.text=
+AttributeInspector.lblPrefsReturn.text=
+AttributeInspector.lblPrefsExit.text=
+AttributeInspector.lblPrefsThrow.text=
+AttributeInspector.lblPrefsPre.text=
+AttributeInspector.lblPrefsPost.text=
+AttributeInspector.lblPrefsMore.text=
+AttributeInspector.btnParserPrefs.text=
+AttributeInspector.btnParserPrefs.tooltip=
+AttributeInspector.btnOk.text=
+AttributeInspector.btnOk.tooltip=
+AttributeInspector.btnCancel.text=
+AttributeInspector.btnCancel.tooltip=
+AttributeInspector.lblMain.text=
+AttributeInspector.lblSub.text=
+AttributeInspector.lblIncl.text=
+AttributeInspector.pnCopyrights.border=
+AttributeInspector.pnStatistics.border=
+AttributeInspector.pnKeywordSet.border=
+AttributeInspector.msgOverrideLicense.text=
+AttributeInspector.msgLicenseChange.text=
+AttributeInspector.msgLicenseLoadError.text=
+
+-----[ License Editor ]-----
+LicenseEditor.titleString.text=
+LicenseEditor.menuFile.text=
+LicenseEditor.menuFile.mnemonic=
+LicenseEditor.menuEdit.text=
+LicenseEditor.menuEdit.mnemonic=
+LicenseEditor.menuProp.text=
+LicenseEditor.menuProp.mnemonic=
+LicenseEditor.menuFileCommit.text=
+LicenseEditor.menuFileSave.text=
+LicenseEditor.menuFileSaveAs.text=
+LicenseEditor.menuFileRename.text=
+LicenseEditor.menuFileReload.text=
+LicenseEditor.menuFileDelete.text=
+LicenseEditor.menuFileQuit.text=
+LicenseEditor.menuEditUndo.text=
+LicenseEditor.menuEditRedo.text=
+LicenseEditor.menuEditClear.text=
+LicenseEditor.menuPropFont.text=
+LicenseEditor.menuPropFontUp.text=
+LicenseEditor.menuPropFontDown.text=
+LicenseEditor.msgNewLicName.text=
+LicenseEditor.msgCouldntWriteLicense.text=
+LicenseEditor.msgCouldntRenameLicense.text=
+LicenseEditor.msgSureToDelete.text=
+LicenseEditor.msgSureToDiscard.text=
+LicenseEditor.msgPendingChanges.text=
+LicenseEditor.msgOverwriteExisting.text=
 
 -----[ Preferences ]-----
 Preferences.title=Structure Preferences
 Preferences.pnlAlt.border=IF statement
-Preferences.pnlAlt.tooltip
+Preferences.pnlAlt.tooltip=
 Preferences.lblAltT.text=Label TRUE
 Preferences.lblAltT.tooltip=Den Label fir déi lénks Säit
 Preferences.lblAltF.text=Label FALSE
@@ -410,21 +910,31 @@ Preferences.lblAltContent.text=Standard Inhalt
 Preferences.lblAltContent.tooltip=Standard Inhalt vun engem IF statement.
 Preferences.altPadRight.text=FALSE vergréisseren
 Preferences.pnlCase.border=CASE statment
-Preferences.pnlCase.tooltip
+Preferences.pnlCase.tooltip=
 Preferences.lblCase.text=Standard Inhalt
 Preferences.lblCase.tooltip=Standard Inhalt vun engem @{Case} statement.
+Preferences.lblCaseRot.text=
+Preferences.lblCaseRot.tooltip=
+Preferences.chkCaseEditor.text=
+Preferences.pnlRoot.border=
+Preferences.lblRoot.text=
+Preferences.lblRoot.tooltip=
 Preferences.pnlFor.border=@{For}-Schläif
-Preferences.pnlFor.tooltip
+Preferences.pnlFor.tooltip=
 Preferences.lblFor.text=Standard Inhalt
 Preferences.lblFor.tooltip=Standard Inhalt vun enger @{For}-Schläif.
 Preferences.pnlWhile.border=@{While}-Schläif
-Preferences.pnlWhile.tooltip
+Preferences.pnlWhile.tooltip=
 Preferences.lblWhile.text=Standard Inhalt
 Preferences.lblWhile.tooltip=Standard Inhalt vun enger @{While}-Schläif.
 Preferences.pnlRepeat.border=@{Repeat}-Schläif
-Preferences.pnlRepeat.tooltip
+Preferences.pnlRepeat.tooltip=
 Preferences.lblRepeat.text=Standard Inhalt
 Preferences.lblRepeat.tooltip=Standard Inhalt vun enger @{Repeat}-Schläif.
+Preferences.pnlTry.border=
+Preferences.lblTry.tooltip=
+Preferences.lblCatch.tooltip=
+Preferences.lblFinal.tooltip=
 Preferences.btnOK.text=OK
 Preferences.btnOK.tooltip=D'Auswahl bestätegen.
 
@@ -433,6 +943,9 @@ Preferences.btnOK.tooltip=D'Auswahl bestätegen.
 About.title=Iwwert
 About.pnlTabbed.tab.0=Agebonne Persons
 About.pnlTabbed.tab.1=Changelog
+About.pnlTabbed.tab.2=
+About.pnlTabbed.tab.3=
+About.msgPaths.text=
 About.btnOK.text=OK
 About.btnOK.tooltip=Verloossen.
 
@@ -446,7 +959,7 @@ FontChooser.lblSize.text=Gréisst
 FontChooser.lblSize.tooltip=D'Gréisst vun den ausgewielten Schrëften.
 FontChooser.btnOK.text=OK
 FontChooser.btnOK.tooltip=D'Auswahl bestätegen.
-
+FontChooser.cbFixPadding.text=
 
 -----[ Colors ]-----
 Colors.title=Faarf Preferences
@@ -455,7 +968,8 @@ Colors.lblColors.*.tooltip=Ausgewielten Faarf nˇ [#].
 Colors.colors.*.tooltip=Klick fir ze editéieren...
 Colors.btnOK.text=OK
 Colors.btnOK.tooltip=D'Auswahl bestätegen.
-
+Colors.btnReset.text=
+Colors.btnReset.tooltip=
 
 -----[ ColorChooser ]-----
 ColorChooser.title=Faarwen
@@ -468,31 +982,46 @@ ColorChooser.btnOK.tooltip=D'Auswahl bestätegen.
 -----[ ParserPreferences ]-----
 ParserPreferences.title=Parser Astellungen
 ParserPreferences.lblPre.text=Pre
-ParserPreferences.lblPre.tooltip
+ParserPreferences.lblPre.tooltip=
 ParserPreferences.lblPost.text=Post
-ParserPreferences.lblPost.tooltip
+ParserPreferences.lblPost.tooltip=
 ParserPreferences.lblAlt.text=@{Alternative} statement
-ParserPreferences.lblAlt.tooltip
+ParserPreferences.lblAlt.tooltip=
 ParserPreferences.lblCase.text=@{Case} statement
-ParserPreferences.lblCase.tooltip
+ParserPreferences.lblCase.tooltip=
 ParserPreferences.lblFor.text=@{For.COUNTER}-Schläif
-ParserPreferences.lblFor.tooltip
+ParserPreferences.lblFor.tooltip=
 ParserPreferences.lblForStep.text=Schrëtt Separater
 ParserPreferences.lblForIn.text=@{For.TRAVERSAL}-Schläif
 ParserPreferences.lblForIn.tooltip=
 ParserPreferences.edtForInPre.tooltip=
 ParserPreferences.edtForInPost.tooltip=
 ParserPreferences.lblWhile.text=@{While}-Schläif
-ParserPreferences.lblWhile.tooltip
+ParserPreferences.lblWhile.tooltip=
 ParserPreferences.lblRepeat.text=@{Repeat}-Schläif
-ParserPreferences.lblRepeat.tooltip
+ParserPreferences.lblRepeat.tooltip=
+ParserPreferences.lblJump.text=
+ParserPreferences.lblJump.tooltip=
+ParserPreferences.lblJumpLeave.text=
+ParserPreferences.lblJumpReturn.text=
+ParserPreferences.lblJumpExit.text=
+ParserPreferences.lblJumpThrow.text=
+ParserPreferences.lblInputOutput.text=
+ParserPreferences.lblInputOutput.tooltip=
 ParserPreferences.lblInput.text=Agang
-ParserPreferences.lblInput.tooltip
+ParserPreferences.lblInput.tooltip=
 ParserPreferences.lblOutput.text=Ausgang
-ParserPreferences.lblOutput.tooltip
+ParserPreferences.lblOutput.tooltip=
+ParserPreferences.chkIgnoreCase.text=
+ParserPreferences.btnFromLocale.text=
+ParserPreferences.btnFromLocale.tooltip=
 ParserPreferences.btnOK.text=OK
 ParserPreferences.btnOK.tooltip=D'Auswahl bestätegen.
 ParserPreferences.lblErrorSign.text=Den Doppelpunkt ':' däerf a kengem String virkommen.
+ParserPreferences.lblErrorSign2.text=
+ParserPreferences.lblErrorSign3.text=
+ParserPreferences.ttlError.text=
+ParserPreferences.lblHeadline.text=
 
 -----[ PrintPreview ]-----
 PrintPreview.title=Drockvirschau
@@ -502,25 +1031,216 @@ PrintPreview.btnCancel.text=Ofbriechen.
 PrintPreview.btnCancel.tooltip=Den Dréckvirgang ofbriechen.
 PrintPreview.btnOK.text=Drécken
 PrintPreview.btnOK.tooltip=Den Diagramm elo ausdrécken.
+PrintPreview.lblMarginX.text=
+PrintPreview.lblMarginY.text=
 
 -----[ ExportOptionDialoge ]-----
 ExportOptionDialoge.title=Astellunge fir de Code-Export
+ExportOptionDialoge.tabbedPane.tab.0=
+ExportOptionDialoge.tabbedPane.tab.1=
+ExportOptionDialoge.noConversionCheckBox.text=
+ExportOptionDialoge.noConversionCheckBox.tooltip=
 ExportOptionDialoge.commentsCheckBox.text=Uweisungen als Kommentar exportéieren.
 ExportOptionDialoge.bracesCheckBox.text=Block opmaachent Klammer an selwecht Linn setzen (C/C++/Java etc.)
+ExportOptionDialoge.chkExportSubroutines.text=
+ExportOptionDialoge.chkExportLicenseInfo.text=
+ExportOptionDialoge.lbPrefGenerator.text=
+ExportOptionDialoge.lbCharset.text=
+ExportOptionDialoge.chkCharsetAll.text=
+ExportOptionDialoge.btnPluginOptions.text=
+ExportOptionDialoge.msgOptionsForPlugin.text=
 ExportOptionDialoge.jLabel1.text=Wiel déi Astellungen, déi's du gären aktivéiert häss...
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Astellunge Späicheren
+ExportOptionDialoge.includeLists.*.tooltip=
+ExportOptionDialoge.spnPrefGenTrigger.tooltip=
+ExportOptionDialoge.chkDirectoryFromNsd.text=
+ExportOptionDialoge.chkDirectoryFromNsd.tooltip=
+ExportOptionDialoge.chkArraySize.text=
+ExportOptionDialoge.chkStringLen.text=
 
 -----[ ImportOptionDialog ]-----
 ImportOptionDialog.title=Astellunge fir de Datei-Import
+ImportOptionDialog.lbIntro.text=
+ImportOptionDialog.pnlCode.border=
+ImportOptionDialog.pnlNSD.border=
+ImportOptionDialog.pnlPreference.border=
+ImportOptionDialog.lbCharset.text=
+ImportOptionDialog.chkCharsetAll.text=
+ImportOptionDialog.chkRefactorOnLoading.text=
+ImportOptionDialog.chkRefactorOnLoading.tooltip=
+ImportOptionDialog.chkVarDeclarations.text=
+ImportOptionDialog.chkVarDeclarations.tooltip=
+ImportOptionDialog.chkCommentImport.text=
+ImportOptionDialog.chkCommentImport.tooltip=
+ImportOptionDialog.chkInsertOptKeywords.text=
+ImportOptionDialog.chkInsertOptKeywords.tooltip=
+ImportOptionDialog.chkSaveParseTree.text=
+ImportOptionDialog.chkSaveParseTree.tooltip=
+ImportOptionDialog.chkLogDir.text=
+ImportOptionDialog.chkLogDir.tooltip=
+ImportOptionDialog.txtLogDir.tooltip=
+ImportOptionDialog.btnLogDir.tooltip=
+ImportOptionDialog.lblMaxLen.text=
+ImportOptionDialog.spnMaxLen.tooltip=
+ImportOptionDialog.lblLimit.text=
+ImportOptionDialog.btnPluginOptions.text=
+ImportOptionDialog.msgOptionsForPlugin.text=
+ImportOptionDialog.btnOk.text=
+ImportOptionDialog.btnOk.tooltip=
+
+-----[ SaveOptionDialog ]-----
+SaveOptionDialog.title=
+SaveOptionDialog.lbIntro.text=
+SaveOptionDialog.pnlAutoSave.border=
+SaveOptionDialog.pnlBackup.border=
+SaveOptionDialog.pnlFileInfo.border=
+SaveOptionDialog.pnlFileNames.border=
+SaveOptionDialog.pnlArrFiles.border=
+SaveOptionDialog.chkAutoSaveExecute.text=
+SaveOptionDialog.chkAutoSaveClose.text=
+SaveOptionDialog.chkBackupFile.text=
+SaveOptionDialog.chkRelativeCoordinates.text=
+SaveOptionDialog.chkRelativeCoordinates.tooltip=
+SaveOptionDialog.lblAuthorName.text=
+SaveOptionDialog.btnLicenseFile.text=
+SaveOptionDialog.btnLicenseFile.tooltip=
+SaveOptionDialog.chkArgNumbers.text=
+SaveOptionDialog.chkArgNumbers.tooltip=
+SaveOptionDialog.lblSeparator.text=
+SaveOptionDialog.lblSeparator.tooltip=
+SaveOptionDialog.msgNoFile.text=
+SaveOptionDialog.msgCantEdit.text=
+SaveOptionDialog.msgRiskOfNameClash.text=
+SaveOptionDialog.btnOk.text=
+SaveOptionDialog.btnOk.tooltip=
+
+-----[ PluginOptionDialog ]-----
+PluginOptionDialog.msgNoValidInteger.text=
+PluginOptionDialog.msgNoValidUnsigned.text=
+PluginOptionDialog.msgNoValidCharacter.text=
+PluginOptionDialog.msgNoValidDouble.text=
+PluginOptionDialog.msgVerificationError.text=
+PluginOptionDialog.btnOk.text=
+PluginOptionDialog.btnCancel.text=
+PluginOptionDialog.optionComponents.convert_syntax.text=
+PluginOptionDialog.optionComponents.convert_syntax.tooltip=
+PluginOptionDialog.optionComponents.debugLines.text[getPluginKey():COBOLParser]=
+PluginOptionDialog.optionComponents.debugLines.tooltip[getPluginKey():COBOLParser]=
+PluginOptionDialog.optionComponents.decimalComma.text[getPluginKey():COBOLParser]=
+PluginOptionDialog.optionComponents.decimalComma.tooltip[getPluginKey():COBOLParser]=
+PluginOptionDialog.optionComponents.fixedForm.text[getPluginKey():COBOLParser]=
+PluginOptionDialog.optionComponents.fixedForm.tooltip[getPluginKey():COBOLParser]=
+PluginOptionDialog.optionLabels.fixedColumnIndicator.text[getPluginKey():COBOLParser]=
+PluginOptionDialog.optionComponents.fixedColumnIndicator.tooltip[getPluginKey():COBOLParser]=
+PluginOptionDialog.optionLabels.fixedColumnText.text[getPluginKey():COBOLParser]=
+PluginOptionDialog.optionComponents.fixedColumnText.tooltip[getPluginKey():COBOLParser]=
+PluginOptionDialog.optionLabels.tidyupPerformThru.text[getPluginKey():COBOLParser]=
+PluginOptionDialog.optionComponents.tidyupPerformThru.tooltip[getPluginKey():COBOLParser]=
+PluginOptionDialog.optionLabels.typeNames.text[getPluginKey():C99Parser]=
+PluginOptionDialog.optionComponents.typeNames.tooltip[getPluginKey():C99Parser]=
+PluginOptionDialog.optionLabels.redundantNames.text[getPluginKey():C99Parser]=
+PluginOptionDialog.optionComponents.redundantNames.tooltip[getPluginKey():C99Parser]=
+PluginOptionDialog.optionComponents.use_WINAPI_defines.text[getPluginKey():C99Parser]=
+PluginOptionDialog.optionComponents.use_WINAPI_defines.tooltip[getPluginKey():C99Parser]=
+PluginOptionDialog.optionComponents.use_MinGw_defines.text[getPluginKey():C99Parser]=
+PluginOptionDialog.optionComponents.use_MinGw_defines.tooltip[getPluginKey():C99Parser]=
+PluginOptionDialog.optionComponents.lineNumbering.text=
+PluginOptionDialog.optionComponents.lineNumbering.tooltip[getPluginKey():BasGenerator]=
+PluginOptionDialog.optionComponents.lineNumbering.tooltip[getPluginKey():COBOLGenerator]=
+PluginOptionDialog.optionLabels.numberingInterval.text=
+PluginOptionDialog.optionComponents.numberingInterval.tooltip=
+PluginOptionDialog.optionLabels.package.text=
+PluginOptionDialog.optionComponents.package.tooltip=
+PluginOptionDialog.optionComponents.appendSemicolon.text=
+PluginOptionDialog.optionComponents.appendSemicolon.tooltip=
+PluginOptionDialog.optionComponents.gnuCode.text=
+PluginOptionDialog.optionComponents.alignArrays.text=
+PluginOptionDialog.optionComponents.alignArrays.tooltip=
+PluginOptionDialog.optionComponents.terminateStrings.text=
+PluginOptionDialog.optionComponents.terminateStrings.tooltip=
+
+-----[ ElementNamePreferences ]-----
+ElementNamePreferences.title=
+ElementNamePreferences.lblExplanation.text=
+ElementNamePreferences.chkUseConfNames.text=
+ElementNamePreferences.lblLocalized.text=
+ElementNamePreferences.lblIndividual.text=
+ElementNamePreferences.btnEnglishStd.text=
+ElementNamePreferences.btnEnglishStd.tooltip=
+ElementNamePreferences.btnOK.text=
+ElementNamePreferences.btnOK.tooltip=
+
+-----[ DiagramControllerAliases ]-----
+// Also consider Menu.msgTabHdrSignature and Menu.msgTabHdrAlias
+DiagramControllerAliases.title=
+DiagramControllerAliases.lblHeader.text=
+DiagramControllerAliases.lblRemark.text=
+DiagramControllerAliases.chkApplyAliases.text=
+DiagramControllerAliases.btnOK.text=
+DiagramControllerAliases.btnOK.tooltip=
+DiagramControllerAliases.hlpEndEditing.text=
+DiagramControllerAliases.msgIdentifierRequired.text=
+DiagramControllerAliases.ttlIllegalValues.text=
+DiagramControllerAliases.msgIn.text=
+DiagramControllerAliases.msgConflictsFound.text=
+
+-----[ GUIScaleChooser ]-----
+GUIScaleChooser.title=
+GUIScaleChooser.txtComment.text=
+GUIScaleChooser.lblSpinner.text=
+GUIScaleChooser.pnlTest.border=
+GUIScaleChooser.lblTest.text=
+GUIScaleChooser.lblIcon.text=
+GUIScaleChooser.chkTest.text=
+GUIScaleChooser.btnOK.text=
+GUIScaleChooser.btnOK.tooltip=
+
+-----[ CodeImportMonitor ]-----
+CodeImportMonitor.ttlImporting.text=
+CodeImportMonitor.phaseLabels.0.text=
+CodeImportMonitor.phaseLabels.1.text=
+CodeImportMonitor.phaseLabels.2.text=
+CodeImportMonitor.phaseLabels.3.text=
+CodeImportMonitor.btnOk.text=
+CodeImportMonitor.btnCancel.text=
+CodeImportMonitor.lblRoots.text=
+CodeImportMonitor.lblErrors.text=
+CodeImportMonitor.msgInterrupted.text=
 
 -----[ FindAndReplace ]-----
+FindAndReplace.title=
+FindAndReplace.lblSearchPattern.text=
+FindAndReplace.lblReplacePattern.text=
+FindAndReplace.pnlMode.border=
+FindAndReplace.chkCaseSensitive.text=
+FindAndReplace.chkCaseSensitive.mnemonic=
+FindAndReplace.chkWholeWord.text=
+FindAndReplace.chkWholeWord.mnemonic=
+FindAndReplace.chkRegEx.text=
+FindAndReplace.chkRegEx.mnemonic=
+FindAndReplace.rbDown.text=
+FindAndReplace.rbDown.mnemonic=
+FindAndReplace.rbUp.text=
+FindAndReplace.rbUp.mnemonic=
+FindAndReplace.pnlScope.border=
+FindAndReplace.cmbScope.item.0=
+FindAndReplace.cmbScope.item.1=
+FindAndReplace.cmbScope.item.2=
+FindAndReplace.pnlRootTypes.border=
 FindAndReplace.chkRootTypes.0.text=@n
 FindAndReplace.chkRootTypes.0.mnemonic=p
 FindAndReplace.chkRootTypes.1.text=@o
 FindAndReplace.chkRootTypes.1.mnemonic=s
 FindAndReplace.chkRootTypes.2.text=@p
 FindAndReplace.chkRootTypes.2.mnemonic=i
+FindAndReplace.chkInTexts.text=
+FindAndReplace.chkInTexts.mnemonic=
+FindAndReplace.chkInComments.text=
+FindAndReplace.chkInComments.mnemonic=
+FindAndReplace.pnlElements.border=
+FindAndReplace.btnAll.text=
+FindAndReplace.btnNone.text=
 FindAndReplace.chkElementTypes.0.text=@{Root}
 FindAndReplace.chkElementTypes.1.text=@{Instruction}
 FindAndReplace.chkElementTypes.2.text=@{Alternative}
@@ -533,9 +1253,321 @@ FindAndReplace.chkElementTypes.8.text=@{Call}
 FindAndReplace.chkElementTypes.9.text=@{Jump}
 FindAndReplace.chkElementTypes.10.text=@{Parallel}
 FindAndReplace.chkElementTypes.11.text=@{Try}
+FindAndReplace.chkDisabled.text=
+FindAndReplace.pnlPreview.border=
+FindAndReplace.txtText.border=
+FindAndReplace.txtComm.border=
+FindAndReplace.chkElementwise.text=
+FindAndReplace.chkElementwise.mnemonic=
+FindAndReplace.btnFind.text=
+FindAndReplace.btnFind.mnemonic=
+FindAndReplace.btnReplace.text=
+FindAndReplace.btnReplace.mnemonic=
+FindAndReplace.btnReplaceFind.text=
+FindAndReplace.btnReplaceFind.mnemonic=
+FindAndReplace.btnReplaceAll.text=
+FindAndReplace.btnReplaceAll.mnemonic=
+FindAndReplace.btnReplaceAll.tooltip=
+FindAndReplace.btnClose.text=
+FindAndReplace.msgRegexCorrupt.text=
+FindAndReplace.ttlSearchError.text=
 
 -----[ DownloadMonitor ]-----
 DownloadMonitor.btnCancel.text=Ofbriechen
+
+-----> Arranger
+-----[ Arranger ]-----
+Arranger.btnAddDiagram.text=Nei Diagramm
+Arranger.btnRemoveDiagram.text=Ewechzehuelen
+Arranger.btnRemoveDiagrams.text=Ewechzehuelen
+Arranger.btnRemoveAllDiagrams.text=Ewechzehuelen all
+Arranger.btnExportPNG.text=Export als PNG
+Arranger.btnSaveArr.text=Späichert Arr.
+Arranger.btnLoadArr.text=Lueden Arr.
+Arranger.btnAddDiagram.tooltip=Füügt eng nei, eidel Diagramm.
+Arranger.btnPinDiagram.text=Pin Diagramm
+Arranger.btnSetCovered.text=Set ofgedeckt
+Arranger.btnZoom.text=Aus-/Anzoomen
+Arranger.btnSaveArr.tooltip=Späichert dës Arrangement als Lëscht (*.arr) oder als Archiv (*.arrz).
+Arranger.btnLoadArr.tooltip=Lued eng Array vu Lëscht (*.arr) oder Archiv (*.arrz).
+Arranger.btnExportPNG.tooltip=Gitt dës Arrangement als Bilddatei am PNG-Format aus.
+Arranger.btnPinDiagram.tooltip=Pin ausgewielt Diagrammer fir se ze schützen géint Ersatz duerch Structorizer.
+Arranger.btnSetCovered.tooltip=Mark Ënnerprogramm Diagrammer vun der Auswiel fir Routine Appellen als komplett vun Tester ofgedeckt.
+Arranger.btnRemoveDiagram.tooltip=Ewechzehuelen déi gewielte Diagramm - Halt Shift fir all Diagrammer ze läschen.
+Arranger.btnZoom.tooltip=Halt Shift erof fir ze anzoomen.
+Arranger.chkDrawGroups.text=Show Gruppen
+Arranger.chkSelectGroups.text=Wielt Gruppen
+Arranger.popupHitList.text=Diagrammer / Gruppen beréiert
+Arranger.popupRemove.text=Ewechzehuelen ausgewielt Diagrammer
+Arranger.popupRemoveAll.text=Ewechzehuelen all Diagrammer
+Arranger.popupExpandSelection.text=Komplett Auswiel
+Arranger.popupExpandSelection.tooltip=Füügt all d'Diagrammer zougänglech oder abegraff direkt oder indirekt an déi aktuell Auswiel.
+Arranger.popupGroup.text=Grupp ausgewielt Diagrammer
+Arranger.popupExpandGroup.text=Komplett a gruppéiere ...
+Arranger.popupAttributes.text=Eegeschaften weisen ...
+Arranger.popupAttributes.tooltip=Öffnet den Eegeschaften Dialog fir de gewielte Diagramm
+Arranger.popupHelp.text=Arrangeur Hëllef ...
+Arranger.popupHelp.tooltip=Weist d'Arrangeur Kapitel vum Online Benotzerhandbuch am Browser
+Arranger.popupKeyBindings.text=Tastatur Ofkiirzungen ...
+Arranger.popupKeyBindings.tooltip=Weist d'Tastatur Ofkiirzungen valabel am Arrangeur op der entspriechender Benotzerhandbuch Säit am Browser.
+Arranger.popupRearrange.text=Reorder nach Gruppen
+Arranger.statusSelection.tooltip=Abegraff an aktuell ausgewielt Diagrammer
+Arranger.msgConfirmRemoveAll.text=Sidd Dir sécher datt Dir all Diagrammer vum Arrangeur wëllt läschen?
+Arranger.msgTitleWarning.text=Warnung
+Arranger.msgTitleIllegal.text=Illegal Operatioun!
+Arranger.msgActionDelete.text=Läschen
+Arranger.msgActionCut.text=Ausschneiden
+Arranger.msgActionCopy.text=Kopéieren
+Arranger.msgConfirmRemove.text=Wëllt Dir wierklech déi uewe genannte Diagrammer vum Arrangeur %1?
+Arranger.msgConfirmMultiple.text=Déi folgend %1 Diagrammer (aus %2 am Ganzen) sinn ausgewielt:\n- %3\n\n%4
+Arranger.msgReadyToExport.text=Elo exportéiert déi spezifizéiert Deelarrangement als PNG?
+Arranger.msgCantDoWithMultipleRoots.text=Et ass net méiglech méi wéi eng Diagramm gläichzäiteg ze %1. Dir hutt %2 Charts ausgewielt:\n- %3
+Arranger.msgDiagramsSelected.text=%1, ausgewielt: %2
+Arranger.msgBrowseFailed.text=Kann "%" am Browser net weisen
+Arranger.msgShowingOfflineGuide.text=D'Benotzerhandbuch dat viru kuerzem als PDF erofgeluede gouf gëtt als Ersatz ugewisen (am PDF Viewer).\nGitt w.e.g. an d'Sektioun "Arranger" am Kapitel "Features".
+Arranger.msgTitleURLError.text=URL Feeler
+Arranger.msgSelectionExpanded.text=% oprufft / abegraff Diagrammer bäigefüügt an de Auswiel.
+Arranger.msgMissingDiagrams.text=\n\nReferenzen op %1 Diagrammer net geléist (Diagrammer net fonnt):\n- %2
+Arranger.msgAmbiguousSignatures.text=\nEt gi %1 zweedeiteg Signaturen an der Auswiel, dat heescht méi wéi een Diagramm entsprécht all:\n- %2
+Arranger.msgEmptySelection.text=Kann Diagrammer net %: näischt ausgewielt.
+Arranger.msgActionGroup.text=grupp
+Arranger.msgGroupName.text=%1Numm vun der Grupp zu där déi %2 ausgewielte Diagrammer solle gehéieren:
+Arranger.msgGroupNameRejected.text=Gruppnumm "%" net ugeholl.
+Arranger.msgGroupExists.text=Et gëtt schonn eng Grupp mam Numm "%". Wat wëllt Dir maachen?
+Arranger.msgGroupingOptions.0.text=Diagrammer dobäizemaachen
+Arranger.msgGroupingOptions.1.text=Grupp iwwerschreiwe
+Arranger.msgGroupingOptions.2.text=Gitt de Gruppnumm erëm an
+Arranger.msgGroupingOptions.3.text=Annuléieren
+Arranger.msgCongruentGroups.text=De Set vun de %1 ausgewielten Diagrammer ass kongruent mat %2 existéierende Grupp(en):\n- %3\n\n%4
+Arranger.msgDoCreateGroup.text=Wëllt Dir nach eng aner Grupp derbäisetzen?
+
+-----[ Surface ]-----
+Surface.msgFileLoadError.text=Feeler beim Luede vun der Datei:
+Surface.msgSavePortable.text=Dir kënnt dës Arrangement späicheren:\n- entweder als portable kompriméierten Archiv (*.arrz)\n- oder als einfach Arrangement Lëscht mat Weereferenzen (*.arr).
+Surface.lblSaveAsArrz.text=Als Archiv (*.arrz)
+Surface.lblSaveAsArr.text=Als Lëscht (*.arr)
+Surface.msgSaveDialogTitle.text=Späichert d'Diagrammarrangement ...
+Surface.msgSaveError.text=Feeler beim Späicheren vun der Arrangement:
+Surface.msgLoadDialogTitle.text=Lued gespäichert Diagrammarrangement ...
+Surface.msgExtractDialogTitle.text=Unzip an e Verzeichnis (optional)?
+Surface.msgArrLoadError.text=Feeler beim Luede vun der Arrangement:
+Surface.msgExportDialogTitle.text=Export Diagramm als PNG ...
+Surface.msgExportError.text=Feeler beim Erstellen vun der Bilddatei!
+Surface.msgParseError.text=NSD Parser Feeler:
+Surface.msgResetCovered.text=Routine ass schonn als Test ofgedeckt markéiert! Unmarkéieren?
+Surface.msgCoverageError.text=Kee gëeegent Ënnerprogramm Diagramm ausgewielt, keng Ofdeckungsmarkéierung méiglech!
+Surface.msgUnsavedDiagrams.text=Déi folgend Diagrammer konnten net gespäichert ginn:
+Surface.msgUnsavedHint.text=Dir wëllt vläicht d'Diagrammer éischt späicheren andeems Dir se duebelklickt an späichert mat Structorizer (da dréckt op "Ofbriechen").
+Surface.msgUnsavedContinue.text=Trotzdem weider?
+Surface.msgNoArrFile.text=Keen Arrangeurdatei (arr) fonnt
+Surface.msgDefectiveArr.text=Broken Arrangementsdatei.
+Surface.msgDefectiveArrz.text=Broken portable Arrangement Archiv.
+Surface.titleDiagramConflict.text=Diagramm Konflikt
+Surface.msgInsertionConflict.0.text=Et gëtt schonn eng Versioun vum Diagramm "%2",\nop d'mannst eng vun deenen net gespäichert Ännerungen huet.
+Surface.msgInsertionConflict.1.text=Et gëtt schonn eng gläichwäerteg Kopie vum Diagramm "%1"\nmat engem anere Fichierwee "%2".
+Surface.msgInsertionConflict.2.text=Et gëtt schonn en anert Diagramm mat der Signatur "%1" an de Fichierwee "%2".
+Surface.msgOverwriteFile.text=Bestehend Datei "%" iwwerschreiwe?
+Surface.msgConfirmOverwrite.text=Confirméieren iwwerschreiwe
+Surface.msgTooltipSelectThis.text=Wielt %1 (+Shift: der Auswiel bäizefügen)%2 a bréngt no vir.
+Surface.msgGroupRemovalError.text=Feeler beim Entfernen vun der Grupp «%»
+Surface.msgArrangementAlreadyLoaded.text=D'Arrangementsdatei "%1" gouf schonn an de Grupp «%2» gelueden.\nSollt en nei gelueden ginn, mam Gruppname geännert?
+Surface.msgArrangementNotLoaded.text=D'Luede vun der Arrangementsdatei ofgebrach.
+Surface.msgSaveAsNewGroup.text=als nei Grupp
+Surface.msgSelectGroup.text=Gitt w.e.g. un, ob de Fichier vun enger vun de bestehenden Gruppen soll aktualiséiert ginn oder eng nei Arrangement soll gespäichert ginn:
+Surface.msgConfirmRemoveGroup.text=Soll déi eidel Grupp «%» elo ewechgeholl ginn?
+Surface.msgSaveGroupChanges.text=Grupp «%» huet net gespäichert Ännerungen.\nSollen dës Ännerungen elo gespäichert ginn?
+Surface.msgUnsavedGroups.text=Déi folgend Gruppen konnten net gespäichert ginn:
+Surface.msgDiagram.text=Diagramm «%»
+Surface.msgGroup.text=Grupp «%»
+Surface.msgGroupExists.text=Eng Grupp mam Numm "%" existéiert schonn!
+Surface.titleRenameGroup.text=Grupp «%1» op «%2» ëmbenennen
+Surface.msgRenameArrFile.text=Arrangementsdatei\n"%1"\nop "%2" ëmbenennen?
+Surface.msgRenamingFailed.text=Arrangementsdatei konnt net op "%" ëmbenannt ginn!\nOperatioun ofgebrach!
+Surface.msgSharedDiagrams.text=Déi folgend Diagrammer ginn elo mat de opgelëschte Gruppen gedeelt:\n - %1\n\nBemierkung datt all Ännerunge vun hinnen all Grupp beaflossen\nan d'Archiv %2, och wann deen net méi gelueden ass!
+Surface.msgFileMissing.text=vermësst!
+
+-----[ ArrangerIndex ]-----
+ArrangerIndex.popupIndexGet.text=Kréien Diagramm
+ArrangerIndex.popupIndexAttributes.text=Eegeschaften weisen ...
+ArrangerIndex.popupIndexInfo.text=Diagramm/Grupp Info ...
+ArrangerIndex.popupIndexSave.text=Ännerungen späicheren
+ArrangerIndex.popupIndexRemove.text=Ewechzehuelen
+ArrangerIndex.popupIndexCovered.text=Testofdeckung an/aus
+ArrangerIndex.popupIndexRemoveAll.text=Ewechzehuelen all
+ArrangerIndex.popupIndexGroup.text=Grupp erstellen ...
+ArrangerIndex.popupIndexExpandGroup.text=Grupp erweideren ...
+ArrangerIndex.popupIndexDissolve.text=Grupp opléisen
+ArrangerIndex.popupIndexDetach.text=Ewechzehuelen aus Grupp
+ArrangerIndex.popupIndexAttach.text=An d'Grupp asetzen / réckelen ...
+ArrangerIndex.popupIndexDrawGroup.text=Grupp weisen
+ArrangerIndex.popupIndexDrawGroup.tooltip=Visibilitéit vun dëser Grupp a seng Diagrammer am Arrangeur
+ArrangerIndex.popupIndexRenameGroup.text=Grupp ëmbenennen ...
+ArrangerIndex.popupIndexExport.text=Export Diagramm/Grupp
+ArrangerIndex.popupIndexRenameGroup.tooltip=Erlaabt de gewielte Grupp ëmbenennen, optional déi verbonne Datei abegraff.
+ArrangerIndex.popupIndexShowQualifiers.text=Numm Präfixe weisen (wann zoutreffend)
+ArrangerIndex.popupIndexShowQualifiers.tooltip=Weist den Nummraumidentifizéierer als Präfix op importéierten (Methode) Diagrammer (soss gëtt eng Bamvisioun versicht).
+ArrangerIndex.popupIndexHide.text=Verstoppen Arrangeur Index
+ArrangerIndex.lblSelectTargetGroup.text=Wielt Zilgrupp:
+ArrangerIndex.lblGroups.text=Gruppen zougewisen
+ArrangerIndex.lblSubroutines.text=@oer oprufft
+ArrangerIndex.lblIncludables.text=Abegraff @p Diagrammer
+ArrangerIndex.lblDependingDiagrams.text=Ofhängeg Diagrammer
+ArrangerIndex.lblStaleReferences.text=Ongeléist Diagramm Referenzen
+ArrangerIndex.lblModifications.text=Net gespäichert Ännerungen
+ArrangerIndex.lblExternSubroutines.text=Referenzen op extern @or
+ArrangerIndex.lblExternIncludables.text=Referenzen op extern @p Diagrammer
+ArrangerIndex.btnShowGroup.tooltip=Toggle individuell Visibilitéit vun dëser Grupp am Arrangeur
+ArrangerIndex.btnGroupColors.*.tooltip=Setzt d'Faarf vun dësem Knäppchen als Faarf vum Grupp
+ArrangerIndex.msgDefaultGroupName.text=(Standardgrupp)
+ArrangerIndex.msgGroupsAndRootsSelected.text=Béid Gruppen an Diagrammer ausgewielt. Op béide Niveauen zur selwechter Zäit läschen kéint onerwaart Resultater hunn.
+ArrangerIndex.msgDeleteGroupMembers.text=% Gruppen ginn ewechgeholl.\n\nDiagrammer, déi an hinnen enthale sinn, gi behalen soulaang se an anere Gruppen optrieden.\n\nWat soll mat Diagrammer geschéien, déi net an anere Gruppen enthale sinn: Vun Arrangeur ewechhuelen?\n(Soss si se gëtt an d'Standardgrupp bäigefüügt, déi iwwerholl gëtt.)
+ArrangerIndex.msgConfirmDeleteRoots.text=Dir hutt % Diagramm(e) gewielt fir ze läschen.\n\nSollt se och ganz aus allen anere Gruppen ewechgeholl ginn?\n(Soss ginn se einfach aus der jeweileger Grupp geläscht.)
+ArrangerIndex.msgAttachOptions.0.text=Füügt an de Grupp
+ArrangerIndex.msgAttachOptions.1.text=Réckelen an d'Grupp
+ArrangerIndex.msgAttachOptions.2.text=Annuléieren
+ArrangerIndex.msgNumberOfSharedMembers.text=% Diagrammer mat anere Gruppen gedeelt
+ArrangerIndex.msgMembersIncomplete.text=Grupp ass onkomplett: Referenzen op %1 Diagrammer ausserhalb vun der Grupp; %2 onopléisbar Referenzen
+ArrangerIndex.msgMembersComplete.text=Grupp ass komplett: keng extern Referenzen
+ArrangerIndex.msgGroupMembersChanged.text=D'Set vun Diagrammer abegraff huet geännert.
+ArrangerIndex.msgGroupMembersMoved.text=D'Koordinate vun e puer abegraff Diagrammer goufen geännert.
+ArrangerIndex.msgNewGroupName.text=Neien Numm fir de gewielte Grupp:
+ArrangerIndex.msgConfirmDissolve.text=Sécher dës Grupp(e) opzeléisen?\n%
+
+-----> Executor
+-----[ Control ]-----
+Control.title=
+Control.lblSpeed.text=
+Control.btnCallStack.text=
+Control.lblCallLevel.text=
+Control.chkCollectRuntimeData.text=
+Control.cbRunDataDisplay.item.0=
+Control.cbRunDataDisplay.item.1=
+Control.cbRunDataDisplay.item.2=
+Control.cbRunDataDisplay.item.3=
+Control.cbRunDataDisplay.item.4=
+Control.cbRunDataDisplay.item.5=
+Control.cbRunDataDisplay.item.6=
+Control.cbRunDataDisplay.item.7=
+Control.chkOutputToTextWindow.text=
+Control.lbStopRunningProc.text=
+Control.lbInputValue.text=
+Control.lbInputPaused.text=
+Control.lbInputCancelled.text=
+Control.lbManuallySet.text=
+Control.lbEmptyLine.text=
+Control.lbReturnedResult.text=
+Control.lbOutput.text=
+Control.lbInput.text=
+Control.lbAcknowledge.text=
+Control.lbOk.text=
+Control.lbPause.text=
+Control.lbCommit.text=
+Control.lbDiscard.text=
+Control.ttlCompName.text=
+Control.ttlIndex.text=
+Control.ttlContent.text=
+Control.msgTitleError.text=
+Control.msgTitleQuestion.text=
+Control.msgTitleParallel.text=
+Control.msgNoSubroutine.text=
+Control.msgNoInclDiagram.text=
+Control.msgAmbiguousCall.text=
+Control.msgInvalidExpr.text=
+Control.msgInvalidBool.text=
+Control.msgIllFunction.text=
+Control.msgManualBreak.text=
+Control.msgIllegalLeave.text=
+Control.msgWrongExit.text=
+Control.msgExitCode.text=
+Control.msgIllegalJump.text=
+Control.msgTooManyLevels.text=
+Control.msgJumpOutParallel.text=
+Control.msgForLoopManipulation.text=
+Control.msgInvalidFileNumberRead.text=
+Control.msgInvalidFileNumberWrite.text=
+Control.msgNoIntLiteralOnFile.text=
+Control.msgNoDoubleLiteralOnFile.text=
+Control.msgEndOfFile.text=
+Control.msgUseStopButton.text=
+Control.msgConstantRedefinition.text=
+Control.msgConstantArrayElement.text=
+Control.msgInvalidRecord.text=
+Control.msgInvalidComponent.text=
+Control.msgConstantRecordComponent.text=
+Control.msgTypeMismatch.text=
+Control.msgBadValueList.text=
+Control.msgBadValueListDetails.text=
+Control.msgInvalidArrayAccess.text=
+Control.msgIndexOutOfBounds.text=
+Control.msgInitializerAsArgument.text=
+Control.msgIllegalEmptyLine.text=
+Control.msgVarUpdateErrors.text=
+Control.msgVarUpdatesFailed.text=
+Control.msgEndEditing.text=
+Control.msgFunctionConflict.text=
+Control.msgProcedureConflict.text=
+Control.msgSignatureConflicts.text=
+Control.msgGUISyncFault.text=
+Control.msgErrorInSubroutine.text=
+Control.msgThrown.text=
+Control.msgInvalidInitialization.text=Variabel déi initialiséiert gëtt fehlt oder zweedeiteg: «%»!
+Control.tblVar.header.0=
+Control.tblVar.header.2=
+
+-----[ OutputConsole ]-----
+OutputConsole.title=
+OutputConsole.menuProp.text=
+OutputConsole.menuPropFont.text=
+OutputConsole.menuPropFontUp.text=
+OutputConsole.menuPropFontDown.text=
+OutputConsole.menuContent.text=
+OutputConsole.menuContentLogCalls.text=
+OutputConsole.menuContentLogMeta.text=
+OutputConsole.menuContentLogMeta.tooltip=
+OutputConsole.menuContentSave.text=
+OutputConsole.msgOverwriteFile.text=
+OutputConsole.msgErrorFileSave.text=
+OutputConsole.msgTitleError.text=
+
+-----> DiagramController
+-----[ TurtleFrame ]-----
+TurtleFrame.popupGotoCoord.text=
+TurtleFrame.popupGotoTurtle.text=
+TurtleFrame.popupGotoHome.text=
+TurtleFrame.popupGotoOrigin.text=
+TurtleFrame.popupZoom100.text=
+TurtleFrame.popupZoomBounds.text=
+TurtleFrame.popupExtendCanvas.text=
+TurtleFrame.popupShowOrigin.text=
+TurtleFrame.popupShowTurtle.text=
+TurtleFrame.popupShowStatus.text=
+TurtleFrame.popupShowCoords.text=
+TurtleFrame.popupSnapLines.text=
+TurtleFrame.popupSnapRadius.text=
+TurtleFrame.popupBackground.text=
+TurtleFrame.popupExportCSV.text=
+TurtleFrame.popupExportImage.text=
+TurtleFrame.popupExportPNG.text=
+TurtleFrame.popupExportSVG.text=
+TurtleFrame.statusHome.tooltip=
+TurtleFrame.statusTurtle.tooltip=
+TurtleFrame.statusSize.tooltip=
+TurtleFrame.statusViewport.tooltip=
+TurtleFrame.statusSelection.tooltip=
+TurtleFrame.statusZoom.tooltip=
+TurtleFrame.msgOverwrite.text=
+TurtleFrame.msgBrowseFailed.text=
+TurtleFrame.msgHelp.text=
+TurtleFrame.msgSnapConfig.text=
+TurtleFrame.msgSnapLines.text=
+TurtleFrame.msgSnapPoints.text=
+TurtleFrame.lblScale.text=
+TurtleFrame.lblSeparator.text=
+TurtleFrame.rbSeparators.0.text=
+TurtleFrame.rbSeparators.1.text=
+TurtleFrame.rbSeparators.2.text=
+TurtleFrame.rbSeparators.3.text=
+TurtleFrame.rbSeparators.4.text=
 
 -----> Elements
 ElementNames.localizedNames.0.text=Instruktioun
@@ -551,7 +1583,29 @@ ElementNames.localizedNames.9.text=CALL
 ElementNames.localizedNames.10.text=EXIT
 ElementNames.localizedNames.11.text=PARALLEL
 ElementNames.localizedNames.12.text=Diagram
-ElementNames.localizedNames.13.text=Main program
-ElementNames.localizedNames.14.text=Sub-routine
-ElementNames.localizedNames.15.text=Includable
+ElementNames.localizedNames.13.text=Haaptprogramm
+ElementNames.localizedNames.14.text=Ënnerprogramm
+ElementNames.localizedNames.15.text=Abezéibar
 ElementNames.localizedNames.16.text=TRY
+
+-----> Keywords
+ParserKeywords.AltPre.text=
+ParserKeywords.AltPost.text=
+ParserKeywords.CasePre.text=
+ParserKeywords.CasePost.text=
+ParserKeywords.ForPre.text=
+ParserKeywords.ForPost.text=
+ParserKeywords.ForStep.text=
+ParserKeywords.ForInPre.text=
+ParserKeywords.ForInPost.text=
+ParserKeywords.WhilePre.text=
+ParserKeywords.WhilePost.text=
+ParserKeywords.RepeatPre.text=
+ParserKeywords.RepeatPost.text=
+ParserKeywords.JumpLeave.text=
+ParserKeywords.JumpReturn.text=
+ParserKeywords.JumpExit.text=
+ParserKeywords.JumpThrow.text=
+ParserKeywords.Input.text=
+ParserKeywords.Output.text=
+

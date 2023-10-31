@@ -93,6 +93,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2020-10-16      Bugfix #874: Nullpointer exception on Calls with non-ASCII letters in name
  *      Kay Gürtzig             2021-12-05      Bugfix #1024: Precautions against defective record initializers
  *      Kay Gürtzig             2023-09-28      Bugfix #1092: Sensible export of alias type definitions enabled
+ *      Kay Gürtzig             2023-10-04      Bugfix #1093 Undue final return 0 on function diagrams
  *
  ******************************************************************************************************
  *
@@ -564,6 +565,9 @@ public class OberonGenerator extends Generator {
 			StringList lines = _inst.getUnbrokenText();
 			for (int i=0; i<lines.count(); i++)
 			{
+				// START KGU#1089 2023-10-17: Issue #980 Ensure line-specific suppression is lifted
+				isDisabled = _inst.isDisabled(false);
+				// END KGU#1089 2023-10-17
 				// START KGU#101/KGU#108 2015-12-20 Issue #51/#54
 				//code.add(_indent+transform(_inst.getText().get(i))+";");
 				String line = lines.get(i);
@@ -652,6 +656,13 @@ public class OberonGenerator extends Generator {
 					String transline = transform(line);
 					int asgnPos = transline.indexOf(":=");
 					boolean isComplexInit = false;
+					// START KGU#1089 2023-10-17: Issue #980 Suppress defective declarations
+					StringList tokens =Element.splitLexically(line, true);
+					tokens.removeAll(" ");
+					if (asgnPos > 0 && Instruction.getAssignedVarname(tokens, false) == null) {
+						isDisabled = true;
+					}
+					// END KGU#1089 2023-10-17
 					// START KGU#100 2016-01-16: Enh. #84 - resolve array initialisation
 					// START KGU#504 2018-03-13: Bugfix #520, #521
 					//if (asgnPos >= 0 && transline.contains("{") && transline.contains("}"))
@@ -2232,6 +2243,11 @@ public class OberonGenerator extends Generator {
 				int vx = varNames.indexOf("result", false);
 				result = varNames.get(vx);
 			}
+			// START KGU#1084 2023-10-04: Bugfix #1093 Don't invent an undue return statement here
+			else {
+				return _indent;
+			}
+			// END KGU#1084 2023-10-24
 			//addSepaLine();
 			code.add(_indent + this.getIndent() + "RETURN " + result + ";");
 		}

@@ -88,6 +88,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2022-08-14      Bugfix #1061: Suppression of content conversions #423, #623, #680, #782, #812
  *      Kay Gürtzig             2022-08-23      Issue #1068: transformIndexLists() inserted in transformTokens()
  *      Kay Gürtzig             2023-09-29      Issues #1091, #1092: Alias and array type defs now simply suppressed
+ *      Kay Gürtzig             2023-10-04      Bugfix #1093 Undue final return 0 on function diagrams eliminated
+ *      Kay Gürtzig             2023-10-12/18   Issue #980 Code generation for multi-variable and array declarations revised
  *
  ******************************************************************************************************
  *
@@ -712,6 +714,13 @@ public class PythonGenerator extends Generator
 				// START KGU#1053 2022-08-14: Bugfix #1061 - hands off in "no conversion" mode!
 				}
 				// END KGU#1053 2022-08-14
+				// START KGU#1089 2023-10-18: Issue #980 Reject a multi-var declaration
+				if (!done && (Instruction.isAssignment(line))
+						&& this.getAssignedVarname(line, false) == null) {
+					this.appendComment("*** ILLEGAL LINE SKIPPED: " + line, _indent);
+					done = true;
+				}
+				// END KGU#1089 2023-10-18
 				if (!done) {
 					addCode(codeLine, _indent, isDisabled);
 				}
@@ -1361,21 +1370,77 @@ public class PythonGenerator extends Generator
 	// START KGU#767 2019-11-24: Bugfix #782 - wrong handling of global / local declarations
 	/**
 	 * Generates a declaration from the given line and registers it with the given root.
-	 * @param _line - the original line of the declaration
+	 * 
+	 * @param _line - the original line of the declaration (should start with "var" or "dim")
 	 * @param _root - the owning {@link Root} object
 	 * @param _indent - current indentation level
-	 * @param _isDisabled - whether this element is disabled (i.e. all content is going to be a comment)
+	 * @param _isDisabled - whether this element is disabled (i.e. all content is going to
+	 *     be a comment)
 	 * @return true iff all code generation for the instruction line is done
 	 */
 	private boolean generateDeclaration(String _line, Root _root, String _indent, boolean _isDisabled) {
-		StringList tokens = Element.splitLexically(_line + " <- 0", true);
+		// START KGU#1089 2023-10-12: Issu #980
+		//StringList tokens = Element.splitLexically(_line + " <- 0", true);
+		//tokens.removeAll(" ");
+		//String varName = Instruction.getAssignedVarname(tokens, false);
+		//return generateDeclaration(_root, varName, _indent, _isDisabled);
+		StringList tokens = Element.splitLexically(_line, true);
 		tokens.removeAll(" ");
-		String varName = Instruction.getAssignedVarname(tokens, false);
-		if (this.wasDefHandled(_root, varName, false)) {
+		if (!tokens.isEmpty()) {
+			// First tokens should be "var" or "dim" now.
+			tokens.remove(0);
+		}
+		int posColon = tokens.indexOf(":");
+		if (posColon < 0) {
+			posColon = tokens.indexOf("as", false);
+		}
+		if (posColon < 0) {
+			// Something's wrong here!
+			posColon = tokens.count();
+		}
+		boolean done = true;
+		StringList declItems = Element.splitExpressionList(tokens.subSequence(0, posColon), ",", false);
+		for (int i = 0; i < declItems.count(); i++) {
+			String declItem = declItems.get(i);
+			int posBrack = declItem.indexOf("[");
+			if (posBrack >= 0) {
+				declItem = declItem.substring(0, posBrack);
+			}
+			if (Function.testIdentifier(declItem, false, null)) {
+				done = generateDeclaration(_root, declItem, _indent, _isDisabled) && done;
+			}
+			else {
+				// FIXME This may cause more trouble then to return always true
+				done = false;
+			}
+		}
+		return done;
+		// END KGU#1089 2023-10-12
+	}
+	// END KGU#767 2019-11-24
+
+	// START KGU#1098 2023-10-12: Issue #980 extracted from generateDeclaration(String, Root, String, boolean)
+	/**
+	 * Generates a declaration for the given variable and registers it with the given root
+	 * if is hadn't already been declared.
+	 * @param _root - the owning {@link Root} object
+	 * @param _varName - the variable for which the declaration is to be generated (from
+	 *     {@code root}'s type map)
+	 * @param _indent - current indentation level
+	 * @param _isDisabled - whether this element is disabled (i.e. all content is going to be a comment)
+	 * @return true iff declaration for the given variable was or had been generated
+	 */
+	private boolean generateDeclaration(Root _root, String _varName, String _indent, boolean _isDisabled) {
+		if (this.wasDefHandled(_root, _varName, false)) {
 			return true;
 		}
 		String typeComment = "";
-		TypeMapEntry type = this.typeMap.get(varName);
+		TypeMapEntry type = this.typeMap.get(_varName);
+		// START KGU#1089 2023-10-12: Issue #980 More intelligent declaration for fixed-size arrays
+		StringList initializer = new StringList();
+		int depth = 0;
+		boolean toFill = true;
+		// END KGU#1089 2023-10-12
 		if (type != null) {
 			StringList typeNames = this.getTransformedTypes(type, true);
 			if (typeNames != null && !typeNames.isEmpty()) {
@@ -1383,12 +1448,32 @@ public class PythonGenerator extends Generator
 						" meant to be of type " + typeNames.concatenate(" or ") + " " +
 						this.commentSymbolRight();
 			}
+			// START KGU#1089 2023-10-12: Issue #980 More intelligent declaration for fixed-size arrays
+			String canonStr = type.getCanonicalType(true, false);
+			while (canonStr.substring(depth).startsWith("@")) {
+				initializer.insert("]", depth);
+				int maxIndex = type.getMaxIndex(depth);
+				toFill = false;
+				if (maxIndex >= 0) {
+					initializer.insert(" for i" + depth + " in range(" + (maxIndex+1) +")", depth);
+					toFill = true;
+				}
+				initializer.insert("[", 0);
+				depth++;
+			}
+			// END KGU#1089 2023-10-12
 		}
-		addCode(varName + " = None" + typeComment, _indent, _isDisabled);
-		this.setDefHandled(_root.getSignatureString(false, false), varName);
+		// START KGU#1089 2023-10-12: Issue #980 More intelligent declaration for fixed-size arrays
+		//addCode(_varName + " = None" + typeComment, _indent, _isDisabled);
+		if (toFill) {
+			initializer.insert("None", depth);
+		}
+		addCode(_varName + " = " + initializer.concatenate(null) + typeComment, _indent, _isDisabled);
+		// END KGU#1089 2023-10-12
+		this.setDefHandled(_root.getSignatureString(false, false), _varName);
 		return true;
 	}
-	// END KGU#767 2019-11-24
+	// END KGU#1098 2023-10-12
 
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.Generator#generateHeader(lu.fisch.structorizer.elements.Root, java.lang.String, java.lang.String, lu.fisch.utils.StringList, lu.fisch.utils.StringList, java.lang.String)
@@ -1529,6 +1614,11 @@ public class PythonGenerator extends Generator
 				int vx = varNames.indexOf("result", false);
 				result = varNames.get(vx);
 			}
+			// START KGU#1084 2023-10-04: Bugfix #1093 Don't invent an undue return statement here
+			else {
+				return _indent;
+			}
+			// END KGU#1084 2023-10-24
 			addSepaLine(_indent);;
 			code.add(_indent + "return " + result);
 		}
@@ -1564,7 +1654,7 @@ public class PythonGenerator extends Generator
 	}
 	// END KGU 2015-12-15
 	
-	// START KGU#799 2020-02-13: Auxiliary fpor bugfix #812
+	// START KGU#799 2020-02-13: Auxiliary for bugfix #812
 	private String getAssignedVarname(String line, boolean pureBasename)
 	{
 		StringList tokens = Element.splitLexically(line, true);

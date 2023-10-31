@@ -72,6 +72,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2021-06-07      Issue #67: lineNumering option made plugin-specific
  *      Kay Gürtzig         2021-10-03/04   Bugfix #993: Wrong handling of constant parameters, array types, and mere declarations
  *      Kay Gürtzig         2021-12-05      Bugfix #1024: Precautions against defective record initializers
+ *      Kay Gürtzig         2023-10-04      Bugfix #1093 Undue final return 0 on function diagrams
  *
  ******************************************************************************************************
  *
@@ -596,6 +597,12 @@ public class BasGenerator extends Generator
 						StringList leftSide = tokens.subSequence(0, asgnPos);
 						leftSide.removeAll(" ");
 						String varName = Instruction.getAssignedVarname(leftSide, false);
+						// START KGU#1089 2023-10-17: Issue #980 Suppress defective initialisations
+						if (varName == null) {
+							this.appendComment("***ILLEGAL LINE SKIPPED: " + line, _indent);
+							continue;
+						}
+						// END KGU#1089 2023-10-17: Issue #980
 						StringList exprTokens = tokens.subSequence(asgnPos+1, tokens.count()).trim();
 						isArrayInit = !exprTokens.isEmpty() && exprTokens.get(0).equals("{") && exprTokens.get(exprTokens.count()-1).equals("}");
 						// START KGU#780 2019-12-01 - trouble with complicated left sides fixed
@@ -1577,6 +1584,11 @@ public class BasGenerator extends Generator
 				int vx = varNames.indexOf("result", false);
 				result = varNames.get(vx);
 			}
+			// START KGU#1084 2023-10-04: Bugfix #1093 Don't invent an undue return statement here
+			else {
+				return _indent;
+			}
+			// END KGU#1084 2023-10-24
 			code.add(this.getLineNumber() + _indent + transformKeyword("RETURN ") + result);
 		}
 		return _indent;

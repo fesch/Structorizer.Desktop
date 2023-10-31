@@ -55,6 +55,7 @@
  *      Kay Gürtzig     2016-12-14  New menu "Debug"
  *      Kay Gürtzig     2018-07-02  KGU#245: all Colors stuff replaced with array keys
  *      Kay Gürtzig     2022-08-11  Enh. #84/#250: Parser configuration for FOR loops updated
+ *      Kay Gürtzig     2023-10-06  Issue #311: Menu reorganisation (menuDiagram split)
  *
  ******************************************************************************************************
  *
@@ -131,8 +132,6 @@ Menu.menuEditPaste.text=粘贴
 Menu.menuEditCopyDiagramPNG.text=复制 PNG 图像到剪贴板
 Menu.menuEditCopyDiagramEMF.text=复制 EMF 图像到剪贴板
 
-Menu.menuView.text=视图
-
 // Menu "Diagram"
 Menu.menuDiagram.text=图
 // Submenus of "Diagram"
@@ -173,11 +172,13 @@ Menu.menuDiagramType.text=类型
 Menu.menuDiagramTypeProgram.text=主程序
 Menu.menuDiagramTypeFunction.text=子程序
 Menu.menuDiagramUnboxed.text=有横隔的图？
-Menu.menuDiagramComment.text=显示注释？
-Menu.menuDiagramMarker.text=变量高亮显示？
-Menu.menuDiagramDIN.text=DIN？
-Menu.menuDiagramAnalyser.text=分析程序结构？
-Menu.menuDiagramSwitchComments.text=切换显示文本/注释？
+// Menu "View"
+Menu.menuView.text=视图
+Menu.menuViewComment.text=显示注释？
+Menu.menuViewMarker.text=变量高亮显示？
+Menu.menuViewDIN.text=DIN？
+Menu.menuViewAnalyser.text=分析程序结构？
+Menu.menuViewSwitchComments.text=切换显示文本/注释？
 // Menu "Help"
 Menu.menuPreferences.text=参数设置
 // Submenu of "Help"
