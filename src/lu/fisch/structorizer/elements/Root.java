@@ -6924,8 +6924,8 @@ public class Root extends Element {
         // Warn in case of switched text/comments as first report
         if (isSwitchTextCommentMode())
         {
-            String[] menuPath = {"menuDiagram", "menuDiagramSwitchComments"};
-            String[] defaultNames = {"Diagram", "Switch text/comments?"};
+            String[] menuPath = {"menuView", "menuViewSwitchComments"};
+            String[] defaultNames = {"View", "Switch text/comments?"};
             // This is a general warning without associated element - put at top
             error = new DetectedError(errorMsg(Menu.warning_1, Menu.getLocalizedMenuPath(menuPath, defaultNames)), null);
             // Category 0 is not restricted to configuration (cannot be switched off)
