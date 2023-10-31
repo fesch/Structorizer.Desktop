@@ -5887,8 +5887,8 @@ public class Root extends Element {
 			}
 			else {
 				// Let's check the index lists now
-				var defective = new StringList();
-				var badSizes = new StringList();
+				StringList defective = new StringList();
+				StringList badSizes = new StringList();
 				unifyOperators(tokens, true);
 				tokens.remove(tokens.indexOf("<-"), tokens.count());
 				tokens = Element.coagulateSubexpressions(tokens);
