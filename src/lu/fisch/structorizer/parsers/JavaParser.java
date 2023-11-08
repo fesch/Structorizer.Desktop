@@ -57,6 +57,7 @@ package lu.fisch.structorizer.parsers;
  *                                      bugfix #961: The conversion of output instructions had not worked
  *      Kay Gürtzig     2021-03-06      Bugfix #962: Constructor bodies had not been imported,
  *                                      KGU#961: Array initialiser conversion in declarations improved
+ *      Kay Gürtzig     2023-11-08      Bugfix #1110 method translateContent() returned the argument instead of the result
  *
  ******************************************************************************************************
  *
@@ -3254,17 +3255,22 @@ public class JavaParser extends CodeParser
 	}
 	
 	/**
-	 * Checks the initialization zone of a Java {@code for} loop given by {@link #Token} {@code initToken} 
-	 * whether the statement is suited for a Structorizer FOR loop.<br/>
-	 * Only the following cases are accepted where the expression {@code <expr>} must not be composed
-	 * of several instructions:<br/>
-	 * 1. {@code <id> = <expr>} or<br/>
-	 * 2. {@code <type> <id> = <expr>}<br/>
-	 * where {@code <id>} is the given {@code <id>}. 
-	 * @param initToken - the token representing the first zone of a {@code for} loop header
+	 * Checks the initialization zone of a Java {@code for} loop given by
+	 * {@link #Token} {@code initToken} whether the statement is suited for
+	 * a Structorizer FOR loop.<br/>
+	 * Only the following cases are accepted where the expression {@code <expr>}
+	 * must not be composed of several instructions:
+	 * <ol>
+	 * <li>{@code <id> = <expr>} or</li>
+	 * <li>{@code <type> <id> = <expr>}</li>
+	 * </ol>
+	 * where {@code <id>} is the given {@code id}.
+	 * 
+	 * @param initToken - the token representing the first zone of a {@code for}
+	 *    loop header
 	 * @param id - the expected loop variable id to be tested
-	 * @return the start value expression, or {@code null} if the {@code id} doesn't match or
-	 *       the statement isn't suited
+	 * @return the start value expression, or {@code null} if the {@code id}
+	 *    doesn't match or the statement isn't suited
 	 * 
 	 * @see #checkAndMakeFor(Token, Token, Token)
 	 * @see #checkForIncr(Token)
@@ -3300,6 +3306,7 @@ public class JavaParser extends CodeParser
 	/**
 	 * Converts a rule of type PROD_SWITCHSTATEMENT_SWITCH_LPAREN_RPAREN into the
 	 * skeleton of a Case element. The case branches will be handled separately
+	 * 
 	 * @param _reduction - Reduction rule of a switch instruction
 	 * @param _parentNode - the Subqueue this Case element is to be appended to
 	 * @throws ParserCancelled 
@@ -3540,11 +3547,12 @@ public class JavaParser extends CodeParser
 	}
 
 	/**
-	 * Helper method to retrieve and compose the text of the given reduction, combine it with previously
-	 * assembled string _content and adapt it to syntactical conventions of Structorizer. Finally return
-	 * the text phrase.
-	 * @param _content - A string already assembled, may be used as prefix, ignored or combined in another
-	 * way 
+	 * Helper method to retrieve and compose the text of the given reduction,
+	 * combine it with previously assembled string _content and adapt it to
+	 * syntactical conventions of Structorizer. Finally return the text phrase.
+	 * 
+	 * @param _content - A string already assembled, may be used as prefix,
+	 *    ignored or combined in another way 
 	 * @return composed and translated text.
 	 */
 	protected String translateContent(String _content)
@@ -3563,7 +3571,10 @@ public class JavaParser extends CodeParser
 		
 		tokens.removeAll(StringList.explode("Math,.", ","), true);
 
-		return _content.trim();
+		// START KGU#1098 2023-11-08: Bugfix #1110 Methodwas ineffective
+		//return _content.trim();
+		return tokens.concatenate(null).trim();
+		// END KGU#1098 2023-11-08
 	}
 	
 	/**

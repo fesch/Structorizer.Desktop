@@ -50,6 +50,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2023-09-12      Bugfix #1085 Type definitions from header files weren't correctly handled
  *      Kay Gürtzig     2023-09-15      Issue #809: Conversion of return elements in main diagrams to exit elements
  *      Kay Gürtzig     2023-09-27/28   Bugfix #1089.1: Support for struct initializers with named components
+ *      Kay Gürtzig     2023-11-08      Bugfix #1108: Defective handling of nested comments in 
  *
  ******************************************************************************************************
  *
@@ -565,12 +566,12 @@ public abstract class CPreParser extends CodeParser
 	/**
 	 * Method analyses the comment block structure (FIXME: doesn't care for string literals such
 	 * that a string "foo/*bar" might fool the analysis!) in the string passed in via {@code trimmed},
-	 * replaces the latter with a comment-free string part plus a line tail and returns whether a
+	 * replaces the latter with a comment-free string part plus a line tail and returns whether
 	 * there is a pending open comment block.
 	 * 
 	 * @param trimmed - a string array with the trimmed input string - content may be modified!
-	 * @param inComment - true if the line started within an comment block
-	 * @return true if the line ends with an opened comment block, false otherwise.
+	 * @param inComment - {@code true} if the line started within an comment block
+	 * @return {@code true} if the line ends with an opened comment block, {@code false} otherwise.
 	 */
 	private boolean checkComments(String[] trimmed, boolean inComment)
 	{
@@ -580,7 +581,7 @@ public abstract class CPreParser extends CodeParser
 		String lineTail = trimmedLine;
 		while (!lineTail.isEmpty() && !commentsChecked) {
 			if (inComment) {
-				// check if the line ends the current comment block
+				// check if the commend ends in the current line
 				int commentPos = lineTail.indexOf("*/");
 				if (commentPos >= 0) {
 					inComment = false;
@@ -600,12 +601,20 @@ public abstract class CPreParser extends CodeParser
 			if (!inComment && !lineTail.isEmpty()) {
 				// remove inline comments
 				int commentPos = lineTail.indexOf("//");
-				if (commentPos > 0) {
-					lineTail = lineTail.substring(0, commentPos).trim(); 
+				// START KGU#1101 2023-11-08: Bugfix #1108 - be aware of nested comments
+				//if (commentPos > 0) {
+				//	lineTail = lineTail.substring(0, commentPos).trim(); 
+				//}
+				//// check if the line starts a new comment block
+				//commentPos = lineTail.indexOf("/*");
+				//if (commentPos >= 0) {
+				int commentPos1 = lineTail.indexOf("/*");
+				if (commentPos >= 0 && (commentPos1 < 0 || commentPos1 > commentPos)) {
+					lineTail = lineTail.substring(0, commentPos).trim();
 				}
-				// check if the line starts a new comment block
-				commentPos = lineTail.indexOf("/*");
-				if (commentPos >= 0) {
+				else if (commentPos1 >= 0) {
+					commentPos = commentPos1;
+				// END KGU1101 2023-11-08
 					inComment = true;
 					if (commentPos > 0) {
 						commentFree += " " + lineTail.substring(0, commentPos).trim();

@@ -1239,12 +1239,30 @@ public class BasGenerator extends Generator
 				}
 				// START KGU#686 2019-03-18: Enh. #56
 				else if (Jump.isThrow(line)) {
+					// START KGU#1102 2023-11-08: Bugfix #1109 Rethrow not correctly handled
+					String arg = line.substring(preThrow.length()).trim();
+					// END KGU#1102 2023-11-08
 					if (this.optionCodeLineNumbering()) {
 						appendComment("FIXME: Only a number is allowed as parameter:", _indent);
-						addCode("ERROR " + line.substring(preThrow.length()).trim(), _indent, disabled);
+						// START KGU#1102 2023-11-08: Bugfix #1109 Rethrow not correctly handled
+						//addCode("ERROR " + line.substring(preThrow.length()).trim(), _indent, disabled);
+						addCode ("ERROR " + arg, _indent, disabled);
+						// END KGU#1102 2023-11-08
 					}
 					else {
-						addCode("Throw New Exception(" + line.substring(preThrow.length()).trim() + ")", _indent, disabled);
+						// START KGU#1102 2023-11-08: Bugfix #1109 Rethrow not correctly handled
+						//addCode("Throw New Exception(" + line.substring(preThrow.length()).trim() + ")", _indent, disabled);
+						if (arg.isEmpty()) {
+							// Could be a rethrow - look for a catch context
+							if (Try.findEnclosingTry(_jump, true) == null) {
+								arg = "New Exception(\"FIXME - missing argument!\")";
+							}
+						}
+						else {
+							arg = "New Exception(" + arg + ")";
+						}
+						addCode("Throw " + arg, _indent, disabled);
+						// END KGU#1102 2023-11-08
 					}
 				}
 				// END KGU#686 2019-03-18

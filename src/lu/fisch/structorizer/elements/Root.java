@@ -183,6 +183,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2023-10-05      Bugfix #1094: splitKeywords initialisation enforced in getUsedVars()
  *      Kay Gürtzig     2023-10-13      Issue #980 New analyser check 31 for declaration syntax implemented
  *      Kay Gürtzig     2023-10-15      Bugfix #1096 More precise type and declaration handling
+ *      Kay.gürtzig     2023-11-08      Issue #1112: Analyser is to avoid error3_1 and error24_8 on java.lang.
+ *                                      java.util. method calls like Math.sqrt(17.2) or Character.isDigit('5')
  *      
  ******************************************************************************************************
  *
@@ -231,6 +233,7 @@ import org.xml.sax.Attributes;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -4157,7 +4160,10 @@ public class Root extends Element {
 					lineRef = Menu.errorLineReference.getText().replace("%", Integer.toString(_lineNo+1));
 				}
 				// END KGU#375 2017-04-05
-				if (!_vars.contains(myUsed) && !_uncertainVars.contains(myUsed))
+				// START KGU#1103 202311-08: Issue #1112 Avoid warnings on Java methods
+				//if (!_vars.contains(myUsed) && !_uncertainVars.contains(myUsed))
+				if (!_vars.contains(myUsed) && !_uncertainVars.contains(myUsed) && !mayBeJavaMethod(_ele, myUsed, _lineNo))
+				// END KGU#1103 2023-11-08
 				{
 					//error  = new DetectedError("The variable «"+myUsed.get(j)+"» has not yet been initialized!",(Element) _node.getElement(i));
 					// START KGU##375 2017-04-05: Enh. #388
@@ -4176,7 +4182,70 @@ public class Root extends Element {
 			}
 	}
 
-
+	// START KGU#1103 2023-11-08: Issue #1112
+	/**
+	 * Checks whether the reference to identifier {@code _code} in the text line
+	 * {@code _lineNo} of Element {@code _ele} may indeed be the base part of
+	 * a Java method call, e.g. {@code Math.sqrt(double)}.<br/>
+	 * Auxiliary helper for CHECK 3 and CHECK 24
+	 * 
+	 * @param _ele - the Element the supposed variable occurs in
+	 * @param _var - identifier of the entity
+	 * @param _lineNo - line number within the Element text
+	 * @return {@code true} if {@code _var} is initial part of a method access path and there
+	 *     is a potentially matching static Java method
+	 * 
+	 * @see #analyse_3(Element, Vector, StringList, StringList, StringList, int)
+	 * @see #analyse_24_tokens(Element, Vector, HashMap, StringList)
+	 */
+	private boolean mayBeJavaMethod(Element _ele, String _var, int _lineNo) {
+		String line = _ele.getUnbrokenText().get(_lineNo);
+		StringList tokens = Element.splitLexically(line, true);
+		tokens.removeAll(" ");
+		return mayBeJavaMethod(_var, tokens);
+	}
+	// END KGU#1103 2023-11-08
+	/**
+	 * Checks whether the reference to identifier {@code _code} in the given
+	 * condensed token list {@code _tokens} may indeed be the base part of
+	 * a Java method call, e.g. {@code Math.sqrt(double)}.<br/>
+	 * Auxiliary helper for CHECK 3 and CHECK 24
+	 * 
+	 * @param _var - identifier of the entity
+	 * @param _tokens - the tokenized source text line
+	 * @return {@code true} if {@code _var} is initial part of a method access path and there
+	 *     is a potentially matching static Java method
+	 */
+	private boolean mayBeJavaMethod(String _var, StringList _tokens) {
+		int posVar = _tokens.indexOf(_var);
+		if (posVar >= 0 && posVar < _tokens.count() - 4) {
+			// could be a minimal method reference
+			String methodName = _tokens.get(posVar +2);
+			if (_tokens.get(posVar+1).equals(".") && Function.testIdentifier(methodName, false, null)
+					&& _tokens.get(posVar+3).equals("(")) {
+				StringList args = Element.splitExpressionList(_tokens.subSequence(posVar+4, _tokens.count()), ",", true);
+				if (args.get(args.count()-1).startsWith(")")) {
+					// Might be enough to check?
+					for (String prefix: new String[] {"java.lang.", "java.util."}) {
+						try {
+							Class<?> genClass = Class.forName(prefix + _var);
+							Method[] methods = genClass.getMethods();
+							for (Method meth: methods) {
+								if (meth.getParameterCount() == args.count()-1) {
+									// It's rather only a maybe
+									return true;
+								}
+							}
+						} catch (ClassNotFoundException exc) {
+							System.err.println(exc);
+						}
+					}
+				}
+			}
+		}
+		return false;	// Rather still a maybe...
+	}
+	
 	/**
 	 * Three checks in one loop:<br/>
 	 * CHECK  #5: non-uppercase var<br/>
@@ -5420,7 +5489,11 @@ public class Root extends Element {
 			String after = _tokens.get(posDot+1);
 			ArrayList<String> compNames = Element.retrieveComponentNames(
 					_tokens.subSequence(0, posDot), _types, indexInform);
-			if (compNames == null || !compNames.contains(after)) {
+			// START KGU#1103 2023-11-08: Issue #1112 Avoid warnings on Java method calls
+			//if (compNames == null || !compNames.contains(after)) {
+			if ((compNames == null || !compNames.contains(after))
+					&& !mayBeJavaMethod(_tokens.get(indexInform[0]), _tokens)) {
+			// END KGU#1103 2023-11-08
 				String path = _tokens.concatenate(null, indexInform[0], posDot).trim();
 				addError(_errors, new DetectedError(errorMsg(Menu.error24_8, new String[]{path, after}), _ele), 24);
 			}

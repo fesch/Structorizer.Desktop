@@ -1468,24 +1468,26 @@ public class Executor implements Runnable
 							//}
 							String msg = getEvalErrorMessage(ex);
 							// END KGU#1058 2022-09-29
-							logger.log(Level.WARNING, "convertStringComparison(\"{0}\"): {1}", new Object[]{str, msg});
+							s = "..." + exprs.get(i-1) + s + exprs.get(i+1) + "...";
+							logger.log(Level.WARNING, "convertStringComparison(\"{0}\"): {1}", new Object[]{s, msg});
 							// END KGU#1024 2022-01-05
 						}
 						catch (Exception ex)
 						{
-							logger.log(Level.WARNING, "convertStringComparison(\"{0}\"): {1}", new Object[]{str, ex.getMessage()});
+							s = "..." + exprs.get(i-1) + s + exprs.get(i+1) + "...";
+							logger.log(Level.WARNING, "convertStringComparison(\"{0}\"): {1}", new Object[]{s, ex.getMessage()});
 						}
 					} // if (!s.equals(" " + eqOps[op] + " ") && (s.indexOf(eqOps[op]) >= 0))
 				} // for (int op = 0; op < eqOps.length; op++)
-				if (replaced)
-				{
-					// START KGU#490 2018-02-07: Bugfix #503 - the regex escaping was wrong (see above)
-					//// Compose the partial expressions and undo the regex escaping for the initial split
-					//str = exprs.getLongString().replace(" \\|\\| ", " || ");
-					str = exprs.getLongString();
-					// END KGU#490 2018-02-07
-					str.replace("  ", " ");	// Get rid of multiple spaces
-				}
+			} // for (int i = 0; i < exprs.count(); i++)
+			if (replaced)
+			{
+				// START KGU#490 2018-02-07: Bugfix #503 - the regex escaping was wrong (see above)
+				//// Compose the partial expressions and undo the regex escaping for the initial split
+				//str = exprs.getLongString().replace(" \\|\\| ", " || ");
+				str = exprs.getLongString();
+				// END KGU#490 2018-02-07
+				str.replace("  ", " ");	// Get rid of multiple spaces
 			}
 		}
 		return str;

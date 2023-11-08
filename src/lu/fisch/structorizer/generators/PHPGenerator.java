@@ -79,6 +79,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2023-10-04      Bugfix #1093 Undue final return 0 on function diagrams
  *      Kay Gürtzig             2023-10-13      Issue #980 Export of multi-variable declaration revised
  *      Kay Gürtzig             2023-10-18      Bugfix #1099: Handling of constants was not correct.
+ *      Kay Gürtzig             2023-10-04      Bugfix #1093 Undue final return 0 on function diagrams
  *
  ******************************************************************************************************
  *
@@ -996,7 +997,23 @@ public class PHPGenerator extends Generator
 			}
 			// START KGU#686 2019-03-21: Enh. #56
 			else if (Jump.isThrow(line)) {
-				addCode("throw new Exception(" + line.substring(preThrow.length()).trim() + ");", _indent, isDisabled);
+				// START KGU#1102 2023-11-08: Bugfix #1109 Rethrow was wrong
+				//addCode("throw new Exception(" + line.substring(preThrow.length()).trim() + ");", _indent, isDisabled);
+				String arg = line.substring(preThrow.length()).trim();
+				if (arg.isEmpty()) {
+					Try parentTry = Try.findEnclosingTry(_jump, true);
+					if (parentTry != null) {
+						arg = "$ex" + Integer.toHexString(parentTry.hashCode());
+					}
+					else {
+						arg = "new Exception(" + arg + ")";
+					}
+				}
+				else {
+					arg = "new Exception(" + arg + ")";
+				}
+				addCode("throw " + arg + ";", _indent, isDisabled);
+				// END KGU#1102 2023-11-08
 			}
 			// END KGU#686 2019-03-21
 			else if (Jump.isLeave(line))
@@ -1031,7 +1048,7 @@ public class PHPGenerator extends Generator
 		
 		this.addCode("try {", _indent, isDisabled);
 		this.generateCode(_try.qTry, indentPlus1);
-		this.addCode("} catch (Exception $e" + exName + ") {", _indent, isDisabled);
+		this.addCode("} catch (Exception $" + exName + ") {", _indent, isDisabled);
 		if (varName != null && !varName.isEmpty()) {
 			this.addCode("$" + varName + " = $" + exName + "->getMessage();", indentPlus1, isDisabled);
 		}
