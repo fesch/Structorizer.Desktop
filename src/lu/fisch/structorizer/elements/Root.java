@@ -183,7 +183,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2023-10-05      Bugfix #1094: splitKeywords initialisation enforced in getUsedVars()
  *      Kay Gürtzig     2023-10-13      Issue #980 New analyser check 31 for declaration syntax implemented
  *      Kay Gürtzig     2023-10-15      Bugfix #1096 More precise type and declaration handling
- *      Kay Gürtzig     2023-11-08      Issue #1112: Analyser no longer complains about java.lang. and
+ *      Kay.gürtzig     2023-11-08      Issue #1112: Analyser is to avoid error3_1 and error24_8 on java.lang.
  *                                      java.util. method calls like Math.sqrt(17.2) or Character.isDigit('5')
  *      
  ******************************************************************************************************
