@@ -35,6 +35,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-09-17      Bugfix #749: Width for FINALLY section wasn't properly reserved
  *      Kay Gürtzig     2019-09-24      Bugfix #749: Text content and width in collapsed mode fixed
  *      Kay Gürtzig     2021-01-22      Enh. #714: Special visibility control for the FINALLY block
+ *      Kay Gürtzig     2023-11-08      Bugfix #1109: Auxiliary method findEnclosingTry added.
  *
  ******************************************************************************************************
  *
@@ -596,5 +597,39 @@ public class Try extends Element {
 	}
 	// END KGU#695 2021-01-22
 
-
+	// START KGU#1102 2023-11-08: Bugfix #1109 Support for Rethrow
+	/**
+	 * Tries to find the closest ancestor Try block the specified Element
+	 * {@code element} is situated in the substructure of. This is a static
+	 * structural relation, not a dynamic question of invocation context.
+	 * Argument {@code onlyIfInCatch} determines whether only Try blocks are
+	 * considered where {@code element} is a descendent of the CATCH clause
+	 * (this is specifically relevant e.g. for the validity of a re-throw).
+	 * 
+	 * @param element - an Element of the supposed substructure of a Try
+	 *    block
+	 * @param onlyIfInCatch - if {@code true} then a surrounding Try block
+	 *    is only of interest if {@code element} is part of the CACTCH
+	 *    clause.
+	 * @return The closest surrounding Try bloc, or {@code null} if there is
+	 *    no Try ancestor.
+	 */
+	public static Try findEnclosingTry(Element element, boolean onlyIfInCatch)
+	{
+		Try foundTry = null;
+		Element parent = element;
+		while (parent != null) {
+			Element grandPa = null;
+			if (parent instanceof Subqueue
+					&& (grandPa = parent.parent) instanceof Try
+					&& (!onlyIfInCatch || parent == ((Try)grandPa).qCatch)) {
+				foundTry = (Try)grandPa;
+				break;
+			}
+			parent = parent.parent;
+		}
+		return foundTry;
+	}
+	// END KGU#1102 2023-11-08
+	
 }

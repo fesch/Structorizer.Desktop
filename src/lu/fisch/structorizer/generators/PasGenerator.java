@@ -99,6 +99,7 @@ package lu.fisch.structorizer.generators;
  *                                          Fix KGU#994: Strange array index ranges like [-1..49] could occur
  *      Kay Gürtzig         2021-12-05      Bugfix #1024: Precautions against defective record initializers
  *      Kay Gürtzig         2023-09-28      Bugfix #1092: Sensible export of alias type definitions enabled
+ *      Kay Gürtzig         2023-11-08      Bugfix #1109: generateCode(Jump) revised for throw
  *
  ******************************************************************************************************
  *
@@ -1455,7 +1456,19 @@ public class PasGenerator extends Generator
 					// START KGU#686 2019-03-20: Enh. #56
 					else if (Jump.isThrow(line)) {
 						String what = line.substring(preThrow.length()).trim();
-						addCode("raise Exception.Create(" + what + ");", _indent, isDisabled);
+						// START KGU#1102 2023-11-08: Bugfix #1109 Rethrow not correctly handled
+						//addCode("raise Exception.Create(" + what + ");", _indent, isDisabled);
+						if (what.isEmpty()) {
+							// Could be a rethrow - look for a catch context
+							if (Try.findEnclosingTry(_jump, true) == null) {
+								what = "\"FIXME - missing argument\"";
+							}
+						}
+						else {
+							what = "Exception.Create(" + what + ");";
+						}
+						addCode("raise " + what, _indent, isDisabled);
+						// END KGU#1102 2023-11-08
 					}
 					// END KGU#686 2019-03-20
 					else if (!isEmpty)
