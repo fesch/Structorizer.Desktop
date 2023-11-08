@@ -221,6 +221,7 @@ package lu.fisch.structorizer.executor;
  *                                      method getEvalErrorMessage() generated.
  *      Kay Gürtzig     2023-10-16      Bugfix #980/#1096: Simple but effective workaround for complicated C-style
  *                                      initialisation (declaration + assignment) case where setVar used to fail.
+ *      Kay.gürtzig     2023-11-08      Issue #1112: Analyser is to avoid error3_1 and error24_8 on Java method calls
  *
  ******************************************************************************************************
  *
