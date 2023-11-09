@@ -130,7 +130,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-04-15      Enh. #967: menu item menuDiagramARM as introduced by A. Simonetta disabled 
  *      Kay Gürtzig     2021-10-05      Enh. #992: Messages for new Analyser check 30 against bracket faults
  *      Kay Gürtzig     2023-10-06      Issue #311: Parts of the "Diagram" menu moved to a new "View" menu
- *      Kay Gürtzig     2023-10-13      Issue #980: New messages for declaration syntax check (error31_*) 
+ *      Kay Gürtzig     2023-10-13      Issue #980: New messages for declaration syntax check (error31_*)
+ *      Kay Gürtzig     2023-11-09      Issue #311: Preference dump selection dialog adapted to menu changes
  *
  ******************************************************************************************************
  *
@@ -1725,7 +1726,10 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 			if (parserPlugins == null) {
 				parserPlugins = new Vector<GENPlugin>();
 			}
-			preferenceKeys.put("menuDiagram", Mainform.getPreferenceKeys("diagram"));
+			// START KGU#310 2023-11-09: Issue #311 Menu reorganised - so the prefernec category should follow
+			//preferenceKeys.put("menuDiagram", Mainform.getPreferenceKeys("diagram"));
+			preferenceKeys.put("menuView", Mainform.getPreferenceKeys("view"));
+			// END KGU#310 2023-11-09
 			preferenceKeys.put("menuPreferencesLanguage", new String[] {"Lang"});
 			preferenceKeys.put("menuPreferencesNotifyUpdate", Mainform.getPreferenceKeys("update"));
 			preferenceKeys.put("menuPreferencesSimplified", new String[] {"userSkillLevel"});
