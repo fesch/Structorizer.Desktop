@@ -175,7 +175,8 @@ Current development version 3.32-15 (2023-11-09)
       and missing components on java.lang. and java.util. method calls <2>
 - 15: Enh. #1114: Caret positioning on first '?' in text for new elements <2>
 - 15: Issue #311: Preference category renamed ("Diagram" -> "View") according
-      to menu changes <2>
+      to menu changes, "copy PNG image" and "copy EMF image" moved to menu
+      "Diagram" <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>
