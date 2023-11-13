@@ -7,6 +7,7 @@
 		<option name="redundantNames" type="String" title="Redundant pre-processor names or macros" help="Comma-separated list of names or macros (with empty parentheses) to be ignored on parsing" />
 		<option name="use_WINAPI_defines" type="Boolean" title="Use type names and defines from WINAPI" help="Enable this if the source file refers to many WINAPI type names or dummy defines like WINAPI" />
 		<option name="use_MinGw_defines" type="Boolean" title="Use type names and defines from MinGw" help="Enable this if the source file refers to many MinGw type names or dummy defines" />
+		<option name="definesToConstants" type="Boolean" title="Convert #defines to constants" help="Enable this if included defines that seem to represent value constants are to be converted to constant definitions if possible" />
 	</plugin>
 	<plugin title="COBOL" 				class="lu.fisch.structorizer.parsers.COBOLParser" icon="" >
 		<option name="debugLines" type="Boolean" title="Import Debug lines as valid code" help="Select this to import debug lines as valid code, otherwise they will be converted to comments &quot;DEBUG ...&quot;." />

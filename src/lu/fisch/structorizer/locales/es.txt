@@ -140,6 +140,7 @@
  *      Kay Gürtzig     2022-09-29  Bugfix #1072: New message InputBoxFor.msgIllegalWordInField added
  *      Kay Gürtzig     2023-08-01  Enh. #1082: Function name incuded in messages Menu.error13_* *
  *      Kay Gürtzig     2023-10-13  Issue #980: New messages for declaration syntax check (error31_*)
+ *      Kay Gürtzig     2023-11-13  Enh. #1115: New messages for C99 import option definesToConstants
  * 
  ******************************************************************************************************
  *
@@ -1225,6 +1226,8 @@ PluginOptionDialog.optionComponents.use_WINAPI_defines.text[getPluginKey():C99Pa
 PluginOptionDialog.optionComponents.use_WINAPI_defines.tooltip[getPluginKey():C99Parser]=Activar esto si el código contiene referencias a muchos nombres de tipo o simples anotaciones desde el WINAPI (por ejemplo "WINAPI").
 PluginOptionDialog.optionComponents.use_MinGw_defines.text[getPluginKey():C99Parser]=Usar nombres y tipos de MinGw
 PluginOptionDialog.optionComponents.use_MinGw_defines.tooltip[getPluginKey():C99Parser]=Activar esto si el código contiene referencias a muchos nombres de tipo o simples anotaciones desde MinGw.
+PluginOptionDialog.optionComponents.definesToConstants.text[getPluginKey():C99Parser]=Importar #define símbolos como verdaderas constantes.
+PluginOptionDialog.optionComponents.definesToConstants.tooltip[getPluginKey():C99Parser]=Activar para derivar definicions de constantes desde valores specificados con #define en lugar de simplemente substituirlos.
 PluginOptionDialog.optionComponents.lineNumbering.text=Generar números de linea
 PluginOptionDialog.optionComponents.lineNumbering.tooltip[getPluginKey():BasGenerator]=Esta opción también modifica todo el sintaxis hacia Vintage BASIC.
 PluginOptionDialog.optionComponents.lineNumbering.tooltip[getPluginKey():COBOLGenerator]=Esta opción continuamente numera las lineas de código exportadas.
