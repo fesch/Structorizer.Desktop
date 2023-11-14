@@ -311,20 +311,7 @@ public abstract class CPreParser extends CodeParser
 				
 				// START KGU#1105 2023-11-13: Enh. #1115 - find out which included constants are needed
 				if (this.optionConvertDefinesToConstants && !constants.isEmpty()) {
-					HashSet<String> usedConsts = new HashSet<String>();
-					StringList tokens = Element.splitLexically(srcCode, true);
-					for (int i = 0; i < tokens.count(); i++) {
-						if (constants.containsKey(tokens.get(i))) {
-							addReferencedConstants(usedConsts, tokens.get(i));
-						}
-					}
-					// Now drop all constants not needed by the source code
-					HashSet<String> allConsts = new HashSet<String>(constants.keySet());
-					for (String id: allConsts) {
-						if (!usedConsts.contains(id)) {
-							constants.remove(id);
-						}
-					}
+					forgetUnusedConstants(srcCode);
 				}
 				// END KGU#1105 2023-11-13
 				
@@ -373,6 +360,50 @@ public abstract class CPreParser extends CodeParser
 		}
 		return interm;
 	}
+
+	// START KGU#1105 2023-11-14: Enh. #1115 - more efficient way to get rid of unnecessary defines
+	/**
+	 * Removes all entries from {@link #constants} that are not referenced in the given
+	 * pre-processed source code {@code _srcCode}.
+	 * 
+	 * @param _srcCode - the preprocessed file content as single string with newlines
+	 * @return the set of referenced constant names out of {@link #constants}, or {@code null}
+	 *    if some IO trouble occurred
+	 */
+	private void forgetUnusedConstants(String _srcCode) {
+		HashSet<String> usedConsts = new HashSet<String>();
+		StreamTokenizer tokenizer = new StreamTokenizer(new StringReader(_srcCode));
+		tokenizer.quoteChar('"');
+		tokenizer.quoteChar('\'');
+		tokenizer.slashStarComments(true);
+		tokenizer.slashSlashComments(true);
+		tokenizer.parseNumbers();
+		tokenizer.eolIsSignificant(true);
+		// Underscore must be added to word characters!
+		tokenizer.wordChars('_', '_');
+		
+		try {
+			while (tokenizer.nextToken() != StreamTokenizer.TT_EOF) {
+				if (tokenizer.ttype == StreamTokenizer.TT_WORD) {
+					String word = tokenizer.sval;
+					if (constants.containsKey(word)) {
+						addReferencedConstants(usedConsts, word);
+					}
+				}
+			}
+		} catch (IOException exc) {
+			return;
+		}	
+		
+		// Now drop all constants not needed by the source code
+		HashSet<String> allConsts = new HashSet<String>(constants.keySet());
+		for (String id: allConsts) {
+			if (!usedConsts.contains(id)) {
+				constants.remove(id);
+			}
+		}
+	}
+	// END KGU#1105 2023-11-14
 
 	// START KGU#1105 2023-11-13: Enh. #1115 Auxiliary method for conversion define -> const
 	/**
