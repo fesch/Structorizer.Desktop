@@ -297,21 +297,26 @@ public class About extends LangDialog implements ActionListener, KeyListener, La
 		// START KGU#1106 2023-11-17: Enh. 1117 Working HTML links to the GitHub / sourecforge issues
 		//txtChangelog.setText(readTextFile(CHANGELOG_FILE));
 		String changelog = readTextFile(CHANGELOG_FILE);
-		changelog = changelog.replace("<", "&lt;").replace(">", "&gt;");
+		// Now we convert the text content into an HTML document on the fly ...
+		changelog = changelog.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+		// ... preserving indentations ...
 		for (int i = 6; i >= 0; i -= 2) {
 			changelog = changelog.replace("\n" + " ".repeat(i), "\n" + "&nbsp;".repeat(i));
 		}
+		// ... and linefeeds.
 		changelog = changelog.replace("\n", "<br/>\n");
-		// "Hide" the ancient bug references (to structorizer hompage)
+		// Insert and mask the ancient bug references (to structorizer homepage)
 		changelog = changelog.replaceAll("\\(bug [#]([0-9]+)\\)",
 				"(bug <a href=\"https://structorizer.fisch.lu/index.php?include=bugs&bug=$1\">§§§$1</a>)");
+		// Insert and mask the few Sourceforge references
 		changelog = changelog.replace("#2897065", "<a href=\"https://sourceforge.net/p/structorizer/bugs/1/\">§§§2897065</a>").
 				replace("#2898346", "<a href=\"https://sourceforge.net/p/structorizer/bugs/1/\">§§§2898346</a>");
-		// Now construct the new issue links to GitHub
+		// Now construct the (new) issue links to GitHub
 		changelog = changelog.replaceAll("#([0-9]+)",
 				"<a href=\"https://github.com/fesch/Structorizer.Desktop/issues/$1\">#$1</a>");
 		// Eventually, restore the old bug references
 		changelog = changelog.replace("§§§", "#");
+		// Embed the text in HTML tags 
 		changelog = "<html><body><p><span style=\"font-family: courier new,courier;\">\n" + changelog + "\n</span></body></html>";
 		txtChangelog.setContentType("text/html");
 		txtChangelog.setText(changelog);
