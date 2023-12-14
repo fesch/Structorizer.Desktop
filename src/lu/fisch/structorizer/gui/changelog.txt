@@ -185,6 +185,8 @@ Current development version 3.32-15 (2023-12-14)
 - 15: Enh. #1117: Changelog on About window now with active HTML links <2>
 - 15: Bugfix #1118 The comment of empty Instructions wasn't exported to C,
       C++, C#, Java etc. [bersetm]2
+- 15: Issue #1119: An empty editor text will no longer produce an element
+      with a single empty line but with no lines. <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>
