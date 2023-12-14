@@ -117,11 +117,12 @@ package lu.fisch.structorizer.generators;
  *                                              transformOrGenerateArrayInit() mended (mutilated empty initialisers)
  *      Kay Gürtzig             2022-09-29      Bugfix #1073: Call comments had always been duplicated
  *      Kay Gürtzig             2023-09-28      Bugfix #1092: Sensible export of alias type definitions enabled
- *      Kay Gürtzig             2023-10-04      Bugfix #1093 Undue final return 0 on function diagrams
+ *      Kay Gürtzig             2023-10-04      Bugfix #1093: Undue final return 0 on function diagrams
  *      Kay Gürtzig             2023-10-12      Issue #980: Cope with multi-variable declarations
- *      Kay Gürtzig             2023-10-15      Bugfix #1096 Handles complicated C-/Java-style declarations
+ *      Kay Gürtzig             2023-10-15      Bugfix #1096: Handles complicated C-/Java-style declarations
  *      Kay Gürtzig             2023-10-17      Bugfix #1099: Constants defined by an external routine call no longer moved
  *                                              to top (to change execution order could severely compromise the algorithm!)
+ *      Kay Gürtzig             2023-12-14      Bugfix #1118: The comment of Instructions without a line wasn't exported
  *
  ******************************************************************************************************
  *
@@ -1180,7 +1181,12 @@ public class CGenerator extends Generator {
 				commentInserted = generateInstructionLine(_inst, _indent, commentInserted, line);
 				// END KGU#277/KGU#284 2016-10-13
 			}
-
+			
+			// START KGU#1107 2023-12-14: Bugfix #1118 - the comment of an empty element wasn't exported
+			if (!commentInserted) {
+				appendComment(_inst, _indent);
+			}
+			// END KGU#1107 2023-12-14
 		}
 		
 	}
@@ -2203,6 +2209,11 @@ public class CGenerator extends Generator {
 				}
 				// END KGU#730 2019-09-24
 			}
+			// START KGU#1107 2023-12-14: Bugfix #1118 - the comment of an empty element wasn't exported
+			if (!commentInserted) {
+				appendComment(_call, _indent);
+			}
+			// END KGU#1107 2023-12-14
 		}
 		
 	}
