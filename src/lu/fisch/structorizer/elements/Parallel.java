@@ -176,6 +176,7 @@ public class Parallel extends Element
 
 // START KGU#91 2015-12-01: Bugfix #39, D.R.Y. - employ setText(StringList) for the rest
     	text.setText(_text);
+    	// This call seems redundant but is essential since it is the overridden StringList method 
     	this.setText(text);
             
 // END KGU#91 2015-12-01            
@@ -188,9 +189,9 @@ public class Parallel extends Element
     	Subqueue s = null;
 
     	//setText(_textList);
-    	text=_textList;
+    	text = _textList;
 
-    	if(qs==null)
+    	if (qs == null)
     	{
     		qs = new Vector<Subqueue>();
     	}
@@ -217,8 +218,8 @@ public class Parallel extends Element
     		// add subqueues
     		while(count>qs.size())
     		{
-    			s=new Subqueue();
-    			s.parent=this;
+    			s = new Subqueue();
+    			s.parent = this;
     			qs.add(s);
     		}
     		// remove subqueues

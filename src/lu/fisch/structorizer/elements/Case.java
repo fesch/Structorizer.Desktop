@@ -149,19 +149,17 @@ public class Case extends Element implements IFork
 		// END KGU#172 2016-04-01
 	}
     // END KGU#91 2015-12-01
-    
-    
-    @Override
-    public void setText(String _text)
-    {
-// START KGU#91 2015-12-01: D.R.Y. - just employ setText(StringList)
-    	text.setText(_text);	// Convert to a StringList
-    	// This call seems redundant but is essential since it is the overridden method 
-    	this.setText(text);
-    	
-// END KGU#91 2015-12-01
 
-    }
+
+	@Override
+	public void setText(String _text)
+	{
+// START KGU#91 2015-12-01: D.R.Y. - just employ setText(StringList)
+		text.setText(_text);	// Convert to a StringList
+		// This call seems redundant but is essential since it is the overridden StringList method
+		this.setText(text);
+// END KGU#91 2015-12-01
+	}
 
     @Override
     public void setText(StringList _textList)
