@@ -1173,6 +1173,16 @@ public class CGenerator extends Generator {
 				//String line = _inst.getText().get(i);
 				String line = lines.get(i);
 				// END KGU#504 2018-03-13
+				// START KGU#1107 2023-12-14: Bugfix #1118 Skip an empty line
+				if (line.isEmpty()) {
+					if (!commentInserted) {
+						appendComment(_inst, _indent);
+						commentInserted = true;
+						addCode(line, _indent, false);
+					}
+					continue;
+				}
+				// END KGU#1107 2023-12-14
 				// START KGU#261/KGU#332 2017-01-26: Enh. #259/#335
 				//String codeLine = transform(line) + ";";
 				//addCode(codeLine, _indent, isDisabled);
@@ -2150,6 +2160,16 @@ public class CGenerator extends Generator {
 			Root owningRoot = Element.getRoot(_call);
 			for (int i = 0; i < lines.count(); i++) {
 				String line = lines.get(i).trim();
+				// START KGU#1107 2023-12-14: Bugfix #1118 Skip an empty line
+				if (line.isEmpty()) {
+					if (!commentInserted) {
+						appendComment(_call, _indent);
+						commentInserted = true;
+						addCode(line, _indent, isDisabled);
+					}
+					continue;
+				}
+				// END KGU#1107 2023-12-14
 //				// START KGU#376 2017-04-13: Enh. #389 handle import calls - withdrawn here
 //				if (!isDisabled && Call.isImportCall(lines.get(i))) {
 //					generateImportCode(_call, line, _indent);
