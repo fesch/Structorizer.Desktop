@@ -103,6 +103,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-06-13      Issue #944: Code adapted for Java 11 (begun)
  *      Kay Gürtzig     2021-11-14      Issue #967: Ini support for plugin-specific Analyser checks
  *      Kay Gürtzig     2022-08-17      Issue #1065: GUI responsiveness problem with ArrangerIndex notifications solved
+ *      Kay Gürtzig     2023-11-09      Issue #311: Preferences category "diagram" renamed to "view"
  *
  ******************************************************************************************************
  *
@@ -615,7 +616,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			return new String[] {"autoSaveOnExecute", "autoSaveOnClose", "makeBackups", "filenameWithArgNos",
 					"filenameSigSeparator", "arrangerRelCoords"};
 		}
-		else if (category.equals("diagram")) {
+		// START KGU#310 2023-11-09: Issue #311 Menu reorganised - so the prefernec category should follow
+		//else if (category.equals("diagram")) {
+		else if (category.equals("view")) {
+		// END KGU#310 2023-11-09
 			return new String[] {"showComments", "commentsPlusText", "switchTextComments", "varHightlight",
 					// START KGU#872 2020-10-17: Enh. #738, #872, bugfix #876
 					"showOpsLikeC", "codePreview",

@@ -117,11 +117,12 @@ package lu.fisch.structorizer.generators;
  *                                              transformOrGenerateArrayInit() mended (mutilated empty initialisers)
  *      Kay Gürtzig             2022-09-29      Bugfix #1073: Call comments had always been duplicated
  *      Kay Gürtzig             2023-09-28      Bugfix #1092: Sensible export of alias type definitions enabled
- *      Kay Gürtzig             2023-10-04      Bugfix #1093 Undue final return 0 on function diagrams
+ *      Kay Gürtzig             2023-10-04      Bugfix #1093: Undue final return 0 on function diagrams
  *      Kay Gürtzig             2023-10-12      Issue #980: Cope with multi-variable declarations
- *      Kay Gürtzig             2023-10-15      Bugfix #1096 Handles complicated C-/Java-style declarations
+ *      Kay Gürtzig             2023-10-15      Bugfix #1096: Handles complicated C-/Java-style declarations
  *      Kay Gürtzig             2023-10-17      Bugfix #1099: Constants defined by an external routine call no longer moved
  *                                              to top (to change execution order could severely compromise the algorithm!)
+ *      Kay Gürtzig             2023-12-14      Bugfix #1118: The comment of Instructions without a line wasn't exported
  *
  ******************************************************************************************************
  *
@@ -1172,6 +1173,16 @@ public class CGenerator extends Generator {
 				//String line = _inst.getText().get(i);
 				String line = lines.get(i);
 				// END KGU#504 2018-03-13
+				// START KGU#1107 2023-12-14: Bugfix #1118 Skip an empty line
+				if (line.isEmpty()) {
+					if (!commentInserted) {
+						appendComment(_inst, _indent);
+						commentInserted = true;
+						addCode(line, _indent, false);
+					}
+					continue;
+				}
+				// END KGU#1107 2023-12-14
 				// START KGU#261/KGU#332 2017-01-26: Enh. #259/#335
 				//String codeLine = transform(line) + ";";
 				//addCode(codeLine, _indent, isDisabled);
@@ -1180,7 +1191,12 @@ public class CGenerator extends Generator {
 				commentInserted = generateInstructionLine(_inst, _indent, commentInserted, line);
 				// END KGU#277/KGU#284 2016-10-13
 			}
-
+			
+			// START KGU#1107 2023-12-14: Bugfix #1118 - the comment of an empty element wasn't exported
+			if (!commentInserted) {
+				appendComment(_inst, _indent);
+			}
+			// END KGU#1107 2023-12-14
 		}
 		
 	}
@@ -2144,6 +2160,16 @@ public class CGenerator extends Generator {
 			Root owningRoot = Element.getRoot(_call);
 			for (int i = 0; i < lines.count(); i++) {
 				String line = lines.get(i).trim();
+				// START KGU#1107 2023-12-14: Bugfix #1118 Skip an empty line
+				if (line.isEmpty()) {
+					if (!commentInserted) {
+						appendComment(_call, _indent);
+						commentInserted = true;
+						addCode(line, _indent, isDisabled);
+					}
+					continue;
+				}
+				// END KGU#1107 2023-12-14
 //				// START KGU#376 2017-04-13: Enh. #389 handle import calls - withdrawn here
 //				if (!isDisabled && Call.isImportCall(lines.get(i))) {
 //					generateImportCode(_call, line, _indent);
@@ -2203,6 +2229,11 @@ public class CGenerator extends Generator {
 				}
 				// END KGU#730 2019-09-24
 			}
+			// START KGU#1107 2023-12-14: Bugfix #1118 - the comment of an empty element wasn't exported
+			if (!commentInserted) {
+				appendComment(_call, _indent);
+			}
+			// END KGU#1107 2023-12-14
 		}
 		
 	}

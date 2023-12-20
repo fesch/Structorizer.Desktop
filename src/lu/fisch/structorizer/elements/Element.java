@@ -133,6 +133,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2022-07-07      Issue #653: Consistency with Colors.defaultColors ensured
  *      Kay Gürtzig     2022-08-20      Enh. #1066: New static method retrieveComponentNames()
  *      Kay Gürtzig     2022-08-22      Bugfix #1068: Type inference failure for array initialisers mended
+ *      Kay Gürtzig     2023-12-14      Issue #1119: To set an empty string as text now leads to an empty StringList
  *
  ******************************************************************************************************
  *
@@ -304,7 +305,7 @@ public abstract class Element {
 	public static final long E_HELP_FILE_SIZE = 12300000;
 	public static final String E_DOWNLOAD_PAGE = "https://www.fisch.lu/Php/download.php";
 	// END KGU#791 2020-01-20
-	public static final String E_VERSION = "3.32-14";
+	public static final String E_VERSION = "3.32-15";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -1096,7 +1097,15 @@ public abstract class Element {
 
 	public void setText(String _text)
 	{
-		text.setText(_text);
+		// START KGU#1108 2023-12-14: Bugfix #1119 Suppress empty text
+		//text.setText(_text);
+		if (_text.isEmpty()) {
+			text.clear();
+		}
+		else {
+			text.setText(_text);	// Convert to a StringList
+		}
+		// END KGU#1108 2023-12-14
 	}
 
 	public void setText(StringList _text)

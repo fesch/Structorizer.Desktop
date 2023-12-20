@@ -141,6 +141,7 @@
  *      Kay Gürtzig         2023-08-01  Enh. #1082: Function name incuded in messages Menu.error13_* *
  *      Kay Gürtzig         2023-10-06  Issue #311: Menu reorganisation (menuDiagram split)
  *      Kay Gürtzig         2023-10-13  Issues #980,#1096: New messages for declaration syntax check (error31_*)
+ *      Kay Gürtzig         2023-11-13  Enh. #1115: New messages for C99 import option definesToConstants
  *
  ******************************************************************************************************
  *
@@ -1225,6 +1226,8 @@ PluginOptionDialog.optionComponents.use_WINAPI_defines.text[getPluginKey():C99Pa
 PluginOptionDialog.optionComponents.use_WINAPI_defines.tooltip[getPluginKey():C99Parser]=Aktivieren, falls die Quelldatei viele Bezüge auf Typnamen oder bloße Kennzeichnungen der WINAPI enthält (wie z.B. "WINAPI").
 PluginOptionDialog.optionComponents.use_MinGw_defines.text[getPluginKey():C99Parser]=Namen und Typen von MinGw benutzt
 PluginOptionDialog.optionComponents.use_MinGw_defines.tooltip[getPluginKey():C99Parser]=Aktivieren, falls die Quelldatei viele Bezüge auf Typnamen oder bloße Kennzeichnungen von MinGw enthält.
+PluginOptionDialog.optionComponents.definesToConstants.text[getPluginKey():C99Parser]=Symboldefinitionen als Konstanten importieren
+PluginOptionDialog.optionComponents.definesToConstants.tooltip[getPluginKey():C99Parser]=Aktivieren, um mit #define festgelegte Werte nicht zu ersetzen, sondern als Konstanten in ein einbeziehbares Diagramm zu importieren.
 PluginOptionDialog.optionComponents.lineNumbering.text=Zeilennummern mitgenerieren.
 PluginOptionDialog.optionComponents.lineNumbering.tooltip[getPluginKey():BasGenerator]=Diese Option ändert zugleich die gesamte Syntax hin zu Vintage-BASIC.
 PluginOptionDialog.optionComponents.lineNumbering.tooltip[getPluginKey():COBOLGenerator]=Diese Option nummeriert die exportierten Code-Zeilen fortlaufend.

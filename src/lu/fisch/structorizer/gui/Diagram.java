@@ -241,6 +241,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2022-08-18      Enh. #1066: text auto-completion mechanism in showInputBox()
  *      Kay Gürtzig     2022-08-25      Enh. #1066: Infinity literal added to auto-complete words.
  *      Kay Gürtzig     2023-09-12      Bugfix #1086: Defective arrangement on source import with two routines
+ *      Kay Gürtzig     2023-11-09      Enh. #1114: Place the InputBox caret at the first question mark in
+ *                                      the default text for new Elements
  *
  ******************************************************************************************************
  *
@@ -9967,6 +9969,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// START KGU#911 2021-01-10: Enh. #910
 			inputbox.btnOK.setEnabled(_allowCommit);
 			// END KGU#911 2021-01-10
+			// START KGU#1104 2023-11-09: Enh. #1114 Place the caret to the first question mark for new elements
+			if (_isInsertion) {
+				// Typically, the default texts contain a question mark where the condition is to be inserted
+				int posQM = inputbox.txtText.getText().indexOf('?');
+				if (posQM > 0) {
+					inputbox.txtText.setCaretPosition(posQM);
+					inputbox.txtText.setSelectionEnd(posQM+1);
+				}
+			}
+			// END KGU#1104 2023-11-09
 			inputbox.setVisible(true);
 
 			// -------------------------------------------------------------------------------------

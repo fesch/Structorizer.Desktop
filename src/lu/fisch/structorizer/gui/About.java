@@ -44,6 +44,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-08-07      Enh. #741: Paths tab now shows the complete ini file path, not just the dir path
  *      Bob Fisch       2021-02-18      Issue #940: Paths tab now also reports the java version (from System)
  *                                      Kay Gürtzig: Message adapted, Java home path added
+ *      Kay Gürtzig     2023-11-20      Enh. #1117: Changelog tab view with active HTML links
  *
  ******************************************************************************************************
  *
@@ -71,6 +72,8 @@ import java.awt.event.*;
 
 import javax.swing.*;
 import javax.swing.border.*;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 
 import lu.fisch.structorizer.elements.*;
 
@@ -257,9 +260,10 @@ public class About extends LangDialog implements ActionListener, KeyListener, La
 				//---- okButton ----
 				btnOK.setText("OK");
 				btnOK.addActionListener(this);
-				buttonBar.add(btnOK, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0,
-															   GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-															   new Insets(0, 0, 0, 0), 0, 0));
+				buttonBar.add(btnOK, new GridBagConstraints(
+						1, 0, 1, 1, 0.0, 0.0,
+						GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+						new Insets(0, 0, 0, 0), 0, 0));
 			}
 			dialogPane.add(buttonBar, BorderLayout.SOUTH);
 		}
@@ -290,8 +294,61 @@ public class About extends LangDialog implements ActionListener, KeyListener, La
 		txtPaths.setEditable(false);
 		// END KGU#595 2018-10-08
 		
-		
-		txtChangelog.setText(readTextFile(CHANGELOG_FILE));
+		// START KGU#1106 2023-11-17: Enh. 1117 Working HTML links to the GitHub / sourecforge issues
+		//txtChangelog.setText(readTextFile(CHANGELOG_FILE));
+		String changelog = readTextFile(CHANGELOG_FILE);
+		// Now we convert the text content into an HTML document on the fly ...
+		changelog = changelog.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+		// ... preserving indentations ...
+		for (int i = 6; i >= 0; i -= 2) {
+			changelog = changelog.replace("\n" + " ".repeat(i), "\n" + "&nbsp;".repeat(i));
+		}
+		// ... and linefeeds.
+		changelog = changelog.replace("\n", "<br/>\n");
+		// Insert and mask the ancient bug references (to structorizer homepage)
+		changelog = changelog.replaceAll("\\(bug [#]([0-9]+)\\)",
+				"(bug <a href=\"https://structorizer.fisch.lu/index.php?include=bugs&bug=$1\">§§§$1</a>)");
+		// Insert and mask the few Sourceforge references
+		changelog = changelog.replace("#2897065", "<a href=\"https://sourceforge.net/p/structorizer/bugs/1/\">§§§2897065</a>").
+				replace("#2898346", "<a href=\"https://sourceforge.net/p/structorizer/bugs/1/\">§§§2898346</a>");
+		// Now construct the (new) issue links to GitHub
+		changelog = changelog.replaceAll("#([0-9]+)",
+				"<a href=\"https://github.com/fesch/Structorizer.Desktop/issues/$1\">#$1</a>");
+		// Eventually, restore the old bug references
+		changelog = changelog.replace("§§§", "#");
+		// Embed the text in HTML tags 
+		changelog = "<html><body><p><span style=\"font-family: courier new,courier;\">\n" + changelog + "\n</span></body></html>";
+		txtChangelog.setContentType("text/html");
+		txtChangelog.setText(changelog);
+		txtChangelog.addHyperlinkListener(new HyperlinkListener() {
+			@Override
+			public void hyperlinkUpdate(HyperlinkEvent evt) {
+				if (evt.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED)) {
+					String errorMessage = null;
+					try {
+						if (!lu.fisch.utils.Desktop.browse(evt.getURL().toURI())) {
+							errorMessage = Menu.msgBrowseFailed.getText().replace("%", evt.getURL().toString());
+						};
+					} catch (Exception ex) {
+						logger.log(Level.WARNING, "Defective issue link.", ex);
+						errorMessage = ex.getLocalizedMessage();
+						if (errorMessage == null) {
+							errorMessage = ex.getMessage();
+						}
+						if (errorMessage == null || errorMessage.isEmpty()) {
+							errorMessage = ex.toString();
+						}
+					}
+					if (errorMessage != null) {
+						JOptionPane.showMessageDialog(null,
+								errorMessage,
+								Menu.msgTitleURLError.getText(),
+								JOptionPane.ERROR_MESSAGE);
+					}
+				}
+			}
+		});
+		// END KGU#1106 2023-11-17
 
 		txtLicense.setText(readTextFile(LICENSE_FILE));
 

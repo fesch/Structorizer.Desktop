@@ -37,7 +37,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2021-11-10      First Issue (generated with GOLDprog.exe)
  *      Kay Gürtzig     2021-11-17      Bugfix #1020: Preparation of Instruction lines with return syntax
  *                                      ensured, keyword replacement in Jump elements improved
- *      Kay Gürtzig     2022-09-30      Bugfix #1074: preprocessLine now first unifies the operator symbols
+ *      Kay Gürtzig     2022-09-30      Bugfix #1074, #1075: preprocessLine now first unifies the operator
+ *                                      symbols
  *
  ******************************************************************************************************
  *
@@ -387,9 +388,9 @@ public class ArmLineParser implements GeneratorSyntaxChecker
 	{
 		Subqueue sq;
 		String className = owner.getClass().getSimpleName();
-		// START KGU#1066 2022-09-30: Bugfix #2022-09-30 verbose operators were rejected
+		// START KGU#1066/KGU#1068/KGU#1069 2022-09-30: Bugfix #1074, #1075 verbose operators were rejected
 		line = Element.unifyOperators(line);
-		// END KGU#1066 2022-09-30
+		// END KGU#1066/KGU#1068/KGU#1069 2022-09-30
 		if (className.equals("Call")) {
 			line = "§CALL§ " + line;
 		}

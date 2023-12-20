@@ -50,7 +50,9 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2023-09-12      Bugfix #1085 Type definitions from header files weren't correctly handled
  *      Kay Gürtzig     2023-09-15      Issue #809: Conversion of return elements in main diagrams to exit elements
  *      Kay Gürtzig     2023-09-27/28   Bugfix #1089.1: Support for struct initializers with named components
- *      Kay Gürtzig     2023-11-08      Bugfix #1108: Defective handling of nested comments in 
+ *      Kay Gürtzig     2023-11-08      Bugfix #1108: Defective handling of nested comments in checComments()
+ *      Kay Gürtzig     2023-11-13      Enh. #1115 + bugfix #1116: New option to convert #defines into constants,
+ *                                      array typedef preparation repaired
  *
  ******************************************************************************************************
  *
@@ -75,6 +77,8 @@ import java.util.regex.Pattern;
 import com.creativewidgetworks.goldparser.engine.Reduction;
 import com.creativewidgetworks.goldparser.engine.Token;
 
+import bsh.EvalError;
+import bsh.Interpreter;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.elements.IElementVisitor;
@@ -184,6 +188,41 @@ public abstract class CPreParser extends CodeParser
 	 */
 	static HashMap<String, String[]> defines = new LinkedHashMap<String, String[]>();
 	
+	// START KGU#1105 2023-11-13. Enh. #1115 Keep certain #defines as constants to be imported
+	/**
+	 * Maps the name of a preprocessor define that might serve as a constant definition
+	 * to be preserved to
+	 * [0]: its value string and
+	 * [1]: the path of the header or source file it proceeds from.
+	 * 
+	 * @see #optionConvertDefinesToConstants
+	 */
+	protected final HashMap<String, String[]> constants = new LinkedHashMap<String, String[]>();
+	
+	/**
+	 * Caches the Language-specific option that {@code #define}s with literals or
+	 * constant expressions as substitute are to be preserved and converted into
+	 * constant definitions placed in an additional Includable diagram
+	 */
+	private boolean optionConvertDefinesToConstants = false;
+	
+	/**
+	 * A Bean Shell interpreter for a simple check whether a supposed C expression can be evaluated
+	 */
+	private Interpreter interpreter = null;
+	
+	/**
+	 * Potentially an Includable diagram collecting all constants derived from
+	 * {@code #define} directives from included headers to be added to the set of
+	 * generated {@link Root}s and included by the latter ones.
+	 * 
+	 * @see #optionConvertDefinesToConstants
+	 */
+	protected Root includedConsts = null;
+	
+	private final static StringList ASSIGN_OPERATORS = StringList.explode("=,+=,-=,*=,/=,%=,<<=,>>=,&=,|=,^=", ",");
+	// END KGU#1105 2023-11-13
+	
 	// START KGU#547 2018-07-09: We should prevent headers from being included repeatedly.
 	/** Set of the paths of already processed (included) header files */
 	private Set<String> includedHeaders = new HashSet<String>();
@@ -210,12 +249,22 @@ public abstract class CPreParser extends CodeParser
 	 * @param _textToParse - name (path) of the source file
 	 * @param _encoding - the expected encoding of the source file.
 	 * @return The File object associated with the preprocessed source file.
+	 * @throws ParserCancelled if the user interactively decided to abort
+	 * @throws FilePreparationException on severe plugin-specific file preparation
+	 *    trouble
 	 */
 	@Override
-	protected File prepareTextfile(String _textToParse, String _encoding) throws ParserCancelled, FilePreparationException
+	protected File prepareTextfile(String _textToParse, String _encoding)
+			throws ParserCancelled, FilePreparationException
 	{	
 		this.ParserPath = null; // set after file object creation
 		this.ParserEncoding	= _encoding;
+		// START KGU#1105 2023-11-13: Enh. #1115 Optionally convert suited defines to constants
+		this.optionConvertDefinesToConstants = (Boolean)this.getPluginOption("definesToConstants", false);
+		if (this.optionConvertDefinesToConstants) {
+			this.interpreter = new Interpreter();
+		}
+		// END KGU#1105 2023-11-13
 		
 		// START KGU#519 2018-06-17: Enh. 541 Empty the defines before general start
 		defines.clear();
@@ -260,6 +309,12 @@ public abstract class CPreParser extends CodeParser
 				String srcCode = this.prepareTypedefs(srcCodeSB.toString(), _textToParse);
 //				System.out.println(srcCode);
 				
+				// START KGU#1105 2023-11-13: Enh. #1115 - find out which included constants are needed
+				if (this.optionConvertDefinesToConstants && !constants.isEmpty()) {
+					forgetUnusedConstants(srcCode);
+				}
+				// END KGU#1105 2023-11-13
+				
 				// trim and save as new file
 				interm = File.createTempFile("Structorizer", "." + getFileExtensions()[0]);
 				OutputStreamWriter ow = new OutputStreamWriter(new FileOutputStream(interm), "UTF-8");
@@ -281,17 +336,108 @@ public abstract class CPreParser extends CodeParser
 				System.err.println("CParser.prepareTextfile() creation of intermediate file -> " + e);
 				this.error += e.toString();
 			}
+			// START KGU#1105 2023-11-13: Enh. #1115: Optional conversion define -> const
+			if (this.optionConvertDefinesToConstants && !constants.isEmpty()) {
+				this.includedConsts = new Root();
+				File fileSrc = new File(_textToParse);
+				String fileName = fileSrc.getName();
+				if (fileName.contains(".")) {
+					fileName = fileName.substring(0, fileName.lastIndexOf('.'));
+					fileName.replace(".", "_");
+				}
+				fileName.replace(" ", "_");
+				this.includedConsts.setText(fileName + "_defines");
+				this.includedConsts.setInclude();
+				for (Entry<String, String[]> entry: constants.entrySet()) {
+					// FIXME: Some translation/parsing might still be necessary!
+					Instruction constDef = new Instruction("const " + entry.getKey() + " <- " + entry.getValue()[0]);
+					constDef.setColor(colorConst);
+					constDef.setComment("Converted from a #define in file \"" + entry.getValue()[1] + "\"");
+					this.includedConsts.children.addElement(constDef);
+				}
+			}
+			// END KGU#1105 2023-11-13
 		}
 		return interm;
 	}
+
+	// START KGU#1105 2023-11-14: Enh. #1115 - more efficient way to get rid of unnecessary defines
+	/**
+	 * Removes all entries from {@link #constants} that are not referenced in the given
+	 * pre-processed source code {@code _srcCode}.
+	 * 
+	 * @param _srcCode - the preprocessed file content as single string with newlines
+	 * @return the set of referenced constant names out of {@link #constants}, or {@code null}
+	 *    if some IO trouble occurred
+	 */
+	private void forgetUnusedConstants(String _srcCode) {
+		HashSet<String> usedConsts = new HashSet<String>();
+		StreamTokenizer tokenizer = new StreamTokenizer(new StringReader(_srcCode));
+		tokenizer.quoteChar('"');
+		tokenizer.quoteChar('\'');
+		tokenizer.slashStarComments(true);
+		tokenizer.slashSlashComments(true);
+		tokenizer.parseNumbers();
+		tokenizer.eolIsSignificant(true);
+		// Underscore must be added to word characters!
+		tokenizer.wordChars('_', '_');
+		
+		try {
+			while (tokenizer.nextToken() != StreamTokenizer.TT_EOF) {
+				if (tokenizer.ttype == StreamTokenizer.TT_WORD) {
+					String word = tokenizer.sval;
+					if (constants.containsKey(word)) {
+						addReferencedConstants(usedConsts, word);
+					}
+				}
+			}
+		} catch (IOException exc) {
+			return;
+		}	
+		
+		// Now drop all constants not needed by the source code
+		HashSet<String> allConsts = new HashSet<String>(constants.keySet());
+		for (String id: allConsts) {
+			if (!usedConsts.contains(id)) {
+				constants.remove(id);
+			}
+		}
+	}
+	// END KGU#1105 2023-11-14
+
+	// START KGU#1105 2023-11-13: Enh. #1115 Auxiliary method for conversion define -> const
+	/**
+	 * Adds {@code constId} and all constant names recursively required for the evaluation
+	 * of constant {@code constId} according to map {@link #constants} to set {@code usedConsts}.
+	 * 
+	 * @param usedConsts - set of constant names from {@link #constants} actually referenced
+	 *    (directly or indirectly) by the code to be parsed, is likely to be expanded here
+	 * @param constId - a referenced constant name
+	 */
+	private void addReferencedConstants(HashSet<String> usedConsts, String constId) {
+		if (usedConsts.add(constId)) {
+			if (usedConsts.size() >= constants.size()) {
+				// No further modification possible
+				return;
+			}
+			StringList tokens = Element.splitLexically(constants.get(constId)[0], true);
+			for (int i = 0; i < tokens.count(); i++) {
+				String token = tokens.get(i);
+				if (constants.containsKey(token)) {
+					addReferencedConstants(usedConsts, token);
+				}
+			}
+		}
+	}
+	// END KGU#1105 2023-11-13
 
 	// START KGU#550 2018-07-09: Enh. #489 Default additions for well-known libraries
 	/**
 	 * Reads all plugin-specific options of kind "use_XXX_defines" to make use of predefined
 	 * types or preprocessor defines for the respective library and adds them either to
 	 * {@link #typedefs} or to {@link #defines}, depending on the value mapped in the
-	 * associated resource file ("type"&nbsp;-&gt;&nbsp;{@link #typedefs}, any other string&nbsp;-&gt;&nbsp;
-	 * {@link #defines}).
+	 * associated resource file ("type"&nbsp;-&gt;&nbsp;{@link #typedefs}, any other
+	 * string&nbsp;-&gt;&nbsp;{@link #defines}).
 	 */
 	private void applyUseDefinesOptions() {
 		for (String libName: standardLibs) {
@@ -341,15 +487,15 @@ public abstract class CPreParser extends CodeParser
 	 * Performs some necessary preprocessing for the text file. Actually opens the
 	 * file, filters it, places its contents into the given StringBuilder (if set).
 	 * For the C Parser e.g. the preprocessor directives must be removed and possibly
-	 * be executed (at least the defines. with #if it would get difficult).
+	 * be executed (at least the defines; with #if it would get difficult).
 	 * 
 	 * @param _textToParse - name (path) of the source file
-	 * @param srcCodeSB - optional: StringBuilder to store the content of the preprocessing;<br/>
+	 * @param _srcCodeSB - optional: StringBuilder to store the content of the preprocessing;<br/>
 	 *    if not given then only the preprocessor handling (including #defines) will be done.
-	 * @return flag signaling whether the preprocessing worked
-	 * @throws ParserCancelled 
+	 * @return flag signalling whether the preprocessing worked
+	 * @throws ParserCancelled if the user interactively decided to abort
 	 */
-	private boolean processSourceFile(String _textToParse, StringBuilder srcCodeSB) throws ParserCancelled {
+	private boolean processSourceFile(String _textToParse, StringBuilder _srcCodeSB) throws ParserCancelled {
 		
 		try
 		{
@@ -383,9 +529,9 @@ public abstract class CPreParser extends CodeParser
 					// END KGU#537 2018-07-01
 					String trimmedLine = strLine.trim();
 					if (trimmedLine.isEmpty()) {
-						if (srcCodeSB != null) {
+						if (_srcCodeSB != null) {
 							// no processing if we only want to check for defines
-							srcCodeSB.append("\n");
+							_srcCodeSB.append("\n");
 							// START KGU#1075 2023-09-12: Bugfix #1085 typedef scopes were mixed
 							lineNo++;
 							// END KGU#1075 2023-09-12
@@ -476,10 +622,10 @@ public abstract class CPreParser extends CodeParser
 
 					// Note: trimmedLine can be empty if we start a block comment only
 					if (trimmedLine.isEmpty()) {
-						if (srcCodeSB != null) {
+						if (_srcCodeSB != null) {
 							// no processing if we only want to check for defines
-							srcCodeSB.append(strLine);
-							srcCodeSB.append("\n");
+							_srcCodeSB.append(strLine);
+							_srcCodeSB.append("\n");
 							// START KGU#1075 2023-09-12: Bugfix #1085 typedef scopes were mixed
 							lineNo++;
 							// END KGU#1075 2023-09-12
@@ -490,40 +636,45 @@ public abstract class CPreParser extends CodeParser
 					//        likely only useful if we parse includes...
 					//        and/or add a standard (dialect specific) list of defines
 					if (trimmedLine.charAt(0) == '#') {
-						if (srcCodeSB == null) {
+						if (_srcCodeSB == null) {
 							// START KGU#1075 2023-09-12: Bugfix #1085 - We must handle recursive ranges
 							//handlePreprocessorLine(trimmedLine.substring(1), defines);
-							handlePreprocessorLine(trimmedLine.substring(1), defines, lineNo);
+							// START KGU#1105 2023-11-13: Enh. #1115 Care for constant conversions
+							//handlePreprocessorLine(trimmedLine.substring(1), defines, lineNo);
+							handlePreprocessorLine(trimmedLine.substring(1), defines, lineNo, _textToParse);
+							// END KGU#1105 2023-11-13
 							// END KGU#1075 2023-09-12
 							// no further processing if we only want to check for defines
 							continue;
 						}
 						// START KGU#582 2018-09-25: Bugfix #608 (makeshift approach) 
-						// There are cases where within the preprocessor line a multi-line comment starts with "/*"
-						// (i.e. with the "*/" not following in the very line!).
-						// In these cases the prefix "// preparser ..." will cause syntax errors on end, because the
-						// next comment lines won't be detected as such. If we could be sure then (and only then) our
-						// returned comment prefix should better start with "/*" instead of "//".
+						// There are cases where within the preprocessor line a multi-line comment starts
+						// with "/*" (i.e. with the "*/" not following in the very line!).
+						// In these cases the prefix "// preparser ..." will cause syntax errors on end,
+						// because the next comment lines won't be detected as such. If we could be sure
+						// then (and only then) our returned comment prefix should better start with "/*"
+						// instead of "//".
 						//srcCodeSB.append(handlePreprocessorLine(trimmedLine.substring(1), defines));
 						// START KGU#1075 2023-09-12: Bugfix #1085 - We must handle recursive ranges
 						//String prefix = handlePreprocessorLine(trimmedLine.substring(1), defines);
-						String prefix = handlePreprocessorLine(trimmedLine.substring(1), defines, lineNo);
+						String prefix = handlePreprocessorLine(trimmedLine.substring(1), defines, lineNo, _textToParse);
 						// END KGU#1075 2023-09-12
 						if (prefix.startsWith("//") && checkComments(new String[]{strLine}, false)) {
 							prefix = "/*" + prefix.substring(2);
 						}
-						srcCodeSB.append(prefix);
+						_srcCodeSB.append(prefix);
 						// END KGU#582 2018-09-25
-						srcCodeSB.append(strLine);
+						_srcCodeSB.append(strLine);
 					} else {
-						if (srcCodeSB == null) {
+						if (_srcCodeSB == null) {
 							// no further processing if we only want to check for defines
 							continue;
 						}
 						strLine = replaceDefinedEntries(strLine, defines);
-						// The grammar doesn't cope with customer-defined type names nor library-defined ones,
-						// so we will have to replace as many as possible of them in advance.
-						// We cannot guess, however, what's included since include files won't be available for us.
+						// The grammar doesn't cope with customer-defined type names nor library-defined
+						// ones, so we will have to replace as many as possible of them in advance.
+						// We cannot guess, however, what's included since include files won't be available
+						// for us.
 						for (String[] pair: typeReplacements) {
 							String search = "(^|.*?\\W)" + Pattern.quote(pair[0])+"(\\W.*?|$)";
 							if (strLine.matches(search)) {
@@ -534,9 +685,9 @@ public abstract class CPreParser extends CodeParser
 						if (mtchVoidCast.matches()) {
 							strLine = mtchVoidCast.group(1) + mtchVoidCast.group(2);	// checkme
 						}
-						srcCodeSB.append(strLine);
+						_srcCodeSB.append(strLine);
 					}
-					srcCodeSB.append("\n");
+					_srcCodeSB.append("\n");
 					// START KGU#1075 2023-09-12: Bugfix #1085 typedef scopes were mixed
 					lineNo++;
 					// END KGU#1075 2023-09-12
@@ -555,7 +706,7 @@ public abstract class CPreParser extends CodeParser
 		}
 		catch (Exception e) 
 		{
-			if (srcCodeSB != null) {
+			if (_srcCodeSB != null) {
 				log(this.getClass().getSimpleName() + ".processSourcefile() -> " + e.toString() + "\n", true);
 			}
 			return false;
@@ -711,19 +862,27 @@ public abstract class CPreParser extends CodeParser
 	protected static Matcher mtchConst = PTRN_CONST.matcher("");
 
 	/**
-	 * Helper function for prepareTextfile to handle C preprocessor commands
+	 * Helper function for {@link #prepareTextfile(String, String)} to handle C
+	 * preprocessor commands
 	 * 
 	 * @param preprocessorLine - line for the preprocessor without leading '#'
-	 * @param defines - symbols or macros mapped to their pre-processed replacement data - to be updated
+	 * @param defines - symbols or macros mapped to their pre-processed replacement data
+	 *    - to be updated
 	 * @param lineNo - the number of the line to be handled in the source file
+	 * @param filePath - path or name of the currently analysed header file, or {@code null}
 	 * @return comment string that can be used for prefixing the original source line
-	 * @throws ParserCancelled
+	 * @throws ParserCancelled if the user interactively decided to abort
 	 * 
-	 * @see {@link #defines}
+	 * @see #defines
+	 * @see #constants
 	 */
 	// START KGU#1075 2023-09-12: Bugfix #1085 We needed awareness of the line number
 	//private String handlePreprocessorLine(String preprocessorLine, HashMap<String, String[]> defines) throws ParserCancelled
-	private String handlePreprocessorLine(String preprocessorLine, HashMap<String, String[]> defines, int lineNo) throws ParserCancelled
+	// START KGU#1105 2023-11-13: Enh. #1115 For define to constant conversions the filepath is wanted
+	//private String handlePreprocessorLine(String preprocessorLine, HashMap<String, String[]> defines, int lineNo) throws ParserCancelled
+	private String handlePreprocessorLine(String preprocessorLine, HashMap<String, String[]> defines,
+			int lineNo, String filePath) throws ParserCancelled
+	// END KGU#1105 2023-11-013
 	// END KGU#1075 2023-09-12
 	{
 		mtchDefineFunc.reset(preprocessorLine);
@@ -750,6 +909,12 @@ public abstract class CPreParser extends CodeParser
 			String subst[] = new String[1];
 			subst[0] = mtchDefine.group(2);
 			subst[0] = replaceDefinedEntries(subst[0], defines).trim();
+			// START KGU#1105 2023-11-13: Enh. #1115
+			if (this.optionConvertDefinesToConstants && isLiteralOrConstExpr(symbol, subst[0])) {
+				constants.put(symbol, new String[] {subst[0], filePath == null ? "" : filePath});
+				return "// preparser define used as const: ";
+			}
+			// END KGU#1105 2023-11-13
 			defines.put(symbol, subst);
 			return "// preparser define: ";
 		}
@@ -759,6 +924,9 @@ public abstract class CPreParser extends CodeParser
 			// #undef	a
 			String symbol = mtchUndef.group(1);
 			defines.remove(symbol);
+			// START KGU#1105 2023-11-13: Enh. #1115
+			constants.remove(symbol);
+			// END KGU#1105 2023-11-13
 			return "// preparser undef: ";
 		}
 
@@ -768,6 +936,9 @@ public abstract class CPreParser extends CodeParser
 			String symbol = mtchDefineEmpty.group(1);
 			String subst[] = new String[]{""};
 			defines.put(symbol, subst);
+			// START KGU#1105 2023-11-13: Enh. #1115
+			constants.remove(symbol);
+			// END KGU#1105 2023-11-13
 			return "// preparser define: ";
 		}
 
@@ -813,8 +984,8 @@ public abstract class CPreParser extends CodeParser
 					return "// preparser include (failed): ";
 				}
 				// START KGU#1075 2023-09-12: Bugfix #1085
-				// We must forget the ranges within the include file an set the include line as start
-				// (this is not of course clean but better than before)
+				// We must forget the ranges within the include file and set the include line 
+				// as start (this is not of course clean but better than before)
 				if (lineNo > -1) {
 					for (int i = nTypes; i < this.blockRanges.size(); i++) {
 						this.blockRanges.get(i)[0] = lineNo + 2;	// different counting base
@@ -837,6 +1008,64 @@ public abstract class CPreParser extends CodeParser
 		return "// preparser instruction (not parsed!): ";
 	}
 
+	// START KGU#1105 2023-11-13: Enh. #1115 Convert suited defines to constants
+	/**
+	 * Checks whether the specified {@code string} is a C literal or an obvious
+	 * constant expression that could be used in a constant definition.
+	 * 
+	 * @param name - the defined symbol, used as constant identifier
+	 * @param string - the character sequence to be analysed syntactically
+	 * 
+	 * @return {@code true} if constant syntax applies to the given {@code string}
+	 */
+	private boolean isLiteralOrConstExpr(String name, String string) {
+		StringList tokens = Element.splitLexically(string = string.trim(), true);
+		if (tokens.isEmpty()) {
+			return false;
+		}
+//		if (tokens.count() == 1) {
+//			// Check for literal syntax
+//			if (string.equals("true") || string.equals("false")
+//					|| string.equals("TRUE") || string.equals("FALSE")
+//					|| (string.startsWith("'") && string.length() >= 3
+//					|| string.startsWith("\"") && string.length() >= 2)) {
+//				// Boolean literal, character or string literal
+//				return true;
+//			}
+//			try {
+//				if (string.startsWith("0x")) {
+//					Integer.parseInt(string.substring(2), 16);
+//					return true;
+//				}
+//				else if (string.startsWith("0")) {
+//					// If it complies with an octal number it will also match double syntax
+//					Double.parseDouble(string);
+//					return true;
+//				}
+//				else if (!string.contains(".") && !string.contains("e") && !string.contains("E")) {
+//					Integer.parseInt(string);
+//					return true;
+//				}
+//				else {
+//					Double.parseDouble(string);
+//					return true;
+//				}
+//			}
+//			catch (NumberFormatException ex) {}
+//		}
+//		else if (tokens.get(0).equals("(") && tokens.get(tokens.count()-1).equals(")")) {
+		if (tokens.count() == 1
+				|| tokens.get(0).equals("(") && tokens.get(tokens.count()-1).equals(")")
+				&& !tokens.containsAnyOf(ASSIGN_OPERATORS)) {
+			try {
+				interpreter.eval(name + " = " + string);
+				return interpreter.get(name) != null;
+			}
+			catch (EvalError exc) {}
+		}
+		return false;
+	}
+
 	/**
 	 * Detects typedef declarations in the {@code srcCode}, identifies the defined type names and replaces
 	 * them throughout their definition scopes with generic names "user_type_###" as defined in the grammar
@@ -847,7 +1076,7 @@ public abstract class CPreParser extends CodeParser
 	 * @param _textToParse - the original file name
 	 * @return the source code with replaced type names
 	 * @throws IOException
-	 * @throws ParserCancelled
+	 * @throws ParserCancelled if the user interactively decided to abort
 	 * 
 	 * @see #initializeTypedefs()
 	 * @see #collectTypedefs(String, String, LinkedList)
@@ -958,7 +1187,7 @@ public abstract class CPreParser extends CodeParser
 	 *     definitions, may be {@code null}
 	 * @return the exploded source code string
 	 * @throws IOException
-	 * @throws ParserCancelled
+	 * @throws ParserCancelled if the user interactively decided to abort
 	 * 
 	 * @see #initializeTypedefs()
 	 * @see #prepareTypedefs(String, String)
@@ -1035,7 +1264,10 @@ public abstract class CPreParser extends CodeParser
 						state = PreprocState.STRUCT_UNION_ENUM;
 						typedefStructPattern = "typedef\\s+(" + word;
 					}
-					else {
+					// START KGU#1105 2023-11-13: Bugfix #1116 Parsing failed with constants as index range
+					//else {
+					else if (indexDepth == 0) {
+					// END KGU#1105 2023-11-13
 						lastId = word;	// Might be the defined type id if no identifier will follow
 						typedefStructPattern = "";	// ...but it's definitely no combined struct/type definition
 					}
@@ -1163,7 +1395,18 @@ public abstract class CPreParser extends CodeParser
 				if (!typedefStructPattern.isEmpty()) {
 					typedefStructPattern += "\\s*\\[";
 				}
-				if (state == PreprocState.TYPEID) {
+				// START KGU#1105 2023-11-13: Bugfix #1116: failed in a simple array type definition
+				//if (state == PreprocState.TYPEID) {
+				if (state == PreprocState.TYPEID || state == PreprocState.TYPEDEF) {
+					if (indexDepth == 0 && lastId != null) {
+						typedefs.add(lastId);
+						// Bugfix #489 The line counting of StreamTokenizer isn't reliable - apply correction
+						blockRanges.add(new Integer[]{tokenizer.lineno()+minLineOffset+1, (blockStarts.isEmpty() ? -1 : blockStarts.peek())});
+						state = PreprocState.TYPEID;
+						// lastId is used and stale now
+						lastId = null;
+					}
+				// END KGU#1105 2023-11-13
 					indexDepth++;
 				}
 				parenthStack.push(']');
@@ -1225,7 +1468,7 @@ public abstract class CPreParser extends CodeParser
 						}
 					}
 				}
-					break;
+				break;
 			case '*':
 				log("*\n", false);
 				if (state == PreprocState.TYPEDEF) {
@@ -1252,6 +1495,9 @@ public abstract class CPreParser extends CodeParser
 						typedefStructPattern += "\\s+" + lastId + "\\s*,";
 					}
 					state = PreprocState.TYPEID;
+					// START KGU#1105 2023-11-13: Bugfix #1116: lastId is used and stale now
+					lastId = null;
+					// END KGU#1105 2023-11-13
 				}
 				else if (state == PreprocState.TYPEID) {
 					if (!typedefStructPattern.isEmpty()) {
@@ -1269,6 +1515,9 @@ public abstract class CPreParser extends CodeParser
 					//END KGU#541 2018-07-06
 					typedefStructPattern = "";
 					state = PreprocState.TEXT;
+					// START KGU#1105 2023-11-13: Bugfix #1116: lastId is used and stale now
+					lastId = null;
+					// END KGU#1105 2023-11-13
 				}
 				else if (state == PreprocState.TYPEID) {
 					if (!typedefStructPattern.isEmpty() && !typedefStructPattern.endsWith("(")) {
@@ -1279,6 +1528,9 @@ public abstract class CPreParser extends CodeParser
 					}
 					typedefStructPattern = "";
 					state = PreprocState.TEXT;						
+					// START KGU#1105 2023-11-13: Bugfix #1116: lastId is used and stale now
+					lastId = null;
+					// END KGU#1105 2023-11-13
 				}
 				else if (state == PreprocState.COMPLIST && !typedefStructPattern.isEmpty()) {
 					typedefStructPattern += "\\s*;";
@@ -1300,13 +1552,13 @@ public abstract class CPreParser extends CodeParser
 
 	/**
 	 * Part of the file preprocessing, is to replace all occurrences of any of the keys
-	 * of string map {@code defines} by their corresponding values within the target
-	 * string {@code toReplace}.
+	 * of string map {@code defines} by their corresponding values within the first line
+	 * of the target string {@code toReplace}.
 	 * 
 	 * @param toReplace - the string representation of (a part of) the input file.
 	 * @param defines - maps certain defined identifiers to more acceptable other ones.
 	 * @return the resulting string.
-	 * @throws ParserCancelled 
+	 * @throws ParserCancelled if the user interactively decided to abort
 	 */
 	private String replaceDefinedEntries(String toReplace, HashMap<String, String[]> defines) throws ParserCancelled {
 		// START KGU#519 2018-06-17: Enh. #541 - The matching tends to fail if toReplace ends with newline characters
@@ -1460,7 +1712,7 @@ public abstract class CPreParser extends CodeParser
 	 * @param _name - the name of the encountered input function (e.g. "scanf")
 	 * @param _args - the argument expressions
 	 * @param _parentNode - the {@link Subqueue} the output instruction is to be added to. 
-	 * @throws ParserCancelled 
+	 * @throws ParserCancelled if the user interactively decided to abort
 	 */
 	protected void buildInput(Reduction _reduction, String _name, StringList _args, Subqueue _parentNode) throws ParserCancelled {
 		//content = content.replaceAll(BString.breakup("scanf")+"[ ((](.*?),[ ]*[&]?(.*?)[))]", input+" $2");
@@ -1523,7 +1775,7 @@ public abstract class CPreParser extends CodeParser
 	 * @param _name - the name of the encountered output function (e.g. "printf")
 	 * @param _args - the argument expressions
 	 * @param _parentNode - the {@link Subqueue} the output instruction is to be added to. 
-	 * @throws ParserCancelled 
+	 * @throws ParserCancelled if the user interactively decided to abort
 	 */
 	protected void buildOutput(Reduction _reduction, String _name, StringList _args, Subqueue _parentNode) throws ParserCancelled {
 		//content = content.replaceAll(BString.breakup("printf")+"[ ((](.*?)[))]", output+" $1");
@@ -1671,7 +1923,8 @@ public abstract class CPreParser extends CodeParser
 	 * @param initToken - {@link Token} representing the first header zone 
 	 * @param condToken - {@link Token} representing the second header zone
 	 * @param incrToken - {@link Token} representing the third header zone
-	 * @return either a {@link For} element or null.
+	 * @return either a {@link For} element or {@code null}.
+	 * @throws ParserCancelled if the user interactively decided to abort
 	 * 
 	 * @see #checkForInit(Token, String)
 	 * @see #checkForCond(Token, String, boolean)
@@ -1709,6 +1962,7 @@ public abstract class CPreParser extends CodeParser
 	 *
 	 * @param incrToken - the token representing the third zone of a {@code for} loop header
 	 * @return null or a string array of: [0] the id, [1] '+' or '-', [2] the int literal of the increment/decrement
+	 * @throws ParserCancelled if the user interactively decided to abort
 	 * 
 	 * @see #checkAndMakeFor(Token, Token, Token)
 	 * @see #checkForCond(Token, String, boolean)
@@ -1735,6 +1989,7 @@ public abstract class CPreParser extends CodeParser
 	 * @param id - the expected loop variable id to be tested
 	 * @param upward - whether there is an increment or decrement
 	 * @return the end value of the Structorizer counting FOR loop if suited, null otherwise
+	 * @throws ParserCancelled if the user interactively decided to abort
 	 * 
 	 * @see #checkAndMakeFor(Token, Token, Token)
 	 * @see #checkForIncr(Token)
@@ -1758,7 +2013,9 @@ public abstract class CPreParser extends CodeParser
 	 * 
 	 * @param initToken - the token representing the first zone of a {@code for} loop header
 	 * @param id - the expected loop variable id to be tested
-	 * @return the start value expression or null if the {@code id} doesn't match or the staeement isn't suited
+	 * @return the start value expression or null if the {@code id} doesn't match or the
+	 *    statement isn't suited
+	 * @throws ParserCancelled if the user interactively decided to abort
 	 * 
 	 * @see #checkAndMakeFor(Token, Token, Token)
 	 * @see #checkForIncr(Token)
@@ -1866,6 +2123,15 @@ public abstract class CPreParser extends CodeParser
 			}
 			// END KGU#793 2020-02-10
 		}
+		// START KGU#1105 2023-11-13: Enh. #1115 Handle constants converted from included #defines
+		if (this.includedConsts != null) {
+			// FIXME: Do this in a more intelligent way (to avoid indirect duplicates)
+			if (aRoot.includeList == null) {
+				aRoot.includeList = new StringList();
+			}
+			aRoot.includeList.insert(this.includedConsts.getMethodName(), 0);
+		}
+		// END KGU#1105 2023-11-13
 		return false;
 	}
 
@@ -1897,6 +2163,11 @@ public abstract class CPreParser extends CodeParser
 			}
 			this.importingRoots.clear();
 		}
+		// START KGU#1105 2023-11-13: Enh. #1115 optional conversion of included defines to consts
+		if (this.includedConsts != null) {
+			this.addRoot(this.includedConsts);
+		}
+		// END KGU#1105 2023-11-13
 	}
 
 	// START KGU#793 2020-02-10: Bugfix #809

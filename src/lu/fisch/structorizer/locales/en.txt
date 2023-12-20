@@ -1222,6 +1222,8 @@ PluginOptionDialog.optionComponents.use_WINAPI_defines.text[getPluginKey():C99Pa
 PluginOptionDialog.optionComponents.use_WINAPI_defines.tooltip[getPluginKey():C99Parser]=
 PluginOptionDialog.optionComponents.use_MinGw_defines.text[getPluginKey():C99Parser]=
 PluginOptionDialog.optionComponents.use_MinGw_defines.tooltip[getPluginKey():C99Parser]=
+PluginOptionDialog.optionComponents.definesToConstants.text[getPluginKey():C99Parser]=
+PluginOptionDialog.optionComponents.definesToConstants.tooltip[getPluginKey():C99Parser]=
 PluginOptionDialog.optionComponents.lineNumbering.text=Generate line numbers
 PluginOptionDialog.optionComponents.lineNumbering.tooltip[getPluginKey():BasGenerator]=This option also modifies the entire syntax towards Vintage BASIC.
 PluginOptionDialog.optionComponents.lineNumbering.tooltip[getPluginKey():COBOLGenerator]=This option consecutively numbers the exported code lines.
