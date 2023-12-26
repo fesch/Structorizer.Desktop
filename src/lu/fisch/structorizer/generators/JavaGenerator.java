@@ -84,6 +84,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2023-09-28      Bugfix #1092: Type alias export flaws mended, at least as comment
  *      Kay Gürtzig             2023-10-04      Bugfix #1093 Undue final return 0 on function diagrams
  *      Kay Gürtzig             2023-10-15      Bugfix #1096 Initialisation for multidimensional arrays fixed
+ *      Kay Gürtzig             2023-12-25      Issue #1121 Scanner method should be type-specific where possible
  *
  ******************************************************************************************************
  *
@@ -133,6 +134,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map.Entry;
+import java.util.Scanner;
 
 import lu.fisch.diagrcontrol.DiagramController;
 import lu.fisch.structorizer.elements.*;
@@ -263,6 +265,11 @@ public class JavaGenerator extends CGenerator
 	// END KGU#351 2017-02-26
 
 	/************ Code Generation **************/
+	
+	// START KGU#1109 2023-12-25: Issue #1121 Better type-specific input support
+	/** List of Java types with specific {@code next...()} method on class {@link Scanner}. */
+	static private final StringList SCANNER_TYPES = StringList.explode("double,float,long,int,short,boolean,byte", ",");
+	// END KGU#1109 2023-12-23
 	
 	// START KGU#542 2019-11-18: Enh. #739 - we need the current root for token transformation
 	/** Currently exported {@link Root} object */
@@ -499,6 +506,22 @@ public class JavaGenerator extends CGenerator
 				s = s.substring(0, s.length() - inpRepl.length()-1) + s.substring(s.length() - inpRepl.length()+2);
 			}
 			//END KGU#281
+			// START KGU#1109 2023-12-25: Issue #1121 Try a more type-specific input
+			else {
+				int posRepl = s.indexOf(inpRepl);
+				if (posRepl > 0) {
+					int posSemi = s.lastIndexOf(";", posRepl);
+					String target = s.substring(posSemi + 1, posRepl).trim();
+					if (this.varNames.contains(target) && this.typeMap.containsKey(target)) {
+						String typename = this.transformType(typeMap.get(target).getCanonicalType(true, true), "???");
+						if (SCANNER_TYPES.contains(typename)) {
+							s = s.replace("nextLine()", 
+									"next" + Character.toUpperCase(typename.charAt(0)) + typename.substring(1) + "()");
+						}
+					}
+				}
+			}
+			// END KGU#1109 2023-12-25
 		}
 
 		// Math function

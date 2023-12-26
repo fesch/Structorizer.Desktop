@@ -40,8 +40,9 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2020-04-22      Bugfix #854: Deterministic topological order of type definitions ensured
  *      Kay Gürtzig     2021-02-03      Issue #920: Transformation for "Infinity" literal, see comment
  *      Kay Gürtzig     2021-12-05      Bugfix #1024: Precautions against defective record initializers
- *      Kay Gürtzig     2023-10-04      Bugfix #1093 Undue final return 0 on function diagrams
- *      Kay Gürtzig     2023-10-16      Bugfix #1098 Recursive application of initializer transformation ensured
+ *      Kay Gürtzig     2023-10-04      Bugfix #1093: Undue final return 0 on function diagrams
+ *      Kay Gürtzig     2023-10-16      Bugfix #1098: Recursive application of initializer transformation ensured
+ *      Kay Gürtzig     2023-12-26      Bugfix #1122: getInputReplacer() was defective for promptless input.
  *
  ******************************************************************************************************
  *
@@ -150,7 +151,9 @@ public class JsGenerator extends CGenerator {
 		if (withPrompt) {
 			return "$2 = prompt($1)";
 		}
-		return "$1 = prompt(String($1))";
+		// START KGU#1110 2023-12-26: Issue #1122 prompt requires two arguments
+		return "$1 = prompt(\"$1\")";
+		// END KGU#1110 2023-12-26
 	}
 
 	/* (non-Javadoc)
