@@ -123,6 +123,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2023-10-17      Bugfix #1099: Constants defined by an external routine call no longer moved
  *                                              to top (to change execution order could severely compromise the algorithm!)
  *      Kay Gürtzig             2023-12-14      Bugfix #1118: The comment of Instructions without a line wasn't exported
+ *      Kay Gürtzig             2023-12-26      Issue #1123: Translation of built-in function random() added.
  *
  ******************************************************************************************************
  *
@@ -368,6 +369,14 @@ public class CGenerator extends Generator {
 		return false;
 	}
 	// END KGU#784 2019-12-02
+	
+	// START KGU#1112 2023-12-26: Issue #1123: Care for random translation
+	/** @return whether the translation of a {@code random(expr)} expression requires a local Random class instance. */
+	protected boolean needsRandomClassInstance()
+	{
+		return false;
+	}
+	// END KGU#1112 2023-12-26
 
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
 	/* (non-Javadoc)
@@ -571,6 +580,19 @@ public class CGenerator extends Generator {
 			tokens.set(pos, "(char)");
 		}
 		// END KGU#150 2016-04-03
+		// START KGU#1112 2023-12-17: Issue #1123: Convert random(expr) calls
+		pos = -1;
+		while ((pos = tokens.indexOf("random", pos+1)) >= 0 && pos+2 < tokens.count() && tokens.get(pos+1).equals("("))
+		{
+			StringList exprs = Element.splitExpressionList(tokens.subSequence(pos+2, tokens.count()),
+					",", true);
+			if (exprs.count() == 2 && exprs.get(1).startsWith(")")) {
+				tokens.remove(pos, tokens.count());
+				tokens.add(Element.splitLexically("(rand() % (" + exprs.get(0) + ")" + exprs.get(1), true));
+			}
+		}
+		// END KGU#1112 2023-12-17
+		
 		// START KGU#311 2016-12-22: Enh. #314 - Structorizer file API support
 		// KGU#832 2020-03-23: Bugfix #840 Even in case of disabled File API elements the code should be transformed
 		//if (this.usesFileAPI) {
@@ -2712,11 +2734,13 @@ public class CGenerator extends Generator {
 
 	// START KGU#376 2017-09-26: Enh #389 - declaration stuff condensed to a method
 	/**
-	 * Appends constant, type, and variable definitions for the passed-in {@link Root} {@code _root}.<br/>
+	 * Appends constant, type, and variable definitions for the passed-in {@link Root} {@code _root}.
+	 * 
 	 * @param _root - the diagram the declarations and definitions of are to be added
 	 * @param _indent - the proper indentation as String
 	 * @param _varNames - optionally the StringList of the variable names to be declared (my be null)
-	 * @param _force - true means that the addition is forced even if option {@link #isInternalDeclarationAllowed()} is set 
+	 * @param _force - {@code true} means that the addition is forced even if some adversary option like
+	 *    e.g. {@link #isInternalDeclarationAllowed()} is set 
 	 */
 	protected void appendDefinitions(Root _root, String _indent, StringList _varNames, boolean _force) {
 		// TODO: structured constants must be defined after the type definitions (see PasGenerator)!
@@ -2771,6 +2795,19 @@ public class CGenerator extends Generator {
 			}
 		}
 		// END KGU#376 2017-09-28
+		// START KGU#1112 2023-12-26: Issue #1123 Support for built-in random function
+		if (needsRandomClassInstance() && rootCallsRandom(_root)) {
+			String rndInst = "randGen";
+			//if (_varNames.contains(rndInst)) {
+			//	int i = 0;
+			//	while (_varNames.contains(rndInst + i)) {
+			//		i++;
+			//	}
+			//	rndInst += i;
+			//}
+			addCode("Random " + rndInst + " = new Random();", _indent, false);
+		}
+		// END KGU#1112 2023-12-26
 		if (code.count() > lastLine) {
 			addSepaLine();
 		}
@@ -2779,6 +2816,44 @@ public class CGenerator extends Generator {
 			typeMap = oldTypeMap;
 		}
 		// END KGU#852 2020-04-22
+	}
+	
+	/**
+	 * Checks whether the given {@code _root} (i.e. its substructure) contains
+	 * a {@code random(..)} call.
+	 * 
+	 * @param _root - the diagram to search
+	 * @return {@code true} if some of the elements of {@code _root} refers to
+	 *    function {@code random()}
+	 */
+	private boolean rootCallsRandom(Root _root) {
+		final class RandomFinder implements IElementVisitor {
+			public boolean callsRandom = false;
+			
+			@Override
+			public boolean visitPreOrder(Element _ele) {
+				StringList elText = _ele.getUnbrokenText();
+				for (int i = 0; i < elText.count(); i++) {
+					StringList tokens = Element.splitLexically(elText.get(i), true);
+					tokens.removeAll(" ");
+					int posRnd = tokens.indexOf("random");
+					if (posRnd >= 0 && posRnd+1 < tokens.count() && tokens.get(posRnd + 1).equals("(")) {
+						callsRandom = true;
+						return false;
+					}
+				}
+				return true;
+			}
+
+			@Override
+			public boolean visitPostOrder(Element _ele) {
+				return true;
+			}
+		};
+		
+		RandomFinder randFinder = new RandomFinder();
+		_root.traverse(randFinder);
+		return randFinder.callsRandom;
 	}
 	// END KGU#376 2017-09-26
 	

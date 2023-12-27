@@ -82,9 +82,10 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2021-10-03      Bugfix #993: Wrong handling of constant parameters
  *      Kay Gürtzig             2021-12-05      Bugfix #1024: Precautions against defective record initializers
  *      Kay Gürtzig             2023-09-28      Bugfix #1092: Type alias export flaws mended, at least as comment
- *      Kay Gürtzig             2023-10-04      Bugfix #1093 Undue final return 0 on function diagrams
- *      Kay Gürtzig             2023-10-15      Bugfix #1096 Initialisation for multidimensional arrays fixed
- *      Kay Gürtzig             2023-12-25      Issue #1121 Scanner method should be type-specific where possible
+ *      Kay Gürtzig             2023-10-04      Bugfix #1093: Undue final return 0 on function diagrams
+ *      Kay Gürtzig             2023-10-15      Bugfix #1096: Initialisation for multidimensional arrays fixed
+ *      Kay Gürtzig             2023-12-25      Issue #1121: Scanner method should be type-specific where possible
+ *      Kay Gürtzig             2023-12-27      Issue #1123: Translation of built-in function random() added.
  *
  ******************************************************************************************************
  *
@@ -312,6 +313,14 @@ public class JavaGenerator extends CGenerator
 		return true;
 	}
 
+	// START KGU#1112 2023-12-27: Issue #1123: Care for random translation
+	@Override
+	protected boolean needsRandomClassInstance()
+	{
+		return true;
+	}
+	// END KGU#1112 2023-12-27
+	
 	// START KGU#480 2018-01-21: Enh. #490 Improved support for Turtleizer export
 	/**
 	 * Maps light-weight instances of DiagramControllers for API retrieval
@@ -447,6 +456,18 @@ public class JavaGenerator extends CGenerator
 				// END KGU#542 2019-11-18
 			}
 		}
+		// START KGU#1112 2023-12-17: Issue #1123: Convert random(expr) calls
+		int pos = -1;
+		while ((pos = tokens.indexOf("random", pos+1)) >= 0 && pos+2 < tokens.count() && tokens.get(pos+1).equals("("))
+		{
+			StringList exprs = Element.splitExpressionList(tokens.subSequence(pos+2, tokens.count()),
+					",", true);
+			if (exprs.count() == 2 && exprs.get(1).startsWith(")")) {
+				tokens.remove(pos, tokens.count());
+				tokens.add(Element.splitLexically("(randGen.nextInt() % (" + exprs.get(0) + ")" + exprs.get(1), true));
+			}
+		}
+		// END KGU#1112 2023-12-17
 		return super.transformTokens(tokens);
 	}
 	// END KGU#446 2017-10-27

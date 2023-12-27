@@ -3672,12 +3672,13 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 
 	/**
-	 * Appends constant, type, and variable definitions for the passed-in {@link Root} {@code _root} 
+	 * Appends constant, type, and variable definitions for the passed-in {@link Root} {@code _root}.
+	 * 
 	 * @param _root - the diagram the declarations and definitions of which are to be inserted
 	 * @param _indent - the proper indentation as String
 	 * @param _varNames - optionally the StringList of the variable names to be declared (my be null)
 	 * @param _force - true means that the insertion is forced even if some adversary option like e.g.
-	 *  {@link CGenerator#isInternalDeclarationAllowed()} is set
+	 *    {@link CGenerator#isInternalDeclarationAllowed()} is set
 	 */
 	protected void appendDefinitions(Root _root, String _indent, StringList _varNames, boolean _force) {
 		// To be overridden by subclasses

@@ -78,6 +78,7 @@ package lu.fisch.structorizer.generators;
  *                                              Bugfix #1092: Approach for more sensible export of type aliases
  *      Kay Gürtzig             2023-10-04      Bugfix #1093 Undue final return 0 on function diagrams
  *      Kay Gürtzig             2023-10-15      Bugfix #1096 Initialisation for multidimensional arrays fixed
+ *      Kay Gürtzig             2023-12-27      Issue #1123: Translation of built-in function random() added.
  *
  ******************************************************************************************************
  *
@@ -254,6 +255,14 @@ public class CSharpGenerator extends CGenerator
 		return true;
 	}
 
+	// START KGU#1112 2023-12-27: Issue #1123: Care for random translation
+	@Override
+	protected boolean needsRandomClassInstance()
+	{
+		return true;
+	}
+	// END KGU#1112 2023-12-27
+	
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.CGenerator#insertPrototype(lu.fisch.structorizer.elements.Root, java.lang.String, boolean, int)
 	 */
@@ -440,6 +449,18 @@ public class CSharpGenerator extends CGenerator
 	protected String transformTokens(StringList tokens)
 	{
 		tokens.replaceAll("Infinity", "double.PositiveInfinity");
+		// START KGU#1112 2023-12-17: Issue #1123: Convert random(expr) calls
+		int pos = -1;
+		while ((pos = tokens.indexOf("random", pos+1)) >= 0 && pos+2 < tokens.count() && tokens.get(pos+1).equals("("))
+		{
+			StringList exprs = Element.splitExpressionList(tokens.subSequence(pos+2, tokens.count()),
+					",", true);
+			if (exprs.count() == 2 && exprs.get(1).startsWith(")")) {
+				tokens.remove(pos, tokens.count());
+				tokens.add(Element.splitLexically("randGen.Next(" + exprs.get(0) + exprs.get(1), true));
+			}
+		}
+		// END KGU#1112 2023-12-17
 		return super.transformTokens(tokens);
 	}
 	// END KGU#920 2021-02-03
