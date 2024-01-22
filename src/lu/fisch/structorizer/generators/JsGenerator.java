@@ -249,7 +249,7 @@ public class JsGenerator extends CGenerator {
 				tokens.remove(pos, tokens.count());
 				// The code "§RANDOM§" is to protect it from super. It will be replaced after super call.
 				tokens.add(Element.splitLexically("Math.floor(Math.random() * " + exprs.get(0) + exprs.get(1), true));
-				pos += 6;
+				pos += 9;
 			}
 		}
 		// END KGU#1112 2023-12-17

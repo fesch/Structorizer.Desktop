@@ -458,6 +458,7 @@ public class CSharpGenerator extends CGenerator
 			if (exprs.count() == 2 && exprs.get(1).startsWith(")")) {
 				tokens.remove(pos, tokens.count());
 				tokens.add(Element.splitLexically("randGen.Next(" + exprs.get(0) + exprs.get(1), true));
+				pos += 3;
 			}
 		}
 		// END KGU#1112 2023-12-17

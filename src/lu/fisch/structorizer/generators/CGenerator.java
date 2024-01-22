@@ -589,6 +589,7 @@ public class CGenerator extends Generator {
 			if (exprs.count() == 2 && exprs.get(1).startsWith(")")) {
 				tokens.remove(pos, tokens.count());
 				tokens.add(Element.splitLexically("(rand() % (" + exprs.get(0) + ")" + exprs.get(1), true));
+				pos += 5;
 			}
 		}
 		// END KGU#1112 2023-12-17
