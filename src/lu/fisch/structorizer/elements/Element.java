@@ -134,6 +134,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2022-08-20      Enh. #1066: New static method retrieveComponentNames()
  *      Kay Gürtzig     2022-08-22      Bugfix #1068: Type inference failure for array initialisers mended
  *      Kay Gürtzig     2023-12-14      Issue #1119: To set an empty string as text now leads to an empty StringList
+ *      Kay Gürtzig     2024-01-22      Bugfix #1125: Equality check must consider disabled state
  *
  ******************************************************************************************************
  *
@@ -1021,6 +1022,9 @@ public abstract class Element {
 		// START KGU#156 2016-03-12: Colour had to be disabled due to races
 		//if (isEqual) isEqual = this.getColor().equals(_another.getColor());
 		// END KGU#156 2016-03-12
+		// START KGU#1113 2024-01-22: Enh. #270, Bugfix #1125 disabled state is a difference
+		if (isEqual) isEqual = this.disabled == _another.disabled;
+		// END KGU#1113 2024-01-22
 		return isEqual;
 	}
 	// END KGU#119 2016-01-02

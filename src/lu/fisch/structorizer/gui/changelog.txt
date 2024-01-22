@@ -190,6 +190,7 @@ Current development version 3.32-16 (2024-01-22)
 - 16: Issue #1121 Type-specific Scanner methods on Java export of INPUT <2>
 - 16: Bugfix #1122 Defective export of INPUT instructions to Javascript <2>
 - 16: Issue #1123 Proper export of random(...) to C, C++, C#, Java, Js <2>
+- 16: Issue #1125 Diagram comparison didn't distinguish disabled state <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>
