@@ -71,7 +71,7 @@
  *      Kay Gürtzig     2018-08-03      Enh. #577: OutputConsole keys renamed and new messages added
  *      Kay Gürtzig     2019-06-16      Enh. #373: Translations for Find & Replace dialog added
  *      A. Simonetta    2021-03-06      Substantial progress in filling the gaps
- *      Kay Gürtzig     2023-08-01      Enh. #1082: Function name incuded in messages Menu.error13_* *
+ *      Kay Gürtzig     2023-08-01      Enh. #1082: Function name included in messages Menu.error13_* *
  *      Kay Gürtzig     2023-10-13      Issue #980: New messages for declaration syntax check (error31_*) 
  *      Kay Gürtzig     2024-01-26      Issue #311/bugfix #1126: Menu reorganisation (menuDiagram split)
  *

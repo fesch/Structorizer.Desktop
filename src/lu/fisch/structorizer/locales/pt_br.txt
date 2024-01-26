@@ -60,7 +60,7 @@
  *      Kay Gürtzig     2018-07-02  KGU#245: all Colors stuff replaced with array keys
  *      Kay Gürtzig     2018-12-30  Enh. #492: Element name place holders introduced
  *      Kay Gürtzig     2022-08-10  Enh. #56, #492: Messages / tooltips for TRY elements added
- *      Kay Gürtzig     2023-08-01  Enh. #1082: Function name incuded in messages Menu.error13_*
+ *      Kay Gürtzig     2023-08-01  Enh. #1082: Function name included in messages Menu.error13_*
  *      Kay Gürtzig     2023-10-06  Issue #311: Menu reorganisation (menuDiagram split)
  *      Kay Gürtzig     2023-10-13  Issue #980: New messages for declaration syntax check (error31_*) 
  *

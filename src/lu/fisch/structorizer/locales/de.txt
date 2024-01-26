@@ -138,7 +138,7 @@
  *      Kay Gürtzig         2022-08-16  Enh. #1051: Messages for COBOL-specific import options
  *      Kay Gürtzig         2022-08-21  Enh. #1066: Caption and tooltip for InputBox.lblSuggest
  *      Kay Gürtzig         2022-09-29  Bugfix #1072: New message InputBoxFor.msgIllegalWordInField added
- *      Kay Gürtzig         2023-08-01  Enh. #1082: Function name incuded in messages Menu.error13_* *
+ *      Kay Gürtzig         2023-08-01  Enh. #1082: Function name included in messages Menu.error13_* *
  *      Kay Gürtzig         2023-10-06  Issue #311: Menu reorganisation (menuDiagram split)
  *      Kay Gürtzig         2023-10-13  Issues #980,#1096: New messages for declaration syntax check (error31_*)
  *      Kay Gürtzig         2023-11-13  Enh. #1115: New messages for C99 import option definesToConstants

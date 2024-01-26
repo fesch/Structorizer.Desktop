@@ -61,7 +61,7 @@
  *      Kay Gürtzig     2021-01-23      Enh. #714: InputBox.chkShowFinally added
  *      Kay Gürtzig     2021-01-25      Enh. #915: InputBoxCase messages added
  *      Kay Gürtzig     2021-09-22      Enh. #915: Some missing InputBoxCase tooltips concocted
- *      Kay Gürtzig     2023-08-01      Enh. #1082: Function name incuded in messages Menu.error13_*
+ *      Kay Gürtzig     2023-08-01      Enh. #1082: Function name included in messages Menu.error13_*
  *      Kay Gürtzig     2023-10-16      Issues #980/#1096: New messages for declaration syntax check (error31_*) 
  *
  ******************************************************************************************************
