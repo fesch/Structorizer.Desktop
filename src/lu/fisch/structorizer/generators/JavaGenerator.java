@@ -82,8 +82,10 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2021-10-03      Bugfix #993: Wrong handling of constant parameters
  *      Kay Gürtzig             2021-12-05      Bugfix #1024: Precautions against defective record initializers
  *      Kay Gürtzig             2023-09-28      Bugfix #1092: Type alias export flaws mended, at least as comment
- *      Kay Gürtzig             2023-10-04      Bugfix #1093 Undue final return 0 on function diagrams
- *      Kay Gürtzig             2023-10-15      Bugfix #1096 Initialisation for multidimensional arrays fixed
+ *      Kay Gürtzig             2023-10-04      Bugfix #1093: Undue final return 0 on function diagrams
+ *      Kay Gürtzig             2023-10-15      Bugfix #1096: Initialisation for multidimensional arrays fixed
+ *      Kay Gürtzig             2023-12-25      Issue #1121: Scanner method should be type-specific where possible
+ *      Kay Gürtzig             2023-12-27      Issue #1123: Translation of built-in function random() added.
  *
  ******************************************************************************************************
  *
@@ -133,6 +135,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map.Entry;
+import java.util.Scanner;
 
 import lu.fisch.diagrcontrol.DiagramController;
 import lu.fisch.structorizer.elements.*;
@@ -264,6 +267,11 @@ public class JavaGenerator extends CGenerator
 
 	/************ Code Generation **************/
 	
+	// START KGU#1109 2023-12-25: Issue #1121 Better type-specific input support
+	/** List of Java types with specific {@code next...()} method on class {@link Scanner}. */
+	static private final StringList SCANNER_TYPES = StringList.explode("double,float,long,int,short,boolean,byte", ",");
+	// END KGU#1109 2023-12-23
+	
 	// START KGU#542 2019-11-18: Enh. #739 - we need the current root for token transformation
 	/** Currently exported {@link Root} object */
 	protected Root root = null;
@@ -305,6 +313,14 @@ public class JavaGenerator extends CGenerator
 		return true;
 	}
 
+	// START KGU#1112 2023-12-27: Issue #1123: Care for random translation
+	@Override
+	protected boolean needsRandomClassInstance()
+	{
+		return true;
+	}
+	// END KGU#1112 2023-12-27
+	
 	// START KGU#480 2018-01-21: Enh. #490 Improved support for Turtleizer export
 	/**
 	 * Maps light-weight instances of DiagramControllers for API retrieval
@@ -440,6 +456,19 @@ public class JavaGenerator extends CGenerator
 				// END KGU#542 2019-11-18
 			}
 		}
+		// START KGU#1112 2023-12-17: Issue #1123: Convert random(expr) calls
+		int pos = -1;
+		while ((pos = tokens.indexOf("random", pos+1)) >= 0 && pos+2 < tokens.count() && tokens.get(pos+1).equals("("))
+		{
+			StringList exprs = Element.splitExpressionList(tokens.subSequence(pos+2, tokens.count()),
+					",", true);
+			if (exprs.count() == 2 && exprs.get(1).startsWith(")")) {
+				tokens.remove(pos, tokens.count());
+				tokens.add(Element.splitLexically("(randGen.nextInt() % (" + exprs.get(0) + ")" + exprs.get(1), true));
+				pos += 7;
+			}
+		}
+		// END KGU#1112 2023-12-17
 		return super.transformTokens(tokens);
 	}
 	// END KGU#446 2017-10-27
@@ -499,6 +528,22 @@ public class JavaGenerator extends CGenerator
 				s = s.substring(0, s.length() - inpRepl.length()-1) + s.substring(s.length() - inpRepl.length()+2);
 			}
 			//END KGU#281
+			// START KGU#1109 2023-12-25: Issue #1121 Try a more type-specific input
+			else {
+				int posRepl = s.indexOf(inpRepl);
+				if (posRepl > 0) {
+					int posSemi = s.lastIndexOf(";", posRepl);
+					String target = s.substring(posSemi + 1, posRepl).trim();
+					if (this.varNames.contains(target) && this.typeMap.containsKey(target)) {
+						String typename = this.transformType(typeMap.get(target).getCanonicalType(true, true), "???");
+						if (SCANNER_TYPES.contains(typename)) {
+							s = s.replace("nextLine()", 
+									"next" + Character.toUpperCase(typename.charAt(0)) + typename.substring(1) + "()");
+						}
+					}
+				}
+			}
+			// END KGU#1109 2023-12-25
 		}
 
 		// Math function

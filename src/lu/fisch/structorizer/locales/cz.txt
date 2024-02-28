@@ -59,7 +59,7 @@
  *      Kay Gürtzig     2017-12-16      Element name place holders introduced
  *      Kay Gürtzig     2018-07-02      KGU#245: all Colors stuff replaced with array keys 
  *      Kay Gürtzig     2022-08-10      Enh. #56, #492: Messages for TRY elements added, Element name placeholders
- *      Kay Gürtzig     2023-08-01      Enh. #1082: Function name incuded in messages Menu.error13_* *
+ *      Kay Gürtzig     2023-08-01      Enh. #1082: Function name included in messages Menu.error13_* *
  *      Kay Gürtzig     2023-10-06      Issue #311: Menu reorganisation (menuDiagram split)
  *      Kay Gürtzig     2023-10-16      Missing error messages automatically generated via https://www.webtran.de/
  *

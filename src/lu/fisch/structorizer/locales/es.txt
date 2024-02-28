@@ -141,6 +141,7 @@
  *      Kay Gürtzig     2023-08-01  Enh. #1082: Function name incuded in messages Menu.error13_* *
  *      Kay Gürtzig     2023-10-13  Issue #980: New messages for declaration syntax check (error31_*)
  *      Kay Gürtzig     2023-11-13  Enh. #1115: New messages for C99 import option definesToConstants
+ *      Kay Gürtzig     2024-01-26  Issue #311/bugfix #1126: Menu reorganisation (menuDiagram split)
  * 
  ******************************************************************************************************
  *
@@ -283,19 +284,6 @@ Menu.menuDiagramTypeProgram.text=@n
 Menu.menuDiagramTypeFunction.text=@o
 Menu.menuDiagramTypeInclude.text=@p
 Menu.menuDiagramUnboxed.text=¿Diagrama sin caja?
-Menu.menuDiagramComment.text=¿Mostrar comentarios?
-Menu.menuDiagramSwitchComments.text=¿Intercambiar textos/comentarios?
-Menu.menuDiagramCommentsPlusText.text=¿Tanto comentarios como textos?
-Menu.menuDiagramSwitchTCTooltip.text=Impida opción "%1" para activar este punto de menú
-Menu.menuDiagramHideDeclarations.text=¿Esconder puras declaraciónes?
-Menu.menuDiagramMarker.text=¿Resaltar variables?
-Menu.menuDiagramOperatorsC.text=¿Mostrar operadores como en C?
-Menu.menuDiagramOperatorsC.tooltip=Presentar símbolos de operadores según el estilo C en los diagramas (requiere modo "¿Resaltar variables?").
-Menu.menuDiagramDIN.text=¿DIN 66261?
-Menu.menuDiagramDIN.tooltip=Cambia la apariencia de ciclos @d entre norma DIN 66261 (dibujo como ciclo @g) y no estándar (dibujo como ciclo @i).
-Menu.menuDiagramAnalyser.text=¿Comprobar diagrama?
-Menu.menuDiagramIndex.text=¿Mostrar índice de Arranger?
-Menu.menuDiagramPreview.text=¿Mostrar prevista de código?
 
 // Menu "Preferences"
 Menu.menuPreferences.text=Preferencias
@@ -346,7 +334,21 @@ Menu.menuPreferencesSaveRestore.text=Restaurar último backup
 Menu.menuPreferencesSaveRestore.tooltip=Restablece las peferencias del backup cual fue hecho cuandos importaste preferencias desde un archivo INI (durante ésta sesión).
 
 // Menu "View" (not in use right now!)
-Menu.menuView.text=
+Menu.menuView.text=Representación
+Menu.menuView.mnemonic=r
+Menu.menuViewComment.text=¿Mostrar comentarios?
+Menu.menuViewSwitchComments.text=¿Intercambiar textos/comentarios?
+Menu.menuViewCommentsPlusText.text=¿Tanto comentarios como textos?
+Menu.menuViewSwitchTCTooltip.text=Impida opción "%1" para activar este punto de menú
+Menu.menuViewHideDeclarations.text=¿Esconder puras declaraciónes?
+Menu.menuViewMarker.text=¿Resaltar variables?
+Menu.menuViewOperatorsC.text=¿Mostrar operadores como en C?
+Menu.menuViewOperatorsC.tooltip=Presentar símbolos de operadores según el estilo C en los diagramas (requiere modo "¿Resaltar variables?").
+Menu.menuViewDIN.text=¿DIN 66261?
+Menu.menuViewDIN.tooltip=Cambia la apariencia de ciclos @d entre norma DIN 66261 (dibujo como ciclo @g) y no estándar (dibujo como ciclo @i).
+Menu.menuViewAnalyser.text=¿Comprobar diagrama?
+Menu.menuViewIndex.text=¿Mostrar índice de Arranger?
+Menu.menuViewPreview.text=¿Mostrar prevista de código?
 
 // Menu "Debug" (Caption "Depurar" might be better but would require to change the mnemonic to e.g. 'u')
 Menu.menuDebug.text=Debug

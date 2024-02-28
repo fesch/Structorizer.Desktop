@@ -71,8 +71,9 @@
  *      Kay Gürtzig     2018-08-03      Enh. #577: OutputConsole keys renamed and new messages added
  *      Kay Gürtzig     2019-06-16      Enh. #373: Translations for Find & Replace dialog added
  *      A. Simonetta    2021-03-06      Substantial progress in filling the gaps
- *      Kay Gürtzig     2023-08-01      Enh. #1082: Function name incuded in messages Menu.error13_* *
+ *      Kay Gürtzig     2023-08-01      Enh. #1082: Function name included in messages Menu.error13_* *
  *      Kay Gürtzig     2023-10-13      Issue #980: New messages for declaration syntax check (error31_*) 
+ *      Kay Gürtzig     2024-01-26      Issue #311/bugfix #1126: Menu reorganisation (menuDiagram split)
  *
  ******************************************************************************************************
  *
@@ -165,6 +166,7 @@ Menu.menuEditBreakLines.text=Segmenta linee di testo ...
 Menu.menuEditBreakLines.tooltip=
 Menu.menuEditCopyDiagramPNG.text=Copia immagine PNG
 Menu.menuEditCopyDiagramEMF.text=Copia immagine EMF
+
 // Menu "Diagram"
 Menu.menuDiagram.text=Diagramma
 Menu.menuDiagram.mnemonic=d
@@ -213,19 +215,6 @@ Menu.menuDiagramTypeProgram.text=@{Root.DT_MAIN}
 Menu.menuDiagramTypeFunction.text=@{Root.DT_SUB}
 Menu.menuDiagramTypeInclude.text=@{Root.DT_INCL}
 Menu.menuDiagramUnboxed.text=Diagramma senza comice?
-Menu.menuDiagramComment.text=Mostra commenti?
-Menu.menuDiagramSwitchComments.text=Scambia testo/commenti?
-Menu.menuDiagramCommentsPlusText.text=Commenti e testo insieme?
-Menu.menuDiagramSwitchTCTooltip.text=Deseleziona "%1" per attivare questo elemento
-Menu.menuDiagramHideDeclarations.text=Nascondi le dichiarazioni di tipo
-Menu.menuDiagramMarker.text=Evidenzia variabili?
-Menu.menuDiagramOperatorsC.text=Mostra gli operatori con la sintassi del C
-Menu.menuDiagramOperatorsC.tooltip=Mostra i simboli degli operatori seguendo la sintassi del C nei diagrammi
-Menu.menuDiagramDIN.text=DIN 66261?
-Menu.menuDiagramDIN.tooltip=Cambia l'apparenza dei cicli @d tra DIN 66261 e non-standard
-Menu.menuDiagramAnalyser.text=Analizza struttogramma?
-Menu.menuDiagramIndex.text=
-Menu.menuDiagramPreview.text=Mostra l'anteprima del codice
 
 // Menu "Preferences"
 Menu.menuPreferences.text=Opzioni
@@ -276,7 +265,21 @@ Menu.menuPreferencesSaveRestore.text=Restaurare ultimo backup
 Menu.menuPreferencesSaveRestore.tooltip=Ricarica le preferenze di cui è stato fatto il backup l'ultima volta che le hai caricate da un file INI durante la sessione
 
 // Menu "View" (not in use right now!)
-Menu.menuView.text=
+Menu.menuView.text=Veduta
+Menu.menuView.mnemonic=v
+Menu.menuViewComment.text=Mostra commenti?
+Menu.menuViewSwitchComments.text=Scambia testo/commenti?
+Menu.menuViewCommentsPlusText.text=Commenti e testo insieme?
+Menu.menuViewSwitchTCTooltip.text=Deseleziona "%1" per attivare questo elemento
+Menu.menuViewHideDeclarations.text=Nascondi le dichiarazioni di tipo
+Menu.menuViewMarker.text=Evidenzia variabili?
+Menu.menuViewOperatorsC.text=Mostra gli operatori con la sintassi del C
+Menu.menuViewOperatorsC.tooltip=Mostra i simboli degli operatori seguendo la sintassi del C nei diagrammi
+Menu.menuViewDIN.text=DIN 66261?
+Menu.menuViewDIN.tooltip=Cambia l'apparenza dei cicli @d tra DIN 66261 e non-standard
+Menu.menuViewAnalyser.text=Analizza struttogramma?
+Menu.menuViewIndex.text=
+Menu.menuViewPreview.text=Mostra l'anteprima del codice
 
 // Menu "Debug"
 Menu.menuDebug.text=Debug
