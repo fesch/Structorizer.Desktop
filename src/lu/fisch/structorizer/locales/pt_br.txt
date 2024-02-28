@@ -1149,7 +1149,7 @@ PluginOptionDialog.optionComponents.use_WINAPI_defines.text[getPluginKey():C99Pa
 PluginOptionDialog.optionComponents.use_WINAPI_defines.tooltip[getPluginKey():C99Parser]=
 PluginOptionDialog.optionComponents.use_MinGw_defines.text[getPluginKey():C99Parser]=
 PluginOptionDialog.optionComponents.use_MinGw_defines.tooltip[getPluginKey():C99Parser]=
-PluginOptionDialog.optionComponents.definesToConstants.text[getPluginKey():C99Parser]=Transformar defines a constantes
+PluginOptionDialog.optionComponents.definesToConstants.text[getPluginKey():C99Parser]=Transformar #defines a constantes
 PluginOptionDialog.optionComponents.definesToConstants.tooltip[getPluginKey():C99Parser]=
 PluginOptionDialog.optionComponents.lineNumbering.text=Gerar números de linhas ao exportar
 PluginOptionDialog.optionComponents.lineNumbering.tooltip[getPluginKey():BasGenerator]=Esta opção também modificará toda a sintaxe para Vintage BASIC.
