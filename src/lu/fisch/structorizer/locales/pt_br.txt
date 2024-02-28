@@ -577,7 +577,7 @@ Editor.btnAfterTry.tooltip=Inserir um novo comando @q após o (+shift: antes do)
 Editor.btnUndo.tooltip=Desfazer a última ação.
 Editor.btnRedo.tooltip=Refazer a última ação.
 // find & replace
-Editor.btnFindReplace.tooltip=Abrir a ferramenta para Procurar/Sustituir.
+Editor.btnFindReplace.tooltip=Abrir a ferramenta para Procurar/Substituir.
 // copy & paste
 Editor.btnCut.tooltip=Recortar o elemento selecionado.
 Editor.btnCopy.tooltip=Copiar o elemento selecionado.
