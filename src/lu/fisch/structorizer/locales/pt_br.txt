@@ -104,10 +104,9 @@
 >>>
 -----> Structorizer
 -----[ Menu ]-----
-//Menu File
+// Menu "File"
 Menu.menuFile.text=Arquivo
 Menu.menuFile.mnemonic=f
-
 // Submenus of "File"
 Menu.menuFileNew.text=Novo
 Menu.menuFileOpen.text=Abrir ...
@@ -116,20 +115,18 @@ Menu.menuFileSave.text=Salvar
 Menu.menuFileSaveAs.text=Salvar como ...
 Menu.menuFileSaveAll.text=Salvar tudo
 Menu.menuFileExport.text=Exportar
-
 // Submenu of "File -> Export"
 Menu.menuFileExportPicture.text=Figura
 Menu.menuFileExportCode.text=Código
-Menu.menuFileExportPicturePNG.text= 
+Menu.menuFileExportPicturePNG.text=
 Menu.menuFileExportPicturePNGmulti.text=PNG (múltiplo) ...
-Menu.menuFileExportPictureEMF.text= 
-Menu.menuFileExportPictureSWF.text= 
-Menu.menuFileExportPicturePDF.text= 
-Menu.menuFileExportPictureSVG.text= 
-Menu.lbFileExportCodeFavorite.text=Exportar como código % 
-Menu.menuFileExportCodeFavorite.tooltip=É possível escolher a linguagem nas preferências para exportação. 
+Menu.menuFileExportPictureEMF.text=
+Menu.menuFileExportPictureSWF.text=
+Menu.menuFileExportPicturePDF.text=
+Menu.menuFileExportPictureSVG.text=
+Menu.lbFileExportCodeFavorite.text=Exportar como código %
+Menu.menuFileExportCodeFavorite.tooltip=É possível escolher a linguagem nas preferências para exportação.
 Menu.menuFileImport.text=Importar
-
 // Submenu of "File -> Import"
 Menu.menuFileImportCode.text=Código fonte ...
 Menu.menuFilePrint.text=Imprimir ...
@@ -141,7 +138,6 @@ Menu.menuFileQuit.text=Sair
 // Menu "Edit"
 Menu.menuEdit.text=Editar
 Menu.menuEdit.mnemonic=e
-
 // Submenu of "Edit"
 Menu.menuEditUndo.text=Desfazer
 Menu.menuEditRedo.text=Refazer
@@ -156,20 +152,16 @@ Menu.menuEditUpgradeTurtle.tooltip=Substituir todos os comandos Turtle baseados 
 Menu.menuEditDowngradeTurtle.text=Para gráficos com inteiros
 Menu.menuEditDowngradeTurtle.tooltip=Substituir todos os comandos Turtle mais precisos nos elementos selecionados pelos baseados em números inteiros (menor precisão).
 Menu.menuEditBreakLines.text=(Re-)fazer quebras de linhas de texto ...
-Menu.menuEditBreakLines.tooltip=Permitir o ajuste de quebras de linhas de texto de elementos selecionados (e opcionalmente sua subestrutura) para um novo limite de comprimento de linha.  
+Menu.menuEditBreakLines.tooltip=Permitir o ajuste de quebras de linhas de texto de elementos selecionados (e opcionalmente sua subestrutura) para um novo limite de comprimento de linha.
 Menu.menuEditCopyDiagramPNG.text=Copiar imagem PNG
 Menu.menuEditCopyDiagramEMF.text=Copiar imagem EMF
-
 // Menu "Diagram"
 Menu.menuDiagram.text=Diagrama
 Menu.menuDiagram.mnemonic=d
-
 // Submenus of "Diagram"
 Menu.menuDiagramAdd.text=Inserir
-
 // Submenu "Diagram -> Add -> Before"
 Menu.menuDiagramAddBefore.text=Antes
-
 // Submenus for adding Elements "Before"
 Menu.menuDiagramAddBeforeInst.text=@a
 Menu.menuDiagramAddBeforeAlt.text=@b statement
@@ -182,10 +174,8 @@ Menu.menuDiagramAddBeforeCall.text=@j
 Menu.menuDiagramAddBeforeJump.text=@k
 Menu.menuDiagramAddBeforePara.text=@l
 Menu.menuDiagramAddBeforeTry.text=@q
-
 // Submenu "Diagram -> Add -> After"
 Menu.menuDiagramAddAfter.text=Depois
-
 // Submenus for adding Elements "After"
 Menu.menuDiagramAddAfterInst.text=@a
 Menu.menuDiagramAddAfterAlt.text=@b statement
@@ -207,7 +197,6 @@ Menu.menuDiagramOutsource.text=Terceirizar ...
 Menu.menuDiagramOutsource.tooltip=Terceirizar a sequência do elemento selecionado para uma nova sub-rotina.
 Menu.menuDiagramCollapse.text=Colapsar
 Menu.menuDiagramExpand.text=Expandir
-
 // Diagram Appearance
 Menu.menuDiagramType.text=Tipo
 Menu.menuDiagramTypeProgram.text=@n
@@ -215,7 +204,7 @@ Menu.menuDiagramTypeFunction.text=@o
 Menu.menuDiagramTypeInclude.text=@p
 Menu.menuDiagramUnboxed.text=Diagrama não encaixado?
 
-// Menu "View" (not in use right now!) 
+// Menu "View"
 Menu.menuView.text=Representação
 Menu.menuView.mnemonic=r
 Menu.menuViewComment.text=Mostrar comentários?
@@ -258,18 +247,15 @@ Menu.menuPreferencesLanguageItems.nl.text=Holandês
 Menu.menuPreferencesLanguageItems.lu.text=Luxemburguês
 Menu.menuPreferencesLanguageItems.es.text=Espanhol
 Menu.menuPreferencesLanguageItems.it.text=Italiano
-Menu.menuPreferencesLanguageItems.pt_br.text=Português (BR) 
+Menu.menuPreferencesLanguageItems.pt_br.text=Português (BR)
 Menu.menuPreferencesLanguageItems.zh-cn.text=Chinês  (simplificado)
 Menu.menuPreferencesLanguageItems.zh-tw.text=Chinês (tradicional)
 Menu.menuPreferencesLanguageItems.cz.text=Checo
 Menu.menuPreferencesLanguageItems.ru.text=Russo
 Menu.menuPreferencesLanguageItems.pl.text=Polonês
-
 Menu.menuPreferencesLanguageFromFile.text=A partir do arquivo ...
 Menu.menuPreferencesLanguageFromFile.tooltip=Poderá criar arquivos de tradução com a ferramenta 'Tradutor' no menu Arquivo.
-
 Menu.menuPreferencesLookAndFeel.text=Aspecto
-
 Menu.menuPreferencesWheel.text=Rolagem do mouse
 Menu.menuPreferencesWheelCollapse.text=Rolagem do mouse para colapsar?
 Menu.menuPreferencesWheelZoom.text=Inverter o zoom ao usar com Ctrl?
@@ -298,7 +284,6 @@ Menu.menuDebugDisable.text=Desativar/ativar
 // Menu "Help"
 Menu.menuHelp.text=Ajuda
 Menu.menuHelp.mnemonic=h
-
 // Submenu of "Help"
 Menu.menuHelpOnline.text=Guia do Usuário
 Menu.menuHelpOnline.tooltip=Abrir Guia do Usuário online no navegador
@@ -426,7 +411,6 @@ Menu.msgErrorSettingLaF.text=Problema ao trocar Aparências %1: %2
 Menu.msgRootCloned.text=Clonado o diagrama «%1».\n\nO atual é cópia independente:\n%2
 Menu.msgAnalyserHint_3_30_14.text=Novos símbolos indicadores\nirão lembrá-lo\que há alertas\no Analisador para os elementos marcados.\n\nPoderá desativá-los via:\n%
 Menu.msgVersionHint_3_30_15.text=Este novo editor para elementos @c\né opcional.\nEle promete manter a ligação entre os casos\ne suas ramificações ao permutá-los.\n\nSe preferir o editor tradicional de elementos,\npoderá desmarcar a caixa de seleção \n"%1"\nem %2.
-
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Assinatura de rotina
 Menu.msgTabHdrAlias.text=Nome alternativo
@@ -434,7 +418,6 @@ Menu.msgTabHdrAlias.text=Nome alternativo
 // Error messages for analyser
 Menu.warning_1.text=AVISO: TEXTOS E COMENTÁRIOS ESTÃO TROCADOS NA TELA! → Menu "%1 ► %2".
 Menu.warning_2.text=NOTA: «%4» está ativo. Para desativar: → Menu "%1 ► %2 ► %3".
-
 Menu.error01_1.text=AVISO: Variável de controle não detectada ...
 Menu.error01_2.text=AVISO: Mais de uma variável de controle detectada: «%»
 Menu.error01_3.text=Não é permitido modificar a variável de controle "%" dentro da repetição!
@@ -447,7 +430,7 @@ Menu.error06.text=O nome do programa «%» deve ser escrito em maiúsculas!
 Menu.error07_1.text=«%» não é um nome válido para um programa ou método!
 Menu.error07_2.text=«%» não é um nome válido para um parâmetro!
 Menu.error07_3.text=«%» não é um nome válido para uma variável ou constante!
-Menu.error07_4.text=Nomes de diagramas não devem conter espaços em branco, melhor usar sublinha entre as palavras: «%». 
+Menu.error07_4.text=Nomes de diagramas não devem conter espaços em branco, melhor usar sublinha entre as palavras: «%».
 Menu.error07_5.text=O identificador «%» contém símbolos diferentes dos ASCII; isso deve ser evitado.
 Menu.error08.text=Não é permitido fazer uma atribuição dentro de uma condição.
 Menu.error09.text=Seu programa («%») não pode ter o mesmo nome que uma variável ou parâmetro!
@@ -468,7 +451,7 @@ Menu.error14_3.text=A variável «%» pode coincidir com outra já configurada c
 Menu.error15_1.text=A chamada (CALL) não tem o formato «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)» ou «import <prog_name>»!
 Menu.error15_2.text=O diagrama chamado @o «%» não está disponível no momento.
 Menu.error15_3.text=Há varios diagramas @o com a mesma assinatura «%».
-Menu.error16_1.text=Um desvio (JUMP) pode estar vazio ou iniciar-se por %, possivelmente seguido por um argumento!	
+Menu.error16_1.text=Um desvio (JUMP) pode estar vazio ou iniciar-se por %, possivelmente seguido por um argumento!
 Menu.error16_2.text=A instrução «%» para retorno, fora da última posição, deve ter o formato de um desvio (JUMP)!
 Menu.error16_3.text=Uma instrução «%1» ou «%2» somente é permitida como desvio (JUMP)!
 Menu.error16_4.text=Não é possível interromper ou abandonar mais de nível aninhado em (%)!
@@ -527,6 +510,7 @@ Menu.error31_3.text=Estes objetos de declaração não são identificadores adeq
 Menu.error31_4.text=Esta é uma tentativa de declarar novamente as variáveis ​​já existentes «%»!
 Menu.error31_5.text=Para uma inicialização, a declaração deve conter exatamente UMA variável, e não %!
 Menu.error31_6.text=Uma construção anônima do tipo «%» não é permitida nesta posição!Menu.errorLineReference.text= (linha %)
+Menu.errorLineReference.text=(linha %)
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Preferências do analisador
@@ -564,47 +548,45 @@ AnalyserPreferences.checkboxes.27.text=Verificar se os itens do seletor @c são 
 AnalyserPreferences.checkboxes.28.text=Verificar se as listas do seletor @c estão separadas.
 AnalyserPreferences.checkboxes.29.text=Verificar se o valor de escolha @c não é de um tipo estruturado.
 AnalyserPreferences.checkboxes.30.text=Verificar se os colchetes estão balanceados e aninhados corretamente.
+AnalyserPreferences.checkboxes.31.text=Verificar sintaxe de declaração e inicialização de variável
 AnalyserPreferences.lblDrawWarningSign.text=Desenhar um sinal de aviso nos elementos afetados
 AnalyserPreferences.okButton.text=OK
 
+
+
 -----[ Diagram ]-----
-
 // Buttons
-
 // I/O
 Editor.btnNew.tooltip=Criar um diagrama em branco.
 Editor.btnOpen.tooltip=Abrir um diagrama existente.
 Editor.btnSave.tooltip=Salvar o diagrama atual.
 Editor.btnSaveAll.tooltip=Salvar todos os diagramas e grupos com alterações.
-
-// InsertAfter (+shift: Before)
+// InsertAfter (+shift: before)
 Editor.btnAfterInst.tooltip=Inserir uma nova @a após o (+shift: antes do) elemento selecionado.
 Editor.btnAfterAlt.tooltip=Inserir uma nova alternativa @b após o (+shift: antes do) elemento selecionado.
+Editor.btnAfterCase.tooltip=Inserir uma nova alternativa @k após o (+shift: antes do) elemento selecionado.
 Editor.btnAfterFor.tooltip=Inserir uma nova repetição @c após o (+shift: antes do) elemento selecionado.
 Editor.btnAfterWhile.tooltip=Inserir uma nova repetição @d após o (+shift: antes do) elemento selecionado.
 Editor.btnAfterRepeat.tooltip=Inserir uma nova repetição @g após o (+shift: antes do) elemento selecionado.
 Editor.btnAfterForever.tooltip=Inserir uma nova repetição @h após o (+shift: antes do) elemento selecionado.
 Editor.btnAfterCall.tooltip=Inserir uma nova chamada @i após o (+shift: antes do) elemento selecionado.
 Editor.btnAfterJump.tooltip=Inserir um novo desvio @j após o (+shift: antes do) elemento selecionado.
-Editor.btnAfterCase.tooltip=Inserir uma nova alternativa @k após o (+shift: antes do) elemento selecionado.
 Editor.btnAfterPara.tooltip=Inserir um novo comando @l após o (+shift: antes do) elemento selecionado.
 Editor.btnAfterTry.tooltip=Inserir um novo comando @q após o (+shift: antes do) elemento selecionado.
-
 // undo & redo
 Editor.btnUndo.tooltip=Desfazer a última ação.
 Editor.btnRedo.tooltip=Refazer a última ação.
-
+// find & replace
+Editor.btnFindReplace.tooltip=Abrir a ferramenta para Procurar/Sustituir.
 // copy & paste
 Editor.btnCut.tooltip=Recortar o elemento selecionado.
 Editor.btnCopy.tooltip=Copiar o elemento selecionado.
 Editor.btnPaste.tooltip=Colar ou recortar após o elemento selecionado.
-
 // style
 Editor.btnUnboxed.tooltip=Mudar o estilo visual do diagrama.
 Editor.btnFunction.tooltip=Sub diagrama (cantos arredondados).
 Editor.btnProgram.tooltip=Diagrama principal (cantos quadrados).
 Editor.btnInclude.tooltip=@p (2 cantos chanfrados).
-
 // editing
 Editor.btnEdit.tooltip=Editar o elemento selecionado.
 Editor.btnDelete.tooltip=Apagar o elemento selecionado.
@@ -612,47 +594,37 @@ Editor.btnMoveUp.tooltip=Mover o elemento selecionado uma posição para cima.
 Editor.btnMoveDown.tooltip=Mover o elemento selecionado uma posição para baixo.
 Editor.btnTransmute.tooltip=Mudar instruções para chamadas (CALLs) ou desvios (JUMPs), para mesclar ou separar sequências
 Editor.btnOutsource.tooltip=Terceirizar a sequência do elemento selecionado para uma nova sub-rotina.
-
 //printing
 Editor.btnPrint.tooltip=Imprimir o diagrama.
 Editor.btnArrange.tooltip=Acrescentar diagrama ao painel do Organizador
-
 // font
 Editor.btnFontUp.tooltip=Aumentar o tamanho da fonte.
 Editor.btnFontDown.tooltip=Diminuir o tamanho da fonte.
-
 // copyright & help
 Editor.btnAbout.tooltip=Mostrar informações sobre Structorizer.
 Editor.btnHelp.tooltip=Mostrar o Guia do Usuário online no navegador.
-
 // colors
 Editor.btnColors.*.tooltip=Colorir o elemento selecionado com esta cor.
-
 // collapsing
 Editor.btnCollapse.tooltip=Colapsar o elemento selecionado.
 Editor.btnExpand.tooltip=Expandir o elemento selecionado.
-
 // debug
 Editor.btnTurtle.tooltip=Abrir Turtleizer ...
 Editor.btnMake.tooltip=Abrir Executor ...
 Editor.btnDropBrk.tooltip=Ignorar todos os breakpoints.
 Editor.btnDisable.tooltip=Desativar/ativar o(s) elemento(s) selecionado(s).
-
 // display mode
 Editor.ttSwitchComments.text=Texto e comentários estão trocados!
 Editor.ttOperatorsC.text=Operadores mostrados no estilo de C!
 Editor.msgInactiveMode.text=(Modo de exibição inativo)
 Editor.msgMenuHint.text=Item do menu
-
 // Popup menu
 Editor.popupCut.text=Recortar
 Editor.popupCopy.text=Copiar
 Editor.popupPaste.text=Colar
 Editor.popupAdd.text=Inserir
-
 // Submenu of "Add"
 Editor.popupAddBefore.text=Antes
-
 // Submenus of "Add -> Before"
 Editor.popupAddBeforeInst.text=@a
 Editor.popupAddBeforeAlt.text=@b statement
@@ -665,10 +637,8 @@ Editor.popupAddBeforeCall.text=@j
 Editor.popupAddBeforeJump.text=@k
 Editor.popupAddBeforePara.text=@l
 Editor.popupAddBeforeTry.text=@q
-
 // After
 Editor.popupAddAfter.text=Depois
-
 // Submenus of "Add -> After"
 Editor.popupAddAfterInst.text=@a
 Editor.popupAddAfterAlt.text=@b statement
@@ -681,7 +651,6 @@ Editor.popupAddAfterCall.text=@j
 Editor.popupAddAfterJump.text=@k
 Editor.popupAddAfterPara.text=@l
 Editor.popupAddAfterTry.text=@q
-
 // Edit
 Editor.popupEdit.text=Editar
 Editor.popupDelete.text=Apagar
@@ -692,12 +661,10 @@ Editor.popupOutsource.text=Terceirizar
 Editor.popupOutsource.tooltip=Terceirizar a sequência do elemento selecionado
 Editor.popupEditSub.text=Editar sub-rotina ...
 Editor.popupEditSub.tooltip=Chamar @o ou um diagrama @p referenciado para edição.
-
 // Collapsing
 Editor.popupCollapse.text=Colapsar
 Editor.popupExpand.text=Expandir
 Editor.popupDisable.text=Desativar/ativar
-
 // Debug
 Editor.popupBreakpoint.text=Alternar breakpoint
 Editor.popupBreakTrigger.text=Especificar ativador de parada ...
@@ -718,8 +685,8 @@ InputBox.lblComment.text=Comentário
 InputBox.lblComment.tooltip=
 InputBox.lblSuggest.text=Limite para sugestão
 InputBox.lblSuggest.tooltip=Número mínimo de caracteres digitados para instigar sugestões de palavras (0 desativará o atendimento).
-InputBox.txtText.tooltip=O conteúdo de um elemento.
-InputBox.txtComment.tooltip=O comentário de um elemento.
+InputBox.txtText.tooltip=O conteúdo do elemento.
+InputBox.txtComment.tooltip=O comentário do elemento.
 InputBox.btnOK.text=OK
 InputBox.btnOK.tooltip=Confirmar escolhas.
 InputBox.btnCancel.text=Cancelar
@@ -728,14 +695,12 @@ InputBox.chkDisabled.text=Desativar (execução e exportação)
 InputBox.chkBreakpoint.text=Breakpoint
 InputBox.chkShowFinally.text=Mostrar o bloco de limpeza (seção FINALMENTE) mesmo se estivar vazio
 InputBox.lblBreakTriggerText.text=Interromper a execução na contagem: %
-
 InputBox.lblText.text[elementType:Alternative]=Favor inserir a condição
 InputBox.lblText.text[elementType:While]=Favor inserir a condição para entrar
 InputBox.lblText.text[elementType:Repeat]=Favor inserir a condição para sair
 InputBox.lblText.text[elementType:Case]=Favor inserir a expressão para escolha e as constantes  para cada caso (uma por linha)
 InputBox.lblText.text[elementType:Parallel]=Número de threads paralelas
 InputBox.lblText.text[elementType:Try]=Nome da variável de exceção
-
 InputBox.title[elementType:Instruction,getInsertionType():insert]=Inserir elemento @a ...
 InputBox.title[elementType:Alternative,getInsertionType():insert]=Inserir elemento @b ...
 InputBox.title[elementType:Case,getInsertionType():insert]=Inserir elemento @c ...
@@ -745,6 +710,7 @@ InputBox.title[elementType:While,getInsertionType():insert]=Inserir elemento @g 
 InputBox.title[elementType:Call,getInsertionType():insert]=Inserir elemento @j ...
 InputBox.title[elementType:Jump,getInsertionType():insert]=Inserir elemento @k ...
 InputBox.title[elementType:Parallel,getInsertionType():insert]=Inserir elemento @l ...
+InputBox.title[elementType:Try,getInsertionType():insert]=Inserir elemento @q
 InputBox.title[elementType:Instruction,getInsertionType():update]=Editar elemento @a ...
 InputBox.title[elementType:Alternative,getInsertionType():update]=Editar elemento @b ...
 InputBox.title[elementType:Case,getInsertionType():update]=Editar elemento @c ...
@@ -754,28 +720,28 @@ InputBox.title[elementType:While,getInsertionType():update]=Editar elemento @g .
 InputBox.title[elementType:Call,getInsertionType():update]=Editar elemento @j ...
 InputBox.title[elementType:Jump,getInsertionType():update]=Editar elemento @k ...
 InputBox.title[elementType:Parallel,getInsertionType():update]=Editar elemento @l ...
+InputBox.title[elementType:Try,getInsertionType():update]=Editar elemento @q
 
-
------[ InputBox For ]----- 
+-----[ InputBox For ]-----
 InputBoxFor.title[getInsertionType():insert]=Inserir @d loop ...
 InputBoxFor.title[getInsertionType():update]=Editar @d loop ...
 InputBoxFor.rbCounting.tooltip=Selecionar esta opção se desejar contar em um intervalo de números.
 InputBoxFor.rbTraversing.tooltip=Selecionar esta opção se desejar percorrer todos os membros de uma coleção.
-InputBoxFor.lblVariable.text= 
-InputBoxFor.lblStartVal.text= 
-InputBoxFor.lblEndVal.text= 
-InputBoxFor.lblIncr.text= 
-InputBoxFor.lblTraversingVariable.text=
-InputBoxFor.lblValueList.text=
-InputBoxFor.chkTextInput.text= 
+InputBoxFor.lblVariable.text=Variável de contagem
+InputBoxFor.lblStartVal.text=Valor inicial
+InputBoxFor.lblEndVal.text=Valor final
+InputBoxFor.lblIncr.text=Incremento
+InputBoxFor.lblTraversingVariable.text=Variável de elemento
+InputBoxFor.lblValueList.text=Lista de valores, array ou cadeia de caracteres
+InputBoxFor.chkTextInput.text=Entrada de texto direta
 InputBoxFor.chkTextInput.tooltip=Se ativado, o conteúdo dos campos acima será extraído do texto, caso contrário, o texto será composto a partir do conteúdo do campo.
-InputBoxFor.lblComment.text= 
-InputBoxFor.lblComment.tooltip= 
-InputBoxFor.txtText.tooltip= 
-InputBoxFor.txtComment.tooltip=Entrar com o comentário do elemento aqui. 
-InputBoxFor.btnOK.text= 
+InputBoxFor.lblComment.text=Comentário
+InputBoxFor.lblComment.tooltip=O comentário do elemento.
+InputBoxFor.txtText.tooltip=
+InputBoxFor.txtComment.tooltip=Entrar com o comentário do elemento aqui.
+InputBoxFor.btnOK.text=OK
 InputBoxFor.btnOK.tooltip=Validar sua escolha (e fechar a caixa de diálogo).
-InputBoxFor.btnCancel.text= 
+InputBoxFor.btnCancel.text=Cancelar
 InputBoxFor.btnCancel.tooltip=Fechar a caixa de diálogo sem salvar sua entrada/modificações.
 InputBoxFor.chkDisabled.text=Desativadas (execução e exportação)
 InputBoxFor.chkBreakpoint.text=Breakpoint
@@ -789,6 +755,7 @@ InputBoxFor.msgEnsureVariableIsArray.text=Tem certeza de que <%> designa um arra
 InputBoxFor.msgEnterValueList.text=Inserir a lista de valores para a repetição.
 InputBoxFor.msgDiscardData.text=Alterar o estilo da repetição significará descartar a maioria dos dados!\nQuer mesmo descartar os dados?
 InputBoxFor.msgAttention.text=ATENÇÃO!
+InputBoxFor.msgIllegalWordInField.text=Campo "%1" não deve conter a palavra-chave «%2»!
 
 -----[ InputBox Root ]-----
 InputBoxRoot.title[elementType:Root]=Editar @n
@@ -799,7 +766,7 @@ InputBoxRoot.txtIncludeList.tooltip=Nomes dos diagramas a serem incluídos no in
 InputBoxRoot.lblText.text=Nome do diagrama / assinatura da função
 InputBoxRoot.txtText.tooltip=Entrar com o nome do diagrama (para @ns ou diagrama @p) ou a assinatura @o (nome, lista de parâmetros, tipo do resultado se houver)
 InputBoxRoot.lblComment.text=Comentário
-InputBoxRoot.txtComment.tooltip=Ex.:Qual é o objetivo do algoritmo, como deverá ser usado, quem o criou etc. 
+InputBoxRoot.txtComment.tooltip=Ex.:Qual é o objetivo do algoritmo, como deverá ser usado, quem o criou etc.
 InputBoxRoot.btnOK.text=OK
 InputBoxRoot.btnOK.tooltip=
 InputBoxRoot.btnCancel.text=Cancelar
@@ -953,7 +920,7 @@ Preferences.lblCase.tooltip=O conteúdo padrão de uma alternativa @c.
 Preferences.lblCaseRot.text=Mínimo de desvios para rotação
 Preferences.lblCaseRot.tooltip=Limite de contagem de desvios para tentativas de reduzir a largura rotacioando elementos (0 = desligado)
 Preferences.chkCaseEditor.text=Usar editor dedicado para @c
-Preferences.pnlRoot.border=Cabeçalho @m 
+Preferences.pnlRoot.border=Cabeçalho @m
 Preferences.lblRoot.text=Incluir legenda da lista
 Preferences.lblRoot.tooltip=A legenda para a lista de diagramas @p ao ser desenhada.
 Preferences.pnlFor.border=Repetição @d loop
@@ -975,6 +942,7 @@ Preferences.lblFinal.tooltip=Rótulo para o bloco de limpeza em um elemento @q
 Preferences.btnOK.text=OK
 Preferences.btnOK.tooltip=Confirmar escolha.
 
+
 -----[ About ]-----
 About.title=Sobre
 About.pnlTabbed.tab.0=Pessoas envolvidas
@@ -984,6 +952,7 @@ About.pnlTabbed.tab.3=Caminhos
 About.msgPaths.text=Arquivo ini:\n%1\n\nPasta de log:\n%2\n\nCaminho de instalação:\n%3\n\nJava VM (versão %4):\n%5\n
 About.btnOK.text=OK
 About.btnOK.tooltip=Fechar a janela.
+
 
 -----[ FontChooser ]-----
 FontChooser.title=Font
@@ -1013,8 +982,9 @@ ColorChooser.btnCancel.tooltip=Cancelar escolha.
 ColorChooser.btnOK.text=OK
 ColorChooser.btnOK.tooltip=Confirmar escolha.
 
+
 -----[ ParserPreferences ]-----
-ParserPreferences.title=Preferências do parser 
+ParserPreferences.title=Preferências do parser
 ParserPreferences.lblPre.text=Pre
 ParserPreferences.lblPre.tooltip=Prefixo para a entrada principal
 ParserPreferences.lblPost.text=Pós
@@ -1025,10 +995,10 @@ ParserPreferences.lblCase.text=@c statement
 ParserPreferences.lblCase.tooltip=Sequência associada à expressão no cabeçalho @c
 ParserPreferences.lblFor.text=@e loop
 ParserPreferences.lblFor.tooltip=Sequência para separar itens no cabeçalho @e
-ParserPreferences.lblForStep.text=Separador para a variação 
-ParserPreferences.lblForIn.text=@f loop 
+ParserPreferences.lblForStep.text=Separador para a variação
+ParserPreferences.lblForIn.text=@f loop
 ParserPreferences.lblForIn.tooltip=Sequência para separar itens no cabeçalho @f
-ParserPreferences.edtForInPre.tooltip=Deverá ser igual à das repetições @e. 
+ParserPreferences.edtForInPre.tooltip=Deverá ser igual à das repetições @e.
 ParserPreferences.edtForInPost.tooltip=Deverá ser diferente de todas as outras palavras já configuradas aqui!
 ParserPreferences.lblWhile.text=@g loop
 ParserPreferences.lblWhile.tooltip=Sequência para separar itens no cabeçalho @g
@@ -1036,7 +1006,7 @@ ParserPreferences.lblRepeat.text=@h loop
 ParserPreferences.lblRepeat.tooltip=Sequência para separar itens no cabeçalho @h
 ParserPreferences.lblJump.text=@k statement
 ParserPreferences.lblJump.tooltip=Classificar palavras-chave para comandos de escape de bloco.
-ParserPreferences.lblJumpLeave.text=sair de repetição 
+ParserPreferences.lblJumpLeave.text=sair de repetição
 ParserPreferences.lblJumpReturn.text=de sub-rotina
 ParserPreferences.lblJumpExit.text=do programa
 ParserPreferences.lblJumpThrow.text=em caso de erro
@@ -1072,19 +1042,18 @@ PrintPreview.lblMarginY.text=Margem vertical:
 ExportOptionDialoge.title=Opções para exportar
 ExportOptionDialoge.tabbedPane.tab.0=Geral
 ExportOptionDialoge.tabbedPane.tab.1=Inclusões
-ExportOptionDialoge.noConversionCheckBox.text=Nenhuma conversão de conteúdo em expressão/instrução. 
-ExportOptionDialoge.noConversionCheckBox.tooltip=Selecionar essa opção se o texto já estiver na linguagem escolhida 
+ExportOptionDialoge.noConversionCheckBox.text=Nenhuma conversão de conteúdo em expressão/instrução.
+ExportOptionDialoge.noConversionCheckBox.tooltip=Selecionar essa opção se o texto já estiver na linguagem escolhida
 ExportOptionDialoge.commentsCheckBox.text=Exportar instruções como comentários.
 ExportOptionDialoge.bracesCheckBox.text=Colocar início de bloco na mesma linha (C/C++/Java etc.).
-ExportOptionDialoge.jLabel1.text=Favor selecionar as opções desejadas para ativação ...
 ExportOptionDialoge.chkExportSubroutines.text=Envolver subprogramas chamados.
 ExportOptionDialoge.chkExportLicenseInfo.text=Exportar autor e atributos da licença.
-ExportOptionDialoge.lbPrefGenerator.text=Exportar para código de preferência: 
-ExportOptionDialoge.lbCharset.text=Conjunto de caracteres: 
+ExportOptionDialoge.lbPrefGenerator.text=Exportar para código de preferência:
+ExportOptionDialoge.lbCharset.text=Conjunto de caracteres:
 ExportOptionDialoge.chkCharsetAll.text=Listar tudo?
 ExportOptionDialoge.btnPluginOptions.text=Opções específicas da linguagem
 ExportOptionDialoge.msgOptionsForPlugin.text=Opções para o gerador %
-ExportOptionDialoge.jLabel1.text=Favor selecionar as opções que desejar ativar ... 
+ExportOptionDialoge.jLabel1.text=Favor selecionar as opções desejadas para ativação ...
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Salvar configurações.
 ExportOptionDialoge.includeLists.*.tooltip=Preencher uma lista separada por vírgulas com arquivos ou módulos para os quais as cláusulas include/import/use deverão ser inseridas
@@ -1158,7 +1127,7 @@ PluginOptionDialog.msgNoValidDouble.text=Valor para '%' tem de ser um número
 PluginOptionDialog.msgVerificationError.text=Verificação de entrada falhou
 PluginOptionDialog.btnOk.text=OK
 PluginOptionDialog.btnCancel.text=Cancelar
-PluginOptionDialog.optionComponents.lineNumbering.text=Gerar números de linhas ao exportar
+PluginOptionDialog.optionComponents.convert_syntax.text=
 PluginOptionDialog.optionComponents.convert_syntax.tooltip=
 PluginOptionDialog.optionComponents.debugLines.text[getPluginKey():COBOLParser]=
 PluginOptionDialog.optionComponents.debugLines.tooltip[getPluginKey():COBOLParser]=
@@ -1180,7 +1149,9 @@ PluginOptionDialog.optionComponents.use_WINAPI_defines.text[getPluginKey():C99Pa
 PluginOptionDialog.optionComponents.use_WINAPI_defines.tooltip[getPluginKey():C99Parser]=
 PluginOptionDialog.optionComponents.use_MinGw_defines.text[getPluginKey():C99Parser]=
 PluginOptionDialog.optionComponents.use_MinGw_defines.tooltip[getPluginKey():C99Parser]=
-PluginOptionDialog.optionComponents.lineNumbering.text=Gerar números de linhas
+PluginOptionDialog.optionComponents.definesToConstants.text[getPluginKey():C99Parser]=Transformar defines a constantes
+PluginOptionDialog.optionComponents.definesToConstants.tooltip[getPluginKey():C99Parser]=
+PluginOptionDialog.optionComponents.lineNumbering.text=Gerar números de linhas ao exportar
 PluginOptionDialog.optionComponents.lineNumbering.tooltip[getPluginKey():BasGenerator]=Esta opção também modificará toda a sintaxe para Vintage BASIC.
 PluginOptionDialog.optionComponents.lineNumbering.tooltip[getPluginKey():COBOLGenerator]=Esta opção numerará consecutivamente as linhas de código exportadas.
 PluginOptionDialog.optionLabels.numberingInterval.text=Intervalo para numeração de linhas
@@ -1207,7 +1178,7 @@ ElementNamePreferences.btnOK.text=OK
 ElementNamePreferences.btnOK.tooltip=Aceitar estas configurações.
 
 -----[ DiagramControllerAliases ]-----
-// Also consider Menu.msgTabHdrSignature and Menu.msgTabHdrAlias 
+// Also consider Menu.msgTabHdrSignature and Menu.msgTabHdrAlias
 DiagramControllerAliases.title=Alternativas para rotina do Controlador
 DiagramControllerAliases.lblHeader.text=Especificar nomes alternativos para as rotinas de complementos controláveis.
 DiagramControllerAliases.lblRemark.text=(Observar que maiúsculas/minúsculas serão ignoradas em nomes de rotina do controlador!)
@@ -1402,7 +1373,7 @@ Surface.msgInsertionConflict.0.text=Há outra versão do diagrama "%2",\ne pelo 
 Surface.msgInsertionConflict.1.text=Há uma cópia equivalente do diagrama "%1"\ncom caminho diferente "%2".
 Surface.msgInsertionConflict.2.text=Há um diagrama diferente com assinatura "%1"\ne caminho "%2".
 Surface.msgOverwriteFile.text=Substituir o arquivo existente "%"?
-Surface.msgConfirmOverwrite.text=Confirmar a substituição 
+Surface.msgConfirmOverwrite.text=Confirmar a substituição
 Surface.msgTooltipSelectThis.text=Selecionar %1 (+shift: acrescentá-lo à seleção)%2 e trazê-lo para cima.
 Surface.msgGroupRemovalError.text=Erro ao remover o grupo «%»
 Surface.msgArrangementAlreadyLoaded.text=O arquivo de arranjo "%1" já carregado para o grupo %2.\nCarregá-lo novamente com um nome de grupo modificado?
@@ -1471,7 +1442,7 @@ ArrangerIndex.msgConfirmDissolve.text=Quer mesmo dissolver este(s) grupo(s)?\n%
 -----> Executor
 -----[ Control ]-----
 Control.title=Controle do Executor
-Control.lblSpeed.text=Atraso: 
+Control.lblSpeed.text=Atraso:
 Control.btnCallStack.text=Pilha de chamadas
 Control.lblCallLevel.text=Profundidade da chamada:
 Control.chkCollectRuntimeData.text=Coletar dados de tempo de execução
@@ -1545,6 +1516,7 @@ Control.msgSignatureConflicts.text=Há conflitos de API entre os plug-ins do con
 Control.msgGUISyncFault.text=Possível falha de sincronização da GUI ao executar «%».\nTentar retomar a execução?
 Control.msgErrorInSubroutine.text=Detectado erro ao executar «%1» no nível %2:\n %3!
 Control.msgThrown.text=Exceção lançada em «%1» no nível %2: %3
+Control.msgInvalidInitialization.text=Objeto da inicialização falta u é ambíguo: «%»!
 Control.tblVar.header.0=Nome de variável
 Control.tblVar.header.2=Conteúdo
 
@@ -1642,3 +1614,4 @@ ParserKeywords.JumpExit.text=exit
 ParserKeywords.JumpThrow.text=throw
 ParserKeywords.Input.text=INPUT
 ParserKeywords.Output.text=OUTPUT
+
