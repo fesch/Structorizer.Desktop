@@ -64,7 +64,7 @@
  *      Kay Gürtzig     2023-10-06  Issue #311: Menu reorganisation (menuDiagram split)
  *      Kay Gürtzig     2023-10-13  Issue #980: New messages for declaration syntax check (error31_*)
  *      PUC-Minas       2023-12-31  Completion and correction of the message set
- *      Kay Gürtzig     2024-02-28  Control.lblCallLevel.text message shortened
+ *      Kay Gürtzig     2024-02-28  Control.lblCallLevel.text and Control.chkCollectRuntimeData.text shortened
  *
  ******************************************************************************************************
  *
@@ -1444,10 +1444,10 @@ ArrangerIndex.msgConfirmDissolve.text=Quer mesmo dissolver este(s) grupo(s)?\n%
 -----> Executor
 -----[ Control ]-----
 Control.title=Controle do Executor
-Control.lblSpeed.text=Atraso:
+Control.lblSpeed.text= Atraso:
 Control.btnCallStack.text=Pilha de chamadas
 Control.lblCallLevel.text=Profundidade:
-Control.chkCollectRuntimeData.text=Coletar dados de tempo de execução
+Control.chkCollectRuntimeData.text=Coletar dados de execução
 Control.cbRunDataDisplay.item.0=sem cor
 Control.cbRunDataDisplay.item.1=cobertura de teste simples
 Control.cbRunDataDisplay.item.2=cobertura de testes profunda

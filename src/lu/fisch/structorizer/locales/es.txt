@@ -1521,7 +1521,7 @@ ArrangerIndex.msgConfirmDissolve.text=Cierto a descomponer este grupo/estos grup
 -----> Executor
 -----[ Control ]-----
 Control.title=Control de Ejecución
-Control.lblSpeed.text=Demora:
+Control.lblSpeed.text= Demora:
 Control.btnCallStack.text=Lote de llamadas
 Control.lblCallLevel.text=Nivel:
 Control.chkCollectRuntimeData.text=Contar pasos de ejec.

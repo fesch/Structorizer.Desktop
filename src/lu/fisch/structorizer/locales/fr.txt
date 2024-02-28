@@ -1438,7 +1438,7 @@ ArrangerIndex.msgConfirmDissolve.text=Êtes-vous sûr de dissoudre ce(s) groupe(
 -----> Executor
 -----[ Control ]-----
 Control.title=
-Control.lblSpeed.text=
+Control.lblSpeed.text= Décélération:
 Control.btnCallStack.text=
 Control.lblCallLevel.text=
 Control.chkCollectRuntimeData.text=
