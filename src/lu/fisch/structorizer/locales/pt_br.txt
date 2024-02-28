@@ -38,7 +38,7 @@
 
 /******************************************************************************************************
  *
- *      Author:         PUC-Minas, MG - Brasil
+ *      Author:         PUC-Minas, MG - Brasil (Theldo Cruz Franqueiro)
  *
  *      Description:    The Brazilian Portuguese (PT-BR) language file
  *
@@ -46,24 +46,26 @@
  *
  *      Revision List
  *
- *      Author                  Date        Description
- *      ------                  ----        -----------
- *      PUC-Minas               2009-08-20  First Issue
- *      PUC-Minas               2009-10-20  Revised
- *      PUC-Minas               2016-07-30  Revised
- *      Kay Gürtzig             2016-09-04  Menu.menuPreferencesLanguage... key structure modified
- *      Kay Gürtzig             2016-09-13  Entries for InputBox and InputBoxFor revised (bugfix #241)
- *      Kay Gürtzig             2016-09-22  AnalyserPreferences numbering modified
- *      Kay Gürtzig             2016-10-11  Enh. 267: Menu.error15 renamed into Menu.error15_1
- *      Kay Gürtzig             2016-12-14  Enh. #311: New menu "Debug"
- *      Kay Gürtzig             2017-04-05  Additions for enh. #388 and #390 (constant definition checks)
- *      Kay Gürtzig             2018-07-02  KGU#245: all Colors stuff replaced with array keys
- *      Kay Gürtzig             2018-12-30  Enh. #492: Element name place holders introduced
- *      Kay Gürtzig             2022-08-10  Enh. #56, #492: Messages / tooltips for TRY elements added
- *      Kay Gürtzig             2023-08-01  Enh. #1082: Function name included in messages Menu.error13_*
- *      Kay Gürtzig             2023-10-06  Issue #311: Menu reorganisation (menuDiagram split)
- *      Kay Gürtzig             2023-10-13  Issue #980: New messages for declaration syntax check (error31_*) 
- *      Theldo Cruz Franqueira  2023-12-31  Completion and correction of the message set *
+ *      Author          Date        Description
+ *      ------          ----        -----------
+ *      PUC-Minas       2009-08-20  First Issue
+ *      PUC-Minas       2009-10-20  Revised
+ *      PUC-Minas       2016-07-30  Revised
+ *      Kay Gürtzig     2016-09-04  Menu.menuPreferencesLanguage... key structure modified
+ *      Kay Gürtzig     2016-09-13  Entries for InputBox and InputBoxFor revised (bugfix #241)
+ *      Kay Gürtzig     2016-09-22  AnalyserPreferences numbering modified
+ *      Kay Gürtzig     2016-10-11  Enh. 267: Menu.error15 renamed into Menu.error15_1
+ *      Kay Gürtzig     2016-12-14  Enh. #311: New menu "Debug"
+ *      Kay Gürtzig     2017-04-05  Additions for enh. #388 and #390 (constant definition checks)
+ *      Kay Gürtzig     2018-07-02  KGU#245: all Colors stuff replaced with array keys
+ *      Kay Gürtzig     2018-12-30  Enh. #492: Element name place holders introduced
+ *      Kay Gürtzig     2022-08-10  Enh. #56, #492: Messages / tooltips for TRY elements added
+ *      Kay Gürtzig     2023-08-01  Enh. #1082: Function name included in messages Menu.error13_*
+ *      Kay Gürtzig     2023-10-06  Issue #311: Menu reorganisation (menuDiagram split)
+ *      Kay Gürtzig     2023-10-13  Issue #980: New messages for declaration syntax check (error31_*)
+ *      PUC-Minas       2023-12-31  Completion and correction of the message set
+ *      Kay Gürtzig     2024-02-28  Control.lblCallLevel.text message shortened
+ *
  ******************************************************************************************************
  *
  *      Comment:	
@@ -1444,7 +1446,7 @@ ArrangerIndex.msgConfirmDissolve.text=Quer mesmo dissolver este(s) grupo(s)?\n%
 Control.title=Controle do Executor
 Control.lblSpeed.text=Atraso:
 Control.btnCallStack.text=Pilha de chamadas
-Control.lblCallLevel.text=Profundidade da chamada:
+Control.lblCallLevel.text=Profundidade:
 Control.chkCollectRuntimeData.text=Coletar dados de tempo de execução
 Control.cbRunDataDisplay.item.0=sem cor
 Control.cbRunDataDisplay.item.1=cobertura de teste simples

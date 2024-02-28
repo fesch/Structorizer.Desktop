@@ -306,7 +306,7 @@ public abstract class Element {
 	public static final long E_HELP_FILE_SIZE = 12300000;
 	public static final String E_DOWNLOAD_PAGE = "https://www.fisch.lu/Php/download.php";
 	// END KGU#791 2020-01-20
-	public static final String E_VERSION = "3.32-16";
+	public static final String E_VERSION = "3.32-17";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -352,7 +352,7 @@ public abstract class Element {
 	" - DE: Klaus-Peter Reimers <k_p_r@freenet.de>\n"+
 	" - LU: Laurent Zender <laurent.zender@hotmail.de>\n"+
 	" - ES: Andres Cabrera <andrescabrera20@gmail.com>\n"+
-	" - PT/BR: Theldo Cruz <cruz@pucminas.br>\n"+
+	" - PT/BR: Theldo Cruz Franqueiro <cruz@pucminas.br>\n"+
 	" - IT: Andrea Maiani <andreamaiani@gmail.com>, A. Simonetta (University of Rome Tor Vergata)\n"+
 	" - ZH-CN: Wang Lei <wanglei@hollysys.com>\n"+
 	" - ZH-TW: Joe Chem <hueyan_chen@yahoo.com.tw>\n"+
