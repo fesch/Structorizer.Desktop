@@ -65,6 +65,7 @@
  *      Kay Gürtzig     2023-10-13  Issue #980: New messages for declaration syntax check (error31_*)
  *      PUC-Minas       2023-12-31  Completion and correction of the message set
  *      Kay Gürtzig     2024-02-28  Control.lblCallLevel.text and Control.chkCollectRuntimeData.text shortened
+ *      Kay Gürtzig     2024-03-04  Mnemonics adapted, some PluginOptionDialog messages added.
  *
  ******************************************************************************************************
  *
@@ -732,7 +733,7 @@ InputBoxFor.rbTraversing.tooltip=Selecionar esta opção se desejar percorrer to
 InputBoxFor.lblVariable.text=Variável de contagem
 InputBoxFor.lblStartVal.text=Valor inicial
 InputBoxFor.lblEndVal.text=Valor final
-InputBoxFor.lblIncr.text=Incremento
+InputBoxFor.lblIncr.text=Variação
 InputBoxFor.lblTraversingVariable.text=Variável de elemento
 InputBoxFor.lblValueList.text=Lista de valores, array ou cadeia de caracteres
 InputBoxFor.chkTextInput.text=Entrada de texto direta
@@ -923,7 +924,7 @@ Preferences.lblCaseRot.text=Mínimo de desvios para rotação
 Preferences.lblCaseRot.tooltip=Limite de contagem de desvios para tentativas de reduzir a largura rotacioando elementos (0 = desligado)
 Preferences.chkCaseEditor.text=Usar editor dedicado para @c
 Preferences.pnlRoot.border=Cabeçalho @m
-Preferences.lblRoot.text=Incluir legenda da lista
+Preferences.lblRoot.text=Legenda da lista de Inclusões
 Preferences.lblRoot.tooltip=A legenda para a lista de diagramas @p ao ser desenhada.
 Preferences.pnlFor.border=Repetição @d loop
 Preferences.pnlFor.tooltip=
@@ -1129,8 +1130,8 @@ PluginOptionDialog.msgNoValidDouble.text=Valor para '%' tem de ser um número
 PluginOptionDialog.msgVerificationError.text=Verificação de entrada falhou
 PluginOptionDialog.btnOk.text=OK
 PluginOptionDialog.btnCancel.text=Cancelar
-PluginOptionDialog.optionComponents.convert_syntax.text=
-PluginOptionDialog.optionComponents.convert_syntax.tooltip=
+PluginOptionDialog.optionComponents.convert_syntax.text=Converter declarações/expreções a um estilo como Pascal
+PluginOptionDialog.optionComponents.convert_syntax.tooltip=Esta opção aumenta la probabilidade de poder executar ou re-exportar o resultado em Structorizer.
 PluginOptionDialog.optionComponents.debugLines.text[getPluginKey():COBOLParser]=
 PluginOptionDialog.optionComponents.debugLines.tooltip[getPluginKey():COBOLParser]=
 PluginOptionDialog.optionComponents.decimalComma.text[getPluginKey():COBOLParser]=
@@ -1143,13 +1144,13 @@ PluginOptionDialog.optionLabels.fixedColumnText.text[getPluginKey():COBOLParser]
 PluginOptionDialog.optionComponents.fixedColumnText.tooltip[getPluginKey():COBOLParser]=
 PluginOptionDialog.optionLabels.tidyupPerformThru.text[getPluginKey():COBOLParser]=
 PluginOptionDialog.optionComponents.tidyupPerformThru.tooltip[getPluginKey():COBOLParser]=adas encadeadas resultantes de PERFORM THRU geralmente serão separadas, tomadas como chamadas dispensáveis e rotinas descartadas. Adaptar isso, por exemplo para perícia forense de importação.
-PluginOptionDialog.optionLabels.typeNames.text[getPluginKey():C99Parser]=
+PluginOptionDialog.optionLabels.typeNames.text[getPluginKey():C99Parser]=Nomes de tipos externamente definidos
 PluginOptionDialog.optionComponents.typeNames.tooltip[getPluginKey():C99Parser]=
-PluginOptionDialog.optionLabels.redundantNames.text[getPluginKey():C99Parser]=
+PluginOptionDialog.optionLabels.redundantNames.text[getPluginKey():C99Parser]=Nomes ou macros redundantes do pré-processador
 PluginOptionDialog.optionComponents.redundantNames.tooltip[getPluginKey():C99Parser]=
-PluginOptionDialog.optionComponents.use_WINAPI_defines.text[getPluginKey():C99Parser]=
+PluginOptionDialog.optionComponents.use_WINAPI_defines.text[getPluginKey():C99Parser]=Usar nomes de tipos e definições de WINAPI
 PluginOptionDialog.optionComponents.use_WINAPI_defines.tooltip[getPluginKey():C99Parser]=
-PluginOptionDialog.optionComponents.use_MinGw_defines.text[getPluginKey():C99Parser]=
+PluginOptionDialog.optionComponents.use_MinGw_defines.text[getPluginKey():C99Parser]=Usar nomes de tipos e definições de MinGw
 PluginOptionDialog.optionComponents.use_MinGw_defines.tooltip[getPluginKey():C99Parser]=
 PluginOptionDialog.optionComponents.definesToConstants.text[getPluginKey():C99Parser]=Transformar #defines a constantes
 PluginOptionDialog.optionComponents.definesToConstants.tooltip[getPluginKey():C99Parser]=
@@ -1167,6 +1168,8 @@ PluginOptionDialog.optionComponents.alignArrays.text=Garantir o alinhamento da m
 PluginOptionDialog.optionComponents.alignArrays.tooltip=Inserir diretivas .align antes de qualquer alocação de dados e no início da área de texto (somente modo GNU).
 PluginOptionDialog.optionComponents.terminateStrings.text=Armazenar cadeias de caracteres com terminação-0
 PluginOptionDialog.optionComponents.terminateStrings.tooltip=Normalmente, as cadeias de caracteres serão armazenadas como arranjos apenas com os caracteres nela contidos. Esta opção adicionará um caractere NUL para terminação
+PluginOptionDialog.optionComponents.restrictedSyntax.text=Limitar exportação a conteúdo em nível ARM
+PluginOptionDialog.optionComponents.restrictedSyntax.tooltip=Não aplicar capacidades ampliadas de compilação, rejeitar conteúdo que excede o nível ARM.
 
 -----[ ElementNamePreferences ]-----
 ElementNamePreferences.title=Preferências para nome de elemento
@@ -1181,7 +1184,7 @@ ElementNamePreferences.btnOK.tooltip=Aceitar estas configurações.
 
 -----[ DiagramControllerAliases ]-----
 // Also consider Menu.msgTabHdrSignature and Menu.msgTabHdrAlias
-DiagramControllerAliases.title=Alternativas para rotina do Controlador
+DiagramControllerAliases.title=Nomes alternativos para rotina do Controlador
 DiagramControllerAliases.lblHeader.text=Especificar nomes alternativos para as rotinas de complementos controláveis.
 DiagramControllerAliases.lblRemark.text=(Observar que maiúsculas/minúsculas serão ignoradas em nomes de rotina do controlador!)
 DiagramControllerAliases.chkApplyAliases.text=Aplicar alternativas especificadas na exibição etc.
@@ -1222,15 +1225,15 @@ FindAndReplace.lblSearchPattern.text=Procurar:
 FindAndReplace.lblReplacePattern.text=Substituir por:
 FindAndReplace.pnlMode.border=Modo
 FindAndReplace.chkCaseSensitive.text=Maiúsculas e minúsculas
-FindAndReplace.chkCaseSensitive.mnemonic=c
+FindAndReplace.chkCaseSensitive.mnemonic=m
 FindAndReplace.chkWholeWord.text=Palavra inteira
-FindAndReplace.chkWholeWord.mnemonic=w
+FindAndReplace.chkWholeWord.mnemonic=v
 FindAndReplace.chkRegEx.text=Expressões regulares
 FindAndReplace.chkRegEx.mnemonic=x
 FindAndReplace.rbDown.text=Para baixo
-FindAndReplace.rbDown.mnemonic=o
+FindAndReplace.rbDown.mnemonic=b
 FindAndReplace.rbUp.text=Para cima
-FindAndReplace.rbUp.mnemonic=u
+FindAndReplace.rbUp.mnemonic=c
 FindAndReplace.pnlScope.border=Escopo
 FindAndReplace.cmbScope.item.0=Seleção atual
 FindAndReplace.cmbScope.item.1=Diagrama atual
@@ -1245,7 +1248,7 @@ FindAndReplace.chkRootTypes.2.mnemonic=i
 FindAndReplace.chkInTexts.text=Em textos
 FindAndReplace.chkInTexts.mnemonic=t
 FindAndReplace.chkInComments.text=Em comentários
-FindAndReplace.chkInComments.mnemonic=m
+FindAndReplace.chkInComments.mnemonic=o
 FindAndReplace.pnlElements.border=Tipos de elementos
 FindAndReplace.btnAll.text=Todos
 FindAndReplace.btnNone.text=Nenhum
@@ -1270,11 +1273,11 @@ FindAndReplace.chkElementwise.mnemonic=e
 FindAndReplace.btnFind.text=Procurar
 FindAndReplace.btnFind.mnemonic=n
 FindAndReplace.btnReplace.text=Substituir
-FindAndReplace.btnReplace.mnemonic=r
+FindAndReplace.btnReplace.mnemonic=s
 FindAndReplace.btnReplaceFind.text=Substituir/Procurar
-FindAndReplace.btnReplaceFind.mnemonic=d
+FindAndReplace.btnReplaceFind.mnemonic=u
 FindAndReplace.btnReplaceAll.text=Substituir tudo
-FindAndReplace.btnReplaceAll.mnemonic=a
+FindAndReplace.btnReplaceAll.mnemonic=d
 FindAndReplace.btnReplaceAll.tooltip=Substituir todas as ocorrências restantes do padrão de pesquisa na direção especificada a partir da posição atual.
 FindAndReplace.btnClose.text=Fechar
 FindAndReplace.msgRegexCorrupt.text=Expressão regular «%1» parece inválida: %2
@@ -1477,7 +1480,7 @@ Control.ttlContent.text=Conteúdo
 Control.msgTitleError.text=Erro
 Control.msgTitleQuestion.text=Pergunta
 Control.msgTitleParallel.text=Problema com execução em paralelo
-Control.msgNoSubroutine.text=Um diagrama @o "%1" (parâmetros %2) não foi encontrado!\nConsiderar reiniciar o Organizador e colocar os diagramas @o necessários lá primeiro.
+Control.msgNoSubroutine.text=Um diagrama @o "%1" (%2 parâmetros) não foi encontrado!\nConsiderar reiniciar o Organizador e colocar os diagramas @o necessários lá primeiro.
 Control.msgNoInclDiagram.text=Um diagrama @p "%" não foi encontrado!\nConsiderar reiniciar o Organizador e colocar o diagrama necessário lá primeiro.
 Control.msgAmbiguousCall.text=Ambíguo @j: Diferentes diagramas de sub-rotina
 Control.msgInvalidExpr.text=«%1» não é uma expressão correta ou existente.

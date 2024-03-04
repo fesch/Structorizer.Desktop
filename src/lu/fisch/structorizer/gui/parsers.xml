@@ -22,7 +22,7 @@
 		</option>
 	</plugin>
 	<plugin title="Java-SE8" 			class="lu.fisch.structorizer.parsers.JavaParser" icon="">
-		<option name="convert_syntax" type="Boolean" title="Convert declarations etc. to Pascal/Structorizer style" help="This setting slightly raises the chance of executability and re-export in Structorizer " default="true" />
+		<option name="convert_syntax" type="Boolean" title="Convert declarations etc. to Pascal/Structorizer style" help="This setting slightly raises the chance of executability and re-export in Structorizer" default="true" />
 	</plugin>
 	<plugin title="Processing" 			class="lu.fisch.structorizer.parsers.ProcessingParser" icon="">
 		<option name="convert_syntax" type="Boolean" title="Convert declarations etc. to Pascal/Structorizer style" help="This setting slightly raises the chance of executability and re-export in Structorizer" default="true" />

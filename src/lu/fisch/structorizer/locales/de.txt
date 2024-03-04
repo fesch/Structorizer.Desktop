@@ -142,6 +142,7 @@
  *      Kay Gürtzig         2023-10-06  Issue #311: Menu reorganisation (menuDiagram split)
  *      Kay Gürtzig         2023-10-13  Issues #980,#1096: New messages for declaration syntax check (error31_*)
  *      Kay Gürtzig         2023-11-13  Enh. #1115: New messages for C99 import option definesToConstants
+ *      Kay Gürtzig         2024-03-04  Mnemonic changed on Find&Replace, PluginOptionDialog message added
  *
  ******************************************************************************************************
  *
@@ -1242,6 +1243,8 @@ PluginOptionDialog.optionComponents.alignArrays.text=Speicherausrichtung für Da
 PluginOptionDialog.optionComponents.alignArrays.tooltip=Fügt passende .align-Direktiven vor Daten-Deklarationen und am Anfang des Text-Bereichs ein (nur im GNU-Modus).
 PluginOptionDialog.optionComponents.terminateStrings.text=Zeichenketten mit Abschlusszeichen versehen
 PluginOptionDialog.optionComponents.terminateStrings.tooltip=Normalerweise werden Zeichenketten einfach als Array ihrer enthaltenen Zeichencodes generiert. Diese Option sorgt für das Anhängen eines NUL-Zeichens (wie in C).
+PluginOptionDialog.optionComponents.restrictedSyntax.text=Auf Elementinhalte auf ARM-Niveau beschränken.
+PluginOptionDialog.optionComponents.restrictedSyntax.tooltip=Keine erweiterten Compilerfähigkeiten anwenden, sondern Inhalte zurückweisen, die das Niveau von ARM-Befehlen übersteigen.
 
 -----[ ElementNamePreferences ]-----
 ElementNamePreferences.title=Elementnamen einstellen
@@ -1301,7 +1304,7 @@ FindAndReplace.chkCaseSensitive.mnemonic=g
 FindAndReplace.chkWholeWord.text=Ganzes Wort
 FindAndReplace.chkWholeWord.mnemonic=w
 FindAndReplace.chkRegEx.text=Reguläre Ausdrücke
-FindAndReplace.chkRegEx.mnemonic=x
+FindAndReplace.chkRegEx.mnemonic=k
 FindAndReplace.rbDown.text=Abwärts
 FindAndReplace.rbDown.mnemonic=b
 FindAndReplace.rbUp.text=Aufwärts

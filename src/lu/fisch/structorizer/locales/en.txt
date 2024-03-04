@@ -1238,6 +1238,8 @@ PluginOptionDialog.optionComponents.alignArrays.text=Guarantee memory alignment 
 PluginOptionDialog.optionComponents.alignArrays.tooltip=Inserts .align directives before any data allocation and at the beginning of the text area (GNU mode only).
 PluginOptionDialog.optionComponents.terminateStrings.text=Store strings with 0-termination
 PluginOptionDialog.optionComponents.terminateStrings.tooltip=Normally strings will be stored as arrays of only the contained characters. This option will add a terminating NUL character
+PluginOptionDialog.optionComponents.restrictedSyntax.text=Restrict to Element content on ARM level
+PluginOptionDialog.optionComponents.restrictedSyntax.tooltip=Don't make use of extended compiling capabilities, reject all content that exceeds ARM level.
 
 -----[ ElementNamePreferences ]-----
 ElementNamePreferences.title=Element Name Preferences
