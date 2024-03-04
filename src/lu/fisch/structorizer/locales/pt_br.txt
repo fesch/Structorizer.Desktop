@@ -109,7 +109,7 @@
 -----[ Menu ]-----
 // Menu "File"
 Menu.menuFile.text=Arquivo
-Menu.menuFile.mnemonic=f
+Menu.menuFile.mnemonic=a
 // Submenus of "File"
 Menu.menuFileNew.text=Novo
 Menu.menuFileOpen.text=Abrir ...
@@ -158,6 +158,7 @@ Menu.menuEditBreakLines.text=(Re-)fazer quebras de linhas de texto ...
 Menu.menuEditBreakLines.tooltip=Permitir o ajuste de quebras de linhas de texto de elementos selecionados (e opcionalmente sua subestrutura) para um novo limite de comprimento de linha.
 Menu.menuEditCopyDiagramPNG.text=Copiar imagem PNG
 Menu.menuEditCopyDiagramEMF.text=Copiar imagem EMF
+
 // Menu "Diagram"
 Menu.menuDiagram.text=Diagrama
 Menu.menuDiagram.mnemonic=d
@@ -286,7 +287,7 @@ Menu.menuDebugDisable.text=Desativar/ativar
 
 // Menu "Help"
 Menu.menuHelp.text=Ajuda
-Menu.menuHelp.mnemonic=h
+Menu.menuHelp.mnemonic=j
 // Submenu of "Help"
 Menu.menuHelpOnline.text=Guia do Usuário
 Menu.menuHelpOnline.tooltip=Abrir Guia do Usuário online no navegador
