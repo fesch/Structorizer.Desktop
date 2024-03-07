@@ -109,7 +109,7 @@
 -----[ Menu ]-----
 // Menu "File"
 Menu.menuFile.text=Arquivo
-Menu.menuFile.mnemonic=a
+Menu.menuFile.mnemonic=q
 // Submenus of "File"
 Menu.menuFileNew.text=Novo
 Menu.menuFileOpen.text=Abrir ...
@@ -880,7 +880,7 @@ AttributeInspector.msgLicenseLoadError.text=Erro ao carregar o texto da licença
 -----[ License Editor ]-----
 LicenseEditor.titleString.text=Editor de licença do Structorizer: %
 LicenseEditor.menuFile.text=Arquivo
-LicenseEditor.menuFile.mnemonic=f
+LicenseEditor.menuFile.mnemonic=q
 LicenseEditor.menuEdit.text=Editar
 LicenseEditor.menuEdit.mnemonic=e
 LicenseEditor.menuProp.text=Propriedades
