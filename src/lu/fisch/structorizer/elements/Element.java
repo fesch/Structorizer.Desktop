@@ -135,7 +135,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2022-08-22      Bugfix #1068: Type inference failure for array initialisers mended
  *      Kay Gürtzig     2023-12-14      Issue #1119: To set an empty string as text now leads to an empty StringList
  *      Kay Gürtzig     2024-01-22      Bugfix #1125: Equality check must consider disabled state
- *      Kay Gürtzig	    2024-03-07      Issue #1129: Limitation of error lines in the Analyser warning popup
+ *      Kay Gürtzig	    2024-03-07      Bugfix #1128 Risk of endless loop in method retrieveComponentNmes() fixed;
+ *                                      Issue #1129: Limitation of error lines in the Analyser warning popup
  *
  ******************************************************************************************************
  *
@@ -3857,6 +3858,11 @@ public abstract class Element {
 						path.remove(0);
 					}
 				}
+				// START KGU#1115 2024-03-07: Bugfix #1128: We must not get trapped in the loop
+				else {
+					varType = null;
+				}
+				// END KGU#1115 2024-03-07
 			}
 			if (varType != null && varType.isRecord()) {
 				// path must now be exhausted, the component names are our proposals
