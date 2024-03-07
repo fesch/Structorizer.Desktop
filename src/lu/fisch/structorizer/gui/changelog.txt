@@ -195,6 +195,7 @@ Current development version 3.32-17 (2024-03-07)
       the attempt to open Translator led to an error abort. <2>
 - 16: Completion and corrections of the Portuguese/Brazilian locale <T. Cruz>
 - 17: Menu mnemonics for the PT_BR locale rectified <T. Cruz>
+- 17: Issue #1129: Analyser popup didn't open with too many error entries <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>
