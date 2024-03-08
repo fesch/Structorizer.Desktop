@@ -53,6 +53,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2023-11-08      Bugfix #1108: Defective handling of nested comments in checComments()
  *      Kay Gürtzig     2023-11-13      Enh. #1115 + bugfix #1116: New option to convert #defines into constants,
  *                                      array typedef preparation repaired
+ *      Kay Gürtzig     2024-03-08      Bugfix #1130: Macro expansion had to suppressed in string/char literals
  *
  ******************************************************************************************************
  *
@@ -1599,6 +1600,11 @@ public abstract class CPreParser extends CodeParser
 				Matcher matcher = Pattern.compile("(^|.*?\\W)" + entry.getKey() + "(\\s*)\\((.*)\\)(.*?)").matcher("");
 				//while (toReplace.matches("(^|.*?\\W)" + entry.getKey() + "\\s*\\(.*\\).*?")) {
 				while (matcher.reset(toReplace).matches()) {
+					// START KGU#1118 2024-03-08: Bugfix #1130 We must not apply macro expansion within literals
+					if (startsStrLiteral(matcher.group(1))) {
+						continue;
+					}
+					// END KGU#1118 2024-03-08
 					if (entry.getValue()[0].isEmpty()) {
 						//toReplace = toReplace.replaceAll("(^|.*?\\W)" + entry.getKey() + "(\\s*)\\((.*)\\)(.*?)", "$1$2$4");
 						toReplace = matcher.replaceAll("$1$2$4");
@@ -1671,7 +1677,7 @@ public abstract class CPreParser extends CodeParser
 							StringList argsPlusTail = Element.splitExpressionList(argsRaw, ",", true);
 							if (argsPlusTail.count() > args.count()) {
 								String tail = argsPlusTail.get(args.count()).trim();
-								// With high probability tail stars with a closing parenthesis, which has to be dropped if so
+								// With high probability tail starts with a closing parenthesis, which has to be dropped if so
 								// whereas the consumed parenthesis at the end has to be restored.
 								if (tail.startsWith(")")) {
 									tail = tail.substring(1) + ")";
@@ -1684,7 +1690,25 @@ public abstract class CPreParser extends CodeParser
 						}
 					}
 				}
-			} else {
+			}
+			// START KGU#1118 2024-03-08: Bugfix #1130 Avoid expansions within literals
+			else if (toReplace.indexOf('\'') >= 0 || toReplace.indexOf('"') >= 0) {
+				Matcher matcher = Pattern.compile("(^|.*?\\W)" + entry.getKey() + "(\\W.*?|$)").matcher("");
+				String expanded = "";
+				while (matcher.reset(toReplace).matches()) {
+					if (startsStrLiteral(expanded + matcher.group(1))) {
+						// Skip this occurrence - it starts within a string/character literal
+						expanded += matcher.group(1) + entry.getKey();
+					}
+					else {
+						expanded += matcher.group(1) + entry.getValue()[0];
+					}
+					toReplace = matcher.group(2);
+				}
+				toReplace = expanded + toReplace;
+			}
+			// END KGU#1118 2024-03-08
+			else {
 				// from: #define	a	b, b can also be empty
 				toReplace = toReplace.replaceAll("(^|.*?\\W)" + entry.getKey() + "(\\W.*?|$)",
 						"$1" + Matcher.quoteReplacement((String) entry.getValue()[0]) + "$2");
@@ -1696,6 +1720,44 @@ public abstract class CPreParser extends CodeParser
 		// END KGU#519 2018-06-17
 	}
 
+	// START KGU#1118 2024-03-08: Bugfix #1130
+	/**
+	 * Checks whether the passed-in source code snippet {@code prefix} ends within
+	 * a string or character literal such that a macro expansion would have to be
+	 * suppressed. Assumes that {@code prefix} does not itself starts within a literal.
+	 * 
+	 * @param prefix
+	 * @return {@code true} if a string or character literal started (and and not ended)
+	 *    before the end of {@code prefix}.
+	 */
+	private boolean startsStrLiteral(String prefix) {
+		int pos0 = -1;
+		int posQ1 = -1, posQ2 = -1;
+		int len = prefix.length();
+		char quote = '\0';
+		while ((posQ1 = prefix.indexOf('\'', pos0+1)) >= 0
+				|| (posQ2 = prefix.indexOf('"', pos0+1)) >= 0) {
+			pos0 = posQ2;
+			if (posQ1 > 0 && (posQ2 < 0 || posQ1 < posQ2)) {
+				pos0 = posQ1;
+			}
+			quote = prefix.charAt(pos0++);
+			while (pos0 < len && quote != '\0') {
+				char ch = prefix.charAt(pos0);
+				if (ch == '\\') {
+					// Ignore the next character
+					pos0++;
+				}
+				else if (ch == quote) {
+					quote = '\0';
+				}
+				pos0++;
+			}
+		}
+		return quote != '\0';
+	}
+	// END KGU#1118 2024-03-08
+	
 	//---------------------- Build helpers for structograms ---------------------------
 
 	/**
