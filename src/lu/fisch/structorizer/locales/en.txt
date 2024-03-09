@@ -135,7 +135,8 @@
  *      Kay Gürtzig     2022-09-29      Bugfix #1072: New message InputBoxFor.msgIllegalWordInField added
  *      Kay Gürtzig     2023-08-01      Enh. #1082: Function name now included in messages Menu.error13_*
  *      Kay Gürtzig     2023-10-06      Issue #311: Menu reorganisation (menuDiagram split)
- *      Kay Gürtzig     2023-10-16      Issue #980/#1096: New messages for declaration syntax check (error31_*) 
+ *      Kay Gürtzig     2023-10-16      Issue #980/#1096: New messages for declaration syntax check (error31_*)
+ *      Kay Gürtzig     2024-03-09      Issue #1117: Messages for new PuginOptionDialog option dissect_anon_inner_class
  *
  ******************************************************************************************************
  *
@@ -1202,6 +1203,8 @@ PluginOptionDialog.btnOk.text=OK
 PluginOptionDialog.btnCancel.text=Cancel
 PluginOptionDialog.optionComponents.convert_syntax.text=
 PluginOptionDialog.optionComponents.convert_syntax.tooltip=
+PluginOptionDialog.optionComponents.dissect_anon_inner_class.text=
+PluginOptionDialog.optionComponents.dissect_anon_inner_class.tooltip=
 PluginOptionDialog.optionComponents.debugLines.text[getPluginKey():COBOLParser]=
 PluginOptionDialog.optionComponents.debugLines.tooltip[getPluginKey():COBOLParser]=
 PluginOptionDialog.optionComponents.decimalComma.text[getPluginKey():COBOLParser]=

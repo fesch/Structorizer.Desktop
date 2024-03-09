@@ -142,7 +142,8 @@
  *      Kay Gürtzig     2023-10-13  Issue #980: New messages for declaration syntax check (error31_*)
  *      Kay Gürtzig     2023-11-13  Enh. #1115: New messages for C99 import option definesToConstants
  *      Kay Gürtzig     2024-01-26  Issue #311/bugfix #1126: Menu reorganisation (menuDiagram split)
- *      Kay Gürtzig     2024-03-04  Menmonics for Find&Replace dialog specified.
+ *      Kay Gürtzig     2024-03-04  Mnemonics for Find&Replace dialog specified.
+ *      Kay Gürtzig     2024-03-09  Issue #1117: Messages for new PuginOptionDialog option dissect_anon_inner_class
  * 
  ******************************************************************************************************
  *
@@ -1209,6 +1210,8 @@ PluginOptionDialog.btnOk.text=Aceptar
 PluginOptionDialog.btnCancel.text=Cancelar
 PluginOptionDialog.optionComponents.convert_syntax.text=Convertir declaraciones/expresiones a un estilo como Pascal
 PluginOptionDialog.optionComponents.convert_syntax.tooltip=Esta opción aumenta la probabilidad de poder ejecutar o re-exportar el resultado en Structorizer
+PluginOptionDialog.optionComponents.dissect_anon_inner_class.text=Desglosar clases anónimas interiores a diagramas
+PluginOptionDialog.optionComponents.dissect_anon_inner_class.tooltip=De otro modo, una clase anónima definida en pasada simplemente sería puesto como una larga expresión de código fuente al elemento que contiene su instanciación.
 PluginOptionDialog.optionComponents.debugLines.text[getPluginKey():COBOLParser]=Importar líneas debug como código válido
 PluginOptionDialog.optionComponents.debugLines.tooltip[getPluginKey():COBOLParser]=Si es activada, líneas debug serán importadas como código válido, de otro modo serían convertidas en comentarios "DEBUG ...".
 PluginOptionDialog.optionComponents.decimalComma.text[getPluginKey():COBOLParser]=Coma decimal (en lugar de punto decimal) en el código

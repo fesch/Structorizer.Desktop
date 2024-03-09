@@ -59,6 +59,7 @@ package lu.fisch.structorizer.parsers;
  *                                      KGU#961: Array initialiser conversion in declarations improved
  *      Kay Gürtzig     2023-11-08      Bugfix #1110 method translateContent() returned the argument instead of the result
  *      Kay Gürtzig     2024-03-08      KGU#1117: Missing backward replacement of c_l_a_s_s in one case mended.
+ *      Kay Gürtzig     2024-03-09      Issue #1131: Handling of anonymous inner class instantiations
  *
  ******************************************************************************************************
  *
@@ -836,8 +837,8 @@ public class JavaParser extends CodeParser
 //		final int PROD_PRIMARYNONEWARRAY6                                           = 355;  // <PrimaryNoNewArray> ::= <ProcessingTypeConversion>
 		final int PROD_CLASSINSTANCECREATIONEXPRESSION_NEW_LPAREN_RPAREN            = 356;  // <ClassInstanceCreationExpression> ::= new <ClassType> '(' <ArgumentList> ')'
 		final int PROD_CLASSINSTANCECREATIONEXPRESSION_NEW_LPAREN_RPAREN2           = 357;  // <ClassInstanceCreationExpression> ::= new <ClassType> '(' ')'
-//		final int PROD_CLASSINSTANCECREATIONEXPRESSION_NEW_LPAREN_RPAREN3           = 358;  // <ClassInstanceCreationExpression> ::= new <ClassType> '(' <ArgumentList> ')' <ClassBody>
-//		final int PROD_CLASSINSTANCECREATIONEXPRESSION_NEW_LPAREN_RPAREN4           = 359;  // <ClassInstanceCreationExpression> ::= new <ClassType> '(' ')' <ClassBody>
+		final int PROD_CLASSINSTANCECREATIONEXPRESSION_NEW_LPAREN_RPAREN3           = 358;  // <ClassInstanceCreationExpression> ::= new <ClassType> '(' <ArgumentList> ')' <ClassBody>
+		final int PROD_CLASSINSTANCECREATIONEXPRESSION_NEW_LPAREN_RPAREN4           = 359;  // <ClassInstanceCreationExpression> ::= new <ClassType> '(' ')' <ClassBody>
 //		final int PROD_ARGUMENTLIST                                                 = 360;  // <ArgumentList> ::= <Expression>
 		final int PROD_ARGUMENTLIST_COMMA                                           = 361;  // <ArgumentList> ::= <ArgumentList> ',' <Expression>
 		final int PROD_ARRAYCREATIONEXPRESSION_NEW                                  = 362;  // <ArrayCreationExpression> ::= new <PrimitiveType> <DimExprs> <Dims>
@@ -1161,7 +1162,12 @@ public class JavaParser extends CodeParser
 	/** Represents the class definitions in the hierarchical class context */
 	private Stack<Root> includables = null;
 	
+	/** Holds the value of the Java-specific import option "convert_syntax" */
 	private boolean optionConvertSyntax = false;
+	// START KGU#1117 2024-03-09: Issue #1131 Handle anonymous inne class instantiations properly
+	/** Holds the value of the Java-specific import option "dissect_anon_inner_class" */
+	private boolean optionDissectInnerClass = true;
+	// END KGU#1117 2024-03-09
 	
 	/** Maps the labels of labelled statements to the respective first element of the statement */
 	private HashMap<String, Element> labels = new HashMap<String, Element>();
@@ -1207,6 +1213,9 @@ public class JavaParser extends CodeParser
 		root.children.addElement(new Forever());
 		
 		optionConvertSyntax = (Boolean)this.getPluginOption("convert_syntax", false);
+		// START KGU#1117 2024-03-09: Issue #1131 Allow to construct diagrams from anonymous classes
+		optionDissectInnerClass = (Boolean)this.getPluginOption("dissect_anon_inner_class", true);
+		// END KGU#1117 2024-03-09
 		
 		// START KGU#407 2018-03-26: Enh. #420: Configure the lookup table for comment retrieval
 		this.registerStatementRuleIds(statementIds);
@@ -2318,15 +2327,20 @@ public class JavaParser extends CodeParser
 	 * the expression such that embedded implicit or explicit assignments are extracted
 	 * to an own preceding line, combined assignment operator expressions are also
 	 * decomposed, e.g. {@code <var> += <expr>} to {@code <var> <- <var> + <expr>}.
+	 * 
+	 * @param exprToken - the {@link Token} representing the top-level expression.
 	 * @param isStatement - whether the expression represents a statement
 	 * @param leftHandSide - indicates whether the expression represents an assignment
-	 * target expression.
-	 * @param redExpr - the top-level expression {@link Reduction}.
+	 *    target expression.
+	 * @param optInstNameSubst - optionally a name substitution pair (in case of an
+	 *    anonymous inner class instantiation
+	 * 
 	 * @return a {@code StringList} each elements of which contain an expression, all
-	 * but the very last one are necessarily expression statements.
+	 *    but the very last one are necessarily expression statements.
 	 * @throws ParserCancelled 
 	 */
-	protected StringList decomposeExpression(Token exprToken, boolean isStatement, boolean leftHandSide) throws ParserCancelled {
+	protected StringList decomposeExpression(Token exprToken, boolean isStatement, boolean leftHandSide)
+			 throws ParserCancelled {
 		// We expect redExpr to represent one of the following
 		// <Assignment>
 		// <PreIncrementExpression>
@@ -2342,7 +2356,8 @@ public class JavaParser extends CodeParser
 		StringList exprs = new StringList();
 		if (exprToken.getType() == SymbolType.NON_TERMINAL) {
 			Reduction exprRed = exprToken.asReduction();
-			switch (exprRed.getParent().getTableIndex()) {
+			int ruleIx = exprRed.getParent().getTableIndex();
+			switch (ruleIx) {
 			case RuleConstants.PROD_ASSIGNMENT:
 			{
 				// <Assignment> ::= <LeftHandSide> <AssignmentOperator> <AssignmentExpression>
@@ -2737,7 +2752,28 @@ public class JavaParser extends CodeParser
 				exprs.set(ixLast, cast + exprs.get(ixLast));
 			}
 			break;
-				
+			// START KGU#1117 2024-03-09: Issue #1131: Handle anonymous inner classes
+			// ATTENTION: THIS CASE MUST REMAIN AT LAST POSITION BEFORE DEFAULT!
+			case RuleConstants.PROD_CLASSINSTANCECREATIONEXPRESSION_NEW_LPAREN_RPAREN3:
+			case RuleConstants.PROD_CLASSINSTANCECREATIONEXPRESSION_NEW_LPAREN_RPAREN4:
+				// <ClassInstanceCreationExpression> ::= new <ClassType> '(' <ArgumentList> ')' <ClassBody>
+				// <ClassInstanceCreationExpression> ::= new <ClassType> '(' ')' <ClassBody>
+				if (this.optionDissectInnerClass) {
+					String className = this.deriveAnonInnerClass(exprRed);
+					StringList result = new StringList();
+					result.add("new");
+					result.add(className);
+					if (ruleIx == RuleConstants.PROD_CLASSINSTANCECREATIONEXPRESSION_NEW_LPAREN_RPAREN3) {
+						Token argListToken = exprRed.get(3);
+						processArguments(argListToken, result, exprs);
+					}
+					else {
+						exprs.add(result.concatenate(null) + "()");
+					}
+					break;
+				}
+				// No break; here (or an else branch with the content of default would have to be added)!
+			// END KGU#1117 2024-03-09
 			default:
 				// START KGU#1117 2024-03-08: Some expressions slipped through without replacement
 				//exprs.add(this.getContent_R(exprToken));
@@ -2752,10 +2788,69 @@ public class JavaParser extends CodeParser
 		return exprs;
 	}
 
+	// START KGU#1117 2024-03-09: Issue #1131 Handle anonymous inner classes
+	/**
+	 * Creates the diagrams defining an anonymous inner class and its methods and
+	 * returns a name mapping from the instantiated super class to the made-up
+	 * generic class name of the anonymous class.
+	 * 
+	 * @param instCreaRed - the instance creation expression {@link Reduction}
+	 * @return the made-up name for the instantiated anonymous inner class.
+	 * @throws ParserCancelled 
+	 */
+	private String deriveAnonInnerClass(Reduction instCreaRed) throws ParserCancelled {
+		// <ClassInstanceCreationExpression> ::= new <ClassType> '(' <ArgumentList> ')' <ClassBody>
+		// <ClassInstanceCreationExpression> ::= new <ClassType> '(' ')' <ClassBody>
+		// FIXME Try to delegate as much as possible to a submethod shared with ClassDeclaration section
+		String className0 = getContent_R(instCreaRed.get(1).asReduction(), "");
+		String qualifier = packageStr;
+		Root classRoot = root;
+		if (!this.includables.isEmpty()) {
+			// (Should always be the case here)
+			qualifier = this.includables.peek().getQualifiedName();
+			classRoot = new Root();
+			classRoot.setInclude();
+			classRoot.addToIncludeList(includables.peek());
+			// Add temporary dummy loops in order to gather fields and method signatures
+			classRoot.children.addElement(new Forever());
+			classRoot.children.addElement(new Forever());
+			this.addRoot(classRoot);
+		}
+		includables.push(classRoot);
+		classRoot.setNamespace(qualifier);
+		String className = className0 + "_" + Integer.toHexString(classRoot.hashCode());
+		classRoot.setText(className);
+		// FIXME: Is this necessary here?
+		if (this.includables.size() == 1 && packageStr != null) {
+			classRoot.comment.add("==== package: " + packageStr);
+			if (!imports.isEmpty()) {
+				imports.insert("==== imports:", 0);
+				classRoot.comment.add(imports);
+			}
+		}
+		classRoot.comment.insert("CLASS"
+				+ (this.includables.size() > 1 ? " in class " + qualifier : ""), 0);
+		classRoot.getComment().add(("Anonymous inner class").trim());
+		classRoot.comment.add("==== " + className0);
+		
+		// Now descend into the body
+		int ixBody = 4;
+		if (instCreaRed.getParent().getTableIndex() == RuleConstants.PROD_CLASSINSTANCECREATIONEXPRESSION_NEW_LPAREN_RPAREN3) {
+			ixBody++;
+		}
+		this.buildNSD_R(instCreaRed.get(ixBody).asReduction(), classRoot.children);
+		// Dissolve the field and method containers
+		dissolveDummyContainers(classRoot);
+		this.includables.pop();
+		return className;
+	}
+	// END KGU#1117 2024-03-09
+
 	// START KGU#957 2021-03-05: Issue #959 - Processing conversion function handling
 	/**
 	 * Processes a conversion function of the "Processing" language. The JavaParser base
 	 * code won't do anything here.
+	 * 
 	 * @param exprRed - a {@code <ProcessingTypeConversion>} reduction
 	 * @return a StringList containing the necessary sequence of Structorizer instructions
 	 * and expressions to achieve the same effect.
