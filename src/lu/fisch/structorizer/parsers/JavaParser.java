@@ -2831,7 +2831,7 @@ public class JavaParser extends CodeParser
 		classRoot.comment.insert("CLASS"
 				+ (this.includables.size() > 1 ? " in class " + qualifier : ""), 0);
 		classRoot.getComment().add(("Anonymous inner class").trim());
-		classRoot.comment.add("==== " + className0);
+		classRoot.comment.add("==== extends or implements " + className0);
 		
 		// Now descend into the body
 		int ixBody = 4;

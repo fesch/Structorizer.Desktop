@@ -66,6 +66,7 @@
  *      PUC-Minas       2023-12-31  Completion and correction of the message set
  *      Kay Gürtzig     2024-02-28  Control.lblCallLevel.text and Control.chkCollectRuntimeData.text shortened
  *      Kay Gürtzig     2024-03-04  Mnemonics adapted, some PluginOptionDialog messages added.
+ *      PUC-Minas       2024-03-09  Issue #1131: Messages for new Java import option provided
  *
  ******************************************************************************************************
  *
@@ -1133,8 +1134,8 @@ PluginOptionDialog.btnOk.text=OK
 PluginOptionDialog.btnCancel.text=Cancelar
 PluginOptionDialog.optionComponents.convert_syntax.text=Converter declarações/expreções a um estilo como Pascal
 PluginOptionDialog.optionComponents.convert_syntax.tooltip=Esta opção aumenta la probabilidade de poder executar ou re-exportar o resultado em Structorizer.
-PluginOptionDialog.optionComponents.dissect_anon_inner_class.text=Desmembrar clases anônimas interiores em diagramas
-PluginOptionDialog.optionComponents.dissect_anon_inner_class.tooltip=Caso contrário, uma clase anônima definida de passagem simplesmente seja pousado como longa expressão de código-fonte em o elemento que contém sua instânciasão.
+PluginOptionDialog.optionComponents.dissect_anon_inner_class.text=Discriminar classes anônimas interiores a diagramas
+PluginOptionDialog.optionComponents.dissect_anon_inner_class.tooltip=De outro modo, uma classe anônima definida instantaneamente será passada como uma extensa expressão em código fonte ao elemento instanciador.
 PluginOptionDialog.optionComponents.debugLines.text[getPluginKey():COBOLParser]=
 PluginOptionDialog.optionComponents.debugLines.tooltip[getPluginKey():COBOLParser]=
 PluginOptionDialog.optionComponents.decimalComma.text[getPluginKey():COBOLParser]=
