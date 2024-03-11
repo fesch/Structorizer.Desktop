@@ -1,4 +1,4 @@
-! -----------------------------------------------------------------------
+﻿! -----------------------------------------------------------------------
 ! Java SE 8 Edition grammar
 ! -----------------------------------------------------------------------
 !
@@ -56,14 +56,15 @@
 !                                       modelled
 ! V 0.5     2021-03-04  Kay Gürtzig     Some additions to support "Processing"
 !                                       code
+! V 0.6     2024-03-08  Kay Gürtzig     {String Char} revised (backslash handling)
 ! -----------------------------------------------------------------------
 
 "Name"    = 'Java SE 8'
-"Version" = '0.5, March 2021'
+"Version" = '0.6, March 2024'
 "Author"  = 'Kay Gürtzig'
 "About"   = 'Simplified Java SE 8 grammar, based on a partial conversion of Sun Java 1.0-2.0 specification by Dmitry Gazko and the Oracle Java SE 8 specification.'
 
-{String Char} = {all printable} - ["]
+{String Char} = {all printable} - ["] - [\]
 {Quote} = ['']
 {IdLetter} = {Letter} + [_$]
 {IdAlphaNumeric} = {Alphanumeric} + [_$]
@@ -75,7 +76,7 @@
 {ExponentPartIndicator} = [eE]
 {Sign} = [-+]
 {CharSign} = [abtnfr"\] + {Quote}
-{CharSign1} = {String Char} + ["] - [\]
+{CharSign1} = {String Char} + ["]
 {HexEscapeSign} =[uUxX]
 
 Identifier     = {IdLetter}{IdAlphaNumeric}*

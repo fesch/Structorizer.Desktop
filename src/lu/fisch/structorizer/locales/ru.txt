@@ -1339,7 +1339,7 @@ ArrangerIndex.msgNewGroupName.text=
 -----> Executor
 -----[ Control ]-----
 Control.title=Управление выполнения
-Control.lblSpeed.text=Замедление
+Control.lblSpeed.text= Замедление:
 Control.btnCallStack.text=Вывозный стек
 Control.lblCallLevel.text=Глубина стека:
 Control.chkCollectRuntimeData.text=Счесть выполнения

@@ -38,7 +38,7 @@
 
 /******************************************************************************************************
  *
- *      Author:         PUC-Minas, MG - Brasil
+ *      Author:         PUC-Minas, MG - Brasil (Theldo Cruz Franqueiro)
  *
  *      Description:    The Brazilian Portuguese (PT-BR) language file
  *
@@ -46,24 +46,28 @@
  *
  *      Revision List
  *
- *      Author                  Date        Description
- *      ------                  ----        -----------
- *      PUC-Minas               2009-08-20  First Issue
- *      PUC-Minas               2009-10-20  Revised
- *      PUC-Minas               2016-07-30  Revised
- *      Kay Gürtzig             2016-09-04  Menu.menuPreferencesLanguage... key structure modified
- *      Kay Gürtzig             2016-09-13  Entries for InputBox and InputBoxFor revised (bugfix #241)
- *      Kay Gürtzig             2016-09-22  AnalyserPreferences numbering modified
- *      Kay Gürtzig             2016-10-11  Enh. 267: Menu.error15 renamed into Menu.error15_1
- *      Kay Gürtzig             2016-12-14  Enh. #311: New menu "Debug"
- *      Kay Gürtzig             2017-04-05  Additions for enh. #388 and #390 (constant definition checks)
- *      Kay Gürtzig             2018-07-02  KGU#245: all Colors stuff replaced with array keys
- *      Kay Gürtzig             2018-12-30  Enh. #492: Element name place holders introduced
- *      Kay Gürtzig             2022-08-10  Enh. #56, #492: Messages / tooltips for TRY elements added
- *      Kay Gürtzig             2023-08-01  Enh. #1082: Function name included in messages Menu.error13_*
- *      Kay Gürtzig             2023-10-06  Issue #311: Menu reorganisation (menuDiagram split)
- *      Kay Gürtzig             2023-10-13  Issue #980: New messages for declaration syntax check (error31_*) 
- *      Theldo Cruz Franqueira  2023-12-31  Completion and correction of the message set *
+ *      Author          Date        Description
+ *      ------          ----        -----------
+ *      PUC-Minas       2009-08-20  First Issue
+ *      PUC-Minas       2009-10-20  Revised
+ *      PUC-Minas       2016-07-30  Revised
+ *      Kay Gürtzig     2016-09-04  Menu.menuPreferencesLanguage... key structure modified
+ *      Kay Gürtzig     2016-09-13  Entries for InputBox and InputBoxFor revised (bugfix #241)
+ *      Kay Gürtzig     2016-09-22  AnalyserPreferences numbering modified
+ *      Kay Gürtzig     2016-10-11  Enh. 267: Menu.error15 renamed into Menu.error15_1
+ *      Kay Gürtzig     2016-12-14  Enh. #311: New menu "Debug"
+ *      Kay Gürtzig     2017-04-05  Additions for enh. #388 and #390 (constant definition checks)
+ *      Kay Gürtzig     2018-07-02  KGU#245: all Colors stuff replaced with array keys
+ *      Kay Gürtzig     2018-12-30  Enh. #492: Element name place holders introduced
+ *      Kay Gürtzig     2022-08-10  Enh. #56, #492: Messages / tooltips for TRY elements added
+ *      Kay Gürtzig     2023-08-01  Enh. #1082: Function name included in messages Menu.error13_*
+ *      Kay Gürtzig     2023-10-06  Issue #311: Menu reorganisation (menuDiagram split)
+ *      Kay Gürtzig     2023-10-13  Issue #980: New messages for declaration syntax check (error31_*)
+ *      PUC-Minas       2023-12-31  Completion and correction of the message set
+ *      Kay Gürtzig     2024-02-28  Control.lblCallLevel.text and Control.chkCollectRuntimeData.text shortened
+ *      Kay Gürtzig     2024-03-04  Mnemonics adapted, some PluginOptionDialog messages added.
+ *      PUC-Minas       2024-03-09  Issue #1131: Messages for new Java import option provided
+ *
  ******************************************************************************************************
  *
  *      Comment:	
@@ -106,7 +110,7 @@
 -----[ Menu ]-----
 // Menu "File"
 Menu.menuFile.text=Arquivo
-Menu.menuFile.mnemonic=f
+Menu.menuFile.mnemonic=q
 // Submenus of "File"
 Menu.menuFileNew.text=Novo
 Menu.menuFileOpen.text=Abrir ...
@@ -155,6 +159,7 @@ Menu.menuEditBreakLines.text=(Re-)fazer quebras de linhas de texto ...
 Menu.menuEditBreakLines.tooltip=Permitir o ajuste de quebras de linhas de texto de elementos selecionados (e opcionalmente sua subestrutura) para um novo limite de comprimento de linha.
 Menu.menuEditCopyDiagramPNG.text=Copiar imagem PNG
 Menu.menuEditCopyDiagramEMF.text=Copiar imagem EMF
+
 // Menu "Diagram"
 Menu.menuDiagram.text=Diagrama
 Menu.menuDiagram.mnemonic=d
@@ -283,7 +288,7 @@ Menu.menuDebugDisable.text=Desativar/ativar
 
 // Menu "Help"
 Menu.menuHelp.text=Ajuda
-Menu.menuHelp.mnemonic=h
+Menu.menuHelp.mnemonic=j
 // Submenu of "Help"
 Menu.menuHelpOnline.text=Guia do Usuário
 Menu.menuHelpOnline.tooltip=Abrir Guia do Usuário online no navegador
@@ -730,7 +735,7 @@ InputBoxFor.rbTraversing.tooltip=Selecionar esta opção se desejar percorrer to
 InputBoxFor.lblVariable.text=Variável de contagem
 InputBoxFor.lblStartVal.text=Valor inicial
 InputBoxFor.lblEndVal.text=Valor final
-InputBoxFor.lblIncr.text=Incremento
+InputBoxFor.lblIncr.text=Variação
 InputBoxFor.lblTraversingVariable.text=Variável de elemento
 InputBoxFor.lblValueList.text=Lista de valores, array ou cadeia de caracteres
 InputBoxFor.chkTextInput.text=Entrada de texto direta
@@ -876,7 +881,7 @@ AttributeInspector.msgLicenseLoadError.text=Erro ao carregar o texto da licença
 -----[ License Editor ]-----
 LicenseEditor.titleString.text=Editor de licença do Structorizer: %
 LicenseEditor.menuFile.text=Arquivo
-LicenseEditor.menuFile.mnemonic=f
+LicenseEditor.menuFile.mnemonic=q
 LicenseEditor.menuEdit.text=Editar
 LicenseEditor.menuEdit.mnemonic=e
 LicenseEditor.menuProp.text=Propriedades
@@ -921,7 +926,7 @@ Preferences.lblCaseRot.text=Mínimo de desvios para rotação
 Preferences.lblCaseRot.tooltip=Limite de contagem de desvios para tentativas de reduzir a largura rotacioando elementos (0 = desligado)
 Preferences.chkCaseEditor.text=Usar editor dedicado para @c
 Preferences.pnlRoot.border=Cabeçalho @m
-Preferences.lblRoot.text=Incluir legenda da lista
+Preferences.lblRoot.text=Legenda da lista de Inclusões
 Preferences.lblRoot.tooltip=A legenda para a lista de diagramas @p ao ser desenhada.
 Preferences.pnlFor.border=Repetição @d loop
 Preferences.pnlFor.tooltip=
@@ -1127,8 +1132,10 @@ PluginOptionDialog.msgNoValidDouble.text=Valor para '%' tem de ser um número
 PluginOptionDialog.msgVerificationError.text=Verificação de entrada falhou
 PluginOptionDialog.btnOk.text=OK
 PluginOptionDialog.btnCancel.text=Cancelar
-PluginOptionDialog.optionComponents.convert_syntax.text=
-PluginOptionDialog.optionComponents.convert_syntax.tooltip=
+PluginOptionDialog.optionComponents.convert_syntax.text=Converter declarações/expreções a um estilo como Pascal
+PluginOptionDialog.optionComponents.convert_syntax.tooltip=Esta opção aumenta la probabilidade de poder executar ou re-exportar o resultado em Structorizer.
+PluginOptionDialog.optionComponents.dissect_anon_inner_class.text=Discriminar classes anônimas interiores a diagramas
+PluginOptionDialog.optionComponents.dissect_anon_inner_class.tooltip=De outro modo, uma classe anônima definida instantaneamente será passada como uma extensa expressão em código fonte ao elemento instanciador.
 PluginOptionDialog.optionComponents.debugLines.text[getPluginKey():COBOLParser]=
 PluginOptionDialog.optionComponents.debugLines.tooltip[getPluginKey():COBOLParser]=
 PluginOptionDialog.optionComponents.decimalComma.text[getPluginKey():COBOLParser]=
@@ -1141,13 +1148,13 @@ PluginOptionDialog.optionLabels.fixedColumnText.text[getPluginKey():COBOLParser]
 PluginOptionDialog.optionComponents.fixedColumnText.tooltip[getPluginKey():COBOLParser]=
 PluginOptionDialog.optionLabels.tidyupPerformThru.text[getPluginKey():COBOLParser]=
 PluginOptionDialog.optionComponents.tidyupPerformThru.tooltip[getPluginKey():COBOLParser]=adas encadeadas resultantes de PERFORM THRU geralmente serão separadas, tomadas como chamadas dispensáveis e rotinas descartadas. Adaptar isso, por exemplo para perícia forense de importação.
-PluginOptionDialog.optionLabels.typeNames.text[getPluginKey():C99Parser]=
+PluginOptionDialog.optionLabels.typeNames.text[getPluginKey():C99Parser]=Nomes de tipos externamente definidos
 PluginOptionDialog.optionComponents.typeNames.tooltip[getPluginKey():C99Parser]=
-PluginOptionDialog.optionLabels.redundantNames.text[getPluginKey():C99Parser]=
+PluginOptionDialog.optionLabels.redundantNames.text[getPluginKey():C99Parser]=Nomes ou macros redundantes do pré-processador
 PluginOptionDialog.optionComponents.redundantNames.tooltip[getPluginKey():C99Parser]=
-PluginOptionDialog.optionComponents.use_WINAPI_defines.text[getPluginKey():C99Parser]=
+PluginOptionDialog.optionComponents.use_WINAPI_defines.text[getPluginKey():C99Parser]=Usar nomes de tipos e definições de WINAPI
 PluginOptionDialog.optionComponents.use_WINAPI_defines.tooltip[getPluginKey():C99Parser]=
-PluginOptionDialog.optionComponents.use_MinGw_defines.text[getPluginKey():C99Parser]=
+PluginOptionDialog.optionComponents.use_MinGw_defines.text[getPluginKey():C99Parser]=Usar nomes de tipos e definições de MinGw
 PluginOptionDialog.optionComponents.use_MinGw_defines.tooltip[getPluginKey():C99Parser]=
 PluginOptionDialog.optionComponents.definesToConstants.text[getPluginKey():C99Parser]=Transformar #defines a constantes
 PluginOptionDialog.optionComponents.definesToConstants.tooltip[getPluginKey():C99Parser]=
@@ -1165,6 +1172,8 @@ PluginOptionDialog.optionComponents.alignArrays.text=Garantir o alinhamento da m
 PluginOptionDialog.optionComponents.alignArrays.tooltip=Inserir diretivas .align antes de qualquer alocação de dados e no início da área de texto (somente modo GNU).
 PluginOptionDialog.optionComponents.terminateStrings.text=Armazenar cadeias de caracteres com terminação-0
 PluginOptionDialog.optionComponents.terminateStrings.tooltip=Normalmente, as cadeias de caracteres serão armazenadas como arranjos apenas com os caracteres nela contidos. Esta opção adicionará um caractere NUL para terminação
+PluginOptionDialog.optionComponents.restrictedSyntax.text=Limitar exportação a conteúdo em nível ARM
+PluginOptionDialog.optionComponents.restrictedSyntax.tooltip=Não aplicar capacidades ampliadas de compilação, rejeitar conteúdo que excede o nível ARM.
 
 -----[ ElementNamePreferences ]-----
 ElementNamePreferences.title=Preferências para nome de elemento
@@ -1179,7 +1188,7 @@ ElementNamePreferences.btnOK.tooltip=Aceitar estas configurações.
 
 -----[ DiagramControllerAliases ]-----
 // Also consider Menu.msgTabHdrSignature and Menu.msgTabHdrAlias
-DiagramControllerAliases.title=Alternativas para rotina do Controlador
+DiagramControllerAliases.title=Nomes alternativos para rotina do Controlador
 DiagramControllerAliases.lblHeader.text=Especificar nomes alternativos para as rotinas de complementos controláveis.
 DiagramControllerAliases.lblRemark.text=(Observar que maiúsculas/minúsculas serão ignoradas em nomes de rotina do controlador!)
 DiagramControllerAliases.chkApplyAliases.text=Aplicar alternativas especificadas na exibição etc.
@@ -1220,15 +1229,15 @@ FindAndReplace.lblSearchPattern.text=Procurar:
 FindAndReplace.lblReplacePattern.text=Substituir por:
 FindAndReplace.pnlMode.border=Modo
 FindAndReplace.chkCaseSensitive.text=Maiúsculas e minúsculas
-FindAndReplace.chkCaseSensitive.mnemonic=c
+FindAndReplace.chkCaseSensitive.mnemonic=m
 FindAndReplace.chkWholeWord.text=Palavra inteira
-FindAndReplace.chkWholeWord.mnemonic=w
+FindAndReplace.chkWholeWord.mnemonic=v
 FindAndReplace.chkRegEx.text=Expressões regulares
 FindAndReplace.chkRegEx.mnemonic=x
 FindAndReplace.rbDown.text=Para baixo
-FindAndReplace.rbDown.mnemonic=o
+FindAndReplace.rbDown.mnemonic=b
 FindAndReplace.rbUp.text=Para cima
-FindAndReplace.rbUp.mnemonic=u
+FindAndReplace.rbUp.mnemonic=c
 FindAndReplace.pnlScope.border=Escopo
 FindAndReplace.cmbScope.item.0=Seleção atual
 FindAndReplace.cmbScope.item.1=Diagrama atual
@@ -1243,7 +1252,7 @@ FindAndReplace.chkRootTypes.2.mnemonic=i
 FindAndReplace.chkInTexts.text=Em textos
 FindAndReplace.chkInTexts.mnemonic=t
 FindAndReplace.chkInComments.text=Em comentários
-FindAndReplace.chkInComments.mnemonic=m
+FindAndReplace.chkInComments.mnemonic=o
 FindAndReplace.pnlElements.border=Tipos de elementos
 FindAndReplace.btnAll.text=Todos
 FindAndReplace.btnNone.text=Nenhum
@@ -1266,13 +1275,13 @@ FindAndReplace.txtComm.border=Comentário
 FindAndReplace.chkElementwise.text=Elemento por elemento
 FindAndReplace.chkElementwise.mnemonic=e
 FindAndReplace.btnFind.text=Procurar
-FindAndReplace.btnFind.mnemonic=n
+FindAndReplace.btnFind.mnemonic=a
 FindAndReplace.btnReplace.text=Substituir
-FindAndReplace.btnReplace.mnemonic=r
+FindAndReplace.btnReplace.mnemonic=u
 FindAndReplace.btnReplaceFind.text=Substituir/Procurar
-FindAndReplace.btnReplaceFind.mnemonic=d
+FindAndReplace.btnReplaceFind.mnemonic=r
 FindAndReplace.btnReplaceAll.text=Substituir tudo
-FindAndReplace.btnReplaceAll.mnemonic=a
+FindAndReplace.btnReplaceAll.mnemonic=d
 FindAndReplace.btnReplaceAll.tooltip=Substituir todas as ocorrências restantes do padrão de pesquisa na direção especificada a partir da posição atual.
 FindAndReplace.btnClose.text=Fechar
 FindAndReplace.msgRegexCorrupt.text=Expressão regular «%1» parece inválida: %2
@@ -1442,10 +1451,10 @@ ArrangerIndex.msgConfirmDissolve.text=Quer mesmo dissolver este(s) grupo(s)?\n%
 -----> Executor
 -----[ Control ]-----
 Control.title=Controle do Executor
-Control.lblSpeed.text=Atraso:
+Control.lblSpeed.text= Atraso:
 Control.btnCallStack.text=Pilha de chamadas
-Control.lblCallLevel.text=Profundidade da chamada:
-Control.chkCollectRuntimeData.text=Coletar dados de tempo de execução
+Control.lblCallLevel.text=Profundidade:
+Control.chkCollectRuntimeData.text=Coletar dados de execução
 Control.cbRunDataDisplay.item.0=sem cor
 Control.cbRunDataDisplay.item.1=cobertura de teste simples
 Control.cbRunDataDisplay.item.2=cobertura de testes profunda
@@ -1475,7 +1484,7 @@ Control.ttlContent.text=Conteúdo
 Control.msgTitleError.text=Erro
 Control.msgTitleQuestion.text=Pergunta
 Control.msgTitleParallel.text=Problema com execução em paralelo
-Control.msgNoSubroutine.text=Um diagrama @o "%1" (parâmetros %2) não foi encontrado!\nConsiderar reiniciar o Organizador e colocar os diagramas @o necessários lá primeiro.
+Control.msgNoSubroutine.text=Um diagrama @o "%1" (%2 parâmetros) não foi encontrado!\nConsiderar reiniciar o Organizador e colocar os diagramas @o necessários lá primeiro.
 Control.msgNoInclDiagram.text=Um diagrama @p "%" não foi encontrado!\nConsiderar reiniciar o Organizador e colocar o diagrama necessário lá primeiro.
 Control.msgAmbiguousCall.text=Ambíguo @j: Diferentes diagramas de sub-rotina
 Control.msgInvalidExpr.text=«%1» não é uma expressão correta ou existente.

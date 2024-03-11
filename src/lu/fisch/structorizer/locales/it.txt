@@ -1416,7 +1416,7 @@ ArrangerIndex.msgConfirmDissolve.text=
 -----> Executor
 -----[ Control ]-----
 Control.title=Controllo Esecuzione
-Control.lblSpeed.text=Ritardo:
+Control.lblSpeed.text= Ritardo:
 Control.btnCallStack.text=
 Control.lblCallLevel.text=
 Control.chkCollectRuntimeData.text=Registra dati di esecuzione

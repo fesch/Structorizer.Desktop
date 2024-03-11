@@ -142,6 +142,8 @@
  *      Kay Gürtzig         2023-10-06  Issue #311: Menu reorganisation (menuDiagram split)
  *      Kay Gürtzig         2023-10-13  Issues #980,#1096: New messages for declaration syntax check (error31_*)
  *      Kay Gürtzig         2023-11-13  Enh. #1115: New messages for C99 import option definesToConstants
+ *      Kay Gürtzig         2024-03-04  Mnemonic changed on Find&Replace, PluginOptionDialog message added
+ *      Kay Gürtzig         2024-03-09  Issue #1117: Messages for new PuginOptionDialog option dissect_anon_inner_class
  *
  ******************************************************************************************************
  *
@@ -1206,6 +1208,8 @@ PluginOptionDialog.btnOk.text=OK
 PluginOptionDialog.btnCancel.text=Abbrechen
 PluginOptionDialog.optionComponents.convert_syntax.text=Deklarationen/Ausdrücke usw. in Pascal-ähnlichen Stil wandeln
 PluginOptionDialog.optionComponents.convert_syntax.tooltip=Diese Einstellung vergrößert die Chancen der Ausführbarkeit oder des Re-Exports in Structorizer
+PluginOptionDialog.optionComponents.dissect_anon_inner_class.text=Anonyme innere Klassen in Diagramme zerlegen
+PluginOptionDialog.optionComponents.dissect_anon_inner_class.tooltip=Anderenfalls würde die en passant definierte innere Klasse einfach als sehr langer Quellcode-Ausdruck in das instanziierende Element durchgereicht.
 PluginOptionDialog.optionComponents.debugLines.text[getPluginKey():COBOLParser]=Debug-Zeilen als aktiven Code importieren
 PluginOptionDialog.optionComponents.debugLines.tooltip[getPluginKey():COBOLParser]=Falls aktiviert, werden Debug-Zeilen ggf. als gültiger Code importiert, anderenfalls in Kommentarzeilen "DEBUG ..." umgewandelt.
 PluginOptionDialog.optionComponents.decimalComma.text[getPluginKey():COBOLParser]=Dezimalkomma (statt Dezimalpunkt) im Quelltext
@@ -1242,6 +1246,8 @@ PluginOptionDialog.optionComponents.alignArrays.text=Speicherausrichtung für Da
 PluginOptionDialog.optionComponents.alignArrays.tooltip=Fügt passende .align-Direktiven vor Daten-Deklarationen und am Anfang des Text-Bereichs ein (nur im GNU-Modus).
 PluginOptionDialog.optionComponents.terminateStrings.text=Zeichenketten mit Abschlusszeichen versehen
 PluginOptionDialog.optionComponents.terminateStrings.tooltip=Normalerweise werden Zeichenketten einfach als Array ihrer enthaltenen Zeichencodes generiert. Diese Option sorgt für das Anhängen eines NUL-Zeichens (wie in C).
+PluginOptionDialog.optionComponents.restrictedSyntax.text=Auf Elementinhalte auf ARM-Niveau beschränken.
+PluginOptionDialog.optionComponents.restrictedSyntax.tooltip=Keine erweiterten Compilerfähigkeiten anwenden, sondern Inhalte zurückweisen, die das Niveau von ARM-Befehlen übersteigen.
 
 -----[ ElementNamePreferences ]-----
 ElementNamePreferences.title=Elementnamen einstellen
@@ -1301,7 +1307,7 @@ FindAndReplace.chkCaseSensitive.mnemonic=g
 FindAndReplace.chkWholeWord.text=Ganzes Wort
 FindAndReplace.chkWholeWord.mnemonic=w
 FindAndReplace.chkRegEx.text=Reguläre Ausdrücke
-FindAndReplace.chkRegEx.mnemonic=x
+FindAndReplace.chkRegEx.mnemonic=k
 FindAndReplace.rbDown.text=Abwärts
 FindAndReplace.rbDown.mnemonic=b
 FindAndReplace.rbUp.text=Aufwärts
@@ -1519,7 +1525,7 @@ ArrangerIndex.msgConfirmDissolve.text=Sicher, diese Gruppe(n) aufzulösen?\n%
 -----> Executor
 -----[ Control ]-----
 Control.title=Diagramm-Test
-Control.lblSpeed.text=Verzögerung:
+Control.lblSpeed.text= Verzögerung:
 Control.btnCallStack.text=Aufrufstapel
 Control.lblCallLevel.text=Aufruftiefe:
 Control.chkCollectRuntimeData.text=Sammle Laufzeitdaten

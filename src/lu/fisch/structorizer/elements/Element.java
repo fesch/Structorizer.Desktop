@@ -135,6 +135,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2022-08-22      Bugfix #1068: Type inference failure for array initialisers mended
  *      Kay Gürtzig     2023-12-14      Issue #1119: To set an empty string as text now leads to an empty StringList
  *      Kay Gürtzig     2024-01-22      Bugfix #1125: Equality check must consider disabled state
+ *      Kay Gürtzig	    2024-03-07      Bugfix #1128 Risk of endless loop in method retrieveComponentNmes() fixed;
+ *                                      Issue #1129: Limitation of error lines in the Analyser warning popup
  *
  ******************************************************************************************************
  *
@@ -306,7 +308,7 @@ public abstract class Element {
 	public static final long E_HELP_FILE_SIZE = 12300000;
 	public static final String E_DOWNLOAD_PAGE = "https://www.fisch.lu/Php/download.php";
 	// END KGU#791 2020-01-20
-	public static final String E_VERSION = "3.32-16";
+	public static final String E_VERSION = "3.32-17";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -352,7 +354,7 @@ public abstract class Element {
 	" - DE: Klaus-Peter Reimers <k_p_r@freenet.de>\n"+
 	" - LU: Laurent Zender <laurent.zender@hotmail.de>\n"+
 	" - ES: Andres Cabrera <andrescabrera20@gmail.com>\n"+
-	" - PT/BR: Theldo Cruz <cruz@pucminas.br>\n"+
+	" - PT/BR: Theldo Cruz Franqueiro <cruz@pucminas.br>\n"+
 	" - IT: Andrea Maiani <andreamaiani@gmail.com>, A. Simonetta (University of Rome Tor Vergata)\n"+
 	" - ZH-CN: Wang Lei <wanglei@hollysys.com>\n"+
 	" - ZH-TW: Joe Chem <hueyan_chen@yahoo.com.tw>\n"+
@@ -478,6 +480,9 @@ public abstract class Element {
 	/** Shall warning markers be drawn in flawed elements? */
 	public static boolean E_ANALYSER_MARKER = true;
 	// END KGU#906 2021-01-02
+	// START KGU#1116 2024-03-07: Issue #1129
+	public static int E_ANALYSER_MAX_POPUP_LINES = 10;
+	// END KGU#1116 2024-03-07
 	// START KGU#123 2016-01-04: New toggle for Enh. #87
 	/** Is collapsing by mouse wheel rotation enabled? */
 	public static boolean E_WHEELCOLLAPSE = false;
@@ -3853,6 +3858,11 @@ public abstract class Element {
 						path.remove(0);
 					}
 				}
+				// START KGU#1115 2024-03-07: Bugfix #1128: We must not get trapped in the loop
+				else {
+					varType = null;
+				}
+				// END KGU#1115 2024-03-07
 			}
 			if (varType != null && varType.isRecord()) {
 				// path must now be exhausted, the component names are our proposals

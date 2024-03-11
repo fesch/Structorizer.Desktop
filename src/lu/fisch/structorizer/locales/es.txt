@@ -142,6 +142,8 @@
  *      Kay Gürtzig     2023-10-13  Issue #980: New messages for declaration syntax check (error31_*)
  *      Kay Gürtzig     2023-11-13  Enh. #1115: New messages for C99 import option definesToConstants
  *      Kay Gürtzig     2024-01-26  Issue #311/bugfix #1126: Menu reorganisation (menuDiagram split)
+ *      Kay Gürtzig     2024-03-04  Mnemonics for Find&Replace dialog specified.
+ *      Kay Gürtzig     2024-03-09  Issue #1117: Messages for new PuginOptionDialog option dissect_anon_inner_class
  * 
  ******************************************************************************************************
  *
@@ -863,7 +865,7 @@ InputBoxCase.lblDiscriminator.text=Expresión de selección
 InputBoxCase.lblSelectors.text=Constantes de selección
 InputBoxCase.btnAddRow.tooltip=Añadir nuevo renglón (y dejar rellenarlo con constantes selectores, separadas por comas)
 InputBoxCase.btnDelRows.tooltip=Quitar los renglones seleccionados
-InputBoxCase.btnUpRow.tooltip=Mover las líneas arriva por un renglón
+InputBoxCase.btnUpRow.tooltip=Mover las líneas arriba por un renglón
 InputBoxCase.btnDnRow.tooltip=Mover las líneas abajo por un renglón
 InputBoxCase.btnMergeRows.tooltip=Unir renglones seleccionados (no ofrecido con diferentes brazos asociados)
 InputBoxCase.btnSplitRow.tooltip=Dividir el renglón seleccionado
@@ -1208,6 +1210,8 @@ PluginOptionDialog.btnOk.text=Aceptar
 PluginOptionDialog.btnCancel.text=Cancelar
 PluginOptionDialog.optionComponents.convert_syntax.text=Convertir declaraciones/expresiones a un estilo como Pascal
 PluginOptionDialog.optionComponents.convert_syntax.tooltip=Esta opción aumenta la probabilidad de poder ejecutar o re-exportar el resultado en Structorizer
+PluginOptionDialog.optionComponents.dissect_anon_inner_class.text=Desglosar clases anónimas interiores a diagramas
+PluginOptionDialog.optionComponents.dissect_anon_inner_class.tooltip=De otro modo, una clase anónima definida en pasada simplemente sería puesto como una larga expresión de código fuente al elemento que contiene su instanciación.
 PluginOptionDialog.optionComponents.debugLines.text[getPluginKey():COBOLParser]=Importar líneas debug como código válido
 PluginOptionDialog.optionComponents.debugLines.tooltip[getPluginKey():COBOLParser]=Si es activada, líneas debug serán importadas como código válido, de otro modo serían convertidas en comentarios "DEBUG ...".
 PluginOptionDialog.optionComponents.decimalComma.text[getPluginKey():COBOLParser]=Coma decimal (en lugar de punto decimal) en el código
@@ -1244,6 +1248,8 @@ PluginOptionDialog.optionComponents.alignArrays.text=Ajustar direcciones de dato
 PluginOptionDialog.optionComponents.alignArrays.tooltip=Inserta directivas .align ante cada asignación de datos y antes del inicio de la región de código (para modo GNU).
 PluginOptionDialog.optionComponents.terminateStrings.text=Terminar cadenas con signo NUL (0)
 PluginOptionDialog.optionComponents.terminateStrings.tooltip=Normálmente una cadena estará generado como un campo de sólamente sus caracteres miembros. Esta opción va a apender un signo NUL (código 0) como en C.
+PluginOptionDialog.optionComponents.restrictedSyntax.text=Limitar exporte a contenido en nivel ARM
+PluginOptionDialog.optionComponents.restrictedSyntax.tooltip=No emplear capabilidades extendidas de compilación, rechazar contenido que excede el nivel ARM.
 
 -----[ ElementNamePreferences ]-----
 ElementNamePreferences.title=Preferidos nombres de elementos
@@ -1299,15 +1305,15 @@ FindAndReplace.lblSearchPattern.text=Buscar:
 FindAndReplace.lblReplacePattern.text=Sustituir por:
 FindAndReplace.pnlMode.border=Modo
 FindAndReplace.chkCaseSensitive.text=Cuidar may./minúscula
-FindAndReplace.chkCaseSensitive.mnemonic=
+FindAndReplace.chkCaseSensitive.mnemonic=c
 FindAndReplace.chkWholeWord.text=Palabra entera
-FindAndReplace.chkWholeWord.mnemonic=
+FindAndReplace.chkWholeWord.mnemonic=l
 FindAndReplace.chkRegEx.text=Expresiones regulares
-FindAndReplace.chkRegEx.mnemonic=
+FindAndReplace.chkRegEx.mnemonic=x
 FindAndReplace.rbDown.text=Abajo
-FindAndReplace.rbDown.mnemonic=
-FindAndReplace.rbUp.text=Arriva
-FindAndReplace.rbUp.mnemonic=
+FindAndReplace.rbDown.mnemonic=j
+FindAndReplace.rbUp.text=Arriba
+FindAndReplace.rbUp.mnemonic=a
 FindAndReplace.pnlScope.border=Alcance
 FindAndReplace.cmbScope.item.0=Selección actual
 FindAndReplace.cmbScope.item.1=Diagrama actual
@@ -1521,7 +1527,7 @@ ArrangerIndex.msgConfirmDissolve.text=Cierto a descomponer este grupo/estos grup
 -----> Executor
 -----[ Control ]-----
 Control.title=Control de Ejecución
-Control.lblSpeed.text=Demora:
+Control.lblSpeed.text= Demora:
 Control.btnCallStack.text=Lote de llamadas
 Control.lblCallLevel.text=Nivel:
 Control.chkCollectRuntimeData.text=Contar pasos de ejec.

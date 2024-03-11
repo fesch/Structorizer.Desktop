@@ -1389,7 +1389,7 @@ ArrangerIndex.msgConfirmDissolve.text=Wilt u echt deze groepen ontbinden?\n%
 -----> Executor
 -----[ Control ]-----
 Control.title=Besturing van uitvoereen
-Control.lblSpeed.text=Vertraging:
+Control.lblSpeed.text= Vertraging:
 Control.btnCallStack.text=Stack oproepen
 Control.lblCallLevel.text=Oproepdiepte:
 Control.chkCollectRuntimeData.text=Runtime-gegevens verzamelen
