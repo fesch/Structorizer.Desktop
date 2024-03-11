@@ -23,7 +23,7 @@ Known issues (also see https://github.com/fesch/Structorizer.Desktop/issues):
 - ARM export is still experimental and relies on a specific and very restricted
   syntax for the element contents in order to produce meaningful results.
 
-Current development version 3.32-17 (2024-03-10)
+Current development version 3.32-18 (2024-03-11)
 - 01: Bugfix #987: Duplicate subroutine comment export by Pascal generator <2>
 - 01: Bugfix #988: Syntax error in Structorizer.bat and Arranger.bat fixed <2>
 - 01: Bugfix #989: Expressions in EXIT elements (e.g. return) were forgotten
@@ -201,6 +201,8 @@ Current development version 3.32-17 (2024-03-10)
 - 17: Bugfix #1130 C import expanded macros within char literals [csrabak]2
 - 17: Issue #1131 Handling of anonymous inner classes on Java import <2>
 - 17: Bugfix #1132 Java import defect on backslashes in string literals <2>
+- 18: Bugfix #1135 Two Java import bugs - unicode escape sequences in string
+      literals and identifiers 'str', 'binary', 'hex' caused failure. <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>

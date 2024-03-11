@@ -77,6 +77,7 @@ import lu.fisch.utils.StringList;
  */
 public class ProcessingParser extends JavaParser {
 
+	//------------------------------ Constructor -----------------------------
 	/**
 	 * Constructs a parser for language "Processing", loads the grammar as resource and
 	 * specifies whether to generate the parse tree as string

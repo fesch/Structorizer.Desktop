@@ -57,10 +57,12 @@
 ! V 0.5     2021-03-04  Kay Gürtzig     Some additions to support "Processing"
 !                                       code
 ! V 0.6     2024-03-08  Kay Gürtzig     {String Char} revised (backslash handling)
+! V 0.7     2024-03-11  Kay Gürtzig     Missing hx escape sequence in StringLiteral enabled,
+!                                       Processing conversion function str disabled (impeded 'str' identifiers)
 ! -----------------------------------------------------------------------
 
 "Name"    = 'Java SE 8'
-"Version" = '0.6, March 2024'
+"Version" = '0.7, March 2024'
 "Author"  = 'Kay Gürtzig'
 "About"   = 'Simplified Java SE 8 grammar, based on a partial conversion of Sun Java 1.0-2.0 specification by Dmitry Gazko and the Oracle Java SE 8 specification.'
 
@@ -80,7 +82,7 @@
 {HexEscapeSign} =[uUxX]
 
 Identifier     = {IdLetter}{IdAlphaNumeric}*
-StringLiteral  = '"'({String Char}|'\'{CharSign})*'"'
+StringLiteral  = '"'({String Char}|'\'({CharSign}|{HexEscapeSign}{HexDigit}{HexDigit}{HexDigit}{HexDigit}))*'"'
 FloatingPointLiteral   = {Digit}+'.'{Digit}*{FloatTypeSuffix}? | {Digit}+{FloatTypeSuffix} | '.'{Digit}+{FloatTypeSuffix}?
 FloatingPointLiteralExponent = {Digit}+'.'{Digit}*{ExponentPartIndicator}{Sign}?{Digit}+{FloatTypeSuffix}? | {Digit}+{ExponentPartIndicator}{Sign}?{Digit}+{FloatTypeSuffix}? | '.'{Digit}+{ExponentPartIndicator}{Sign}?{Digit}+{FloatTypeSuffix}?
 BooleanLiteral = 'true' | 'false'
@@ -909,14 +911,15 @@ Comment Line = '//'
          
 ! Non-Java expression kind to let "Processing" code pass
 <ProcessingTypeConversion>
-        ::= 'binary'   '(' <Expression> ')'
-         |  'hex'      '(' <Expression> ')'
-         |  'unbinary' '(' <Expression> ')'
-         |  'unhex'    '(' <Expression> ')'
-         |  'int'      '(' <Expression> ')'
+!        ::= 'binary'   '(' <Expression> ')'
+!         |  'hex'      '(' <Expression> ')'
+!         |  'unbinary' '(' <Expression> ')'
+!         |  'unhex'    '(' <Expression> ')'
+!         |  'int'      '(' <Expression> ')'
+        ::= 'int'      '(' <Expression> ')'
          |  'byte'     '(' <Expression> ')'
          |  'char'     '(' <Expression> ')'
-         |  'str'      '(' <Expression> ')'
+!         |  'str'      '(' <Expression> ')'     ! This was unnecessary and impeded declarations with 'str' as identifier
          |  'float'    '(' <Expression> ')'
          |  'boolean'  '(' <Expression> ')'
          
