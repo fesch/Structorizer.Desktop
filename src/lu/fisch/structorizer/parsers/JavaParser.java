@@ -60,6 +60,9 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2023-11-08      Bugfix #1110 method translateContent() returned the argument instead of the result
  *      Kay Gürtzig     2024-03-08      KGU#1117: Missing backward replacement of c_l_a_s_s in one case mended.
  *      Kay Gürtzig     2024-03-09      Issue #1131: Handling of anonymous inner class instantiations
+ *      Kay Gürtzig     2024-03-12      Bugfix #1136 Heuristic approaches to circumvent three known problems
+ *                                      with type parameters (particularly considering angular brackets),
+ *                                      Bugfix #1137: Workaround for usage of "this" like a component name.
  *
  ******************************************************************************************************
  *
@@ -80,6 +83,8 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.Stack;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.creativewidgetworks.goldparser.engine.*;
 import com.creativewidgetworks.goldparser.engine.enums.SymbolType;
@@ -1030,6 +1035,15 @@ public class JavaParser extends CodeParser
 	//static final StringList CLASS_LITERAL = StringList.explodeWithDelimiter(".class", ".");
 	static final StringList CLASS_LITERAL = StringList.explode(".:class", ":");
 	// END KGU#953 2021-03-04
+	// START KGU#1123 2024-03-12: Bugfix #1137 Similar workaround as for ".class"
+	static final StringList THIS_LITERAL = StringList.explode(".:this", ":");
+	// END KGU#1123 2024-03-12
+	
+	// START KGU#1122 2024-03-12: Bugfix #1136 Temporary replacements for certain angular brackets
+	/** A String array with temporary substitutes for '<' (at [0]), ',' (at [1]), '>' (at [2]),
+	 * '[' (at [3]), and ']' (at [4]) within type castings */
+	static final String[] ANG_BRACK_SUBST = {"íí", "îî", "ìì", "úú", "ùù"};
+	// END KGU#1122 2024-03-12
 
 	/**
 	 * Performs some necessary preprocessing for the text file. Actually opens the
@@ -1039,7 +1053,8 @@ public class JavaParser extends CodeParser
 	 * NOTE: For interactive mode, there should be frequent tests with either
 	 * {@link #isCancelled()} or {@link #doStandardCancelActionIfRequested()} whether
 	 * the parser thread was asked to stop. If so, then a return or an exception are
-	 * recommended in order to respond to the cancel request. 
+	 * recommended in order to respond to the cancel request.
+	 * 
 	 * @param _textToParse - name (path) of the source file
 	 * @param _encoding - the expected encoding of the source file.
 	 * @return The File object associated with the preprocessed source file.
@@ -1052,21 +1067,22 @@ public class JavaParser extends CodeParser
 		 * and before the outer class or interface definition: The possibly recursive
 		 * annotations, which may be interwoven with comments, are the problem.
 		 */
-		
 		//boolean wrapInClass = (Boolean)this.getPluginOption("wrap_in_dummy_class", false);
 		
 		/*
+		 * The grammar does not cope with type arguments in type casting, as e.g. in
+		 * Vector<String> strings = (Vector<String>)getLines("blabla\nhoho\nmore");
+		 * We want to provide a workaround.
 		 * Another well-known problem is that the closing angular brackets
 		 * of type parameters or arguments clash together and are then mistaken
-		 * as a shift operator. So we may have to separate them since it is
+		 * as a shift operator. So we have to separate them since it is
 		 * beyond the power of our grammar to solve this.
-		 * Unfortunately it is neither feasible to tell these occurrences
-		 * from actual operator symbols ">>" or ">>>" with a simple heuristics.
-		 * So the only approach would be to offer it interactively. But this
-		 * would not be sustainable, i.e. the user would have to be asked again
-		 * and again if another error occurred. Hence it is way simpler and more
-		 * effective to let the user manually modify the source code.
 		 */
+		final Matcher castMatcher = Pattern.compile(".*[>]\\s*[)].*").matcher("");
+		
+		// START KGU#1122 2024-03-12: Bugfix #1136 New option to separate angular type parameter brackets
+		boolean separateAngularBrackets = (Boolean)this.getPluginOption("separate_angular_brackets", true);
+		// END KGU#1122 2024-03-12
 
 		File interm = null;
 		try
@@ -1098,7 +1114,10 @@ public class JavaParser extends CodeParser
 					/* We have to replace "class" as a component identifier
 					 * as in "Logger.getLogger(XYZClass.class.getName())"
 					 */
-					if (strLine.contains("class")) {
+					// START KGU#1123 2024-03-12: Bugfix #1137 ".this" may also cause trouble
+					//if (strLine.contains("class")) {
+					if (strLine.contains("class") || strLine.contains(".this")) {
+					// END KGU#1123 2024-03-12
 						// Tokenization is to make sure that we don't substitute in wrong places
 						StringList tokens = Element.splitLexically(strLine, true);
 						int ixClass = -1;
@@ -1107,10 +1126,55 @@ public class JavaParser extends CodeParser
 							tokens.set(ixClass+1, "c_l_a_s_s");
 							replaced = true;
 						}
+						// START KGU#1123 2024-03-12: Bugfix #1137 ".this" may also cause trouble
+						ixClass = -1;
+						while ((ixClass = tokens.indexOf(THIS_LITERAL, 0, true)) >= 0) {
+							tokens.set(ixClass+1, "t_h_i_s");
+							replaced = true;
+						}
+						// END KGU#1123 2024-03-12
 						if (replaced) {
 							strLine = tokens.concatenate();
 						}
 					}
+					// START KGU#1122 2024-03-12: Bugfix #1136
+					castMatcher.reset(strLine);
+					if (castMatcher.matches() || strLine.contains(">>") || strLine.contains("?>")) {
+						boolean replaced = false;
+						StringList tokens = Element.splitLexically(strLine, true);
+						// Initially decompose all ">>" tokens into ">", ">" ...
+						int posAngBr = -1;
+						while ((posAngBr = tokens.indexOf(">>", posAngBr+1)) >= 0) {
+							tokens.set(posAngBr, ">");
+							tokens.insert(">", ++posAngBr);
+							// This is no modification w.r.t. the string representation
+						}
+						// ... and remove all token sequences "<", "?", ">"
+						posAngBr = -1;
+						while ((posAngBr = tokens.indexOf(">", posAngBr+1)) >= 0) {
+							int pos = posAngBr - 1;
+							while (pos > 0 && tokens.get(pos).isBlank()) pos--;
+							if (pos > 0 && tokens.get(pos).equals("?")) {
+								while (--pos >= 0 && tokens.get(pos).isBlank());
+								if (pos >= 0 && tokens.get(pos).equals("<")) {
+									tokens.remove(pos, posAngBr+1);
+									replaced = true;
+									posAngBr = pos;
+								}
+							}
+						}
+						
+						// Now we first look for type casts with type arguments and modify them
+						replaced = transformCastsWithTypeParameters(tokens) || replaced;
+						// Second, we look for clashing closing angular brackets.
+						if (separateAngularBrackets) {
+							replaced = separateAngularTypeBrackets(tokens) || replaced;
+						}
+						if (replaced) {
+							strLine = tokens.concatenate();
+						}
+					}
+					// END KGU#1122 2024-03-12
 					srcCode.append(strLine + "\n");
 					first = false;
 				}
@@ -1136,9 +1200,140 @@ public class JavaParser extends CodeParser
 		return interm;
 	}
 
+	// START KGU#1122 2024-03-12: Bugfix #1136 Methods to solve angular bracket trouble
+	/**
+	 * Derives a single pseudo identifier from parameterized types with casting
+	 * parentheses, e.g.<br/>
+	 * {@code (Vector<Integer>)expression} &rarr; {@code (VectorííIntegerìì)expression}
+	 * 
+	 * @param tokens - a tokenized line to be transformed in the described way
+	 *    at all matching places. May be modified (then returns {@code true}).
+	 * @return {@code true} if {@code tokens} was modified, {@code false} otherwise.
+	 */
+	private boolean transformCastsWithTypeParameters(StringList tokens) {
+		boolean replaced = false;
+		int posAngBr = -1;
+		while ((posAngBr = tokens.indexOf(">", posAngBr+1)) >= 0) {
+			// Go ahead and look for a closing parenthesis...
+			int posPar1 = posAngBr + 1;
+			while (posPar1 < tokens.count() && tokens.get(posPar1).isBlank()) posPar1++;
+			/* If there is a closing parenthesis then we walk backwards along
+			 * possible type constructs in order to replace all angular brackets
+			 * by "íí" and "ìì", respectively until we reach the opening parenthesis.
+			 * but it's a little more tricky as there might be lists of type parameters
+			 * and some of the types might be array types, e.g.
+			 * (HashMap<String, Object[]>). So, for ',', '[', and ']' substítutions
+			 * are also necessary. The major question here is, how precise our syntax
+			 * check has to be.
+			 */
+			if (posPar1 < tokens.count() && tokens.get(posPar1).equals(")")) {
+				/* First make sure the construct is complete within this line
+				 * We must only find identifiers, '.', ',', '[]', '<', and '>'
+				 * (and possibly comments!?) between the parentheses...
+				 * We start with a rather rough backwards search and do a more
+				 * precise syntax check in forward direction after that.
+				 */
+				int posPar0 = posAngBr - 1;
+				int angCount = 1;
+				while (posPar0 >= 0 && !tokens.get(posPar0).equals("(") && angCount >= 0) {
+					String token = tokens.get(posPar0);
+					if (token.isBlank()) {
+						// We want to produce a single pseudo identifier, so remove all blanks
+						tokens.remove(posPar0);
+						posPar1--;
+						posAngBr--;
+					}
+					else if (token.equals(">")) {
+						angCount++;
+					}
+					else if (token.equals("<")) {
+						angCount--;
+					}
+					else if (!Function.testIdentifier(token, false, "$")
+							&& !(token.length() == 1 && "[],.".contains(token))) {
+						break;
+					}
+					posPar0--;
+				}
+				if (posPar0 >= 0 && tokens.get(posPar0).equals("(") && angCount == 0
+						&& isTypeSpecificationList(tokens.subSequence(posPar0+1, posPar1))) {
+					// We should have a dense token sequence now and produce a pseudo-identifier
+					tokens.replaceAllBetween("<", ANG_BRACK_SUBST[0], true, posPar0+1, posPar1);
+					tokens.replaceAllBetween(">", ANG_BRACK_SUBST[2], true, posPar0+1, posPar1);
+					tokens.replaceAllBetween(",", ANG_BRACK_SUBST[1], true, posPar0+1, posPar1);
+					tokens.replaceAllBetween("[", ANG_BRACK_SUBST[3], true, posPar0+1, posPar1);
+					tokens.replaceAllBetween("]", ANG_BRACK_SUBST[4], true, posPar0+1, posPar1);
+					// (The operator symbols will be restored after the parsing)
+					replaced = true;
+				}
+			}
+		}
+		return replaced;
+	}
+
+	/**
+	 * Tries to separate closing angular brackets of nested type parmeters as
+	 * in {@code HashMap<String, ArrayList<String[]>>} within the given token
+	 * list {@code tokens} by blanks in order to avoid a parser error because
+	 * of the mistaken assumption, {@code >>} formed a shift operator.
+	 * 
+	 * @param tokens - a tokenized source code line, where ">>" and ">>>" tokens
+	 *    must already have been split into two or three consecutive tokens ">".
+	 * @return {@code true} if the given {@code tokens} were modified, {@code false}
+	 *    otherwise.
+	 */
+	private boolean separateAngularTypeBrackets(StringList tokens) {
+		boolean replaced = false;
+		int posAngBr = -1;
+		while ((posAngBr = tokens.indexOf(">", posAngBr + 1)) >= 0) {
+			if (posAngBr < tokens.count() - 1 && tokens.get(posAngBr+1).equals(">")) {
+				// Again, roughly scan backwards for an opening angular bracket
+				int angCount = 1;
+				int posAngBr0 = posAngBr - 1;
+				while (posAngBr0 >= 0 && angCount > 0) {
+					String token = tokens.get(posAngBr0);
+					if (token.equals(">")) {
+						angCount++;
+					}
+					else if (token.equals("<") && --angCount == 0) {
+						if (isTypeSpecificationList(tokens.subSequence(posAngBr0 + 1, posAngBr))) {
+							// Separate the two closing angular brackets
+							tokens.insert(" ", ++posAngBr);
+							replaced = true;
+						}
+						break;
+					}
+					else if (!token.isBlank()
+							&& !Function.testIdentifier(token, false, "$")
+							&& !(token.length() == 1 && "[],.".contains(token))) {
+						break;
+					}
+					posAngBr0--;
+				}
+			}
+		}
+		return replaced;
+	}
+
+	/**
+	 * Checks the syntax of (possibly nested) type specifications like
+	 * {@code HashMap<String, Vector<String[]>>}
+	 * 
+	 * @param subSequence - token sequence assumed to specify a (possibly parameterized)
+	 *    type.
+	 * @return
+	 */
+	private boolean isTypeSpecificationList(StringList subSequence) {
+		// TODO Auto-generated method stub
+		System.out.println("Checking type list \"" + subSequence + "\"");
+		return true;
+	}
+	// END KGU#1122 2024-03-12
+	
 	/**
 	 * Allows subclasses to do some extra preparations to the preprocessed
 	 * content given as {@code _srcCode}, considering the source file {@code _file}
+	 * 
 	 * @param _srcCode - the pre-processed file content
 	 * @param _file - the file object for the source file (e.g. to fetch the name from)
 	 * @throws ParserCancelled 
@@ -2452,7 +2647,11 @@ public class JavaParser extends CodeParser
 				// <ClassInstanceCreationExpression> ::= new <ClassType> '(' <ArgumentList> ')'
 				StringList result = new StringList();
 				for (int i = 0; i < exprRed.size() - 3; i++) {
-					result.add(this.getContent_R(exprRed.get(i)).replace("c_l_a_s_s", "class"));
+					// START KGU#1123 2024-03-12: Bugfix #1137
+					//result.add(this.getContent_R(exprRed.get(i)).replace("c_l_a_s_s", "class"));
+					result.add(this.getContent_R(exprRed.get(i)).replace("c_l_a_s_s", "class")
+							.replace("t_h_i_s", "this"));
+					// END KGU#1123 2024-03-12
 				}
 				Token argListToken = exprRed.get(exprRed.size()-2);
 				processArguments(argListToken, result, exprs);
@@ -2468,7 +2667,11 @@ public class JavaParser extends CodeParser
 				// <ClassInstanceCreationExpression> ::= new <ClassType> '(' ')'
 				
 				// Just leave it as is
-				exprs.add(getContent_R(exprRed, "").replace("c_l_a_s_s", "class"));
+				// START KGU#1123 2024-03-12: Bugfix #1137
+				//exprs.add(getContent_R(exprRed, "").replace("c_l_a_s_s", "class"));
+				exprs.add(getContent_R(exprRed, "").replace("c_l_a_s_s", "class")
+						.replace("t_h_i_s", "this"));
+				// END KGU#1123 2024-03-12
 			}
 			break;
 			
@@ -2497,14 +2700,9 @@ public class JavaParser extends CodeParser
 			case RuleConstants.PROD_PROCESSINGTYPECONVERSION_FLOAT_LPAREN_RPAREN:
 			case RuleConstants.PROD_PROCESSINGTYPECONVERSION_BOOLEAN_LPAREN_RPAREN:
 			{
-				// <ProcessingTypeConversion> ::= binary '(' <Expression> ')'
-				// <ProcessingTypeConversion> ::= hex '(' <Expression> ')'
-				// <ProcessingTypeConversion> ::= unbinary '(' <Expression> ')'
-				// <ProcessingTypeConversion> ::= unhex '(' <Expression> ')'
 				// <ProcessingTypeConversion> ::= int '(' <Expression> ')'
 				// <ProcessingTypeConversion> ::= byte '(' <Expression> ')'
 				// <ProcessingTypeConversion> ::= char '(' <Expression> ')'
-				// <ProcessingTypeConversion> ::= str '(' <Expression> ')'
 				// <ProcessingTypeConversion> ::= float '(' <Expression> ')'
 				// <ProcessingTypeConversion> ::= boolean '(' <Expression> ')'
 				exprs.add(decomposeProcessingTypeConversion(exprRed));
@@ -2545,7 +2743,11 @@ public class JavaParser extends CodeParser
 				exprs = decomposeExpression(exprRed.get(0), false, false);
 				int ixLast = exprs.count()-1;
 				exprs.set(ixLast, exprs.get(ixLast) + "."
-						+ exprRed.get(2).asString().replace("c_l_a_s_s", "class"));
+						// START KGU#1123 2024-03-12: Bugfix #1137
+						//+ exprRed.get(2).asString().replace("c_l_a_s_s", "class"));
+						+ exprRed.get(2).asString().replace("c_l_a_s_s", "class")
+						.replace("t_h_i_s", "this"));
+						// END KGU#1123 2024-03-12
 			}
 			break;
 
@@ -2773,10 +2975,12 @@ public class JavaParser extends CodeParser
 				// No break; here (or an else branch with the content of default would have to be added)!
 			// END KGU#1117 2024-03-09
 			default:
-				// START KGU#1117 2024-03-08: Some expressions slipped through without replacement
+				// START KGU#1117/KGU#1123 2024-03-12: Some expressions slipped through without replacement
 				//exprs.add(this.getContent_R(exprToken));
-				exprs.add(this.getContent_R(exprToken).replace(".c_l_a_s_s", ".class"));
-				// END KGU#1117 2024-03-08
+				//exprs.add(this.getContent_R(exprToken).replace("c_l_a_s_s", "class"));
+				exprs.add(this.getContent_R(exprToken).replace("c_l_a_s_s", "class")
+						.replace("t_h_i_s", "this"));
+				// END KGU#1117/KGU#1123 2024-03-12
 			}
 			
 		}
@@ -3584,6 +3788,7 @@ public class JavaParser extends CodeParser
 	 * to the syntactic preferences held in {@link #optionConvertSyntax}, i.e. either
 	 * to a documented Structorizer type description syntax (rather Pascal-like)
 	 * or not at all.
+	 * 
 	 * @param token - the {@link Token} representing a {@code <Type>} rule or symbol
 	 * @return an appropriate type description
 	 * @throws ParserCancelled 
@@ -3688,7 +3893,12 @@ public class JavaParser extends CodeParser
 			return getContent_R(_token.asReduction(), "");
 		}
 		else if (_token.getType() == SymbolType.CONTENT) {
-			return _token.asString();
+			// START KGU#1122 2024-03-12: Bugfix #1136 revert preprocessing substitutions
+			//return _token.asString();
+			return _token.asString().replace(ANG_BRACK_SUBST[0], "<").replace(ANG_BRACK_SUBST[2], ">")
+					.replace(ANG_BRACK_SUBST[1], ",")
+					.replace(ANG_BRACK_SUBST[3], "[").replace(ANG_BRACK_SUBST[4], "]");
+			// END KGU#1122 2024-03-12
 		}
 		return "";
 	}
@@ -3801,7 +4011,12 @@ public class JavaParser extends CodeParser
 			/* -------- End code example for text retrieval and translation -------- */
 		}
 		
-		return _content;
+		// START KGU#1122 2024-03-12: Bugfix #1136 revert preprocessing substitutions
+		//return _content;
+		return _content.replace(ANG_BRACK_SUBST[0], "<").replace(ANG_BRACK_SUBST[2], ">")
+				.replace(ANG_BRACK_SUBST[1], ",")
+				.replace(ANG_BRACK_SUBST[3], "[").replace(ANG_BRACK_SUBST[4], "]");
+		// END KGU#1122 2024-03-12
 	}
 
 	//------------------------- Postprocessor ---------------------------

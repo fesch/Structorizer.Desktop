@@ -59,17 +59,19 @@
 ! V 0.6     2024-03-08  Kay Gürtzig     {String Char} revised (backslash handling)
 ! V 0.7     2024-03-11  Kay Gürtzig     Missing hx escape sequence in StringLiteral enabled,
 !                                       Processing conversion function str disabled (impeded 'str' identifiers)
+! V 0.8     2024-03-12  Kay Gürtzig     Identifier syntax extended to {All Latin} (as Java accepts them in fact)
 ! -----------------------------------------------------------------------
 
 "Name"    = 'Java SE 8'
-"Version" = '0.7, March 2024'
+"Version" = '0.8, March 2024'
 "Author"  = 'Kay Gürtzig'
 "About"   = 'Simplified Java SE 8 grammar, based on a partial conversion of Sun Java 1.0-2.0 specification by Dmitry Gazko and the Oracle Java SE 8 specification.'
 
 {String Char} = {all printable} - ["] - [\]
 {Quote} = ['']
 {IdLetter} = {Letter} + [_$]
-{IdAlphaNumeric} = {Alphanumeric} + [_$]
+!{IdAlphaNumeric} = {Alphanumeric} + [_$]
+{IdAlphaNumeric} = {All Latin} + {Digit} + [_$]
 {HexDigit} = {Digit} + [abcdefABCDEF]
 {OctalCharSet} = [01234567]
 {NoZeroDigit} = [123456789]
