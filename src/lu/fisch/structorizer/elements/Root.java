@@ -183,8 +183,9 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2023-10-05      Bugfix #1094: splitKeywords initialisation enforced in getUsedVars()
  *      Kay Gürtzig     2023-10-13      Issue #980 New analyser check 31 for declaration syntax implemented
  *      Kay Gürtzig     2023-10-15      Bugfix #1096 More precise type and declaration handling
- *      Kay.gürtzig     2023-11-08      Issue #1112: Analyser is to avoid error3_1 and error24_8 on java.lang.
+ *      Kay Gürtzig     2023-11-08      Issue #1112: Analyser is to avoid error3_1 and error24_8 on java.lang.
  *                                      java.util. method calls like Math.sqrt(17.2) or Character.isDigit('5')
+ *      Kay Gürtzig     2024-03-14      Bugfix #1139: NullPointerException in analyse_5_7_13() with empty Try
  *      
  ******************************************************************************************************
  *
@@ -2037,8 +2038,11 @@ public class Root extends Element {
 	 * 4: Equal contents but different file paths (may occur if a file copy
 	 *    is loaded or if a Structorizer instance just copied the diagram
 	 *    with "Save as");<br/>
-	 * 5: Equal signature (i. e. type, name and argument number) but different
-	 *    content or structure.
+	 * 5: Equal qualified signature (i. e. type, qualified name and argument
+	 *    number) only but different content or structure;<br/>
+	 * 6: Still equal signature (i. e. type, name and argument number) but
+	 *    different namespace, content or structure.
+	 * 
 	 * @param another - the Root to compare with
 	 * @return a resemblance code according to the description above
 	 */
@@ -2061,9 +2065,17 @@ public class Root extends Element {
 				resemblance = 4;
 			}
 		}
-		else if (this.getSignatureString(false, false).equals(another.getSignatureString(false, false))) {
+		// START KGU#1124 2024-02-13: Issue #1138 More precise differenciating
+		//else if (this.getSignatureString(false, false).equals(another.getSignatureString(false, false))) {
+		//	resemblance = 5;
+		//}
+		else if (this.getSignatureString(false, true).equals(another.getSignatureString(false, true))) {
 			resemblance = 5;
 		}
+		else if (this.getSignatureString(false, false).equals(another.getSignatureString(false, false))) {
+			resemblance = 6;
+		}
+		// END KGU#1124 2024-03-13
 		return resemblance;
 	}
 	// END KGU#312 2016-12-29
@@ -4260,10 +4272,17 @@ public class Root extends Element {
 	 */
 	private void analyse_5_7_13(Element ele, Vector<DetectedError> _errors, StringList _myVars, boolean[] _resultFlags)
 	{
-		// START KGU#812 2020-02-21: Bugfix #825 We check the error variable of a TRY block too
+		// START KGU#812 2020-02-21: Bugfix #825 We check the error variable of a TRY block, too
 		if (ele instanceof Try) {
-			_myVars = _myVars.copy();
-			_myVars.addIfNew(((Try)ele).getExceptionVarName());			
+			// START KGU#1125 2024-03-14: Bugfix #1139 This caused NullPointerException with missing catch
+			//_myVars = _myVars.copy();
+			//_myVars.addIfNew(((Try)ele).getExceptionVarName());
+			String exVar = ((Try)ele).getExceptionVarName();
+			if (exVar != null && !exVar.isBlank()) {
+				_myVars = _myVars.copy();
+				_myVars.addIfNew(exVar);
+			}
+			// END KGU#1125 2024-03-14
 		}
 		// END KGU#812 2020-02-21
 		for (int j = 0; j < _myVars.count(); j++)

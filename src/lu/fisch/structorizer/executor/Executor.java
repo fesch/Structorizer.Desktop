@@ -221,6 +221,7 @@ package lu.fisch.structorizer.executor;
  *                                      method getEvalErrorMessage() generated.
  *      Kay Gürtzig     2023-10-16      Bugfix #980/#1096: Simple but effective workaround for complicated C-style
  *                                      initialisation (declaration + assignment) case where setVar used to fail.
+ *      Kay Gürtzig     2024-03-14      Bugfix #1139: Rethrow without specified expression wasn't correct
  *
  ******************************************************************************************************
  *
@@ -2792,6 +2793,7 @@ public class Executor implements Runnable
      * Searches all known pools for either routine diagrams with a signature
      * compatible to {@code name(arg1, arg2, ..., arg_nArgs)} or for includable
      * diagrams with name {@code name}
+     * 
      * @param name - diagram name
      * @param nArgs - number of parameters of the requested function (negative
      *        for Includable)
@@ -2834,7 +2836,10 @@ public class Executor implements Runnable
     				int similarity = diagr.compareTo(cand); 
     				if (similarity > 2 && similarity != 4) {
     					// 3: Equal file path but unsaved changes in one or both diagrams;
-    					// 5: Equal signature (i. e. type, name and argument number) but different content or structure.
+    					// 5: Equal qualified signature (i. e. type, qualified name and argument
+    					//    number) but different content or structure;
+    					// 6: Equal signature (i. e. type, qualified name and argument number)
+    					//    but differing namespace, content or structure
     					throw new Exception(control.msgAmbiguousCall.getText().replace("%1", name)
     							.replace("%2", (nArgs < 0 ? "--" : Integer.toString(nArgs))));
     				}
@@ -5880,6 +5885,21 @@ public class Executor implements Runnable
 		else if (element.isThrow()) {
 			try {
 				String expr = sl.get(0).trim().substring(CodeParser.getKeyword("preThrow").length()).trim();
+				// START KGU#1125 2024-03-14: Bugfix #1139 Try to identify a caught error
+				if (expr.isEmpty()) {
+					// Prepare rethrow if within the catch clause of a TRY element
+					Element parent = element.parent;
+					Try catcher = null;
+					while (parent != null && catcher == null) {
+						if (parent instanceof Subqueue && parent.parent instanceof Try
+								&& parent == ((Try)parent.parent).qCatch) {
+							catcher = (Try)parent.parent;
+							expr = catcher.getExceptionVarName(false);
+						}
+						parent = parent.parent;
+					}
+				}
+				// END KGU#1125 2024-03-14
 				if (expr.isEmpty()) {
 					trouble = RETHROW_MESSAGE;
 				}
@@ -8006,12 +8026,15 @@ public class Executor implements Runnable
 			String origTrouble = trouble;	// For the case of a rethrow
 			try {
 				this.updateVariableDisplay(true);
-				String varName = element.getExceptionVarName();
+				// START KGU#1125 2024-03-14: Bugfix #1139 Support anonymous rethrow
+				//String varName = element.getExceptionVarName();
+				String varName = element.getExceptionVarName(true);
+				// END KGU#1125 2024-03-14
 				Object priorValue = null;
 				boolean hadVariable = false;
 				if (varName != null) {
 					if ((hadVariable = context.variables.contains(varName))) {
-					priorValue = context.interpreter.get(varName);
+						priorValue = context.interpreter.get(varName);
 					}
 					setVar(varName, trouble, true);
 				}

@@ -36,6 +36,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-09-24      Bugfix #749: Text content and width in collapsed mode fixed
  *      Kay Gürtzig     2021-01-22      Enh. #714: Special visibility control for the FINALLY block
  *      Kay Gürtzig     2023-11-08      Bugfix #1109: Auxiliary method findEnclosingTry added.
+ *      Kay Gürtzig     2024-03-14      Bugfix #1139: Precautions against missing exception variable
  *
  ******************************************************************************************************
  *
@@ -544,6 +545,7 @@ public class Try extends Element {
 		if (excName != null) {
 			addToTypeMap(typeMap, excName, "Exception", 0, true, true);
 		}
+		// END KGU#413 2017-06-09
 	}
 	
 	@Override
@@ -556,22 +558,55 @@ public class Try extends Element {
 			varNames = this.parent.getVariableSetFor(this);
 		}
 		if (_child == this || _child == this.qCatch) {
-			varNames.add(this.getExceptionVarName());
+			// START KGU#1125 2024-03-14: Bugfix #1139 We must not insert null
+			//varNames.add(this.getExceptionVarName());
+			String exName = this.getExceptionVarName();
+			if (exName != null && !exName.isBlank()) {
+				varNames.add(exName);
+			}
+			// END KGU#1125 2024-03-14
 		}
 		return varNames;
 	}
 	
 	/**
 	 * @return the most likely variable name extracted from the text (assuming it
-	 * to be either a pure name or a declaration).
+	 * to be either a pure name or a declaration). Might be {@code null} or empty.
+	 * 
+	 * @see #getExceptionVarName(boolean)
 	 */
 	public String getExceptionVarName()
 	{
-		return Instruction.getAssignedVarname(
+		// START KGU#1125 2024-03-14: Bugfix #1139 We shouldn't return null here
+		//return Instruction.getAssignedVarname(
+		//		Element.splitLexically(this.getUnbrokenText().getLongString(), true),
+		//		false
+		//		);
+		return getExceptionVarName(false);
+		// END KGU#1125 2024-03-14
+	}
+
+	/**
+	 * Provides the most likely variable name extracted from the text (assuming it
+	 * to be either a pure name or a declaration), possibly a generic name.
+	 * 
+	 * @param force - if {@code true} then forces a generic but unique exception
+	 *    name in case non is specified.
+	 * @return the exception variable name. May be {@code null} in case
+	 *    {@code force == false}
+	 */
+	public String getExceptionVarName(boolean force)
+	{
+		String excName = Instruction.getAssignedVarname(
 				Element.splitLexically(this.getUnbrokenText().getLongString(), true),
 				false
 				);
+		if (force && (excName == null || excName.isBlank())) {
+			excName = "exception_" + Integer.toHexString(this.hashCode());
+		}
+		return excName;
 	}
+	// END KGU#1125 2024-03-14
 	
 	// START KGU#695 2021-01-22: Enh. #714
 	/**

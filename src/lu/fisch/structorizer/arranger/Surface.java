@@ -4080,9 +4080,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	/**
 	 * Search among the held {@link Diagram} objects for one the associated {@link Root} of which
 	 * closely enough resembles the given {@link Root} {@code root}.
+	 * 
 	 * @param root - the Nassi-Shneiderman diagram we look for
 	 * @param equalityLevel - the level of resemblance - see {@link Root#compareTo(Root)}
 	 * @return the first {@link Diagram} that holds a matching {@link Root}.
+	 * 
 	 * @see #findDiagram(Root, int, boolean)
 	 * @see #findDiagramsByName(String)
 	 * @see #findIncludesByName(String, Root, boolean)
@@ -4094,15 +4096,17 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	/**
 	 * Search among the held {@link Diagram} objects for one the associated {@link Root} of which
 	 * closely enough resembles the given {@link Root} {@code root}.
+	 * 
 	 * @param root - the Nassi-Shneiderman diagram we look for
-	 * @param equalityLevel - the level of resemblance - see {@link Root#compareTo(Root)}
+	 * @param equivalenceLevel - the level of resemblance - see {@link Root#compareTo(Root)}
 	 * @param warnLevel2AndAbove - if true then a warning will be raised if the obtained equality level is not 1 
 	 * @return the first {@link Diagram} that holds a matching {@link Root}.
+	 * 
 	 * @see #findDiagram(Root, int)
 	 * @see #findDiagramsByName(String)
 	 * @see #findIncludesByName(String, Root, boolean)
 	 */
-	private Diagram findDiagram(Root root, int equalityLevel, boolean warnLevel2andAbove)
+	private Diagram findDiagram(Root root, int equivalenceLevel, boolean warnLevel2andAbove)
 	// END KGU#312 2016-12-29
 	// END KGU#119 2016-01-02
 	{
@@ -4115,11 +4119,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		//	return this.rootMap.get(root);
 		//}
 		owner = this.rootMap.get(root);
-		if (owner != null || equalityLevel == 1) {
+		if (owner != null || equivalenceLevel == 1) {
+			// Identity case
 			return owner;
 		}
 		// END KGU#700 2019-03-28
-		else if (equalityLevel == 2 || equalityLevel == 5) {
+		else if (equivalenceLevel == 2 || equivalenceLevel == 5) {
+			// Either equality or at least signature compatibility required
 			// We try to reduce the number of diagrams to be searched  
 			diagramList = this.nameMap.get(root.getMethodName());
 		}
@@ -4147,12 +4153,17 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 						String message = msgInsertionConflict[resemblance-3].getText().
 								replace("%1", root.getSignatureString(false, false)).
 								replace("%2", fName);
-						JOptionPane.showMessageDialog(this.getParent(), message,
-								this.titleDiagramConflict.getText(),
-								JOptionPane.WARNING_MESSAGE);
+						// START KGU#1124 2024-03-13: Issue #1138 Just raise the conflict viewer
+						//JOptionPane.showMessageDialog(this.getParent(), message,
+						//		this.titleDiagramConflict.getText(),
+						//		JOptionPane.WARNING_MESSAGE);
+						// FIXME temporary workaround
+						System.out.println(message);
+						// END KGU#1124 2024-03-13
 					}
-					if (resemblance <= equalityLevel)
+					if (resemblance <= equivalenceLevel)
 					{
+						// If we leave here then potential conflicts won't occur
 						owner = diagram;	// Will leave the loop
 					}
 				}

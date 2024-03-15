@@ -2237,19 +2237,6 @@ public class JavaParser extends CodeParser
 						 * System.exit() or System.out.println()
 						 */
 						// START KGU#959 2021-03-05: Issue #961: give subclasses a chance for own conversions
-						if (line.startsWith("System.exit(")) {
-							ele = new Jump(getKeyword("preExit") + " "
-									+ line.substring("System.exit(".length(), line.length()-1));
-						}
-						else if (line.startsWith("System.out.println(")) {
-							ele = new Instruction(getKeyword("output") + " "
-									+ line.substring("System.out.println(".length(), line.length()-1));
-						}
-						else if (line.startsWith("System.out.print(")) {
-							ele = new Instruction(getKeyword("output") + " "
-									+ line.substring("System.out.print(".length(), line.length()-1));
-						}
-						//else {
 						if ((ele = convertInvocation(line)) == null) {
 						// END KGU#959 2021-03-05
 							ele = new Instruction(line);
@@ -2301,9 +2288,10 @@ public class JavaParser extends CodeParser
 	 * method invocation with or without assigned result, where the assignment
 	 * symbol if contained is expected to be "<-") represents some built-in
 	 * function or command, e.g. an output instruction, and if so converts it
-	 * accordingly. If it is notzhing specific then just returns {@code null}.
-	 * @param line - an built instruction line with call syntax (qualified names
-	 * possible)
+	 * accordingly. If it is nothing specific then just returns {@code null}.
+	 * 
+	 * @param line - a built instruction line with call syntax (qualified names
+	 *    possible)
 	 * @return a representing {@link Element} or {@code null}
 	 */
 	protected Instruction convertInvocation(String line)
@@ -2326,7 +2314,11 @@ public class JavaParser extends CodeParser
 	// END KGU#959 2021-03-05
 	
 	/**
-	 * @param classRoot
+	 * For the composition of Includables representing classes the field and
+	 * method delaration have been collected in two dummy Forever loops. These
+	 * are here deconstructed and their contents merged into the top subqueue.
+	 * 
+	 * @param classRoot - the Includable diagram representing a declared class
 	 */
 	private void dissolveDummyContainers(Root classRoot) {
 		for (int i = 1; i >= 0; i--) {

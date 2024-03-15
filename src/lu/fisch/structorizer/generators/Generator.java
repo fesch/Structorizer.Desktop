@@ -124,6 +124,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2022-08-14      Issues #441, #1047: usesTurtleizer must be reset at the beginning of exportCode
  *      Kay Gürtzig     2022-08-23      Issue #1068: Auxiliary method transformIndexLists(StringList) added
  *      Kay Gürtzig     2023-09-28      Bugfix #1092: Sensible export of alias type definitions enabled
+ *      Kay Gürtzig     2024-03-14      Bugfix #1139: NullPointerException risk in generateCode(Try, String)
  *
  ******************************************************************************************************
  *
@@ -3297,7 +3298,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	{
 		appendComment("try (FIXME!)", _indent);
 		generateCode(_try.qTry, _indent + this.getIndent());
-		appendComment(("catch " + _try.getExceptionVarName()).trim() + " (FIXME!)", _indent);
+		appendComment(("catch " + _try.getExceptionVarName(true)).trim() + " (FIXME!)", _indent);
 		generateCode(_try.qCatch, _indent + this.getIndent());
 		appendComment("finally (FIXME!)", _indent);
 		generateCode(_try.qFinally, _indent + this.getIndent());
