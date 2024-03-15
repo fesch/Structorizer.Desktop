@@ -201,13 +201,14 @@ Current development version 3.32-18 (2024-03-15)
 - 17: Bugfix #1130 C import expanded macros within char literals [csrabak]2
 - 17: Issue #1131 Handling of anonymous inner classes on Java import <2>
 - 17: Bugfix #1132 Java import defect on backslashes in string literals <2>
-- 18: Enh. #1084 Minor Pascal import updates towards Delphi 12 <2>
+- 18: Enh. #1084 Pascal import toughened up for ObjectPascal/Delphi 12 <2>
 - 18: Bugfix #1135 Two Java import bugs - unicode escape sequences in string
       literals and identifiers 'str', 'binary', 'hex' caused failure. <2>
 - 18: Bugfix #1136 Three Java import problems due to angular brackets of type
       arguments (nested parameterized types, casting, "<?>" parameters). <2>
 - 18: Bugfix #1137 Workaround for Java import errors due to ".this" <2>
 - 18: Bugfix #1139 TRY elements without catch variable caused defects <2>
+- 18: Bugfix #1140 Transmutation didn't work for calls with method syntax <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>

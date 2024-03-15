@@ -76,6 +76,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2021-09-28      Issue #1091: Type definition detection mended (aliases and array types)
  *      Kay Gürtzig     2023-10-10/13   Issue #980: Declaration-related stuff revised
  *      Kay Gürtzig     2023-10-15      Bugfix #1096: More precise type and C-style declaration handling
+ *      Kay Gürtzig     2024-03-15      Bugfix #1140: Function syntax check ignored the 'qualified' argument 
  *
  ******************************************************************************************************
  *
@@ -742,13 +743,17 @@ public class Instruction extends Element {
 	/**
 	 * Checks whether this element contains exactly one line and that assigns the value
 	 * of a function (or method) call to the target variable.
+	 * 
 	 * @param withQualifiers - whether qualified names are also to be accepted.
 	 * @return true iff {@code this} consists of exactly one instruction line and this
 	 * line complies to {@link #isFunctionCall(String, boolean)} */
 	public boolean isFunctionCall(boolean withQualifiers)
 	{
 		StringList lines = this.getUnbrokenText();
-		return lines.count() == 1 && Instruction.isFunctionCall(lines.get(0), false);
+		// START KGU#1126 2024-03-15: Bugfix #1140 wrong argument passing
+		//return lines.count() == 1 && Instruction.isFunctionCall(lines.get(0), false);
+		return lines.count() == 1 && Instruction.isFunctionCall(lines.get(0), withQualifiers);
+		//END KGU#1126 2024-03-15
 	}
 	// END KGU#199 2016-07-06
 	

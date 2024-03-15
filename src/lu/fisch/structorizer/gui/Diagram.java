@@ -244,6 +244,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2023-11-09      Enh. #1114: Place the InputBox caret at the first question mark in
  *                                      the default text for new Elements
  *      Kay Gürtzig     2024-03-07      Issue #1129: Restrict the number of lines to show in a warning popup
+ *      Kay Gürtzig     2024-03-15      Bugfix #1140: Transmutation conditions were too strict for method calls
  *
  ******************************************************************************************************
  *
@@ -3801,8 +3802,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				Instruction instr = (Instruction) selected;
 				isConvertible = instr.getUnbrokenText().count() > 1
 						|| instr.isJump()
-						|| instr.isFunctionCall(false)
-						|| instr.isProcedureCall(false);
+						|| instr.isFunctionCall(true)
+						|| instr.isProcedureCall(true);
 			} else if (selected instanceof IElementSequence && ((IElementSequence) selected).getSize() > 1) {
 				isConvertible = true;
 				for (int i = 0; isConvertible && i < ((IElementSequence) selected).getSize(); i++) {
@@ -5405,7 +5406,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		Element elem = instr;
 		if (instr instanceof Call || instr instanceof Jump) {
 			elem = new Instruction(instr);
-		} else if (instr.isProcedureCall(false) || instr.isFunctionCall(false)) {
+		} else if (instr.isProcedureCall(true) || instr.isFunctionCall(true)) {
 			elem = new Call(instr);
 		} else if (instr.isJump()) {
 			elem = new Jump(instr);

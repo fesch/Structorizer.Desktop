@@ -76,6 +76,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2021-10-03      Mechanism to ensure case-sensitive matching of result variables with function name
  *      Kay Gürtzig     2022-12-21      Deprecation annotation added to filterNonAscii()
  *      Kay Gürtzig     2024-03-14      Issue #1084 RuleConstants updated to new grammar version 1.6
+ *      Kay Gürtzig     2024-03-15      Issue #1084 Substantial achievements to import ObjectPascal / Delphi code
  *
  ******************************************************************************************************
  *
@@ -481,8 +482,8 @@ public class D7Parser extends CodeParser
 //		final int PROD_METHODSPEC2                                 = 275;  // <MethodSpec> ::= <DestructorSpec>
 //		final int PROD_METHODSPEC3                                 = 276;  // <MethodSpec> ::= <ProcSpec>
 //		final int PROD_METHODSPEC4                                 = 277;  // <MethodSpec> ::= <FuncSpec>
-//		final int PROD_CONSTRUCTORSPEC_CONSTRUCTOR_SEMI            = 278;  // <ConstructorSpec> ::= CONSTRUCTOR <RefId> <OptFormalParms> ';'
-//		final int PROD_DESTRUCTORSPEC_DESTRUCTOR_SEMI              = 279;  // <DestructorSpec> ::= DESTRUCTOR <RefId> <OptFormalParms> ';'
+		final int PROD_CONSTRUCTORSPEC_CONSTRUCTOR_SEMI            = 278;  // <ConstructorSpec> ::= CONSTRUCTOR <RefId> <OptFormalParms> ';'
+		final int PROD_DESTRUCTORSPEC_DESTRUCTOR_SEMI              = 279;  // <DestructorSpec> ::= DESTRUCTOR <RefId> <OptFormalParms> ';'
 		final int PROD_PROCSPEC_PROCEDURE_SEMI                     = 280;  // <ProcSpec> ::= PROCEDURE <RefId> <OptFormalParms> <OptCallConventions> ';'
 		final int PROD_FUNCSPEC_FUNCTION_COLON_SEMI                = 281;  // <FuncSpec> ::= FUNCTION <RefId> <OptFormalParms> ':' <ResultType> <OptCallConventions> ';'
 //		final int PROD_RESOLUTIONSPEC_PROCEDURE_DOT_EQ_SEMI        = 282;  // <ResolutionSpec> ::= PROCEDURE <RefId> '.' <RefId> '=' <RefId> ';'
@@ -1157,6 +1158,12 @@ public class D7Parser extends CodeParser
 	protected LinkedList<Root> includerList = new LinkedList<Root>();
 	// END KGU#586 2018-09-28
 
+	// START KGU#1073 2024-03-15: Issue #1084 we must distinguish INTERFACE context
+	/** Indicates whether or not we are inside an INTERFACE section */
+	private boolean withinInterface = false;
+	// END KGU#1073 2024-03-15
+
+	
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.parsers.CodeParser#initializeBuildNSD()
 	 */
@@ -1324,6 +1331,7 @@ public class D7Parser extends CodeParser
 			else if (
 					ruleId == RuleConstants.PROD_TYPEDECL_EQ
 					&&
+					// <TypeSpec> ::= <GenericType> ';'
 					_reduction.get(2).asReduction().getParent().getTableIndex() == RuleConstants.PROD_TYPESPEC_SEMI
 					)
 			{
@@ -1375,6 +1383,7 @@ public class D7Parser extends CodeParser
 			else if (
 					ruleId == RuleConstants.PROD_TYPEDECL_EQ
 					&&
+					// <TypeSpec> ::= <RestrictedType> <OptPortDirectives> ';'
 					_reduction.get(2).asReduction().getParent().getTableIndex() == RuleConstants.PROD_TYPESPEC_SEMI2
 					)
 			{
@@ -1383,10 +1392,13 @@ public class D7Parser extends CodeParser
 				/* Now we have to produce both a record type definition with the public components
 				 * and an includable at the same time
 				 */
-				String comment = this.retrieveComment(_reduction);
-				String comment2 = null;
+				String comment1 = this.retrieveComment(_reduction);
+				StringList comment = new StringList();
 				String typeName = this.getContent_R(_reduction.get(0).asReduction(), "");
 				Reduction secRed = _reduction.get(2).asReduction().get(0).asReduction();
+				if (comment1 != null && !comment1.isBlank()) {
+					comment.add(comment1);
+				}
 				ruleId = secRed.getParent().getTableIndex();
 				switch (ruleId) {
 				case RuleConstants.PROD_CLASSTYPE_CLASS_END:
@@ -1394,15 +1406,15 @@ public class D7Parser extends CodeParser
 					StringBuilder sb = new StringBuilder();
 					sb.append("type ");
 					sb.append(typeName);
-					sb.append(" = record {");
+					sb.append(" = record {");	// FIXME We might introduce a class type
 					String heritage = "";
 					if (secRed.get(1).asReduction().size() > 0) {
 						heritage = this.getContent_R(secRed.get(1).asReduction().get(1).asReduction(), "");
 					}
+					comment.add("CLASS");
 					buildClassDefinition(typeName, heritage, secRed.get(2).asReduction(), sb, comment);
 					sb.append("}");
 					content = sb.toString();
-					comment2 = "CLASS";
 					break;
 				//case RuleConstants.PROD_OBJECTTYPE_OBJECT_END: TODO?
 				//case RuleConstants.PROD_CLASSTYPE_CLASS: TODO?
@@ -1410,17 +1422,21 @@ public class D7Parser extends CodeParser
 				//case RuleConstants.PROD_INTERFACETYPE_INTERFACE_END: TODO?
 				//case RuleConstants.PROD_INTERFACETYPE_DISPINTERFACE: TODO?
 				}
-				if (!content.isEmpty()) {
-					// FIXME: Could be global if outside of functions! --> global Root --> includable
-					Element def = new Instruction(translateContent(content));
-					if (comment != null && !comment.isBlank()) {
-						def.setComment(comment);
-					}
-					if (comment2 != null) {
-						def.comment.add(comment2);
-					}
-					_parentNode.addElement(def);
-				}
+				// The definition must be added even if it does not contain any (public) fields
+				/* FIXME It might be an ideas, however, to introduce a new type category "class"
+				 * as an extension of record/struct, which should hold public method entries next
+				 * to the public fields. Proposed syntax for the methods would be like subroutine
+				 * headers:
+				 * type Classtype = class {
+				 *     field1: type1;
+				 *     field2: type2;
+				 *     procmethod(arg1, arg2, arg3);
+				 *     funcmethod(arg1, arg2): type3
+				 * }
+				 */
+				Element def = new Instruction(translateContent(content));
+				def.setComment(comment);
+				_parentNode.addElement(def);
 			}
 			// END KGU#1073 2024-03-14
 			else if (
@@ -1438,22 +1454,36 @@ public class D7Parser extends CodeParser
 				String usesClause = this.getContent_R(_reduction, "");
 				this.usesClauses.add(usesClause);
 			}
-			else if (
-			// END KGU#821 2020-03-08
-					 ruleHead.equals("<LabelSection>")
-					 // END KGU#358 2017-03-29
-					 // START KGU#194 2016-05-08: Bugfix #185
-					 // UNIT Interface section can be ignored, all contained routines
-					 // must be converted from the implementation section
-					 ||
-					 ruleHead.equals("<InterfaceSection>")
-					 ||
-					 ruleHead.equals("<InitSection>")
-					 // END KGU#194 2016-05-08
-					 )
-			{
-				// This is just to skip these sections
+			// START KGU#1073 2024-03-15: Issue #1084 to ignore <InterfaceSection> and <InitSection> was outright wrong
+			//else if (
+			//// END KGU#821 2020-03-08
+			//		 ruleHead.equals("<LabelSection>")
+			//		 // END KGU#358 2017-03-29
+			//		 // START KGU#194 2016-05-08: Bugfix #185
+			//		 // UNIT Interface section can be ignored, all contained routines
+			//		 // must be converted from the implementation section
+			//		 ||
+			//		 ruleHead.equals("<InterfaceSection>")
+			//		 ||
+			//		 ruleHead.equals("<InitSection>")
+			//		 // END KGU#194 2016-05-08
+			//		 )
+			//{
+			//	// This is just to skip these sections
+			//}
+			else if (ruleHead.equals("<LabelSection>")) {
+				// Ignore this section
 			}
+			else if (ruleHead.equals("<InterfaceSection>")) {
+				// Process the uses clause
+				this.buildNSD_R(_reduction.get(1).asReduction(), _parentNode);
+				// Process the actual export declarations
+				this.withinInterface = true;
+				this.buildNSD_R(_reduction.get(2).asReduction(), _parentNode);
+				this.withinInterface = false;
+			}
+			// END KGU#1073 2024-03-15
+			// START KGU#1073 2024-03-15: Issue 
 			// START KGU#194 2016-05-08: Bugfix #185 - we must handle unit headers
 			else if (
 					ruleHead.equals("<UnitHeader>")
@@ -1462,16 +1492,19 @@ public class D7Parser extends CodeParser
 				unitName = getContent_R(_reduction.get(1).asReduction(), "");
 				// START KGU#407 2018-09-28: Enh. #420 - comments already here
 				String comment = this.retrieveComment(_reduction);
-				if (comment != null) {
+				if (comment != null && !comment.isBlank()) {
 					root.getComment().add(StringList.explode(comment, "\n"));
 				}
 				// END KGU#407 2018-09-28
 			}
 			else if (
+					// <ProcedureDecl> ::= <ProcHeading> <CallBody> <OptSemi>
 					ruleHead.equals("<ProcedureDecl>")
 					||
+					// <FunctionDecl> ::= <FuncHeading> <CallBody> <OptSemi>
 					ruleHead.equals("<FunctionDecl>")
 					||
+					// <MethodDecl> ::= <MethHeading> <CallBody> <OptSemi>
 					ruleHead.equals("<MethodDecl>")
 					)
 			{
@@ -1536,144 +1569,18 @@ public class D7Parser extends CodeParser
 				// END KGU#407 2017-06-22
 			}
 			else if (
-					 ruleHead.equals("<ProcHeading>")
-					 ||
-					 ruleHead.equals("<FuncHeading>")
-					 // START KGU#1073 2024-03-14: Issue #1084 Handle method definitions as well
-					 ||
-					 ruleHead.equals("<MethHeading>")
-					 // END KGU#1073 2024-03-14
+					ruleHead.equals("<ProcHeading>")
+					||
+					ruleHead.equals("<FuncHeading>")
+					// START KGU#1073 2024-03-15: Issue #1084 Handle method definitions as well
+					||
+					ruleHead.equals("<MethHeading>")
+					// END KGU#1073 2024-03-15
 					 )
 			{
-				content = "";
-				// Get the routine name
-				// START KGU#1073 2024-03-14: Issue #1084 Handle method definitions as well
-				//content = getContent_R(_reduction.get(1).asReduction(), content);
-				while (ruleId == RuleConstants.PROD_METHHEADING_SEMI
-						|| ruleId == RuleConstants.PROD_PROCHEADING
-						|| ruleId == RuleConstants.PROD_FUNCHEADING) {
-					// <MethHeading> ::= <MethHeading> <CallDirectives> ';'
-					// <ProcHeading> ::= <ProcHeading> <CallDirectives> <OptSemi>
-					// <FuncHeading> ::= <FuncHeading> <CallDirectives> <OptSemi>
-					// Just ignore the <CallDirectives> here (should ideally be put to the comments)
-					_reduction = _reduction.get(0).asReduction();
-					ruleHead = _reduction.getParent().getHead().toString();
-					ruleId = _reduction.getParent().getTableIndex();
+				if (!this.withinInterface) {
+					processRoutineHeading(_reduction);
 				}
-				boolean isFunc = ruleHead.equals("<FuncHeading>")
-						|| ruleId == RuleConstants.PROD_METHHEADING_CLASS_FUNCTION_DOT_COLON_SEMI
-						|| ruleId == RuleConstants.PROD_METHHEADING_FUNCTION_DOT_COLON_SEMI
-						|| ruleId == RuleConstants.PROD_METHHEADING_FUNCTION_DOT_SEMI;
-				int ixName = 1;
-				switch (ruleId) {
-				case RuleConstants.PROD_METHHEADING_CLASS_FUNCTION_DOT_COLON_SEMI:
-				case RuleConstants.PROD_METHHEADING_CLASS_PROCEDURE_DOT_SEMI:
-					ixName++;
-				case RuleConstants.PROD_METHHEADING_CONSTRUCTOR_DOT_SEMI:
-				case RuleConstants.PROD_METHHEADING_DESTRUCTOR_DOT_SEMI:
-				case RuleConstants.PROD_METHHEADING_FUNCTION_DOT_COLON_SEMI:
-				case RuleConstants.PROD_METHHEADING_FUNCTION_DOT_SEMI:
-				case RuleConstants.PROD_METHHEADING_PROCEDURE_DOT_SEMI:
-					ixName += 2;
-					String className = getContent_R(_reduction.get(ixName - 2).asReduction(), "");
-					root.addToIncludeList(className);
-					if (unitName != null) {
-						root.setNamespace(unitName + DEFAULT_GLOBAL_SUFFIX + "." + className);
-					}
-					else {
-						root.setNamespace(className);
-					}
-				}
-				content = getContent_R(_reduction.get(ixName).asReduction(), content);
-				// END KGU#1073 2024-03-14
-				
-				// START KGU#991 2021-10-03: Issue #991 Cache the exact name spelling to coerce the result variable
-				// START KGU#1073 2024-03-14: Issue #1084 Handle method definitions properly
-				//if (ruleHead.equals("<FuncHeading>")) {
-				if (isFunc) {
-				// END KGU#1073 2024-03-14
-					functionName = content.trim();
-					// This will be cleared at the end of <FunctionDecl>
-				}
-				// END KGU#991 2021-10-03
-				
-				// Check the parameter list
-				// START KGU#1073 2024-03-14: Issue #1084 Handle method definitions properly
-				//Reduction secReduc = _reduction.get(2).asReduction();
-				if (ruleId != RuleConstants.PROD_FUNCHEADING_FUNCTION_SEMI
-						&& ruleId != RuleConstants.PROD_METHHEADING_FUNCTION_DOT_SEMI) {
-					Reduction secReduc = _reduction.get(ixName + 1).asReduction();
-				// END KGU#1073 2024-03-14
-					if (secReduc.size() != 0)
-					{
-						// Append the parameter list
-						content = getContent_R(secReduc, content);
-					}
-					// START KGU#821 2020-03-08 Issue #833 - parameterless routine must get parentheses
-					else {
-						// No parameter list -> ensure parentheses
-						paramlessRoutineNames.add(content);
-						content += "()";
-					}
-					// END KGU#821 2020-03-08
-				
-					// START KGU#1073 2024-03-14: Issue #1084
-					//if (ruleHead.equals("<FuncHeading>"))
-					//{
-					//	secReduc = _reduction.get(4).asReduction();
-					if (isFunc)
-					{
-						secReduc = _reduction.get(ixName + 3).asReduction();
-					// END KGU#1073 2024-03-14
-						if (secReduc.size() > 0)
-						{
-							content += ": ";
-							content = getContent_R(secReduc,content);
-						}
-					}
-					
-				// START KGU#1073 2024-03-14: Issue #1084
-				}
-				else {
-					// No parameter list -> ensure parentheses
-					paramlessRoutineNames.add(content);
-					content += "()";
-					// No result type specification, either
-					isFunc = false;
-				}
-				// END KGU#1073 2024-03-14
-				
-				content = content.replace(";", "; ");
-				content = content.replace(";  ", "; ");
-				root.setText(translateContent(content));
-				root.setProgram(false);
-				// END KGU#1073 2024-03-14
-				// START KGU#194 2016-05-08: Bugfix #185 - be aware of unit context
-				if (unitName != null)
-				{
-					// START KGU#376 2017-09-22: Enh. #389 - the unit will be an includable now
-					//root.setComment("(UNIT " + unitName + ")");
-					root.addToIncludeList(unitName + DEFAULT_GLOBAL_SUFFIX);
-					// START KGU#586 2018-09-28: Bugfix #613 - register the established include relation
-					this.includerList.add(root);
-					// END KGU#586 2018-09-28
-					// END KGU#376 2017-09-22
-				}
-				// END KGU#194 2016-05-08
-				// START KGU#407 2017-06-20: Enh. #420 - comments already here
-				String comment = this.retrieveComment(_reduction);
-				// START KGU#860 2020-04-24: Bugfix #861/2 Precaution didn't work if newlines are contained
-				//if (comment != null && !root.getComment().contains(comment)) {
-				//	root.getComment().add(StringList.explode(comment, "\n"));
-				//}
-				if (comment != null && !comment.trim().isEmpty()) {
-					StringList commentLines = StringList.explode(comment, "\n");
-					if (root.getComment().indexOf(commentLines, 0, true) < 0) {
-						root.getComment().add(commentLines);
-					}
-				}
-				// END KGU#960 2020-06-20
-				// END KGU#407 2017-06-22
 			}
 			else if (
 					 ruleHead.equals("<WhileStatement>")
@@ -1983,8 +1890,153 @@ public class D7Parser extends CodeParser
 			
 		}
 	}
-	
+
 	// START KGU#1073 2024-03-14: Issue #1084
+	/**
+	 * Processes a the routine heading that is supposed to become the text of the
+	 * current {@link root}.<br/>
+	 * <b>Beware:</b> Shall not be invoked if the method header is just some kind of
+	 * forward declaration!
+	 * 
+	 * @param _reduction - the current routine header reduction, expected are:
+	 *    {@code <ProcHeading>}, {@code <FuncHeading>} and {@code <MethHeading>}
+	 * @throws ParserCancelled
+	 */
+	private void processRoutineHeading(Reduction _reduction) throws ParserCancelled {
+		String ruleHead = _reduction.getParent().getHead().toString();
+		int ruleId = _reduction.getParent().getTableIndex();
+		String content;
+		content = "";
+		// Get the routine name
+		// START KGU#1073 2024-03-14: Issue #1084 Handle method definitions as well
+		//content = getContent_R(_reduction.get(1).asReduction(), content);
+		while (ruleId == RuleConstants.PROD_METHHEADING_SEMI
+				|| ruleId == RuleConstants.PROD_PROCHEADING
+				|| ruleId == RuleConstants.PROD_FUNCHEADING) {
+			// <MethHeading> ::= <MethHeading> <CallDirectives> ';'
+			// <ProcHeading> ::= <ProcHeading> <CallDirectives> <OptSemi>
+			// <FuncHeading> ::= <FuncHeading> <CallDirectives> <OptSemi>
+			// Just ignore the <CallDirectives> here (should ideally be put to the comments)
+			_reduction = _reduction.get(0).asReduction();
+			ruleHead = _reduction.getParent().getHead().toString();
+			ruleId = _reduction.getParent().getTableIndex();
+		}
+		boolean isFunc = ruleHead.equals("<FuncHeading>")
+				|| ruleId == RuleConstants.PROD_METHHEADING_CLASS_FUNCTION_DOT_COLON_SEMI
+				|| ruleId == RuleConstants.PROD_METHHEADING_FUNCTION_DOT_COLON_SEMI
+				|| ruleId == RuleConstants.PROD_METHHEADING_FUNCTION_DOT_SEMI;
+		int ixName = 1;
+		switch (ruleId) {
+		case RuleConstants.PROD_METHHEADING_CLASS_FUNCTION_DOT_COLON_SEMI:
+		case RuleConstants.PROD_METHHEADING_CLASS_PROCEDURE_DOT_SEMI:
+			ixName++;
+		case RuleConstants.PROD_METHHEADING_CONSTRUCTOR_DOT_SEMI:
+		case RuleConstants.PROD_METHHEADING_DESTRUCTOR_DOT_SEMI:
+		case RuleConstants.PROD_METHHEADING_FUNCTION_DOT_COLON_SEMI:
+		case RuleConstants.PROD_METHHEADING_FUNCTION_DOT_SEMI:
+		case RuleConstants.PROD_METHHEADING_PROCEDURE_DOT_SEMI:
+			ixName += 2;
+			String className = getContent_R(_reduction.get(ixName - 2).asReduction(), "");
+			root.addToIncludeList(className);
+			if (unitName != null) {
+				root.setNamespace(unitName + "." + className);
+			}
+			else {
+				root.setNamespace(className);
+			}
+		}
+		content = getContent_R(_reduction.get(ixName).asReduction(), content);
+		// END KGU#1073 2024-03-14
+		
+		// START KGU#991 2021-10-03: Issue #991 Cache the exact name spelling to coerce the result variable
+		// START KGU#1073 2024-03-14: Issue #1084 Handle method definitions properly
+		//if (ruleHead.equals("<FuncHeading>")) {
+		if (isFunc) {
+		// END KGU#1073 2024-03-14
+			functionName = content.trim();
+			// This will be cleared at the end of <FunctionDecl>
+		}
+		// END KGU#991 2021-10-03
+		
+		// Check the parameter list
+		// START KGU#1073 2024-03-14: Issue #1084 Handle method definitions properly
+		//Reduction secReduc = _reduction.get(2).asReduction();
+		if (ruleId != RuleConstants.PROD_FUNCHEADING_FUNCTION_SEMI
+				&& ruleId != RuleConstants.PROD_METHHEADING_FUNCTION_DOT_SEMI) {
+			Reduction secReduc = _reduction.get(ixName + 1).asReduction();
+		// END KGU#1073 2024-03-14
+			if (secReduc.size() != 0)
+			{
+				// Append the parameter list
+				content = getContent_R(secReduc, content);
+			}
+			// START KGU#821 2020-03-08 Issue #833 - parameterless routine must get parentheses
+			else {
+				// No parameter list -> ensure parentheses
+				paramlessRoutineNames.addIfNew(content);
+				content += "()";
+			}
+			// END KGU#821 2020-03-08
+		
+			// START KGU#1073 2024-03-14: Issue #1084
+			//if (ruleHead.equals("<FuncHeading>"))
+			//{
+			//	secReduc = _reduction.get(4).asReduction();
+			if (isFunc)
+			{
+				secReduc = _reduction.get(ixName + 3).asReduction();
+			// END KGU#1073 2024-03-14
+				if (secReduc.size() > 0)
+				{
+					content += ": ";
+					content = getContent_R(secReduc,content);
+				}
+			}
+			
+		// START KGU#1073 2024-03-14: Issue #1084
+		}
+		else {
+			// No parameter list -> ensure parentheses
+			paramlessRoutineNames.addIfNew(content);
+			content += "()";
+			// No result type specification, either
+			isFunc = false;
+		}
+		// END KGU#1073 2024-03-14
+		
+		content = content.replace(";", "; ");
+		content = content.replace(";  ", "; ");
+		root.setText(translateContent(content));
+		root.setProgram(false);
+		// END KGU#1073 2024-03-14
+		// START KGU#194 2016-05-08: Bugfix #185 - be aware of unit context
+		if (unitName != null)
+		{
+			// START KGU#376 2017-09-22: Enh. #389 - the unit will be an includable now
+			//root.setComment("(UNIT " + unitName + ")");
+			root.addToIncludeList(unitName + DEFAULT_GLOBAL_SUFFIX);
+			// START KGU#586 2018-09-28: Bugfix #613 - register the established include relation
+			this.includerList.add(root);
+			// END KGU#586 2018-09-28
+			// END KGU#376 2017-09-22
+		}
+		// END KGU#194 2016-05-08
+		// START KGU#407 2017-06-20: Enh. #420 - comments already here
+		String comment = this.retrieveComment(_reduction);
+		// START KGU#860 2020-04-24: Bugfix #861/2 Precaution didn't work if newlines are contained
+		//if (comment != null && !root.getComment().contains(comment)) {
+		//	root.getComment().add(StringList.explode(comment, "\n"));
+		//}
+		if (comment != null && !comment.trim().isEmpty()) {
+			StringList commentLines = StringList.explode(comment, "\n");
+			if (root.getComment().indexOf(commentLines, 0, true) < 0) {
+				root.getComment().add(commentLines);
+			}
+		}
+		// END KGU#960 2020-06-20
+		// END KGU#407 2017-06-22
+	}
+	
 	/**
 	 * Extracts the members of a class definition with name {@code _className} from
 	 * the given {@code <ClassMemberList>} {@link Reduction} {@code _memberListRed},
@@ -1996,21 +2048,27 @@ public class D7Parser extends CodeParser
 	 * @param _ancestors - String containing the comma-separated list of parent classes
 	 * @param _memberListRed - the root reduction of the member definitions
 	 * @param _sb - a StringBuilder to gather the member definitions
-	 * @param _comment - the class comment
+	 * @param _comment - the extendable class comment
 	 * @throws ParserCancelled 
 	 */
 	private void buildClassDefinition(String _className, String _ancestors, Reduction _memberListRed,
-			StringBuilder _sb, String _comment) throws ParserCancelled {
+			StringBuilder _sb, StringList _comment) throws ParserCancelled {
 		// Does it contain members or parent includes??
 		boolean isNeeded = false;
 		StringList parents = StringList.explode(_ancestors.replace(" ", ""), ",");
 		Root classRoot = new Root();
+		if (!_ancestors.isBlank()) {
+			_comment.add("==== inherits from " + _ancestors);
+		}
 		classRoot.setInclude();
 		String qualifier = "";
 		boolean doesInclude = false;
 		// FIXME not sensible...
 		if (root.isInclude()) {
-			qualifier = root.getQualifiedName();
+			String rootName = root.getMethodName();
+			if (!rootName.equals(this.unitName) && !rootName.equals(unitName + DEFAULT_GLOBAL_SUFFIX)) {
+				qualifier = root.getQualifiedName();
+			}
 			classRoot.addToIncludeList(root);
 			isNeeded = true;
 			doesInclude = true;
@@ -2034,11 +2092,12 @@ public class D7Parser extends CodeParser
  		// Add temporary dummy loops in order to gather fields and method signatures
 		classRoot.children.addElement(new Forever());
 		classRoot.children.addElement(new Forever());
-		int ixFields = 0, ixMethods = 0;
+		//int ixFields = 0, ixMethods = 0;
 		classRoot.setText(_className);	
 		classRoot.setNamespace(qualifier);
 		
 		String accessLevel = "PUBLIC";
+		boolean hasConstructor = false, hasDestructor = false;
 		while (_memberListRed != null) {
 			int ruleId = _memberListRed.getParent().getTableIndex();
 			Reduction fieldListRed, methodListRed;
@@ -2058,10 +2117,13 @@ public class D7Parser extends CodeParser
 			if (fieldListRed.size() > 0) {
 				do {
 					// Get a field specification and add it to fieldDefs and classRoot.children.get(0)
-					Reduction fieldSpecRed = fieldListRed.get(0).asReduction();
+					Reduction fieldSpecRed = fieldListRed;
 					if (fieldListRed.getParent().getTableIndex() == RuleConstants.PROD_FIELDLIST2) {
 						fieldSpecRed = fieldListRed.get(1).asReduction();
 						fieldListRed = fieldListRed.get(0).asReduction();
+					}
+					else {
+						fieldListRed = null;
 					}
 					String fieldDef = getContent_R(fieldSpecRed, "").trim();
 					if (fieldDef.endsWith(";")) {
@@ -2073,7 +2135,7 @@ public class D7Parser extends CodeParser
 					Element decl = equipWithSourceComment(new Instruction("var " + fieldDef), fieldSpecRed);
 					decl.comment.add("FIELD in class " + classRoot.getQualifiedName());
 					decl.comment.add(accessLevel);
-					((Forever)classRoot.children.getElement(0)).getBody().insertElementAt(decl, ixFields);
+					((Forever)classRoot.children.getElement(0)).getBody().insertElementAt(decl, 0);
 				} while (fieldListRed != null);
 			}
 			
@@ -2103,6 +2165,8 @@ public class D7Parser extends CodeParser
 						ruleId = methSpecRed.getParent().getTableIndex();
 					case RuleConstants.PROD_PROCSPEC_PROCEDURE_SEMI:
 					case RuleConstants.PROD_FUNCSPEC_FUNCTION_COLON_SEMI:
+					case RuleConstants.PROD_CONSTRUCTORSPEC_CONSTRUCTOR_SEMI:
+					case RuleConstants.PROD_DESTRUCTORSPEC_DESTRUCTOR_SEMI:
 						if (ruleId == RuleConstants.PROD_FUNCSPEC_FUNCTION_COLON_SEMI) {
 							resultType = getContent_R(methSpecRed.get(4).asReduction(), ": ");
 						}
@@ -2111,43 +2175,51 @@ public class D7Parser extends CodeParser
 						String methName = getContent_R(methSpecRed.get(1).asReduction(), "");
 						String params = getContent_R(methSpecRed.get(2).asReduction(), "");
 						if (params.isBlank()) {
+							paramlessRoutineNames.addIfNew(methName);
 							params = "()";
 						}
-						if (keyword.equals("CONSTRUCTOR") || keyword.equals("DESTRUCTOR")) {
+						if (keyword.equals("CONSTRUCTOR")) {
+							hasConstructor = true;
 							methKind = keyword;
 						}
-						Element decl = equipWithSourceComment(new Call(methName + params + resultType), methSpecRed);
+						else if (keyword.equals("DESTRUCTOR")) {
+							hasDestructor = true;
+							methKind = keyword;
+						}
+						String signature = methName + params + resultType;
+						if (accessLevel.equals("PUBLIC")) {
+							_comment.add(keyword + " " + signature);
+						}
+						Element decl = equipWithSourceComment(new Call(signature), methSpecRed);
 						decl.comment.add(methKind + " for class " + classRoot.getQualifiedName());
 						decl.comment.add(accessLevel);
 						((Call)decl).isMethodDeclaration = true;
-						((Forever)classRoot.children.getElement(1)).getBody().insertElementAt(decl, ixMethods);
+						((Forever)classRoot.children.getElement(1)).getBody().insertElementAt(decl, 0);
 						break;
 					case RuleConstants.PROD_CLASSMETHODSPEC2:
 					case RuleConstants.PROD_CLASSMETHODSPEC3:
 					}
 				} while (methodListRed != null);
 			}
-			ixFields = ((Forever)classRoot.children.getElement(0)).getBody().getSize();
-			ixMethods = ((Forever)classRoot.children.getElement(1)).getBody().getSize();
+//			ixFields = ((Forever)classRoot.children.getElement(0)).getBody().getSize();
+//			ixMethods = ((Forever)classRoot.children.getElement(1)).getBody().getSize();
 			for (int i = fieldDefs.count() - 1; i >= 0; i--) {
 				_sb.append("\\n");
 				_sb.append(fieldDefs.get(i));
 			}
 		}
-		
+		if (!hasConstructor) {
+			this.paramlessRoutineNames.addIfNew("Create");
+		}
+		if (!hasDestructor) {
+			this.paramlessRoutineNames.addIfNew("Destroy");
+		}
 		dissolveDummyContainers(classRoot);
 		if (isNeeded || classRoot.children.getSize() > 0) {
 			this.addRoot(classRoot);
 			includables.add(classRoot);
-			if (!_comment.isBlank()) {
-				classRoot.setComment(_comment);
-			}
-			classRoot.getComment().insert("CLASS", 0);
-			if (!_ancestors.isBlank()) {
-				classRoot.comment.add("==== inherits from " + _ancestors);
-			}		
+			classRoot.setComment(_comment);
 		}
-		
 	}
 
 	/**
