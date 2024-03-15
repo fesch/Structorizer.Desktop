@@ -221,7 +221,7 @@ package lu.fisch.structorizer.executor;
  *                                      method getEvalErrorMessage() generated.
  *      Kay Gürtzig     2023-10-16      Bugfix #980/#1096: Simple but effective workaround for complicated C-style
  *                                      initialisation (declaration + assignment) case where setVar used to fail.
- *      Kay Gürtzig     2024-03-14      Bugfix #1139: Rethrow without specified expression wasn't correct
+ *      Kay Gürtzig     2024-03-14      Bugfix #1139: Catch now always saves message in a variable (possibly a generic one)
  *
  ******************************************************************************************************
  *
@@ -5885,22 +5885,9 @@ public class Executor implements Runnable
 		else if (element.isThrow()) {
 			try {
 				String expr = sl.get(0).trim().substring(CodeParser.getKeyword("preThrow").length()).trim();
-				// START KGU#1125 2024-03-14: Bugfix #1139 Try to identify a caught error
 				if (expr.isEmpty()) {
-					// Prepare rethrow if within the catch clause of a TRY element
-					Element parent = element.parent;
-					Try catcher = null;
-					while (parent != null && catcher == null) {
-						if (parent instanceof Subqueue && parent.parent instanceof Try
-								&& parent == ((Try)parent.parent).qCatch) {
-							catcher = (Try)parent.parent;
-							expr = catcher.getExceptionVarName(false);
-						}
-						parent = parent.parent;
-					}
-				}
-				// END KGU#1125 2024-03-14
-				if (expr.isEmpty()) {
+					// This message can be recognized by an enclosing TRY on stack unwinding.
+					// Hence if it is a rethrow then it will be replaced by the original error message. 
 					trouble = RETHROW_MESSAGE;
 				}
 				else {
@@ -8026,7 +8013,7 @@ public class Executor implements Runnable
 			String origTrouble = trouble;	// For the case of a rethrow
 			try {
 				this.updateVariableDisplay(true);
-				// START KGU#1125 2024-03-14: Bugfix #1139 Support anonymous rethrow
+				// START KGU#1125 2024-03-14: Bugfix #1139 Make the error visible
 				//String varName = element.getExceptionVarName();
 				String varName = element.getExceptionVarName(true);
 				// END KGU#1125 2024-03-14
