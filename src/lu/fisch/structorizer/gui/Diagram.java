@@ -245,6 +245,8 @@ package lu.fisch.structorizer.gui;
  *                                      the default text for new Elements
  *      Kay Gürtzig     2024-03-07      Issue #1129: Restrict the number of lines to show in a warning popup
  *      Kay Gürtzig     2024-03-15      Bugfix #1140: Transmutation conditions were too strict for method calls
+ *      Kay Gürtzig     2024-03-16      Issue #1138: code import and arrangement loading now in serial mode to
+ *                                      allow the user to suppress Arranger collision warnings (new serial aspect)
  *
  ******************************************************************************************************
  *
@@ -427,12 +429,18 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	};
 
 	public enum SerialDecisionAspect {
-		SERIAL_SAVE, SERIAL_OVERWRITE, SERIAL_GROUP_SAVE
+		SERIAL_SAVE, SERIAL_OVERWRITE, SERIAL_GROUP_SAVE,
+		// START KGU#1124 2024-03-15: Bugfix #1138 new serial aspect
+		SERIAL_ARRANGE,
+		// END KGU#1124 2024-03-15
 	};
 	private static final SerialDecisionStatus[] serialDecisions = {
 			SerialDecisionStatus.INDIVIDUAL,	// SERIAL_SAVE
 			SerialDecisionStatus.INDIVIDUAL,	// SERIAL_OVERWRITE
 			SerialDecisionStatus.INDIVIDUAL,	// SERIAL_GROUP_SAVE
+			// START KGU#1124 2024-03-15: Bugfix #1138 new serial aspect
+			SerialDecisionStatus.INDIVIDUAL,	// SERIAL_ARRANGE
+			// END KGU#1124 2024-03-15
 	}; 
 	/**
 	 * Enters a serial action - thus allowing general decisions to certain
@@ -2682,10 +2690,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			//errorMsg = arr.loadArrangement((Mainform)this.getFrame(), arrFile);
 			Cursor origCursor = getCursor();
 			try {
+				// START KGU#1124 2024-03-16: Issue #1138 Don't make collision messages a nuisance
+				startSerialMode();
+				// END KGU#1124 2024-03-16
 				setCursor(new Cursor(Cursor.WAIT_CURSOR));	// Possibly this should have done Surface?
 				errorMsg = arr.loadArrangement((Mainform) this.getFrame(), arrFile);
 			} finally {
 				setCursor(origCursor);
+				// START KGU#1124 2024-03-16: Issue #1138 Don't make collision messages a nuisance
+				endSerialMode();
+				// END KGU#1124 2024-03-16
 			}
 			// END KGU#901 2020-12-29
 		}

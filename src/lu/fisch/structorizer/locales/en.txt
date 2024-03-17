@@ -138,6 +138,7 @@
  *      Kay Gürtzig     2023-10-16      Issue #980/#1096: New messages for declaration syntax check (error31_*)
  *      Kay Gürtzig     2024-03-09      Issue #1131: Messages for new PluginOptionDialog entry dissect_anon_inner_class
  *      Kay Gürtzig     2024-03-12      Bugfix #1136: New PluginOptionDialog import option separate_angular_brackets
+ *      Kay Gürtzig     2024-03-17      Issue #1138: New / modified conflict messages for Surface
  *
  ******************************************************************************************************
  *
@@ -1450,9 +1451,14 @@ Surface.msgNoArrFile.text=No Arranger file found
 Surface.msgDefectiveArr.text=Defective arrangement.
 Surface.msgDefectiveArrz.text=Defective portable arrangement file.
 Surface.titleDiagramConflict.text=Diagram conflict
-Surface.msgInsertionConflict.0.text=There is another version of diagram "%2",\nat least one of them has unsaved changes.
-Surface.msgInsertionConflict.1.text=There is an equivalent copy of diagram "%1"\nwith different path "%2".
-Surface.msgInsertionConflict.2.text=There is a differing diagram with signature "%1"\nand path "%2".
+Surface.msgInsertionConflict.text=There are differing arranged diagrams for "%":
+Surface.titleConflContentDiff.text=Content
+Surface.titleConflPathDiff.text=Path
+Surface.titleConflSignature.text=Fully qualified signature
+Surface.titleConflPath.text=File path
+Surface.titleConflGroups.text=Groups
+Surfcae.msgOk.text=OK
+Surface.msgNoFurtherConflicts.text=Don't show further conflicts
 Surface.msgOverwriteFile.text=Overwrite existing file "%"?
 Surface.msgConfirmOverwrite.text=Confirm Overwrite
 Surface.msgTooltipSelectThis.text=Select %1 (+shift: add it to the selection)%2 and bring it up to top.

@@ -133,6 +133,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2021-02-24      Enh. #410: Root search methods enhanced by namespace similarity ranking
  *      Kay Gürtzig     2021-03-01      Enh. #410: Temporary pool notification suppression introduced
  *      Kay Gürtzig     2022-06-01      Enh. #1035: New method getGroup(String)
+ *      Kay Gürtzig     2024-03-16      Issue #1138: Provide a better and more usable diagram collision information
  *
  ******************************************************************************************************
  *
@@ -186,12 +187,15 @@ package lu.fisch.structorizer.arranger;
  *
  ******************************************************************************************************///
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.EventQueue;
+import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -244,8 +248,17 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileFilter;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
+import javax.swing.text.JTextComponent;
 
 import lu.fisch.graphics.Rect;
 import lu.fisch.structorizer.archivar.Archivar;
@@ -311,6 +324,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	private static final int MIN_WIDTH = 80;
 	/** Empirical height estimate for an empty diagram */ 
 	private static final int MIN_HEIGHT = 118;
+	
+	/** Symbols for the degree of content difference on diagram comparison for equivalence levels 3..6 */
+	private static final String[] SYMBOLS_CONTENT_DIFF = {"*=*", "=", "≠", "?"};
+	/** Symbols for the path difference on diagram comparison for equivalence levels 3..6 */
+	private static final String[] SYMBOLS_PATH_DIFF = {"=", "≠", "≠", "≠"};
 
 	/** Current/Last actual mouse coordinates on dragging diagrams (null while nothing being dragged) */
 	private Point dragPoint = null;
@@ -371,11 +389,21 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	// END KGU#289 2016-11-14
 	// START KGU#312 2016-12-29: Enh. #315 more meticulous equivalence analysis on insertion
 	public final LangTextHolder titleDiagramConflict = new LangTextHolder("Diagram conflict");
-	public final LangTextHolder[] msgInsertionConflict = {
-			new LangTextHolder("There is another version of diagram \"%2\",\nat least one of them has unsaved changes."),
-			new LangTextHolder("There is an equivalent copy of diagram \"%1\"\nwith different path \"%2\"."),
-			new LangTextHolder("There is a differing diagram with signature \"%1\"\nand path \"%2\".")
-	};
+	// START KGU#1124 2024-03-16: Issue #1138 More sensible conflict information
+	//public final LangTextHolder[] msgInsertionConflict = {
+	//		new LangTextHolder("There is another version of diagram \"%2\",\nat least one of them has unsaved changes."),
+	//		new LangTextHolder("There is an equivalent copy of diagram \"%1\"\nwith different path \"%2\"."),
+	//		new LangTextHolder("There is a differing diagram with signature \"%1\"\nand path \"%2\".")
+	//};
+	public final LangTextHolder msgInsertionConflict = new LangTextHolder("There are differing arranged diagrams for \"%\":");
+	public final LangTextHolder titleConflContentDiff = new LangTextHolder("Content");
+	public final LangTextHolder titleConflPathDiff = new LangTextHolder("Path");
+	public final LangTextHolder titleConflSignature = new LangTextHolder("Fully qualified signature");
+	public final LangTextHolder titleConflPath = new LangTextHolder("File path");
+	public final LangTextHolder titleConflGroups = new LangTextHolder("Groups");
+	public final LangTextHolder msgOk = new LangTextHolder("OK");
+	public final LangTextHolder msgNoFurtherConflicts = new LangTextHolder("Don't show further conflicts");
+	// END KGU#1124 2024-03-16
 	// END KGU#312 2016-12-29
 	// START KGU#408 2021-03-01: Enh. ##410 Again monstruous contention
 	private boolean notifications_enabled = true;
@@ -4130,8 +4158,14 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			diagramList = this.nameMap.get(root.getMethodName());
 		}
 		// END KGU#624 2018-12-26
+		// START KGU#1124 2024-03-15: Issue #1138 large imports could provoke an n² message nuisance
+		Vector<String[]> collisionInfo = null;
+		// END KGU#1124 2024-03-14
 		if (diagramList != null) {
-			for(int d = 0; owner == null && d < diagramList.size(); d++)
+			// START KGU#1124 2024-03-16: Issue #1138 get a complete collision set
+			//for(int d = 0; owner == null && d < diagramList.size(); d++)
+			for(int d = 0; (owner == null || warnLevel2andAbove) && d < diagramList.size(); d++)
+			// END KGU#1124 2024-03-16
 			{
 				Diagram diagram = diagramList.get(d);
 				// START KGU#312 2016-12-29: Enh. #315
@@ -4150,29 +4184,189 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 						if (fName.trim().isEmpty()) {
 							fName = "[" + diagram.root.proposeFileName() + "]";
 						}
-						String message = msgInsertionConflict[resemblance-3].getText().
-								replace("%1", root.getSignatureString(false, false)).
-								replace("%2", fName);
 						// START KGU#1124 2024-03-13: Issue #1138 Just raise the conflict viewer
+						//String message = msgInsertionConflict[resemblance-3].getText().
+						//		replace("%1", root.getSignatureString(false, false)).
+						//		replace("%2", fName);
 						//JOptionPane.showMessageDialog(this.getParent(), message,
 						//		this.titleDiagramConflict.getText(),
 						//		JOptionPane.WARNING_MESSAGE);
-						// FIXME temporary workaround
-						System.out.println(message);
+						if (collisionInfo == null) {
+							collisionInfo = new Vector<String[]>();
+						}
+						collisionInfo.add(new String[] {
+								Integer.toString(collisionInfo.size() + 1),
+								SYMBOLS_CONTENT_DIFF[resemblance-3],
+								SYMBOLS_PATH_DIFF[resemblance-3],
+								diagram.root.getSignatureString(false, true),
+								fName,
+								new StringList(diagram.getGroupNames()).concatenate(", ")
+						});
 						// END KGU#1124 2024-03-13
 					}
 					if (resemblance <= equivalenceLevel)
 					{
-						// If we leave here then potential conflicts won't occur
-						owner = diagram;	// Will leave the loop
+						owner = diagram;
 					}
 				}
 				// END KGU#312 2016-12-29
 			}
 		}
+		// START KGU#1124 2024-03-15: Issue #1138
+		if (collisionInfo != null
+				&& (!lu.fisch.structorizer.gui.Diagram.isInSerialMode()
+						|| lu.fisch.structorizer.gui.Diagram.getSerialDecision(
+								lu.fisch.structorizer.gui.Diagram.SerialDecisionAspect.SERIAL_ARRANGE) != 
+								lu.fisch.structorizer.gui.Diagram.SerialDecisionStatus.NO_TO_ALL)) {
+			boolean waived = showArrangementCollisions(root, collisionInfo);
+			if (waived) {
+				lu.fisch.structorizer.gui.Diagram.setSerialDecision(
+						lu.fisch.structorizer.gui.Diagram.SerialDecisionAspect.SERIAL_ARRANGE,
+						false);
+			}
+		}
+		// END KGU#1134 2024-03-15
 		return owner;
 	}
 	// END KGU#2 2015-11-19
+	
+	// START KGU#1124 2024-03-15: Issue #1138 Present colision info in a more useful way
+	/**
+	 * Presents the passed-in set of collision information for the given {@link}
+	 * @param root - the compared Nassi-Shneiderman diagram
+	 * @param collisionInfo - a list of string arrays containing information about
+	 *    similar diagrams
+	 * @return {@code true} if the 
+	 */
+	private boolean showArrangementCollisions(Root root, Vector<String[]> collisionInfo) {
+		JPanel pnColl = new JPanel();
+		JTable tblColl = new JTable();
+		Object[][] content = collisionInfo.toArray(new Object[collisionInfo.size()][6]);
+		tblColl.setModel(new javax.swing.table.DefaultTableModel(
+				content,
+				new String [] {
+						"#",
+						"Δ " + titleConflContentDiff.getText(),
+						"Δ " + titleConflPathDiff.getText(),
+						titleConflSignature.getText(),
+						titleConflPath.getText(),
+						titleConflGroups.getText()
+				}
+				) {
+			@Override
+			public boolean isCellEditable(int row, int column)
+			{
+				// Make the table non-editable (though it wouldn't cause harm)
+				return false;
+			}
+		});
+		tblColl.setGridColor(Color.LIGHT_GRAY);
+		tblColl.setShowGrid(true);
+		tblColl.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+		//scrTable.setViewportView(tblColl);
+		JScrollPane scrTable = new JScrollPane(tblColl);
+		//scrTable.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		pnColl.setLayout(new BorderLayout(5, 5));
+		pnColl.add(new JLabel(msgInsertionConflict.getText()
+				.replace("%", root.getSignatureString(false, true))), BorderLayout.NORTH);
+		pnColl.add(scrTable, BorderLayout.CENTER);
+		// Work out the column widths
+		int colCount = tblColl.getColumnCount();
+		int columnWidth[] = new int[colCount];
+		for (int i = 0; i < colCount; i++) {
+			columnWidth[i] = getMaxColumnWidth(tblColl, i, true, 10);
+		}
+		// Now set the preferred column widths accordingly
+		TableColumnModel tableColumnModel = tblColl.getColumnModel();
+		for (int i = 0; i < colCount; i++) {
+			TableColumn tableColumn = tableColumnModel.getColumn(i);
+			tableColumn.setPreferredWidth(columnWidth[i]);
+		}
+		int stdHeight = tblColl.getRowHeight();
+		double scale = Double.parseDouble(Ini.getInstance().getProperty("scaleFactor", "1"));
+		if (scale > 1) {
+			tblColl.setRowHeight((int)(stdHeight * scale));
+		}
+		
+		Object[] options;
+		if (lu.fisch.structorizer.gui.Diagram.isInSerialMode()) {
+			options = new String[] {this.msgOk.getText(), msgNoFurtherConflicts.getText()};
+		}
+		else {
+			options = new String[] {this.msgOk.getText()};
+		}
+		int answer = JOptionPane.showOptionDialog(this.getParent(),
+				pnColl,
+				this.titleDiagramConflict.getText(),
+				JOptionPane.DEFAULT_OPTION,
+				JOptionPane.WARNING_MESSAGE, null, options, null);
+		return answer > 0;
+	}
+	
+	/**
+	 * Determines the required width for the specified column of the given
+	 * {@link JTable} {@code aTable} according to the column contents.
+	 * (Taken from https://wiki.byte-welt.net/wiki/Breite_von_Tabellenspalten_automatisch_am_Zelleninhalt_anpassen)
+	 * 
+	 * @param aTable - the JTable to resize the columns on
+	 * @param columnNo - the number of the column to be estimated
+	 * @param includeColumnHeaderWidth - use the column header width as a minimum width?
+	 * @param columnPadding - the number of extra pixels at the end of each column
+	 * @returns The column width required to show all rows of this column in full length
+	 */
+	private static int getMaxColumnWidth(JTable aTable, int columnNo,
+			boolean includeColumnHeaderWidth,
+			int columnPadding) {
+		// FIXME: This ought to be a method on a JTable subclass
+		TableColumn column = aTable.getColumnModel().getColumn(columnNo);
+		Component comp = null;
+		int maxWidth = 0;
+		if (includeColumnHeaderWidth) {
+			TableCellRenderer headerRenderer = column.getHeaderRenderer();
+			if (headerRenderer != null) {
+				comp = headerRenderer.getTableCellRendererComponent(aTable, column.getHeaderValue(), false, false, 0, columnNo);
+				if (comp instanceof JTextComponent) {
+					JTextComponent jtextComp = (JTextComponent) comp;
+					String text = jtextComp.getText();
+					Font font = jtextComp.getFont();
+					FontMetrics fontMetrics = jtextComp.getFontMetrics(font);
+					maxWidth = SwingUtilities.computeStringWidth(fontMetrics, text);
+				} else {
+					maxWidth = comp.getPreferredSize().width;
+				}
+			} else {
+				try {
+					String headerText = (String) column.getHeaderValue();
+					JLabel defaultLabel = new JLabel(headerText);
+					Font font = defaultLabel.getFont();
+					FontMetrics fontMetrics = defaultLabel.getFontMetrics(font);
+					maxWidth = SwingUtilities.computeStringWidth(fontMetrics, headerText);
+				} catch (final ClassCastException ce) {
+					// Can't work out the header column width..
+					maxWidth = 0;
+				}
+			}
+		}
+		TableCellRenderer tableCellRenderer;
+		int cellWidth = 0;
+		for (int i = 0; i < aTable.getRowCount(); i++) {
+			tableCellRenderer = aTable.getCellRenderer(i, columnNo);
+			comp = tableCellRenderer.getTableCellRendererComponent(aTable, aTable.getValueAt(i, columnNo), false, false, i, columnNo);
+			if (comp instanceof JTextComponent) {
+				JTextComponent jtextComp = (JTextComponent) comp;
+				String text = jtextComp.getText();
+				Font font = jtextComp.getFont();
+				FontMetrics fontMetrics = jtextComp.getFontMetrics(font);
+				int textWidth = SwingUtilities.computeStringWidth(fontMetrics, text);
+				maxWidth = Math.max(maxWidth, textWidth);
+			} else {
+				cellWidth = comp.getPreferredSize().width;
+				maxWidth = Math.max(maxWidth, cellWidth);
+			}
+		}
+		return (maxWidth + columnPadding);
+	}
+	// END KGU#1124 2024-0315
 
 	// START KGU#48 2015-10-17: As soon as a new NSD was loaded by some Mainform instance, Surface had lost track
 	/* (non-Javadoc)

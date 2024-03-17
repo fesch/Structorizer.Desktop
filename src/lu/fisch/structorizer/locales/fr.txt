@@ -64,7 +64,8 @@
  *      GitHub/tph002   2022-08-14      Majority of texts translated or corrected, respectively
  *      Kay Gürtzig     2023-08-01      Enh. #1082: Function name included in messages Menu.error13_* *
  *      Kay Gürtzig     2023-10-07      Issue #311: Menu reorganisation (menuDiagram split)
- *      Kay Gürtzig     2023-10-13      Issue #980: New messages for declaration syntax check (error31_*) 
+ *      Kay Gürtzig     2023-10-13      Issue #980: New messages for declaration syntax check (error31_*)
+ *      Kay Gürtzig     2024-03-17      Issue #1138: New / modified conflict messages for Surface
  *
  ******************************************************************************************************
  *
@@ -1365,9 +1366,14 @@ Surface.msgNoArrFile.text=Aucun fichier d'Arrangeur trouvé
 Surface.msgDefectiveArr.text=Arrangement défaillant.
 Surface.msgDefectiveArrz.text=Fichier d'arrangement portable défaillant.
 Surface.titleDiagramConflict.text=Conflit de diagramme
-Surface.msgInsertionConflict.0.text=il existe une autre version du diagramme "%2",\nau moins une d'entre elles a des modifications non sauvegardées.
-Surface.msgInsertionConflict.1.text=il existe une copie équivalente du diagramme "%1"\navec un chemin différent "%2".
-Surface.msgInsertionConflict.2.text=Il existe un diagramme différent avec la signature "%1"\net le chemin "%2".
+Surface.msgInsertionConflict.text=Il existe autres versiones de diagrammes avec signature comme "%".
+Surface.titleConflContentDiff.text=Content
+Surface.titleConflPathDiff.text=Chemin
+Surface.titleConflSignature.text=Signature qualifiée
+Surface.titleConflPath.text=Chemin du fichier
+Surface.titleConflGroups.text=Groupes
+Surfcae.msgOk.text=OK
+Surface.msgNoFurtherConflicts.text=Ne pas montrer autres conflites
 Surface.msgOverwriteFile.text=Écraser le fichier existant "%"?
 Surface.msgConfirmOverwrite.text=Confirmer l'écrasement
 Surface.msgTooltipSelectThis.text=Sélectionner %1 (+shift: l'ajouter à la sélection)%2 et l'amener en haut.
