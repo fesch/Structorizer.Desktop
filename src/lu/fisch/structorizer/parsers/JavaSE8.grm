@@ -59,7 +59,8 @@
 ! V 0.6     2024-03-08  Kay Gürtzig     {String Char} revised (backslash handling)
 ! V 0.7     2024-03-11  Kay Gürtzig     Missing hx escape sequence in StringLiteral enabled,
 !                                       Processing conversion function str disabled (impeded 'str' identifiers)
-! V 0.8     2024-03-12  Kay Gürtzig     Identifier syntax extended to {All Latin} (as Java accepts them in fact)
+! V 0.8     2024-03-17  Kay Gürtzig     Identifier syntax extended to {All Latin} (as Java accepts them in fact),
+!                                       <AssertStatement> introduced
 ! -----------------------------------------------------------------------
 
 "Name"    = 'Java SE 8'
@@ -668,6 +669,7 @@ Comment Line = '//'
          |  <SynchronizedStatement>
          |  <ThrowStatement>
          |  <TryStatement>
+         |  <AssertStatement>
 
 <EmptyStatement> 
         ::= ';'
@@ -831,6 +833,13 @@ Comment Line = '//'
 
 <Finally> 
         ::= 'finally' <Block>
+         
+<AssertStatement>
+        ::= 'assert' <Expression> <AssertMessageOpt>
+         
+<AssertMessageOpt>
+        ::= ':' <Expression>
+         |
 
 <ResourceSpecification>
         ::= '(' <Resources> ')'

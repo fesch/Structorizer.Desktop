@@ -215,6 +215,7 @@ Current development version 3.32-18 (2024-03-17)
 - 18: Bugfix #1139 TRY elements without catch variable caused defects <2>
 - 18: Bugfix #1140 Transmutation didn't work for CALLs with method syntax <2>
 - 18: Bugfix #1141 Stack overflow risk on build phase of code import <2>
+- 18: Bugfix #1142 Java import failed on "assert" statements.
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>
