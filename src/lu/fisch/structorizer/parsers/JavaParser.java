@@ -1083,6 +1083,7 @@ public class JavaParser extends CodeParser
 		 * beyond the power of our grammar to solve this.
 		 */
 		final Matcher castMatcher = Pattern.compile(".*[>]\\s*[)].*").matcher("");
+		final Matcher arrayDeclMatcher = Pattern.compile(".*[>]\\s*\\[\\s*\\].*").matcher("");
 		
 		// START KGU#1122 2024-03-12: Bugfix #1136 New option to separate angular type parameter brackets
 		boolean separateAngularBrackets = (Boolean)this.getPluginOption("separate_angular_brackets", true);
@@ -1149,7 +1150,9 @@ public class JavaParser extends CodeParser
 					}
 					// START KGU#1122 2024-03-12: Bugfix #1136
 					castMatcher.reset(strLine);
-					if (castMatcher.matches() || strLine.contains(">>") || strLine.contains("?>")) {
+					arrayDeclMatcher.reset(strLine);
+					if (castMatcher.matches() || arrayDeclMatcher.matches()
+							|| strLine.contains(">>") || strLine.contains("?>")) {
 						boolean replaced = false;
 						StringList tokens = Element.splitLexically(strLine, true);
 						// Initially decompose all ">>" tokens into ">", ">" ...
@@ -1174,8 +1177,8 @@ public class JavaParser extends CodeParser
 							}
 						}
 						
-						// Now we first look for type casts with type arguments and modify them
-						replaced = transformCastsWithTypeParameters(tokens) || replaced;
+						// Now we first look for type casts or array specs with type arguments and modify them
+						replaced = transformParameterisedTypes(tokens) || replaced;
 						// Second, we look for clashing closing angular brackets.
 						if (separateAngularBrackets) {
 							replaced = separateAngularTypeBrackets(tokens) || replaced;
@@ -1210,21 +1213,24 @@ public class JavaParser extends CodeParser
 		return interm;
 	}
 
-	// START KGU#1122 2024-03-12: Bugfix #1136 Methods to solve angular bracket trouble
+	// START KGU#1122 2024-03-17: Bugfix #1136 Methods to solve angular bracket trouble
 	/**
 	 * Derives a single pseudo identifier from parameterized types with casting
-	 * parentheses, e.g.<br/>
-	 * {@code (Vector<Integer>)expression} &rarr; {@code (VectorííIntegerìì)expression}
+	 * parentheses or in array specifications, e.g.<br/>
+	 * {@code (Vector<Integer>)expression} &rarr; {@code (VectorííIntegerìì)expression}<br/>
+	 * {@code JComboBox<String>[]} &rarr; {@code JComboBoxííIntegerìì[]}<br/>
+	 * If a replacement takes place adds its backward mapping to {@link CodeParser#replacedIds}.
 	 * 
 	 * @param tokens - a tokenized line to be transformed in the described way
 	 *    at all matching places. May be modified (then returns {@code true}).
-	 * @return {@code true} if {@code tokens} was modified, {@code false} otherwise.
+	 * @return {@code true} if {@code tokens} was modified and a related entry is member
+	 *    of {@link CodeParser#replacedIds}, {@code false} otherwise.
 	 */
-	private boolean transformCastsWithTypeParameters(StringList tokens) {
+	private boolean transformParameterisedTypes(StringList tokens) {
 		boolean replaced = false;
 		int posAngBr = -1;
 		while ((posAngBr = tokens.indexOf(">", posAngBr+1)) >= 0) {
-			// Go ahead and look for a closing parenthesis...
+			// Go ahead and look for a closing parenthesis or an opening bracket...
 			int posPar1 = posAngBr + 1;
 			while (posPar1 < tokens.count() && tokens.get(posPar1).isBlank()) posPar1++;
 			/* If there is a closing parenthesis then we walk backwards along
@@ -1236,7 +1242,8 @@ public class JavaParser extends CodeParser
 			 * are also necessary. The major question here is, how precise our syntax
 			 * check has to be.
 			 */
-			if (posPar1 < tokens.count() && tokens.get(posPar1).equals(")")) {
+			boolean isCast = false;
+			if (posPar1 < tokens.count() && ((isCast = tokens.get(posPar1).equals(")")) || tokens.get(posPar1).equals("["))) {
 				/* First make sure the construct is complete within this line
 				 * We must only find identifiers, '.', ',', '[]', '<', and '>'
 				 * (and possibly comments!?) between the parentheses...
@@ -1245,6 +1252,7 @@ public class JavaParser extends CodeParser
 				 */
 				int posPar0 = posAngBr - 1;
 				int angCount = 1;
+				int posId = -1;
 				while (posPar0 >= 0 && !tokens.get(posPar0).equals("(") && angCount >= 0) {
 					String token = tokens.get(posPar0);
 					if (token.isBlank()) {
@@ -1252,12 +1260,23 @@ public class JavaParser extends CodeParser
 						tokens.remove(posPar0);
 						posPar1--;
 						posAngBr--;
+						posId--;
 					}
 					else if (token.equals(">")) {
 						angCount++;
 					}
 					else if (token.equals("<")) {
 						angCount--;
+						// There must be an identifier before the opening '<'
+						posId = posPar0 - 1;
+						while (angCount >= 0 && posId >= 0 && tokens.get(posId).isBlank()) posId--;
+						if (posId < 0 || !Function.testIdentifier(tokens.get(posId), false, "$")) {
+							break;
+						}
+						else if (!isCast && angCount == 0) {
+							posPar0 = posId;
+							break;
+						}
 					}
 					else if (!Function.testIdentifier(token, false, "$")
 							&& !(token.length() == 1 && "[],.".contains(token))) {
@@ -1265,22 +1284,26 @@ public class JavaParser extends CodeParser
 					}
 					posPar0--;
 				}
-				if (posPar0 >= 0 && tokens.get(posPar0).equals("(") && angCount == 0
-						&& isTypeSpecificationList(tokens.subSequence(posPar0+1, posPar1))) {
+				if (posPar0 >= 0 && (!isCast || tokens.get(posPar0).equals("(")) && angCount == 0
+						&& isTypeSpecificationList(tokens.subSequence(posId, posAngBr+1))) {
+					String origSequence = tokens.concatenate("", posId, posAngBr+1);
 					// We should have a dense token sequence now and produce a pseudo-identifier
 					tokens.replaceAllBetween("<", ANG_BRACK_SUBST[0], true, posPar0+1, posPar1);
 					tokens.replaceAllBetween(">", ANG_BRACK_SUBST[2], true, posPar0+1, posPar1);
 					tokens.replaceAllBetween(",", ANG_BRACK_SUBST[1], true, posPar0+1, posPar1);
 					tokens.replaceAllBetween("[", ANG_BRACK_SUBST[3], true, posPar0+1, posPar1);
 					tokens.replaceAllBetween("]", ANG_BRACK_SUBST[4], true, posPar0+1, posPar1);
-					// (The operator symbols will be restored after the parsing)
+					// Ensure the operator symbols will be restored after the parsing
+					this.replacedIds.putIfAbsent(tokens.concatenate("", posId, posAngBr+1), origSequence);
 					replaced = true;
 				}
 			}
 		}
 		return replaced;
 	}
+	// END KGU#1122 2024-03-17
 
+	// START KGU#1122 2024-03-12: Bugfix #1136 Methods to solve angular bracket trouble
 	/**
 	 * Tries to separate closing angular brackets of nested type parmeters as
 	 * in {@code HashMap<String, ArrayList<String[]>>} within the given token
@@ -1329,12 +1352,12 @@ public class JavaParser extends CodeParser
 	 * Checks the syntax of (possibly nested) type specifications like
 	 * {@code HashMap<String, Vector<String[]>>}
 	 * 
-	 * @param subSequence - token sequence assumed to specify a (possibly parameterized)
-	 *    type.
+	 * @param subSequence - token sequence assumed to specify a (possibly
+	 *    parameterized) type.
 	 * @return
 	 */
 	private boolean isTypeSpecificationList(StringList subSequence) {
-		// TODO Auto-generated method stub
+		// TODO (by now the parsing in transformParameterisedTypes() was good enough)
 		//System.out.println("(Not) checking type list \"" + subSequence + "\" in JavaParser.isTypeSpecification()");
 		return true;
 	}
@@ -3907,8 +3930,9 @@ public class JavaParser extends CodeParser
 	/**
 	 * Convenience method for the string content retrieval from a {@link Token}
 	 * that may be either represent a content symbol or a {@link Reduction}.
+	 * 
 	 * @param _token - the {@link Token} the content is to be appended to
-	 *        {@code _content}
+	 *    {@code _content}
 	 * @return the content string (may be empty in case of noise)
 	 * @throws ParserCancelled
 	 */
@@ -3918,12 +3942,13 @@ public class JavaParser extends CodeParser
 			return getContent_R(_token.asReduction(), "");
 		}
 		else if (_token.getType() == SymbolType.CONTENT) {
-			// START KGU#1122 2024-03-12: Bugfix #1136 revert preprocessing substitutions
+			// START KGU#1122 2024-03-17: Bugfix #1136 revert preprocessing substitutions
 			//return _token.asString();
-			return _token.asString().replace(ANG_BRACK_SUBST[0], "<").replace(ANG_BRACK_SUBST[2], ">")
-					.replace(ANG_BRACK_SUBST[1], ",")
-					.replace(ANG_BRACK_SUBST[3], "[").replace(ANG_BRACK_SUBST[4], "]");
-			// END KGU#1122 2024-03-12
+			//return _token.asString().replace(ANG_BRACK_SUBST[0], "<").replace(ANG_BRACK_SUBST[2], ">")
+			//		.replace(ANG_BRACK_SUBST[1], ",")
+			//		.replace(ANG_BRACK_SUBST[3], "[").replace(ANG_BRACK_SUBST[4], "]");
+			return undoIdReplacements(_token.asString());
+			// END KGU#1122 2024-03-17
 		}
 		return "";
 	}
@@ -4041,12 +4066,7 @@ public class JavaParser extends CodeParser
 			/* -------- End code example for text retrieval and translation -------- */
 		}
 		
-		// START KGU#1122 2024-03-12: Bugfix #1136 revert preprocessing substitutions
-		//return _content;
-		return _content.replace(ANG_BRACK_SUBST[0], "<").replace(ANG_BRACK_SUBST[2], ">")
-				.replace(ANG_BRACK_SUBST[1], ",")
-				.replace(ANG_BRACK_SUBST[3], "[").replace(ANG_BRACK_SUBST[4], "]");
-		// END KGU#1122 2024-03-12
+		return _content;
 	}
 
 	//------------------------- Postprocessor ---------------------------

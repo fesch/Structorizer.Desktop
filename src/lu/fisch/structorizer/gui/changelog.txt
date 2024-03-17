@@ -8,17 +8,17 @@ Legend:
 Known issues (also see https://github.com/fesch/Structorizer.Desktop/issues):
 - Copying diagram images to the clipboard may fail with some OS/JRE combination
   (#685), on Windows the image format may be JPG instead of PNG.
-- Pascal import does not cope with unit name aliases.
+- Pascal import does not cope with unit name aliases. ObjectPascal code should
+  be tolerated by the parser but may produce nonsense from the OOP parts.
 - COBOL import may fail if certain single-letter identifiers are used (rename
   them!), it does not cope with some statement variants and variable
   redefinitions, either.
-- Java import may not cope with type arguments in array element types. The
-  import option to mitigate ambiguities between closing angular brackets (in
+- The import option to mitigate ambiguities between closing angular brackets (in
   nested type arguments) and shift operators >> may fail in some cases. Then
   it should be switched off and closing angular brackets be separated manually.
-  It does not cope with lambda expressions and some annotations. The imported
-  diagrams will usually not be executable, anyway (because of unsupported OOP
-  context).
+  It does not cope with lambda expressions and some annotations. Because OOP
+  context is not actually supported in Structorizer, the imported diagrams will
+  usually not be executable and will raise a lot of Analyser warnings.
 - Shell export neither copes with nested array/record initialisers and
   component access nor with cleanly handling usual and associative arrays as
   parameters or results.
@@ -207,8 +207,9 @@ Current development version 3.32-18 (2024-03-17)
 - 18: Enh. #1084 Pascal import toughened up for ObjectPascal/Delphi 12 <2>
 - 18: Bugfix #1135 Two Java import bugs - unicode escape sequences in string
       literals and identifiers 'str', 'binary', 'hex' caused failure. <2>
-- 18: Bugfix #1136 Three Java import problems due to angular brackets of type
-      arguments (nested parameterized types, casting, "<?>" parameters). <2>
+- 18: Bugfix #1136 Four Java import problems due to angular brackets of type
+      arguments (nested parameterized types, casting, "<?>" parameters,
+      arrays over parameterized types). <2>
 - 18: Bugfix #1137 Workaround for Java import errors due to ".this" <2>
 - 18: Issue #1138 Arranger collision warnings could become a nuisance <2>
 - 18: Bugfix #1139 TRY elements without catch variable caused defects <2>
