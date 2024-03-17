@@ -245,7 +245,7 @@ package lu.fisch.structorizer.gui;
  *                                      the default text for new Elements
  *      Kay Gürtzig     2024-03-07      Issue #1129: Restrict the number of lines to show in a warning popup
  *      Kay Gürtzig     2024-03-15      Bugfix #1140: Transmutation conditions were too strict for method calls
- *      Kay Gürtzig     2024-03-16      Issue #1138: code import and arrangement loading now in serial mode to
+ *      Kay Gürtzig     2024-03-17      Issue #1138: code import and arrangement loading now in serial mode to
  *                                      allow the user to suppress Arranger collision warnings (new serial aspect)
  *
  ******************************************************************************************************
@@ -863,182 +863,44 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// END KGU#392 2017-05-07
 				//boolean found = false;
 				for (int i = 0; i < files.length; i++) {
-					String filename = files[i].toString();
-					// START KGU#671 2019-03-01: Issue #693 We can use the equivalent mechanism of openNsdOrArr() instead
-					//String filenameLower = filename.toLowerCase();
-					//if(filenameLower.endsWith(".nsd"))
-					//{
-					//	openNSD(filename);
-					//}
-					//// START KGU#289 2016-11-15: Enh. #290 (Arranger file support)
-					//else if (filenameLower.endsWith(".arr")
-					//		||
-					//		filenameLower.endsWith(".arrz"))
-					//{
-					//	loadArrangement(files[i]);
-					//}
-					//// END KGU#289 2016-11-15
-					//else {
-					// If openNsdOrArr() doesn't recognise the file type then it returns an empty extension string
-					// START KGU#868 2020-06-03: Bugfix #868 - filesdrop import is to be suppressed, too
-					//if (openNsdOrArr(filename).isEmpty()) {
-					if (openNsdOrArr(filename).isEmpty() && !NSDControl.isRestricted()) {
-					// END KGU#868 2020-06-03
-					// END KGU#671 2019-03-01
-						Ini ini = Ini.getInstance();
-						String charSet = ini.getProperty("impImportCharset", Charset.defaultCharset().name());
-						// START KGU#354 2017-04-27: Enh. #354
-						boolean isVerbose = ini.getProperty("impLogToDir", "false").equals("true");
-						String logPath = null;
-						if (isVerbose) {
-							logPath = ini.getProperty("impLogDir", "");
+					// START KGU#901 2024-03-17: Issue #901 WAIT_CURSOR on time-consuming actions
+					Cursor origCursor = getCursor();
+					setCursor(new Cursor(Cursor.WAIT_CURSOR));
+					try {
+					// END KGU#901 2024-03-17
+						String filename = files[i].toString();
+						// START KGU#671 2019-03-01: Issue #693 We can use the equivalent mechanism of openNsdOrArr() instead
+						//String filenameLower = filename.toLowerCase();
+						//if(filenameLower.endsWith(".nsd"))
+						//{
+						//	openNSD(filename);
+						//}
+						//// START KGU#289 2016-11-15: Enh. #290 (Arranger file support)
+						//else if (filenameLower.endsWith(".arr")
+						//		||
+						//		filenameLower.endsWith(".arrz"))
+						//{
+						//	loadArrangement(files[i]);
+						//}
+						//// END KGU#289 2016-11-15
+						//else {
+						// If openNsdOrArr() doesn't recognise the file type then it returns an empty extension string
+						// START KGU#868 2020-06-03: Bugfix #868 - filesdrop import is to be suppressed, too
+						//if (openNsdOrArr(filename).isEmpty()) {
+						if (openNsdOrArr(filename).isEmpty() && !NSDControl.isRestricted()) {
+						// END KGU#868 2020-06-03
+						// END KGU#671 2019-03-01
+							// START KGU#
+							unsuitedFiles = importDroppedFile(filename, unsuitedFiles);
 						}
-						// END KGU#354 2017-04-27
-						// START KGU#354 2017-03-08: go over all the parser plugins
-						CodeParser parser = null;
-						File theFile = new File(filename);
-						parser = findParserForFileExtension(theFile);
-						if (parser != null) {
-							// save (only if something has been changed)
-							saveNSD(true);
-							// START KGU#354 2017-04-27: Enh. #354
-							if (isVerbose) {
-								if (logPath.isEmpty()) {
-									logPath = theFile.getParent();
-								} else if (logPath.equals(".")) {
-									if (currentDirectory != null) {
-										if (!currentDirectory.isDirectory()) {
-											logPath = currentDirectory.getParent();
-										} else {
-											logPath = currentDirectory.getPath();
-										}
-									}
-								}
-							}
-							// END KGU#354 2017-04-27				
-							// load and parse source-code
-							// START KGU#354 2017-05-03: Enh. #354 - we needed more safety here
-							String parserError = null;
-							try {
-							// END KGU#354 2017-05-03
-								// START KGU#354 2017-05-12: Enh. #354 - we better use a new instance instead of statically sharing it
-								parser = parser.getClass().getDeclaredConstructor().newInstance();
-								// END KGU#354 2017-05-12
-								// START KGU#395 2017-07-02: Enh. #357
-								String pluginKey = parser.getClass().getSimpleName();
-								for (int j = 0; j < parserPlugins.size(); j++) {
-									// START KGU#948 2021-03-02: Bugfix #951 wrong index used
-									//GENPlugin plug = parserPlugins.get(i);
-									GENPlugin plug = parserPlugins.get(j);
-									// END KGU#948 2021-03-02
-									if (plug.getKey().equals(pluginKey)) {
-										setPluginSpecificOptions(parser, plug.options);
-										break;
-									}
-								}
-								// END KGU#395 2017-07-02
-								List<Root> newRoots = parser.parse(filename, charSet, logPath);
-								if (parser.error.equals("")) {
-									boolean arrange = false;
-									// START KGU#1076 2023-09-12: Bugfix #1086 - for functionality a main should reside in work area
-									Root newMain = null;
-									// END KGU#1076 2023-09-12
-									for (Root rootNew : newRoots) {
-										if (arrange) {
-											// START KGU#1076 2023-09-12: Bugfix #1086 - the group should be named after the file
-											//arrangeNSD();
-											arrangeNSD(theFile.getName());
-											// END KGU#1076 2023-09-12
-										}
-										// START KGU#1076 2023-09-12: Bugfix #1086 - for functionality a main should reside in work area
-										if (newMain == null && rootNew.isProgram()) {
-											newMain = rootNew;
-										}
-										// END KGU#1076 2023-09-12
-										// FIXME: Consider temporary shut-off of Arranger index notifications, see importCode()
-										setRootIfNotRunning(rootNew);
-										currentDirectory = new File(filename);
-										arrange = true;
-										//System.out.println(root.getFullText().getText());
-									}
-									// START KGU#354 2017-05-23: Enh.#354 - with many roots it's better to push the principal root to the Arranger, too
-									// START KGU#1076 2023-09-12: Bugfix #1086 - This must already be done if it's more than ONE root.
-									//if (newRoots.size() > 2 || !root.isProgram()) {
-									//	arrangeNSD();
-									//}
-									if (newRoots.size() >= 2) {
-										arrangeNSD(theFile.getName());
-									}
-									// END KGU#1076 2023-09-12
-									// END KGU#354 2017-05-23
-									for (Root rootNew : newRoots) {
-										rootNew.setChanged(false);
-									}
-									// START KGU#1076 2023-09-12: Bugfix #1086 - for functionality a main should reside in work area
-									if (newMain != null && !root.isProgram()) {
-										setRootIfNotRunning(newMain);
-									}
-									// END KGU#1076 2023-09-12
-																	} else {
-							// START KGU#354 2017-05-03: Enh #354 Safety addition part 2
-									parserError = parser.error;
-								}
-							} catch (Exception ex) {
-								parserError = ex.toString();
-								// START KGU#484 2018-04-05: Issue #463
-								//ex.printStackTrace();
-								logger.log(Level.WARNING, "Use of parser " + parser + " failed.", ex);
-								// END KGU#484 2018-04-05
-							}
-							if (parserError != null)
-							// END KGU#354 2017-05-03
-							{
-								// show error
-								// START KGU#364 2017-03-09: Issues #182, #354 - Allow to copy the content
-								//JOptionPane.showMessageDialog(null,
-								//		parser.error,
-								//		Menu.msgTitleParserError.getText(),
-								//		JOptionPane.ERROR_MESSAGE);
-								String[] options = {
-										Menu.lblOk.getText(),
-										Menu.lblCopyToClipBoard.getText()
-								};
-								int chosen = JOptionPane.showOptionDialog(null,
-										// START KGU#354 2017-05-03: Enh. #354 - Safety addition part 3
-										//parser.error,
-										parserError,
-										// END KGU#354 2017-05-03
-										Menu.msgTitleParserError.getText(),
-										JOptionPane.ERROR_MESSAGE,
-										JOptionPane.YES_NO_OPTION,
-										null, options, 0);
-								if (chosen == 1) {
-									Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-									StringSelection toClip = new StringSelection(parser.error);
-									clipboard.setContents(toClip, null);
-								}
-							}
-							redraw();
-							// START KGU#354 2017-05-02: Enh. #354 file buttons hadn't been enabled properly  
-							doButtons();
-							// END KGU#354 2017-05-02
-
-							Container cont = getParent();
-							while (cont != null && !(cont instanceof JFrame)) {
-								cont = cont.getParent();
-							}
-							if (cont != null) {
-								((JFrame) cont).toFront();
-							}
-						}
-						// START KGU#392 2017-05-07: Enh. #399: Gather unsuited files
-						else {
-							unsuitedFiles += "\n\u2022 " + filename;
-						}
-						// END KGU#392 2017-05-07
-
+						// END KGU#354 2017-03-08
+					// START KGU#901 2024-03-17: Issue #901 WAIT_CURSOR on time-consuming actions
 					}
-					// END KGU#354 2017-03-08
+					finally {
+						setCursor(origCursor);
+					}
+					// END KGU#901 2024-03-17
+
 				} // for (int i = 0; i < files.length; i++)
 				// START KGU#392 2017-05-07: Enh. #399 Inform about unsuited files
 				if (!unsuitedFiles.isEmpty()) {
@@ -1048,6 +910,183 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							JOptionPane.INFORMATION_MESSAGE);
 				}
 				// END KGU#392 2017-05-07
+			}
+
+			// START KGU 2024-03-17: Extracted from filesDropped
+			// START KGU 2024-03-17: Extracted from filesDropped
+			/**
+			 * Attempts to import file {@code filename} from source code or a foreign diagram type.
+			 * 
+			 * @param filename - name and path of the file to be dropped
+			 * @param unsuitedFiles - multi-line item list of the files the import of which has
+			 *    already failed, will be part of the result.
+			 * @return the {@code unsuitedFiles} string, possibly extended by {@code filename}
+			 * @throws HeadlessException
+			 */
+			private String importDroppedFile(String filename, String unsuitedFiles) throws HeadlessException {
+				Ini ini = Ini.getInstance();
+				String charSet = ini.getProperty("impImportCharset", Charset.defaultCharset().name());
+				// START KGU#354 2017-04-27: Enh. #354
+				boolean isVerbose = ini.getProperty("impLogToDir", "false").equals("true");
+				String logPath = null;
+				if (isVerbose) {
+					logPath = ini.getProperty("impLogDir", "");
+				}
+				// END KGU#354 2017-04-27
+				// START KGU#354 2017-03-08: go over all the parser plugins
+				CodeParser parser = null;
+				File theFile = new File(filename);
+				parser = findParserForFileExtension(theFile);
+				if (parser != null) {
+					// save (only if something has been changed)
+					saveNSD(true);
+					// START KGU#354 2017-04-27: Enh. #354
+					if (isVerbose) {
+						if (logPath.isEmpty()) {
+							logPath = theFile.getParent();
+						} else if (logPath.equals(".")) {
+							if (currentDirectory != null) {
+								if (!currentDirectory.isDirectory()) {
+									logPath = currentDirectory.getParent();
+								} else {
+									logPath = currentDirectory.getPath();
+								}
+							}
+						}
+					}
+					// END KGU#354 2017-04-27				
+					// load and parse source-code
+					// START KGU#354 2017-05-03: Enh. #354 - we needed more safety here
+					String parserError = null;
+					try {
+						// END KGU#354 2017-05-03
+						// START KGU#354 2017-05-12: Enh. #354 - we better use a new instance instead of statically sharing it
+						parser = parser.getClass().getDeclaredConstructor().newInstance();
+						// END KGU#354 2017-05-12
+						// START KGU#395 2017-07-02: Enh. #357
+						String pluginKey = parser.getClass().getSimpleName();
+						for (int j = 0; j < parserPlugins.size(); j++) {
+							// START KGU#948 2021-03-02: Bugfix #951 wrong index used
+							//GENPlugin plug = parserPlugins.get(i);
+							GENPlugin plug = parserPlugins.get(j);
+							// END KGU#948 2021-03-02
+							if (plug.getKey().equals(pluginKey)) {
+								setPluginSpecificOptions(parser, plug.options);
+								break;
+							}
+						}
+						// END KGU#395 2017-07-02
+						List<Root> newRoots = parser.parse(filename, charSet, logPath);
+						if (parser.error.equals("")) {
+							boolean arrange = false;
+							// START KGU#1076 2023-09-12: Bugfix #1086 - for functionality a main should reside in work area
+							Root newMain = null;
+							// END KGU#1076 2023-09-12
+							// START KGU#1124 2024-03-17: Issue #1138 Sensible conflict info handling
+							startSerialMode();
+							try {
+								// END KGU#1124 2024-03-17
+								for (Root rootNew : newRoots) {
+									if (arrange) {
+										// START KGU#1076 2023-09-12: Bugfix #1086 - the group should be named after the file
+										//arrangeNSD();
+										arrangeNSD(theFile.getName());
+										// END KGU#1076 2023-09-12
+									}
+									// START KGU#1076 2023-09-12: Bugfix #1086 - for functionality a main should reside in work area
+									if (newMain == null && rootNew.isProgram()) {
+										newMain = rootNew;
+									}
+									// END KGU#1076 2023-09-12
+									// FIXME: Consider temporary shut-off of Arranger index notifications, see importCode()
+									setRootIfNotRunning(rootNew);
+									currentDirectory = new File(filename);
+									arrange = true;
+									//System.out.println(root.getFullText().getText());
+								}
+								// START KGU#354 2017-05-23: Enh.#354 - with many roots it's better to push the principal root to the Arranger, too
+								// START KGU#1076 2023-09-12: Bugfix #1086 - This must already be done if it's more than ONE root.
+								//if (newRoots.size() > 2 || !root.isProgram()) {
+								//	arrangeNSD();
+								//}
+								if (newRoots.size() >= 2) {
+									arrangeNSD(theFile.getName());
+								}
+								// END KGU#1076 2023-09-12
+								// END KGU#354 2017-05-23
+								// START KGU#1124 2024-03-17: Issue #1138 part two. see above
+							}
+							finally {
+								endSerialMode();
+							}
+							// END KGU#1124 2024-03-17
+							for (Root rootNew : newRoots) {
+								rootNew.setChanged(false);
+							}
+							// START KGU#1076 2023-09-12: Bugfix #1086 - for functionality a main should reside in work area
+							if (newMain != null && !root.isProgram()) {
+								setRootIfNotRunning(newMain);
+							}
+							// END KGU#1076 2023-09-12
+						} else {
+							// START KGU#354 2017-05-03: Enh #354 Safety addition part 2
+							parserError = parser.error;
+						}
+					} catch (Exception ex) {
+						parserError = ex.toString();
+						// START KGU#484 2018-04-05: Issue #463
+						//ex.printStackTrace();
+						logger.log(Level.WARNING, "Use of parser " + parser + " failed.", ex);
+						// END KGU#484 2018-04-05
+					}
+					if (parserError != null)
+						// END KGU#354 2017-05-03
+					{
+						// show error
+						// START KGU#364 2017-03-09: Issues #182, #354 - Allow to copy the content
+						//JOptionPane.showMessageDialog(null,
+						//		parser.error,
+						//		Menu.msgTitleParserError.getText(),
+						//		JOptionPane.ERROR_MESSAGE);
+						String[] options = {
+								Menu.lblOk.getText(),
+								Menu.lblCopyToClipBoard.getText()
+						};
+						int chosen = JOptionPane.showOptionDialog(null,
+								// START KGU#354 2017-05-03: Enh. #354 - Safety addition part 3
+								//parser.error,
+								parserError,
+								// END KGU#354 2017-05-03
+								Menu.msgTitleParserError.getText(),
+								JOptionPane.ERROR_MESSAGE,
+								JOptionPane.YES_NO_OPTION,
+								null, options, 0);
+						if (chosen == 1) {
+							Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+							StringSelection toClip = new StringSelection(parser.error);
+							clipboard.setContents(toClip, null);
+						}
+						// END KGU#364 2017-03-09
+					}
+					redraw();
+					// START KGU#354 2017-05-02: Enh. #354 file buttons hadn't been enabled properly  
+					doButtons();
+					// END KGU#354 2017-05-02
+
+					Container cont = getParent();
+					while (cont != null && !(cont instanceof JFrame)) {
+						cont = cont.getParent();
+					}
+					if (cont != null) {
+						((JFrame) cont).toFront();
+					}
+				}
+				// START KGU#392 2017-05-07: Enh. #399: Gather unsuited files
+				else {
+					unsuitedFiles += "\n\u2022 " + filename;
+				}
+				// END KGU#392 2017-05-07
+				return unsuitedFiles;
 			}
 		}
 				);
@@ -7140,26 +7179,36 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// START KGU#1076 2023-09-12: Bugfix #1086 incomplete establishment of arrangement group on C99 import
 					Root newMain = null;
 					// END KGU#1076 2023-09-12
-					while (iter.hasNext()) {
-						root = iter.next();
-						// START KGU#1076 2023-09-12: Bugfix #1086
-						if (newMain == null && root.isProgram()) {
-							newMain = root;
+					// START KGU#1124 2024-03-17: Issue #1138 ensure the user may waive conflict info
+					startSerialMode();
+					try {
+					// END KGU#1124 2024-03-17
+						while (iter.hasNext()) {
+							root = iter.next();
+							// START KGU#1076 2023-09-12: Bugfix #1086
+							if (newMain == null && root.isProgram()) {
+								newMain = root;
+							}
+							// END KGU#1076 2023-09-12
+							//root.highlightVars = hil;
+							if (Element.E_VARHIGHLIGHT) {
+								root.retrieveVarNames();	// Initialise the variable table, otherwise the highlighting won't work
+							}
+							// The Root must be marked for saving
+							root.setChanged(false);
+							// ... and be added to the Arranger
+							// START KGU#626 2018-12-28 Enh. #657 - group management introduced
+							//this.arrangeNSD();
+							this.arrangeNSD(file.getName());
+							// END KGU#626 2018-12-28
+							Arranger.getInstance().enableNotification(false);
 						}
-						// END KGU#1076 2023-09-12
-						//root.highlightVars = hil;
-						if (Element.E_VARHIGHLIGHT) {
-							root.retrieveVarNames();	// Initialise the variable table, otherwise the highlighting won't work
-						}
-						// The Root must be marked for saving
-						root.setChanged(false);
-						// ... and be added to the Arranger
-						// START KGU#626 2018-12-28 Enh. #657 - group management introduced
-						//this.arrangeNSD();
-						this.arrangeNSD(file.getName());
-						// END KGU#626 2018-12-28
-						Arranger.getInstance().enableNotification(false);
+					// START KGU#1124 2024-03-17: Issue #1138 see above
 					}
+					finally {
+						endSerialMode();
+					}
+					// END KGU#1124 2024-03-17
 					if (firstRoot != null) {
 						root = firstRoot;
 					// END KGU#194 2016-05-08

@@ -12,11 +12,13 @@ Known issues (also see https://github.com/fesch/Structorizer.Desktop/issues):
 - COBOL import may fail if certain single-letter identifiers are used (rename
   them!), it does not cope with some statement variants and variable
   redefinitions, either.
-- Java import does not cope with type arguments in casting prefixes or array
-  element types and fails if two or more closing angular brackets (in case of
-  nested type arguments) meet without separating blank. It does not cope with
-  lambda expressions, either. The imported diagrams will usually not be
-  executable, anyway (because of unsupported OOP context).
+- Java import may not cope with type arguments in array element types. The
+  import option to mitigate ambiguities between closing angular brackets (in
+  nested type arguments) and shift operators >> may fail in some cases. Then
+  it should be switched off and closing angular brackets be separated manually.
+  It does not cope with lambda expressions and some annotations. The imported
+  diagrams will usually not be executable, anyway (because of unsupported OOP
+  context).
 - Shell export neither copes with nested array/record initialisers and
   component access nor with cleanly handling usual and associative arrays as
   parameters or results.
@@ -201,6 +203,7 @@ Current development version 3.32-18 (2024-03-17)
 - 17: Bugfix #1130 C import expanded macros within char literals [csrabak]2
 - 17: Issue #1131 Handling of anonymous inner classes on Java import <2>
 - 17: Bugfix #1132 Java import defect on backslashes in string literals <2>
+- 18: Issue #901 FilesDrop was lacking to set the WAITING cursor <2>
 - 18: Enh. #1084 Pascal import toughened up for ObjectPascal/Delphi 12 <2>
 - 18: Bugfix #1135 Two Java import bugs - unicode escape sequences in string
       literals and identifiers 'str', 'binary', 'hex' caused failure. <2>
@@ -210,6 +213,7 @@ Current development version 3.32-18 (2024-03-17)
 - 18: Issue #1138 Arranger collision warnings could become a nuisance <2>
 - 18: Bugfix #1139 TRY elements without catch variable caused defects <2>
 - 18: Bugfix #1140 Transmutation didn't work for CALLs with method syntax <2>
+- 18: Bugfix #1141 Stack overflow risk on build phase of code import <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>

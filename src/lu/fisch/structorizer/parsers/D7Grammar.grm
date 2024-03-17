@@ -49,7 +49,7 @@
 !  V1.3 - Oct 2018,  second comment group repaired (i.e. adapted to GOLDBuilder 5.2)
 !  V1.4 - Apr 2020,  indentaion re-aligned (Kay Gürtzig)
 !  V1.5 - Feb 2021,  Hack into the <EnumType> rule in order to overcome a reduce-reduce conflict (Kay Gürtzig)
-!  V1.6 - Mar 2024,  Qualified names enabled in UNIT and USES clauses
+!  V1.6 - Mar 2024,  Qualified names enabled in UNIT and USES clauses (Kay Gürtzig, for #1084)
 ! -----------------------------------------------------------------------
 
 "Name"    = 'ObjectPascal' 

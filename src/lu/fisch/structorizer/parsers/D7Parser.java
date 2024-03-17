@@ -77,6 +77,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2022-12-21      Deprecation annotation added to filterNonAscii()
  *      Kay Gürtzig     2024-03-14      Issue #1084 RuleConstants updated to new grammar version 1.6
  *      Kay Gürtzig     2024-03-15      Issue #1084 Substantial achievements to import ObjectPascal / Delphi code
+ *      Kay Gürtzig     2024-03-17      Bugfix #1141: Measures against stack overflow in buildNSD_R()
  *
  ******************************************************************************************************
  *
@@ -124,6 +125,7 @@ import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CodingErrorAction;
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.Stack;
 import java.util.logging.Level;
 
 /**
@@ -324,7 +326,7 @@ public class D7Parser extends CodeParser
 //		final int PROD_OPTDECLSECTION                              = 117;  // <OptDeclSection> ::= <DeclSection>
 //		final int PROD_OPTDECLSECTION2                             = 118;  // <OptDeclSection> ::= 
 //		final int PROD_DECLSECTION                                 = 119;  // <DeclSection> ::= <DeclItem>
-//		final int PROD_DECLSECTION2                                = 120;  // <DeclSection> ::= <DeclSection> <DeclItem>
+		final int PROD_DECLSECTION2                                = 120;  // <DeclSection> ::= <DeclSection> <DeclItem>
 //		final int PROD_DECLITEM                                    = 121;  // <DeclItem> ::= <LabelSection>
 //		final int PROD_DECLITEM2                                   = 122;  // <DeclItem> ::= <ConstSection>
 //		final int PROD_DECLITEM3                                   = 123;  // <DeclItem> ::= <TypeSection>
@@ -337,7 +339,7 @@ public class D7Parser extends CodeParser
 //		final int PROD_CONSTSECTION_CONST                          = 130;  // <ConstSection> ::= CONST <ConstantDeclList>
 //		final int PROD_CONSTSECTION_RESOURCESTRING                 = 131;  // <ConstSection> ::= RESOURCESTRING <ConstantDeclList>
 //		final int PROD_CONSTANTDECLLIST                            = 132;  // <ConstantDeclList> ::= <ConstantDecl>
-//		final int PROD_CONSTANTDECLLIST2                           = 133;  // <ConstantDeclList> ::= <ConstantDeclList> <ConstantDecl>
+		final int PROD_CONSTANTDECLLIST2                           = 133;  // <ConstantDeclList> ::= <ConstantDeclList> <ConstantDecl>
 		final int PROD_CONSTANTDECL_EQ_SEMI                        = 134;  // <ConstantDecl> ::= <RefId> '=' <ConstExpr> <OptPortDirectives> ';'
 		final int PROD_CONSTANTDECL_COLON_EQ_SEMI                  = 135;  // <ConstantDecl> ::= <RefId> ':' <Type> '=' <TypedConstant> <OptPortDirectives> ';'
 //		final int PROD_CONSTANTDECL_SYNERROR_SEMI                  = 136;  // <ConstantDecl> ::= SynError ';'
@@ -355,7 +357,7 @@ public class D7Parser extends CodeParser
 //		final int PROD_TYPEDCONSTLIST_COMMA                        = 148;  // <TypedConstList> ::= <TypedConstList> ',' <TypedConstant>
 //		final int PROD_TYPESECTION_TYPE                            = 149;  // <TypeSection> ::= TYPE <TypeDeclList>
 //		final int PROD_TYPEDECLLIST                                = 150;  // <TypeDeclList> ::= <TypeDecl>
-//		final int PROD_TYPEDECLLIST2                               = 151;  // <TypeDeclList> ::= <TypeDeclList> <TypeDecl>
+		final int PROD_TYPEDECLLIST2                               = 151;  // <TypeDeclList> ::= <TypeDeclList> <TypeDecl>
 		final int PROD_TYPEDECL_EQ                                 = 152;  // <TypeDecl> ::= <TypeId> '=' <TypeSpec>
 //		final int PROD_TYPEDECL_SYNERROR_SEMI                      = 153;  // <TypeDecl> ::= SynError ';'
 		final int PROD_TYPESPEC_SEMI                               = 154;  // <TypeSpec> ::= <GenericType> ';'
@@ -516,7 +518,7 @@ public class D7Parser extends CodeParser
 //		final int PROD_VARSECTION_VAR                              = 309;  // <VarSection> ::= VAR <VarDeclList>
 //		final int PROD_VARSECTION_THREADVAR                        = 310;  // <VarSection> ::= THREADVAR <ThreadVarDeclList>
 //		final int PROD_VARDECLLIST                                 = 311;  // <VarDeclList> ::= <VarDecl>
-//		final int PROD_VARDECLLIST2                                = 312;  // <VarDeclList> ::= <VarDeclList> <VarDecl>
+		final int PROD_VARDECLLIST2                                = 312;  // <VarDeclList> ::= <VarDeclList> <VarDecl>
 		final int PROD_VARDECL_COLON_SEMI                          = 313;  // <VarDecl> ::= <IdList> ':' <Type> <OptAbsoluteClause> <OptPortDirectives> ';'
 		final int PROD_VARDECL_COLON_EQ_SEMI                       = 314;  // <VarDecl> ::= <IdList> ':' <Type> '=' <TypedConstant> <OptPortDirectives> ';'
 		final int PROD_VARDECL_COLON                               = 315;  // <VarDecl> ::= <IdList> ':' <TypeSpec>
@@ -600,7 +602,7 @@ public class D7Parser extends CodeParser
 //		final int PROD_CONSTEXPRLIST                               = 393;  // <ConstExprList> ::= <ConstExpr>
 //		final int PROD_CONSTEXPRLIST_COMMA                         = 394;  // <ConstExprList> ::= <ConstExprList> ',' <ConstExpr>
 //		final int PROD_STMTLIST                                    = 395;  // <StmtList> ::= <Statement>
-//		final int PROD_STMTLIST_SEMI                               = 396;  // <StmtList> ::= <StmtList> ';' <Statement>
+		final int PROD_STMTLIST_SEMI                               = 396;  // <StmtList> ::= <StmtList> ';' <Statement>
 		final int PROD_STATEMENT                                   = 397;  // <Statement> ::= <Label> <Statement>
 		final int PROD_STATEMENT2                                  = 398;  // <Statement> ::= <AssignmentStmt>
 		final int PROD_STATEMENT3                                  = 399;  // <Statement> ::= <CallStmt>
@@ -1874,11 +1876,41 @@ public class D7Parser extends CodeParser
 				_parentNode.addElement(this.equipWithSourceComment(ele, _reduction));
 			}
 			// END KGU#686 2019-03-22
+			
+			// TODO add the handling of further instruction types here...
+
+			// START KGU#1130 2024-03-17: Bugfix #1141 Measures against stack overflow risk
+			else if (ruleId == RuleConstants.PROD_EXPORTDECLLIST2
+					|| ruleId == RuleConstants.PROD_DECLSECTION2
+					|| ruleId == RuleConstants.PROD_CONSTANTDECLLIST2
+					|| ruleId == RuleConstants.PROD_TYPEDECLLIST2
+					|| ruleId == RuleConstants.PROD_VARDECLLIST2
+					|| ruleId == RuleConstants.PROD_STMTLIST_SEMI) {
+				// <ExportDeclList> ::= <ExportDeclList> <ExportDeclItem>
+				// <DeclSection> ::= <DeclSection> <DeclItem>
+				// <ConstantDeclList> ::= <ConstantDeclList> <ConstantDecl>
+				// <TypeDeclList> ::= <TypeDeclList> <TypeDecl>
+				// <VarDeclList> ::= <VarDeclList> <VarDecl>
+				// <StmtList> ::= <StmtList> ';' <Statement>
+				int loopId = ruleId;
+				Stack<Reduction> redStack = new Stack<Reduction>();
+				do {
+					redStack.push(_reduction.get(1).asReduction());
+					_reduction = _reduction.get(0).asReduction();
+					ruleId = _reduction.getParent().getTableIndex();
+				} while (ruleId == loopId);
+				System.out.println("Doing block of type " + loopId + " with length " + redStack.size());
+				buildNSD_R(_reduction, _parentNode);
+				while (!redStack.isEmpty()) {
+					buildNSD_R(redStack.pop(), _parentNode);
+				}
+			}
+			// END KGU#1130 2024-03-17
 			else
 			{
 				if (_reduction.size() > 0)
 				{
-					for (int i=0; i<_reduction.size(); i++)
+					for (int i = 0; i < _reduction.size(); i++)
 					{
 						if (_reduction.get(i).getType() == SymbolType.NON_TERMINAL)
 						{
@@ -2194,6 +2226,7 @@ public class D7Parser extends CodeParser
 						decl.comment.add(methKind + " for class " + classRoot.getQualifiedName());
 						decl.comment.add(accessLevel);
 						((Call)decl).isMethodDeclaration = true;
+						decl.setColor(colorDecl);
 						((Forever)classRoot.children.getElement(1)).getBody().insertElementAt(decl, 0);
 						break;
 					case RuleConstants.PROD_CLASSMETHODSPEC2:

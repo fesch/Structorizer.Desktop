@@ -63,6 +63,10 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2024-03-12      Bugfix #1136 Heuristic approaches to circumvent three known problems
  *                                      with type parameters (particularly considering angular brackets),
  *                                      Bugfix #1137: Workaround for usage of "this" like a component name.
+ *      Kay Gürtzig     2024-03-17      Issues #1131, #1137: Proper id replacement solution ensuring
+ *                                      consistent id restoration via CodeParser.undoIdReplacaments();
+ *                                      bugfix #1141: Measures against stack overflow in buildNSD_R()
+
  *
  ******************************************************************************************************
  *
@@ -250,7 +254,7 @@ public class JavaParser extends CodeParser
 //		final int SYM_FOR                                  =  77;  // for
 //		final int SYM_HEXESCAPECHARLITERAL                 =  78;  // HexEscapeCharLiteral
 		final int SYM_HEXINTEGERLITERAL                    =  79;  // HexIntegerLiteral
-//		final int SYM_IDENTIFIER                           =  80;  // Identifier
+		final int SYM_IDENTIFIER                           =  80;  // Identifier
 //		final int SYM_IF                                   =  81;  // if
 //		final int SYM_IMPLEMENTS                           =  82;  // implements
 //		final int SYM_IMPORT                               =  83;  // import
@@ -627,7 +631,7 @@ public class JavaParser extends CodeParser
 		final int PROD_CLASSBODY_LBRACE_RBRACE                                      = 145;  // <ClassBody> ::= '{' <ClassBodyDeclarations> '}'
 //		final int PROD_CLASSBODY_LBRACE_RBRACE2                                     = 146;  // <ClassBody> ::= '{' '}'
 //		final int PROD_CLASSBODYDECLARATIONS                                        = 147;  // <ClassBodyDeclarations> ::= <ClassBodyDeclaration>
-//		final int PROD_CLASSBODYDECLARATIONS2                                       = 148;  // <ClassBodyDeclarations> ::= <ClassBodyDeclarations> <ClassBodyDeclaration>
+		final int PROD_CLASSBODYDECLARATIONS2                                       = 148;  // <ClassBodyDeclarations> ::= <ClassBodyDeclarations> <ClassBodyDeclaration>
 //		final int PROD_CLASSBODYDECLARATION                                         = 149;  // <ClassBodyDeclaration> ::= <ClassMemberDeclaration>
 //		final int PROD_CLASSBODYDECLARATION2                                        = 150;  // <ClassBodyDeclaration> ::= <InstanceInitializer>
 //		final int PROD_CLASSBODYDECLARATION3                                        = 151;  // <ClassBodyDeclaration> ::= <StaticInitializer>
@@ -715,7 +719,7 @@ public class JavaParser extends CodeParser
 //		final int PROD_BLOCK_LBRACE_RBRACE                                          = 233;  // <Block> ::= '{' <BlockStatements> '}'
 //		final int PROD_BLOCK_LBRACE_RBRACE2                                         = 234;  // <Block> ::= '{' '}'
 //		final int PROD_BLOCKSTATEMENTS                                              = 235;  // <BlockStatements> ::= <BlockStatement>
-//		final int PROD_BLOCKSTATEMENTS2                                             = 236;  // <BlockStatements> ::= <BlockStatements> <BlockStatement>
+		final int PROD_BLOCKSTATEMENTS2                                             = 236;  // <BlockStatements> ::= <BlockStatements> <BlockStatement>
 //		final int PROD_BLOCKSTATEMENT                                               = 237;  // <BlockStatement> ::= <LocalVariableDeclarationStatement>
 //		final int PROD_BLOCKSTATEMENT2                                              = 238;  // <BlockStatement> ::= <LocalClassDeclaration>
 //		final int PROD_BLOCKSTATEMENT3                                              = 239;  // <BlockStatement> ::= <Statement>
@@ -1124,12 +1128,18 @@ public class JavaParser extends CodeParser
 						boolean replaced = false;
 						while ((ixClass = tokens.indexOf(CLASS_LITERAL, 0, true)) >= 0) {
 							tokens.set(ixClass+1, "c_l_a_s_s");
+							// START KGU#1117/KGU#1123 2024-03-17: Issues #1131, #1137 Proper solution
+							replacedIds.putIfAbsent("c_l_a_s_s", "class");
+							// END KGU#1117/KGU#1123 2024-03-17
 							replaced = true;
 						}
 						// START KGU#1123 2024-03-12: Bugfix #1137 ".this" may also cause trouble
 						ixClass = -1;
 						while ((ixClass = tokens.indexOf(THIS_LITERAL, 0, true)) >= 0) {
 							tokens.set(ixClass+1, "t_h_i_s");
+							// START KGU#1117/KGU#1123 2024-03-17: Issues #1131, #1137 Proper solution
+							replacedIds.putIfAbsent("t_h_i_s", "this");
+							// END KGU#1117/KGU#1123 2024-03-17
 							replaced = true;
 						}
 						// END KGU#1123 2024-03-12
@@ -1325,7 +1335,7 @@ public class JavaParser extends CodeParser
 	 */
 	private boolean isTypeSpecificationList(StringList subSequence) {
 		// TODO Auto-generated method stub
-		System.out.println("Checking type list \"" + subSequence + "\"");
+		//System.out.println("(Not) checking type list \"" + subSequence + "\" in JavaParser.isTypeSpecification()");
 		return true;
 	}
 	// END KGU#1122 2024-03-12
@@ -1844,6 +1854,7 @@ public class JavaParser extends CodeParser
 				}
 				Element forIn = this.equipWithSourceComment(new For(loopVar, valList.get(ixLast)), _reduction);
 				_parentNode.addElement(forIn);
+				// Build the loop body
 				this.buildNSD_R(_reduction.get(ixType + 5).asReduction(), ((For)forIn).getBody());
 			}
 			break;
@@ -1865,6 +1876,7 @@ public class JavaParser extends CodeParser
 								+ getOptKeyword("postWhile", true, false)),
 						_reduction);
 				_parentNode.addElement(loop);
+				// Build the loop body
 				this.buildNSD_R(_reduction.get(4).asReduction(), loop.getBody());
 			}
 			break;
@@ -1881,8 +1893,11 @@ public class JavaParser extends CodeParser
 								+ getOptKeyword("posRepeat", true, false)),
 						_reduction);
 				_parentNode.addElement(loop);
+				// Build the loop body
 				this.buildNSD_R(_reduction.get(1).asReduction(), loop.getBody());
+				// Did the condition contain some assignments or other side effects?
 				if (ixLast > 0) {
+					// Yes, create an element for the preparation instructions and append it to the body
 					Instruction prep = new Instruction(cond.subSequence(0, ixLast));
 					prep.setColor(colorMisc);
 					loop.getBody().addElement(prep);
@@ -1968,7 +1983,9 @@ public class JavaParser extends CodeParser
 					
 					ixBlock++;
 				}
+				// Build the protected TRY block
 				this.buildNSD_R(_reduction.get(ixBlock).asReduction(), ele.qTry);
+				// Care for the CATCH block(s)
 				if (ruleId != RuleConstants.PROD_TRYSTATEMENT_TRY3
 						&& ruleId != RuleConstants.PROD_TRYSTATEMENT_TRY4
 						&& ruleId != RuleConstants.PROD_TRYSTATEMENT_TRY7) {
@@ -2042,6 +2059,7 @@ public class JavaParser extends CodeParser
 						// END KGU#953 2021-03-04
 					}
 				}
+				// Check if there is a FINALLY block (and where)
 				int ixFinally = 0;
 				if (ruleId == RuleConstants.PROD_TRYSTATEMENT_TRY2) {
 					ixFinally = 3;
@@ -2051,6 +2069,7 @@ public class JavaParser extends CodeParser
 				}
 				if (ixFinally > 0) {
 					// <Finally> ::= finally <Block>
+					// Build the FINALLY block
 					this.buildNSD_R(_reduction.get(ixFinally).asReduction().get(1).asReduction(), ele.qFinally);
 				}
 				_parentNode.addElement(this.equipWithSourceComment(ele, _reduction));
@@ -2267,6 +2286,29 @@ public class JavaParser extends CodeParser
 			}
 			break;
 			
+			// TODO add the handling of further instruction types here...
+			
+			// START KGU#1130 2024-03-17: Bugfix #1141 Measures against stack overflow risk
+			case RuleConstants.PROD_CLASSBODYDECLARATIONS2:
+			case RuleConstants.PROD_BLOCKSTATEMENTS2:
+			{
+				// <ClassBodyDeclarations> ::= <ClassBodyDeclarations> <ClassBodyDeclaration>
+				// <BlockStatements> ::= <BlockStatements> <BlockStatement>
+				int loopId = ruleId;
+				Stack<Reduction> redStack = new Stack<Reduction>();
+				do {
+					redStack.push(_reduction.get(1).asReduction());
+					_reduction = _reduction.get(0).asReduction();
+					ruleId = _reduction.getParent().getTableIndex();
+				} while (ruleId == loopId);
+				System.out.println("Doing block of type " + loopId + " with length " + redStack.size());
+				buildNSD_R(_reduction, _parentNode);
+				while (!redStack.isEmpty()) {
+					buildNSD_R(redStack.pop(), _parentNode);
+				}
+			}
+			break;
+			// END KGU#1130 2024-03-17
 			default:
 				if (_reduction.size() > 0)
 				{
@@ -2639,11 +2681,10 @@ public class JavaParser extends CodeParser
 				// <ClassInstanceCreationExpression> ::= new <ClassType> '(' <ArgumentList> ')'
 				StringList result = new StringList();
 				for (int i = 0; i < exprRed.size() - 3; i++) {
-					// START KGU#1123 2024-03-12: Bugfix #1137
+					// START KGU#1123 2024-03-17: Bugfix #1137 Delegated to getContent_R()
 					//result.add(this.getContent_R(exprRed.get(i)).replace("c_l_a_s_s", "class"));
-					result.add(this.getContent_R(exprRed.get(i)).replace("c_l_a_s_s", "class")
-							.replace("t_h_i_s", "this"));
-					// END KGU#1123 2024-03-12
+					result.add(this.getContent_R(exprRed.get(i)));
+					// END KGU#1123 2024-03-17
 				}
 				Token argListToken = exprRed.get(exprRed.size()-2);
 				processArguments(argListToken, result, exprs);
@@ -2659,11 +2700,10 @@ public class JavaParser extends CodeParser
 				// <ClassInstanceCreationExpression> ::= new <ClassType> '(' ')'
 				
 				// Just leave it as is
-				// START KGU#1123 2024-03-12: Bugfix #1137
+				// START KGU#1123 2024-03-17: Bugfix #1137 Delegated to getContent_R()
 				//exprs.add(getContent_R(exprRed, "").replace("c_l_a_s_s", "class"));
-				exprs.add(getContent_R(exprRed, "").replace("c_l_a_s_s", "class")
-						.replace("t_h_i_s", "this"));
-				// END KGU#1123 2024-03-12
+				exprs.add(getContent_R(exprRed, ""));
+				// END KGU#1123 2024-03-17
 			}
 			break;
 			
@@ -2735,11 +2775,10 @@ public class JavaParser extends CodeParser
 				exprs = decomposeExpression(exprRed.get(0), false, false);
 				int ixLast = exprs.count()-1;
 				exprs.set(ixLast, exprs.get(ixLast) + "."
-						// START KGU#1123 2024-03-12: Bugfix #1137
+						// START KGU#1123 2024-03-17: Bugfix #1137 Delegated to getConten_R()
 						//+ exprRed.get(2).asString().replace("c_l_a_s_s", "class"));
-						+ exprRed.get(2).asString().replace("c_l_a_s_s", "class")
-						.replace("t_h_i_s", "this"));
-						// END KGU#1123 2024-03-12
+						+ exprRed.get(2).asString());
+						// END KGU#1123 2024-03-17
 			}
 			break;
 
@@ -2967,12 +3006,7 @@ public class JavaParser extends CodeParser
 				// No break; here (or an else branch with the content of default would have to be added)!
 			// END KGU#1117 2024-03-09
 			default:
-				// START KGU#1117/KGU#1123 2024-03-12: Some expressions slipped through without replacement
-				//exprs.add(this.getContent_R(exprToken));
-				//exprs.add(this.getContent_R(exprToken).replace("c_l_a_s_s", "class"));
-				exprs.add(this.getContent_R(exprToken).replace("c_l_a_s_s", "class")
-						.replace("t_h_i_s", "this"));
-				// END KGU#1117/KGU#1123 2024-03-12
+				exprs.add(this.getContent_R(exprToken));
 			}
 			
 		}
@@ -3991,6 +4025,11 @@ public class JavaParser extends CodeParser
 					}
 					// NOTE: The missing of a break instruction is intended here!
 				default:
+					// START KGU#1117/KGU#1123 2024-03-17: Issues #1131, #1137 Proper solution
+					if (idx == SymbolConstants.SYM_IDENTIFIER) {
+						toAdd = undoIdReplacements(toAdd);
+					}
+					// END KGU#1117/KGU#1123 2024-03-17
 					if (toAdd.matches("^\\w.*") && _content.matches(".*\\w$") || _content.matches(".*[,;]$")) {
 						_content += " ";
 					}

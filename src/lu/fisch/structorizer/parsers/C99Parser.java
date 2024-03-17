@@ -61,6 +61,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2023-09-27      Bugfix #1089.2-4 three flaws on typedef imports
  *      Kay Gürtzig     2023-09-28      Issue #1091: Correct handling of alias, enum, and array type definitions
  *      Kay Gürtzig     2023-09-29      Bugfix #678: Unwanted side-effect on pointer types mended
+ *      Kay Gürtzig     2024-03-17      Bugfix #1141: Measures against stack overflow in buildNSD_R()
  *
  ******************************************************************************************************
  *
@@ -78,6 +79,7 @@ package lu.fisch.structorizer.parsers;
 import java.awt.Color;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Stack;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -493,7 +495,7 @@ public class C99Parser extends CPreParser
 		final int PROD_LABELLEDSTMT_IDENTIFIER_COLON                      = 124;  // <Labelled Stmt> ::= Identifier ':' <Statement>
 		final int PROD_COMPOUNDSTMT_LBRACE_RBRACE                         = 125;  // <Compound Stmt> ::= '{' <BlockItemList> '}'
 //		final int PROD_COMPOUNDSTMT_LBRACE_RBRACE2                        = 126;  // <Compound Stmt> ::= '{' '}'
-//		final int PROD_BLOCKITEMLIST                                      = 127;  // <BlockItemList> ::= <BlockItemList> <BlockItem>
+		final int PROD_BLOCKITEMLIST                                      = 127;  // <BlockItemList> ::= <BlockItemList> <BlockItem>
 //		final int PROD_BLOCKITEMLIST2                                     = 128;  // <BlockItemList> ::= <BlockItem>
 //		final int PROD_BLOCKITEM                                          = 129;  // <BlockItem> ::= <Declaration>
 //		final int PROD_BLOCKITEM2                                         = 130;  // <BlockItem> ::= <Statement>
@@ -519,7 +521,7 @@ public class C99Parser extends CPreParser
 		final int PROD_JUMPSTMT_BREAK_SEMI                                = 150;  // <Jump Stmt> ::= break ';'
 		final int PROD_JUMPSTMT_RETURN_SEMI                               = 151;  // <Jump Stmt> ::= return <ExprOpt> ';'
 //		final int PROD_TRANSLATIONUNIT                                    = 152;  // <Translation Unit> ::= <External Decl>
-//		final int PROD_TRANSLATIONUNIT2                                   = 153;  // <Translation Unit> ::= <Translation Unit> <External Decl>
+		final int PROD_TRANSLATIONUNIT2                                   = 153;  // <Translation Unit> ::= <Translation Unit> <External Decl>
 //		final int PROD_EXTERNALDECL                                       = 154;  // <External Decl> ::= <Function Def>
 //		final int PROD_EXTERNALDECL2                                      = 155;  // <External Decl> ::= <Declaration>
 		final int PROD_FUNCTIONDEF                                        = 156;  // <Function Def> ::= <Decl Specifiers> <Declarator> <DeclListOpt> <Compound Stmt>
@@ -1022,11 +1024,31 @@ public class C99Parser extends CPreParser
 			}
 			
 			// TODO add the handling of further instruction types here...
+			
+			// START KGU#1130 2024-03-17: Bugfix #1141 Measures against stack overflow risk
+			else if (ruleId == RuleConstants.PROD_BLOCKITEMLIST
+					|| ruleId == RuleConstants.PROD_TRANSLATIONUNIT2) {
+				// <BlockItemList> ::= <BlockItemList> <BlockItem>
+				// <Translation Unit> ::= <Translation Unit> <External Decl>
+				int loopId = ruleId;
+				Stack<Reduction> redStack = new Stack<Reduction>();
+				do {
+					redStack.push(_reduction.get(1).asReduction());
+					_reduction = _reduction.get(0).asReduction();
+					ruleId = _reduction.getParent().getTableIndex();
+				} while (ruleId == loopId);
+				System.out.println("Doing block of type " + loopId + " with length " + redStack.size());
+				buildNSD_R(_reduction, _parentNode);
+				while (!redStack.isEmpty()) {
+					buildNSD_R(redStack.pop(), _parentNode);
+				}
+			}
+			// END KGU#1130 2024-03-17
 			else 
 			{
-				if (_reduction.size()>0)
+				if (_reduction.size() > 0)
 				{
-					for(int i=0; i<_reduction.size(); i++)
+					for(int i = 0; i < _reduction.size(); i++)
 					{
 						if (_reduction.get(i).getType() == SymbolType.NON_TERMINAL)
 						{
