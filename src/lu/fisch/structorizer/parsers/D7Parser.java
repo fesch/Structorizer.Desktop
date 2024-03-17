@@ -1899,7 +1899,6 @@ public class D7Parser extends CodeParser
 					_reduction = _reduction.get(0).asReduction();
 					ruleId = _reduction.getParent().getTableIndex();
 				} while (ruleId == loopId);
-				System.out.println("Doing block of type " + loopId + " with length " + redStack.size());
 				buildNSD_R(_reduction, _parentNode);
 				while (!redStack.isEmpty()) {
 					buildNSD_R(redStack.pop(), _parentNode);
