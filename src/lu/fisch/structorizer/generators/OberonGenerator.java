@@ -94,6 +94,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2021-12-05      Bugfix #1024: Precautions against defective record initializers
  *      Kay Gürtzig             2023-09-28      Bugfix #1092: Sensible export of alias type definitions enabled
  *      Kay Gürtzig             2023-10-04      Bugfix #1093 Undue final return 0 on function diagrams
+ *      Kay Gürtzig             2024-03-18      Bugfix #1146 Wrong END between THEN and ELSE on Alternative export,
+ *                                              missed opportunity to use ELSIF in IF chains now implemented
  *
  ******************************************************************************************************
  *
@@ -998,9 +1000,23 @@ public class OberonGenerator extends Generator {
 		// END KGU#453 2017-1102
 				_indent, isDisabled);
 		generateCode(_alt.qTrue, _indent+this.getIndent());
-		if (_alt.qFalse.getSize()!=0)
+		// START KGU#1135 2024-03-18: Issue #1146 We ought to make use of the ELSIf if possible
+		Element ele = null;
+		while (_alt.qFalse.getSize() == 1 
+				&& (ele = _alt.qFalse.getElement(0)) instanceof Alternative
+				&& !ele.isDisabled(isDisabled)) {
+			_alt = (Alternative)ele;
+			appendComment(_alt, _indent);
+			addCode("ELSIF "+ transform(_alt.getUnbrokenText().getLongString()) + " THEN",
+					_indent, isDisabled);
+			generateCode(_alt.qTrue, _indent+this.getIndent());
+		}
+		// END KGU#1135 2024-03-18
+		if (_alt.qFalse.getSize() != 0)
 		{
-			addCode("END", _indent, isDisabled);
+			// START KGU#1135 2024-03-18: Bugfix #1146 END is wrong here
+			//addCode("END", _indent, isDisabled);
+			// END KGU#1135 2024-03-18
 			addCode("ELSE", _indent, isDisabled);
 			generateCode(_alt.qFalse, _indent+this.getIndent());
 		}

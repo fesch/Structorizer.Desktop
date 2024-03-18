@@ -67,7 +67,8 @@ package lu.fisch.structorizer.parsers;
  *                                      consistent id restoration via CodeParser.undoIdReplacaments();
  *                                      bugfix #1141: Measures against stack overflow in buildNSD_R()
  *                                      bugfix #1142: assert statements hadn't been supported.
- *      Kay Gürtzig     2024-03-18      Bugfix #1143: {@code <EnumDeclaration>} unduly required modifiers
+ *      Kay Gürtzig     2024-03-18      Bugfix #1143: {@code <EnumDeclaration>} unduly required modifiers,
+ *                                      bugfix #1145: Crash with more than 1 class / interface on top level
  *
  ******************************************************************************************************
  *
