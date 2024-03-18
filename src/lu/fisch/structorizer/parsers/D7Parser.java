@@ -1292,7 +1292,7 @@ public class D7Parser extends CodeParser
 						//asgnmt.getComment().add("Constant!");
 						// END KGU#407 2017-06-22
 						if (isConstant) {
-							instr.setColor(colorConst);
+							instr.setColor(COLOR_CONST);
 						}
 						_parentNode.addElement(instr);
 					}
@@ -1310,7 +1310,7 @@ public class D7Parser extends CodeParser
 						// START KGU#407 2017-06-20: Enh. #420 - comments already here
 						this.equipWithSourceComment(instr, _reduction);
 						// END KGU#407 2017-06-22
-						instr.setColor(colorDecl);
+						instr.setColor(COLOR_DECL);
 						_parentNode.addElement(instr);
 					}
 					break;
@@ -1322,7 +1322,7 @@ public class D7Parser extends CodeParser
 					this.equipWithSourceComment(instr, _reduction);
 					//asgnmt.getComment().add("Constant!");
 					// END KGU#407 2017-06-22
-					instr.setColor(colorConst);
+					instr.setColor(COLOR_CONST);
 					_parentNode.addElement(instr);
 					break;
 				default:;
@@ -1373,7 +1373,7 @@ public class D7Parser extends CodeParser
 					Element def = this.equipWithSourceComment(new Instruction(translateContent(content)), _reduction);
 					_parentNode.addElement(def);
 					if (isEnum) {
-						def.setColor(colorConst);
+						def.setColor(COLOR_CONST);
 						// START KGU#542 2019-11-19: Enh. #739 - No longer needed, now genuine enum type import
 						//def.getComment().add("Enumerator type " + typeName);
 						// END KGU#542 2019-11-19
@@ -2225,7 +2225,7 @@ public class D7Parser extends CodeParser
 						decl.comment.add(methKind + " for class " + classRoot.getQualifiedName());
 						decl.comment.add(accessLevel);
 						((Call)decl).isMethodDeclaration = true;
-						decl.setColor(colorDecl);
+						decl.setColor(COLOR_DECL);
 						((Forever)classRoot.children.getElement(1)).getBody().insertElementAt(decl, 0);
 						break;
 					case RuleConstants.PROD_CLASSMETHODSPEC2:

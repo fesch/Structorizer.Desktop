@@ -217,6 +217,8 @@ Current development version 3.32-18 (2024-03-18)
 - 18: Bugfix #1141 Stack overflow risk on build phase of code import <2>
 - 18: Bugfix #1142 Java import failed on "assert" statements <2>
 - 18: Bugfix #1143 Java import grammar demanded modifiers before "enum" <2>
+- 18: Bugfix #1145 Java import crashed when source file contains two or more
+      classes / interfaces / enumerators on top level <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>

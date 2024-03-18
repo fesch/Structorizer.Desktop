@@ -119,7 +119,6 @@ import lu.fisch.utils.StringList;
  */
 public class JavaParser extends CodeParser
 {
-
 	//---------------------- Grammar specification ---------------------------
 
 	@Override
@@ -1179,7 +1178,7 @@ public class JavaParser extends CodeParser
 					castMatcher.reset(strLine);
 					arrayDeclMatcher.reset(strLine);
 					if (castMatcher.matches() || arrayDeclMatcher.matches()
-							|| strLine.contains(">>") || strLine.contains("?>")) {
+							|| strLine.contains(">>") || strLine.contains("?>") || strLine.contains("<>")) {
 						boolean replaced = false;
 						StringList tokens = Element.splitLexically(strLine, true);
 						// Initially decompose all ">>" tokens into ">", ">" ...
@@ -1189,19 +1188,35 @@ public class JavaParser extends CodeParser
 							tokens.insert(">", ++posAngBr);
 							// This is no modification w.r.t. the string representation
 						}
-						// ... and remove all token sequences "<", "?", ">"
+						// START KGU#1122 2024-03-18: Bugfix #1136 can only be an empty type param list
+						// ... get rid of "<>" tokens ...
+						if (tokens.removeAll("<>") > 0) {
+							replaced = true;
+						}
+						// END KGU#1122 2024-03-18
+						// ... and remove all token sequences "<", "?", ">" and "<", ">".
 						posAngBr = -1;
 						while ((posAngBr = tokens.indexOf(">", posAngBr+1)) >= 0) {
 							int pos = posAngBr - 1;
 							while (pos > 0 && tokens.get(pos).isBlank()) pos--;
 							if (pos > 0 && tokens.get(pos).equals("?")) {
+								// Look for preceding "<" in order to verify "<", "?", ">"
 								while (--pos >= 0 && tokens.get(pos).isBlank());
 								if (pos >= 0 && tokens.get(pos).equals("<")) {
+									// Found token sequence "<", "?", ">", so efface it
 									tokens.remove(pos, posAngBr+1);
 									replaced = true;
 									posAngBr = pos;
 								}
 							}
+							// START KGU#1122 2024-03-18: Bugfix #1136
+							else if (pos > 0 && tokens.get(pos).equals("<")) {
+								// Found token sequence "<", ">", which can only be an empty type param list
+								tokens.remove(pos, posAngBr+1);
+								replaced = true;
+								posAngBr = pos;
+							}
+							// END KGU#1122 2024-03-18
 						}
 						
 						// Now we first look for type casts or array specs with type arguments and modify them
@@ -1376,12 +1391,14 @@ public class JavaParser extends CodeParser
 	}
 
 	/**
-	 * Checks the syntax of (possibly nested) type specifications like
-	 * {@code HashMap<String, Vector<String[]>>}
+	 * Verifies the syntax of (possibly nested) type specifications like
+	 * {@code HashMap<String, Vector<String[]>>, List<Double>}
 	 * 
-	 * @param subSequence - token sequence assumed to specify a (possibly
-	 *    parameterized) type.
-	 * @return
+	 * @param subSequence - token sequence assumed to specify a comma-separated
+	 *    list of (possibly parameterised) types.
+	 * @return {@code true} if the given token list does not obviously violate
+	 *    the expected syntax of a comma-separated list of (possibly parameterised)
+	 *    type specifiers.
 	 */
 	private boolean isTypeSpecificationList(StringList subSequence) {
 		// TODO (by now the parsing in transformParameterisedTypes() was good enough)
@@ -1458,8 +1475,8 @@ public class JavaParser extends CodeParser
 		root.setInclude();
 		addRoot(root);
 		// Add dummy loops in order to gather fields and method signatures (to be dissolved in the end)
-		root.children.addElement(new Forever());
-		root.children.addElement(new Forever());
+		root.children.addElement(new Forever());	// For types
+		root.children.addElement(new Forever());	// not need at outermost level
 		
 		optionConvertSyntax = (Boolean)this.getPluginOption("convert_syntax", false);
 		// START KGU#1117 2024-03-09: Issue #1131 Allow to construct diagrams from anonymous classes
@@ -1552,12 +1569,30 @@ public class JavaParser extends CodeParser
 				// <InterfaceDeclaration> ::= <Annotations> <Modifiers> interface Identifier <TypeParametersOpt> <InterfaceBody>
 				// <InterfaceDeclaration> ::= <Annotations> interface Identifier <TypeParametersOpt> <ExtendsInterfaces> <InterfaceBody>
 				// <InterfaceDeclaration> ::= <Annotations> interface Identifier <TypeParametersOpt> <InterfaceBody>
+				
+				/*
+				 * What situations do we have to face?
+				 * - if this.includables is empty then we are at the outermost level, but
+				 *    it is not necessarily the first class/interface at this level
+				 *    (i.e. currentRoot is not necessarily = this.root)
+				 * - currentRoot == this.root then this is either the first (currentRoot empty)
+				 *    or the second class (curentRoot not empty) at the outermost level.
+				 * - currentRoot is an Includable - then we are defining an inner class and
+				 *    we will add to this.includables
+				 * - currentRoot is no Includable but a subroutine then we are defining a
+				 *    local class within the method block. We will add to includables and
+				 *    have currentRoot including this new Root.
+				 */
+				
+				// START KGU#1134 2024-03-18: Bugfix #1145 we better distinguish context
+				boolean isLocal = ruleId == RuleConstants.PROD_LOCALCLASSDECLARATION;
+				// END KGU#1134 2024-03-18
 				// Fetch comment and append modifiers
 				String modifiers = "";
 				int ixName = 1;
 				Reduction redClass = _reduction;
 				if (ruleId == RuleConstants.PROD_NORMALCLASSDECLARATION
-						|| ruleId == RuleConstants.PROD_LOCALCLASSDECLARATION) {
+						|| isLocal) {
 					// Get modifiers (in order to append them to the comment)
 					modifiers = this.getContent_R(_reduction.get(0));
 					_reduction = _reduction.get(1).asReduction();
@@ -1576,12 +1611,30 @@ public class JavaParser extends CodeParser
 				String name = _reduction.get(ixName).asString();
 				String category = _reduction.get(ixName-1).asString(); // "class" or "interface"
 				String qualifier = packageStr;
-				Root classRoot = root;
+				// START KGU#1134 2024-03-18: Bugfix #1145
+				//Root classRoot = root;
+				Root classRoot = Element.getRoot(_parentNode);
+				Root outerClass = null;
+				// END KGU#1134 2024-03-18
 				if (!this.includables.isEmpty()) {
-					qualifier = this.includables.peek().getQualifiedName();
+					// START KGU#1134 2024-03-18: Bugfix #1145
+					//qualifier = this.includables.peek().getQualifiedName();
+					qualifier = (outerClass = this.includables.peek()).getQualifiedName();
+				}
+				if (outerClass != null || !isEmptyClassRoot(classRoot)) {
+					Root currentRoot = classRoot;
+				// END KGU#1134 2024-03-18
 					classRoot = new Root();
 					classRoot.setInclude();
-					classRoot.addToIncludeList(includables.peek());
+					if (outerClass != null) {
+						// In case of a global class shall we actually establish this?
+						classRoot.addToIncludeList(outerClass);
+					}
+					// START KGU#1134 2024-03-18: Bugfix #1145
+					if (!currentRoot.isInclude()) {
+						currentRoot.addToIncludeList(name);
+					}
+					// END KGU#1134 2024-03-18
 					// Add temporary dummy loops in order to gather fields and method signatures
 					classRoot.children.addElement(new Forever());
 					classRoot.children.addElement(new Forever());
@@ -1624,8 +1677,10 @@ public class JavaParser extends CodeParser
 				}
 				// Now descend into the body
 				this.buildNSD_R(_reduction.get(ixBody).asReduction(), classRoot.children);
+				// START KGU#1134 2024-03-18: Bugfix# 1154 We must not this for the outermost diagram now
 				// Dissolve the field and method containers
-				dissolveDummyContainers(classRoot);
+				//dissolveDummyContainers(classRoot);
+				// END KGU#1134 2024-03-18
 				this.includables.pop();
 			}
 			break;
@@ -1633,7 +1688,10 @@ public class JavaParser extends CodeParser
 			case RuleConstants.PROD_ENUMDECLARATION_ENUM_IDENTIFIER:
 			case RuleConstants.PROD_ENUMDECLARATION_ENUM_IDENTIFIER2:
 			{
-				buildEnumeratorDefinition(_reduction, ruleId);
+				// START KGU#1134 2024-03-18: Bugfix #1145 Trouble with multiple classes on top level
+				//buildEnumeratorDefinition(_reduction, ruleId);
+				buildEnumeratorDefinition(_reduction, ruleId, _parentNode);
+				// eND KGU#1134 2024-03-18
 			}
 			break;
 			
@@ -1656,14 +1714,16 @@ public class JavaParser extends CodeParser
 				StringList decls = processVarDeclarators(_reduction.get(ixType+1), type, allConstant);
 				Element ele = this.equipWithSourceComment(new Instruction(decls), _reduction);
 				ele.comment.add("FIELD in class " + includables.peek().getQualifiedName());
-				ele.setColor(colorGlobal);
+				ele.setColor(COLOR_GLOBAL);
 				if (allConstant) {
-					ele.setColor(colorConst);
+					ele.setColor(COLOR_CONST);
 				}
 				if (modifiers != null) {
 					ele.comment.add(modifiers);
 				}
+				// FIXME #1145 We must cope with more than one class per file
 				((Forever)_parentNode.getElement(0)).getBody().addElement(ele);
+				// END KGU#1134 2024-03-18
 			}
 			break;
 			
@@ -1714,7 +1774,7 @@ public class JavaParser extends CodeParser
 					Call decl = new Call(subRoot.getText());
 					decl.isMethodDeclaration = true;
 					decl.setComment(subRoot.getComment());
-					decl.setColor(colorDecl);
+					decl.setColor(COLOR_DECL);
 					// Append the declaration
 					((Forever)classRoot.children.getElement(1)).getBody().addElement(decl);
 				}
@@ -1760,10 +1820,10 @@ public class JavaParser extends CodeParser
 				// END KGU#951 2021-03-04
 				Instruction ele = new Instruction(vars);
 				if (isConst) {
-					ele.setColor(colorConst);
+					ele.setColor(COLOR_CONST);
 				}
 				else {
-					ele.setColor(colorDecl);
+					ele.setColor(COLOR_DECL);
 				}
 				_parentNode.addElement(this.equipWithSourceComment(ele, _reduction));
 			}
@@ -1780,13 +1840,13 @@ public class JavaParser extends CodeParser
 				int ixLast = cond.count()-1; // index of the last line of the condition (if there are more than 1)
 				if (ixLast > 0) {
 					Instruction prep = new Instruction(cond.subSequence(0, ixLast));
-					prep.setColor(colorMisc);
+					prep.setColor(COLOR_MISC);
 					_parentNode.addElement(prep);
 				}
 				Alternative alt = new Alternative(cond.get(ixLast));
 				this.equipWithSourceComment(alt, _reduction);
 				if (ixLast > 0) {
-					alt.setColor(colorMisc);
+					alt.setColor(COLOR_MISC);
 				}
 				_parentNode.addElement(alt);
 				buildNSD_R(_reduction.get(4).asReduction(), alt.qTrue);
@@ -1824,7 +1884,7 @@ public class JavaParser extends CodeParser
 					// Mark all offsprings of the FOR loop with a (by default) yellowish colour
 					// (maybe the initialization part was empty, though!)
 					for (int i = oldSize; i < _parentNode.getSize(); i++) {
-						_parentNode.getElement(i).setColor(colorMisc);
+						_parentNode.getElement(i).setColor(COLOR_MISC);
 					}
 
 					// get the second part - should be an ordinary condition
@@ -1839,7 +1899,7 @@ public class JavaParser extends CodeParser
 						int ixLast = cond.count() - 1;	// index of the last line (might be more than 1)
 						if (cond.count() > 1) {
 							Instruction prep = new Instruction(cond.subSequence(0, ixLast));
-							prep.setColor(colorMisc);
+							prep.setColor(COLOR_MISC);
 							_parentNode.addElement(prep);
 						}
 						While loop = new While((getOptKeyword("preWhile", false, true)
@@ -1849,7 +1909,7 @@ public class JavaParser extends CodeParser
 						body = loop.getBody();
 					}
 					// Mark all offsprings of the FOR loop with a (by default) yellowish colour
-					ele.setColor(colorMisc);
+					ele.setColor(COLOR_MISC);
 				}
 				
 				this.equipWithSourceComment(ele, _reduction);
@@ -1865,7 +1925,7 @@ public class JavaParser extends CodeParser
 					buildNSD_R(_reduction.get(6).asReduction(), body);
 					// Mark all offsprings of the FOR loop with a (by default) yellowish colour
 					for (int i = oldSize; i < body.getSize(); i++) {
-						body.getElement(i).setColor(colorMisc);
+						body.getElement(i).setColor(COLOR_MISC);
 					}
 				}
 			}
@@ -1891,7 +1951,7 @@ public class JavaParser extends CodeParser
 				if (optionImportVarDecl) {	// KGU#951 2021-03-04 issue #956
 					Instruction instr = new Instruction("var " + loopVar + ": " + type);
 					instr.setDisabled(true);
-					instr.setColor(colorMisc);
+					instr.setColor(COLOR_MISC);
 					_parentNode.addElement(instr);
 				}
 				//String valList = this.translateContent(this.getContent_R(_reduction.get(ixType + 3)));
@@ -1899,7 +1959,7 @@ public class JavaParser extends CodeParser
 				int ixLast = valList.count() - 1;
 				if (ixLast > 0) {
 					Instruction prep = new Instruction(valList.subSequence(0, ixLast));
-					prep.setColor(colorMisc);
+					prep.setColor(COLOR_MISC);
 					_parentNode.addElement(prep);
 				}
 				Element forIn = this.equipWithSourceComment(new For(loopVar, valList.get(ixLast)), _reduction);
@@ -1949,7 +2009,7 @@ public class JavaParser extends CodeParser
 				if (ixLast > 0) {
 					// Yes, create an element for the preparation instructions and append it to the body
 					Instruction prep = new Instruction(cond.subSequence(0, ixLast));
-					prep.setColor(colorMisc);
+					prep.setColor(COLOR_MISC);
 					loop.getBody().addElement(prep);
 				}
 			}
@@ -2016,17 +2076,17 @@ public class JavaParser extends CodeParser
 						finAlt.setComment("FIXME: The comparison with null may have to be replaced!");
 						Instruction disp = new Instruction("dispose(" + rscId + ")");
 						disp.setComment("FIXME: Find the correct way to dispose the resource!");
-						disp.setColor(colorMisc);
+						disp.setColor(COLOR_MISC);
 						finAlt.qTrue.addElement(disp);
-						finAlt.setColor(colorMisc);
+						finAlt.setColor(COLOR_MISC);
 					} while (redRscs != null);
 					
 					// Insert the resource declaration block before the TRY element
 					Instruction decls = new Instruction(textRscDecls.reverse());
-					decls.setColor(colorMisc);
+					decls.setColor(COLOR_MISC);
 					decls.setComment("FIXME: The initialisation with null is Java-specific");
 					_parentNode.addElement(decls);
-					ele.setColor(colorMisc);
+					ele.setColor(COLOR_MISC);
 					
 					// Put the combined resource acquisition instruction into the TRY block
 					ele.qTry.addElement(new Instruction(textRscInits.reverse()));
@@ -2282,7 +2342,7 @@ public class JavaParser extends CodeParser
 				For ele = new For("synchronized", "0", "0", 1);
 				this.equipWithSourceComment(ele, _reduction);
 				ele.comment.add("synchronized (" + this.getContent_R(_reduction.get(2)) + ")");
-				ele.setColor(colorConst);
+				ele.setColor(COLOR_CONST);
 				_parentNode.addElement(ele);
 				this.buildNSD_R(_reduction.get(4).asReduction(), ele.q);
 			}
@@ -2391,6 +2451,25 @@ public class JavaParser extends CodeParser
 		}
 	}
 
+	// START KGU#1134 2024-03-18: Bugfix #1145 Trouble with more than one class at top level
+	/**
+	 * Checks whether the given Root is an "empty" Includable for a class definition.
+	 * 
+	 * @param classRoot - the potential diagram to place a new class representation
+	 * @return {@code true} if {@code classRoot} is an Includable containing exactly two
+	 *     empty Forever loops, {@code false} otherwise
+	 */
+	private boolean isEmptyClassRoot(Root classRoot) {
+		Element ele;
+		return classRoot.isInclude()
+				&& classRoot.children.getSize() == 2
+				&& ((ele = classRoot.children.getElement(0)) instanceof Forever)
+				&& ((Forever)ele).getBody().getSize() == 0
+				&& ((ele = classRoot.children.getElement(1)) instanceof Forever)
+				&& ((Forever)ele).getBody().getSize() == 0;
+	}
+	// END KGU#1134 2024-03-18
+
 	// START KGU#959 2021-03-06: Issue #961 extracted from decomposeExpression() for overloading
 	/**
 	 * Checks whether the passed-in instruction line (which must adhere to a
@@ -2445,12 +2524,14 @@ public class JavaParser extends CodeParser
 	/**
 	 * Derives an enumerator definition, either as a type definition or as a class
 	 * from the given {@link Reduction} {@code _reduction}
+	 * 
 	 * @param _reduction - The {@link Reduction} meant to represent an {@code  <EnumDeclaration>}
 	 * rule.
 	 * @param _ruleId - the actual table index of the rule
+	 * @param _parentNode - the target {@link Subqueue}
 	 * @throws ParserCancelled if the user happened to abort the parsing process
 	 */
-	private void buildEnumeratorDefinition(Reduction _reduction, int _ruleId) throws ParserCancelled {
+	private void buildEnumeratorDefinition(Reduction _reduction, int _ruleId, Subqueue _parentNode) throws ParserCancelled {
 		// <EnumDeclaration> ::= <ModifiersOpt> enum Identifier <Interfaces> <EnumBody>
 		// <EnumDeclaration> ::= <ModifiersOpt> enum Identifier <EnumBody>
 		String modifiers = this.getContent_R(_reduction.get(0));
@@ -2514,16 +2595,31 @@ public class JavaParser extends CodeParser
 		Reduction redDecls = redBody.get(redBody.size()-2).asReduction();
 		if (isClass || redDecls != null && redDecls.size() > 0) {
 			// We will have to define a member class
+			// START KGU#1134 2024-03-18: Bugfix #1145 We might be within a method
+			Root currentRoot = Element.getRoot(_parentNode);
+			// END KGU#1134 2024-03-18
 			Root enumRoot = root;
 			String qualifier = packageStr;
-			if (!includables.isEmpty()) {
+			// START KGU#1134 2024-03-18: Bugfix #1145 more than one top-level classes caused error
+			//if (!includables.isEmpty()) {
+			if (!includables.isEmpty() || !this.isEmptyClassRoot(enumRoot)) {
+			// END KGU#1134 2024-03-18
 				enumRoot = new Root();
 				enumRoot.setInclude();
 				// Add temporary dummy loops in order to gather fields and method signatures
 				enumRoot.children.addElement(new Forever());
 				enumRoot.children.addElement(new Forever());
-				qualifier = includables.peek().getQualifiedName();
-				enumRoot.addToIncludeList(includables.peek());
+				// START KGU#1134 2024-03-18: Bugfix #1145 more than one top-level classes caused error
+				//qualifier = includables.peek().getQualifiedName();
+				//enumRoot.addToIncludeList(includables.peek());
+				if (!includables.isEmpty()) {
+					qualifier = includables.peek().getQualifiedName();
+					enumRoot.addToIncludeList(includables.peek());
+					if (!currentRoot.isInclude()) {
+						currentRoot.addToIncludeList(enumRoot);
+					}
+				}
+				// END KGU#1134 2024-03-18
 				addRoot(enumRoot);
 			}
 			enumRoot.setText(name);
@@ -2535,7 +2631,9 @@ public class JavaParser extends CodeParser
 				enumRoot.comment.add(modifiers);
 			}
 			// END KGU#1132 2024-03-18
+			// Provide information about inherited interfaces if given
 			if (_ruleId == RuleConstants.PROD_ENUMDECLARATION_ENUM_IDENTIFIER) {
+				 // <EnumDeclaration> ::= <ModifiersOpt> enum Identifier <Interfaces> <EnumBody>
 				enumRoot.comment.add("==== " + this.getContent_R(_reduction.get(3)));
 			}
 			if (redDecls != null && redDecls.size() > 0) {
@@ -2568,7 +2666,7 @@ public class JavaParser extends CodeParser
 				}
 				Instruction itemDecl = new Instruction("const " + itemName + " <- " + value);
 				itemDecl.setComment(itemComments.get(i));
-				itemDecl.setColor(colorConst);
+				itemDecl.setColor(COLOR_CONST);
 				container.addElement(itemDecl);
 				itemOffset++;
 				if (classBodies.containsKey(itemName)) {
@@ -2586,7 +2684,9 @@ public class JavaParser extends CodeParser
 					includables.pop();
 				}
 			}
-			this.dissolveDummyContainers(enumRoot);
+			// START KGU#1134 2024-03-18: Bugfix #1145 Postpone this to the postprocessing
+			//this.dissolveDummyContainers(enumRoot);
+			// END KGU#1134 2024-03-18
 		}
 		else {
 			// This is going to be a type definition
@@ -2601,17 +2701,31 @@ public class JavaParser extends CodeParser
 			// Users may break the lines at their preference afterwards...
 			Instruction ele = new Instruction("type " + name + " = enum{"
 					+ itemNames.reverse().concatenate(", ") + "}");
-			Root targetRoot = root;
-			if (!includables.isEmpty()) {
-				targetRoot = includables.peek();
-				this.equipWithSourceComment(ele, _reduction);
+			// START KGU#1134 2024-03-18: Bugfix #1145 we may be in different contexts
+			//Root targetRoot = root;
+			//if (!includables.isEmpty()) {
+			//	targetRoot = includables.peek();
+			//	this.equipWithSourceComment(ele, _reduction);
+			//}
+			//else {
+			//	// We are on the outermost level
+			//	root.setText(name);
+			//	this.equipWithSourceComment(root, _reduction);
+			//}
+			Root targetRoot = Element.getRoot(_parentNode);
+			if (targetRoot == root && this.isEmptyClassRoot(targetRoot)) {
+				root.setText(name);
+			}
+			//((Forever)targetRoot.children.getElement(0)).getBody().addElement(ele);			
+			// START KGU#1134 2024-03-18: Bugfix #1145 We may not be on a class level but in a method
+			if (targetRoot.isInclude()) {
+				((Forever)targetRoot.children.getElement(0)).getBody().addElement(ele);
 			}
 			else {
-				// We are on the outermost level
-				root.setText(name);
-				this.equipWithSourceComment(root, _reduction);
+				_parentNode.addElement(ele);
 			}
-			((Forever)targetRoot.children.getElement(0)).getBody().addElement(ele);
+			// END KGU#1134 2024-03-18
+			this.equipWithSourceComment(ele, _reduction);
 			ele.comment.add(itemComments.reverse());
 			// START KGU#1132 2024-03-18: Bugfix #1143 enum does not need modifiers
 			//ele.comment.add(modifiers);
@@ -3109,30 +3223,21 @@ public class JavaParser extends CodeParser
 		// FIXME Try to delegate as much as possible to a submethod shared with ClassDeclaration section
 		String className0 = getContent_R(instCreaRed.get(1).asReduction(), "");
 		String qualifier = packageStr;
-		Root classRoot = root;
 		if (!this.includables.isEmpty()) {
 			// (Should always be the case here)
 			qualifier = this.includables.peek().getQualifiedName();
-			classRoot = new Root();
-			classRoot.setInclude();
-			classRoot.addToIncludeList(includables.peek());
-			// Add temporary dummy loops in order to gather fields and method signatures
-			classRoot.children.addElement(new Forever());
-			classRoot.children.addElement(new Forever());
-			this.addRoot(classRoot);
 		}
+		Root classRoot = new Root();
+		classRoot.setInclude();
+		classRoot.addToIncludeList(includables.peek());
+		// Add temporary dummy loops in order to gather fields and method signatures
+		classRoot.children.addElement(new Forever());
+		classRoot.children.addElement(new Forever());
+		this.addRoot(classRoot);
 		includables.push(classRoot);
 		classRoot.setNamespace(qualifier);
 		String className = className0 + "_" + Integer.toHexString(classRoot.hashCode());
 		classRoot.setText(className);
-		// FIXME: Is this necessary here?
-		if (this.includables.size() == 1 && packageStr != null) {
-			classRoot.comment.add("==== package: " + packageStr);
-			if (!imports.isEmpty()) {
-				imports.insert("==== imports:", 0);
-				classRoot.comment.add(imports);
-			}
-		}
 		classRoot.comment.insert("CLASS"
 				+ (this.includables.size() > 1 ? " in class " + qualifier : ""), 0);
 		classRoot.getComment().add(("Anonymous inner class").trim());
@@ -3144,8 +3249,6 @@ public class JavaParser extends CodeParser
 			ixBody++;
 		}
 		this.buildNSD_R(instCreaRed.get(ixBody).asReduction(), classRoot.children);
-		// Dissolve the field and method containers
-		dissolveDummyContainers(classRoot);
 		this.includables.pop();
 		return className;
 	}
@@ -3734,7 +3837,7 @@ public class JavaParser extends CodeParser
 			Instruction instr = new Instruction(var + " <- " + content);
 			this.equipWithSourceComment(instr, _reduction);
 			instr.getComment().add("This was a switch instruction with empty body!");
-			instr.setColor(colorMisc);
+			instr.setColor(COLOR_MISC);
 			_parentNode.addElement(instr);
 			return;
 		}
@@ -4147,6 +4250,11 @@ public class JavaParser extends CodeParser
 //			}
 //			aRoot.isProgram = true;
 //		}
+		// START KGU#1134 2024-03-18: Bugfix #1145
+		if (aRoot.isInclude()) {
+			this.dissolveDummyContainers(aRoot);
+		}
+		// END KGU#1134 2024-03-18
 		return false;
 	}
 

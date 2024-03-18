@@ -936,7 +936,7 @@ public class C99Parser extends CPreParser
 					// Mark all offsprings of the FOR loop with a (by default) yellowish colour
 					// (maybe the initialization part was empty, though!)
 					for (int i = oldSize; i < _parentNode.getSize(); i++) {
-						_parentNode.getElement(i).setColor(colorMisc);
+						_parentNode.getElement(i).setColor(COLOR_MISC);
 					}
 
 					// get the second part - should be an ordinary condition
@@ -957,7 +957,7 @@ public class C99Parser extends CPreParser
 						body = loop.getBody();
 					}
 					// Mark all offsprings of the FOR loop with a (by default) yellowish colour
-					ele.setColor(colorMisc);
+					ele.setColor(COLOR_MISC);
 				}
 				
 				this.equipWithSourceComment(ele, _reduction);
@@ -973,7 +973,7 @@ public class C99Parser extends CPreParser
 					buildNSD_R(_reduction.get(condIx + 2).asReduction(), body);
 					// Mark all offsprings of the FOR loop with a (by default) yellowish colour
 					for (int i = oldSize; i < body.getSize(); i++) {
-						body.getElement(i).setColor(colorMisc);
+						body.getElement(i).setColor(COLOR_MISC);
 					}
 				}
 			}
@@ -1812,7 +1812,7 @@ public class C99Parser extends CPreParser
 				if (_parentNode.parent instanceof Root && ((Root)_parentNode.parent).getMethodName().equals("???")) {
 					if (!_asTypeDef) {
 						instr.getComment().add("Globally declared!");
-						instr.setColor(colorGlobal);
+						instr.setColor(COLOR_GLOBAL);
 					}
 					// FIXME
 					if (root != _parentNode.parent && !this.importingRoots.contains(root)) {
@@ -1828,7 +1828,7 @@ public class C99Parser extends CPreParser
 					}
 				}
 				else if (expr == null && !_asTypeDef) {
-					instr.setColor(colorDecl);	// local declarations with a smooth green
+					instr.setColor(COLOR_DECL);	// local declarations with a smooth green
 				}
 				// START KGU#1080/KGU#1081 2023-09-28: Bugfix #1089/#1091 We must register aliases
 				//if (_asTypeDef && expr != null) {
@@ -1845,7 +1845,7 @@ public class C99Parser extends CPreParser
 				// END KGU#1080/KGU#1081 2023-09-28
 				// Constant colour has priority
 				if (isConstant && !_asTypeDef) {
-					instr.setColor(colorConst);
+					instr.setColor(COLOR_CONST);
 				}
 				_parentNode.addElement(instr);
 			}
@@ -2121,7 +2121,7 @@ public class C99Parser extends CPreParser
 							//if (typeName != null) {
 							//	enumDef.getComment().add("Enumeration type " + typeName);
 							//}
-							enumDef.setColor(colorConst);
+							enumDef.setColor(COLOR_CONST);
 							_parentNode.addElement(enumDef);
 							// START KGU#1080/KGU#1081 2023-09-28: Bugfix #1089/#1091
 							enumDef.updateTypeMap(typeMap);

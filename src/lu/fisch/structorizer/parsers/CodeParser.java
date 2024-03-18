@@ -55,6 +55,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2022-07-20      Enh. #1046: Decoding mechanism for token names to actual symbols
  *      Kay Gürtzig     2022-07-29      Issue #1051: New methods getSubRoot() and removeRoot() to support COBOL tidying
  *      Kay Gürtzig     2023-10-09      Javadoc comments revised.
+ *      Kay Gürtzig     2024-03-18      Standard colour names refactored (e.g. colorConst -> COLOR_CONST)
  *
  ******************************************************************************************************
  *
@@ -363,36 +364,36 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter impl
 	/**
 	 * Standard element colour for imported constant definitions
 	 * 
-	 * @see #colorDecl
-	 * @see #colorGlobal
-	 * @see #colorMisc
+	 * @see #COLOR_DECL
+	 * @see #COLOR_GLOBAL
+	 * @see #COLOR_MISC
 	 */
-	protected static final Color colorConst = Color.decode("0xFFE0FF");
+	protected static final Color COLOR_CONST = Color.decode("0xFFE0FF");
 	/**
 	 * Standard element colour for imported variable declarations (without
 	 * initialization)
 	 * 
-	 * @see #colorConst
-	 * @see #colorGlobal
-	 * @see #colorMisc
+	 * @see #COLOR_CONST
+	 * @see #COLOR_GLOBAL
+	 * @see #COLOR_MISC
 	 */
-	protected static final Color colorDecl = Color.decode("0xE0FFE0");
+	protected static final Color COLOR_DECL = Color.decode("0xE0FFE0");
 	/**
 	 * Standard element colour for imported global declarations or definitions
 	 * 
-	 * @see #colorConst
-	 * @see #colorDecl
-	 * @see #colorMisc
+	 * @see #COLOR_CONST
+	 * @see #COLOR_DECL
+	 * @see #COLOR_MISC
 	 */
-	protected static final Color colorGlobal = Color.decode("0xE0FFFF");
+	protected static final Color COLOR_GLOBAL = Color.decode("0xE0FFFF");
 	/**
 	 * Standard element colour for miscellaneous mark-ups
 	 * 
-	 * @see #colorConst
-	 * @see #colorDecl
-	 * @see #colorGlobal
+	 * @see #COLOR_CONST
+	 * @see #COLOR_DECL
+	 * @see #COLOR_GLOBAL
 	 */
-	protected static final Color colorMisc = Color.decode("0xFFFFE0");
+	protected static final Color COLOR_MISC = Color.decode("0xFFFFE0");
 
 	// START KGU 2017-04-11
 	/**

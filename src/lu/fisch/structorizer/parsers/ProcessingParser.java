@@ -319,6 +319,9 @@ public class ProcessingParser extends JavaParser {
 	@Override
 	protected boolean subclassUpdateRoot(Root root, String sourceFileName) throws ParserCancelled
 	{
+		// START KGU#1134 2024-03-18: Bugfix #1145 Defective handling of multiple classes at top level
+		super.subclassUpdateRoot(root, sourceFileName);
+		// END KGU#1134 2024-03-18
 		if (root.isInclude() && root.getMethodName().equals(progName + "Processing")) {
 			// START KGU#970 2021-05-12: Issue #932 Content moved to subclassPostProcess 
 			// Define some important Processing constants
@@ -555,66 +558,66 @@ public class ProcessingParser extends JavaParser {
 			stdDefs.setText("ProcessingStandardDefinitions");
 			stdDefs.setInclude();
 			Instruction defs = new Instruction(systemVariables2);
-			defs.setColor(colorGlobal);
+			defs.setColor(COLOR_GLOBAL);
 			defs.setComment("Processing system variables initialization, part 2");
 			stdDefs.children.insertElementAt(defs, 0);
 			defs = new Instruction(systemVariables1);
-			defs.setColor(colorGlobal);
+			defs.setColor(COLOR_GLOBAL);
 			defs.setComment("Processing system variables initialization, part 1");
 			stdDefs.children.insertElementAt(defs, 0);
 			defs = new Instruction("type KeyCodes = enum{NONE, SHIFT = 16, CONTROL, ALT, LEFT = 37, RIGHT = 39, DOWN = 40, UP = 224}");
-			defs.setColor(colorConst);
+			defs.setColor(COLOR_CONST);
 			defs.setComment("Processing standard key code enumerator");
 			stdDefs.children.insertElementAt(defs, 0);
 			defs = new Instruction("type FileTypes = enum{TIFF, TARGA, JPEG, GIF}");
-			defs.setColor(colorConst);
+			defs.setColor(COLOR_CONST);
 			defs.setComment("Processing standard file type enumerator");
 			stdDefs.children.insertElementAt(defs, 0);
 			defs = new Instruction("type Lighting = enum{AMBIENT, DIRECTIONAL, SPOT}");
-			defs.setColor(colorConst);
+			defs.setColor(COLOR_CONST);
 			defs.setComment("Processing standard lighting enumerator");
 			stdDefs.children.insertElementAt(defs, 0);
 			defs = new Instruction("type VertAlignmentModes = enum{BASELINE, TOP, BOTTOM}");
-			defs.setColor(colorConst);
+			defs.setColor(COLOR_CONST);
 			defs.setComment("Processing standard vertical alignment mode enumerator");
 			stdDefs.children.insertElementAt(defs, 0);
 			defs = new Instruction("type ArcModes = enum{CHORD = 2, PIE}");
-			defs.setColor(colorConst);
+			defs.setColor(COLOR_CONST);
 			defs.setComment("Processing standard arc drawing mode enumerator");
 			stdDefs.children.insertElementAt(defs, 0);
 			defs = new Instruction("type ShapeModes = enum{CORNER, CORNERS, RADIUS, CENTER, DIAMETER = CENTER}");
-			defs.setColor(colorConst);
+			defs.setColor(COLOR_CONST);
 			defs.setComment("Processing standard shape drawing mode enumerator");
 			stdDefs.children.insertElementAt(defs, 0);
 			defs = new Instruction(shapeEnumerator);
-			defs.setColor(colorConst);
+			defs.setColor(COLOR_CONST);
 			defs.setComment("Processing standard shape type enumerator");
 			stdDefs.children.insertElementAt(defs, 0);
 			defs = new Instruction("type ColorMode = enum{RGB, ARGB, HSB, ALPHA}");
 			// END KGU#958 2021-03-05
-			defs.setColor(colorConst);
+			defs.setColor(COLOR_CONST);
 			defs.setComment("Processing standard color mode enumerator");
 			stdDefs.children.insertElementAt(defs, 0);
 			// START KGU#958 2021-03-05: Issue #960
 			defs = new Instruction(rendererConstants);
-			defs.setColor(colorConst);
+			defs.setColor(COLOR_CONST);
 			defs.setComment("Processing standard renderer constants");
 			stdDefs.children.insertElementAt(defs, 0);
 			defs = new Instruction(blendModeConstants);
-			defs.setColor(colorConst);
+			defs.setColor(COLOR_CONST);
 			defs.setComment("Processing standard blend mode constants");
 			stdDefs.children.insertElementAt(defs, 0);
 			defs = new Instruction(strokeConstants);
-			defs.setColor(colorConst);
+			defs.setColor(COLOR_CONST);
 			defs.setComment("Processing standard stroke constants");
 			stdDefs.children.insertElementAt(defs, 0);
 			defs = new Instruction(keyConstants);
-			defs.setColor(colorConst);
+			defs.setColor(COLOR_CONST);
 			defs.setComment("Processing standard key constants");
 			stdDefs.children.insertElementAt(defs, 0);
 			// END KGU#958 2021-03-05
 			defs = new Instruction(mathConstants);
-			defs.setColor(colorConst);
+			defs.setColor(COLOR_CONST);
 			defs.setComment("Processing standard Math constants");
 			stdDefs.children.insertElementAt(defs, 0);
 			this.addRoot(stdDefs);
