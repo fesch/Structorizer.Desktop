@@ -59,8 +59,8 @@
 ! V 0.6     2024-03-08  Kay Gürtzig     {String Char} revised (backslash handling)
 ! V 0.7     2024-03-11  Kay Gürtzig     Missing hx escape sequence in StringLiteral enabled,
 !                                       Processing conversion function str disabled (impeded 'str' identifiers)
-! V 0.8     2024-03-17  Kay Gürtzig     Identifier syntax extended to {All Latin} (as Java accepts them in fact),
-!                                       <AssertStatement> introduced
+! V 0.8     2024-03-18  Kay Gürtzig     Identifier syntax extended to {All Latin} (as Java accepts them in fact),
+!                                       <AssertStatement> introduced (#1142), enum without <Modifiers> enabled (#1143)
 ! -----------------------------------------------------------------------
 
 "Name"    = 'Java SE 8'
@@ -348,6 +348,10 @@ Comment Line = '//'
 <Modifiers> 
         ::= <Modifier>
          |  <Modifiers> <Modifier>
+         
+<ModifiersOpt>
+        ::= <Modifiers>
+         |
 
 <Modifier> 
         ::= 'public'
@@ -393,8 +397,8 @@ Comment Line = '//'
                         | <InterfaceTypeList> ',' <InterfaceType>
 
 <EnumDeclaration>
-        ::= <Modifiers> 'enum' Identifier <Interfaces> <EnumBody>
-         |  <Modifiers> 'enum' Identifier <EnumBody>
+        ::= <ModifiersOpt> 'enum' Identifier <Interfaces> <EnumBody>
+         |  <ModifiersOpt> 'enum' Identifier <EnumBody>
          
 <EnumBody>
         ::= '{' <EnumConstants> ',' <EnumBodyDeclarationsOpt> '}'
@@ -881,11 +885,19 @@ Comment Line = '//'
 !         |  'boolean' <Dims> '.' 'class'
 !         |  'void' <Dims> '.' 'class'
 
+!<QualifiedNew>
+!        ::= 'new'
+!         | <QualifiedName> '.' 'new'
+
 <ClassInstanceCreationExpression> 
         ::= 'new' <ClassType> '(' <ArgumentList> ')'
          |  'new' <ClassType> '(' ')'
          |  'new' <ClassType> '(' <ArgumentList> ')' <ClassBody>
          |  'new' <ClassType> '(' ')' <ClassBody>
+!        ::= <QualifiedNew> <ClassType> '(' <ArgumentList> ')'
+!         |  <QualifiedNew> <ClassType> '(' ')'
+!         |  <QualifiedNew> <ClassType> '(' <ArgumentList> ')' <ClassBody>
+!         |  <QualifiedNew> <ClassType> '(' ')' <ClassBody>
 
 <ArgumentList> 
         ::= <Expression>
