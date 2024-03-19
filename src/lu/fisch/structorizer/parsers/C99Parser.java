@@ -61,6 +61,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2023-09-27      Bugfix #1089.2-4 three flaws on typedef imports
  *      Kay Gürtzig     2023-09-28      Issue #1091: Correct handling of alias, enum, and array type definitions
  *      Kay Gürtzig     2023-09-29      Bugfix #678: Unwanted side-effect on pointer types mended
+ *      Kay Gürtzig     2024-03-17      Bugfix #1141: Measures against stack overflow in buildNSD_R()
  *
  ******************************************************************************************************
  *
@@ -78,6 +79,7 @@ package lu.fisch.structorizer.parsers;
 import java.awt.Color;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Stack;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -493,7 +495,7 @@ public class C99Parser extends CPreParser
 		final int PROD_LABELLEDSTMT_IDENTIFIER_COLON                      = 124;  // <Labelled Stmt> ::= Identifier ':' <Statement>
 		final int PROD_COMPOUNDSTMT_LBRACE_RBRACE                         = 125;  // <Compound Stmt> ::= '{' <BlockItemList> '}'
 //		final int PROD_COMPOUNDSTMT_LBRACE_RBRACE2                        = 126;  // <Compound Stmt> ::= '{' '}'
-//		final int PROD_BLOCKITEMLIST                                      = 127;  // <BlockItemList> ::= <BlockItemList> <BlockItem>
+		final int PROD_BLOCKITEMLIST                                      = 127;  // <BlockItemList> ::= <BlockItemList> <BlockItem>
 //		final int PROD_BLOCKITEMLIST2                                     = 128;  // <BlockItemList> ::= <BlockItem>
 //		final int PROD_BLOCKITEM                                          = 129;  // <BlockItem> ::= <Declaration>
 //		final int PROD_BLOCKITEM2                                         = 130;  // <BlockItem> ::= <Statement>
@@ -519,7 +521,7 @@ public class C99Parser extends CPreParser
 		final int PROD_JUMPSTMT_BREAK_SEMI                                = 150;  // <Jump Stmt> ::= break ';'
 		final int PROD_JUMPSTMT_RETURN_SEMI                               = 151;  // <Jump Stmt> ::= return <ExprOpt> ';'
 //		final int PROD_TRANSLATIONUNIT                                    = 152;  // <Translation Unit> ::= <External Decl>
-//		final int PROD_TRANSLATIONUNIT2                                   = 153;  // <Translation Unit> ::= <Translation Unit> <External Decl>
+		final int PROD_TRANSLATIONUNIT2                                   = 153;  // <Translation Unit> ::= <Translation Unit> <External Decl>
 //		final int PROD_EXTERNALDECL                                       = 154;  // <External Decl> ::= <Function Def>
 //		final int PROD_EXTERNALDECL2                                      = 155;  // <External Decl> ::= <Declaration>
 		final int PROD_FUNCTIONDEF                                        = 156;  // <Function Def> ::= <Decl Specifiers> <Declarator> <DeclListOpt> <Compound Stmt>
@@ -934,7 +936,7 @@ public class C99Parser extends CPreParser
 					// Mark all offsprings of the FOR loop with a (by default) yellowish colour
 					// (maybe the initialization part was empty, though!)
 					for (int i = oldSize; i < _parentNode.getSize(); i++) {
-						_parentNode.getElement(i).setColor(colorMisc);
+						_parentNode.getElement(i).setColor(COLOR_MISC);
 					}
 
 					// get the second part - should be an ordinary condition
@@ -955,7 +957,7 @@ public class C99Parser extends CPreParser
 						body = loop.getBody();
 					}
 					// Mark all offsprings of the FOR loop with a (by default) yellowish colour
-					ele.setColor(colorMisc);
+					ele.setColor(COLOR_MISC);
 				}
 				
 				this.equipWithSourceComment(ele, _reduction);
@@ -971,7 +973,7 @@ public class C99Parser extends CPreParser
 					buildNSD_R(_reduction.get(condIx + 2).asReduction(), body);
 					// Mark all offsprings of the FOR loop with a (by default) yellowish colour
 					for (int i = oldSize; i < body.getSize(); i++) {
-						body.getElement(i).setColor(colorMisc);
+						body.getElement(i).setColor(COLOR_MISC);
 					}
 				}
 			}
@@ -1022,11 +1024,30 @@ public class C99Parser extends CPreParser
 			}
 			
 			// TODO add the handling of further instruction types here...
+			
+			// START KGU#1130 2024-03-17: Bugfix #1141 Measures against stack overflow risk
+			else if (ruleId == RuleConstants.PROD_BLOCKITEMLIST
+					|| ruleId == RuleConstants.PROD_TRANSLATIONUNIT2) {
+				// <BlockItemList> ::= <BlockItemList> <BlockItem>
+				// <Translation Unit> ::= <Translation Unit> <External Decl>
+				int loopId = ruleId;
+				Stack<Reduction> redStack = new Stack<Reduction>();
+				do {
+					redStack.push(_reduction.get(1).asReduction());
+					_reduction = _reduction.get(0).asReduction();
+					ruleId = _reduction.getParent().getTableIndex();
+				} while (ruleId == loopId);
+				buildNSD_R(_reduction, _parentNode);
+				while (!redStack.isEmpty()) {
+					buildNSD_R(redStack.pop(), _parentNode);
+				}
+			}
+			// END KGU#1130 2024-03-17
 			else 
 			{
-				if (_reduction.size()>0)
+				if (_reduction.size() > 0)
 				{
-					for(int i=0; i<_reduction.size(); i++)
+					for(int i = 0; i < _reduction.size(); i++)
 					{
 						if (_reduction.get(i).getType() == SymbolType.NON_TERMINAL)
 						{
@@ -1791,7 +1812,7 @@ public class C99Parser extends CPreParser
 				if (_parentNode.parent instanceof Root && ((Root)_parentNode.parent).getMethodName().equals("???")) {
 					if (!_asTypeDef) {
 						instr.getComment().add("Globally declared!");
-						instr.setColor(colorGlobal);
+						instr.setColor(COLOR_GLOBAL);
 					}
 					// FIXME
 					if (root != _parentNode.parent && !this.importingRoots.contains(root)) {
@@ -1807,7 +1828,7 @@ public class C99Parser extends CPreParser
 					}
 				}
 				else if (expr == null && !_asTypeDef) {
-					instr.setColor(colorDecl);	// local declarations with a smooth green
+					instr.setColor(COLOR_DECL);	// local declarations with a smooth green
 				}
 				// START KGU#1080/KGU#1081 2023-09-28: Bugfix #1089/#1091 We must register aliases
 				//if (_asTypeDef && expr != null) {
@@ -1824,7 +1845,7 @@ public class C99Parser extends CPreParser
 				// END KGU#1080/KGU#1081 2023-09-28
 				// Constant colour has priority
 				if (isConstant && !_asTypeDef) {
-					instr.setColor(colorConst);
+					instr.setColor(COLOR_CONST);
 				}
 				_parentNode.addElement(instr);
 			}
@@ -2100,7 +2121,7 @@ public class C99Parser extends CPreParser
 							//if (typeName != null) {
 							//	enumDef.getComment().add("Enumeration type " + typeName);
 							//}
-							enumDef.setColor(colorConst);
+							enumDef.setColor(COLOR_CONST);
 							_parentNode.addElement(enumDef);
 							// START KGU#1080/KGU#1081 2023-09-28: Bugfix #1089/#1091
 							enumDef.updateTypeMap(typeMap);

@@ -5744,7 +5744,7 @@ public class COBOLParser extends CodeParser
 			if (declEl == null) {
 				declEl = new Instruction(declContent);
 				declEl.setComment(AUX_VAR_DECL_COMMENT);
-				declEl.setColor(colorMisc);
+				declEl.setColor(COLOR_MISC);
 				root.children.insertElementAt(declEl, elNo);
 			}
 			else {
@@ -5893,7 +5893,7 @@ public class COBOLParser extends CodeParser
 				if (!root.getParameterNames().contains(resultVar) && this.optionImportVarDecl) {
 					Instruction decl = new Instruction("var " + resultVar + ": " + resultType);
 					decl.setComment("Result variable");
-					decl.setColor(colorDecl);
+					decl.setColor(COLOR_DECL);
 					_parentNode.addElement(decl);
 				}
 				// END KGU#475 2017-12-05
@@ -6661,9 +6661,9 @@ public class COBOLParser extends CodeParser
 			content.add("{" + afters.reverse().concatenate(", ") + "},\\");
 			content.add("{" + befores.reverse().concatenate(", ") + "})");
 			call.setText(content);
-			call.setColor(colorMisc);
+			call.setColor(COLOR_MISC);
 			Element el = new Instruction(counter + "[" + (counters.count() - 1) + "] <- 0");
-			el.setColor(colorMisc);
+			el.setColor(COLOR_MISC);
 			_parentNode.addElement(el);
 			_parentNode.addElement(this.equipWithSourceComment(call, _redInspect));
 			Set<String> counterVars = new HashSet<String>();
@@ -6684,7 +6684,7 @@ public class COBOLParser extends CodeParser
 				content.add(line);
 			}
 			el = new Instruction(content);
-			el.setColor(colorMisc);
+			el.setColor(COLOR_MISC);
 			_parentNode.addElement(el);
 			// START KGU#847 2020-04-19 Issue #851/1 insert declarations for auxiliary variables
 			insertAuxVarDeclaration(counter, "int[" + counters.count() + "]");
@@ -6782,7 +6782,7 @@ public class COBOLParser extends CodeParser
 			content.add("{" + afters.reverse().concatenate(", ") + "},\\");
 			content.add("{" + befores.reverse().concatenate(", ") + "})");
 			Call call = new Call(content);	// No need to register this in totalCallMap
-			call.setColor(colorMisc);
+			call.setColor(COLOR_MISC);
 			_parentNode.addElement(this.equipWithSourceComment(call, _redInspect));
 			isDone = true;
 		}
@@ -6829,7 +6829,7 @@ public class COBOLParser extends CodeParser
 		content.add(afters.get(0) + ",\\");
 		content.add(befores.get(0) + ")");
 		Call call = new Call(content);	// No need to register this in totalCallMap
-		call.setColor(colorMisc);
+		call.setColor(COLOR_MISC);
 		_parentNode.addElement(this.equipWithSourceComment(call, _redInspect));
 		isDone = true;
 		return isDone;
@@ -7013,8 +7013,8 @@ public class COBOLParser extends CodeParser
 			String testVarName = "wasFound_" + Integer.toHexString(wLoop.hashCode());
 			wLoop.setText(wLoop.getText().getText() + " and not " + testVarName);
 			Instruction testInit = new Instruction(testVarName + " <- false");
-			testInit.setColor(colorMisc);
-			wLoop.setColor(colorMisc);
+			testInit.setColor(COLOR_MISC);
+			wLoop.setColor(COLOR_MISC);
 			_parentNode.addElement(testInit);
 			_parentNode.addElement(this.equipWithSourceComment(wLoop, _reduction));
 			// START KGU#847 2020-04-19 Issue #851/1 insert declarations for auxiliary variables
@@ -7034,7 +7034,7 @@ public class COBOLParser extends CodeParser
 				}
 				String cond = this.transformCondition(redWhen.get(1).asReduction(), null);
 				Alternative when = new Alternative(cond);
-				when.setColor(colorMisc);
+				when.setColor(COLOR_MISC);
 				wLoop.getBody().addElement(this.equipWithSourceComment(when, redWhen));
 				this.buildNSD_R(redWhen.get(2).asReduction(), when.qTrue);
 				when.qTrue.addElement(new Instruction(stopStmt));
@@ -7045,13 +7045,13 @@ public class COBOLParser extends CodeParser
 				InstrString += "\n inc(" + indexAdditionalVar.getName() + ")";
 			}
 			Instruction incr = new Instruction(InstrString);
-			incr.setColor(colorMisc);
+			incr.setColor(COLOR_MISC);
 			wLoop.getBody().addElement(incr);
 			// Finally convert and add the AT END clause after the loop.
 			redWhens = redBody.get(2).asReduction();
 			if (redWhens.getParent().getTableIndex() == RuleConstants.PROD_SEARCH_AT_END_END) {
 				Alternative endTest = new Alternative("not " + testVarName);
-				endTest.setColor(colorMisc);
+				endTest.setColor(COLOR_MISC);
 				_parentNode.addElement(this.equipWithSourceComment(endTest, redWhens));
 				this.buildNSD_R(redWhens.get(1).asReduction(), endTest.qTrue);
 			}
@@ -7237,25 +7237,25 @@ public class COBOLParser extends CodeParser
 			String content = "unstring"+suffix + "_0 <- split(" + source + ", " + delimiters.get(0) + ")";
 			String indexVar = "index" + suffix;	// Used for substring traversal (with several delmiters and ALL handling)
 			Instruction instr = new Instruction(content);
-			instr.setColor(colorMisc);
+			instr.setColor(COLOR_MISC);
 			_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
 			instr.getComment().add("-----------------------------------");
 			instr.getComment().add(this.getOriginalText(_reduction, ""));
 			for (int i = 1; i < delimiters.count(); i++) {
 				instr = new Instruction(indexVar + " <- 0");
-				instr.setColor(colorMisc);
+				instr.setColor(COLOR_MISC);
 				_parentNode.addElement(instr);
 				For loop = new For("part" + suffix, "unstring" + suffix + "_" + (1 - i % 2));
-				loop.setColor(colorMisc);
+				loop.setColor(COLOR_MISC);
 				_parentNode.addElement(loop);
 				instr = new Instruction("split" + suffix + " <- split(part" + suffix + ", " +delimiters.get(i) + ")");
-				instr.setColor(colorMisc);
+				instr.setColor(COLOR_MISC);
 				loop.getBody().addElement(instr);
 				For loop1 = new For("item" + suffix, "split" + suffix);
-				loop1.setColor(colorMisc);
+				loop1.setColor(COLOR_MISC);
 				loop.getBody().addElement(loop1);
 				instr = new Instruction("unstring" + suffix + "_" + (i % 2) + "[index" + suffix + "] <- item" + suffix);
-				instr.setColor(colorMisc);
+				instr.setColor(COLOR_MISC);
 				instr.getText().add("inc(index" + suffix + ", 1)");
 				loop1.getBody().addElement(instr);
 			}
@@ -7274,7 +7274,7 @@ public class COBOLParser extends CodeParser
 			// FIXME Handling of ALL clauses is still unclear
 			if (!ignoreUnstringAllClauses) {
 				instr = new Instruction(indexVar + " <- 0");
-				instr.setColor(colorMisc);
+				instr.setColor(COLOR_MISC);
 				_parentNode.addElement(instr);
 			}
 			for (String[] target: targets) {
@@ -7289,10 +7289,10 @@ public class COBOLParser extends CodeParser
 				if (!ignoreUnstringAllClauses) {
 					if (all) {
 						While loop = new While("(" + indexVar + " < length(unstring" + suffix + ")) and (length(unstring_" + suffix + "["+indexVar+"] = 0)");
-						loop.setColor(colorMisc);
+						loop.setColor(COLOR_MISC);
 						_parentNode.addElement(loop);
 						instr = new Instruction("inc(" + indexVar + ", 1)");
-						instr.setColor(colorMisc);
+						instr.setColor(COLOR_MISC);
 						loop.getBody().addElement(instr);
 					}
 					expr = "unstring" + suffix + "[" + indexVar + "]";
@@ -7317,17 +7317,17 @@ public class COBOLParser extends CodeParser
 					assignments.add("inc(" + tallying + ", 1)");
 				}
 				instr = new Instruction(assignments);
-				instr.setColor(colorMisc);
+				instr.setColor(COLOR_MISC);
 				// FIXME Handling of ALL clausues is still unclear
 				String indexStr = (ignoreUnstringAllClauses ? Integer.toString(index) : indexVar);
 				Alternative alt = new Alternative("length(unstring" + suffix + ") > " + indexStr);
-				alt.setColor(colorMisc);
+				alt.setColor(COLOR_MISC);
 				_parentNode.addElement(alt);
 				alt.qTrue.addElement(instr);
 				// FIXME Handling of ALL clausues is still unclear
 				if (!ignoreUnstringAllClauses) {
 					instr = new Instruction("inc(" + indexVar + ", 1)");
-					instr.setColor(colorMisc);
+					instr.setColor(COLOR_MISC);
 					_parentNode.addElement(instr);
 				}
 
@@ -7376,7 +7376,7 @@ public class COBOLParser extends CodeParser
 			if (!content.trim().isEmpty()) {
 				Instruction instr = new Instruction(content.trim());
 				if (requiresManualAction) {
-					instr.setColor(colorMisc);
+					instr.setColor(COLOR_MISC);
 				}
 				_parentNode.addElement(this.equipWithSourceComment(instr, _reduction));
 				if (comment != null) {
@@ -7694,7 +7694,7 @@ public class COBOLParser extends CodeParser
 		}
 		if (this.optionImportVarDecl) {
 			Instruction decl = new Instruction("var " + fileDescr + ": int");
-			decl.setColor(isSuited ? colorDecl : Color.RED);
+			decl.setColor(isSuited ? COLOR_DECL : Color.RED);
 			_subqueue.addElement(this.equipWithSourceComment(decl, _reduction));
 			decl.comment.add("-----------------------------------");
 			decl.comment.add(this.getOriginalText(_reduction, ""));
@@ -8213,7 +8213,7 @@ public class COBOLParser extends CodeParser
 		switch (secRuleId) {
 		case RuleConstants.PROD_EXIT_BODY:	// (empty)
 			content = "(exit from paragraph)";
-			color = colorMisc;
+			color = COLOR_MISC;
 			break;
 		case RuleConstants.PROD_EXIT_BODY_PROGRAM:	// <exit_body> ::= PROGRAM <exit_program_returning>
 		case RuleConstants.PROD_EXIT_BODY_FUNCTION:	// <exit_body> ::= FUNCTION
@@ -8363,15 +8363,15 @@ public class COBOLParser extends CodeParser
 						|| condTokens.contains("xor")) {
 					Instruction init = new Instruction(varName + " <- " + from);
 					// Mark this part of the decomposed not-exactly FOR loop
-					init.setColor(colorMisc);
+					init.setColor(COLOR_MISC);
 					_parentNode.addElement(init);
 					While wloop = new While(negateCondition(cond));
 					if (bodyRuleId == RuleConstants.PROD_PERFORM_BODY2) {
 						this.buildNSD_R(bodyRed.get(1).asReduction(), wloop.getBody());
 						Instruction incr = new Instruction(varName + " <- " + varName + " + (" + by + ")");
 						// Mark the parts of the decomposed not-exactly FOR loop
-						incr.setColor(colorMisc);
-						wloop.setColor(colorMisc);
+						incr.setColor(COLOR_MISC);
+						wloop.setColor(COLOR_MISC);
 						wloop.getBody().addElement(incr);
 						_parentNode.addElement(this.equipWithSourceComment(wloop, _reduction));
 					}
@@ -10766,13 +10766,13 @@ public class COBOLParser extends CodeParser
 			decl.getComment().add("*** Redefines " + redefined.getQualifiedName());
 		}
 		if (isConst) {
-			decl.setColor(colorConst);
+			decl.setColor(COLOR_CONST);
 		}
 		else if (!decl.isAssignment()) {
-			decl.setColor(colorDecl);
+			decl.setColor(COLOR_DECL);
 		}
 		else if (currentVar.isGlobal() || currentVar.isExternal()) {
-			decl.setColor(colorGlobal);
+			decl.setColor(COLOR_GLOBAL);
 		}
 		targetNode.addElement(decl);
 	}
@@ -10821,11 +10821,11 @@ public class COBOLParser extends CodeParser
 			}
 			// FIXME: For global types we must not repeat this within a routine but refer to the globally defined name!!!
 			if (var.isExternal()) {
-				instr.setColor(colorGlobal);
+				instr.setColor(COLOR_GLOBAL);
 				externalNode.addElement(instr);
 			}
 			if (var.isGlobal()) {
-				instr.setColor(colorGlobal);
+				instr.setColor(COLOR_GLOBAL);
 				globalNode.addElement(instr);
 			}
 			else {
@@ -11146,7 +11146,7 @@ public class COBOLParser extends CodeParser
 							client.setText(callText);
 						}
 						// END KGU#849 2020-04-20
-						client.setColor(colorMisc);	// No longer needs to be red
+						client.setColor(COLOR_MISC);	// No longer needs to be red
 						client.setDisabled(false);
 					}
 					// At the original place we most likely won't need the Call anymore (not reachable).

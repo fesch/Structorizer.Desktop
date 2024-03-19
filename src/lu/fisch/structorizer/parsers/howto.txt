@@ -10,7 +10,7 @@ This is just a little file that explains
 ADD A NEW LANGUAGE TO STRUCTORIZER IMPORT
 =========================================
 Author:      Kay Gürtzig
-Last update: 2021-05-31
+Last update: 2024-03-18
 
 Structorizer uses the GOLD Parser version 5.0 (http://www.goldparser.org) in
 combination with a compiled grammar for the source language to derive a structogram
@@ -24,137 +24,171 @@ All information you need for GOLD Parser can be found on the GOLDParser website
 (http://www.goldparser.org).
 
 1. GRAMMAR FILE
-First you need a grammar for the programming language you want to add an import for.
-A grammar file as required for GOLD Parser (grm file) is to be written in an easy-to-
-understand dialect of EBNF (Enhanced Backus-Naur Form).
-Before the grammar rules begin, some preceding lines will have to define the lexical
-tokens used by the grammar rules (e.g. number literals, identifiers etc.). These are
-(according to the Chomsky type 3 of lexic) defined by some sort of regular expressions.
-The documentation is around here: http://goldparser.org/doc/grammars/index.htm.
+
+First you need a grammar for the programming language to be imported.
+A grammar file as required for GOLD Parser (grm file) is to be written in an easy-
+to-understand dialect of EBNF (Enhanced Backus-Naur Form) as text file.
+Before the section of grammar rules starts, a preceding section will have to define
+the lexical tokens used by the grammar rules (e.g. number literals, identifiers etc.).
+These are defined (according to the Chomsky type 3 of lexic) by some sort of regular
+expressions.
+You find the documentation at http://goldparser.org/doc/grammars/index.htm.
 The grammar handles line comments and block comments if the delimiters are defined
 with "Comment Start", "Comment End", and "Comment Line". If alternative comment
-delimiters are to be accepted, then the names of the additional group definitions shall
-start with "Comment" (see http://www.goldparser.org/doc/grammars/define-groups.htm)
-if the generated parser is to be enabled to attach the comments to reductions objects. 
-Be aware that the GOLD Parser is a LALR(1) parser which makes it performant but imposes
-some restrictions to the way grammar rules are to be formed.
+delimiters are to be accepted, then the names of the additional group definitions
+shall start with "Comment" (see
+	http://www.goldparser.org/doc/grammars/define-groups.htm)
+if the generated parser is to be enabled to attach the comments to reductions objects.
+Be aware that the GOLD Parser is a LALR(1) parser which makes it performant but
+imposes some restrictions to the way grammar rules are to be formed.
 In general, it is a good idea to start with some grammar for a very similar language,
 which GOLD Parser is known to work with. You may find examples in this directory and
 on the GOLD Parser homepage (http://goldparser.org/grammars/index.htm). 
-The optimum tool for editing a grammar file for GOLDParser is the GOLDBuilder.exe you
-may download as binary for Windows from:
+The optimum tool for editing a grammar file for GOLDParser is the GOLDBuilder.exe
+you may download as binary for Windows from:
 http://goldparser.org/builder/files/GOLD-Builder-5.2.0-Binary.zip.
 It is not only an editor but also integrates the grammar check and the compilation
-to the grammar table file. It provides an excellent interactive analysis, which allows
-you comfortably to navigate through rule conflicts and the like.  
+to the grammar table file. It provides an excellent interactive analysis, which
+allows you comfortably to navigate through rule conflicts and the like.  
 
 2. COMPILED GRAMMAR TABLE
+
 Convert the grammar file to a set of compiled grammar tables. If you haven't already
-done this with the GOLDBuilder tool mentioned above, it can also be done with a command-
-line tool named GOLDbuild. For Windows, a compiled version of it may be downloaded as
-GOLDbuild.exe from the following URL:
-http://goldparser.org/builder/files/GOLD-Builder-5.2.0-Cmd.zip
-Make sure to unzip all the dat files together with the GOLDbuild.exe into the same folder.
-The GOLDbuild tool analyzes the grammar and constructs the decision tables for the parser
-from them. This takes some seconds and results in an egt file, which contains the tables
-for the state-driven LALR(1) parsing engine. If your grammar is for language XYZ then the
-command line will simply look like:
-GOLDbuild.exe XYZ.grm
+done this with the GOLDBuilder tool mentioned above, it can also be done with a
+command-line tool named GOLDbuild. For Windows, a compiled version of it may be
+downloaded as GOLDbuild.exe from the following URL:
+	http://goldparser.org/builder/files/GOLD-Builder-5.2.0-Cmd.zip
+Make sure to unzip all the dat files together with the GOLDbuild.exe into the same
+folder. The GOLDbuild tool analyzes the grammar and constructs the decision tables
+for the parser from them. This takes some seconds and results in an egt file, which
+contains the tables for the state-driven LALR(1) parsing engine. If your grammar is
+for language XYZ and saved as XYZ.grm then the command line will simply look like:
+	GOLDbuild.exe XYZ.grm
 This will create a file XYZ.egt by default.
-If the grammar is not suited for LALR(1) parsing, however, then you will get some dozens
-or more conflict messages but no egt file. In this case you will have to reformulate the
-rules until the grammar passes the GOLDbuild process. This may get tricky if the language
-itself is intrinsically ambiguous.
-Again, the GOLDBuilder (mentioned in section 1) is way more informative and mighty
-than the GOLDBuild.exe - it leads you step by step to the grammar table. 
+If the grammar is not suited for LALR(1) parsing, however, then you will get some
+dozens or more conflict messages but no egt file. In this case you will have to
+reformulate the rules until the grammar passes the GOLDbuild process. This may get
+tricky if the language itself is intrinsically ambiguous.
+Again, the GOLDBuilder (mentioned in section 1) is way more informative and resouce-
+ful than the GOLDBuild.exe - it leads you step by step to the grammar table (or to
+the core of rule conflict).
 
 3. PARSER CLASS SKELETON
+
 If you have luckily obtained an egt file (or have downloaded an also suited cgt file -
 which is just an older file format for GOLD parser compiled grammar tables) then you
 will have to generate a Parser skeleton for this grammar.
 Here you will have to use a command-line tool GOLDprog.exe downloaded together with
-GOLDbuild (see step 2) as http://goldparser.org/builder/files/GOLD-Builder-5.2.0-Cmd.zip.
-In order to create a meaningful parser class you should use StructorizerParserTemplate.pgt
-as the template file for GOLDprog.exe:
-GOLDprog.exe XYZ.egt StructorizerParserTemplate.pgt XYZParser.java
+GOLDbuild (see step 2) as
+	http://goldparser.org/builder/files/GOLD-Builder-5.2.0-Cmd.zip.
+In order to create a meaningful parser class use StructorizerParserTemplate.pgt as
+the template file for GOLDprog.exe:
+	GOLDprog.exe XYZ.egt StructorizerParserTemplate.pgt XYZParser.java
 The states and patterns in the tables are linked to the rules. The command-line tool
-GOLDprog derives more or less mnemonic constants for the table indices of symbols and
-rules and places them as interface members in the target Java file (XYZParser.java).
+GOLDprog derives more or less mnemonic constants for the table indices of the symbols
+and the rules and places them as interface members in the emerging target Java file
+(XYZParser.java).
 (The template file practically contains the Java skeleton of the aimed Parser class,
-where certain ## markers specify the insertion places and the syntax according to which
-the table index references are generated into the code.)
+where certain ## markers specify the insertion places and the syntax according to
+which the table index references are generated into the code.)
 You will also find some hooks where to add the Nassi-Shneiderman diagram synthesis
 (methods initializeBuildNSD(...), buildNSD_R(...), getContent_R(...),
 subclassUpdateRoots(...), subclassPostProcess(...)).
 
 4. FILE PREPARATION
-Before the parsing begins, usually some file preparations will have to be done. You
-should overwrite method prepareTextfile(String _textToParse, String _encoding).
-To setup the comment processing, you will need to call registerStatementRuleIds(...)
+
+Before the parsing begins, usually some file preparations will be needed to
+overcome trouble that cannot be resolved via the grammar. To this purpose you
+should overwrite method
+	prepareTextfile(String _textToParse, String _encoding).
+To setup the comment processing properly, you will need to call the provided
+method
+	registerStatementRuleIds(...)
 here.
-If the file preparation tends to take a lot of time and you have an idea how to
-estimate the overall time tell when certain portion has been done then you should
-call method firePropertyChange("progress", oldVal, newVal) on a regular basis,
-where oldVal and newVal are to be integer values ranging between 0 and 100, symbolising
-the (old and new) percentage of this file preparation phase. The value 100 will be
-sent anyway after you leave the routine.
 
 5. DIAGRAM SYNTHESIS FROM SYNTAX TREE
-This all done, the diagram synthesis must be written. This is very dependent on the
-rules of the used grammar. Whereas the parsing process works bottom up, i.e. from the
-input token to the start symbol of the grammar, the diagram synthesis works top down.
-When the parsing terminated successfully, i.e. in state ACCEPT, then at first method
-initializeBuildNSD is called in order to give you the opportunity to do some language-
-specific preparation. Just override this method if there is something to prepare.
-Usually you should call method setStatement
-Next the recursive method buildNSD_R will be called with the top Reduction of the
-grammar and the empty element sub-queue of the new diagram root as arguments. The usual
-way to implement it is to pick all Reductions representing some algorithmic entities
-to be converted in diagram elements and handle them correspondingly, skip all Reductions
-being meaningless for Structorizer, and just recursively traverse the remaining Reductions
-with buildNSD_R (else branch).
-Where you need the mere parsed text you may call getContent_R on a Reduction instead,
-which you will also have to implement for the respective rule-specific Reduction.
-The analysis of the element Tokens of the Reduction class is pretty straight-forward.
-With method getParent() you obtain the corresponding production rule (including its text,
-e.g. "<WhileStatement> ::= WHILE <expression> DO <StatementSequence> END"). The left-
-hand side of the rule, here "<WhileStatment>" can be obtained with getHead().
-The table index of the rule can be obtained with getTableIndex() on the production rule.
+
+This all done, the code for the diagram synthesis must be written. This strongly
+depends on the rules of the used grammar. Whereas the parsing process works
+bottom up, i.e. from the input token towards the start symbol of the grammar, the
+diagram synthesis works top down along the provided reduction tree.
+When the parsing terminated successfully, i.e. in state ACCEPT, then first method
+	initializeBuildNSD()
+is called in order to give you the opportunity to do some language-specific build
+preparation. Just override this method if there is something to initialize.
+Next the recursive method
+	buildNSD_R(Reduction, Subqueue)
+will be called with the top Reduction of the grammar and the empty element Subqueue
+of the new diagram Root as arguments. The most obvious way to implement it is to
+pick all Reductions representing algorithmic entities that are to be converted into
+diagram elements and handle them correspondingly, to skip all Reductions regarded
+meaningless for Structorizer, and just to recursively traverse the remaining
+Reductions with buildNSD_R(...) (in the else or default branch). It is worth,
+however, to spend some consideration to avoid recursive descending into sequential
+recursive Reductions like
+	<Statements> ::= <Statements> <Statement>
+because this is prone to cause stack overflow for large sequences. You better find
+a way to process the respective Reduction trees of this kind of linear recursion in
+a loop (for left-recursive rules e.g. by using an auxiliary stack data structure).
+Where you just need the mere parsed text you may call
+	getContent_R(Reduction String)
+on a Reduction instead, which you will also have to implement for the respective
+grammar-specific Reductions.
+The elements of Reductions are Tokens. Tokens may represent a Reduction themselves
+(non-terminal Tokens) or some basic content (terminal Tokens). The analysis of a
+non-terminal Token is pretty straight-forward.
+With method getParent() you obtain the corresponding production rule (an object of
+class Production) including its textual representation, e.g.
+	"<WhileStatement> ::= WHILE <expression> DO <StatementSequence> END").
+The left-hand side of the rule, here "<WhileStatment>", can be obtained from the
+Production with getHead().
+The table index of the rule can be obtained with getTableIndex() on the Production.
 This index may be compared with the generated members of interface RuleConstants to
 identify the rule and conclude its structure:
 The right-hand side of the production rule determines the structure of the Reduction
-elements. In the example above it consists of 5 Tokens (three of type CONTENT (terminal)
-and and two of type NON_TERMINAL, in the rule-defined order, i.e. "WHILE", <expression>,
-"DO", <StatementSequence>, "END"), hence method size() on the Reduction object would
-return 5. You obtain the respective tokens via the get() method, providing the respective
-index (0...4). From the identified rule you will know which tokens are terminals and which
-are non-terminals. For further analysis, you typically fetch the child reduction of non-
-terminal tokens by method asReduction() (on the token), for terminal tokens you will
-retrieve their string content by making use of method asString().
-The initial diagram Root is held in the member variable root of your Parser class. If you
-bump into some subroutine code (a routine declaration Reduction) then you will temporarily
-have to move root into the collection subRoots by means of method addRoot() and add a
-new Root object, putting it into slot root instead.
-Ideally, you have a look at the already existing language-specific parser classes (which
-are rather diagram synthesis classes by the way) how they make use of the Reduction tree
-generated by the actual generic parser.
+elements. In the example above it consists of 5 Tokens (three of type CONTENT
+(terminal) and and two of type NON_TERMINAL, in the rule-defined order, i.e.
+	"WHILE", <expression>, "DO", <StatementSequence>, "END"),
+hence method size() on the Reduction object would return 5 here.
+You obtain the respective Tokens via the get(int) method, providing the correspond-
+ing index (0...4). From the identified rule you will usually know which tokens are
+CONTENT and which are NON_TERMINAL. But sometimes it may vary, according to the
+related subrules, so you use method getType() on the Token make sure.
+For further analysis, you typically fetch the child Reduction of non-terminal tokens
+by applying method asReduction() to the Token, for terminal tokens you will retrieve
+their string content via method asString().
+The initial diagram Root is held in the member variable root of your Parser class.
+If you bump into some subroutine code (a routine declaration Reduction) then you
+will temporarily have to move root into the collection subRoots by means of method
+addRoot(Root) and add a new Root object, putting it into slot root instead.
+It may be recommeded to have a look at the already existing language-specific parser
+classes (which are rather diagram synthesis classes, by the way) how they make use
+of the Reduction tree generated by the actual generic parser.
 
-Import options are available via members named "option..." of the parent class CodeParser:
-- optionImportVarDecl indicates whether variable declarations are to be imported or not
-- optionImportComments specifies whether comments from source are to be passed to the elements
-- optionSaveParseTree() indicates whether the parse tree is to be saved (no action needed,
-  already handled by the parent class!).
-Language-dependent options can be configured within the respective <plugin> tag in file
-parsers.xml. Each <option> tag is supposed to have the following attributes:
+6. IMPORT OPTIONS
+
+Import options may affect different phases of the import (file preparation, build
+decisions or postprocessing). The common ones are made available via members named
+"option..." of the parent class CodeParser:
+- optionImportVarDecl
+	indicates whether or not variable declarations are to be imported
+- optionImportComments
+	specifies whether source comments are to be passed to the elements
+- optionSaveParseTree()
+	indicates whether the parse tree is to be saved (no action needed,
+	it is already handled by the parent class!).
+Language-dependent options can be configured within the respective <plugin> tag in
+file parsers.xml. Each <option> tag is supposed to have the following attributes:
 - name: an identifier string used as internal key,
-- type: one of "Boolean", "Integer", "Unsigned", "Double", "Character", "String", or
-  "Enum",
-- title: the external caption for the import option dialog (should be English)
-- help: A short (English) description used as tooltip popup in the import option dialog.
-If the option values are enumerable (i.e. type="Enum") then a sequence of <item> nodes
-should be placed within the <option> tag, each specifying one of the selectable values
-in its 'value' attribute, e.g.
-	<option name="bar" type="Enum" title="Bar" help="Kind of guy">
+- type: one of "Boolean", "Integer", "Unsigned", "Double", "Character", "String",
+  or "Enum",
+- title: the external caption for the import option dialog (should be in English),
+- help: A short (English) description used as tooltip popup in the import option
+  dialog.
+If the option values are enumerable (i.e. type="Enum") then a sequence of <item>
+nodes should be placed within the <option> tag, each specifying one of the selectable
+values in its 'value' attribute, e.g.
+	<option name="bearing" type="Enum" title="Bearing" help="Kind of guy">
 		<item value="good" />
 		<item value="bad" />
 		<item value="ugly" />
@@ -162,29 +196,158 @@ in its 'value' attribute, e.g.
 In order to obtain the value, the parser must use method
 	getPluginOption(String key, Object default)
 
-The parent class, CodeParser, provides some standard colors that may be used to mark up
-certain kinds of elements:
-- colorConst for constant definitions
-- colorDecl for mere variable declarations (if imported at all)
-- colorGlobal for global definitions (in case of files with multiple routines)
-- colorMisc for miscellaneous source language-specific mark-ups (e.g. for related elements
-  emerging from a single source code construct like a for(...;...;...) loop in C).
+The parent class, CodeParser, provides some pre-defined standard colours that may be
+used to mark up certain kinds of elements:
+- COLOR_CONST for constant definitions
+- COLOR_DECL for mere variable declarations (if imported at all)
+- COLOR_GLOBAL for global definitions (in case of files with multiple routines)
+- COLOR_MISC for miscellaneous source language-specific mark-ups (e.g. for mutually
+  related elements emerging from a single source code construct like a
+  for(...;...;...) loop in C).
   
- Again, if you think you can contribute to a more precise progress display, you
- send the estimated percentage of build completion every now and then by means of
- method firePropertyChange("progress", oldVal, newVal) in the range 0..100.
- 
-6. CONFIGURATION OF COMMENT IMPORT
+7. CONFIGURATION OF COMMENT IMPORT
+
 Some configuration is necessary to make comment import from source files work:
-List those members of class constant RuleConstants in constant statementIds that
-are related to built elements such that the comment retrieval and attachment via
-methods
+List those rule ids (members of class constant RuleConstants) in the constant
+	statementIds
+that are related to built elements (not to e.g. mere partial expressions) such
+that the comment retrieval and attachment methods
 - String retrieveComment(Reduction)
 - Element equipWthSourceComment(Element, Reduction)
 may work as intended.
- 
-7. BATCH MODE TEST
-It may facilitate the final tests to run the parser in batch mode (i.e. from command line):
+
+8. PROGRESS INFORMATION
+
+For the GUI mode, there is a display in Structorizer showing progress bars for the
+different phases of import. You should regularly feed it with sensible information.
+This is to be done by calling method
+	firePropertyChange("progress", oldVal, newVal)
+whenever a substantial portion of the respective phase has been done. The phase
+itself needs not to passed to the method as it is deduced from the calling context.
+The arguments oldVal and newVal are to be integer numbers in the range 0...100,
+representing the percentage of the estimated work load of the respective phase.
+The relevant phases for you are:
+- File preprocessing (calls from inside prepareTextFile(...));
+- Diagram building (calls from buildNSD_R(...));
+The progress information for the parsing and the post-processing phase are generated
+automatically by the basic CodeParser. Even for the preprocessing and the bulding
+phases the initial value 0 and eventual value 100 are automatically generated. But
+without regular percentage updates there would only be some "in progress" animation.
+
+9. BATCH MODE TEST
+
+It may facilitate the final tests to run the parser in batch mode (i.e. from command
+line):
 	Linux:	 	structorizer.sh  -p -v <logDir> <sourceFile> ...
 	Windows: 	structorizer.bat -p -v <logDir> <sourceFile> ...
-(For further command-line options see Structorizer User Guide).
+(For further command-line options see Structorizer User Guide:
+https://help.structorizer.fisch.lu/index.php?menu=136&page=#batch_import.)
+
+10. HANDLING OF OBJECT-ORIENTED ASPECTS
+
+Nassi-Shneiderman diagrams are excellent to visualize algorithms but have not been
+designed for OOP modelling. Nevertheless in order to import algorithms from object-
+oriented programming languages (which are the majority nowadays) object-oriented
+aspects like class context, inheritance, field access scope cannot entirely ignored
+but will have to be reflected in some way or other for the resulting diagrams to make
+sense for the user.
+This chapter comprises some considerations and suggestions how to convey as much
+OO information as possible for the interpretation of the results in relation to the
+underlying structures in the original source code. At the moment the recommendations
+given here shall achieve at least some level of consistency with the parser already
+implemented for OO languages: Java, Processing and ObjectPascal. But best practises
+might change if mor convincing ideas happen to occur.
+A source file may contain one or more classes, even nested ones, so it is necessary
+to distinguish the emerging method diagrams with possibly equal signatures from
+different involved classes. The existing parsers use only the last name part for
+the method signature in the text field of the method Root (diagram type subroutine!).
+A new field "namespace" was introduced where the prefix for the fully qualified name
+is placed. Arranger index uses it to offer the diagram overview either as a flat list
+with fully qualified signatures (sorted by the qualified name) or as a hierarchical
+tree according to the name paths.
+But the class fields will also have to be held somewhere for the method diagrams to
+have access to them (as they are not passed as arguments). So the obvious approach
+is to create an Includable diagram per class (named after the class and also equipp-
+ed with a namespace, e.g. from the package in Java) where all the field declarations
+are placed as if they were "globally defined". They will be given the COLOR_GLOBAL.
+Access modifiers like "public", "protected", "private" cannot actually be modelled,
+they are just mentioned in the element comments.
+This Includable is then to be included by all diagrams holding member methods of the
+class. (Of course, it would have been possible to build two Includables per class,
+one with public members and another with private members. The latter would include
+the former and itself be included by the method diagrams, whereas member diagrams of
+other classes would only include the public Includable. This seems to be "cleaner"
+but in fact this would rather not help clarity. For actual support of public field
+access to an object of the class, a record type definition holding the public fields
+as components would be needed - which is a completely different syntactical approach
+and rather not suited for the internal access from the member methods (where "this."
+or "self." wouldn't be properly interpreted and is usually not required in the im-
+ported languages, i.e. it would have to be added in most cases on import...).
+On the other hand, if the Includable is to "represent" the class then it should be
+coveted also to present the method signatures (which then comes nearer to a class
+node in a UML class diagram, albeit without the graphical manifestation of relations
+like inheritance).
+As a concession to this aim, specifically manipulated CALL elements are (ab)used.
+Rather than method calls, the declaration signatures are placed there, the method
+comment is extended by the access modifier an other information. A specific flag
+only accessible for the Parser code is set, permanently disabling the elements such
+that they cannot be executed accidently. But Structorizer supports to summon the
+related method diagram into an editor window when the "Edit Subroutine" function from
+the "Edit" oder context menu is activated. This property of Call elements is set by:
+	decl.isMethodDeclaration = true;
+Rather than to mix fields and methods in the order they occur in the file, field
+declarations will be placed at the beginning of the diagram, method declarations
+after them - this looks more conform with UML class diagram nodes.
+
+Much more isn't feasible within the concept of a structogram editor and presenter.
+
+In detail, however, to build a sensible diagram arrangement from an OOP source
+file is more complicated as shall be explained at the Java import example here.
+We have to distinguish several contexts:
+1. Outer file context. Here common information like package (to be used as namespace)
+   and imports are to be found. Usually a Java source file contains one public class.
+   Then the Includable representing the class can be derived from it and for all
+   defined methods subroutine diagrams would be built, including the Includable.
+   But a Java file may contain more than one class declaration at the outer level
+   (though the single public class/interface is the eponymous one). Unfortunately,
+   no specific declaration order is guaranteed.
+   Among them may be enumerator definitions that may either be equivalent to a
+   simple enumerator type definition (Instruction element in the class Includable)
+   or to a complex class (an own Includable diagram with constants and related
+   methods). Both will have to be handled in a totally different way. We would
+   have to build an entire set of Includables - each for a class or an enum type
+   definition - but what inclusion relations to establish without producing circular
+   inclusion? All these classes would know each other but stay at the same level.
+   Will there still be a common top level diagram for the entire file (package,
+   import stuff) to be included by all the class diagrams emerging from the file?
+   Or don't we need it since all the diagrams will anyway form an Arranger group?
+   
+2. Inside a class, field and method declarations are possible (the handling of
+   which was generally described above) - so we have to place field and method
+   signature declarations into the class Includable and to associate diagrams for
+   the methods. But the definition of (named) inner classes is also possible at
+   class definition level (i.e. inside the class body but outside of methods).
+   Do we put a record definition with the public fields into the diagram for the
+   surrounding class in addition to the creation of a class Includable for the
+   inner class (next to the set of all method diagrams etc.) - see discussion
+   about access modes above? Again, are the inner class diagrams to be included
+   by the outer class diagram? (Their mutual acquaintance cannot be modelled.)
+   Shall these inner class diagrams at least include the siblings of the outer
+   class diagram?
+
+3. Inside a method. Here only local variables can be declared, but also nested
+   classes, even anonymous classes. How can we establish the relation between
+   these local classes and the owning method diagram? Certainly the method
+   diagram will have to include the Includable of the local class (the other
+   way round isn't possible, anyway) to make the class available for the
+   statements. Additional record type definition?
+
+Technically, to achieve the desired separation of types/fields and method decla-
+rations, the alread existing OOP language parsers here chose to equip the poten-
+tial class diagrams with a pair of temporary FOREVER loops, one for constant
+definitions, type definitions, and field declarations, the other one for method
+signatures. In the posprocessing the contents of the two loops will be concate-
+nated and the loops dropped. Method diagrams, however, will just be constructed
+in the normal way. So we must always be aware of the context to correctly handle
+element placement.
+We are fully aware that the result of OOP import will always be wanting.

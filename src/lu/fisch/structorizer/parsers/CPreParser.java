@@ -352,7 +352,7 @@ public abstract class CPreParser extends CodeParser
 				for (Entry<String, String[]> entry: constants.entrySet()) {
 					// FIXME: Some translation/parsing might still be necessary!
 					Instruction constDef = new Instruction("const " + entry.getKey() + " <- " + entry.getValue()[0]);
-					constDef.setColor(colorConst);
+					constDef.setColor(COLOR_CONST);
 					constDef.setComment("Converted from a #define in file \"" + entry.getValue()[1] + "\"");
 					this.includedConsts.children.addElement(constDef);
 				}

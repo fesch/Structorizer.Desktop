@@ -49,10 +49,11 @@
 !  V1.3 - Oct 2018,  second comment group repaired (i.e. adapted to GOLDBuilder 5.2)
 !  V1.4 - Apr 2020,  indentaion re-aligned (Kay Gürtzig)
 !  V1.5 - Feb 2021,  Hack into the <EnumType> rule in order to overcome a reduce-reduce conflict (Kay Gürtzig)
+!  V1.6 - Mar 2024,  Qualified names enabled in UNIT and USES clauses (Kay Gürtzig, for #1084)
 ! -----------------------------------------------------------------------
 
 "Name"    = 'ObjectPascal' 
-"Version" = '1.5, Feb 2021'
+"Version" = '1.6, Mar 2024'
 "Author"  = 'Rob F.M. van den Brink, Kay Gürtzig' 
 "About"   = 'Derived from scratch, from Delphi 7.0 help and experiments with code files'
 "Start Symbol"  = <ObjectPascal> 
@@ -119,6 +120,9 @@ id               = {Id Head}{Id Tail}*
 !------------------------------------------------------------------------------
 
 !<UnitId>               ::= id
+
+<UnitIdList>            ::= <UnitIdList> ',' <FieldDesignator>
+                          | <FieldDesignator>
 
 <IdList>                ::= <IdList> ',' <RefId>
                           | <RefId>
@@ -197,10 +201,11 @@ id               = {Id Head}{Id Tail}*
                           |
 
            
-<Unit>                  ::= <UnitHeader>  <InterfaceSection> <ImplementationSection> <InitSection> '.'
+!<Unit>                  ::= <UnitHeader>  <InterfaceSection> <ImplementationSection> <InitSection> '.'
+<Unit>                  ::= <UnitHeader> <OptUsesSection> <InterfaceSection> <ImplementationSection> <InitSection> '.'
 
-<UnitHeader>            ::= UNIT <RefId> <OptPortDirectives> ';'
-
+!<UnitHeader>            ::= UNIT <RefId> <OptPortDirectives> ';'
+<UnitHeader>            ::= UNIT <FieldDesignator> <OptPortDirectives> ';'
 
 <Package>               ::= <PackageHeader> <OptRequiresClause> <OptContainsClause> END '.'
 
@@ -223,7 +228,8 @@ id               = {Id Head}{Id Tail}*
                           | 
 
 
-<UsesClause>            ::= USES <IdList> ';'
+!<UsesClause>            ::= USES <IdList> ';'
+<UsesClause>            ::= USES <UnitIdList> ';'
                           | SynError
 
 <UsesSection>           ::= <UsesClause>

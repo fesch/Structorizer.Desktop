@@ -57,17 +57,22 @@
 ! V 0.5     2021-03-04  Kay Gürtzig     Some additions to support "Processing"
 !                                       code
 ! V 0.6     2024-03-08  Kay Gürtzig     {String Char} revised (backslash handling)
+! V 0.7     2024-03-11  Kay Gürtzig     Missing hx escape sequence in StringLiteral enabled,
+!                                       Processing conversion function str disabled (impeded 'str' identifiers)
+! V 0.8     2024-03-18  Kay Gürtzig     Identifier syntax extended to {All Latin} (as Java accepts them in fact),
+!                                       <AssertStatement> introduced (#1142), enum without <Modifiers> enabled (#1143)
 ! -----------------------------------------------------------------------
 
 "Name"    = 'Java SE 8'
-"Version" = '0.6, March 2024'
+"Version" = '0.8, March 2024'
 "Author"  = 'Kay Gürtzig'
 "About"   = 'Simplified Java SE 8 grammar, based on a partial conversion of Sun Java 1.0-2.0 specification by Dmitry Gazko and the Oracle Java SE 8 specification.'
 
 {String Char} = {all printable} - ["] - [\]
 {Quote} = ['']
 {IdLetter} = {Letter} + [_$]
-{IdAlphaNumeric} = {Alphanumeric} + [_$]
+!{IdAlphaNumeric} = {Alphanumeric} + [_$]
+{IdAlphaNumeric} = {All Latin} + {Digit} + [_$]
 {HexDigit} = {Digit} + [abcdefABCDEF]
 {OctalCharSet} = [01234567]
 {NoZeroDigit} = [123456789]
@@ -80,7 +85,7 @@
 {HexEscapeSign} =[uUxX]
 
 Identifier     = {IdLetter}{IdAlphaNumeric}*
-StringLiteral  = '"'({String Char}|'\'{CharSign})*'"'
+StringLiteral  = '"'({String Char}|'\'({CharSign}|{HexEscapeSign}{HexDigit}{HexDigit}{HexDigit}{HexDigit}))*'"'
 FloatingPointLiteral   = {Digit}+'.'{Digit}*{FloatTypeSuffix}? | {Digit}+{FloatTypeSuffix} | '.'{Digit}+{FloatTypeSuffix}?
 FloatingPointLiteralExponent = {Digit}+'.'{Digit}*{ExponentPartIndicator}{Sign}?{Digit}+{FloatTypeSuffix}? | {Digit}+{ExponentPartIndicator}{Sign}?{Digit}+{FloatTypeSuffix}? | '.'{Digit}+{ExponentPartIndicator}{Sign}?{Digit}+{FloatTypeSuffix}?
 BooleanLiteral = 'true' | 'false'
@@ -343,6 +348,10 @@ Comment Line = '//'
 <Modifiers> 
         ::= <Modifier>
          |  <Modifiers> <Modifier>
+         
+<ModifiersOpt>
+        ::= <Modifiers>
+         |
 
 <Modifier> 
         ::= 'public'
@@ -388,8 +397,8 @@ Comment Line = '//'
                         | <InterfaceTypeList> ',' <InterfaceType>
 
 <EnumDeclaration>
-        ::= <Modifiers> 'enum' Identifier <Interfaces> <EnumBody>
-         |  <Modifiers> 'enum' Identifier <EnumBody>
+        ::= <ModifiersOpt> 'enum' Identifier <Interfaces> <EnumBody>
+         |  <ModifiersOpt> 'enum' Identifier <EnumBody>
          
 <EnumBody>
         ::= '{' <EnumConstants> ',' <EnumBodyDeclarationsOpt> '}'
@@ -664,6 +673,7 @@ Comment Line = '//'
          |  <SynchronizedStatement>
          |  <ThrowStatement>
          |  <TryStatement>
+         |  <AssertStatement>
 
 <EmptyStatement> 
         ::= ';'
@@ -827,6 +837,13 @@ Comment Line = '//'
 
 <Finally> 
         ::= 'finally' <Block>
+         
+<AssertStatement>
+        ::= 'assert' <Expression> <AssertMessageOpt>
+         
+<AssertMessageOpt>
+        ::= ':' <Expression>
+         |
 
 <ResourceSpecification>
         ::= '(' <Resources> ')'
@@ -868,11 +885,19 @@ Comment Line = '//'
 !         |  'boolean' <Dims> '.' 'class'
 !         |  'void' <Dims> '.' 'class'
 
+!<QualifiedNew>
+!        ::= 'new'
+!         | <QualifiedName> '.' 'new'
+
 <ClassInstanceCreationExpression> 
         ::= 'new' <ClassType> '(' <ArgumentList> ')'
          |  'new' <ClassType> '(' ')'
          |  'new' <ClassType> '(' <ArgumentList> ')' <ClassBody>
          |  'new' <ClassType> '(' ')' <ClassBody>
+!        ::= <QualifiedNew> <ClassType> '(' <ArgumentList> ')'
+!         |  <QualifiedNew> <ClassType> '(' ')'
+!         |  <QualifiedNew> <ClassType> '(' <ArgumentList> ')' <ClassBody>
+!         |  <QualifiedNew> <ClassType> '(' ')' <ClassBody>
 
 <ArgumentList> 
         ::= <Expression>
@@ -909,14 +934,15 @@ Comment Line = '//'
          
 ! Non-Java expression kind to let "Processing" code pass
 <ProcessingTypeConversion>
-        ::= 'binary'   '(' <Expression> ')'
-         |  'hex'      '(' <Expression> ')'
-         |  'unbinary' '(' <Expression> ')'
-         |  'unhex'    '(' <Expression> ')'
-         |  'int'      '(' <Expression> ')'
+!        ::= 'binary'   '(' <Expression> ')'
+!         |  'hex'      '(' <Expression> ')'
+!         |  'unbinary' '(' <Expression> ')'
+!         |  'unhex'    '(' <Expression> ')'
+!         |  'int'      '(' <Expression> ')'
+        ::= 'int'      '(' <Expression> ')'
          |  'byte'     '(' <Expression> ')'
          |  'char'     '(' <Expression> ')'
-         |  'str'      '(' <Expression> ')'
+!         |  'str'      '(' <Expression> ')'     ! This was unnecessary and impeded declarations with 'str' as identifier
          |  'float'    '(' <Expression> ')'
          |  'boolean'  '(' <Expression> ')'
          

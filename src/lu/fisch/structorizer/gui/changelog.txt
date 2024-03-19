@@ -8,22 +8,24 @@ Legend:
 Known issues (also see https://github.com/fesch/Structorizer.Desktop/issues):
 - Copying diagram images to the clipboard may fail with some OS/JRE combination
   (#685), on Windows the image format may be JPG instead of PNG.
-- Pascal import does not cope with unit name aliases.
+- Pascal import does not cope with unit name aliases. ObjectPascal code should
+  be tolerated by the parser but may produce nonsense from the OOP parts.
 - COBOL import may fail if certain single-letter identifiers are used (rename
   them!), it does not cope with some statement variants and variable
   redefinitions, either.
-- Java import does not cope with type arguments in casting prefixes or array
-  element types and fails if two or more closing angular brackets (in case of
-  nested type arguments) meet without separating blank. It does not cope with
-  lambda expressions, either. The imported diagrams will usually not be
-  executable, anyway (because of unsupported OOP context).
+- The import option to mitigate ambiguities between closing angular brackets (in
+  nested type arguments) and shift operators >> may fail in some cases. Then
+  it should be switched off and closing angular brackets be separated manually.
+  It does not cope with lambda expressions and some annotations. Because OOP
+  context is not actually supported in Structorizer, the imported diagrams will
+  usually not be executable and will raise a lot of Analyser warnings.
 - Shell export neither copes with nested array/record initialisers and
   component access nor with cleanly handling usual and associative arrays as
   parameters or results.
 - ARM export is still experimental and relies on a specific and very restricted
   syntax for the element contents in order to produce meaningful results.
 
-Current development version 3.32-17 (2024-03-10)
+Current development version 3.32-18 (2024-03-19)
 - 01: Bugfix #987: Duplicate subroutine comment export by Pascal generator <2>
 - 01: Bugfix #988: Syntax error in Structorizer.bat and Arranger.bat fixed <2>
 - 01: Bugfix #989: Expressions in EXIT elements (e.g. return) were forgotten
@@ -201,6 +203,23 @@ Current development version 3.32-17 (2024-03-10)
 - 17: Bugfix #1130 C import expanded macros within char literals [csrabak]2
 - 17: Issue #1131 Handling of anonymous inner classes on Java import <2>
 - 17: Bugfix #1132 Java import defect on backslashes in string literals <2>
+- 18: Issue #901 FilesDrop was lacking to set the WAITING cursor <2>
+- 18: Enh. #1084 Pascal import toughened up for ObjectPascal/Delphi 12 <2>
+- 18: Bugfix #1135 Two Java import bugs - unicode escape sequences in string
+      literals and identifiers 'str', 'binary', 'hex' caused failure. <2>
+- 18: Bugfix #1136 Four Java import problems due to angular brackets of type
+      arguments (nested parameterized types, casting, "<?>" parameters,
+      arrays over parameterized types). <2>
+- 18: Bugfix #1137 Workaround for Java import errors due to ".this" <2>
+- 18: Issue #1138 Arranger collision warnings could become a nuisance <2>
+- 18: Bugfix #1139 TRY elements without catch variable caused defects <2>
+- 18: Bugfix #1140 Transmutation didn't work for CALLs with method syntax <2>
+- 18: Bugfix #1141 Stack overflow risk on build phase of code import <2>
+- 18: Bugfix #1142 Java import failed on "assert" statements <2>
+- 18: Bugfix #1143 Java import grammar demanded modifiers before "enum" <2>
+- 18: Bugfix #1145 Java import crashed when source file contains two or more
+      classes / interfaces / enumerators on top level <2>
+- 18: Bugfix #1146: Wrong/awkward Oberon export of Alternatives [K.-P. R.]2
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>

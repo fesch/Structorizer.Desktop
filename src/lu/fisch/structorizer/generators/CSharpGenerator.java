@@ -79,6 +79,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2023-10-04      Bugfix #1093 Undue final return 0 on function diagrams
  *      Kay Gürtzig             2023-10-15      Bugfix #1096 Initialisation for multidimensional arrays fixed
  *      Kay Gürtzig             2023-12-27      Issue #1123: Translation of built-in function random() added.
+ *      Kay Gürtzig             2024-03-14      Bugfix #1139: Risk of NullPointerException in appendCatchHeading()
  *
  ******************************************************************************************************
  *
@@ -1062,11 +1063,14 @@ public class CSharpGenerator extends CGenerator
 		String varName = _try.getExceptionVarName();
 		String head = "catch ()";
 		String exName = "ex" + Integer.toHexString(_try.hashCode());
-		if (varName != null && !varName.isEmpty()) {
+		if (varName != null && !varName.isBlank()) {
 			head = "catch(Exception " + exName + ")";
 		}
 		this.appendBlockHeading(_try, head, _indent);
-		if (exName != null) {
+		// START KGU#1125 2024-03-14: Bugfix #1139 exName cannot be null but varName can
+		//if (exName != null) {
+		if (varName != null && !varName.isBlank()) {
+		// END KGU#1125 2024-03-14
 			this.addCode("string " + varName + " = " + exName + ".ToString()", _indent + this.getIndent(), isDisabled);
 		}
 		this.caughtException = exName;

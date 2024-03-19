@@ -24,10 +24,12 @@
 	<plugin title="Java-SE8" 			class="lu.fisch.structorizer.parsers.JavaParser" icon="">
 		<option name="convert_syntax" type="Boolean" title="Convert declarations etc. to Pascal/Structorizer style" help="This setting slightly raises the chance of executability and re-export in Structorizer" default="true" />
 		<option name="dissect_anon_inner_class" type="Boolean" title="Dissect anonymous inner classes into diagrams" help="Otherwise on-the-fly-defined subclasses will be passed as very long source code expressions to the instantiation element." default="true" />
+		<option name="separate_angular_brackets" type="Boolean" title="Separate >> of type parameters to > >" help="Heuristic preprocessing to avoid nested type parameter closing be mistaken for shift operator '>>'. If it overdoes, do it manually." default="true" />
 	</plugin>
 	<plugin title="Processing" 			class="lu.fisch.structorizer.parsers.ProcessingParser" icon="">
 		<option name="convert_syntax" type="Boolean" title="Convert declarations etc. to Pascal/Structorizer style" help="This setting slightly raises the chance of executability and re-export in Structorizer" default="true" />
 		<option name="dissect_anon_inner_class" type="Boolean" title="Dissect anonymous inner classes into diagrams" help="Otherwise on-the-fly-defined subclasses will be passed as very long source code expressions to the instantiation element." default="true" />
+		<option name="separate_angular_brackets" type="Boolean" title="Separate >> of type parameters to > >" help="Heuristic preprocessing to avoid nested type parameter closing be mistaken for shift operator '>>'. If it overdoes, do it manually." default="true" />
 	</plugin>
     
 </plugins>

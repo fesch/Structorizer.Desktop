@@ -67,6 +67,7 @@
  *      Kay Gürtzig     2024-02-28  Control.lblCallLevel.text and Control.chkCollectRuntimeData.text shortened
  *      Kay Gürtzig     2024-03-04  Mnemonics adapted, some PluginOptionDialog messages added.
  *      PUC-Minas       2024-03-09  Issue #1131: Messages for new Java import option provided
+ *      Kay Gürtzig     2024-03-17  Issue #1138: New / modified conflict messages for Surface
  *
  ******************************************************************************************************
  *
@@ -1381,6 +1382,14 @@ Surface.titleDiagramConflict.text=Conflito de diagrama
 Surface.msgInsertionConflict.0.text=Há outra versão do diagrama "%2",\ne pelo menos uma delas tem alterações não salvas.
 Surface.msgInsertionConflict.1.text=Há uma cópia equivalente do diagrama "%1"\ncom caminho diferente "%2".
 Surface.msgInsertionConflict.2.text=Há um diagrama diferente com assinatura "%1"\ne caminho "%2".
+Surface.msgInsertionConflict.text=Há diagramas diferentes com assinatura como "%":
+Surface.titleConflContentDiff.text=Conteúdo
+Surface.titleConflPathDiff.text=Rota
+Surface.titleConflSignature.text=Assinatura qualificada
+Surface.titleConflPath.text=Rota de arquivo
+Surface.titleConflGroups.text=Grupos
+Surfcae.msgOk.text=OK
+Surface.msgNoFurtherConflicts.text=Não mostrar outros conflitos
 Surface.msgOverwriteFile.text=Substituir o arquivo existente "%"?
 Surface.msgConfirmOverwrite.text=Confirmar a substituição
 Surface.msgTooltipSelectThis.text=Selecionar %1 (+shift: acrescentá-lo à seleção)%2 e trazê-lo para cima.

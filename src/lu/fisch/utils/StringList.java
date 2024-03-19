@@ -1444,8 +1444,9 @@ public class StringList {
     // START KGU#129 2016-01-08: Extended interface to facilitate bugfix #96
     /**
      * Replaces all elements being exactly (or case-independently) equal to the
-     * given string _stringOld by _stringNew; works only within index range
-     * _start and _end (where _end is not included).
+     * given string {@code _stringOld} by {@code _stringNew}; works only within
+     * index range {@code _fromIndex} and {@code _toIndex} (where {@code _toIndex}
+     * is not included).
      *
      * @param _stringOld - the searched string
      * @param _stringNew - the string to replace occurrences of _stringOld

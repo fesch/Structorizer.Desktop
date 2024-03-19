@@ -75,6 +75,9 @@ package lu.fisch.structorizer.parsers;
  *                                      processing no longer necessary, either, hence '\n' substitution also dropped
  *      Kay Gürtzig     2021-10-03      Mechanism to ensure case-sensitive matching of result variables with function name
  *      Kay Gürtzig     2022-12-21      Deprecation annotation added to filterNonAscii()
+ *      Kay Gürtzig     2024-03-14      Issue #1084 RuleConstants updated to new grammar version 1.6
+ *      Kay Gürtzig     2024-03-15      Issue #1084 Substantial achievements to import ObjectPascal / Delphi code
+ *      Kay Gürtzig     2024-03-17      Bugfix #1141: Measures against stack overflow in buildNSD_R()
  *
  ******************************************************************************************************
  *
@@ -96,9 +99,11 @@ import com.creativewidgetworks.goldparser.engine.*;
 import com.creativewidgetworks.goldparser.engine.enums.SymbolType;
 
 import lu.fisch.structorizer.elements.Alternative;
+import lu.fisch.structorizer.elements.Call;
 import lu.fisch.structorizer.elements.Case;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
+import lu.fisch.structorizer.elements.Forever;
 import lu.fisch.structorizer.elements.Instruction;
 import lu.fisch.structorizer.elements.Jump;
 import lu.fisch.structorizer.elements.Repeat;
@@ -118,7 +123,9 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CodingErrorAction;
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.Stack;
 import java.util.logging.Level;
 
 /**
@@ -206,601 +213,603 @@ public class D7Parser extends CodeParser
 //		final int PROD_RCONST_REALLITERAL                          =   4;  // <RCONST> ::= RealLiteral
 //		final int PROD_SCONST_STRINGLITERAL                        =   5;  // <SCONST> ::= StringLiteral
 //		final int PROD_SCONST_CARET_ID                             =   6;  // <SCONST> ::= '^' id
-//		final int PROD_IDLIST_COMMA                                =   7;  // <IdList> ::= <IdList> ',' <RefId>
-//		final int PROD_IDLIST                                      =   8;  // <IdList> ::= <RefId>
-//		final int PROD_LABELID_ID                                  =   9;  // <LabelId> ::= id
-//		final int PROD_TYPEID_ID                                   =  10;  // <TypeId> ::= id
-//		final int PROD_TYPEID_NAME                                 =  11;  // <TypeId> ::= NAME
-//		final int PROD_TYPENAME                                    =  12;  // <TypeName> ::= <TypeId>
-//		final int PROD_TYPENAME_ID_DOT                             =  13;  // <TypeName> ::= id '.' <RefId>
-//		final int PROD_TYPELIST                                    =  14;  // <TypeList> ::= <TypeName>
-//		final int PROD_TYPELIST_COMMA                              =  15;  // <TypeList> ::= <TypeList> ',' <TypeName>
-		final int PROD_REFID_ID                                    =  16;  // <RefId> ::= id
-//		final int PROD_REFID_AT                                    =  17;  // <RefId> ::= AT
-//		final int PROD_REFID_ON                                    =  18;  // <RefId> ::= ON
-//		final int PROD_REFID_READ                                  =  19;  // <RefId> ::= READ
-//		final int PROD_REFID_WRITE                                 =  20;  // <RefId> ::= WRITE
-//		final int PROD_REFID_READLN                                =  21;  // <RefId> ::= READLN
-//		final int PROD_REFID_WRITELN                               =  22;  // <RefId> ::= WRITELN
-//		final int PROD_REFID_NAME                                  =  23;  // <RefId> ::= NAME
-//		final int PROD_REFID_INDEX                                 =  24;  // <RefId> ::= INDEX
-//		final int PROD_REFID_VIRTUAL                               =  25;  // <RefId> ::= VIRTUAL
-//		final int PROD_REFID_ABSOLUTE                              =  26;  // <RefId> ::= ABSOLUTE
-//		final int PROD_REFID_MESSAGE                               =  27;  // <RefId> ::= MESSAGE
-//		final int PROD_REFID_DEFAULT                               =  28;  // <RefId> ::= DEFAULT
-//		final int PROD_REFID_OVERRIDE                              =  29;  // <RefId> ::= OVERRIDE
-//		final int PROD_REFID_ABSTRACT                              =  30;  // <RefId> ::= ABSTRACT
-//		final int PROD_REFID_DISPID                                =  31;  // <RefId> ::= DISPID
-//		final int PROD_REFID_REINTRODUCE                           =  32;  // <RefId> ::= REINTRODUCE
-//		final int PROD_REFID_REGISTER                              =  33;  // <RefId> ::= REGISTER
-//		final int PROD_REFID_PASCAL                                =  34;  // <RefId> ::= PASCAL
-//		final int PROD_REFID_CDECL                                 =  35;  // <RefId> ::= CDECL
-//		final int PROD_REFID_STDCALL                               =  36;  // <RefId> ::= STDCALL
-//		final int PROD_REFID_SAFECALL                              =  37;  // <RefId> ::= SAFECALL
-//		final int PROD_REFID_STRING                                =  38;  // <RefId> ::= STRING
-//		final int PROD_REFID_WIDESTRING                            =  39;  // <RefId> ::= WIDESTRING
-//		final int PROD_REFID_ANSISTRING                            =  40;  // <RefId> ::= ANSISTRING
-//		final int PROD_REFID_VARIANT                               =  41;  // <RefId> ::= VARIANT
-//		final int PROD_REFID_OLEVARIANT                            =  42;  // <RefId> ::= OLEVARIANT
-//		final int PROD_REFID_READONLY                              =  43;  // <RefId> ::= READONLY
-//		final int PROD_REFID_IMPLEMENTS                            =  44;  // <RefId> ::= IMPLEMENTS
-//		final int PROD_REFID_NODEFAULT                             =  45;  // <RefId> ::= NODEFAULT
-//		final int PROD_REFID_STORED                                =  46;  // <RefId> ::= STORED
-//		final int PROD_REFID_OVERLOAD                              =  47;  // <RefId> ::= OVERLOAD
-//		final int PROD_REFID_LOCAL                                 =  48;  // <RefId> ::= LOCAL
-//		final int PROD_REFID_VARARGS                               =  49;  // <RefId> ::= VARARGS
-//		final int PROD_REFID_FORWARD                               =  50;  // <RefId> ::= FORWARD
-//		final int PROD_REFID_CONTAINS                              =  51;  // <RefId> ::= CONTAINS
-//		final int PROD_REFID_PACKAGE                               =  52;  // <RefId> ::= PACKAGE
-//		final int PROD_REFID_REQUIRES                              =  53;  // <RefId> ::= REQUIRES
-//		final int PROD_REFID_LIBRARY                               =  54;  // <RefId> ::= LIBRARY
-//		final int PROD_REFID_IMPORT                                =  55;  // <RefId> ::= IMPORT
-//		final int PROD_REFID_EXPORT                                =  56;  // <RefId> ::= EXPORT
-//		final int PROD_REFID_PLATFORM                              =  57;  // <RefId> ::= PLATFORM
-//		final int PROD_REFID_DEPRECATED                            =  58;  // <RefId> ::= DEPRECATED
-//		final int PROD_REFID_EXTERNAL                              =  59;  // <RefId> ::= EXTERNAL
-//		final int PROD_FIELDDESIGNATOR                             =  60;  // <FieldDesignator> ::= <RefId>
-//		final int PROD_FIELDDESIGNATOR_DOT                         =  61;  // <FieldDesignator> ::= <FieldDesignator> '.' <RefId>
-//		final int PROD_OBJECTPASCAL                                =  62;  // <ObjectPascal> ::= <Program>
-//		final int PROD_OBJECTPASCAL2                               =  63;  // <ObjectPascal> ::= <Unit>
-//		final int PROD_OBJECTPASCAL3                               =  64;  // <ObjectPascal> ::= <Package>
-//		final int PROD_OBJECTPASCAL4                               =  65;  // <ObjectPascal> ::= <Library>
-//		final int PROD_PROGRAM_DOT                                 =  66;  // <Program> ::= <ProgHeader> <OptUsesSection> <Block> '.'
-//		final int PROD_PROGHEADER_PROGRAM_SEMI                     =  67;  // <ProgHeader> ::= PROGRAM <RefId> <OptProgParamList> ';'
-//		final int PROD_OPTPROGPARAMLIST_LPAREN_RPAREN              =  68;  // <OptProgParamList> ::= '(' <IdList> ')'
-//		final int PROD_OPTPROGPARAMLIST                            =  69;  // <OptProgParamList> ::= 
-//		final int PROD_UNIT_DOT                                    =  70;  // <Unit> ::= <UnitHeader> <InterfaceSection> <ImplementationSection> <InitSection> '.'
-//		final int PROD_UNITHEADER_UNIT_SEMI                        =  71;  // <UnitHeader> ::= UNIT <RefId> <OptPortDirectives> ';'
-//		final int PROD_PACKAGE_END_DOT                             =  72;  // <Package> ::= <PackageHeader> <OptRequiresClause> <OptContainsClause> END '.'
-		final int PROD_PACKAGEHEADER_PACKAGE_SEMI                  =  73;  // <PackageHeader> ::= PACKAGE <RefId> ';'
-		final int PROD_OPTREQUIRESCLAUSE_REQUIRES_SEMI             =  74;  // <OptRequiresClause> ::= REQUIRES <IdList> ';'
-//		final int PROD_OPTREQUIRESCLAUSE                           =  75;  // <OptRequiresClause> ::= 
-		final int PROD_OPTCONTAINSCLAUSE_CONTAINS_SEMI             =  76;  // <OptContainsClause> ::= CONTAINS <IdList> ';'
-//		final int PROD_OPTCONTAINSCLAUSE                           =  77;  // <OptContainsClause> ::= 
-//		final int PROD_LIBRARYHEADER_LIBRARY_SEMI                  =  78;  // <LibraryHeader> ::= LIBRARY <RefId> ';'
-//		final int PROD_LIBRARY_DOT                                 =  79;  // <Library> ::= <LibraryHeader> <OptUsesSection> <Block> '.'
-//		final int PROD_INTERFACESECTION_INTERFACE                  =  80;  // <InterfaceSection> ::= INTERFACE <OptUsesSection> <OptExportDeclList>
-//		final int PROD_OPTUSESSECTION                              =  81;  // <OptUsesSection> ::= <UsesSection>
-//		final int PROD_OPTUSESSECTION2                             =  82;  // <OptUsesSection> ::= 
-//		final int PROD_USESCLAUSE_USES_SEMI                        =  83;  // <UsesClause> ::= USES <IdList> ';'
-//		final int PROD_USESCLAUSE_SYNERROR                         =  84;  // <UsesClause> ::= SynError
-//		final int PROD_USESSECTION                                 =  85;  // <UsesSection> ::= <UsesClause>
-//		final int PROD_USESSECTION2                                =  86;  // <UsesSection> ::= <UsesSection> <UsesClause>
-//		final int PROD_OPTEXPORTDECLLIST                           =  87;  // <OptExportDeclList> ::= <ExportDeclList>
-//		final int PROD_OPTEXPORTDECLLIST2                          =  88;  // <OptExportDeclList> ::= 
-		final int PROD_EXPORTDECLLIST                              =  89;  // <ExportDeclList> ::= <ExportDeclItem>
-		final int PROD_EXPORTDECLLIST2                             =  90;  // <ExportDeclList> ::= <ExportDeclList> <ExportDeclItem>
-		final int PROD_EXPORTDECLITEM                              =  91;  // <ExportDeclItem> ::= <ConstSection>
-		final int PROD_EXPORTDECLITEM2                             =  92;  // <ExportDeclItem> ::= <TypeSection>
-		final int PROD_EXPORTDECLITEM3                             =  93;  // <ExportDeclItem> ::= <VarSection>
-		final int PROD_EXPORTDECLITEM4                             =  94;  // <ExportDeclItem> ::= <CallSection>
-		final int PROD_EXPORTDECLITEM_FORWARD_SEMI                 =  95;  // <ExportDeclItem> ::= <CallSection> FORWARD ';'
-		final int PROD_CALLSECTION                                 =  96;  // <CallSection> ::= <ProcHeading>
-		final int PROD_CALLSECTION2                                =  97;  // <CallSection> ::= <FuncHeading>
-		final int PROD_IMPLEMENTATIONSECTION_IMPLEMENTATION        =  98;  // <ImplementationSection> ::= IMPLEMENTATION <OptUsesSection> <OptDeclSection> <OptExportBlock>
-		final int PROD_INITSECTION_INITIALIZATION_END              =  99;  // <InitSection> ::= INITIALIZATION <StmtList> END
-		final int PROD_INITSECTION_INITIALIZATION_FINALIZATION_END = 100;  // <InitSection> ::= INITIALIZATION <StmtList> FINALIZATION <StmtList> END
-		final int PROD_INITSECTION                                 = 101;  // <InitSection> ::= <CompoundStmt>
-		final int PROD_INITSECTION_END                             = 102;  // <InitSection> ::= END
-//		final int PROD_BLOCK                                       = 103;  // <Block> ::= <OptDeclSection> <OptExportBlock> <CompoundStmt> <OptExportBlock>
-//		final int PROD_OPTEXPORTBLOCK                              = 104;  // <OptExportBlock> ::= <ExportStmt>
-//		final int PROD_OPTEXPORTBLOCK2                             = 105;  // <OptExportBlock> ::= <OptExportBlock> <ExportStmt>
-//		final int PROD_OPTEXPORTBLOCK3                             = 106;  // <OptExportBlock> ::= 
-//		final int PROD_EXPORTSTMT_EXPORTS_SEMI                     = 107;  // <ExportStmt> ::= EXPORTS <ExportList> ';'
-//		final int PROD_EXPORTLIST                                  = 108;  // <ExportList> ::= <ExportItem>
-//		final int PROD_EXPORTLIST_COMMA                            = 109;  // <ExportList> ::= <ExportList> ',' <ExportItem>
-//		final int PROD_EXPORTITEM_ID                               = 110;  // <ExportItem> ::= id
-//		final int PROD_EXPORTITEM_ID_NAME_APOST_APOST              = 111;  // <ExportItem> ::= id NAME '' <ConstExpr> ''
-//		final int PROD_EXPORTITEM_ID_INDEX_APOST_APOST             = 112;  // <ExportItem> ::= id INDEX '' <ConstExpr> ''
-//		final int PROD_EXPORTITEM_NAME_APOST_APOST                 = 113;  // <ExportItem> ::= NAME '' <ConstExpr> ''
-//		final int PROD_EXPORTITEM_INDEX_APOST_APOST                = 114;  // <ExportItem> ::= INDEX '' <ConstExpr> ''
-//		final int PROD_OPTDECLSECTION                              = 115;  // <OptDeclSection> ::= <DeclSection>
-//		final int PROD_OPTDECLSECTION2                             = 116;  // <OptDeclSection> ::= 
-//		final int PROD_DECLSECTION                                 = 117;  // <DeclSection> ::= <DeclItem>
-//		final int PROD_DECLSECTION2                                = 118;  // <DeclSection> ::= <DeclSection> <DeclItem>
-//		final int PROD_DECLITEM                                    = 119;  // <DeclItem> ::= <LabelSection>
-//		final int PROD_DECLITEM2                                   = 120;  // <DeclItem> ::= <ConstSection>
-//		final int PROD_DECLITEM3                                   = 121;  // <DeclItem> ::= <TypeSection>
-//		final int PROD_DECLITEM4                                   = 122;  // <DeclItem> ::= <VarSection>
-//		final int PROD_DECLITEM5                                   = 123;  // <DeclItem> ::= <ProcedureDeclSection>
-//		final int PROD_DECLITEM_SYNERROR                           = 124;  // <DeclItem> ::= SynError
-//		final int PROD_LABELSECTION_LABEL_SEMI                     = 125;  // <LabelSection> ::= LABEL <LabelList> ';'
-//		final int PROD_LABELLIST                                   = 126;  // <LabelList> ::= <LabelId>
-//		final int PROD_LABELLIST_COMMA                             = 127;  // <LabelList> ::= <LabelList> ',' <LabelId>
-//		final int PROD_CONSTSECTION_CONST                          = 128;  // <ConstSection> ::= CONST <ConstantDeclList>
-//		final int PROD_CONSTSECTION_RESOURCESTRING                 = 129;  // <ConstSection> ::= RESOURCESTRING <ConstantDeclList>
-//		final int PROD_CONSTANTDECLLIST                            = 130;  // <ConstantDeclList> ::= <ConstantDecl>
-//		final int PROD_CONSTANTDECLLIST2                           = 131;  // <ConstantDeclList> ::= <ConstantDeclList> <ConstantDecl>
-		final int PROD_CONSTANTDECL_EQ_SEMI                        = 132;  // <ConstantDecl> ::= <RefId> '=' <ConstExpr> <OptPortDirectives> ';'
-		final int PROD_CONSTANTDECL_COLON_EQ_SEMI                  = 133;  // <ConstantDecl> ::= <RefId> ':' <Type> '=' <TypedConstant> <OptPortDirectives> ';'
-//		final int PROD_CONSTANTDECL_SYNERROR_SEMI                  = 134;  // <ConstantDecl> ::= SynError ';'
-//		final int PROD_TYPEDCONSTANT                               = 135;  // <TypedConstant> ::= <ConstExpr>
-//		final int PROD_TYPEDCONSTANT2                              = 136;  // <TypedConstant> ::= <ArrayConstant>
-//		final int PROD_TYPEDCONSTANT3                              = 137;  // <TypedConstant> ::= <RecordConstant>
-		final int PROD_ARRAYCONSTANT_LPAREN_RPAREN                 = 138;  // <ArrayConstant> ::= '(' <TypedConstList> ')'
-		final int PROD_RECORDCONSTANT_LPAREN_RPAREN                = 139;  // <RecordConstant> ::= '(' <RecordFieldConstList> ')'
-		final int PROD_RECORDCONSTANT_LPAREN_SEMI_RPAREN           = 140;  // <RecordConstant> ::= '(' <RecordFieldConstList> ';' ')'
-//		final int PROD_RECORDCONSTANT_LPAREN_RPAREN2               = 141;  // <RecordConstant> ::= '(' ')'
-//		final int PROD_RECORDFIELDCONSTLIST                        = 142;  // <RecordFieldConstList> ::= <RecordFieldConstant>
-//		final int PROD_RECORDFIELDCONSTLIST_SEMI                   = 143;  // <RecordFieldConstList> ::= <RecordFieldConstList> ';' <RecordFieldConstant>
-//		final int PROD_RECORDFIELDCONSTANT_COLON                   = 144;  // <RecordFieldConstant> ::= <RefId> ':' <TypedConstant>
-//		final int PROD_TYPEDCONSTLIST                              = 145;  // <TypedConstList> ::= <TypedConstant>
-//		final int PROD_TYPEDCONSTLIST_COMMA                        = 146;  // <TypedConstList> ::= <TypedConstList> ',' <TypedConstant>
-//		final int PROD_TYPESECTION_TYPE                            = 147;  // <TypeSection> ::= TYPE <TypeDeclList>
-//		final int PROD_TYPEDECLLIST                                = 148;  // <TypeDeclList> ::= <TypeDecl>
-//		final int PROD_TYPEDECLLIST2                               = 149;  // <TypeDeclList> ::= <TypeDeclList> <TypeDecl>
-		final int PROD_TYPEDECL_EQ                                 = 150;  // <TypeDecl> ::= <TypeId> '=' <TypeSpec>
-//		final int PROD_TYPEDECL_SYNERROR_SEMI                      = 151;  // <TypeDecl> ::= SynError ';'
-		final int PROD_TYPESPEC_SEMI                               = 152;  // <TypeSpec> ::= <GenericType> ';'
-//		final int PROD_TYPESPEC_SEMI2                              = 153;  // <TypeSpec> ::= <RestrictedType> <OptPortDirectives> ';'
-//		final int PROD_TYPESPEC_SEMI3                              = 154;  // <TypeSpec> ::= <CallType> ';'
-//		final int PROD_TYPESPEC_SEMI_SEMI                          = 155;  // <TypeSpec> ::= <CallType> ';' <CallConventions> ';'
-//		final int PROD_TYPESPEC_SYNERROR_SEMI                      = 156;  // <TypeSpec> ::= SynError ';'
-//		final int PROD_TYPE                                        = 157;  // <Type> ::= <GenericType>
-//		final int PROD_TYPE2                                       = 158;  // <Type> ::= <CallType>
-//		final int PROD_TYPEREF                                     = 159;  // <TypeRef> ::= <TypeName>
-//		final int PROD_TYPEREF2                                    = 160;  // <TypeRef> ::= <StringType>
-//		final int PROD_TYPEREF3                                    = 161;  // <TypeRef> ::= <VariantType>
-//		final int PROD_GENERICTYPE                                 = 162;  // <GenericType> ::= <TypeName>
-//		final int PROD_GENERICTYPE2                                = 163;  // <GenericType> ::= <StringType>
-//		final int PROD_GENERICTYPE3                                = 164;  // <GenericType> ::= <VariantType>
-//		final int PROD_GENERICTYPE4                                = 165;  // <GenericType> ::= <SubrangeType>
-//		final int PROD_GENERICTYPE5                                = 166;  // <GenericType> ::= <EnumType>
-//		final int PROD_GENERICTYPE6                                = 167;  // <GenericType> ::= <StructType>
-//		final int PROD_GENERICTYPE7                                = 168;  // <GenericType> ::= <PointerType>
-//		final int PROD_GENERICTYPE8                                = 169;  // <GenericType> ::= <ClassRefType>
-//		final int PROD_GENERICTYPE9                                = 170;  // <GenericType> ::= <ClonedType>
-//		final int PROD_CLONEDTYPE_TYPE                             = 171;  // <ClonedType> ::= TYPE <TypeRef>
-//		final int PROD_STRINGTYPE_STRING                           = 172;  // <StringType> ::= STRING
-//		final int PROD_STRINGTYPE_ANSISTRING                       = 173;  // <StringType> ::= ANSISTRING
-//		final int PROD_STRINGTYPE_WIDESTRING                       = 174;  // <StringType> ::= WIDESTRING
-//		final int PROD_STRINGTYPE_STRING_LBRACKET_RBRACKET         = 175;  // <StringType> ::= STRING '[' <ConstExpr> ']'
-//		final int PROD_VARIANTTYPE_VARIANT                         = 176;  // <VariantType> ::= VARIANT
-//		final int PROD_VARIANTTYPE_OLEVARIANT                      = 177;  // <VariantType> ::= OLEVARIANT
-//		final int PROD_ORDINALTYPE                                 = 178;  // <OrdinalType> ::= <SubrangeType>
-//		final int PROD_ORDINALTYPE2                                = 179;  // <OrdinalType> ::= <EnumType>
-//		final int PROD_ORDINALTYPE3                                = 180;  // <OrdinalType> ::= <TypeName>
-//		final int PROD_SUBRANGETYPE_DOTDOT                         = 181;  // <SubrangeType> ::= <ConstOrdExpr> '..' <ConstOrdExpr>
-		final int PROD_ENUMTYPE_LPAREN_COMMA_RPAREN                = 182;  // <EnumType> ::= '(' <EnumId> ',' <EnumList> ')'
-//		final int PROD_ENUMLIST                                    = 183;  // <EnumList> ::= <EnumId>
-		final int PROD_ENUMLIST_COMMA                              = 184;  // <EnumList> ::= <EnumList> ',' <EnumId>
-//		final int PROD_ENUMID                                      = 185;  // <EnumId> ::= <RefId>
-		final int PROD_ENUMID_EQ                                   = 186;  // <EnumId> ::= <RefId> '=' <ConstExpr>
-//		final int PROD_OPTPACKED_PACKED                            = 187;  // <OptPacked> ::= PACKED
-//		final int PROD_OPTPACKED                                   = 188;  // <OptPacked> ::= 
-//		final int PROD_STRUCTTYPE                                  = 189;  // <StructType> ::= <ArrayType>
-//		final int PROD_STRUCTTYPE2                                 = 190;  // <StructType> ::= <SetType>
-//		final int PROD_STRUCTTYPE3                                 = 191;  // <StructType> ::= <FileType>
-//		final int PROD_STRUCTTYPE4                                 = 192;  // <StructType> ::= <RecType>
-		final int PROD_ARRAYTYPE_ARRAY_LBRACKET_RBRACKET_OF        = 193;  // <ArrayType> ::= <OptPacked> ARRAY '[' <OrdinalTypeList> ']' OF <Type>
-		final int PROD_ARRAYTYPE_ARRAY_OF_CONST                    = 194;  // <ArrayType> ::= <OptPacked> ARRAY OF CONST
-		final int PROD_ARRAYTYPE_ARRAY_OF                          = 195;  // <ArrayType> ::= <OptPacked> ARRAY OF <Type>
-//		final int PROD_ORDINALTYPELIST                             = 196;  // <OrdinalTypeList> ::= <OrdinalType>
-//		final int PROD_ORDINALTYPELIST_COMMA                       = 197;  // <OrdinalTypeList> ::= <OrdinalTypeList> ',' <OrdinalType>
-		final int PROD_RECTYPE_RECORD_END                          = 198;  // <RecType> ::= <OptPacked> RECORD <RecFieldList> END <OptPortDirectives>
-//		final int PROD_RECFIELDLIST                                = 199;  // <RecFieldList> ::= 
-//		final int PROD_RECFIELDLIST2                               = 200;  // <RecFieldList> ::= <RecField1>
-//		final int PROD_RECFIELDLIST3                               = 201;  // <RecFieldList> ::= <RecField2>
-//		final int PROD_RECFIELDLIST_SEMI                           = 202;  // <RecFieldList> ::= <RecField1> ';' <RecFieldList>
-//		final int PROD_RECFIELDLIST_SEMI2                          = 203;  // <RecFieldList> ::= <RecField2> ';' <RecFieldList>
-//		final int PROD_RECFIELDLIST_SEMI3                          = 204;  // <RecFieldList> ::= <RecField2> ';' <CallConvention>
-//		final int PROD_RECFIELDLIST_SEMI_SEMI                      = 205;  // <RecFieldList> ::= <RecField2> ';' <CallConvention> ';' <RecFieldList>
-//		final int PROD_RECFIELDLIST_CASE_OF                        = 206;  // <RecFieldList> ::= CASE <Selector> OF <RecVariantList>
-//		final int PROD_RECVARIANTLIST                              = 207;  // <RecVariantList> ::= 
-//		final int PROD_RECVARIANTLIST2                             = 208;  // <RecVariantList> ::= <RecVariant>
-//		final int PROD_RECVARIANTLIST_SEMI                         = 209;  // <RecVariantList> ::= <RecVariant> ';' <RecVariantList>
-//		final int PROD_RECFIELD1_COLON                             = 210;  // <RecField1> ::= <IdList> ':' <GenericType> <OptPortDirectives>
-//		final int PROD_RECFIELD2_COLON                             = 211;  // <RecField2> ::= <IdList> ':' <CallType>
-//		final int PROD_RECVARIANT_COLON_LPAREN_RPAREN              = 212;  // <RecVariant> ::= <ConstExprList> ':' '(' <RecFieldList> ')'
-		final int PROD_SELECTOR_COLON                              = 213;  // <Selector> ::= <RefId> ':' <TypeName>
-//		final int PROD_SELECTOR                                    = 214;  // <Selector> ::= <TypeName>
-//		final int PROD_SETTYPE_SET_OF                              = 215;  // <SetType> ::= <OptPacked> SET OF <OrdinalType>
-//		final int PROD_FILETYPE_FILE_OF                            = 216;  // <FileType> ::= <OptPacked> FILE OF <TypeRef>
-//		final int PROD_FILETYPE_FILE                               = 217;  // <FileType> ::= FILE
-//		final int PROD_POINTERTYPE_CARET                           = 218;  // <PointerType> ::= '^' <TypeRef>
-//		final int PROD_CALLTYPE_PROCEDURE                          = 219;  // <CallType> ::= PROCEDURE <OptFormalParms> <OptCallConventions>
-//		final int PROD_CALLTYPE_PROCEDURE_OF_OBJECT                = 220;  // <CallType> ::= PROCEDURE <OptFormalParms> OF OBJECT <OptCallConventions>
-//		final int PROD_CALLTYPE_FUNCTION_COLON                     = 221;  // <CallType> ::= FUNCTION <OptFormalParms> ':' <ResultType> <OptCallConventions>
-//		final int PROD_CALLTYPE_FUNCTION_COLON_OF_OBJECT           = 222;  // <CallType> ::= FUNCTION <OptFormalParms> ':' <ResultType> OF OBJECT <OptCallConventions>
-//		final int PROD_RESTRICTEDTYPE                              = 223;  // <RestrictedType> ::= <ObjectType>
-//		final int PROD_RESTRICTEDTYPE2                             = 224;  // <RestrictedType> ::= <ClassType>
-//		final int PROD_RESTRICTEDTYPE3                             = 225;  // <RestrictedType> ::= <InterfaceType>
-//		final int PROD_OBJECTTYPE_OBJECT_END                       = 226;  // <ObjectType> ::= <OptPacked> OBJECT <OptObjectHeritage> <ObjectMemberList> END
-//		final int PROD_CLASSTYPE_CLASS_END                         = 227;  // <ClassType> ::= CLASS <OptClassHeritage> <ClassMemberList> END
-//		final int PROD_CLASSTYPE_CLASS                             = 228;  // <ClassType> ::= CLASS <OptClassHeritage>
-//		final int PROD_CLASSREFTYPE_CLASS_OF                       = 229;  // <ClassRefType> ::= CLASS OF <TypeName>
-//		final int PROD_INTERFACETYPE_INTERFACE_END                 = 230;  // <InterfaceType> ::= INTERFACE <OptClassHeritage> <OptClassGUID> <OptClassMethodList> END
-//		final int PROD_INTERFACETYPE_DISPINTERFACE_END             = 231;  // <InterfaceType> ::= DISPINTERFACE <OptClassHeritage> <OptClassGUID> <OptClassMethodList> END
-//		final int PROD_INTERFACETYPE_INTERFACE                     = 232;  // <InterfaceType> ::= INTERFACE
-//		final int PROD_INTERFACETYPE_DISPINTERFACE                 = 233;  // <InterfaceType> ::= DISPINTERFACE
-//		final int PROD_OPTOBJECTHERITAGE_LPAREN_RPAREN             = 234;  // <OptObjectHeritage> ::= '(' <TypeName> ')'
-//		final int PROD_OPTOBJECTHERITAGE                           = 235;  // <OptObjectHeritage> ::= 
-//		final int PROD_OPTCLASSHERITAGE_LPAREN_RPAREN              = 236;  // <OptClassHeritage> ::= '(' <TypeList> ')'
-//		final int PROD_OPTCLASSHERITAGE                            = 237;  // <OptClassHeritage> ::= 
-//		final int PROD_OPTCLASSGUID_LBRACKET_RBRACKET              = 238;  // <OptClassGUID> ::= '[' <ConstStrExpr> ']'
-//		final int PROD_OPTCLASSGUID                                = 239;  // <OptClassGUID> ::= 
-//		final int PROD_OBJECTMEMBERLIST                            = 240;  // <ObjectMemberList> ::= <OptFieldList> <OptObjectMethodList>
-//		final int PROD_OBJECTMEMBERLIST_PUBLIC                     = 241;  // <ObjectMemberList> ::= <ObjectMemberList> PUBLIC <OptFieldList> <OptObjectMethodList>
-//		final int PROD_OBJECTMEMBERLIST_PRIVATE                    = 242;  // <ObjectMemberList> ::= <ObjectMemberList> PRIVATE <OptFieldList> <OptObjectMethodList>
-//		final int PROD_OBJECTMEMBERLIST_PROTECTED                  = 243;  // <ObjectMemberList> ::= <ObjectMemberList> PROTECTED <OptFieldList> <OptObjectMethodList>
-//		final int PROD_CLASSMEMBERLIST                             = 244;  // <ClassMemberList> ::= <OptFieldList> <OptClassMethodList>
-//		final int PROD_CLASSMEMBERLIST_PUBLIC                      = 245;  // <ClassMemberList> ::= <ClassMemberList> PUBLIC <OptFieldList> <OptClassMethodList>
-//		final int PROD_CLASSMEMBERLIST_PRIVATE                     = 246;  // <ClassMemberList> ::= <ClassMemberList> PRIVATE <OptFieldList> <OptClassMethodList>
-//		final int PROD_CLASSMEMBERLIST_PROTECTED                   = 247;  // <ClassMemberList> ::= <ClassMemberList> PROTECTED <OptFieldList> <OptClassMethodList>
-//		final int PROD_CLASSMEMBERLIST_PUBLISHED                   = 248;  // <ClassMemberList> ::= <ClassMemberList> PUBLISHED <OptFieldList> <OptClassMethodList>
-//		final int PROD_OPTFIELDLIST                                = 249;  // <OptFieldList> ::= <FieldList>
-//		final int PROD_OPTFIELDLIST2                               = 250;  // <OptFieldList> ::= 
-//		final int PROD_OPTOBJECTMETHODLIST                         = 251;  // <OptObjectMethodList> ::= <ObjectMethodList>
-//		final int PROD_OPTOBJECTMETHODLIST2                        = 252;  // <OptObjectMethodList> ::= 
-//		final int PROD_OPTCLASSMETHODLIST                          = 253;  // <OptClassMethodList> ::= <ClassMethodList>
-//		final int PROD_OPTCLASSMETHODLIST2                         = 254;  // <OptClassMethodList> ::= 
-//		final int PROD_FIELDLIST                                   = 255;  // <FieldList> ::= <FieldSpec>
-//		final int PROD_FIELDLIST2                                  = 256;  // <FieldList> ::= <FieldList> <FieldSpec>
-//		final int PROD_OBJECTMETHODLIST                            = 257;  // <ObjectMethodList> ::= <ObjectMethodSpec>
-//		final int PROD_OBJECTMETHODLIST2                           = 258;  // <ObjectMethodList> ::= <ObjectMethodList> <ObjectMethodSpec>
-//		final int PROD_CLASSMETHODLIST                             = 259;  // <ClassMethodList> ::= <ClassMethodSpec>
-//		final int PROD_CLASSMETHODLIST2                            = 260;  // <ClassMethodList> ::= <ClassMethodList> <ClassMethodSpec>
-//		final int PROD_FIELDSPEC_COLON_SEMI                        = 261;  // <FieldSpec> ::= <IdList> ':' <Type> <OptPortDirectives> ';'
-//		final int PROD_FIELDSPEC_SYNERROR_SEMI                     = 262;  // <FieldSpec> ::= SynError ';'
-//		final int PROD_OBJECTMETHODSPEC                            = 263;  // <ObjectMethodSpec> ::= <MethodSpec> <OptMethodDirectives>
-//		final int PROD_OBJECTMETHODSPEC2                           = 264;  // <ObjectMethodSpec> ::= <PropertySpec> <OptPropertyDirectives>
-//		final int PROD_OBJECTMETHODSPEC_SYNERROR                   = 265;  // <ObjectMethodSpec> ::= SynError
-//		final int PROD_CLASSMETHODSPEC                             = 266;  // <ClassMethodSpec> ::= <MethodSpec> <OptMethodDirectives>
-//		final int PROD_CLASSMETHODSPEC2                            = 267;  // <ClassMethodSpec> ::= <ResolutionSpec> <OptMethodDirectives>
-//		final int PROD_CLASSMETHODSPEC_CLASS                       = 268;  // <ClassMethodSpec> ::= CLASS <ProcSpec> <OptMethodDirectives>
-//		final int PROD_CLASSMETHODSPEC_CLASS2                      = 269;  // <ClassMethodSpec> ::= CLASS <FuncSpec> <OptMethodDirectives>
-//		final int PROD_CLASSMETHODSPEC3                            = 270;  // <ClassMethodSpec> ::= <PropertySpec> <OptPropertyDirectives>
-//		final int PROD_CLASSMETHODSPEC_SYNERROR                    = 271;  // <ClassMethodSpec> ::= SynError
-//		final int PROD_METHODSPEC                                  = 272;  // <MethodSpec> ::= <ConstructorSpec>
-//		final int PROD_METHODSPEC2                                 = 273;  // <MethodSpec> ::= <DestructorSpec>
-//		final int PROD_METHODSPEC3                                 = 274;  // <MethodSpec> ::= <ProcSpec>
-//		final int PROD_METHODSPEC4                                 = 275;  // <MethodSpec> ::= <FuncSpec>
-//		final int PROD_CONSTRUCTORSPEC_CONSTRUCTOR_SEMI            = 276;  // <ConstructorSpec> ::= CONSTRUCTOR <RefId> <OptFormalParms> ';'
-//		final int PROD_DESTRUCTORSPEC_DESTRUCTOR_SEMI              = 277;  // <DestructorSpec> ::= DESTRUCTOR <RefId> <OptFormalParms> ';'
-//		final int PROD_PROCSPEC_PROCEDURE_SEMI                     = 278;  // <ProcSpec> ::= PROCEDURE <RefId> <OptFormalParms> <OptCallConventions> ';'
-//		final int PROD_FUNCSPEC_FUNCTION_COLON_SEMI                = 279;  // <FuncSpec> ::= FUNCTION <RefId> <OptFormalParms> ':' <ResultType> <OptCallConventions> ';'
-//		final int PROD_RESOLUTIONSPEC_PROCEDURE_DOT_EQ_SEMI        = 280;  // <ResolutionSpec> ::= PROCEDURE <RefId> '.' <RefId> '=' <RefId> ';'
-//		final int PROD_RESOLUTIONSPEC_FUNCTION_DOT_EQ_SEMI         = 281;  // <ResolutionSpec> ::= FUNCTION <RefId> '.' <RefId> '=' <RefId> ';'
-//		final int PROD_PROPERTYSPEC_PROPERTY_SEMI                  = 282;  // <PropertySpec> ::= PROPERTY <PropertyDecl> <OptPropSpecifiers> ';'
-//		final int PROD_PROPERTYDECL_COLON                          = 283;  // <PropertyDecl> ::= <RefId> ':' <TypeRef>
-//		final int PROD_PROPERTYDECL_LBRACKET_RBRACKET_COLON        = 284;  // <PropertyDecl> ::= <RefId> '[' <IndexList> ']' ':' <TypeRef>
-//		final int PROD_PROPERTYDECL                                = 285;  // <PropertyDecl> ::= <RefId>
-//		final int PROD_INDEXLIST                                   = 286;  // <IndexList> ::= <IndexDecl>
-//		final int PROD_INDEXLIST_SEMI                              = 287;  // <IndexList> ::= <IndexList> ';' <IndexDecl>
-//		final int PROD_INDEXDECL                                   = 288;  // <IndexDecl> ::= <IdDecl>
-//		final int PROD_INDEXDECL_CONST                             = 289;  // <IndexDecl> ::= CONST <IdDecl>
-//		final int PROD_IDDECL_COLON                                = 290;  // <IdDecl> ::= <IdList> ':' <Type>
-//		final int PROD_OPTPROPSPECIFIERS                           = 291;  // <OptPropSpecifiers> ::= <PropertySpecifiers>
-//		final int PROD_OPTPROPSPECIFIERS2                          = 292;  // <OptPropSpecifiers> ::= 
-//		final int PROD_PROPERTYSPECIFIERS                          = 293;  // <PropertySpecifiers> ::= <PropertySpecifier>
-//		final int PROD_PROPERTYSPECIFIERS2                         = 294;  // <PropertySpecifiers> ::= <PropertySpecifiers> <PropertySpecifier>
-//		final int PROD_PROPERTYSPECIFIER_INDEX                     = 295;  // <PropertySpecifier> ::= INDEX <ConstExpr>
-//		final int PROD_PROPERTYSPECIFIER_READ                      = 296;  // <PropertySpecifier> ::= READ <FieldDesignator>
-//		final int PROD_PROPERTYSPECIFIER_WRITE                     = 297;  // <PropertySpecifier> ::= WRITE <FieldDesignator>
-//		final int PROD_PROPERTYSPECIFIER_STORED                    = 298;  // <PropertySpecifier> ::= STORED <FieldDesignator>
-//		final int PROD_PROPERTYSPECIFIER_DEFAULT                   = 299;  // <PropertySpecifier> ::= DEFAULT <ConstExpr>
-//		final int PROD_PROPERTYSPECIFIER_NODEFAULT                 = 300;  // <PropertySpecifier> ::= NODEFAULT
-//		final int PROD_PROPERTYSPECIFIER_WRITEONLY                 = 301;  // <PropertySpecifier> ::= WRITEONLY
-//		final int PROD_PROPERTYSPECIFIER_READONLY                  = 302;  // <PropertySpecifier> ::= READONLY
-//		final int PROD_PROPERTYSPECIFIER_DISPID                    = 303;  // <PropertySpecifier> ::= DISPID <ConstExpr>
-//		final int PROD_PROPERTYSPECIFIER                           = 304;  // <PropertySpecifier> ::= <ImplementsSpecifier>
-//		final int PROD_IMPLEMENTSSPECIFIER_IMPLEMENTS              = 305;  // <ImplementsSpecifier> ::= IMPLEMENTS <TypeRef>
-//		final int PROD_IMPLEMENTSSPECIFIER_COMMA                   = 306;  // <ImplementsSpecifier> ::= <ImplementsSpecifier> ',' <TypeRef>
-//		final int PROD_VARSECTION_VAR                              = 307;  // <VarSection> ::= VAR <VarDeclList>
-//		final int PROD_VARSECTION_THREADVAR                        = 308;  // <VarSection> ::= THREADVAR <ThreadVarDeclList>
-//		final int PROD_VARDECLLIST                                 = 309;  // <VarDeclList> ::= <VarDecl>
-//		final int PROD_VARDECLLIST2                                = 310;  // <VarDeclList> ::= <VarDeclList> <VarDecl>
-		final int PROD_VARDECL_COLON_SEMI                          = 311;  // <VarDecl> ::= <IdList> ':' <Type> <OptAbsoluteClause> <OptPortDirectives> ';'
-		final int PROD_VARDECL_COLON_EQ_SEMI                       = 312;  // <VarDecl> ::= <IdList> ':' <Type> '=' <TypedConstant> <OptPortDirectives> ';'
-		final int PROD_VARDECL_COLON                               = 313;  // <VarDecl> ::= <IdList> ':' <TypeSpec>
-		final int PROD_VARDECL_SYNERROR_SEMI                       = 314;  // <VarDecl> ::= SynError ';'
-//		final int PROD_THREADVARDECLLIST                           = 315;  // <ThreadVarDeclList> ::= <ThreadVarDecl>
-//		final int PROD_THREADVARDECLLIST2                          = 316;  // <ThreadVarDeclList> ::= <ThreadVarDeclList> <ThreadVarDecl>
-//		final int PROD_THREADVARDECL_COLON                         = 317;  // <ThreadVarDecl> ::= <IdList> ':' <TypeSpec>
-//		final int PROD_THREADVARDECL_SYNERROR_SEMI                 = 318;  // <ThreadVarDecl> ::= SynError ';'
-//		final int PROD_OPTABSOLUTECLAUSE_ABSOLUTE                  = 319;  // <OptAbsoluteClause> ::= ABSOLUTE <RefId>
-//		final int PROD_OPTABSOLUTECLAUSE                           = 320;  // <OptAbsoluteClause> ::= 
-//		final int PROD_CONSTEXPR                                   = 321;  // <ConstExpr> ::= <Expr>
-//		final int PROD_CONSTORDEXPR                                = 322;  // <ConstOrdExpr> ::= <AddExpr>
-//		final int PROD_CONSTSTREXPR                                = 323;  // <ConstStrExpr> ::= <AddExpr>
-//		final int PROD_EXPR                                        = 324;  // <Expr> ::= <AddExpr>
-//		final int PROD_EXPR2                                       = 325;  // <Expr> ::= <AddExpr> <RelOp> <AddExpr>
-//		final int PROD_EXPR_SYNERROR                               = 326;  // <Expr> ::= SynError
-//		final int PROD_ADDEXPR                                     = 327;  // <AddExpr> ::= <MulExpr>
-//		final int PROD_ADDEXPR2                                    = 328;  // <AddExpr> ::= <AddExpr> <AddOp> <MulExpr>
-//		final int PROD_MULEXPR                                     = 329;  // <MulExpr> ::= <Factor>
-//		final int PROD_MULEXPR2                                    = 330;  // <MulExpr> ::= <MulExpr> <MulOp> <Factor>
-//		final int PROD_FACTOR_NIL                                  = 331;  // <Factor> ::= NIL
-//		final int PROD_FACTOR                                      = 332;  // <Factor> ::= <ICONST>
-//		final int PROD_FACTOR2                                     = 333;  // <Factor> ::= <RCONST>
-//		final int PROD_FACTOR3                                     = 334;  // <Factor> ::= <SCONST>
-//		final int PROD_FACTOR4                                     = 335;  // <Factor> ::= <Designator>
-//		final int PROD_FACTOR5                                     = 336;  // <Factor> ::= <SetConstructor>
-//		final int PROD_FACTOR_AT                                   = 337;  // <Factor> ::= '@' <Designator>
-//		final int PROD_FACTOR_AT_AT                                = 338;  // <Factor> ::= '@' '@' <Designator>
-//		final int PROD_FACTOR_LPAREN_RPAREN                        = 339;  // <Factor> ::= '(' <Expr> ')'
-//		final int PROD_FACTOR_LPAREN_RPAREN_CARET                  = 340;  // <Factor> ::= '(' <Expr> ')' '^'
-//		final int PROD_FACTOR_PLUS                                 = 341;  // <Factor> ::= '+' <Factor>
-//		final int PROD_FACTOR_MINUS                                = 342;  // <Factor> ::= '-' <Factor>
-//		final int PROD_FACTOR_NOT                                  = 343;  // <Factor> ::= NOT <Factor>
-//		final int PROD_DESIGNATOR                                  = 344;  // <Designator> ::= <FieldDesignator>
-//		final int PROD_DESIGNATOR_DOT                              = 345;  // <Designator> ::= <Designator> '.' <FieldDesignator>
-//		final int PROD_DESIGNATOR_CARET                            = 346;  // <Designator> ::= <Designator> '^'
-//		final int PROD_DESIGNATOR_LBRACKET_RBRACKET                = 347;  // <Designator> ::= <Designator> '[' <ExprList> ']'
-//		final int PROD_DESIGNATOR_LPAREN_RPAREN                    = 348;  // <Designator> ::= <Designator> '(' <ExprList> ')'
-//		final int PROD_DESIGNATOR_LPAREN_RPAREN2                   = 349;  // <Designator> ::= <Designator> '(' ')'
-//		final int PROD_DESIGNATOR_AS                               = 350;  // <Designator> ::= <Designator> AS <TypeRef>
-//		final int PROD_DESIGNATOR_LPAREN_RPAREN3                   = 351;  // <Designator> ::= '(' <Designator> ')'
-//		final int PROD_DESIGNATOR_INHERITED                        = 352;  // <Designator> ::= INHERITED <Designator>
-//		final int PROD_ASNOP_COLONEQ                               = 353;  // <AsnOp> ::= ':='
-//		final int PROD_ASNOP_PLUSEQ                                = 354;  // <AsnOp> ::= '+='
-//		final int PROD_ASNOP_MINUSEQ                               = 355;  // <AsnOp> ::= '-='
-//		final int PROD_ASNOP_TIMESEQ                               = 356;  // <AsnOp> ::= '*='
-//		final int PROD_ASNOP_DIVEQ                                 = 357;  // <AsnOp> ::= '/='
-//		final int PROD_RELOP_EQ                                    = 358;  // <RelOp> ::= '='
-//		final int PROD_RELOP_GT                                    = 359;  // <RelOp> ::= '>'
-//		final int PROD_RELOP_LT                                    = 360;  // <RelOp> ::= '<'
-//		final int PROD_RELOP_LTEQ                                  = 361;  // <RelOp> ::= '<='
-//		final int PROD_RELOP_GTEQ                                  = 362;  // <RelOp> ::= '>='
-//		final int PROD_RELOP_LTGT                                  = 363;  // <RelOp> ::= '<>'
-//		final int PROD_RELOP_IN                                    = 364;  // <RelOp> ::= IN
-//		final int PROD_RELOP_IS                                    = 365;  // <RelOp> ::= IS
-//		final int PROD_RELOP_AS                                    = 366;  // <RelOp> ::= AS
-//		final int PROD_ADDOP_PLUS                                  = 367;  // <AddOp> ::= '+'
-//		final int PROD_ADDOP_MINUS                                 = 368;  // <AddOp> ::= '-'
-//		final int PROD_ADDOP_OR                                    = 369;  // <AddOp> ::= OR
-//		final int PROD_ADDOP_XOR                                   = 370;  // <AddOp> ::= XOR
-//		final int PROD_MULOP_TIMES                                 = 371;  // <MulOp> ::= '*'
-//		final int PROD_MULOP_DIV                                   = 372;  // <MulOp> ::= '/'
-//		final int PROD_MULOP_DIV2                                  = 373;  // <MulOp> ::= DIV
-//		final int PROD_MULOP_MOD                                   = 374;  // <MulOp> ::= MOD
-//		final int PROD_MULOP_AND                                   = 375;  // <MulOp> ::= AND
-//		final int PROD_MULOP_SHL                                   = 376;  // <MulOp> ::= SHL
-//		final int PROD_MULOP_SHR                                   = 377;  // <MulOp> ::= SHR
-//		final int PROD_SETCONSTRUCTOR_LBRACKET_RBRACKET            = 378;  // <SetConstructor> ::= '[' <SetElementList> ']'
-//		final int PROD_SETCONSTRUCTOR_LBRACKET_RBRACKET2           = 379;  // <SetConstructor> ::= '[' ']'
-//		final int PROD_SETELEMENTLIST                              = 380;  // <SetElementList> ::= <SetElement>
-//		final int PROD_SETELEMENTLIST_COMMA                        = 381;  // <SetElementList> ::= <SetElementList> ',' <SetElement>
-//		final int PROD_SETELEMENT                                  = 382;  // <SetElement> ::= <Expr>
-//		final int PROD_SETELEMENT_DOTDOT                           = 383;  // <SetElement> ::= <Expr> '..' <Expr>
-//		final int PROD_EXPRLIST                                    = 384;  // <ExprList> ::= <Expr>
-//		final int PROD_EXPRLIST_COMMA                              = 385;  // <ExprList> ::= <ExprList> ',' <Expr>
-//		final int PROD_FMTEXPR                                     = 386;  // <FmtExpr> ::= <Expr>
-//		final int PROD_FMTEXPR_COLON                               = 387;  // <FmtExpr> ::= <Expr> ':' <Expr>
-//		final int PROD_FMTEXPR_COLON_COLON                         = 388;  // <FmtExpr> ::= <Expr> ':' <Expr> ':' <Expr>
-//		final int PROD_FMTEXPRLIST                                 = 389;  // <FmtExprList> ::= <FmtExpr>
-//		final int PROD_FMTEXPRLIST_COMMA                           = 390;  // <FmtExprList> ::= <FmtExprList> ',' <FmtExpr>
-//		final int PROD_CONSTEXPRLIST                               = 391;  // <ConstExprList> ::= <ConstExpr>
-//		final int PROD_CONSTEXPRLIST_COMMA                         = 392;  // <ConstExprList> ::= <ConstExprList> ',' <ConstExpr>
-//		final int PROD_STMTLIST                                    = 393;  // <StmtList> ::= <Statement>
-//		final int PROD_STMTLIST_SEMI                               = 394;  // <StmtList> ::= <StmtList> ';' <Statement>
-		final int PROD_STATEMENT                                   = 395;  // <Statement> ::= <Label> <Statement>
-		final int PROD_STATEMENT2                                  = 396;  // <Statement> ::= <AssignmentStmt>
-		final int PROD_STATEMENT3                                  = 397;  // <Statement> ::= <CallStmt>
-		final int PROD_STATEMENT4                                  = 398;  // <Statement> ::= <GotoStatement>
-		final int PROD_STATEMENT5                                  = 399;  // <Statement> ::= <CompoundStmt>
-		final int PROD_STATEMENT6                                  = 400;  // <Statement> ::= <IfStatement>
-		final int PROD_STATEMENT7                                  = 401;  // <Statement> ::= <CaseStatement>
-		final int PROD_STATEMENT8                                  = 402;  // <Statement> ::= <ForStatement>
-		final int PROD_STATEMENT9                                  = 403;  // <Statement> ::= <WhileStatement>
-		final int PROD_STATEMENT10                                 = 404;  // <Statement> ::= <RepeatStatement>
-		final int PROD_STATEMENT11                                 = 405;  // <Statement> ::= <WithStatement>
-		final int PROD_STATEMENT12                                 = 406;  // <Statement> ::= <TryFinallyStmt>
-		final int PROD_STATEMENT13                                 = 407;  // <Statement> ::= <TryExceptStmt>
-		final int PROD_STATEMENT14                                 = 408;  // <Statement> ::= <RaiseStmt>
-		final int PROD_STATEMENT15                                 = 409;  // <Statement> ::= <AssemblerStmt>
-//		final int PROD_STATEMENT_SYNERROR                          = 410;  // <Statement> ::= SynError
-//		final int PROD_STATEMENT16                                 = 411;  // <Statement> ::= 
-//		final int PROD_LABEL_COLON                                 = 412;  // <Label> ::= <LCONST> ':'
-//		final int PROD_LABEL_COLON2                                = 413;  // <Label> ::= <LabelId> ':'
-		final int PROD_ASSIGNMENTSTMT                              = 414;  // <AssignmentStmt> ::= <Designator> <AsnOp> <Expr>
-		final int PROD_ASSIGNMENTSTMT_AT_COLONEQ                   = 415;  // <AssignmentStmt> ::= '@' <RefId> ':=' <Factor>
-		final int PROD_CALLSTMT                                    = 416;  // <CallStmt> ::= <Designator>
-		final int PROD_CALLSTMT_WRITE_LPAREN_RPAREN                = 417;  // <CallStmt> ::= WRITE '(' <FmtExprList> ')'
-		final int PROD_CALLSTMT_WRITELN_LPAREN_RPAREN              = 418;  // <CallStmt> ::= WRITELN '(' <FmtExprList> ')'
-		final int PROD_CALLSTMT_INHERITED                          = 419;  // <CallStmt> ::= INHERITED
-		final int PROD_GOTOSTATEMENT_GOTO                          = 420;  // <GotoStatement> ::= GOTO <LCONST>
-		final int PROD_GOTOSTATEMENT_GOTO2                         = 421;  // <GotoStatement> ::= GOTO <RefId>
-		final int PROD_COMPOUNDSTMT_BEGIN_END                      = 422;  // <CompoundStmt> ::= BEGIN <StmtList> END
-		final int PROD_IFSTATEMENT_IF_THEN_ELSE                    = 423;  // <IfStatement> ::= IF <Expr> THEN <Statement> ELSE <Statement>
-		final int PROD_IFSTATEMENT_IF_THEN                         = 424;  // <IfStatement> ::= IF <Expr> THEN <Statement>
-		final int PROD_IFSTATEMENT_IF_SYNERROR_THEN                = 425;  // <IfStatement> ::= IF SynError THEN <Statement>
-		final int PROD_CASESTATEMENT_CASE_OF_END                   = 426;  // <CaseStatement> ::= CASE <Expr> OF <CaseList> <OtherWise> END
-		final int PROD_FORSTATEMENT_FOR_COLONEQ_DO                 = 427;  // <ForStatement> ::= FOR <RefId> ':=' <Expr> <Dir> <Expr> DO <Statement>
-//		final int PROD_DIR_TO                                      = 428;  // <Dir> ::= TO
-//		final int PROD_DIR_DOWNTO                                  = 429;  // <Dir> ::= DOWNTO
-		final int PROD_WHILESTATEMENT_WHILE_DO                     = 430;  // <WhileStatement> ::= WHILE <Expr> DO <Statement>
-		final int PROD_WITHSTATEMENT_WITH_DO                       = 431;  // <WithStatement> ::= WITH <DesignatorList> DO <Statement>
-//		final int PROD_DESIGNATORLIST                              = 432;  // <DesignatorList> ::= <Designator>
-//		final int PROD_DESIGNATORLIST_COMMA                        = 433;  // <DesignatorList> ::= <DesignatorList> ',' <Designator>
-		final int PROD_REPEATSTATEMENT_REPEAT_UNTIL                = 434;  // <RepeatStatement> ::= REPEAT <StmtList> UNTIL <Expr>
-		final int PROD_ASSEMBLERSTMT_ASM_END                       = 435;  // <AssemblerStmt> ::= ASM <AsmLanguage> END
-//		final int PROD_OTHERWISE_OTHERWISE                         = 436;  // <OtherWise> ::= OTHERWISE <StmtList>
-//		final int PROD_OTHERWISE_ELSE                              = 437;  // <OtherWise> ::= ELSE <StmtList>
-//		final int PROD_OTHERWISE                                   = 438;  // <OtherWise> ::= 
-//		final int PROD_CASELIST                                    = 439;  // <CaseList> ::= <CaseSelector>
-//		final int PROD_CASELIST_SEMI                               = 440;  // <CaseList> ::= <CaseList> ';' <CaseSelector>
-//		final int PROD_CASELIST_SEMI2                              = 441;  // <CaseList> ::= <CaseList> ';'
-//		final int PROD_CASESELECTOR_COLON                          = 442;  // <CaseSelector> ::= <CaseLabels> ':' <Statement>
-//		final int PROD_CASELABELS                                  = 443;  // <CaseLabels> ::= <CaseLabel>
-//		final int PROD_CASELABELS_COMMA                            = 444;  // <CaseLabels> ::= <CaseLabels> ',' <CaseLabel>
-//		final int PROD_CASELABEL                                   = 445;  // <CaseLabel> ::= <ConstExpr>
-//		final int PROD_CASELABEL_DOTDOT                            = 446;  // <CaseLabel> ::= <ConstExpr> '..' <ConstExpr>
-		final int PROD_RAISESTMT_RAISE_SYNERROR                    = 447;  // <RaiseStmt> ::= RAISE SynError
-		final int PROD_RAISESTMT_RAISE                             = 448;  // <RaiseStmt> ::= RAISE <OptExceptInstance>
-		final int PROD_RAISESTMT_RAISE_AT                          = 449;  // <RaiseStmt> ::= RAISE <OptExceptInstance> AT <Address>
-		final int PROD_TRYFINALLYSTMT_TRY_FINALLY_END              = 450;  // <TryFinallyStmt> ::= TRY <StmtList> FINALLY <StmtList> END
-		final int PROD_TRYEXCEPTSTMT_TRY_EXCEPT_END                = 451;  // <TryExceptStmt> ::= TRY <StmtList> EXCEPT <ExceptionBlock> <OptExceptionElse> END
-//		final int PROD_EXCEPTIONBLOCK                              = 452;  // <ExceptionBlock> ::= <ExceptionStmt>
-		final int PROD_EXCEPTIONBLOCK_SEMI                         = 453;  // <ExceptionBlock> ::= <ExceptionBlock> ';' <ExceptionStmt>
-		final int PROD_EXCEPTIONSTMT_ON_DO                         = 454;  // <ExceptionStmt> ::= ON <Selector> DO <Statement>
-//		final int PROD_EXCEPTIONSTMT                               = 455;  // <ExceptionStmt> ::= <Statement>
-		final int PROD_OPTEXCEPTIONELSE_ELSE                       = 456;  // <OptExceptionElse> ::= ELSE <StmtList>
-//		final int PROD_OPTEXCEPTIONELSE                            = 457;  // <OptExceptionElse> ::= 
-//		final int PROD_OPTEXCEPTINSTANCE                           = 458;  // <OptExceptInstance> ::= <Designator>
-//		final int PROD_OPTEXCEPTINSTANCE2                          = 459;  // <OptExceptInstance> ::= 
-//		final int PROD_ADDRESS                                     = 460;  // <Address> ::= <Designator>
-//		final int PROD_OPTSEMI_SEMI                                = 461;  // <OptSemi> ::= ';'
-//		final int PROD_OPTSEMI                                     = 462;  // <OptSemi> ::= 
-//		final int PROD_PROCEDUREDECLSECTION                        = 463;  // <ProcedureDeclSection> ::= <ProcedureDecl>
-//		final int PROD_PROCEDUREDECLSECTION2                       = 464;  // <ProcedureDeclSection> ::= <FunctionDecl>
-//		final int PROD_PROCEDUREDECLSECTION3                       = 465;  // <ProcedureDeclSection> ::= <MethodDecl>
-//		final int PROD_PROCEDUREDECL                               = 466;  // <ProcedureDecl> ::= <ProcHeading> <CallBody> <OptSemi>
-//		final int PROD_FUNCTIONDECL                                = 467;  // <FunctionDecl> ::= <FuncHeading> <CallBody> <OptSemi>
-//		final int PROD_METHODDECL                                  = 468;  // <MethodDecl> ::= <MethHeading> <CallBody> <OptSemi>
-//		final int PROD_PROCHEADING_PROCEDURE_SEMI                  = 469;  // <ProcHeading> ::= PROCEDURE <RefId> <OptFormalParms> <OptCallSpecifiers> ';'
-//		final int PROD_PROCHEADING                                 = 470;  // <ProcHeading> ::= <ProcHeading> <CallDirectives> <OptSemi>
-//		final int PROD_FUNCHEADING_FUNCTION_COLON_SEMI             = 471;  // <FuncHeading> ::= FUNCTION <RefId> <OptFormalParms> ':' <ResultType> <OptCallSpecifiers> ';'
-//		final int PROD_FUNCHEADING_FUNCTION_SEMI                   = 472;  // <FuncHeading> ::= FUNCTION <RefId> ';'
-//		final int PROD_FUNCHEADING                                 = 473;  // <FuncHeading> ::= <FuncHeading> <CallDirectives> <OptSemi>
-//		final int PROD_METHHEADING_PROCEDURE_DOT_SEMI              = 474;  // <MethHeading> ::= PROCEDURE <RefId> '.' <RefId> <OptFormalParms> <OptCallSpecifiers> ';'
-//		final int PROD_METHHEADING_FUNCTION_DOT_COLON_SEMI         = 475;  // <MethHeading> ::= FUNCTION <RefId> '.' <RefId> <OptFormalParms> ':' <ResultType> <OptCallSpecifiers> ';'
-//		final int PROD_METHHEADING_FUNCTION_DOT_SEMI               = 476;  // <MethHeading> ::= FUNCTION <RefId> '.' <RefId> ';'
-//		final int PROD_METHHEADING_CONSTRUCTOR_DOT_SEMI            = 477;  // <MethHeading> ::= CONSTRUCTOR <RefId> '.' <RefId> <OptFormalParms> <OptCallSpecifiers> ';'
-//		final int PROD_METHHEADING_DESTRUCTOR_DOT_SEMI             = 478;  // <MethHeading> ::= DESTRUCTOR <RefId> '.' <RefId> <OptFormalParms> <OptCallSpecifiers> ';'
-//		final int PROD_METHHEADING_CLASS_PROCEDURE_DOT_SEMI        = 479;  // <MethHeading> ::= CLASS PROCEDURE <RefId> '.' <RefId> <OptFormalParms> <OptCallSpecifiers> ';'
-//		final int PROD_METHHEADING_CLASS_FUNCTION_DOT_COLON_SEMI   = 480;  // <MethHeading> ::= CLASS FUNCTION <RefId> '.' <RefId> <OptFormalParms> ':' <ResultType> <OptCallSpecifiers> ';'
-//		final int PROD_METHHEADING_SEMI                            = 481;  // <MethHeading> ::= <MethHeading> <CallDirectives> ';'
-//		final int PROD_RESULTTYPE                                  = 482;  // <ResultType> ::= <TypeRef>
-//		final int PROD_OPTFORMALPARMS_LPAREN_RPAREN                = 483;  // <OptFormalParms> ::= '(' <FormalParmList> ')'
-//		final int PROD_OPTFORMALPARMS_LPAREN_RPAREN2               = 484;  // <OptFormalParms> ::= '(' ')'
-//		final int PROD_OPTFORMALPARMS                              = 485;  // <OptFormalParms> ::= 
-//		final int PROD_FORMALPARMLIST                              = 486;  // <FormalParmList> ::= <FormalParm>
-//		final int PROD_FORMALPARMLIST_SEMI                         = 487;  // <FormalParmList> ::= <FormalParmList> ';' <FormalParm>
-//		final int PROD_FORMALPARM                                  = 488;  // <FormalParm> ::= <Parameter>
-//		final int PROD_FORMALPARM_CONST                            = 489;  // <FormalParm> ::= CONST <Parameter>
-//		final int PROD_FORMALPARM_VAR                              = 490;  // <FormalParm> ::= VAR <Parameter>
-//		final int PROD_FORMALPARM_OUT                              = 491;  // <FormalParm> ::= OUT <Parameter>
-//		final int PROD_PARAMETER                                   = 492;  // <Parameter> ::= <IdList>
-//		final int PROD_PARAMETER_COLON                             = 493;  // <Parameter> ::= <IdList> ':' <ParmType>
-//		final int PROD_PARAMETER_COLON_EQ                          = 494;  // <Parameter> ::= <IdList> ':' <TypeRef> '=' <ConstExpr>
-//		final int PROD_PARMTYPE                                    = 495;  // <ParmType> ::= <TypeRef>
-//		final int PROD_PARMTYPE_ARRAY_OF                           = 496;  // <ParmType> ::= ARRAY OF <TypeRef>
-//		final int PROD_PARMTYPE_ARRAY_OF_CONST                     = 497;  // <ParmType> ::= ARRAY OF CONST
-//		final int PROD_PARMTYPE_FILE                               = 498;  // <ParmType> ::= FILE
-//		final int PROD_CALLBODY                                    = 499;  // <CallBody> ::= <OptDeclSection> <CompoundStmt>
-//		final int PROD_CALLBODY2                                   = 500;  // <CallBody> ::= <OptDeclSection> <AssemblerStmt>
-//		final int PROD_CALLBODY3                                   = 501;  // <CallBody> ::= <ExternalDeclaration>
-//		final int PROD_CALLBODY_FORWARD                            = 502;  // <CallBody> ::= FORWARD
-//		final int PROD_OPTPORTDIRECTIVES                           = 503;  // <OptPortDirectives> ::= <PortDirectives>
-//		final int PROD_OPTPORTDIRECTIVES2                          = 504;  // <OptPortDirectives> ::= 
-//		final int PROD_PORTDIRECTIVES                              = 505;  // <PortDirectives> ::= <PortDirective>
-//		final int PROD_PORTDIRECTIVES2                             = 506;  // <PortDirectives> ::= <PortDirectives> <PortDirective>
-//		final int PROD_PORTDIRECTIVE_PLATFORM                      = 507;  // <PortDirective> ::= PLATFORM
-//		final int PROD_PORTDIRECTIVE_PLATFORM_EQ                   = 508;  // <PortDirective> ::= PLATFORM '=' <ConstExpr>
-//		final int PROD_PORTDIRECTIVE_DEPRECATED                    = 509;  // <PortDirective> ::= DEPRECATED
-//		final int PROD_PORTDIRECTIVE_LIBRARY                       = 510;  // <PortDirective> ::= LIBRARY
-//		final int PROD_OPTMETHODDIRECTIVES                         = 511;  // <OptMethodDirectives> ::= <MethodDirectives>
-//		final int PROD_OPTMETHODDIRECTIVES_SEMI                    = 512;  // <OptMethodDirectives> ::= <OptMethodDirectives> <PortDirective> ';'
-//		final int PROD_OPTMETHODDIRECTIVES2                        = 513;  // <OptMethodDirectives> ::= 
-//		final int PROD_METHODDIRECTIVES_SEMI                       = 514;  // <MethodDirectives> ::= <MethodDirective> ';'
-//		final int PROD_METHODDIRECTIVES_SEMI2                      = 515;  // <MethodDirectives> ::= <MethodDirectives> <MethodDirective> ';'
-//		final int PROD_METHODDIRECTIVE_VIRTUAL                     = 516;  // <MethodDirective> ::= VIRTUAL
-//		final int PROD_METHODDIRECTIVE_VIRTUAL2                    = 517;  // <MethodDirective> ::= VIRTUAL <ConstExpr>
-//		final int PROD_METHODDIRECTIVE_DYNAMIC                     = 518;  // <MethodDirective> ::= DYNAMIC
-//		final int PROD_METHODDIRECTIVE_OVERRIDE                    = 519;  // <MethodDirective> ::= OVERRIDE
-//		final int PROD_METHODDIRECTIVE_ABSTRACT                    = 520;  // <MethodDirective> ::= ABSTRACT
-//		final int PROD_METHODDIRECTIVE_MESSAGE                     = 521;  // <MethodDirective> ::= MESSAGE <ConstExpr>
-//		final int PROD_METHODDIRECTIVE_OVERLOAD                    = 522;  // <MethodDirective> ::= OVERLOAD
-//		final int PROD_METHODDIRECTIVE_REINTRODUCE                 = 523;  // <MethodDirective> ::= REINTRODUCE
-//		final int PROD_METHODDIRECTIVE_DISPID                      = 524;  // <MethodDirective> ::= DISPID <ConstExpr>
-//		final int PROD_METHODDIRECTIVE                             = 525;  // <MethodDirective> ::= <CallConvention>
-//		final int PROD_OPTPROPERTYDIRECTIVES_SEMI                  = 526;  // <OptPropertyDirectives> ::= <PropertyDirective> ';'
-//		final int PROD_OPTPROPERTYDIRECTIVES_SEMI2                 = 527;  // <OptPropertyDirectives> ::= <OptPropertyDirectives> <PortDirective> ';'
-//		final int PROD_OPTPROPERTYDIRECTIVES                       = 528;  // <OptPropertyDirectives> ::= 
-//		final int PROD_PROPERTYDIRECTIVE_DEFAULT                   = 529;  // <PropertyDirective> ::= DEFAULT
-//		final int PROD_EXTERNALDECLARATION_EXTERNAL                = 530;  // <ExternalDeclaration> ::= EXTERNAL
-//		final int PROD_EXTERNALDECLARATION_EXTERNAL2               = 531;  // <ExternalDeclaration> ::= EXTERNAL <ConstStrExpr>
-//		final int PROD_EXTERNALDECLARATION_EXTERNAL_NAME           = 532;  // <ExternalDeclaration> ::= EXTERNAL <ConstStrExpr> NAME <ConstStrExpr>
-//		final int PROD_CALLDIRECTIVES                              = 533;  // <CallDirectives> ::= <CallDirective>
-//		final int PROD_CALLDIRECTIVES2                             = 534;  // <CallDirectives> ::= <CallDirectives> <CallDirective>
-//		final int PROD_CALLDIRECTIVE                               = 535;  // <CallDirective> ::= <CallConvention>
-//		final int PROD_CALLDIRECTIVE2                              = 536;  // <CallDirective> ::= <CallObsolete>
-//		final int PROD_CALLDIRECTIVE3                              = 537;  // <CallDirective> ::= <PortDirective>
-//		final int PROD_CALLDIRECTIVE_VARARGS                       = 538;  // <CallDirective> ::= VARARGS
-//		final int PROD_CALLDIRECTIVE_LOCAL                         = 539;  // <CallDirective> ::= LOCAL
-//		final int PROD_CALLDIRECTIVE4                              = 540;  // <CallDirective> ::= <SCONST>
-//		final int PROD_CALLDIRECTIVE_OVERLOAD                      = 541;  // <CallDirective> ::= OVERLOAD
-//		final int PROD_OPTCALLSPECIFIERS                           = 542;  // <OptCallSpecifiers> ::= <CallSpecifier>
-//		final int PROD_OPTCALLSPECIFIERS2                          = 543;  // <OptCallSpecifiers> ::= <OptCallSpecifiers> <CallSpecifier>
-//		final int PROD_OPTCALLSPECIFIERS3                          = 544;  // <OptCallSpecifiers> ::= 
-//		final int PROD_CALLSPECIFIER                               = 545;  // <CallSpecifier> ::= <CallConvention>
-//		final int PROD_CALLSPECIFIER2                              = 546;  // <CallSpecifier> ::= <CallObsolete>
-//		final int PROD_CALLCONVENTIONS                             = 547;  // <CallConventions> ::= <CallConvention>
-//		final int PROD_CALLCONVENTIONS2                            = 548;  // <CallConventions> ::= <CallConventions> <CallConvention>
-//		final int PROD_OPTCALLCONVENTIONS                          = 549;  // <OptCallConventions> ::= <CallConvention>
-//		final int PROD_OPTCALLCONVENTIONS2                         = 550;  // <OptCallConventions> ::= <OptCallConventions> <CallConvention>
-//		final int PROD_OPTCALLCONVENTIONS3                         = 551;  // <OptCallConventions> ::= 
-//		final int PROD_CALLCONVENTION_REGISTER                     = 552;  // <CallConvention> ::= REGISTER
-//		final int PROD_CALLCONVENTION_PASCAL                       = 553;  // <CallConvention> ::= PASCAL
-//		final int PROD_CALLCONVENTION_CDECL                        = 554;  // <CallConvention> ::= CDECL
-//		final int PROD_CALLCONVENTION_STDCALL                      = 555;  // <CallConvention> ::= STDCALL
-//		final int PROD_CALLCONVENTION_SAFECALL                     = 556;  // <CallConvention> ::= SAFECALL
-//		final int PROD_CALLOBSOLETE_INLINE                         = 557;  // <CallObsolete> ::= INLINE
-//		final int PROD_CALLOBSOLETE_ASSEMBLER                      = 558;  // <CallObsolete> ::= ASSEMBLER
-//		final int PROD_CALLOBSOLETE_NEAR                           = 559;  // <CallObsolete> ::= NEAR
-//		final int PROD_CALLOBSOLETE_FAR                            = 560;  // <CallObsolete> ::= FAR
-//		final int PROD_CALLOBSOLETE_EXPORT                         = 561;  // <CallObsolete> ::= EXPORT
-//		final int PROD_ASMLANGUAGE                                 = 562;  // <AsmLanguage> ::= <AsmInstruction>
-//		final int PROD_ASMLANGUAGE2                                = 563;  // <AsmLanguage> ::= <AsmLanguage> <AsmInstruction>
-//		final int PROD_ASMINSTRUCTION                              = 564;  // <AsmInstruction> ::= <AsmItem>
-//		final int PROD_ASMINSTRUCTION2                             = 565;  // <AsmInstruction> ::= <AsmInstruction> <AsmItem>
-//		final int PROD_ASMINSTRUCTION_COMMA                        = 566;  // <AsmInstruction> ::= <AsmInstruction> ',' <AsmItem>
-//		final int PROD_ASMINSTRUCTION_SEMI                         = 567;  // <AsmInstruction> ::= <AsmInstruction> ';'
-//		final int PROD_ASMITEM                                     = 568;  // <AsmItem> ::= <AsmLabel>
-//		final int PROD_ASMITEM2                                    = 569;  // <AsmItem> ::= <AsmExpr>
-//		final int PROD_ASMLABEL_COLON                              = 570;  // <AsmLabel> ::= <AsmLocal> ':'
-//		final int PROD_ASMLABEL_COLON2                             = 571;  // <AsmLabel> ::= <AsmId> ':'
-//		final int PROD_ASMEXPR                                     = 572;  // <AsmExpr> ::= <AsmFactor>
-//		final int PROD_ASMEXPR_MINUS                               = 573;  // <AsmExpr> ::= '-' <AsmFactor>
-//		final int PROD_ASMEXPR_PLUS                                = 574;  // <AsmExpr> ::= <AsmExpr> '+' <AsmFactor>
-//		final int PROD_ASMEXPR_TIMES                               = 575;  // <AsmExpr> ::= <AsmExpr> '*' <AsmFactor>
-//		final int PROD_ASMEXPR_MINUS2                              = 576;  // <AsmExpr> ::= <AsmExpr> '-' <AsmFactor>
-//		final int PROD_ASMEXPR_DOT                                 = 577;  // <AsmExpr> ::= <AsmExpr> '.' <AsmFactor>
-//		final int PROD_ASMEXPR_LBRACKET_RBRACKET                   = 578;  // <AsmExpr> ::= '[' <AsmExpr> ']'
-//		final int PROD_ASMEXPR_LPAREN_RPAREN                       = 579;  // <AsmExpr> ::= '(' <AsmExpr> ')'
-//		final int PROD_ASMEXPR_SYNERROR                            = 580;  // <AsmExpr> ::= SynError
-//		final int PROD_ASMFACTOR                                   = 581;  // <AsmFactor> ::= <AsmId>
-//		final int PROD_ASMFACTOR2                                  = 582;  // <AsmFactor> ::= <AsmLocal>
-//		final int PROD_ASMFACTOR3                                  = 583;  // <AsmFactor> ::= <ICONST>
-//		final int PROD_ASMFACTOR4                                  = 584;  // <AsmFactor> ::= <RCONST>
-//		final int PROD_ASMFACTOR5                                  = 585;  // <AsmFactor> ::= <SCONST>
-//		final int PROD_ASMID                                       = 586;  // <AsmId> ::= <RefId>
-//		final int PROD_ASMID_AMP                                   = 587;  // <AsmId> ::= '&' <RefId>
-//		final int PROD_ASMID_REPEAT                                = 588;  // <AsmId> ::= REPEAT
-//		final int PROD_ASMID_WHILE                                 = 589;  // <AsmId> ::= WHILE
-//		final int PROD_ASMID_IF                                    = 590;  // <AsmId> ::= IF
-//		final int PROD_ASMID_AND                                   = 591;  // <AsmId> ::= AND
-//		final int PROD_ASMID_OR                                    = 592;  // <AsmId> ::= OR
-//		final int PROD_ASMID_XOR                                   = 593;  // <AsmId> ::= XOR
-//		final int PROD_ASMID_SHR                                   = 594;  // <AsmId> ::= SHR
-//		final int PROD_ASMID_SHL                                   = 595;  // <AsmId> ::= SHL
-//		final int PROD_ASMID_DIV                                   = 596;  // <AsmId> ::= DIV
-//		final int PROD_ASMID_NOT                                   = 597;  // <AsmId> ::= NOT
-//		final int PROD_ASMLOCAL_AT                                 = 598;  // <AsmLocal> ::= '@' <LCONST>
-//		final int PROD_ASMLOCAL_AT2                                = 599;  // <AsmLocal> ::= '@' <AsmId>
-//		final int PROD_ASMLOCAL_AT3                                = 600;  // <AsmLocal> ::= '@' <AsmLocal>
-//		final int PROD_ASMLOCAL_AT_END                             = 601;  // <AsmLocal> ::= '@' END
+//		final int PROD_UNITIDLIST_COMMA                            =   7;  // <UnitIdList> ::= <UnitIdList> ',' <FieldDesignator>
+//		final int PROD_UNITIDLIST                                  =   8;  // <UnitIdList> ::= <FieldDesignator>
+//		final int PROD_IDLIST_COMMA                                =   9;  // <IdList> ::= <IdList> ',' <RefId>
+//		final int PROD_IDLIST                                      =  10;  // <IdList> ::= <RefId>
+//		final int PROD_LABELID_ID                                  =  11;  // <LabelId> ::= id
+//		final int PROD_TYPEID_ID                                   =  12;  // <TypeId> ::= id
+//		final int PROD_TYPEID_NAME                                 =  13;  // <TypeId> ::= NAME
+//		final int PROD_TYPENAME                                    =  14;  // <TypeName> ::= <TypeId>
+//		final int PROD_TYPENAME_ID_DOT                             =  15;  // <TypeName> ::= id '.' <RefId>
+//		final int PROD_TYPELIST                                    =  16;  // <TypeList> ::= <TypeName>
+//		final int PROD_TYPELIST_COMMA                              =  17;  // <TypeList> ::= <TypeList> ',' <TypeName>
+		final int PROD_REFID_ID                                    =  18;  // <RefId> ::= id
+//		final int PROD_REFID_AT                                    =  19;  // <RefId> ::= AT
+//		final int PROD_REFID_ON                                    =  20;  // <RefId> ::= ON
+//		final int PROD_REFID_READ                                  =  21;  // <RefId> ::= READ
+//		final int PROD_REFID_WRITE                                 =  22;  // <RefId> ::= WRITE
+//		final int PROD_REFID_READLN                                =  23;  // <RefId> ::= READLN
+//		final int PROD_REFID_WRITELN                               =  24;  // <RefId> ::= WRITELN
+//		final int PROD_REFID_NAME                                  =  25;  // <RefId> ::= NAME
+//		final int PROD_REFID_INDEX                                 =  26;  // <RefId> ::= INDEX
+//		final int PROD_REFID_VIRTUAL                               =  27;  // <RefId> ::= VIRTUAL
+//		final int PROD_REFID_ABSOLUTE                              =  28;  // <RefId> ::= ABSOLUTE
+//		final int PROD_REFID_MESSAGE                               =  29;  // <RefId> ::= MESSAGE
+//		final int PROD_REFID_DEFAULT                               =  30;  // <RefId> ::= DEFAULT
+//		final int PROD_REFID_OVERRIDE                              =  31;  // <RefId> ::= OVERRIDE
+//		final int PROD_REFID_ABSTRACT                              =  32;  // <RefId> ::= ABSTRACT
+//		final int PROD_REFID_DISPID                                =  33;  // <RefId> ::= DISPID
+//		final int PROD_REFID_REINTRODUCE                           =  34;  // <RefId> ::= REINTRODUCE
+//		final int PROD_REFID_REGISTER                              =  35;  // <RefId> ::= REGISTER
+//		final int PROD_REFID_PASCAL                                =  36;  // <RefId> ::= PASCAL
+//		final int PROD_REFID_CDECL                                 =  37;  // <RefId> ::= CDECL
+//		final int PROD_REFID_STDCALL                               =  38;  // <RefId> ::= STDCALL
+//		final int PROD_REFID_SAFECALL                              =  39;  // <RefId> ::= SAFECALL
+//		final int PROD_REFID_STRING                                =  40;  // <RefId> ::= STRING
+//		final int PROD_REFID_WIDESTRING                            =  41;  // <RefId> ::= WIDESTRING
+//		final int PROD_REFID_ANSISTRING                            =  42;  // <RefId> ::= ANSISTRING
+//		final int PROD_REFID_VARIANT                               =  43;  // <RefId> ::= VARIANT
+//		final int PROD_REFID_OLEVARIANT                            =  44;  // <RefId> ::= OLEVARIANT
+//		final int PROD_REFID_READONLY                              =  45;  // <RefId> ::= READONLY
+//		final int PROD_REFID_IMPLEMENTS                            =  46;  // <RefId> ::= IMPLEMENTS
+//		final int PROD_REFID_NODEFAULT                             =  47;  // <RefId> ::= NODEFAULT
+//		final int PROD_REFID_STORED                                =  48;  // <RefId> ::= STORED
+//		final int PROD_REFID_OVERLOAD                              =  49;  // <RefId> ::= OVERLOAD
+//		final int PROD_REFID_LOCAL                                 =  50;  // <RefId> ::= LOCAL
+//		final int PROD_REFID_VARARGS                               =  51;  // <RefId> ::= VARARGS
+//		final int PROD_REFID_FORWARD                               =  52;  // <RefId> ::= FORWARD
+//		final int PROD_REFID_CONTAINS                              =  53;  // <RefId> ::= CONTAINS
+//		final int PROD_REFID_PACKAGE                               =  54;  // <RefId> ::= PACKAGE
+//		final int PROD_REFID_REQUIRES                              =  55;  // <RefId> ::= REQUIRES
+//		final int PROD_REFID_LIBRARY                               =  56;  // <RefId> ::= LIBRARY
+//		final int PROD_REFID_IMPORT                                =  57;  // <RefId> ::= IMPORT
+//		final int PROD_REFID_EXPORT                                =  58;  // <RefId> ::= EXPORT
+//		final int PROD_REFID_PLATFORM                              =  59;  // <RefId> ::= PLATFORM
+//		final int PROD_REFID_DEPRECATED                            =  60;  // <RefId> ::= DEPRECATED
+//		final int PROD_REFID_EXTERNAL                              =  61;  // <RefId> ::= EXTERNAL
+//		final int PROD_FIELDDESIGNATOR                             =  62;  // <FieldDesignator> ::= <RefId>
+//		final int PROD_FIELDDESIGNATOR_DOT                         =  63;  // <FieldDesignator> ::= <FieldDesignator> '.' <RefId>
+//		final int PROD_OBJECTPASCAL                                =  64;  // <ObjectPascal> ::= <Program>
+//		final int PROD_OBJECTPASCAL2                               =  65;  // <ObjectPascal> ::= <Unit>
+//		final int PROD_OBJECTPASCAL3                               =  66;  // <ObjectPascal> ::= <Package>
+//		final int PROD_OBJECTPASCAL4                               =  67;  // <ObjectPascal> ::= <Library>
+//		final int PROD_PROGRAM_DOT                                 =  68;  // <Program> ::= <ProgHeader> <OptUsesSection> <Block> '.'
+//		final int PROD_PROGHEADER_PROGRAM_SEMI                     =  69;  // <ProgHeader> ::= PROGRAM <RefId> <OptProgParamList> ';'
+//		final int PROD_OPTPROGPARAMLIST_LPAREN_RPAREN              =  70;  // <OptProgParamList> ::= '(' <IdList> ')'
+//		final int PROD_OPTPROGPARAMLIST                            =  71;  // <OptProgParamList> ::= 
+//		final int PROD_UNIT_DOT                                    =  72;  // <Unit> ::= <UnitHeader> <InterfaceSection> <ImplementationSection> <InitSection> '.'
+//		final int PROD_UNITHEADER_UNIT_SEMI                        =  73;  // <UnitHeader> ::= UNIT <FieldDesignator> <OptPortDirectives> ';'
+//		final int PROD_PACKAGE_END_DOT                             =  74;  // <Package> ::= <PackageHeader> <OptRequiresClause> <OptContainsClause> END '.'
+		final int PROD_PACKAGEHEADER_PACKAGE_SEMI                  =  75;  // <PackageHeader> ::= PACKAGE <RefId> ';'
+		final int PROD_OPTREQUIRESCLAUSE_REQUIRES_SEMI             =  76;  // <OptRequiresClause> ::= REQUIRES <IdList> ';'
+//		final int PROD_OPTREQUIRESCLAUSE                           =  77;  // <OptRequiresClause> ::= 
+		final int PROD_OPTCONTAINSCLAUSE_CONTAINS_SEMI             =  78;  // <OptContainsClause> ::= CONTAINS <IdList> ';'
+//		final int PROD_OPTCONTAINSCLAUSE                           =  79;  // <OptContainsClause> ::= 
+//		final int PROD_LIBRARYHEADER_LIBRARY_SEMI                  =  80;  // <LibraryHeader> ::= LIBRARY <RefId> ';'
+//		final int PROD_LIBRARY_DOT                                 =  81;  // <Library> ::= <LibraryHeader> <OptUsesSection> <Block> '.'
+//		final int PROD_INTERFACESECTION_INTERFACE                  =  82;  // <InterfaceSection> ::= INTERFACE <OptUsesSection> <OptExportDeclList>
+//		final int PROD_OPTUSESSECTION                              =  83;  // <OptUsesSection> ::= <UsesSection>
+//		final int PROD_OPTUSESSECTION2                             =  84;  // <OptUsesSection> ::= 
+//		final int PROD_USESCLAUSE_USES_SEMI                        =  85;  // <UsesClause> ::= USES <UnitIdList> ';'
+//		final int PROD_USESCLAUSE_SYNERROR                         =  86;  // <UsesClause> ::= SynError
+//		final int PROD_USESSECTION                                 =  87;  // <UsesSection> ::= <UsesClause>
+//		final int PROD_USESSECTION2                                =  88;  // <UsesSection> ::= <UsesSection> <UsesClause>
+//		final int PROD_OPTEXPORTDECLLIST                           =  89;  // <OptExportDeclList> ::= <ExportDeclList>
+//		final int PROD_OPTEXPORTDECLLIST2                          =  90;  // <OptExportDeclList> ::= 
+		final int PROD_EXPORTDECLLIST                              =  91;  // <ExportDeclList> ::= <ExportDeclItem>
+		final int PROD_EXPORTDECLLIST2                             =  92;  // <ExportDeclList> ::= <ExportDeclList> <ExportDeclItem>
+		final int PROD_EXPORTDECLITEM                              =  93;  // <ExportDeclItem> ::= <ConstSection>
+		final int PROD_EXPORTDECLITEM2                             =  94;  // <ExportDeclItem> ::= <TypeSection>
+		final int PROD_EXPORTDECLITEM3                             =  95;  // <ExportDeclItem> ::= <VarSection>
+		final int PROD_EXPORTDECLITEM4                             =  96;  // <ExportDeclItem> ::= <CallSection>
+		final int PROD_EXPORTDECLITEM_FORWARD_SEMI                 =  97;  // <ExportDeclItem> ::= <CallSection> FORWARD ';'
+		final int PROD_CALLSECTION                                 =  98;  // <CallSection> ::= <ProcHeading>
+		final int PROD_CALLSECTION2                                =  99;  // <CallSection> ::= <FuncHeading>
+		final int PROD_IMPLEMENTATIONSECTION_IMPLEMENTATION        = 100;  // <ImplementationSection> ::= IMPLEMENTATION <OptUsesSection> <OptDeclSection> <OptExportBlock>
+		final int PROD_INITSECTION_INITIALIZATION_END              = 101;  // <InitSection> ::= INITIALIZATION <StmtList> END
+		final int PROD_INITSECTION_INITIALIZATION_FINALIZATION_END = 102;  // <InitSection> ::= INITIALIZATION <StmtList> FINALIZATION <StmtList> END
+		final int PROD_INITSECTION                                 = 103;  // <InitSection> ::= <CompoundStmt>
+		final int PROD_INITSECTION_END                             = 104;  // <InitSection> ::= END
+//		final int PROD_BLOCK                                       = 105;  // <Block> ::= <OptDeclSection> <OptExportBlock> <CompoundStmt> <OptExportBlock>
+//		final int PROD_OPTEXPORTBLOCK                              = 106;  // <OptExportBlock> ::= <ExportStmt>
+//		final int PROD_OPTEXPORTBLOCK2                             = 107;  // <OptExportBlock> ::= <OptExportBlock> <ExportStmt>
+//		final int PROD_OPTEXPORTBLOCK3                             = 108;  // <OptExportBlock> ::= 
+//		final int PROD_EXPORTSTMT_EXPORTS_SEMI                     = 109;  // <ExportStmt> ::= EXPORTS <ExportList> ';'
+//		final int PROD_EXPORTLIST                                  = 110;  // <ExportList> ::= <ExportItem>
+//		final int PROD_EXPORTLIST_COMMA                            = 111;  // <ExportList> ::= <ExportList> ',' <ExportItem>
+//		final int PROD_EXPORTITEM_ID                               = 112;  // <ExportItem> ::= id
+//		final int PROD_EXPORTITEM_ID_NAME_APOST_APOST              = 113;  // <ExportItem> ::= id NAME '' <ConstExpr> ''
+//		final int PROD_EXPORTITEM_ID_INDEX_APOST_APOST             = 114;  // <ExportItem> ::= id INDEX '' <ConstExpr> ''
+//		final int PROD_EXPORTITEM_NAME_APOST_APOST                 = 115;  // <ExportItem> ::= NAME '' <ConstExpr> ''
+//		final int PROD_EXPORTITEM_INDEX_APOST_APOST                = 116;  // <ExportItem> ::= INDEX '' <ConstExpr> ''
+//		final int PROD_OPTDECLSECTION                              = 117;  // <OptDeclSection> ::= <DeclSection>
+//		final int PROD_OPTDECLSECTION2                             = 118;  // <OptDeclSection> ::= 
+//		final int PROD_DECLSECTION                                 = 119;  // <DeclSection> ::= <DeclItem>
+		final int PROD_DECLSECTION2                                = 120;  // <DeclSection> ::= <DeclSection> <DeclItem>
+//		final int PROD_DECLITEM                                    = 121;  // <DeclItem> ::= <LabelSection>
+//		final int PROD_DECLITEM2                                   = 122;  // <DeclItem> ::= <ConstSection>
+//		final int PROD_DECLITEM3                                   = 123;  // <DeclItem> ::= <TypeSection>
+//		final int PROD_DECLITEM4                                   = 124;  // <DeclItem> ::= <VarSection>
+//		final int PROD_DECLITEM5                                   = 125;  // <DeclItem> ::= <ProcedureDeclSection>
+//		final int PROD_DECLITEM_SYNERROR                           = 126;  // <DeclItem> ::= SynError
+//		final int PROD_LABELSECTION_LABEL_SEMI                     = 127;  // <LabelSection> ::= LABEL <LabelList> ';'
+//		final int PROD_LABELLIST                                   = 128;  // <LabelList> ::= <LabelId>
+//		final int PROD_LABELLIST_COMMA                             = 129;  // <LabelList> ::= <LabelList> ',' <LabelId>
+//		final int PROD_CONSTSECTION_CONST                          = 130;  // <ConstSection> ::= CONST <ConstantDeclList>
+//		final int PROD_CONSTSECTION_RESOURCESTRING                 = 131;  // <ConstSection> ::= RESOURCESTRING <ConstantDeclList>
+//		final int PROD_CONSTANTDECLLIST                            = 132;  // <ConstantDeclList> ::= <ConstantDecl>
+		final int PROD_CONSTANTDECLLIST2                           = 133;  // <ConstantDeclList> ::= <ConstantDeclList> <ConstantDecl>
+		final int PROD_CONSTANTDECL_EQ_SEMI                        = 134;  // <ConstantDecl> ::= <RefId> '=' <ConstExpr> <OptPortDirectives> ';'
+		final int PROD_CONSTANTDECL_COLON_EQ_SEMI                  = 135;  // <ConstantDecl> ::= <RefId> ':' <Type> '=' <TypedConstant> <OptPortDirectives> ';'
+//		final int PROD_CONSTANTDECL_SYNERROR_SEMI                  = 136;  // <ConstantDecl> ::= SynError ';'
+//		final int PROD_TYPEDCONSTANT                               = 137;  // <TypedConstant> ::= <ConstExpr>
+//		final int PROD_TYPEDCONSTANT2                              = 138;  // <TypedConstant> ::= <ArrayConstant>
+//		final int PROD_TYPEDCONSTANT3                              = 139;  // <TypedConstant> ::= <RecordConstant>
+		final int PROD_ARRAYCONSTANT_LPAREN_RPAREN                 = 140;  // <ArrayConstant> ::= '(' <TypedConstList> ')'
+		final int PROD_RECORDCONSTANT_LPAREN_RPAREN                = 141;  // <RecordConstant> ::= '(' <RecordFieldConstList> ')'
+		final int PROD_RECORDCONSTANT_LPAREN_SEMI_RPAREN           = 142;  // <RecordConstant> ::= '(' <RecordFieldConstList> ';' ')'
+//		final int PROD_RECORDCONSTANT_LPAREN_RPAREN2               = 143;  // <RecordConstant> ::= '(' ')'
+//		final int PROD_RECORDFIELDCONSTLIST                        = 144;  // <RecordFieldConstList> ::= <RecordFieldConstant>
+//		final int PROD_RECORDFIELDCONSTLIST_SEMI                   = 145;  // <RecordFieldConstList> ::= <RecordFieldConstList> ';' <RecordFieldConstant>
+//		final int PROD_RECORDFIELDCONSTANT_COLON                   = 146;  // <RecordFieldConstant> ::= <RefId> ':' <TypedConstant>
+//		final int PROD_TYPEDCONSTLIST                              = 147;  // <TypedConstList> ::= <TypedConstant>
+//		final int PROD_TYPEDCONSTLIST_COMMA                        = 148;  // <TypedConstList> ::= <TypedConstList> ',' <TypedConstant>
+//		final int PROD_TYPESECTION_TYPE                            = 149;  // <TypeSection> ::= TYPE <TypeDeclList>
+//		final int PROD_TYPEDECLLIST                                = 150;  // <TypeDeclList> ::= <TypeDecl>
+		final int PROD_TYPEDECLLIST2                               = 151;  // <TypeDeclList> ::= <TypeDeclList> <TypeDecl>
+		final int PROD_TYPEDECL_EQ                                 = 152;  // <TypeDecl> ::= <TypeId> '=' <TypeSpec>
+//		final int PROD_TYPEDECL_SYNERROR_SEMI                      = 153;  // <TypeDecl> ::= SynError ';'
+		final int PROD_TYPESPEC_SEMI                               = 154;  // <TypeSpec> ::= <GenericType> ';'
+		final int PROD_TYPESPEC_SEMI2                              = 155;  // <TypeSpec> ::= <RestrictedType> <OptPortDirectives> ';'
+//		final int PROD_TYPESPEC_SEMI3                              = 156;  // <TypeSpec> ::= <CallType> ';'
+//		final int PROD_TYPESPEC_SEMI_SEMI                          = 157;  // <TypeSpec> ::= <CallType> ';' <CallConventions> ';'
+//		final int PROD_TYPESPEC_SYNERROR_SEMI                      = 158;  // <TypeSpec> ::= SynError ';'
+//		final int PROD_TYPE                                        = 159;  // <Type> ::= <GenericType>
+//		final int PROD_TYPE2                                       = 160;  // <Type> ::= <CallType>
+//		final int PROD_TYPEREF                                     = 161;  // <TypeRef> ::= <TypeName>
+//		final int PROD_TYPEREF2                                    = 162;  // <TypeRef> ::= <StringType>
+//		final int PROD_TYPEREF3                                    = 163;  // <TypeRef> ::= <VariantType>
+//		final int PROD_GENERICTYPE                                 = 164;  // <GenericType> ::= <TypeName>
+//		final int PROD_GENERICTYPE2                                = 165;  // <GenericType> ::= <StringType>
+//		final int PROD_GENERICTYPE3                                = 166;  // <GenericType> ::= <VariantType>
+//		final int PROD_GENERICTYPE4                                = 167;  // <GenericType> ::= <SubrangeType>
+//		final int PROD_GENERICTYPE5                                = 168;  // <GenericType> ::= <EnumType>
+//		final int PROD_GENERICTYPE6                                = 169;  // <GenericType> ::= <StructType>
+//		final int PROD_GENERICTYPE7                                = 170;  // <GenericType> ::= <PointerType>
+//		final int PROD_GENERICTYPE8                                = 171;  // <GenericType> ::= <ClassRefType>
+//		final int PROD_GENERICTYPE9                                = 172;  // <GenericType> ::= <ClonedType>
+//		final int PROD_CLONEDTYPE_TYPE                             = 173;  // <ClonedType> ::= TYPE <TypeRef>
+//		final int PROD_STRINGTYPE_STRING                           = 174;  // <StringType> ::= STRING
+//		final int PROD_STRINGTYPE_ANSISTRING                       = 175;  // <StringType> ::= ANSISTRING
+//		final int PROD_STRINGTYPE_WIDESTRING                       = 176;  // <StringType> ::= WIDESTRING
+//		final int PROD_STRINGTYPE_STRING_LBRACKET_RBRACKET         = 177;  // <StringType> ::= STRING '[' <ConstExpr> ']'
+//		final int PROD_VARIANTTYPE_VARIANT                         = 178;  // <VariantType> ::= VARIANT
+//		final int PROD_VARIANTTYPE_OLEVARIANT                      = 179;  // <VariantType> ::= OLEVARIANT
+//		final int PROD_ORDINALTYPE                                 = 180;  // <OrdinalType> ::= <SubrangeType>
+//		final int PROD_ORDINALTYPE2                                = 181;  // <OrdinalType> ::= <EnumType>
+//		final int PROD_ORDINALTYPE3                                = 182;  // <OrdinalType> ::= <TypeName>
+//		final int PROD_SUBRANGETYPE_DOTDOT                         = 183;  // <SubrangeType> ::= <ConstOrdExpr> '..' <ConstOrdExpr>
+		final int PROD_ENUMTYPE_LPAREN_COMMA_RPAREN                = 184;  // <EnumType> ::= '(' <EnumId> ',' <EnumList> ')'
+//		final int PROD_ENUMLIST                                    = 185;  // <EnumList> ::= <EnumId>
+		final int PROD_ENUMLIST_COMMA                              = 186;  // <EnumList> ::= <EnumList> ',' <EnumId>
+//		final int PROD_ENUMID                                      = 187;  // <EnumId> ::= <RefId>
+		final int PROD_ENUMID_EQ                                   = 188;  // <EnumId> ::= <RefId> '=' <ConstExpr>
+//		final int PROD_OPTPACKED_PACKED                            = 189;  // <OptPacked> ::= PACKED
+//		final int PROD_OPTPACKED                                   = 190;  // <OptPacked> ::= 
+//		final int PROD_STRUCTTYPE                                  = 191;  // <StructType> ::= <ArrayType>
+//		final int PROD_STRUCTTYPE2                                 = 192;  // <StructType> ::= <SetType>
+//		final int PROD_STRUCTTYPE3                                 = 193;  // <StructType> ::= <FileType>
+//		final int PROD_STRUCTTYPE4                                 = 194;  // <StructType> ::= <RecType>
+		final int PROD_ARRAYTYPE_ARRAY_LBRACKET_RBRACKET_OF        = 195;  // <ArrayType> ::= <OptPacked> ARRAY '[' <OrdinalTypeList> ']' OF <Type>
+		final int PROD_ARRAYTYPE_ARRAY_OF_CONST                    = 196;  // <ArrayType> ::= <OptPacked> ARRAY OF CONST
+		final int PROD_ARRAYTYPE_ARRAY_OF                          = 197;  // <ArrayType> ::= <OptPacked> ARRAY OF <Type>
+//		final int PROD_ORDINALTYPELIST                             = 198;  // <OrdinalTypeList> ::= <OrdinalType>
+//		final int PROD_ORDINALTYPELIST_COMMA                       = 199;  // <OrdinalTypeList> ::= <OrdinalTypeList> ',' <OrdinalType>
+		final int PROD_RECTYPE_RECORD_END                          = 200;  // <RecType> ::= <OptPacked> RECORD <RecFieldList> END <OptPortDirectives>
+//		final int PROD_RECFIELDLIST                                = 201;  // <RecFieldList> ::= 
+//		final int PROD_RECFIELDLIST2                               = 202;  // <RecFieldList> ::= <RecField1>
+//		final int PROD_RECFIELDLIST3                               = 203;  // <RecFieldList> ::= <RecField2>
+//		final int PROD_RECFIELDLIST_SEMI                           = 204;  // <RecFieldList> ::= <RecField1> ';' <RecFieldList>
+//		final int PROD_RECFIELDLIST_SEMI2                          = 205;  // <RecFieldList> ::= <RecField2> ';' <RecFieldList>
+//		final int PROD_RECFIELDLIST_SEMI3                          = 206;  // <RecFieldList> ::= <RecField2> ';' <CallConvention>
+//		final int PROD_RECFIELDLIST_SEMI_SEMI                      = 207;  // <RecFieldList> ::= <RecField2> ';' <CallConvention> ';' <RecFieldList>
+//		final int PROD_RECFIELDLIST_CASE_OF                        = 208;  // <RecFieldList> ::= CASE <Selector> OF <RecVariantList>
+//		final int PROD_RECVARIANTLIST                              = 209;  // <RecVariantList> ::= 
+//		final int PROD_RECVARIANTLIST2                             = 210;  // <RecVariantList> ::= <RecVariant>
+//		final int PROD_RECVARIANTLIST_SEMI                         = 211;  // <RecVariantList> ::= <RecVariant> ';' <RecVariantList>
+//		final int PROD_RECFIELD1_COLON                             = 212;  // <RecField1> ::= <IdList> ':' <GenericType> <OptPortDirectives>
+//		final int PROD_RECFIELD2_COLON                             = 213;  // <RecField2> ::= <IdList> ':' <CallType>
+//		final int PROD_RECVARIANT_COLON_LPAREN_RPAREN              = 214;  // <RecVariant> ::= <ConstExprList> ':' '(' <RecFieldList> ')'
+		final int PROD_SELECTOR_COLON                              = 215;  // <Selector> ::= <RefId> ':' <TypeName>
+//		final int PROD_SELECTOR                                    = 216;  // <Selector> ::= <TypeName>
+//		final int PROD_SETTYPE_SET_OF                              = 217;  // <SetType> ::= <OptPacked> SET OF <OrdinalType>
+//		final int PROD_FILETYPE_FILE_OF                            = 218;  // <FileType> ::= <OptPacked> FILE OF <TypeRef>
+//		final int PROD_FILETYPE_FILE                               = 219;  // <FileType> ::= FILE
+//		final int PROD_POINTERTYPE_CARET                           = 220;  // <PointerType> ::= '^' <TypeRef>
+//		final int PROD_CALLTYPE_PROCEDURE                          = 221;  // <CallType> ::= PROCEDURE <OptFormalParms> <OptCallConventions>
+//		final int PROD_CALLTYPE_PROCEDURE_OF_OBJECT                = 222;  // <CallType> ::= PROCEDURE <OptFormalParms> OF OBJECT <OptCallConventions>
+//		final int PROD_CALLTYPE_FUNCTION_COLON                     = 223;  // <CallType> ::= FUNCTION <OptFormalParms> ':' <ResultType> <OptCallConventions>
+//		final int PROD_CALLTYPE_FUNCTION_COLON_OF_OBJECT           = 224;  // <CallType> ::= FUNCTION <OptFormalParms> ':' <ResultType> OF OBJECT <OptCallConventions>
+//		final int PROD_RESTRICTEDTYPE                              = 225;  // <RestrictedType> ::= <ObjectType>
+//		final int PROD_RESTRICTEDTYPE2                             = 226;  // <RestrictedType> ::= <ClassType>
+//		final int PROD_RESTRICTEDTYPE3                             = 227;  // <RestrictedType> ::= <InterfaceType>
+//		final int PROD_OBJECTTYPE_OBJECT_END                       = 228;  // <ObjectType> ::= <OptPacked> OBJECT <OptObjectHeritage> <ObjectMemberList> END
+		final int PROD_CLASSTYPE_CLASS_END                         = 229;  // <ClassType> ::= CLASS <OptClassHeritage> <ClassMemberList> END
+//		final int PROD_CLASSTYPE_CLASS                             = 230;  // <ClassType> ::= CLASS <OptClassHeritage>
+//		final int PROD_CLASSREFTYPE_CLASS_OF                       = 231;  // <ClassRefType> ::= CLASS OF <TypeName>
+//		final int PROD_INTERFACETYPE_INTERFACE_END                 = 232;  // <InterfaceType> ::= INTERFACE <OptClassHeritage> <OptClassGUID> <OptClassMethodList> END
+//		final int PROD_INTERFACETYPE_DISPINTERFACE_END             = 233;  // <InterfaceType> ::= DISPINTERFACE <OptClassHeritage> <OptClassGUID> <OptClassMethodList> END
+//		final int PROD_INTERFACETYPE_INTERFACE                     = 234;  // <InterfaceType> ::= INTERFACE
+//		final int PROD_INTERFACETYPE_DISPINTERFACE                 = 235;  // <InterfaceType> ::= DISPINTERFACE
+//		final int PROD_OPTOBJECTHERITAGE_LPAREN_RPAREN             = 236;  // <OptObjectHeritage> ::= '(' <TypeName> ')'
+//		final int PROD_OPTOBJECTHERITAGE                           = 237;  // <OptObjectHeritage> ::= 
+//		final int PROD_OPTCLASSHERITAGE_LPAREN_RPAREN              = 238;  // <OptClassHeritage> ::= '(' <TypeList> ')'
+//		final int PROD_OPTCLASSHERITAGE                            = 239;  // <OptClassHeritage> ::= 
+//		final int PROD_OPTCLASSGUID_LBRACKET_RBRACKET              = 240;  // <OptClassGUID> ::= '[' <ConstStrExpr> ']'
+//		final int PROD_OPTCLASSGUID                                = 241;  // <OptClassGUID> ::= 
+//		final int PROD_OBJECTMEMBERLIST                            = 242;  // <ObjectMemberList> ::= <OptFieldList> <OptObjectMethodList>
+//		final int PROD_OBJECTMEMBERLIST_PUBLIC                     = 243;  // <ObjectMemberList> ::= <ObjectMemberList> PUBLIC <OptFieldList> <OptObjectMethodList>
+//		final int PROD_OBJECTMEMBERLIST_PRIVATE                    = 244;  // <ObjectMemberList> ::= <ObjectMemberList> PRIVATE <OptFieldList> <OptObjectMethodList>
+//		final int PROD_OBJECTMEMBERLIST_PROTECTED                  = 245;  // <ObjectMemberList> ::= <ObjectMemberList> PROTECTED <OptFieldList> <OptObjectMethodList>
+		final int PROD_CLASSMEMBERLIST                             = 246;  // <ClassMemberList> ::= <OptFieldList> <OptClassMethodList>
+//		final int PROD_CLASSMEMBERLIST_PUBLIC                      = 247;  // <ClassMemberList> ::= <ClassMemberList> PUBLIC <OptFieldList> <OptClassMethodList>
+//		final int PROD_CLASSMEMBERLIST_PRIVATE                     = 248;  // <ClassMemberList> ::= <ClassMemberList> PRIVATE <OptFieldList> <OptClassMethodList>
+//		final int PROD_CLASSMEMBERLIST_PROTECTED                   = 249;  // <ClassMemberList> ::= <ClassMemberList> PROTECTED <OptFieldList> <OptClassMethodList>
+//		final int PROD_CLASSMEMBERLIST_PUBLISHED                   = 250;  // <ClassMemberList> ::= <ClassMemberList> PUBLISHED <OptFieldList> <OptClassMethodList>
+//		final int PROD_OPTFIELDLIST                                = 251;  // <OptFieldList> ::= <FieldList>
+//		final int PROD_OPTFIELDLIST2                               = 252;  // <OptFieldList> ::= 
+//		final int PROD_OPTOBJECTMETHODLIST                         = 253;  // <OptObjectMethodList> ::= <ObjectMethodList>
+//		final int PROD_OPTOBJECTMETHODLIST2                        = 254;  // <OptObjectMethodList> ::= 
+//		final int PROD_OPTCLASSMETHODLIST                          = 255;  // <OptClassMethodList> ::= <ClassMethodList>
+//		final int PROD_OPTCLASSMETHODLIST2                         = 256;  // <OptClassMethodList> ::= 
+//		final int PROD_FIELDLIST                                   = 257;  // <FieldList> ::= <FieldSpec>
+		final int PROD_FIELDLIST2                                  = 258;  // <FieldList> ::= <FieldList> <FieldSpec>
+//		final int PROD_OBJECTMETHODLIST                            = 259;  // <ObjectMethodList> ::= <ObjectMethodSpec>
+//		final int PROD_OBJECTMETHODLIST2                           = 260;  // <ObjectMethodList> ::= <ObjectMethodList> <ObjectMethodSpec>
+//		final int PROD_CLASSMETHODLIST                             = 261;  // <ClassMethodList> ::= <ClassMethodSpec>
+		final int PROD_CLASSMETHODLIST2                            = 262;  // <ClassMethodList> ::= <ClassMethodList> <ClassMethodSpec>
+		final int PROD_FIELDSPEC_COLON_SEMI                        = 263;  // <FieldSpec> ::= <IdList> ':' <Type> <OptPortDirectives> ';'
+//		final int PROD_FIELDSPEC_SYNERROR_SEMI                     = 264;  // <FieldSpec> ::= SynError ';'
+//		final int PROD_OBJECTMETHODSPEC                            = 265;  // <ObjectMethodSpec> ::= <MethodSpec> <OptMethodDirectives>
+//		final int PROD_OBJECTMETHODSPEC2                           = 266;  // <ObjectMethodSpec> ::= <PropertySpec> <OptPropertyDirectives>
+//		final int PROD_OBJECTMETHODSPEC_SYNERROR                   = 267;  // <ObjectMethodSpec> ::= SynError
+		final int PROD_CLASSMETHODSPEC                             = 268;  // <ClassMethodSpec> ::= <MethodSpec> <OptMethodDirectives>
+		final int PROD_CLASSMETHODSPEC2                            = 269;  // <ClassMethodSpec> ::= <ResolutionSpec> <OptMethodDirectives>
+		final int PROD_CLASSMETHODSPEC_CLASS                       = 270;  // <ClassMethodSpec> ::= CLASS <ProcSpec> <OptMethodDirectives>
+		final int PROD_CLASSMETHODSPEC_CLASS2                      = 271;  // <ClassMethodSpec> ::= CLASS <FuncSpec> <OptMethodDirectives>
+		final int PROD_CLASSMETHODSPEC3                            = 272;  // <ClassMethodSpec> ::= <PropertySpec> <OptPropertyDirectives>
+//		final int PROD_CLASSMETHODSPEC_SYNERROR                    = 273;  // <ClassMethodSpec> ::= SynError
+//		final int PROD_METHODSPEC                                  = 274;  // <MethodSpec> ::= <ConstructorSpec>
+//		final int PROD_METHODSPEC2                                 = 275;  // <MethodSpec> ::= <DestructorSpec>
+//		final int PROD_METHODSPEC3                                 = 276;  // <MethodSpec> ::= <ProcSpec>
+//		final int PROD_METHODSPEC4                                 = 277;  // <MethodSpec> ::= <FuncSpec>
+		final int PROD_CONSTRUCTORSPEC_CONSTRUCTOR_SEMI            = 278;  // <ConstructorSpec> ::= CONSTRUCTOR <RefId> <OptFormalParms> ';'
+		final int PROD_DESTRUCTORSPEC_DESTRUCTOR_SEMI              = 279;  // <DestructorSpec> ::= DESTRUCTOR <RefId> <OptFormalParms> ';'
+		final int PROD_PROCSPEC_PROCEDURE_SEMI                     = 280;  // <ProcSpec> ::= PROCEDURE <RefId> <OptFormalParms> <OptCallConventions> ';'
+		final int PROD_FUNCSPEC_FUNCTION_COLON_SEMI                = 281;  // <FuncSpec> ::= FUNCTION <RefId> <OptFormalParms> ':' <ResultType> <OptCallConventions> ';'
+//		final int PROD_RESOLUTIONSPEC_PROCEDURE_DOT_EQ_SEMI        = 282;  // <ResolutionSpec> ::= PROCEDURE <RefId> '.' <RefId> '=' <RefId> ';'
+//		final int PROD_RESOLUTIONSPEC_FUNCTION_DOT_EQ_SEMI         = 283;  // <ResolutionSpec> ::= FUNCTION <RefId> '.' <RefId> '=' <RefId> ';'
+//		final int PROD_PROPERTYSPEC_PROPERTY_SEMI                  = 284;  // <PropertySpec> ::= PROPERTY <PropertyDecl> <OptPropSpecifiers> ';'
+//		final int PROD_PROPERTYDECL_COLON                          = 285;  // <PropertyDecl> ::= <RefId> ':' <TypeRef>
+//		final int PROD_PROPERTYDECL_LBRACKET_RBRACKET_COLON        = 286;  // <PropertyDecl> ::= <RefId> '[' <IndexList> ']' ':' <TypeRef>
+//		final int PROD_PROPERTYDECL                                = 287;  // <PropertyDecl> ::= <RefId>
+//		final int PROD_INDEXLIST                                   = 288;  // <IndexList> ::= <IndexDecl>
+//		final int PROD_INDEXLIST_SEMI                              = 289;  // <IndexList> ::= <IndexList> ';' <IndexDecl>
+//		final int PROD_INDEXDECL                                   = 290;  // <IndexDecl> ::= <IdDecl>
+//		final int PROD_INDEXDECL_CONST                             = 291;  // <IndexDecl> ::= CONST <IdDecl>
+//		final int PROD_IDDECL_COLON                                = 292;  // <IdDecl> ::= <IdList> ':' <Type>
+//		final int PROD_OPTPROPSPECIFIERS                           = 293;  // <OptPropSpecifiers> ::= <PropertySpecifiers>
+//		final int PROD_OPTPROPSPECIFIERS2                          = 294;  // <OptPropSpecifiers> ::= 
+//		final int PROD_PROPERTYSPECIFIERS                          = 295;  // <PropertySpecifiers> ::= <PropertySpecifier>
+//		final int PROD_PROPERTYSPECIFIERS2                         = 296;  // <PropertySpecifiers> ::= <PropertySpecifiers> <PropertySpecifier>
+//		final int PROD_PROPERTYSPECIFIER_INDEX                     = 297;  // <PropertySpecifier> ::= INDEX <ConstExpr>
+//		final int PROD_PROPERTYSPECIFIER_READ                      = 298;  // <PropertySpecifier> ::= READ <FieldDesignator>
+//		final int PROD_PROPERTYSPECIFIER_WRITE                     = 299;  // <PropertySpecifier> ::= WRITE <FieldDesignator>
+//		final int PROD_PROPERTYSPECIFIER_STORED                    = 300;  // <PropertySpecifier> ::= STORED <FieldDesignator>
+//		final int PROD_PROPERTYSPECIFIER_DEFAULT                   = 301;  // <PropertySpecifier> ::= DEFAULT <ConstExpr>
+//		final int PROD_PROPERTYSPECIFIER_NODEFAULT                 = 302;  // <PropertySpecifier> ::= NODEFAULT
+//		final int PROD_PROPERTYSPECIFIER_WRITEONLY                 = 303;  // <PropertySpecifier> ::= WRITEONLY
+//		final int PROD_PROPERTYSPECIFIER_READONLY                  = 304;  // <PropertySpecifier> ::= READONLY
+//		final int PROD_PROPERTYSPECIFIER_DISPID                    = 305;  // <PropertySpecifier> ::= DISPID <ConstExpr>
+//		final int PROD_PROPERTYSPECIFIER                           = 306;  // <PropertySpecifier> ::= <ImplementsSpecifier>
+//		final int PROD_IMPLEMENTSSPECIFIER_IMPLEMENTS              = 307;  // <ImplementsSpecifier> ::= IMPLEMENTS <TypeRef>
+//		final int PROD_IMPLEMENTSSPECIFIER_COMMA                   = 308;  // <ImplementsSpecifier> ::= <ImplementsSpecifier> ',' <TypeRef>
+//		final int PROD_VARSECTION_VAR                              = 309;  // <VarSection> ::= VAR <VarDeclList>
+//		final int PROD_VARSECTION_THREADVAR                        = 310;  // <VarSection> ::= THREADVAR <ThreadVarDeclList>
+//		final int PROD_VARDECLLIST                                 = 311;  // <VarDeclList> ::= <VarDecl>
+		final int PROD_VARDECLLIST2                                = 312;  // <VarDeclList> ::= <VarDeclList> <VarDecl>
+		final int PROD_VARDECL_COLON_SEMI                          = 313;  // <VarDecl> ::= <IdList> ':' <Type> <OptAbsoluteClause> <OptPortDirectives> ';'
+		final int PROD_VARDECL_COLON_EQ_SEMI                       = 314;  // <VarDecl> ::= <IdList> ':' <Type> '=' <TypedConstant> <OptPortDirectives> ';'
+		final int PROD_VARDECL_COLON                               = 315;  // <VarDecl> ::= <IdList> ':' <TypeSpec>
+		final int PROD_VARDECL_SYNERROR_SEMI                       = 316;  // <VarDecl> ::= SynError ';'
+//		final int PROD_THREADVARDECLLIST                           = 317;  // <ThreadVarDeclList> ::= <ThreadVarDecl>
+//		final int PROD_THREADVARDECLLIST2                          = 318;  // <ThreadVarDeclList> ::= <ThreadVarDeclList> <ThreadVarDecl>
+//		final int PROD_THREADVARDECL_COLON                         = 319;  // <ThreadVarDecl> ::= <IdList> ':' <TypeSpec>
+//		final int PROD_THREADVARDECL_SYNERROR_SEMI                 = 320;  // <ThreadVarDecl> ::= SynError ';'
+//		final int PROD_OPTABSOLUTECLAUSE_ABSOLUTE                  = 321;  // <OptAbsoluteClause> ::= ABSOLUTE <RefId>
+//		final int PROD_OPTABSOLUTECLAUSE                           = 322;  // <OptAbsoluteClause> ::= 
+//		final int PROD_CONSTEXPR                                   = 323;  // <ConstExpr> ::= <Expr>
+//		final int PROD_CONSTORDEXPR                                = 324;  // <ConstOrdExpr> ::= <AddExpr>
+//		final int PROD_CONSTSTREXPR                                = 325;  // <ConstStrExpr> ::= <AddExpr>
+//		final int PROD_EXPR                                        = 326;  // <Expr> ::= <AddExpr>
+//		final int PROD_EXPR2                                       = 327;  // <Expr> ::= <AddExpr> <RelOp> <AddExpr>
+//		final int PROD_EXPR_SYNERROR                               = 328;  // <Expr> ::= SynError
+//		final int PROD_ADDEXPR                                     = 329;  // <AddExpr> ::= <MulExpr>
+//		final int PROD_ADDEXPR2                                    = 330;  // <AddExpr> ::= <AddExpr> <AddOp> <MulExpr>
+//		final int PROD_MULEXPR                                     = 331;  // <MulExpr> ::= <Factor>
+//		final int PROD_MULEXPR2                                    = 332;  // <MulExpr> ::= <MulExpr> <MulOp> <Factor>
+//		final int PROD_FACTOR_NIL                                  = 333;  // <Factor> ::= NIL
+//		final int PROD_FACTOR                                      = 334;  // <Factor> ::= <ICONST>
+//		final int PROD_FACTOR2                                     = 335;  // <Factor> ::= <RCONST>
+//		final int PROD_FACTOR3                                     = 336;  // <Factor> ::= <SCONST>
+//		final int PROD_FACTOR4                                     = 337;  // <Factor> ::= <Designator>
+//		final int PROD_FACTOR5                                     = 338;  // <Factor> ::= <SetConstructor>
+//		final int PROD_FACTOR_AT                                   = 339;  // <Factor> ::= '@' <Designator>
+//		final int PROD_FACTOR_AT_AT                                = 340;  // <Factor> ::= '@' '@' <Designator>
+//		final int PROD_FACTOR_LPAREN_RPAREN                        = 341;  // <Factor> ::= '(' <Expr> ')'
+//		final int PROD_FACTOR_LPAREN_RPAREN_CARET                  = 342;  // <Factor> ::= '(' <Expr> ')' '^'
+//		final int PROD_FACTOR_PLUS                                 = 343;  // <Factor> ::= '+' <Factor>
+//		final int PROD_FACTOR_MINUS                                = 344;  // <Factor> ::= '-' <Factor>
+//		final int PROD_FACTOR_NOT                                  = 345;  // <Factor> ::= NOT <Factor>
+//		final int PROD_DESIGNATOR                                  = 346;  // <Designator> ::= <FieldDesignator>
+//		final int PROD_DESIGNATOR_DOT                              = 347;  // <Designator> ::= <Designator> '.' <FieldDesignator>
+//		final int PROD_DESIGNATOR_CARET                            = 348;  // <Designator> ::= <Designator> '^'
+//		final int PROD_DESIGNATOR_LBRACKET_RBRACKET                = 349;  // <Designator> ::= <Designator> '[' <ExprList> ']'
+//		final int PROD_DESIGNATOR_LPAREN_RPAREN                    = 350;  // <Designator> ::= <Designator> '(' <ExprList> ')'
+//		final int PROD_DESIGNATOR_LPAREN_RPAREN2                   = 351;  // <Designator> ::= <Designator> '(' ')'
+//		final int PROD_DESIGNATOR_AS                               = 352;  // <Designator> ::= <Designator> AS <TypeRef>
+//		final int PROD_DESIGNATOR_LPAREN_RPAREN3                   = 353;  // <Designator> ::= '(' <Designator> ')'
+//		final int PROD_DESIGNATOR_INHERITED                        = 354;  // <Designator> ::= INHERITED <Designator>
+//		final int PROD_ASNOP_COLONEQ                               = 355;  // <AsnOp> ::= ':='
+//		final int PROD_ASNOP_PLUSEQ                                = 356;  // <AsnOp> ::= '+='
+//		final int PROD_ASNOP_MINUSEQ                               = 357;  // <AsnOp> ::= '-='
+//		final int PROD_ASNOP_TIMESEQ                               = 358;  // <AsnOp> ::= '*='
+//		final int PROD_ASNOP_DIVEQ                                 = 359;  // <AsnOp> ::= '/='
+//		final int PROD_RELOP_EQ                                    = 360;  // <RelOp> ::= '='
+//		final int PROD_RELOP_GT                                    = 361;  // <RelOp> ::= '>'
+//		final int PROD_RELOP_LT                                    = 362;  // <RelOp> ::= '<'
+//		final int PROD_RELOP_LTEQ                                  = 363;  // <RelOp> ::= '<='
+//		final int PROD_RELOP_GTEQ                                  = 364;  // <RelOp> ::= '>='
+//		final int PROD_RELOP_LTGT                                  = 365;  // <RelOp> ::= '<>'
+//		final int PROD_RELOP_IN                                    = 366;  // <RelOp> ::= IN
+//		final int PROD_RELOP_IS                                    = 367;  // <RelOp> ::= IS
+//		final int PROD_RELOP_AS                                    = 368;  // <RelOp> ::= AS
+//		final int PROD_ADDOP_PLUS                                  = 369;  // <AddOp> ::= '+'
+//		final int PROD_ADDOP_MINUS                                 = 370;  // <AddOp> ::= '-'
+//		final int PROD_ADDOP_OR                                    = 371;  // <AddOp> ::= OR
+//		final int PROD_ADDOP_XOR                                   = 372;  // <AddOp> ::= XOR
+//		final int PROD_MULOP_TIMES                                 = 373;  // <MulOp> ::= '*'
+//		final int PROD_MULOP_DIV                                   = 374;  // <MulOp> ::= '/'
+//		final int PROD_MULOP_DIV2                                  = 375;  // <MulOp> ::= DIV
+//		final int PROD_MULOP_MOD                                   = 376;  // <MulOp> ::= MOD
+//		final int PROD_MULOP_AND                                   = 377;  // <MulOp> ::= AND
+//		final int PROD_MULOP_SHL                                   = 378;  // <MulOp> ::= SHL
+//		final int PROD_MULOP_SHR                                   = 379;  // <MulOp> ::= SHR
+//		final int PROD_SETCONSTRUCTOR_LBRACKET_RBRACKET            = 380;  // <SetConstructor> ::= '[' <SetElementList> ']'
+//		final int PROD_SETCONSTRUCTOR_LBRACKET_RBRACKET2           = 381;  // <SetConstructor> ::= '[' ']'
+//		final int PROD_SETELEMENTLIST                              = 382;  // <SetElementList> ::= <SetElement>
+//		final int PROD_SETELEMENTLIST_COMMA                        = 383;  // <SetElementList> ::= <SetElementList> ',' <SetElement>
+//		final int PROD_SETELEMENT                                  = 384;  // <SetElement> ::= <Expr>
+//		final int PROD_SETELEMENT_DOTDOT                           = 385;  // <SetElement> ::= <Expr> '..' <Expr>
+//		final int PROD_EXPRLIST                                    = 386;  // <ExprList> ::= <Expr>
+//		final int PROD_EXPRLIST_COMMA                              = 387;  // <ExprList> ::= <ExprList> ',' <Expr>
+//		final int PROD_FMTEXPR                                     = 388;  // <FmtExpr> ::= <Expr>
+//		final int PROD_FMTEXPR_COLON                               = 389;  // <FmtExpr> ::= <Expr> ':' <Expr>
+//		final int PROD_FMTEXPR_COLON_COLON                         = 390;  // <FmtExpr> ::= <Expr> ':' <Expr> ':' <Expr>
+//		final int PROD_FMTEXPRLIST                                 = 391;  // <FmtExprList> ::= <FmtExpr>
+//		final int PROD_FMTEXPRLIST_COMMA                           = 392;  // <FmtExprList> ::= <FmtExprList> ',' <FmtExpr>
+//		final int PROD_CONSTEXPRLIST                               = 393;  // <ConstExprList> ::= <ConstExpr>
+//		final int PROD_CONSTEXPRLIST_COMMA                         = 394;  // <ConstExprList> ::= <ConstExprList> ',' <ConstExpr>
+//		final int PROD_STMTLIST                                    = 395;  // <StmtList> ::= <Statement>
+		final int PROD_STMTLIST_SEMI                               = 396;  // <StmtList> ::= <StmtList> ';' <Statement>
+		final int PROD_STATEMENT                                   = 397;  // <Statement> ::= <Label> <Statement>
+		final int PROD_STATEMENT2                                  = 398;  // <Statement> ::= <AssignmentStmt>
+		final int PROD_STATEMENT3                                  = 399;  // <Statement> ::= <CallStmt>
+		final int PROD_STATEMENT4                                  = 400;  // <Statement> ::= <GotoStatement>
+		final int PROD_STATEMENT5                                  = 401;  // <Statement> ::= <CompoundStmt>
+		final int PROD_STATEMENT6                                  = 402;  // <Statement> ::= <IfStatement>
+		final int PROD_STATEMENT7                                  = 403;  // <Statement> ::= <CaseStatement>
+		final int PROD_STATEMENT8                                  = 404;  // <Statement> ::= <ForStatement>
+		final int PROD_STATEMENT9                                  = 405;  // <Statement> ::= <WhileStatement>
+		final int PROD_STATEMENT10                                 = 406;  // <Statement> ::= <RepeatStatement>
+		final int PROD_STATEMENT11                                 = 407;  // <Statement> ::= <WithStatement>
+		final int PROD_STATEMENT12                                 = 408;  // <Statement> ::= <TryFinallyStmt>
+		final int PROD_STATEMENT13                                 = 409;  // <Statement> ::= <TryExceptStmt>
+		final int PROD_STATEMENT14                                 = 410;  // <Statement> ::= <RaiseStmt>
+		final int PROD_STATEMENT15                                 = 411;  // <Statement> ::= <AssemblerStmt>
+//		final int PROD_STATEMENT_SYNERROR                          = 412;  // <Statement> ::= SynError
+//		final int PROD_STATEMENT16                                 = 413;  // <Statement> ::= 
+//		final int PROD_LABEL_COLON                                 = 414;  // <Label> ::= <LCONST> ':'
+//		final int PROD_LABEL_COLON2                                = 415;  // <Label> ::= <LabelId> ':'
+		final int PROD_ASSIGNMENTSTMT                              = 416;  // <AssignmentStmt> ::= <Designator> <AsnOp> <Expr>
+		final int PROD_ASSIGNMENTSTMT_AT_COLONEQ                   = 417;  // <AssignmentStmt> ::= '@' <RefId> ':=' <Factor>
+		final int PROD_CALLSTMT                                    = 418;  // <CallStmt> ::= <Designator>
+		final int PROD_CALLSTMT_WRITE_LPAREN_RPAREN                = 419;  // <CallStmt> ::= WRITE '(' <FmtExprList> ')'
+		final int PROD_CALLSTMT_WRITELN_LPAREN_RPAREN              = 420;  // <CallStmt> ::= WRITELN '(' <FmtExprList> ')'
+		final int PROD_CALLSTMT_INHERITED                          = 421;  // <CallStmt> ::= INHERITED
+		final int PROD_GOTOSTATEMENT_GOTO                          = 422;  // <GotoStatement> ::= GOTO <LCONST>
+		final int PROD_GOTOSTATEMENT_GOTO2                         = 423;  // <GotoStatement> ::= GOTO <RefId>
+		final int PROD_COMPOUNDSTMT_BEGIN_END                      = 424;  // <CompoundStmt> ::= BEGIN <StmtList> END
+		final int PROD_IFSTATEMENT_IF_THEN_ELSE                    = 425;  // <IfStatement> ::= IF <Expr> THEN <Statement> ELSE <Statement>
+		final int PROD_IFSTATEMENT_IF_THEN                         = 426;  // <IfStatement> ::= IF <Expr> THEN <Statement>
+		final int PROD_IFSTATEMENT_IF_SYNERROR_THEN                = 427;  // <IfStatement> ::= IF SynError THEN <Statement>
+		final int PROD_CASESTATEMENT_CASE_OF_END                   = 428;  // <CaseStatement> ::= CASE <Expr> OF <CaseList> <OtherWise> END
+		final int PROD_FORSTATEMENT_FOR_COLONEQ_DO                 = 429;  // <ForStatement> ::= FOR <RefId> ':=' <Expr> <Dir> <Expr> DO <Statement>
+//		final int PROD_DIR_TO                                      = 430;  // <Dir> ::= TO
+//		final int PROD_DIR_DOWNTO                                  = 431;  // <Dir> ::= DOWNTO
+		final int PROD_WHILESTATEMENT_WHILE_DO                     = 432;  // <WhileStatement> ::= WHILE <Expr> DO <Statement>
+		final int PROD_WITHSTATEMENT_WITH_DO                       = 433;  // <WithStatement> ::= WITH <DesignatorList> DO <Statement>
+//		final int PROD_DESIGNATORLIST                              = 434;  // <DesignatorList> ::= <Designator>
+//		final int PROD_DESIGNATORLIST_COMMA                        = 435;  // <DesignatorList> ::= <DesignatorList> ',' <Designator>
+		final int PROD_REPEATSTATEMENT_REPEAT_UNTIL                = 436;  // <RepeatStatement> ::= REPEAT <StmtList> UNTIL <Expr>
+		final int PROD_ASSEMBLERSTMT_ASM_END                       = 437;  // <AssemblerStmt> ::= ASM <AsmLanguage> END
+//		final int PROD_OTHERWISE_OTHERWISE                         = 438;  // <OtherWise> ::= OTHERWISE <StmtList>
+//		final int PROD_OTHERWISE_ELSE                              = 439;  // <OtherWise> ::= ELSE <StmtList>
+//		final int PROD_OTHERWISE                                   = 440;  // <OtherWise> ::= 
+//		final int PROD_CASELIST                                    = 441;  // <CaseList> ::= <CaseSelector>
+//		final int PROD_CASELIST_SEMI                               = 442;  // <CaseList> ::= <CaseList> ';' <CaseSelector>
+//		final int PROD_CASELIST_SEMI2                              = 443;  // <CaseList> ::= <CaseList> ';'
+//		final int PROD_CASESELECTOR_COLON                          = 444;  // <CaseSelector> ::= <CaseLabels> ':' <Statement>
+//		final int PROD_CASELABELS                                  = 445;  // <CaseLabels> ::= <CaseLabel>
+//		final int PROD_CASELABELS_COMMA                            = 446;  // <CaseLabels> ::= <CaseLabels> ',' <CaseLabel>
+//		final int PROD_CASELABEL                                   = 447;  // <CaseLabel> ::= <ConstExpr>
+//		final int PROD_CASELABEL_DOTDOT                            = 448;  // <CaseLabel> ::= <ConstExpr> '..' <ConstExpr>
+		final int PROD_RAISESTMT_RAISE_SYNERROR                    = 449;  // <RaiseStmt> ::= RAISE SynError
+		final int PROD_RAISESTMT_RAISE                             = 450;  // <RaiseStmt> ::= RAISE <OptExceptInstance>
+		final int PROD_RAISESTMT_RAISE_AT                          = 451;  // <RaiseStmt> ::= RAISE <OptExceptInstance> AT <Address>
+		final int PROD_TRYFINALLYSTMT_TRY_FINALLY_END              = 452;  // <TryFinallyStmt> ::= TRY <StmtList> FINALLY <StmtList> END
+		final int PROD_TRYEXCEPTSTMT_TRY_EXCEPT_END                = 453;  // <TryExceptStmt> ::= TRY <StmtList> EXCEPT <ExceptionBlock> <OptExceptionElse> END
+//		final int PROD_EXCEPTIONBLOCK                              = 454;  // <ExceptionBlock> ::= <ExceptionStmt>
+		final int PROD_EXCEPTIONBLOCK_SEMI                         = 455;  // <ExceptionBlock> ::= <ExceptionBlock> ';' <ExceptionStmt>
+		final int PROD_EXCEPTIONSTMT_ON_DO                         = 456;  // <ExceptionStmt> ::= ON <Selector> DO <Statement>
+//		final int PROD_EXCEPTIONSTMT                               = 457;  // <ExceptionStmt> ::= <Statement>
+		final int PROD_OPTEXCEPTIONELSE_ELSE                       = 458;  // <OptExceptionElse> ::= ELSE <StmtList>
+//		final int PROD_OPTEXCEPTIONELSE                            = 459;  // <OptExceptionElse> ::= 
+//		final int PROD_OPTEXCEPTINSTANCE                           = 460;  // <OptExceptInstance> ::= <Designator>
+//		final int PROD_OPTEXCEPTINSTANCE2                          = 461;  // <OptExceptInstance> ::= 
+//		final int PROD_ADDRESS                                     = 462;  // <Address> ::= <Designator>
+//		final int PROD_OPTSEMI_SEMI                                = 463;  // <OptSemi> ::= ';'
+//		final int PROD_OPTSEMI                                     = 464;  // <OptSemi> ::= 
+//		final int PROD_PROCEDUREDECLSECTION                        = 465;  // <ProcedureDeclSection> ::= <ProcedureDecl>
+//		final int PROD_PROCEDUREDECLSECTION2                       = 466;  // <ProcedureDeclSection> ::= <FunctionDecl>
+//		final int PROD_PROCEDUREDECLSECTION3                       = 467;  // <ProcedureDeclSection> ::= <MethodDecl>
+//		final int PROD_PROCEDUREDECL                               = 468;  // <ProcedureDecl> ::= <ProcHeading> <CallBody> <OptSemi>
+//		final int PROD_FUNCTIONDECL                                = 469;  // <FunctionDecl> ::= <FuncHeading> <CallBody> <OptSemi>
+//		final int PROD_METHODDECL                                  = 470;  // <MethodDecl> ::= <MethHeading> <CallBody> <OptSemi>
+//		final int PROD_PROCHEADING_PROCEDURE_SEMI                  = 471;  // <ProcHeading> ::= PROCEDURE <RefId> <OptFormalParms> <OptCallSpecifiers> ';'
+		final int PROD_PROCHEADING                                 = 472;  // <ProcHeading> ::= <ProcHeading> <CallDirectives> <OptSemi>
+//		final int PROD_FUNCHEADING_FUNCTION_COLON_SEMI             = 473;  // <FuncHeading> ::= FUNCTION <RefId> <OptFormalParms> ':' <ResultType> <OptCallSpecifiers> ';'
+		final int PROD_FUNCHEADING_FUNCTION_SEMI                   = 474;  // <FuncHeading> ::= FUNCTION <RefId> ';'
+		final int PROD_FUNCHEADING                                 = 475;  // <FuncHeading> ::= <FuncHeading> <CallDirectives> <OptSemi>
+		final int PROD_METHHEADING_PROCEDURE_DOT_SEMI              = 476;  // <MethHeading> ::= PROCEDURE <RefId> '.' <RefId> <OptFormalParms> <OptCallSpecifiers> ';'
+		final int PROD_METHHEADING_FUNCTION_DOT_COLON_SEMI         = 477;  // <MethHeading> ::= FUNCTION <RefId> '.' <RefId> <OptFormalParms> ':' <ResultType> <OptCallSpecifiers> ';'
+		final int PROD_METHHEADING_FUNCTION_DOT_SEMI               = 478;  // <MethHeading> ::= FUNCTION <RefId> '.' <RefId> ';'
+		final int PROD_METHHEADING_CONSTRUCTOR_DOT_SEMI            = 479;  // <MethHeading> ::= CONSTRUCTOR <RefId> '.' <RefId> <OptFormalParms> <OptCallSpecifiers> ';'
+		final int PROD_METHHEADING_DESTRUCTOR_DOT_SEMI             = 480;  // <MethHeading> ::= DESTRUCTOR <RefId> '.' <RefId> <OptFormalParms> <OptCallSpecifiers> ';'
+		final int PROD_METHHEADING_CLASS_PROCEDURE_DOT_SEMI        = 481;  // <MethHeading> ::= CLASS PROCEDURE <RefId> '.' <RefId> <OptFormalParms> <OptCallSpecifiers> ';'
+		final int PROD_METHHEADING_CLASS_FUNCTION_DOT_COLON_SEMI   = 482;  // <MethHeading> ::= CLASS FUNCTION <RefId> '.' <RefId> <OptFormalParms> ':' <ResultType> <OptCallSpecifiers> ';'
+		final int PROD_METHHEADING_SEMI                            = 483;  // <MethHeading> ::= <MethHeading> <CallDirectives> ';'
+//		final int PROD_RESULTTYPE                                  = 484;  // <ResultType> ::= <TypeRef>
+//		final int PROD_OPTFORMALPARMS_LPAREN_RPAREN                = 485;  // <OptFormalParms> ::= '(' <FormalParmList> ')'
+//		final int PROD_OPTFORMALPARMS_LPAREN_RPAREN2               = 486;  // <OptFormalParms> ::= '(' ')'
+//		final int PROD_OPTFORMALPARMS                              = 487;  // <OptFormalParms> ::= 
+//		final int PROD_FORMALPARMLIST                              = 488;  // <FormalParmList> ::= <FormalParm>
+//		final int PROD_FORMALPARMLIST_SEMI                         = 489;  // <FormalParmList> ::= <FormalParmList> ';' <FormalParm>
+//		final int PROD_FORMALPARM                                  = 490;  // <FormalParm> ::= <Parameter>
+//		final int PROD_FORMALPARM_CONST                            = 491;  // <FormalParm> ::= CONST <Parameter>
+//		final int PROD_FORMALPARM_VAR                              = 492;  // <FormalParm> ::= VAR <Parameter>
+//		final int PROD_FORMALPARM_OUT                              = 493;  // <FormalParm> ::= OUT <Parameter>
+//		final int PROD_PARAMETER                                   = 494;  // <Parameter> ::= <IdList>
+//		final int PROD_PARAMETER_COLON                             = 495;  // <Parameter> ::= <IdList> ':' <ParmType>
+//		final int PROD_PARAMETER_COLON_EQ                          = 496;  // <Parameter> ::= <IdList> ':' <TypeRef> '=' <ConstExpr>
+//		final int PROD_PARMTYPE                                    = 497;  // <ParmType> ::= <TypeRef>
+//		final int PROD_PARMTYPE_ARRAY_OF                           = 498;  // <ParmType> ::= ARRAY OF <TypeRef>
+//		final int PROD_PARMTYPE_ARRAY_OF_CONST                     = 499;  // <ParmType> ::= ARRAY OF CONST
+//		final int PROD_PARMTYPE_FILE                               = 500;  // <ParmType> ::= FILE
+//		final int PROD_CALLBODY                                    = 501;  // <CallBody> ::= <OptDeclSection> <CompoundStmt>
+//		final int PROD_CALLBODY2                                   = 502;  // <CallBody> ::= <OptDeclSection> <AssemblerStmt>
+//		final int PROD_CALLBODY3                                   = 503;  // <CallBody> ::= <ExternalDeclaration>
+//		final int PROD_CALLBODY_FORWARD                            = 504;  // <CallBody> ::= FORWARD
+//		final int PROD_OPTPORTDIRECTIVES                           = 505;  // <OptPortDirectives> ::= <PortDirectives>
+//		final int PROD_OPTPORTDIRECTIVES2                          = 506;  // <OptPortDirectives> ::= 
+//		final int PROD_PORTDIRECTIVES                              = 507;  // <PortDirectives> ::= <PortDirective>
+//		final int PROD_PORTDIRECTIVES2                             = 508;  // <PortDirectives> ::= <PortDirectives> <PortDirective>
+//		final int PROD_PORTDIRECTIVE_PLATFORM                      = 509;  // <PortDirective> ::= PLATFORM
+//		final int PROD_PORTDIRECTIVE_PLATFORM_EQ                   = 510;  // <PortDirective> ::= PLATFORM '=' <ConstExpr>
+//		final int PROD_PORTDIRECTIVE_DEPRECATED                    = 511;  // <PortDirective> ::= DEPRECATED
+//		final int PROD_PORTDIRECTIVE_LIBRARY                       = 512;  // <PortDirective> ::= LIBRARY
+//		final int PROD_OPTMETHODDIRECTIVES                         = 513;  // <OptMethodDirectives> ::= <MethodDirectives>
+//		final int PROD_OPTMETHODDIRECTIVES_SEMI                    = 514;  // <OptMethodDirectives> ::= <OptMethodDirectives> <PortDirective> ';'
+//		final int PROD_OPTMETHODDIRECTIVES2                        = 515;  // <OptMethodDirectives> ::= 
+//		final int PROD_METHODDIRECTIVES_SEMI                       = 516;  // <MethodDirectives> ::= <MethodDirective> ';'
+//		final int PROD_METHODDIRECTIVES_SEMI2                      = 517;  // <MethodDirectives> ::= <MethodDirectives> <MethodDirective> ';'
+//		final int PROD_METHODDIRECTIVE_VIRTUAL                     = 518;  // <MethodDirective> ::= VIRTUAL
+//		final int PROD_METHODDIRECTIVE_VIRTUAL2                    = 519;  // <MethodDirective> ::= VIRTUAL <ConstExpr>
+//		final int PROD_METHODDIRECTIVE_DYNAMIC                     = 520;  // <MethodDirective> ::= DYNAMIC
+//		final int PROD_METHODDIRECTIVE_OVERRIDE                    = 521;  // <MethodDirective> ::= OVERRIDE
+//		final int PROD_METHODDIRECTIVE_ABSTRACT                    = 522;  // <MethodDirective> ::= ABSTRACT
+//		final int PROD_METHODDIRECTIVE_MESSAGE                     = 523;  // <MethodDirective> ::= MESSAGE <ConstExpr>
+//		final int PROD_METHODDIRECTIVE_OVERLOAD                    = 524;  // <MethodDirective> ::= OVERLOAD
+//		final int PROD_METHODDIRECTIVE_REINTRODUCE                 = 525;  // <MethodDirective> ::= REINTRODUCE
+//		final int PROD_METHODDIRECTIVE_DISPID                      = 526;  // <MethodDirective> ::= DISPID <ConstExpr>
+//		final int PROD_METHODDIRECTIVE                             = 527;  // <MethodDirective> ::= <CallConvention>
+//		final int PROD_OPTPROPERTYDIRECTIVES_SEMI                  = 528;  // <OptPropertyDirectives> ::= <PropertyDirective> ';'
+//		final int PROD_OPTPROPERTYDIRECTIVES_SEMI2                 = 529;  // <OptPropertyDirectives> ::= <OptPropertyDirectives> <PortDirective> ';'
+//		final int PROD_OPTPROPERTYDIRECTIVES                       = 530;  // <OptPropertyDirectives> ::= 
+//		final int PROD_PROPERTYDIRECTIVE_DEFAULT                   = 531;  // <PropertyDirective> ::= DEFAULT
+//		final int PROD_EXTERNALDECLARATION_EXTERNAL                = 532;  // <ExternalDeclaration> ::= EXTERNAL
+//		final int PROD_EXTERNALDECLARATION_EXTERNAL2               = 533;  // <ExternalDeclaration> ::= EXTERNAL <ConstStrExpr>
+//		final int PROD_EXTERNALDECLARATION_EXTERNAL_NAME           = 534;  // <ExternalDeclaration> ::= EXTERNAL <ConstStrExpr> NAME <ConstStrExpr>
+//		final int PROD_CALLDIRECTIVES                              = 535;  // <CallDirectives> ::= <CallDirective>
+//		final int PROD_CALLDIRECTIVES2                             = 536;  // <CallDirectives> ::= <CallDirectives> <CallDirective>
+//		final int PROD_CALLDIRECTIVE                               = 537;  // <CallDirective> ::= <CallConvention>
+//		final int PROD_CALLDIRECTIVE2                              = 538;  // <CallDirective> ::= <CallObsolete>
+//		final int PROD_CALLDIRECTIVE3                              = 539;  // <CallDirective> ::= <PortDirective>
+//		final int PROD_CALLDIRECTIVE_VARARGS                       = 540;  // <CallDirective> ::= VARARGS
+//		final int PROD_CALLDIRECTIVE_LOCAL                         = 541;  // <CallDirective> ::= LOCAL
+//		final int PROD_CALLDIRECTIVE4                              = 542;  // <CallDirective> ::= <SCONST>
+//		final int PROD_CALLDIRECTIVE_OVERLOAD                      = 543;  // <CallDirective> ::= OVERLOAD
+//		final int PROD_OPTCALLSPECIFIERS                           = 544;  // <OptCallSpecifiers> ::= <CallSpecifier>
+//		final int PROD_OPTCALLSPECIFIERS2                          = 545;  // <OptCallSpecifiers> ::= <OptCallSpecifiers> <CallSpecifier>
+//		final int PROD_OPTCALLSPECIFIERS3                          = 546;  // <OptCallSpecifiers> ::= 
+//		final int PROD_CALLSPECIFIER                               = 547;  // <CallSpecifier> ::= <CallConvention>
+//		final int PROD_CALLSPECIFIER2                              = 548;  // <CallSpecifier> ::= <CallObsolete>
+//		final int PROD_CALLCONVENTIONS                             = 549;  // <CallConventions> ::= <CallConvention>
+//		final int PROD_CALLCONVENTIONS2                            = 550;  // <CallConventions> ::= <CallConventions> <CallConvention>
+//		final int PROD_OPTCALLCONVENTIONS                          = 551;  // <OptCallConventions> ::= <CallConvention>
+//		final int PROD_OPTCALLCONVENTIONS2                         = 552;  // <OptCallConventions> ::= <OptCallConventions> <CallConvention>
+//		final int PROD_OPTCALLCONVENTIONS3                         = 553;  // <OptCallConventions> ::= 
+//		final int PROD_CALLCONVENTION_REGISTER                     = 554;  // <CallConvention> ::= REGISTER
+//		final int PROD_CALLCONVENTION_PASCAL                       = 555;  // <CallConvention> ::= PASCAL
+//		final int PROD_CALLCONVENTION_CDECL                        = 556;  // <CallConvention> ::= CDECL
+//		final int PROD_CALLCONVENTION_STDCALL                      = 557;  // <CallConvention> ::= STDCALL
+//		final int PROD_CALLCONVENTION_SAFECALL                     = 558;  // <CallConvention> ::= SAFECALL
+//		final int PROD_CALLOBSOLETE_INLINE                         = 559;  // <CallObsolete> ::= INLINE
+//		final int PROD_CALLOBSOLETE_ASSEMBLER                      = 560;  // <CallObsolete> ::= ASSEMBLER
+//		final int PROD_CALLOBSOLETE_NEAR                           = 561;  // <CallObsolete> ::= NEAR
+//		final int PROD_CALLOBSOLETE_FAR                            = 562;  // <CallObsolete> ::= FAR
+//		final int PROD_CALLOBSOLETE_EXPORT                         = 563;  // <CallObsolete> ::= EXPORT
+//		final int PROD_ASMLANGUAGE                                 = 564;  // <AsmLanguage> ::= <AsmInstruction>
+//		final int PROD_ASMLANGUAGE2                                = 565;  // <AsmLanguage> ::= <AsmLanguage> <AsmInstruction>
+//		final int PROD_ASMINSTRUCTION                              = 566;  // <AsmInstruction> ::= <AsmItem>
+//		final int PROD_ASMINSTRUCTION2                             = 567;  // <AsmInstruction> ::= <AsmInstruction> <AsmItem>
+//		final int PROD_ASMINSTRUCTION_COMMA                        = 568;  // <AsmInstruction> ::= <AsmInstruction> ',' <AsmItem>
+//		final int PROD_ASMINSTRUCTION_SEMI                         = 569;  // <AsmInstruction> ::= <AsmInstruction> ';'
+//		final int PROD_ASMITEM                                     = 570;  // <AsmItem> ::= <AsmLabel>
+//		final int PROD_ASMITEM2                                    = 571;  // <AsmItem> ::= <AsmExpr>
+//		final int PROD_ASMLABEL_COLON                              = 572;  // <AsmLabel> ::= <AsmLocal> ':'
+//		final int PROD_ASMLABEL_COLON2                             = 573;  // <AsmLabel> ::= <AsmId> ':'
+//		final int PROD_ASMEXPR                                     = 574;  // <AsmExpr> ::= <AsmFactor>
+//		final int PROD_ASMEXPR_MINUS                               = 575;  // <AsmExpr> ::= '-' <AsmFactor>
+//		final int PROD_ASMEXPR_PLUS                                = 576;  // <AsmExpr> ::= <AsmExpr> '+' <AsmFactor>
+//		final int PROD_ASMEXPR_TIMES                               = 577;  // <AsmExpr> ::= <AsmExpr> '*' <AsmFactor>
+//		final int PROD_ASMEXPR_MINUS2                              = 578;  // <AsmExpr> ::= <AsmExpr> '-' <AsmFactor>
+//		final int PROD_ASMEXPR_DOT                                 = 579;  // <AsmExpr> ::= <AsmExpr> '.' <AsmFactor>
+//		final int PROD_ASMEXPR_LBRACKET_RBRACKET                   = 580;  // <AsmExpr> ::= '[' <AsmExpr> ']'
+//		final int PROD_ASMEXPR_LPAREN_RPAREN                       = 581;  // <AsmExpr> ::= '(' <AsmExpr> ')'
+//		final int PROD_ASMEXPR_SYNERROR                            = 582;  // <AsmExpr> ::= SynError
+//		final int PROD_ASMFACTOR                                   = 583;  // <AsmFactor> ::= <AsmId>
+//		final int PROD_ASMFACTOR2                                  = 584;  // <AsmFactor> ::= <AsmLocal>
+//		final int PROD_ASMFACTOR3                                  = 585;  // <AsmFactor> ::= <ICONST>
+//		final int PROD_ASMFACTOR4                                  = 586;  // <AsmFactor> ::= <RCONST>
+//		final int PROD_ASMFACTOR5                                  = 587;  // <AsmFactor> ::= <SCONST>
+//		final int PROD_ASMID                                       = 588;  // <AsmId> ::= <RefId>
+//		final int PROD_ASMID_AMP                                   = 589;  // <AsmId> ::= '&' <RefId>
+//		final int PROD_ASMID_REPEAT                                = 590;  // <AsmId> ::= REPEAT
+//		final int PROD_ASMID_WHILE                                 = 591;  // <AsmId> ::= WHILE
+//		final int PROD_ASMID_IF                                    = 592;  // <AsmId> ::= IF
+//		final int PROD_ASMID_AND                                   = 593;  // <AsmId> ::= AND
+//		final int PROD_ASMID_OR                                    = 594;  // <AsmId> ::= OR
+//		final int PROD_ASMID_XOR                                   = 595;  // <AsmId> ::= XOR
+//		final int PROD_ASMID_SHR                                   = 596;  // <AsmId> ::= SHR
+//		final int PROD_ASMID_SHL                                   = 597;  // <AsmId> ::= SHL
+//		final int PROD_ASMID_DIV                                   = 598;  // <AsmId> ::= DIV
+//		final int PROD_ASMID_NOT                                   = 599;  // <AsmId> ::= NOT
+//		final int PROD_ASMLOCAL_AT                                 = 600;  // <AsmLocal> ::= '@' <LCONST>
+//		final int PROD_ASMLOCAL_AT2                                = 601;  // <AsmLocal> ::= '@' <AsmId>
+//		final int PROD_ASMLOCAL_AT3                                = 602;  // <AsmLocal> ::= '@' <AsmLocal>
+//		final int PROD_ASMLOCAL_AT_END                             = 603;  // <AsmLocal> ::= '@' END
 	};
 	// END KGU#358 2017-03-29
 
@@ -818,6 +827,13 @@ public class D7Parser extends CodeParser
 			RuleConstants.PROD_EXPORTDECLITEM_FORWARD_SEMI,
 			RuleConstants.PROD_CALLSECTION,
 			RuleConstants.PROD_CALLSECTION2,
+			// START KGU#1073 224-03-14: Issue #1084 ObjectPascal import
+			RuleConstants.PROD_CLASSMETHODSPEC,
+			RuleConstants.PROD_CLASSMETHODSPEC2,
+			RuleConstants.PROD_CLASSMETHODSPEC_CLASS,
+			RuleConstants.PROD_CLASSMETHODSPEC_CLASS2,
+			RuleConstants.PROD_FIELDSPEC_COLON_SEMI,
+			// END KGU#1073 2024-03-14
 			RuleConstants.PROD_IMPLEMENTATIONSECTION_IMPLEMENTATION,
 			RuleConstants.PROD_INITSECTION_INITIALIZATION_END,
 			RuleConstants.PROD_INITSECTION_INITIALIZATION_FINALIZATION_END,
@@ -907,7 +923,12 @@ public class D7Parser extends CodeParser
 	/** Registers all occurring USES clauses in order to add them to the comments of imported {@link Root}s. */
 	private StringList usesClauses = new StringList();
 	// END KGU#821 2020-03-07
-	
+
+	// START KGU#1073 2024-03-14: Issue #1084 Handle classes properly
+	/** Represents the class definitions in the hierarchical class context */
+	private ArrayList<Root> includables = null;
+	// END KGU#1073 2024-03-14
+
 	/**
 	 * Removes all non-Ascii characters from the given string {@code inString}
 	 * 
@@ -1139,6 +1160,12 @@ public class D7Parser extends CodeParser
 	protected LinkedList<Root> includerList = new LinkedList<Root>();
 	// END KGU#586 2018-09-28
 
+	// START KGU#1073 2024-03-15: Issue #1084 we must distinguish INTERFACE context
+	/** Indicates whether or not we are inside an INTERFACE section */
+	private boolean withinInterface = false;
+	// END KGU#1073 2024-03-15
+
+	
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.parsers.CodeParser#initializeBuildNSD()
 	 */
@@ -1148,6 +1175,10 @@ public class D7Parser extends CodeParser
 		// START KGU#194 2016-05-08: Bugfix #185
 		unitName = null;
 		// END KGU#194 2016-05-08
+		// START KGU#1073 2024-03-14: Issue #1084 Allow ObjectPascal import
+		includables = new ArrayList<Root>();
+		// END KGU#1073 2024-03-14
+
 		// START KGU#407 207-06-22: Enh. #420: Configure the lookup table for comment retrieval
 		this.registerStatementRuleIds(statementIds);
 		// END KGU#407 2017-06-11
@@ -1167,7 +1198,7 @@ public class D7Parser extends CodeParser
 			int ruleId = _reduction.getParent().getTableIndex();
 
 			//System.out.println(ruleHead);
-			if ( 
+			if (
 				ruleHead.equals("<RefId>")
 				||
 				ruleHead.equals("<CallStmt>")
@@ -1175,10 +1206,13 @@ public class D7Parser extends CodeParser
 				ruleHead.equals("<Designator>")
 				||
 				ruleHead.equals("<AssignmentStmt>")
+				// START KGU#1073 2024-03-15: Issue #1084: ObjectPascal import
+				||
+				ruleHead.equals("<FieldDesignator>")
+				// END KGU#1073 2024-03-15
 			   )
 			{
-				content=new String();
-				content=getContent_R(_reduction,content);
+				content = getContent_R(_reduction, "");
 				//System.out.println(ruleHead + ": " + content);
 				// START KGU#407 2017-06-20: Enh. #420 - comments already here
 				//_parentNode.addElement(new Instruction(translateContent(content)));
@@ -1258,7 +1292,7 @@ public class D7Parser extends CodeParser
 						//asgnmt.getComment().add("Constant!");
 						// END KGU#407 2017-06-22
 						if (isConstant) {
-							instr.setColor(colorConst);
+							instr.setColor(COLOR_CONST);
 						}
 						_parentNode.addElement(instr);
 					}
@@ -1276,7 +1310,7 @@ public class D7Parser extends CodeParser
 						// START KGU#407 2017-06-20: Enh. #420 - comments already here
 						this.equipWithSourceComment(instr, _reduction);
 						// END KGU#407 2017-06-22
-						instr.setColor(colorDecl);
+						instr.setColor(COLOR_DECL);
 						_parentNode.addElement(instr);
 					}
 					break;
@@ -1288,7 +1322,7 @@ public class D7Parser extends CodeParser
 					this.equipWithSourceComment(instr, _reduction);
 					//asgnmt.getComment().add("Constant!");
 					// END KGU#407 2017-06-22
-					instr.setColor(colorConst);
+					instr.setColor(COLOR_CONST);
 					_parentNode.addElement(instr);
 					break;
 				default:;
@@ -1299,9 +1333,12 @@ public class D7Parser extends CodeParser
 			else if (
 					ruleId == RuleConstants.PROD_TYPEDECL_EQ
 					&&
+					// <TypeSpec> ::= <GenericType> ';'
 					_reduction.get(2).asReduction().getParent().getTableIndex() == RuleConstants.PROD_TYPESPEC_SEMI
 					)
 			{
+				// <TypeDecl> ::= <TypeId> '=' <TypeSpec>
+				// with <TypeSpec> ::= <GenericType> ';'
 				boolean isEnum = false;
 				String typeName = this.getContent_R(_reduction.get(0).asReduction(), "type ") + " = ";
 				Reduction secRed = _reduction.get(2).asReduction().get(0).asReduction();
@@ -1336,7 +1373,7 @@ public class D7Parser extends CodeParser
 					Element def = this.equipWithSourceComment(new Instruction(translateContent(content)), _reduction);
 					_parentNode.addElement(def);
 					if (isEnum) {
-						def.setColor(colorConst);
+						def.setColor(COLOR_CONST);
 						// START KGU#542 2019-11-19: Enh. #739 - No longer needed, now genuine enum type import
 						//def.getComment().add("Enumerator type " + typeName);
 						// END KGU#542 2019-11-19
@@ -1344,6 +1381,66 @@ public class D7Parser extends CodeParser
 				}
 			}
 			// END KGU#388 2017-09-22
+			// START KGU#1073 2024-03-24: Issue #1084 Handle class types properly
+			else if (
+					ruleId == RuleConstants.PROD_TYPEDECL_EQ
+					&&
+					// <TypeSpec> ::= <RestrictedType> <OptPortDirectives> ';'
+					_reduction.get(2).asReduction().getParent().getTableIndex() == RuleConstants.PROD_TYPESPEC_SEMI2
+					)
+			{
+				// <TypeDecl> ::= <TypeId> '=' <TypeSpec>
+				// with <TypeSpec> ::= <RestrictedType> <OptPortDirectives> ';'
+				/* Now we have to produce both a record type definition with the public components
+				 * and an includable at the same time
+				 */
+				String comment1 = this.retrieveComment(_reduction);
+				StringList comment = new StringList();
+				String typeName = this.getContent_R(_reduction.get(0).asReduction(), "");
+				Reduction secRed = _reduction.get(2).asReduction().get(0).asReduction();
+				if (comment1 != null && !comment1.isBlank()) {
+					comment.add(comment1);
+				}
+				ruleId = secRed.getParent().getTableIndex();
+				switch (ruleId) {
+				case RuleConstants.PROD_CLASSTYPE_CLASS_END:
+					// <ClassType> ::= CLASS <OptClassHeritage> <ClassMemberList>
+					StringBuilder sb = new StringBuilder();
+					sb.append("type ");
+					sb.append(typeName);
+					sb.append(" = record {");	// FIXME We might introduce a class type
+					String heritage = "";
+					if (secRed.get(1).asReduction().size() > 0) {
+						heritage = this.getContent_R(secRed.get(1).asReduction().get(1).asReduction(), "");
+					}
+					comment.add("CLASS");
+					buildClassDefinition(typeName, heritage, secRed.get(2).asReduction(), sb, comment);
+					sb.append("}");
+					content = sb.toString();
+					break;
+				//case RuleConstants.PROD_OBJECTTYPE_OBJECT_END: TODO?
+				//case RuleConstants.PROD_CLASSTYPE_CLASS: TODO?
+				//case RuleConstants.PROD_CLASSREFTYPE_CLASS_OF: TODO?
+				//case RuleConstants.PROD_INTERFACETYPE_INTERFACE_END: TODO?
+				//case RuleConstants.PROD_INTERFACETYPE_DISPINTERFACE: TODO?
+				}
+				// The definition must be added even if it does not contain any (public) fields
+				/* FIXME It might be an ideas, however, to introduce a new type category "class"
+				 * as an extension of record/struct, which should hold public method entries next
+				 * to the public fields. Proposed syntax for the methods would be like subroutine
+				 * headers:
+				 * type Classtype = class {
+				 *     field1: type1;
+				 *     field2: type2;
+				 *     procmethod(arg1, arg2, arg3);
+				 *     funcmethod(arg1, arg2): type3
+				 * }
+				 */
+				Element def = new Instruction(translateContent(content));
+				def.setComment(comment);
+				_parentNode.addElement(def);
+			}
+			// END KGU#1073 2024-03-14
 			else if (
 					 ruleHead.equals("<UsesClause>")
 			// START KGU#821 2020-03-08: Issue #833 Register uses clauses to add them as comments to all Roots
@@ -1359,40 +1456,57 @@ public class D7Parser extends CodeParser
 				String usesClause = this.getContent_R(_reduction, "");
 				this.usesClauses.add(usesClause);
 			}
-			else if (
-			// END KGU#821 2020-03-08
-					 ruleHead.equals("<LabelSection>")
-					 // END KGU#358 2017-03-29
-					 // START KGU#194 2016-05-08: Bugfix #185
-					 // UNIT Interface section can be ignored, all contained routines
-					 // must be converted from the implementation section
-					 ||
-					 ruleHead.equals("<InterfaceSection>")
-					 ||
-					 ruleHead.equals("<InitSection>")
-					 // END KGU#194 2016-05-08
-					 )
-			{
-				// This is just to skip these sections
+			// START KGU#1073 2024-03-15: Issue #1084 to ignore <InterfaceSection> and <InitSection> was outright wrong
+			//else if (
+			//// END KGU#821 2020-03-08
+			//		 ruleHead.equals("<LabelSection>")
+			//		 // END KGU#358 2017-03-29
+			//		 // START KGU#194 2016-05-08: Bugfix #185
+			//		 // UNIT Interface section can be ignored, all contained routines
+			//		 // must be converted from the implementation section
+			//		 ||
+			//		 ruleHead.equals("<InterfaceSection>")
+			//		 ||
+			//		 ruleHead.equals("<InitSection>")
+			//		 // END KGU#194 2016-05-08
+			//		 )
+			//{
+			//	// This is just to skip these sections
+			//}
+			else if (ruleHead.equals("<LabelSection>")) {
+				// Ignore this section
 			}
+			else if (ruleHead.equals("<InterfaceSection>")) {
+				// Process the uses clause
+				this.buildNSD_R(_reduction.get(1).asReduction(), _parentNode);
+				// Process the actual export declarations
+				this.withinInterface = true;
+				this.buildNSD_R(_reduction.get(2).asReduction(), _parentNode);
+				this.withinInterface = false;
+			}
+			// END KGU#1073 2024-03-15
+			// START KGU#1073 2024-03-15: Issue 
 			// START KGU#194 2016-05-08: Bugfix #185 - we must handle unit headers
 			else if (
 					ruleHead.equals("<UnitHeader>")
 					 )
 			{
-				unitName = getContent_R((Reduction) _reduction.get(1).getData(), "");
+				unitName = getContent_R(_reduction.get(1).asReduction(), "");
 				// START KGU#407 2018-09-28: Enh. #420 - comments already here
 				String comment = this.retrieveComment(_reduction);
-				if (comment != null) {
+				if (comment != null && !comment.isBlank()) {
 					root.getComment().add(StringList.explode(comment, "\n"));
 				}
 				// END KGU#407 2018-09-28
 			}
 			else if (
+					// <ProcedureDecl> ::= <ProcHeading> <CallBody> <OptSemi>
 					ruleHead.equals("<ProcedureDecl>")
 					||
+					// <FunctionDecl> ::= <FuncHeading> <CallBody> <OptSemi>
 					ruleHead.equals("<FunctionDecl>")
 					||
+					// <MethodDecl> ::= <MethHeading> <CallBody> <OptSemi>
 					ruleHead.equals("<MethodDecl>")
 					)
 			{
@@ -1424,7 +1538,7 @@ public class D7Parser extends CodeParser
 				this.equipWithSourceComment(root, _reduction);
 				// END KGU#407 2017-06-22
 				this.addRoot(root);
-				for (int i=0; i < _reduction.size(); i++)
+				for (int i = 0; i < _reduction.size(); i++)
 				{
 					if (_reduction.get(i).getType() == SymbolType.NON_TERMINAL)
 					{
@@ -1457,75 +1571,18 @@ public class D7Parser extends CodeParser
 				// END KGU#407 2017-06-22
 			}
 			else if (
-					 ruleHead.equals("<ProcHeading>")
-					 ||
-					 ruleHead.equals("<FuncHeading>")
+					ruleHead.equals("<ProcHeading>")
+					||
+					ruleHead.equals("<FuncHeading>")
+					// START KGU#1073 2024-03-15: Issue #1084 Handle method definitions as well
+					||
+					ruleHead.equals("<MethHeading>")
+					// END KGU#1073 2024-03-15
 					 )
 			{
-				content = new String();
-				// Get the routine name
-				content = getContent_R(_reduction.get(1).asReduction(), content);
-				// START KGU#991 2021-10-03: Issue #991 Cache the exact name spelling to coerce the result variable
-				if (ruleHead.equals("<FuncHeading>")) {
-					functionName = content.trim();
-					// This will be cleared at the end of <FunctionDecl>
+				if (!this.withinInterface) {
+					processRoutineHeading(_reduction);
 				}
-				// END KGU#991 2021-10-03
-				
-				Reduction secReduc = _reduction.get(2).asReduction();
-				if (secReduc.size() != 0)
-				{
-					// Append the parameter list
-					content = getContent_R(secReduc, content);
-				}
-				// START KGU#821 2020-03-08 Issue #833 - parameterless routine must get parentheses
-				else {
-					// No parameter list -> ensure parentheses
-					paramlessRoutineNames.add(content);
-					content += "()";
-				}
-				// END KGU#821 2020-03-08
-				
-				if (ruleHead.equals("<FuncHeading>"))
-				{
-					secReduc = _reduction.get(4).asReduction();
-					if (secReduc.size() > 0)
-					{
-						content += ": ";
-						content = getContent_R(secReduc,content);
-					}
-				}
-				
-				content = content.replace(";", "; ");
-				content = content.replace(";  ", "; ");
-				root.setText(translateContent(content));
-				root.setProgram(false);
-				// START KGU#194 2016-05-08: Bugfix #185 - be aware of unit context
-				if (unitName != null)
-				{
-					// START KGU#376 2017-09-22: Enh. #389 - the unit will be an includable now
-					//root.setComment("(UNIT " + unitName + ")");
-					root.addToIncludeList(unitName + DEFAULT_GLOBAL_SUFFIX);
-					// START KGU#586 2018-09-28: Bugfix #613 - register the established include relation
-					this.includerList.add(root);
-					// END KGU#586 2018-09-28
-					// END KGU#376 2017-09-22
-				}
-				// END KGU#194 2016-05-08
-				// START KGU#407 2017-06-20: Enh. #420 - comments already here
-				String comment = this.retrieveComment(_reduction);
-				// START KGU#860 2020-04-24: Bugfix #861/2 Precaution didn't work if newlines are contained
-				//if (comment != null && !root.getComment().contains(comment)) {
-				//	root.getComment().add(StringList.explode(comment, "\n"));
-				//}
-				if (comment != null && !comment.trim().isEmpty()) {
-					StringList commentLines = StringList.explode(comment, "\n");
-					if (root.getComment().indexOf(commentLines, 0, true) < 0) {
-						root.getComment().add(commentLines);
-					}
-				}
-				// END KGU#960 2020-06-20
-				// END KGU#407 2017-06-22
 			}
 			else if (
 					 ruleHead.equals("<WhileStatement>")
@@ -1544,7 +1601,7 @@ public class D7Parser extends CodeParser
 				// END KGU#407 2017-06-22
 				_parentNode.addElement(ele);
 				
-				Reduction secReduc = (Reduction) _reduction.get(3).getData();
+				Reduction secReduc = _reduction.get(3).asReduction();
 				buildNSD_R(secReduc,ele.q);
 			}
 			else if (
@@ -1640,7 +1697,7 @@ public class D7Parser extends CodeParser
 						((Case) _parentNode.parent).getText().set(i,content);
 						found=true;
 						
-						Reduction secReduc = (Reduction) _reduction.get(2).getData();
+						Reduction secReduc = _reduction.get(2).asReduction();
 						buildNSD_R(secReduc,(Subqueue) ((Case) _parentNode.parent).qs.get(i-1));
 					}
 				}
@@ -1819,11 +1876,40 @@ public class D7Parser extends CodeParser
 				_parentNode.addElement(this.equipWithSourceComment(ele, _reduction));
 			}
 			// END KGU#686 2019-03-22
+			
+			// TODO add the handling of further instruction types here...
+
+			// START KGU#1130 2024-03-17: Bugfix #1141 Measures against stack overflow risk
+			else if (ruleId == RuleConstants.PROD_EXPORTDECLLIST2
+					|| ruleId == RuleConstants.PROD_DECLSECTION2
+					|| ruleId == RuleConstants.PROD_CONSTANTDECLLIST2
+					|| ruleId == RuleConstants.PROD_TYPEDECLLIST2
+					|| ruleId == RuleConstants.PROD_VARDECLLIST2
+					|| ruleId == RuleConstants.PROD_STMTLIST_SEMI) {
+				// <ExportDeclList> ::= <ExportDeclList> <ExportDeclItem>
+				// <DeclSection> ::= <DeclSection> <DeclItem>
+				// <ConstantDeclList> ::= <ConstantDeclList> <ConstantDecl>
+				// <TypeDeclList> ::= <TypeDeclList> <TypeDecl>
+				// <VarDeclList> ::= <VarDeclList> <VarDecl>
+				// <StmtList> ::= <StmtList> ';' <Statement>
+				int loopId = ruleId;
+				Stack<Reduction> redStack = new Stack<Reduction>();
+				do {
+					redStack.push(_reduction.get(1).asReduction());
+					_reduction = _reduction.get(0).asReduction();
+					ruleId = _reduction.getParent().getTableIndex();
+				} while (ruleId == loopId);
+				buildNSD_R(_reduction, _parentNode);
+				while (!redStack.isEmpty()) {
+					buildNSD_R(redStack.pop(), _parentNode);
+				}
+			}
+			// END KGU#1130 2024-03-17
 			else
 			{
 				if (_reduction.size() > 0)
 				{
-					for (int i=0; i<_reduction.size(); i++)
+					for (int i = 0; i < _reduction.size(); i++)
 					{
 						if (_reduction.get(i).getType() == SymbolType.NON_TERMINAL)
 						{
@@ -1835,6 +1921,360 @@ public class D7Parser extends CodeParser
 			
 		}
 	}
+
+	// START KGU#1073 2024-03-14: Issue #1084
+	/**
+	 * Processes a the routine heading that is supposed to become the text of the
+	 * current {@link root}.<br/>
+	 * <b>Beware:</b> Shall not be invoked if the method header is just some kind of
+	 * forward declaration!
+	 * 
+	 * @param _reduction - the current routine header reduction, expected are:
+	 *    {@code <ProcHeading>}, {@code <FuncHeading>} and {@code <MethHeading>}
+	 * @throws ParserCancelled
+	 */
+	private void processRoutineHeading(Reduction _reduction) throws ParserCancelled {
+		String ruleHead = _reduction.getParent().getHead().toString();
+		int ruleId = _reduction.getParent().getTableIndex();
+		String content;
+		content = "";
+		// Get the routine name
+		// START KGU#1073 2024-03-14: Issue #1084 Handle method definitions as well
+		//content = getContent_R(_reduction.get(1).asReduction(), content);
+		while (ruleId == RuleConstants.PROD_METHHEADING_SEMI
+				|| ruleId == RuleConstants.PROD_PROCHEADING
+				|| ruleId == RuleConstants.PROD_FUNCHEADING) {
+			// <MethHeading> ::= <MethHeading> <CallDirectives> ';'
+			// <ProcHeading> ::= <ProcHeading> <CallDirectives> <OptSemi>
+			// <FuncHeading> ::= <FuncHeading> <CallDirectives> <OptSemi>
+			// Just ignore the <CallDirectives> here (should ideally be put to the comments)
+			_reduction = _reduction.get(0).asReduction();
+			ruleHead = _reduction.getParent().getHead().toString();
+			ruleId = _reduction.getParent().getTableIndex();
+		}
+		boolean isFunc = ruleHead.equals("<FuncHeading>")
+				|| ruleId == RuleConstants.PROD_METHHEADING_CLASS_FUNCTION_DOT_COLON_SEMI
+				|| ruleId == RuleConstants.PROD_METHHEADING_FUNCTION_DOT_COLON_SEMI
+				|| ruleId == RuleConstants.PROD_METHHEADING_FUNCTION_DOT_SEMI;
+		int ixName = 1;
+		switch (ruleId) {
+		case RuleConstants.PROD_METHHEADING_CLASS_FUNCTION_DOT_COLON_SEMI:
+		case RuleConstants.PROD_METHHEADING_CLASS_PROCEDURE_DOT_SEMI:
+			ixName++;
+		case RuleConstants.PROD_METHHEADING_CONSTRUCTOR_DOT_SEMI:
+		case RuleConstants.PROD_METHHEADING_DESTRUCTOR_DOT_SEMI:
+		case RuleConstants.PROD_METHHEADING_FUNCTION_DOT_COLON_SEMI:
+		case RuleConstants.PROD_METHHEADING_FUNCTION_DOT_SEMI:
+		case RuleConstants.PROD_METHHEADING_PROCEDURE_DOT_SEMI:
+			ixName += 2;
+			String className = getContent_R(_reduction.get(ixName - 2).asReduction(), "");
+			root.addToIncludeList(className);
+			if (unitName != null) {
+				root.setNamespace(unitName + "." + className);
+			}
+			else {
+				root.setNamespace(className);
+			}
+		}
+		content = getContent_R(_reduction.get(ixName).asReduction(), content);
+		// END KGU#1073 2024-03-14
+		
+		// START KGU#991 2021-10-03: Issue #991 Cache the exact name spelling to coerce the result variable
+		// START KGU#1073 2024-03-14: Issue #1084 Handle method definitions properly
+		//if (ruleHead.equals("<FuncHeading>")) {
+		if (isFunc) {
+		// END KGU#1073 2024-03-14
+			functionName = content.trim();
+			// This will be cleared at the end of <FunctionDecl>
+		}
+		// END KGU#991 2021-10-03
+		
+		// Check the parameter list
+		// START KGU#1073 2024-03-14: Issue #1084 Handle method definitions properly
+		//Reduction secReduc = _reduction.get(2).asReduction();
+		if (ruleId != RuleConstants.PROD_FUNCHEADING_FUNCTION_SEMI
+				&& ruleId != RuleConstants.PROD_METHHEADING_FUNCTION_DOT_SEMI) {
+			Reduction secReduc = _reduction.get(ixName + 1).asReduction();
+		// END KGU#1073 2024-03-14
+			if (secReduc.size() != 0)
+			{
+				// Append the parameter list
+				content = getContent_R(secReduc, content);
+			}
+			// START KGU#821 2020-03-08 Issue #833 - parameterless routine must get parentheses
+			else {
+				// No parameter list -> ensure parentheses
+				paramlessRoutineNames.addIfNew(content);
+				content += "()";
+			}
+			// END KGU#821 2020-03-08
+		
+			// START KGU#1073 2024-03-14: Issue #1084
+			//if (ruleHead.equals("<FuncHeading>"))
+			//{
+			//	secReduc = _reduction.get(4).asReduction();
+			if (isFunc)
+			{
+				secReduc = _reduction.get(ixName + 3).asReduction();
+			// END KGU#1073 2024-03-14
+				if (secReduc.size() > 0)
+				{
+					content += ": ";
+					content = getContent_R(secReduc,content);
+				}
+			}
+			
+		// START KGU#1073 2024-03-14: Issue #1084
+		}
+		else {
+			// No parameter list -> ensure parentheses
+			paramlessRoutineNames.addIfNew(content);
+			content += "()";
+			// No result type specification, either
+			isFunc = false;
+		}
+		// END KGU#1073 2024-03-14
+		
+		content = content.replace(";", "; ");
+		content = content.replace(";  ", "; ");
+		root.setText(translateContent(content));
+		root.setProgram(false);
+		// END KGU#1073 2024-03-14
+		// START KGU#194 2016-05-08: Bugfix #185 - be aware of unit context
+		if (unitName != null)
+		{
+			// START KGU#376 2017-09-22: Enh. #389 - the unit will be an includable now
+			//root.setComment("(UNIT " + unitName + ")");
+			root.addToIncludeList(unitName + DEFAULT_GLOBAL_SUFFIX);
+			// START KGU#586 2018-09-28: Bugfix #613 - register the established include relation
+			this.includerList.add(root);
+			// END KGU#586 2018-09-28
+			// END KGU#376 2017-09-22
+		}
+		// END KGU#194 2016-05-08
+		// START KGU#407 2017-06-20: Enh. #420 - comments already here
+		String comment = this.retrieveComment(_reduction);
+		// START KGU#860 2020-04-24: Bugfix #861/2 Precaution didn't work if newlines are contained
+		//if (comment != null && !root.getComment().contains(comment)) {
+		//	root.getComment().add(StringList.explode(comment, "\n"));
+		//}
+		if (comment != null && !comment.trim().isEmpty()) {
+			StringList commentLines = StringList.explode(comment, "\n");
+			if (root.getComment().indexOf(commentLines, 0, true) < 0) {
+				root.getComment().add(commentLines);
+			}
+		}
+		// END KGU#960 2020-06-20
+		// END KGU#407 2017-06-22
+	}
+	
+	/**
+	 * Extracts the members of a class definition with name {@code _className} from
+	 * the given {@code <ClassMemberList>} {@link Reduction} {@code _memberListRed},
+	 * appending all public attribute declarations like record component declarations
+	 * to the passed in {@link StringBuilder} {@code _sb}, which is used to form a
+	 * record type definition.
+	 * 
+	 * @param _className - name of the class to be produced
+	 * @param _ancestors - String containing the comma-separated list of parent classes
+	 * @param _memberListRed - the root reduction of the member definitions
+	 * @param _sb - a StringBuilder to gather the member definitions
+	 * @param _comment - the extendable class comment
+	 * @throws ParserCancelled 
+	 */
+	private void buildClassDefinition(String _className, String _ancestors, Reduction _memberListRed,
+			StringBuilder _sb, StringList _comment) throws ParserCancelled {
+		// Does it contain members or parent includes??
+		boolean isNeeded = false;
+		StringList parents = StringList.explode(_ancestors.replace(" ", ""), ",");
+		Root classRoot = new Root();
+		if (!_ancestors.isBlank()) {
+			_comment.add("==== inherits from " + _ancestors);
+		}
+		classRoot.setInclude();
+		String qualifier = "";
+		boolean doesInclude = false;
+		// FIXME not sensible...
+		if (root.isInclude()) {
+			String rootName = root.getMethodName();
+			if (!rootName.equals(this.unitName) && !rootName.equals(unitName + DEFAULT_GLOBAL_SUFFIX)) {
+				qualifier = root.getQualifiedName();
+			}
+			classRoot.addToIncludeList(root);
+			isNeeded = true;
+			doesInclude = true;
+		}
+		else if (root.includeList != null) {
+			classRoot.includeList = new StringList();
+			classRoot.includeList.addIfNew(root.includeList);
+			doesInclude = true;
+		}
+		for (Root incl: this.includables) {
+			String qualName = incl.getQualifiedName();
+			String name = incl.getMethodName();
+			if (parents.contains(name) || parents.contains(qualName)) {
+				classRoot.addToIncludeList(incl);
+				doesInclude = true;
+			}
+		}
+		if (doesInclude) {
+			this.includerList.add(classRoot);
+		}
+ 		// Add temporary dummy loops in order to gather fields and method signatures
+		classRoot.children.addElement(new Forever());
+		classRoot.children.addElement(new Forever());
+		//int ixFields = 0, ixMethods = 0;
+		classRoot.setText(_className);	
+		classRoot.setNamespace(qualifier);
+		
+		String accessLevel = "PUBLIC";
+		boolean hasConstructor = false, hasDestructor = false;
+		while (_memberListRed != null) {
+			int ruleId = _memberListRed.getParent().getTableIndex();
+			Reduction fieldListRed, methodListRed;
+			if (ruleId != RuleConstants.PROD_CLASSMEMBERLIST) {
+				fieldListRed = _memberListRed.get(2).asReduction();
+				methodListRed = _memberListRed.get(3).asReduction();
+				accessLevel = _memberListRed.get(1).asString().toUpperCase();
+				_memberListRed = _memberListRed.get(0).asReduction();
+			}
+			else {
+				fieldListRed = _memberListRed.get(0).asReduction();
+				methodListRed = _memberListRed.get(1).asReduction();
+				_memberListRed = null;
+			}
+			// Care for the field list <OptFieldList>
+			StringList fieldDefs = new StringList();
+			if (fieldListRed.size() > 0) {
+				do {
+					// Get a field specification and add it to fieldDefs and classRoot.children.get(0)
+					Reduction fieldSpecRed = fieldListRed;
+					if (fieldListRed.getParent().getTableIndex() == RuleConstants.PROD_FIELDLIST2) {
+						fieldSpecRed = fieldListRed.get(1).asReduction();
+						fieldListRed = fieldListRed.get(0).asReduction();
+					}
+					else {
+						fieldListRed = null;
+					}
+					String fieldDef = getContent_R(fieldSpecRed, "").trim();
+					if (fieldDef.endsWith(";")) {
+						fieldDef = fieldDef.substring(0, fieldDef.length()-1);
+					}
+					if (accessLevel.equals("PUBLIC") || accessLevel.equals("PUBLISHED")) {
+						fieldDefs.add(fieldDef + ";");
+					}
+					Element decl = equipWithSourceComment(new Instruction("var " + fieldDef), fieldSpecRed);
+					decl.comment.add("FIELD in class " + classRoot.getQualifiedName());
+					decl.comment.add(accessLevel);
+					((Forever)classRoot.children.getElement(0)).getBody().insertElementAt(decl, 0);
+				} while (fieldListRed != null);
+			}
+			
+			// Care for the method list <OptClassMethodList>
+			if (methodListRed.size() > 0) {
+				do {
+					// Get a method specification and add it as dummy call to classRoot.children.get(1)
+					Reduction methSpecRed = methodListRed.get(0).asReduction();
+					if (methodListRed.getParent().getTableIndex() == RuleConstants.PROD_CLASSMETHODLIST2) {
+						methSpecRed = methodListRed.get(1).asReduction();
+						methodListRed = methodListRed.get(0).asReduction();
+					}
+					else {
+						methodListRed = null;
+					}
+					int ixSpec = 0;
+					String resultType = "";
+					String methKind = "";
+					ruleId = methSpecRed.getParent().getTableIndex();
+					switch (ruleId) {
+					case RuleConstants.PROD_CLASSMETHODSPEC_CLASS:
+					case RuleConstants.PROD_CLASSMETHODSPEC_CLASS2:
+						methKind = "CLASS ";
+						ixSpec ++;
+					case RuleConstants.PROD_CLASSMETHODSPEC:
+						methSpecRed = methSpecRed.get(ixSpec).asReduction();
+						ruleId = methSpecRed.getParent().getTableIndex();
+					case RuleConstants.PROD_PROCSPEC_PROCEDURE_SEMI:
+					case RuleConstants.PROD_FUNCSPEC_FUNCTION_COLON_SEMI:
+					case RuleConstants.PROD_CONSTRUCTORSPEC_CONSTRUCTOR_SEMI:
+					case RuleConstants.PROD_DESTRUCTORSPEC_DESTRUCTOR_SEMI:
+						if (ruleId == RuleConstants.PROD_FUNCSPEC_FUNCTION_COLON_SEMI) {
+							resultType = getContent_R(methSpecRed.get(4).asReduction(), ": ");
+						}
+						methKind += "METHOD";
+						String keyword = methSpecRed.get(0).asString().toUpperCase();
+						String methName = getContent_R(methSpecRed.get(1).asReduction(), "");
+						String params = getContent_R(methSpecRed.get(2).asReduction(), "");
+						if (params.isBlank()) {
+							paramlessRoutineNames.addIfNew(methName);
+							params = "()";
+						}
+						if (keyword.equals("CONSTRUCTOR")) {
+							hasConstructor = true;
+							methKind = keyword;
+						}
+						else if (keyword.equals("DESTRUCTOR")) {
+							hasDestructor = true;
+							methKind = keyword;
+						}
+						String signature = methName + params + resultType;
+						if (accessLevel.equals("PUBLIC")) {
+							_comment.add(keyword + " " + signature);
+						}
+						Element decl = equipWithSourceComment(new Call(signature), methSpecRed);
+						decl.comment.add(methKind + " for class " + classRoot.getQualifiedName());
+						decl.comment.add(accessLevel);
+						((Call)decl).isMethodDeclaration = true;
+						decl.setColor(COLOR_DECL);
+						((Forever)classRoot.children.getElement(1)).getBody().insertElementAt(decl, 0);
+						break;
+					case RuleConstants.PROD_CLASSMETHODSPEC2:
+					case RuleConstants.PROD_CLASSMETHODSPEC3:
+					}
+				} while (methodListRed != null);
+			}
+//			ixFields = ((Forever)classRoot.children.getElement(0)).getBody().getSize();
+//			ixMethods = ((Forever)classRoot.children.getElement(1)).getBody().getSize();
+			for (int i = fieldDefs.count() - 1; i >= 0; i--) {
+				_sb.append("\\n");
+				_sb.append(fieldDefs.get(i));
+			}
+		}
+		if (!hasConstructor) {
+			this.paramlessRoutineNames.addIfNew("Create");
+		}
+		if (!hasDestructor) {
+			this.paramlessRoutineNames.addIfNew("Destroy");
+		}
+		dissolveDummyContainers(classRoot);
+		if (isNeeded || classRoot.children.getSize() > 0) {
+			this.addRoot(classRoot);
+			includables.add(classRoot);
+			classRoot.setComment(_comment);
+		}
+	}
+
+	/**
+	 * For the composition of Includables representing classes the field and
+	 * method delaration have been collected in two dummy Forever loops. These
+	 * are here deconstructed and their contents merged into the top subqueue.
+	 * 
+	 * @param classRoot - the Includable diagram representing a declared class
+	 */
+	private void dissolveDummyContainers(Root classRoot) {
+		for (int i = 1; i >= 0; i--) {
+			if (classRoot.children.getSize() > i
+					&& classRoot.children.getElement(i) instanceof Forever) {
+				Subqueue body = ((Forever)classRoot.children.getElement(i)).getBody();
+				for (int j = body.getSize() - 1; j >= 0; j--) {
+					classRoot.children.insertElementAt(body.getElement(j), i+1);
+				}
+				classRoot.children.removeElement(i);
+			}
+		}
+	}
+	// END KGU#1073 2024-03-14
+
 	
 	/**
 	 * Inserts a new exception block from {@code _exStmtReduction} at first free
@@ -2053,11 +2493,11 @@ public class D7Parser extends CodeParser
 			switch (_reduction.get(i).getType()) 
 			{
 			case NON_TERMINAL:
-				_content = getContent_R((Reduction) _reduction.get(i).getData(), _content);	
+				_content = getContent_R(_reduction.get(i).asReduction(), _content);	
 				break;
 			case CONTENT:
 			{
-				String tokenData = (String) _reduction.get(i).getData();
+				String tokenData = _reduction.get(i).asString();
 				// START KGU 2016-05-08: Avoid keyword concatenation
 				boolean tokenIsId = !tokenData.isEmpty() && Character.isJavaIdentifierStart(tokenData.charAt(0));
 				// END KGU 2016-05-08
