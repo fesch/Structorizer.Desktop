@@ -80,6 +80,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2023-10-13      Issue #980 Export of multi-variable declaration revised
  *      Kay Gürtzig             2023-10-18      Bugfix #1099: Handling of constants was not correct.
  *      Kay Gürtzig             2023-10-04      Bugfix #1093 Undue final return 0 on function diagrams
+ *      Kay Gürtzig             2024-03-19      Issue #1148: Special indentation for "if else if" chains
  *
  ******************************************************************************************************
  *
@@ -140,6 +141,7 @@ import lu.fisch.structorizer.parsers.*;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.Stack;
 import java.util.Map.Entry;
 
 import lu.fisch.structorizer.elements.*;
@@ -730,15 +732,40 @@ public class PHPGenerator extends Generator
 
 		addCode("if "+condition+"", _indent, isDisabled);
 		addCode("{", _indent, isDisabled);
-		generateCode(_alt.qTrue,_indent+this.getIndent());
+		generateCode(_alt.qTrue, _indent + this.getIndent());
+		addCode("}", _indent, isDisabled);
+		
+		// START KGU#1137 2024-03-19: Issue #1148 We ought to make use of the ELSIF if possible
+		Element ele = null;
+		// We must cater for the code mapping of the chained sub-alternatives
+		Stack<Element> processedAlts = new Stack<Element>();
+		Stack<Integer> storedLineNos = new Stack<Integer>();
+		while (_alt.qFalse.getSize() == 1 
+				&& (ele = _alt.qFalse.getElement(0)) instanceof Alternative) {
+			_alt = (Alternative)ele;
+			isDisabled = _alt.isDisabled(false);
+			condition = transform(_alt.getUnbrokenText().getLongString()).trim();
+			// We must care for the code mapping explicitly here since we circumvent generateCode()
+			markElementStart(_alt, _indent, processedAlts, storedLineNos);
+			appendComment(_alt, _indent);
+			addCode("else if " + condition, _indent, isDisabled);
+			addCode("{", _indent, isDisabled);
+			generateCode(_alt.qTrue, _indent + this.getIndent());
+			addCode("}", _indent, isDisabled);
+		}
+		// END KGU#1137 2024-03-19
+		
 		if(_alt.qFalse.getSize()!=0)
 		{
-			addCode("}", _indent, isDisabled);
 			addCode("else", _indent, isDisabled);
 			addCode("{", _indent, isDisabled);
-			generateCode(_alt.qFalse,_indent+this.getIndent());
+			generateCode(_alt.qFalse, _indent + this.getIndent());
+			addCode("}", _indent, isDisabled);
 		}
-		addCode("}", _indent, isDisabled);
+		
+		// START KGU#1137 2024-03-19: Issue #1148 Accomplish the code map for the processed child alternatives
+		markElementEnds(processedAlts, storedLineNos);
+		// END KGU#1137 2024-03-19
 	}
 
 	@Override

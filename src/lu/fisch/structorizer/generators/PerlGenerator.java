@@ -86,6 +86,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2021-02-03  Issue #920: Transformation for "Infinity" literal
  *      Kay Gürtzig         2021-12-05  Bugfix #1024: Precautions against defective record initializers
  *      Kay Gürtzig         2023-10-04  Bugfix #1093 Undue final return 0 on function diagrams
+ *      Kay Gürtzig         2024-03-19  Issue #1148: Special indentation for "if else if" chains
  *
  ******************************************************************************************************
  *
@@ -98,6 +99,7 @@ package lu.fisch.structorizer.generators;
  ******************************************************************************************************///
 
 import java.util.HashMap;
+import java.util.Stack;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -719,22 +721,76 @@ public class PerlGenerator extends Generator {
 		
 		boolean isDisabled = _alt.isDisabled(false);
 		
-		addCode("", "", isDisabled);
+		addCode("", "", false);
 
 		appendComment(_alt, _indent);
 
+		String condition = extractCondition(_alt, _indent);
+		addCode("if " + condition + " {", _indent, isDisabled);
+		generateCode(_alt.qTrue,_indent+this.getIndent());
+		addCode("}", _indent, isDisabled);
+
+		// START KGU#1137 2024-03-19: Issue #1148 We ought to make use of the ELSIF if possible
+		Element ele = null;
+		// We must cater for the code mapping of the chained sub-alternatives
+		Stack<Element> processedAlts = new Stack<Element>();
+		Stack<Integer> storedLineNos = new Stack<Integer>();
+		while (_alt.qFalse.getSize() == 1 
+				&& (ele = _alt.qFalse.getElement(0)) instanceof Alternative) {
+			_alt = (Alternative)ele;
+			isDisabled = _alt.isDisabled(false);
+			// We must care for the code mapping explicitly here since we circumvent generateCode()
+			markElementStart(_alt, _indent, processedAlts, storedLineNos);
+			appendComment(_alt, _indent);
+			condition = extractCondition(_alt, _indent);
+			addCode("else if " + condition + " {", _indent, isDisabled);
+			generateCode(_alt.qTrue, _indent + this.getIndent());
+			addCode("}", _indent, isDisabled);
+		}
+		// END KGU#1137 2024-03-19
+		
+		if(_alt.qFalse.getSize() != 0) {
+			
+			addCode("else {", _indent, isDisabled);			
+			generateCode(_alt.qFalse, _indent + this.getIndent());
+			addCode("}", _indent, isDisabled);
+			
+		}
+		
+		addCode("", "", false);
+		
+		// START KGU#1137 2024-03-19: Issue #1148 Accomplish the code map for the processed child alternatives
+		markElementEnds(processedAlts, storedLineNos);
+		// END KGU#1137 2024-03-19
+	}
+
+	// START KGU#1137 2024-03-19: Issue #1148 Prefer IF ELSE IF chains over strict nesting
+	/**
+	 * Auxiliary method to obtain the condition from the text of Element {@code _ele}
+	 * (which is supposed to be an Alternative, While, or Repeat loop), considering FileAPI
+	 * and encapsulation in parenthesis.<br/>
+	 * <b>ATTENTION</b>: This method may append comments to the code if the condition refers
+	 * to FileAPI functions or variables!
+	 * 
+	 * @param _ele - the {@link Element} to get the condition expression from
+	 * @param _indent - the current indentation (for the possible comment generation)
+	 * @return - the prepared condition expression as string
+	 */
+	private String extractCondition(Element _ele, String _indent) {
+		boolean isDisabled = _ele.isDisabled(false);
 		// START KGU#162 2016-04-01: Enh. #144 new restrictive export mode
 		//code.add(_indent+"if ( "+BString.replace(transform(_alt.getText().getText()),"\n","").trim()+" ) {");
-		String condition = transform(_alt.getUnbrokenText().getLongString()).trim();
+		String condition = transform(_ele.getUnbrokenText().getLongString()).trim();
 		// START KGU#311 2017-01-04: Enh. #314 - steer the user through the File API implications
 		if (this.usesFileAPI && !isDisabled) {
 			if (condition.contains("fileEOF(")) {
 				this.appendComment("TODO FileAPI: Replace the fileEOF test by something like «<DATA>» in combination with «$_» for the next fileRead", _indent);
 			}
-			else {
+			// TODO Why was this test resticted to Alternatives? Is it irrelevant/wrong for loops?
+			else /*if (_ele instanceof Alternative)*/ {
 				for (int k = 0; k < this.fileVars.count(); k++) {
 					if (condition.contains(this.fileVars.get(k))) {
-						this.appendComment("TODO FileAPI: Consider replacing / dropping this now inappropriate file test.", _indent);						
+						this.appendComment("TODO FileAPI: Consider replacing / dropping this now inappropriate file test.", _indent);
 					}
 				}
 			}
@@ -747,21 +803,9 @@ public class PerlGenerator extends Generator {
 		{
 			condition = "( " + condition + " )";
 		}
-		addCode("if " + condition + " {", _indent, isDisabled);
-		generateCode(_alt.qTrue,_indent+this.getIndent());
-		
-		if(_alt.qFalse.getSize()!=0) {
-			
-			addCode("}", _indent, isDisabled);
-			addCode("else {", _indent, isDisabled);			
-			generateCode(_alt.qFalse,_indent+this.getIndent());
-			
-		}
-		
-		addCode("}", _indent, isDisabled);
-		addCode("", "", isDisabled);
-		
+		return condition;
 	}
+	// END KGU#1137 2024-03-19
 	
 	protected void generateCode(Case _case, String _indent) {
 		
@@ -907,23 +951,7 @@ public class PerlGenerator extends Generator {
 		
 		addCode("", "", isDisabled);
 		appendComment(_while, _indent);
-		// START KGU#162 2016-04-01: Enh. #144 new restrictive export mode
-		//code.add(_indent+"while ("+BString.replace(transform(_while.getText().getText()),"\n","").trim()+") {");
-		String condition = transform(_while.getUnbrokenText().getLongString()).trim();
-		// START KGU#311 2017-01-04: Enh. #314 - steer the user through the File API implications
-		if (this.usesFileAPI && !isDisabled) {
-			if (condition.contains("fileEOF(")) {
-				this.appendComment("TODO FileAPI: Replace the fileEOF test by something like «<DATA>» in combination with «$_» for the next fileRead", _indent);
-			}
-		}
-		// END KGU#311 2017-01-04
-		// START KGU#301 2016-12-01: Bugfix #301
-		//if (!this.suppressTransformation || !(condition.startsWith("(") && condition.endsWith(")")))
-		if (!this.suppressTransformation && !isParenthesized(condition))
-		// END KGU#301 2016-12-01
-		{
-			condition = "( " + condition + " )";
-		}
+		String condition = extractCondition(_while, _indent);
 		addCode("while " + condition + " {", _indent, isDisabled);
 		// END KGU#162 2016-04-01
 		generateCode(_while.q, _indent+this.getIndent());
@@ -945,24 +973,8 @@ public class PerlGenerator extends Generator {
 		appendComment(_repeat, _indent);
 
 		addCode("do {", _indent, isDisabled);
-		generateCode(_repeat.q,_indent+this.getIndent());
-		// START KGU#162 2016-04-01: Enh. #144 new restrictive export mode
-		//code.add(_indent+"} while (!("+BString.replace(transform(_repeat.getText().getText()),"\n","").trim()+")) {");
-		String condition = transform(_repeat.getUnbrokenText().getLongString()).trim();
-		// START KGU#311 2017-01-04: Enh. #314 - steer the user through the File API implications
-		if (this.usesFileAPI && !isDisabled) {
-			if (condition.contains("fileEOF(")) {
-				this.appendComment("TODO FileAPI: Replace the fileEOF test by something like «<DATA>» in combination with «$_» for the next fileRead", _indent);
-			}
-		}
-		// END KGU#311 2017-01-04
-		// START KGU#301 2016-12-01: Bugfix #301
-		//if (!this.suppressTransformation || !(condition.startsWith("(") && condition.endsWith(")")))
-		if (!this.suppressTransformation && !isParenthesized(condition))
-		// END KGU#301 2016-12-01
-		{
-			condition = "( " + condition + " )";
-		}
+		generateCode(_repeat.q, _indent + this.getIndent());
+		String condition = extractCondition(_repeat, _indent + this.getIndent());
 		addCode("} while (!" + condition + ");", _indent, isDisabled);
 		// END KGU#162 2016-04-01
 		// START KGU#78 2015-12-17: Enh. #23 Put a trailing label if this is a jump target

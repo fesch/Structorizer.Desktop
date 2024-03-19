@@ -73,6 +73,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2021-10-03/04   Bugfix #993: Wrong handling of constant parameters, array types, and mere declarations
  *      Kay Gürtzig         2021-12-05      Bugfix #1024: Precautions against defective record initializers
  *      Kay Gürtzig         2023-10-04      Bugfix #1093 Undue final return 0 on function diagrams
+ *      Kay Gürtzig         2024-03-19      Issue #1148: Special indentation for "if else if" chains
  *
  ******************************************************************************************************
  *
@@ -91,6 +92,7 @@ package lu.fisch.structorizer.generators;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Stack;
 import java.util.Map.Entry;
 
 import lu.fisch.structorizer.elements.Alternative;
@@ -826,11 +828,31 @@ public class BasGenerator extends Generator
     	addCode(transformKeyword("IF ") + condition + " " + transformKeyword("THEN"), _indent, disabled);
     	// END KGU#277 2016-10-13
     	generateCode(_alt.qTrue, indentPlusOne);
+    	
+    	// START KGU#1137 2024-03-19: Issue #1148 We ought to make use of the ELSIF if possible
+    	Element ele = null;
+    	// We must cater for the code mapping of the chained sub-alternatives
+    	Stack<Element> processedAlts = new Stack<Element>();
+    	Stack<Integer> storedLineNos = new Stack<Integer>();
+    	while (_alt.qFalse.getSize() == 1 
+    			&& (ele = _alt.qFalse.getElement(0)) instanceof Alternative
+    			&& !this.optionCodeLineNumbering()) {
+    		_alt = (Alternative)ele;
+    		condition = transform(_alt.getUnbrokenText().getLongString()).trim();
+    		// We must care for the code mapping explicitly here since we circumvent generateCode()
+    		markElementStart(_alt, _indent, processedAlts, storedLineNos);
+    		appendComment(_alt, _indent);
+    		addCode(transformKeyword("ELSEIF ") + condition + " " + transformKeyword("THEN"),
+    				_indent, _alt.isDisabled(false));
+    		generateCode(_alt.qTrue, _indent+this.getIndent());
+    	}
+    	// END KGU#1137 2024-03-19
+    	
     	if(_alt.qFalse.getSize() > 0)
     	{
     		// START KGU#277 2016-10-13: Enh. #270
     		//code.add(this.getLineNumber() + _indent + "ELSE");
-    		addCode(transformKeyword("ELSE"), _indent, disabled);
+    		addCode(transformKeyword("ELSE"), _indent, _alt.isDisabled(false));
     		// END KGU#277 2016-10-13
     		generateCode(_alt.qFalse, indentPlusOne);
     	}
@@ -838,6 +860,10 @@ public class BasGenerator extends Generator
     	//code.add(this.getLineNumber() + _indent + "END IF");
     	addCode(transformKeyword("END IF"), _indent, disabled);
     	// END KGU#277 2016-10-13
+    	
+    	// START KGU#1137 2024-03-19: Issue #1148 Accomplish the code map for the processed child alternatives
+    	markElementEnds(processedAlts, storedLineNos);
+    	// END KGU#1137 2024-03-19
     }
 
     @Override
