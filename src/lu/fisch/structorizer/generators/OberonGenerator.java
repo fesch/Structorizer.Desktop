@@ -1012,12 +1012,7 @@ public class OberonGenerator extends Generator {
 				&& !ele.isDisabled(isDisabled)) {
 			_alt = (Alternative)ele;
 			// We must care for the code mapping explicitly here since we circumvent generateCode()
-			if (codeMap != null) {
-				int line0 = code.count();
-				codeMap.put(_alt, new int[]{line0, line0, _indent.length()});
-				processedAlts.push(_alt);
-				storedLineNos.push(line0);
-			}
+			markElementStart(_alt, _indent, processedAlts, storedLineNos);
 			appendComment(_alt, _indent);
 			addCode("ELSIF "+ transform(_alt.getUnbrokenText().getLongString()) + " THEN",
 					_indent, isDisabled);
@@ -1035,10 +1030,45 @@ public class OberonGenerator extends Generator {
 		}
 		addCode("END;", _indent, isDisabled);
 		// START KGU#1135 2024-03-18: Issue #1146 Accomplish the code map for the processed child alternatives
+		markElementEnds(processedAlts, storedLineNos);
+		// END KGU#1135 2024-03-18
+	}
+
+	// START KGU#1135 2024-03-19: Issue #1146 Refactored to regain clarity
+	/**
+	 * Marks the start of the instruction code for nested alternative {@code _alt}
+	 * within the IF ELSIF chain for the code preview.
+	 * 
+	 * @param _alt - nested alternative in the IF ELSIF sequence
+	 * @param _indent - current indentation
+	 * @param _processedAlts - stack of the marked nested Alternatives (to be modified)
+	 * @param _storedLineNos - stack of the associated start line numbers (to be modified)
+	 */
+	private void markElementStart(Alternative _alt, String _indent, Stack<Element> _processedAlts,
+			Stack<Integer> _storedLineNos) {
+		if (codeMap != null) {
+			int line0 = code.count();
+			codeMap.put(_alt, new int[]{line0, line0, _indent.length()});
+			_processedAlts.push(_alt);
+			_storedLineNos.push(line0);
+		}
+	}
+	/**
+	 * Marks the common end of the instruction codes of all the alternatives
+	 * gathered in stack {@code -processedAlts}, considering the differences
+	 * between the start line numbers held in the {@link codeMap} and in the
+	 * stack {@code _storedLineNos}.
+	 * 
+	 * @param _processedAlts - stack of the marked nested Alternatives (to be emptied)
+	 * @param _storedLineNos - stack of the associated start line numbers (to be emptied)
+	 */
+	private void markElementEnds(Stack<Element> _processedAlts, Stack<Integer> _storedLineNos) {
+		Element ele;
+		assert _processedAlts.size() == _storedLineNos.size();
 		if (codeMap!= null) {
-			while (!processedAlts.isEmpty()) {
-				ele = processedAlts.pop();
-				int line0 = storedLineNos.pop();
+			while (!_processedAlts.isEmpty()) {
+				ele = _processedAlts.pop();
+				int line0 = _storedLineNos.pop();
 				int[] codeMapEntry = codeMap.get(ele);
 				if (codeMapEntry[0] > line0) {
 					// The element code was moved due to some insertions, update line0
@@ -1047,8 +1077,8 @@ public class OberonGenerator extends Generator {
 				codeMapEntry[1] += (code.count() - line0);
 			}
 		}
-		// END KGU#1135 2024-03-18
 	}
+	// END KGU#1135 2024-03-18
 
 	protected void generateCode(Case _case, String _indent)
 	{
