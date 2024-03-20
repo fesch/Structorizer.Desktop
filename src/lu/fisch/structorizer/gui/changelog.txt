@@ -223,6 +223,7 @@ Current development version 3.32-19 (2024-03-19)
 - 19: Issue #1148: Special indentation on exporting IF ELSE IF chains to C,
       C++, C#, Java, Javascript, modern BASIC, Perl, PHP <2>
 - 19: Bugfix #1149: Selection in Code Preview missed to update buttons <2>
+- 19: Bugfix #1150: Java import failed on parameterized class declarations <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>
