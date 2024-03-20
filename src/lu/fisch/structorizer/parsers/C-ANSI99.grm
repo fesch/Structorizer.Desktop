@@ -61,25 +61,27 @@
 ! This grammar file was created for the code import feature of "Structorizer"
 ! (a free Nassi-Shneiderman diagram editor see http://structorizer.fisch.lu)
 !
-! Created: 2018-03-27
+! Created: 2018-03-27 (V 1.0)
 !
-! Modified 2018-04-12
+! V 1.1 (2018-04-12)
 !   * The missing rule variant for <Declaration> was added
 !   * The erroneous ',' was removed from the <StructDeclnList> rule
 !   * Rule for function call with empty argument list had been missing
-! Modified 2018-06-20
+! V 1.2 (2018-06-20)
 !   * Erroneous use of "Literal" in >Selector> rule corrected to <Literal>
 !   * Forgotten equality sign in assign operator '^=' added
-! Modified 2018-06-24
+! V 1.3 (2018-06-24)
 !   * Forgotten empty block (without <BlockItemList>) as possible
 !     <Compound Stmt> added.
 !   * Identifiers allowed as CASE selectors.
-! Modified 2020-02-12
+! V 1.4 (2020-02-12)
 !   * FloatLiteral variant without decimal point added
+! V 1.5 (2024-03-20)
+!   * Tab character {#9} added to {String Ch} 
 ! -----------------------------------------------------------------------
 "Name"     = 'ANSI-C99'
 "Author"   = 'Kay Gürtzig'
-"Version"  = '1.4'
+"Version"  = '1.5'
 "About"    = 'ANSI C99 (ISO/IEC 9899:TC3 draft from September 7, 2007)'
 
 "Case Sensitive" = True
@@ -96,7 +98,7 @@
 {ID Head}      = {Letter} + [_]
 {ID Tail}      = {Alphanumeric} + [_]
 
-{String Ch}      = {All Printable} - ["]
+{String Ch}      = {All Printable} + {#9} - ["]
 {Char Ch}        = {All Printable} - ['']
                  
 !{H Ch}         = {All Printable} - [>]

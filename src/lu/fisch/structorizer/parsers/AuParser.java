@@ -192,7 +192,8 @@ public class AuParser extends GOLDParser {
 	 * Inserts Group objects into the group table, so comments can be processed in a 
 	 * grammar. It is assumed that version 1.0 files have a maximum of 1 closed
 	 * comment block and one comment line symbol.
-	 */	
+	 */
+	@Override
 	protected void resolveCommentGroupsForVersion1Grammars() {
 		if (isVersion1Format()) {
 			Group group;
@@ -253,6 +254,7 @@ public class AuParser extends GOLDParser {
 		}
 	}
 
+	@Override
 	protected boolean processTokenRead() {
 		Token token = this.getCurrentToken();
 		// START KGU#511 2018-04-12: Issue #489
@@ -315,6 +317,7 @@ public class AuParser extends GOLDParser {
 	/**
 	 * Just allowing public access to the current token 
 	 */
+	@Override
 	public Token getCurrentToken() {
 		// START KGU#511 2018-04-12: Issue #489
 		//return super.getCurrentToken();

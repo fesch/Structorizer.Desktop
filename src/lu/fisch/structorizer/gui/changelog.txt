@@ -224,6 +224,7 @@ Current development version 3.32-19 (2024-03-19)
       C++, C#, Java, Javascript, modern BASIC, Perl, PHP <2>
 - 19: Bugfix #1149: Selection in Code Preview missed to update buttons <2>
 - 19: Bugfix #1150: Java import failed on parameterized class declarations <2>
+- 19: Bugfix #1151: Java and C import failed with tab in string literals <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>
