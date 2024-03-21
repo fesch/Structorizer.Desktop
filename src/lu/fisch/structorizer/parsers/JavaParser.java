@@ -70,7 +70,8 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2024-03-18      Bugfix #1143: {@code <EnumDeclaration>} unduly required modifiers,
  *                                      bugfix #1145: Crash with more than 1 class / interface on top level
  *      Kay Gürtzig     2024-03-20      Bugfix #1150: RuleConstants adapted to new grammar version 0.9
- *      Kay Gürtzig     2024-03-21      Bugfix #1136 revision (type parameter "?" is now accepted by the grammar)
+ *      Kay Gürtzig     2024-03-21      Bugfix #1136 revision (type parameter "?" is now accepted by the grammar),
+ *                                      operator "instanceof" used as stop symbol in transformParameterisedTypes()
  *
  ******************************************************************************************************
  *
@@ -1315,7 +1316,8 @@ public class JavaParser extends CodeParser
 							break;
 						}
 					}
-					else if (!Function.testIdentifier(token, false, "$")
+					else if (token.equals("instanceof")	// Would be an expression, no cast
+							|| !Function.testIdentifier(token, false, "$")
 							&& !(token.length() == 1 && "[],.?".contains(token))) {
 						break;
 					}
