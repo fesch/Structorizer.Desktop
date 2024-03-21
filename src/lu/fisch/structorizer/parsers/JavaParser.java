@@ -1331,6 +1331,8 @@ public class JavaParser extends CodeParser
 					tokens.replaceAllBetween("[", ANG_BRACK_SUBST[3], true, posPar0+1, posPar1);
 					tokens.replaceAllBetween("]", ANG_BRACK_SUBST[4], true, posPar0+1, posPar1);
 					tokens.replaceAllBetween("?", ANG_BRACK_SUBST[5], true, posPar0+1, posPar1);
+					// Remove pure "<?(,?)*>" sequences as questionmarks may cause trouble later
+					origSequence = origSequence.replaceAll("<\\?(,\\?)*>", "");
 					// Ensure the operator symbols will be restored after the parsing
 					this.replacedIds.putIfAbsent(tokens.concatenate("", posId, posAngBr+1), origSequence);
 					replaced = true;
