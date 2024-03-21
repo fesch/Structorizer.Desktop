@@ -220,6 +220,7 @@ Current development version 3.32-19 (2024-03-21)
 - 18: Bugfix #1145 Java import crashed when source file contains two or more
       classes / interfaces / enumerators on top level <2>
 - 18: Bugfix #1146: Wrong/awkward Oberon export of Alternatives [K.-P. R.]2
+- 19: Bugfix #1136 revised ('?' now generally accepted as type parameter) <2>
 - 19: Issue #1148: Special indentation on exporting IF ELSE IF chains to C,
       C++, C#, Java, Javascript, modern BASIC, Perl, PHP <2>
 - 19: Bugfix #1149: Selection in Code Preview missed to update buttons <2>

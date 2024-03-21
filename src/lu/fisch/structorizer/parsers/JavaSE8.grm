@@ -62,7 +62,7 @@
 ! V 0.8     2024-03-18  Kay Gürtzig     Identifier syntax extended to {All Latin} (as Java accepts them in fact),
 !                                       <AssertStatement> introduced (#1142), enum without <Modifiers> enabled (#1143)
 ! V 0.9     2024-03-20  Kay Gürtzig     Missing empty rule for <TypeBoundOpt> added (#1150),
-!                                       tab added to {String Char} (#1151)
+!                                       tab added to {String Char} (#1151), '?' enabled as <TypeParameter> (#1136)
 ! -----------------------------------------------------------------------
 
 "Name"    = 'Java SE 8'
@@ -292,6 +292,7 @@ Comment Line = '//'
 
 <TypeParameter>
         ::= <Annotations> Identifier <TypeBoundOpt>
+         | '?'
 
 <TypeBoundOpt>
         ::= 'extends' <TypeVariable>
