@@ -247,6 +247,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2024-03-15      Bugfix #1140: Transmutation conditions were too strict for method calls
  *      Kay Gürtzig     2024-03-17      Issue #1138: code import and arrangement loading now in serial mode to
  *                                      allow the user to suppress Arranger collision warnings (new serial aspect)
+ *      Kay Gürtzig     2024-03-19      Bugfix #1149: On selection change from Code Preview doButtons() was forgotten
  *
  ******************************************************************************************************
  *
@@ -2327,6 +2328,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				// END KGU#978 2021-06-09
 			}
+			// START KGU#1138 2024-03-19: Bugfix #1149 We must update the buttons after selection
+			this.doButtons();
+			// END KGU#1138 2024-03-19
 			this.highlightCodeForElement(element, false);
 		}
 	}

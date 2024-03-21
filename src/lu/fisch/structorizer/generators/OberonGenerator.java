@@ -96,6 +96,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2023-10-04      Bugfix #1093 Undue final return 0 on function diagrams
  *      Kay Gürtzig             2024-03-18/19   Bugfix #1146 Wrong END between THEN and ELSE on Alternative export,
  *                                              missed opportunity to use ELSIF in IF chains now implemented
+ *      Kay Gürtzig             2024-03-19      Issue #1148 Auxiliary methods markElementStart() and markElementEnds()
+ *                                              moved up to Generator, reaction to disabled state improved
  *
  ******************************************************************************************************
  *
@@ -1002,20 +1004,19 @@ public class OberonGenerator extends Generator {
 				_indent, isDisabled);
 		generateCode(_alt.qTrue, _indent+this.getIndent());
 		
-		// START KGU#1135 2024-03-18: Issue #1146 We ought to make use of the ELSIf if possible
+		// START KGU#1135 2024-03-18: Issue #1146 We ought to make use of the ELSIF if possible
 		Element ele = null;
 		// We must cater for the code mapping of the chained sub-alternatives
 		Stack<Element> processedAlts = new Stack<Element>();
 		Stack<Integer> storedLineNos = new Stack<Integer>();
 		while (_alt.qFalse.getSize() == 1 
-				&& (ele = _alt.qFalse.getElement(0)) instanceof Alternative
-				&& !ele.isDisabled(isDisabled)) {
+				&& (ele = _alt.qFalse.getElement(0)) instanceof Alternative) {
 			_alt = (Alternative)ele;
 			// We must care for the code mapping explicitly here since we circumvent generateCode()
 			markElementStart(_alt, _indent, processedAlts, storedLineNos);
 			appendComment(_alt, _indent);
 			addCode("ELSIF "+ transform(_alt.getUnbrokenText().getLongString()) + " THEN",
-					_indent, isDisabled);
+					_indent, ele.isDisabled(false));
 			generateCode(_alt.qTrue, _indent+this.getIndent());
 		}
 		// END KGU#1135 2024-03-18
@@ -1025,7 +1026,7 @@ public class OberonGenerator extends Generator {
 			// START KGU#1135 2024-03-18: Bugfix #1146 END is wrong here
 			//addCode("END", _indent, isDisabled);
 			// END KGU#1135 2024-03-18
-			addCode("ELSE", _indent, isDisabled);
+			addCode("ELSE", _indent, _alt.isDisabled(false));
 			generateCode(_alt.qFalse, _indent+this.getIndent());
 		}
 		addCode("END;", _indent, isDisabled);
@@ -1033,52 +1034,6 @@ public class OberonGenerator extends Generator {
 		markElementEnds(processedAlts, storedLineNos);
 		// END KGU#1135 2024-03-18
 	}
-
-	// START KGU#1135 2024-03-19: Issue #1146 Refactored to regain clarity
-	/**
-	 * Marks the start of the instruction code for nested alternative {@code _alt}
-	 * within the IF ELSIF chain for the code preview.
-	 * 
-	 * @param _alt - nested alternative in the IF ELSIF sequence
-	 * @param _indent - current indentation
-	 * @param _processedAlts - stack of the marked nested Alternatives (to be modified)
-	 * @param _storedLineNos - stack of the associated start line numbers (to be modified)
-	 */
-	private void markElementStart(Alternative _alt, String _indent, Stack<Element> _processedAlts,
-			Stack<Integer> _storedLineNos) {
-		if (codeMap != null) {
-			int line0 = code.count();
-			codeMap.put(_alt, new int[]{line0, line0, _indent.length()});
-			_processedAlts.push(_alt);
-			_storedLineNos.push(line0);
-		}
-	}
-	/**
-	 * Marks the common end of the instruction codes of all the alternatives
-	 * gathered in stack {@code -processedAlts}, considering the differences
-	 * between the start line numbers held in the {@link codeMap} and in the
-	 * stack {@code _storedLineNos}.
-	 * 
-	 * @param _processedAlts - stack of the marked nested Alternatives (to be emptied)
-	 * @param _storedLineNos - stack of the associated start line numbers (to be emptied)
-	 */
-	private void markElementEnds(Stack<Element> _processedAlts, Stack<Integer> _storedLineNos) {
-		Element ele;
-		assert _processedAlts.size() == _storedLineNos.size();
-		if (codeMap!= null) {
-			while (!_processedAlts.isEmpty()) {
-				ele = _processedAlts.pop();
-				int line0 = _storedLineNos.pop();
-				int[] codeMapEntry = codeMap.get(ele);
-				if (codeMapEntry[0] > line0) {
-					// The element code was moved due to some insertions, update line0
-					line0 = codeMap.get(ele)[0];
-				}
-				codeMapEntry[1] += (code.count() - line0);
-			}
-		}
-	}
-	// END KGU#1135 2024-03-18
 
 	protected void generateCode(Case _case, String _indent)
 	{

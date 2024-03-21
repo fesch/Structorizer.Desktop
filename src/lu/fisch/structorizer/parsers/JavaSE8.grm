@@ -61,14 +61,16 @@
 !                                       Processing conversion function str disabled (impeded 'str' identifiers)
 ! V 0.8     2024-03-18  Kay Gürtzig     Identifier syntax extended to {All Latin} (as Java accepts them in fact),
 !                                       <AssertStatement> introduced (#1142), enum without <Modifiers> enabled (#1143)
+! V 0.9     2024-03-20  Kay Gürtzig     Missing empty rule for <TypeBoundOpt> added (#1150),
+!                                       tab added to {String Char} (#1151), '?' enabled as <TypeParameter> (#1136)
 ! -----------------------------------------------------------------------
 
 "Name"    = 'Java SE 8'
-"Version" = '0.8, March 2024'
+"Version" = '0.9, March 2024'
 "Author"  = 'Kay Gürtzig'
 "About"   = 'Simplified Java SE 8 grammar, based on a partial conversion of Sun Java 1.0-2.0 specification by Dmitry Gazko and the Oracle Java SE 8 specification.'
 
-{String Char} = {all printable} - ["] - [\]
+{String Char} = {all printable} + {#9} - ["] - [\]
 {Quote} = ['']
 {IdLetter} = {Letter} + [_$]
 !{IdAlphaNumeric} = {Alphanumeric} + [_$]
@@ -290,10 +292,12 @@ Comment Line = '//'
 
 <TypeParameter>
         ::= <Annotations> Identifier <TypeBoundOpt>
+         | '?'
 
 <TypeBoundOpt>
         ::= 'extends' <TypeVariable>
          |  'extends' <ClassOrInterfaceType> <AdditionalBoundOpt>
+         |
 
 <AdditionalBoundOpt>
         ::= '&' <InterfaceType>

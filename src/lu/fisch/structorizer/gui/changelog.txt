@@ -25,7 +25,7 @@ Known issues (also see https://github.com/fesch/Structorizer.Desktop/issues):
 - ARM export is still experimental and relies on a specific and very restricted
   syntax for the element contents in order to produce meaningful results.
 
-Current development version 3.32-18 (2024-03-19)
+Current development version 3.32-19 (2024-03-21)
 - 01: Bugfix #987: Duplicate subroutine comment export by Pascal generator <2>
 - 01: Bugfix #988: Syntax error in Structorizer.bat and Arranger.bat fixed <2>
 - 01: Bugfix #989: Expressions in EXIT elements (e.g. return) were forgotten
@@ -220,6 +220,13 @@ Current development version 3.32-18 (2024-03-19)
 - 18: Bugfix #1145 Java import crashed when source file contains two or more
       classes / interfaces / enumerators on top level <2>
 - 18: Bugfix #1146: Wrong/awkward Oberon export of Alternatives [K.-P. R.]2
+- 19: Bugfix #1136 revised ('?' now generally accepted as type parameter) <2>
+- 19: Issue #1148: Special indentation on exporting IF ELSE IF chains to C,
+      C++, C#, Java, Javascript, modern BASIC, Perl, PHP <2>
+- 19: Bugfix #1149: Selection in Code Preview missed to update buttons <2>
+- 19: Bugfix #1150: Java import failed on parameterized class declarations <2>
+- 19: Bugfix #1151: Java and C import failed with tab in string literals <2>
+- 19: Bugfix #1152: Pascal import had failed completely in version 3.32-18 <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>

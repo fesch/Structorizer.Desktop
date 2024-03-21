@@ -78,6 +78,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2024-03-14      Issue #1084 RuleConstants updated to new grammar version 1.6
  *      Kay Gürtzig     2024-03-15      Issue #1084 Substantial achievements to import ObjectPascal / Delphi code
  *      Kay Gürtzig     2024-03-17      Bugfix #1141: Measures against stack overflow in buildNSD_R()
+ *      Kay Gürtzig     2024-03-21      Bugfix #1152: Defect of fix #1141 mended (caused NullPointerException)
  *
  ******************************************************************************************************
  *
@@ -129,8 +130,8 @@ import java.util.Stack;
 import java.util.logging.Level;
 
 /**
- * Code import parser class of Structorizer 3.27, based on GOLDParser 5.0 for the ObjectPascal, Pascal
- * or Delphi 7 language.
+ * Code import parser class of Structorizer 3.27, based on GOLDParser 5.0, for the
+ * ObjectPascal, Pascal or Delphi 7 language.
  * This file contains grammar-specific constants and individual routines to build
  * structograms (Nassi-Shneiderman diagrams) from the parsing tree. 
  * @author Kay Gürtzig
@@ -887,23 +888,6 @@ public class D7Parser extends CodeParser
 	private static final StringList NAMES_TO_LOWER = StringList.explode("FALSE,TRUE,CHR,ORD,POS,COPY,DELETE,INSERT,UPPERCASE,LOWERCASE", ",");
 	// END KGU#843 2020-04-11
 
-// START KGU#387 2021-02-16: Issue #939 workaround no longer necessary
-//    // START KGU#575 2018-09-17: Issue #594 - replace obsolete 3rd-party regex library
-//    /** Matcher for temporary newline surrogates */
-//    private static final java.util.regex.Matcher NEWLINE_MATCHER = java.util.regex.Pattern.compile("(.*?)[\u2190](.*?)").matcher("");
-//    // END KGU#575 2018-09-17
-// END KGU#387 2021-02-16
-
-	// START KGU#354 2017-03-04: Now inherited from CodeParser
-	//Root root = null;
-	// START KGU#194 2016-05-08: Bugfix #185
-	// We may obtain a collection of Roots (unit or program with subroutines)!
-	//private List<Root> subRoots = new LinkedList<Root>();
-	// END KGU#194 2016-05-08
-	//
-	//public String error = new String();
-	// END KGU#354 2017-03-04
-	
 	// START KGU#194 2016-05-08: Bugfix #185 - if being a unit we must retain its name
 	private String unitName = null;
 	// END KGU#194 2016-05-08
@@ -992,14 +976,7 @@ public class D7Parser extends CodeParser
 					checkCancelled();
 					// END KGU#537 2018-07-01
 
-					// START KGU#387/KGU#589 2021-02-15: #939 Workaround #615 now obsolete
-					// START KGU#589 2018-09-28: Workaround #615
-					//strLine = unifyComments(strLine, inComments);
-					// END KGU#589 2018-09-28
-					// add no ending because of comment filter
-					//pasCode += strLine+"\u2190";
-					pasCode+=strLine+"\n";
-					// END KGU#387/KGU#589 2021-02-15
+					pasCode += strLine + "\n";
 				}
 			}
 			finally {
@@ -1011,35 +988,11 @@ public class D7Parser extends CodeParser
 			pasCode = embedSubroutineDeclaration(pasCode);
 			// END KGU#195 2016-05-04
 
-// START KGU#387 2021-02-16: Issue #939 obsolete stuff disabled
-//			// reset correct endings
-//			// START KGU#575 2018-09-17: Issue #594 - replacing obsolete 3rd-party regex library
-//			//Regex r = new Regex("(.*?)[\u2190](.*?)","$1\n$2"); 
-//			//pasCode = r.replaceAll(pasCode);
-//			pasCode = NEWLINE_MATCHER.reset(pasCode).replaceAll("$1\n$2");
-//			// END KGU#575 2018-09-17
-//			// START KGU#354 2017-03-07: Workaround for missing second comment delimiter pair in GOLDParser 5.0
-////			pasCode = pasCode.replaceAll("(.*?)(\\(\\*)(.*?)(\\*\\))(.*?)", "$1\\{$3\\}$5");
-//			// END KGU#354 2017-03-07
-//
-//			//System.out.println(pasCode);
-// END KGU#387 2021-02-16
-
 			// trim and save as new file
-			//interm = new File(_textToParse + ".structorizer");
 			interm = File.createTempFile("Structorizer", ".pas");
-			// START KGU#387 2021-02-16: Issue #939 - Eventually we may get rid of this filtering
-			//OutputStreamWriter ow = new OutputStreamWriter(new FileOutputStream(interm), "ISO-8859-1");
-			//try {
-			//	ow.write(filterNonAscii(pasCode.trim()+"\n"));
-			//}
-			//finally {
-			//	ow.close();
-			//}
 			try (OutputStreamWriter ow = new OutputStreamWriter(new FileOutputStream(interm), _encoding)) {
 				ow.write(pasCode.trim() +"\n");
 			}
-			// END KGU#387 2021-02-16
 		}
 		catch (Exception e) 
 		{
@@ -1049,65 +1002,6 @@ public class D7Parser extends CodeParser
 	}
 	// END KGU#354 2017-03-03
 	
-//	// START KGU589 2018-09-28: Issue #615 - KGU#387 2021-02-16: No longer needed (Issue #939)
-//	/**
-//	 * Replaces all comment delimiters of kind (* *) by pairs of curly braces (and therefore closing
-//	 * braces within (* *) former comments with "[brace-close]" to avoid comment corruption as comments
-//	 * of same kind cannot be nested.
-//	 * FIXME: This method is only a workaround while the grammar doesn't cope with (* *) comments.  
-//	 * @param pasLine - the original Pascal line
-//	 * @param withinComments - a pair of flags: [0] for inside (* *), [1] for inside { }.
-//	 * @return the Pascal line with unified comments (length may have changed)
-//	 */
-//	private String unifyComments(String pasLine, boolean[] withinComments) {
-//		// Let's do a quick test first
-//		if (withinComments[0] && (pasLine.contains("*)") || (pasLine.contains("}")))
-//				|| !withinComments[0] && pasLine.contains("(*")) {
-//			// Now we must have a closer look to exclude false positives in string constants
-//			StringBuilder sb = new StringBuilder();
-//			boolean inString = false;
-//			int len = pasLine.length();
-//			int i = 0;
-//			while (i < len) {
-//				char c = pasLine.charAt(i);
-//				if (!withinComments[0] && !withinComments[1]) {
-//					if (c == '\'') {
-//						inString = !inString;
-//					}
-//					else if (c == '{') {
-//						withinComments[1] = true;
-//					}
-//					else if (!inString && c == '(' && i+1 < len && pasLine.charAt(i+1) == '*') {
-//						withinComments[0] = true;
-//						c = '{';
-//						i++;
-//					}
-//				}
-//				else if (withinComments[1]) {
-//					if (c == '}') {
-//						withinComments[1] = false;
-//					}
-//				}
-//				// So we must be within a comment of type (* *)
-//				else if (c == '*' && i+1 < len && pasLine.charAt(i+1) == ')') {
-//					withinComments[0] = false;
-//					c = '}';
-//					i++;
-//				}
-//				else if (c == '}') {
-//					// This might cause trouble as it would shorten the comment!
-//					// so replace it by something irrelevant within a comment
-//					sb.append("[brace-close");
-//					c = ']';
-//				}
-//				sb.append(c);
-//				i++;
-//			}
-//			pasLine = sb.toString();
-//		}
-//		return pasLine;
-//	}
-//	// END KGU#589 2018-09-28
 
 	// START KGU#195 2016-05-04: Issue #185 - Workaround for mere subroutines
 	private String embedSubroutineDeclaration(String _pasCode) throws ParserCancelled
@@ -1893,9 +1787,15 @@ public class D7Parser extends CodeParser
 				// <VarDeclList> ::= <VarDeclList> <VarDecl>
 				// <StmtList> ::= <StmtList> ';' <Statement>
 				int loopId = ruleId;
+				// START KGU#1140 2024-03-21: Bugfix #1152 Wrong rule index for statement list
+				int ixItem = ruleId == RuleConstants.PROD_STMTLIST_SEMI ? 2 : 1;
+				// END KGU#1140 2024-03-21
 				Stack<Reduction> redStack = new Stack<Reduction>();
 				do {
-					redStack.push(_reduction.get(1).asReduction());
+					// START KGU#1140 2024-03-21: Bugfix #1152 Wrong rule index for statement list
+					//redStack.push(_reduction.get(1).asReduction());
+					redStack.push(_reduction.get(ixItem).asReduction());
+					// END KGU#1140 2024-03-21
 					_reduction = _reduction.get(0).asReduction();
 					ruleId = _reduction.getParent().getTableIndex();
 				} while (ruleId == loopId);
