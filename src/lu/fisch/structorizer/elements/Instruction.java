@@ -76,7 +76,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2021-09-28      Issue #1091: Type definition detection mended (aliases and array types)
  *      Kay Gürtzig     2023-10-10/13   Issue #980: Declaration-related stuff revised
  *      Kay Gürtzig     2023-10-15      Bugfix #1096: More precise type and C-style declaration handling
- *      Kay Gürtzig     2024-03-15      Bugfix #1140: Function syntax check ignored the 'qualified' argument 
+ *      Kay Gürtzig     2024-03-15      Bugfix #1140: Function syntax check ignored the 'qualified' argument
+ *      Kay Gürtzig     2024-03-22      Issue #1154: Drawing of the hatch delegated to the disabled elements 
  *
  ******************************************************************************************************
  *
@@ -405,7 +406,10 @@ public class Instruction extends Element {
 			// START KGU#277 2016-10-13: Enh. #270
 			if (_element.isDisabled(true)) {
 //				canvas.hatchRect(_top_left, 5, 10);
-				canvas.hatchRect(myrect, 5, 10);
+				// START KGU#1142 2024-03-22: Issue #1154 Allow element-specific adaptation
+				//canvas.hatchRect(myrect, 5, 10);
+				_element.drawHatched(myrect, canvas);
+				// END KGU#1142 2024-03-22
 			}
 			// END KGU#277 2016-10-13
 		}

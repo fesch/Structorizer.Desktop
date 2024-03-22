@@ -50,8 +50,9 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-03-28      Enh. #657: Retrieval for called subroutine now with group filter
  *      Kay Gürtzig     2019-03-30      Enh. #696: subroutine retrieval now possible from an alternative pool
  *      Kay Gürtzig     2021-01-04      Enh. #906: New field pauseAfterCall to support the debug mode "step over"
- *      Kay Gürtzig     2021-02-26      Enh. #410: New field isMethodDeclaration and method derivatates for
+ *      Kay Gürtzig     2021-02-26      Enh. #410: New field isMethodDeclaration and method derivates for
  *                                      the representation of imported methods (OOP approach)
+ *      Kay Gürtzig     2024-03-22      Issue #1154: Modified drawing of CALLs diverted for method declarations
  *
  ******************************************************************************************************
  *
@@ -201,6 +202,26 @@ public class Call extends Instruction {
 		// END KGU 2016-07-30: Just delegate the basics to super
 	}
 	
+	// START KGU#1142 2024-03-22: Issue #1154 Intended to be subclassed for special purposes
+	/**
+	 * Draws a dark grey hatch pattern into the given rectangle {@code rect} on the
+	 * {@link Canvas} {@code canvas}.
+	 * 
+	 * @param myrect - the rectangle to be (partially) hatched
+	 * @param canvas - the target canvas
+	 */
+	@Override
+	protected void drawHatched(Rect rect, Canvas canvas) {
+		if (this.isMethodDeclaration) {
+			super.drawHatched(new Rect(rect.left, rect.top, rect.left + (E_PADDING / 2), rect.bottom), canvas);
+			super.drawHatched(new Rect(rect.right - (E_PADDING / 2), rect.top, rect.right, rect.bottom), canvas);
+		}
+		else {
+			super.drawHatched(rect, canvas);
+		}
+	}
+	// END KGU#1142 2024-03-22
+
 	// START KGU 2016-07-30: Adapt the runtime info position
 	/**
 	 * Writes the selected runtime information in half-size font to the lower
