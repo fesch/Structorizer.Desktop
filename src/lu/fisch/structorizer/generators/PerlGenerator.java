@@ -565,7 +565,10 @@ public class PerlGenerator extends Generator {
 			{
 				String line = lines.get(i);
 				boolean isAsgn = Instruction.isAssignment(line);
-				boolean isDecl = Instruction.isDeclaration(line);
+				// START KGU#1144 2024-04-02 Bugfx #1156: typed constants caused error
+				//boolean isDecl = Instruction.isDeclaration(line);
+				boolean isDecl = Instruction.isDeclaration(line, true);
+				// END KGU#1144 2024-04-02
 				// START KGU#653 2019-02-15: Enh. #680 - input with several items...
 				StringList inputItems = Instruction.getInputItems(line);
 				if (inputItems != null && inputItems.count() > 2) {

@@ -81,6 +81,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2023-10-18      Bugfix #1099: Handling of constants was not correct.
  *      Kay Gürtzig             2023-10-04      Bugfix #1093 Undue final return 0 on function diagrams
  *      Kay Gürtzig             2024-03-19      Issue #1148: Special indentation for "if else if" chains
+ *      Kay Gürtzig             2024-04-02      Bugfix #1156: Wrong handling of typed constants
  *
  ******************************************************************************************************
  *
@@ -586,7 +587,10 @@ public class PHPGenerator extends Generator
 					}
 					// END KGU#284 2016-10-16
 					// START KGU#839 2020-04-06: Bugfix #843 (issues #389, #782)
-					else if (Instruction.isDeclaration(line)) {
+					// START KGU#1144 2024-04-02: Bugfix #1156 consider typed constants
+					//else if (Instruction.isDeclaration(line)) {
+					else if (Instruction.isDeclaration(line, true)) {
+					// END KGU#1144 2024-04-02
 						StringList tokens = Element.splitLexically(transf, true);
 						// identify declared variable - the token will start with a dollar
 						boolean mereDecl = Instruction.isMereDeclaration(line);

@@ -231,6 +231,7 @@ Current development version 3.32-20 (2024-04-02)
 - 20: Bugfix #1136 revised ("instanceof" detected to deny cast context). <2>
 - 20: Issue #1154 Hatching of CALLs diverted for method signatures modified <2>
 - 20: Bugfix #1155 Stack overflow risk on Pascal export / code preview <2>
+- 20: bugfix #1156 Defective export of typed constants to Perl and PHP code <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>
