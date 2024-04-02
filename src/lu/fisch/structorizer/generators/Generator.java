@@ -1906,7 +1906,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * definition, the enclosing TypeInfo may be given as {@code definingType}.
 	 * 
 	 * @param typeInfo - the defining or derived TypeMapInfo of the type 
-	 * @param definingType - the enclosing type just being defined or null
+	 * @param definingType - the enclosing type just being defined or {@code null}
 	 * @param preferName - whether the type name is to be preferred over the structure
 	 * @return a String suited as type description in declarations etc. of the
 	 *      target language 

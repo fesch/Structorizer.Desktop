@@ -100,6 +100,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2021-12-05      Bugfix #1024: Precautions against defective record initializers
  *      Kay Gürtzig         2023-09-28      Bugfix #1092: Sensible export of alias type definitions enabled
  *      Kay Gürtzig         2023-11-08      Bugfix #1109: generateCode(Jump) revised for throw
+ *      Kay Gürtzig         2024-04-02      Bugfix #1155: Risk of stack overflow on type conversion averted
  *
  ******************************************************************************************************
  *
@@ -476,19 +477,39 @@ public class PasGenerator extends Generator
 	// END KGU#16 2015-11-30	
 
 	// START KGU#140 2017-01-31: Enh. #113: Advanced array transformation
+	/**
+	 * Helper method for {@link #transformType(String, String)} to achieve a meaningful
+	 * type description for Pascal from an apparent array type specification.
+	 * 
+	 * @param _typeDescr - the type specification from a diagram element
+	 * @return ideally a Pascal type specification semantically equivalent to
+	 *    {@code _typeDescr}
+	 */
 	protected String transformArrayDeclaration(String _typeDescr)
 	{
-		if (_typeDescr.toLowerCase().startsWith("array") || _typeDescr.endsWith("]")) {
+		// START KGU#1141 2024-03-29: Bugfix #1155 Risk of endless recursion e.g. with ArrayList<...>
+		//if (_typeDescr.toLowerCase().startsWith("array") || _typeDescr.endsWith("]")) {
+		if (_typeDescr.toLowerCase().startsWith("array") 
+				&& Element.splitLexically(_typeDescr, true).get(0).equalsIgnoreCase("array")
+				|| _typeDescr.endsWith("]")) {
+		// END KGU#1141 2024-03-29
 			// TypeMapEntries are really good at analysing array definitions
 			TypeMapEntry typeInfo = new TypeMapEntry(_typeDescr, null, null, null, 0, false, true);
-			_typeDescr = transformTypeFromEntry(typeInfo, null, true);
+			// START KGU#1141 2024-04-02: Bugfix #1155 Avoid endless recursion if no array is detected
+			//_typeDescr = transformTypeFromEntry(typeInfo, null, true);
+			if (typeInfo != null && typeInfo.isArray()) {
+				_typeDescr = transformTypeFromEntry(typeInfo, null, true);
+			}
+			// END KGU#1141 2024-04-02
 		}
 		return _typeDescr;
 	}
 
 	/**
 	 * Creates a type description suited for Pascal code from the given TypeMapEntry {@code typeInfo}
-	 * @param typeInfo - the defining or derived TypeMapInfo of the type 
+	 * @param typeInfo - the defining or derived TypeMapInfo of the type
+	 * @param difiningWithin - a possible outer type context
+	 * @param preferName - whether the type name is to be preferred over the structure
 	 * @return a String suited as Pascal type description in declarations etc. 
 	 */
 	@Override
