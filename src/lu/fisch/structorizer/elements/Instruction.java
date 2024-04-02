@@ -886,7 +886,7 @@ public class Instruction extends Element {
 	 * @see #isDeclaration(String, boolean)
 	 */
 	public static boolean isDeclaration(String line)
-	// START KGU#1144 2024-04-02: Issue #1156 An extended check for typed constants was useful
+	// START KGU#1143 2024-04-02: Issue #1156 An extended check for typed constants was useful
 	{
 		return isDeclaration(line, false);
 	}
@@ -905,7 +905,7 @@ public class Instruction extends Element {
 	 *    {@code constantToo} is {@code true}.
 	 */
 	public static boolean isDeclaration(String line, boolean constantToo)
-	// END KGU#1144 2024-04-02
+	// END KGU#1143 2024-04-02
 	{
 		StringList tokens = Element.splitLexically(line, true);
 		unifyOperators(tokens, true);
@@ -917,24 +917,24 @@ public class Instruction extends Element {
 		// END KGU#1089 2023-10-13
 		int posAsgn = tokens.indexOf("<-");
 		boolean typeC = false;
-		// START KGU#1144 2024-04-02: Issue #1156 extended support for typed constants
+		// START KGU#1143 2024-04-02: Issue #1156 extended support for typed constants
 		boolean typeD = false;
-		// END KGU#1144 2024-04-02
+		// END KGU#1143 2024-04-02
 		if (posAsgn > 1) {
 			tokens = tokens.subSequence(0, posAsgn);
 			tokens.removeAll(" ");
 			typeC = !Instruction.getDeclaredVariables(tokens).isEmpty();
-			// START KGU#1144 2024-04-02: Issue #1156 extended support for typed constants
+			// START KGU#1143 2024-04-02: Issue #1156 extended support for typed constants
 			typeD = constantToo
 					&& tokens.indexOf("const", false) == 0
 					&& tokens.indexOf(":") == 2
 					&& Function.testIdentifier(tokens.get(1), false, null);
-			// END KGU#1144 2024-04-02
+			// END KGU#1143 2024-04-02
 		}
-		// START KGU#1144 2024-04-02: Issue #1156 extended support for typed constants
+		// START KGU#1143 2024-04-02: Issue #1156 extended support for typed constants
 		//return typeA || typeB || typeC;
 		return typeA || typeB || typeC || typeD;
-		// END KGU#1144 2024-04-02
+		// END KGU#1143 2024-04-02
 	}
 	/**
 	 * @return {@code true} if all non-empty lines are declarations
@@ -1694,13 +1694,13 @@ public class Instruction extends Element {
 		}
 		// END KGU#388 2017-09-15
 		// START KGU#1089 2023-10-13: Issue #980 Don't return a name in a multi-var declaration
-		// START KGU#1144 2024-04-02: Bugfix #1156 Typed constants caused null result
+		// START KGU#1143 2024-04-02: Bugfix #1156 Typed constants caused null result
 		//if (!tokens.isEmpty() && (tokens.get(0).equalsIgnoreCase("var") || tokens.get(0).equalsIgnoreCase("dim"))) {
 		if (!tokens.isEmpty()
 				&& (tokens.get(0).equalsIgnoreCase("var")
 						|| tokens.get(0).equalsIgnoreCase("dim")
 						|| tokens.get(0).equalsIgnoreCase("const"))) {
-		// END KGU#1144 2024-04-02
+		// END KGU#1143 2024-04-02
 			// This should be the case, otherwise we had a syntax violation here
 			tokens.remove(0);
 			isDecl = true;

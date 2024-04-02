@@ -87,6 +87,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2021-12-05  Bugfix #1024: Precautions against defective record initializers
  *      Kay Gürtzig         2023-10-04  Bugfix #1093 Undue final return 0 on function diagrams
  *      Kay Gürtzig         2024-03-19  Issue #1148: Special indentation for "if else if" chains
+ *      Kay Gürtzig         2024-04-02  Bugfix #1156: Proper handling of constant definitions (new export option)
  *
  ******************************************************************************************************
  *
@@ -243,6 +244,22 @@ public class PerlGenerator extends Generator {
 	/** Currently exported {@link Root} object. */
 	private Root root;
 	// END KGU#542 2019-11-20
+	
+	// START KGU#1143 2024-04-02: Bugfix #1156/2 New option for pragma use const
+	/** Internally caches the export option value for pragma "use constant" */
+	private Boolean pragmaUseConstant = null;
+	/**
+	 * @returns value of the (potential) export option to apply the "use constant"
+	 * pragma for constants
+	 */
+	private boolean optionPragmaUseConstant()
+	{
+		if (pragmaUseConstant == null) {
+			pragmaUseConstant = (boolean)getPluginOption("pragmaUseConstant", false);
+		}
+		return pragmaUseConstant;
+	}
+	// END KGU#1143 2024-04-02
 
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
 	/**
@@ -325,7 +342,13 @@ public class PerlGenerator extends Generator {
 			String varName = varNames.get(i);
 			// Is it an enumeration constant? Then don't prefix it
 			String constVal = root.constants.get(varName);
-			if (constVal != null && constVal.startsWith(":") && constVal.contains("€")) {
+			// START KGU#1143 2024-04-02: Issue #1156/2 if constant pragma is used, don't prefix
+			//if (constVal != null && constVal.startsWith(":") && constVal.contains("€")) {
+			if (constVal != null && (
+					constVal.startsWith(":") && constVal.contains("€")
+					|| optionPragmaUseConstant()
+					)) {
+			// END KGU#1143 2024-04-02
 				//tokens.replaceAll(varName, constVal.substring(1, constVal.indexOf('€')) + '_' + varName);
 				continue;
 			}
@@ -565,10 +588,10 @@ public class PerlGenerator extends Generator {
 			{
 				String line = lines.get(i);
 				boolean isAsgn = Instruction.isAssignment(line);
-				// START KGU#1144 2024-04-02 Bugfx #1156: typed constants caused error
+				// START KGU#1143 2024-04-02 Bugfx #1156: typed constants caused error
 				//boolean isDecl = Instruction.isDeclaration(line);
 				boolean isDecl = Instruction.isDeclaration(line, true);
-				// END KGU#1144 2024-04-02
+				// END KGU#1143 2024-04-02
 				// START KGU#653 2019-02-15: Enh. #680 - input with several items...
 				StringList inputItems = Instruction.getInputItems(line);
 				if (inputItems != null && inputItems.count() > 2) {
@@ -607,6 +630,12 @@ public class PerlGenerator extends Generator {
 					StringList tokens = Element.splitLexically(line, true);
 					tokens.removeAll(" ");
 					Element.unifyOperators(tokens, true);
+					// START KGU#1143 2024-04-02 Bugfix #1156/2 special constant handling
+					if (optionPragmaUseConstant() && tokens.get(0).equalsIgnoreCase("const")) {
+						// Constant definition will already have been handed in the preamble
+						continue;
+					}
+					// END KGU#1143 2024-04-02
 					int posAsgn = tokens.indexOf("<-");
 					String var = Instruction.getAssignedVarname(tokens.subSequence(0, posAsgn), true);
 					StringList expr = tokens.subSequence(posAsgn+1, tokens.count());
@@ -1342,6 +1371,16 @@ public class PerlGenerator extends Generator {
 		//	}
 		//}
 		// END KGU#375 2019-11-19
+		// START KGU#1143 2024-04-02: Bugfix #1156/2 Special constant handling
+		if (optionPragmaUseConstant()) {
+			String prefix = _indent + "use constant ";
+			for (Entry<String, String> entry: _root.constants.entrySet()) {
+				if (!entry.getValue().startsWith(":")) {
+					code.add(prefix + entry.getKey() + " => " + this.transform(entry.getValue()) + ";");
+				}
+			}
+		}
+		// END KGU#1143 2024-04-02
 		for (int v = 0; v < _varNames.count(); v++) {
 			String varName = _varNames.get(v);
 			TypeMapEntry typeEntry = this.typeMap.get(varName);
@@ -1349,7 +1388,10 @@ public class PerlGenerator extends Generator {
 			//String prefix = (typeEntry != null && typeEntry.isArray()) ? "@" : "$";
 			//code.add(_indent + "my " + prefix + varName + ";");
 			String constVal = _root.constants.get(varName);
-			if (constVal == null || !constVal.startsWith(":")) {
+			// START KGU#1143 2024-04-02: Bugfix #1156/2 Special constant handling
+			//if (constVal == null || !constVal.startsWith(":")) {
+			if (constVal == null || !constVal.startsWith(":") && !optionPragmaUseConstant()) {
+			// END KGU#1143 2024-04-02
 				String prefix = (typeEntry != null && typeEntry.isArray()) ? "@" : "$";
 				code.add(_indent + "my " + prefix + varName + ";");
 			}

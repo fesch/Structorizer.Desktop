@@ -81,7 +81,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2023-10-18      Bugfix #1099: Handling of constants was not correct.
  *      Kay Gürtzig             2023-10-04      Bugfix #1093 Undue final return 0 on function diagrams
  *      Kay Gürtzig             2024-03-19      Issue #1148: Special indentation for "if else if" chains
- *      Kay Gürtzig             2024-04-02      Bugfix #1156: Wrong handling of typed constants
+ *      Kay Gürtzig             2024-04-02      Bugfix #1156: Handling of typed constants rectified
  *
  ******************************************************************************************************
  *
