@@ -220,9 +220,8 @@ def drawBarChart(values, nValues) :
     for k in range(1, nValues-1+1, 1):
         if (values[k] > values[kMax]):
             kMax = k
-        else:
-            if (values[k] < values[kMin]):
-                kMin = k
+        elif (values[k] < values[kMin]):
+            kMin = k
 
     valMin = values[kMin]
     valMax = values[kMax]
@@ -238,7 +237,7 @@ def drawBarChart(values, nValues) :
 
     # draw coordinate axes 
     turtle.goto(1, ySize - 1)
-    col5e35786 = turtle.pencolor(); turtle.pencolor("#000000")
+    col30d2c4e0 = turtle.pencolor(); turtle.pencolor("#000000")
     turtle.forward(ySize -1)
     turtle.penup()
     turtle.backward(yAxis)
@@ -247,7 +246,7 @@ def drawBarChart(values, nValues) :
     turtle.forward(xSize -1)
     turtle.penup()
     turtle.backward(xSize-1)
-    turtle.pencolor(col5e35786)
+    turtle.pencolor(col30d2c4e0)
     stripeWidth = xSize / nValues
     for k in range(0, nValues-1+1, 1):
         stripeHeight = values[k] * 1.0 / yScale
@@ -258,7 +257,7 @@ def drawBarChart(values, nValues) :
         elif ((k % 3) == 2) :
             turtle.pencolor(0, 0, 255)
 
-        cola86095b = turtle.pencolor(); turtle.pencolor("#000000")
+        col756e41cf = turtle.pencolor(); turtle.pencolor("#000000")
         turtle.fd(1)
         turtle.left(90)
         turtle.pendown()
@@ -269,7 +268,7 @@ def drawBarChart(values, nValues) :
         turtle.forward(stripeHeight)
         turtle.left(90)
         turtle.penup()
-        turtle.pencolor(cola86095b)
+        turtle.pencolor(col756e41cf)
 
 # Writes a text file with name fileName, consisting of count lines, each containing 
 # a random number in the range from minVal to maxVal (both inclusive). 
@@ -610,9 +609,8 @@ if (fileNo > 0):
         for i in range(1, nObtained-1+1, 1):
             if (numberArray[i] < min):
                 min = numberArray[i]
-            else:
-                if (numberArray[i] > max):
-                    max = numberArray[i]
+            elif (numberArray[i] > max):
+                max = numberArray[i]
 
         # Interval width 
         width = (max - min) * 1.0 / nIntervals

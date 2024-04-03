@@ -101,6 +101,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2023-09-28      Bugfix #1092: Sensible export of alias type definitions enabled
  *      Kay Gürtzig         2023-11-08      Bugfix #1109: generateCode(Jump) revised for throw
  *      Kay Gürtzig         2024-04-02      Bugfix #1155: Risk of stack overflow on type conversion averted
+ *      Kay Gürtzig         2024-04-03      Issue #1148: Optimised code generation for "if else if" chains
  *
  ******************************************************************************************************
  *
@@ -153,6 +154,7 @@ import lu.fisch.structorizer.parsers.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Stack;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
@@ -1029,6 +1031,56 @@ public class PasGenerator extends Generator
 		// END KGU 2014-11-16
 
 		//String condition = BString.replace(transform(_alt.getText().getText()),"\n","").trim();
+		// START KGU#311 2016-12-26: Enh. #314 File API support
+		//String condition = transform(_alt.getUnbrokenText().getLongString()).trim();
+		String condition = prepareCondition(_alt, _indent);
+		// END KGU#311 2016-12-26
+		addCode("if " + condition + " then", _indent, isDisabled);
+		addCode("begin", _indent, isDisabled);
+		generateCode(_alt.qTrue,_indent+this.getIndent());
+		// START KGU#1137 2024-04-03: Issue #1148 We ought to make use of ELSE IF if possible
+		Element ele = null;
+		// We must cater for the code mapping of the chained sub-alternatives
+		Stack<Element> processedAlts = new Stack<Element>();
+		Stack<Integer> storedLineNos = new Stack<Integer>();
+		while (_alt.qFalse.getSize() == 1 
+				&& (ele = _alt.qFalse.getElement(0)) instanceof Alternative) {
+			addCode("end;", _indent, isDisabled);
+			_alt = (Alternative)ele;
+			// We must care for the code mapping explicitly here since we circumvent generateCode()
+			markElementStart(_alt, _indent, processedAlts, storedLineNos);
+			appendComment(_alt, _indent);
+			condition = prepareCondition(_alt, _indent);
+			addCode("else if "+ condition + " then",
+					_indent, ele.isDisabled(false));
+			addCode("begin", _indent, ele.isDisabled(false));
+			generateCode(_alt.qTrue, _indent+this.getIndent());
+		}
+		// END KGU#1137 2024-04-03
+		if(_alt.qFalse.getSize()!=0)
+		{
+			addCode("end", _indent, _alt.isDisabled(false));
+			addCode("else", _indent, _alt.isDisabled(false));
+			addCode("begin", _indent, _alt.isDisabled(false));
+			generateCode(_alt.qFalse, _indent + this.getIndent());
+		}
+		addCode("end;", _indent, isDisabled);
+		// START KGU#1137 2024-04-03: Issue #1148 Accomplish the code map for the processed child alternatives
+		markElementEnds(processedAlts, storedLineNos);
+		// END KGU#1137 2024-04-03
+	}
+
+	// START KGU#1137 2024-04-03: Issue #1148 condition preparation extracted
+	/**
+	 * Helper method for {@link #generateCode(Alternative, String)}. Transforms
+	 * the condition of Alternative {@code _alt} and possibly adds an extra
+	 * comment if the condition refers to a file variable.
+	 * 
+	 * @param _alt - the {@link Alternative} the condition of which is needed
+	 * @param _indent - the current indentation (for the comment insertion)
+	 * @return the transformed condition expression
+	 */
+	private String prepareCondition(Alternative _alt, String _indent) {
 		String condition = transform(_alt.getUnbrokenText().getLongString()).trim();
 		// START KGU#311 2016-12-26: Enh. #314 File API support
 		if (this.usesFileAPI) {
@@ -1040,20 +1092,12 @@ public class PasGenerator extends Generator
 			}
 		}
 		// END KGU#311 2016-12-26
-		if(!condition.startsWith("(") && !condition.endsWith(")")) condition="("+condition+")";
-
-		addCode("if "+condition+" then", _indent, isDisabled);
-		addCode("begin", _indent, isDisabled);
-		generateCode(_alt.qTrue,_indent+this.getIndent());
-		if(_alt.qFalse.getSize()!=0)
-		{
-			addCode("end", _indent, isDisabled);
-			addCode("else", _indent, isDisabled);
-			addCode("begin", _indent, isDisabled);
-			generateCode(_alt.qFalse,_indent+this.getIndent());
+		if (!condition.startsWith("(") && !condition.endsWith(")")) {
+			condition = "(" + condition + ")";
 		}
-		addCode("end;", _indent, isDisabled);
+		return condition;
 	}
+	// END KGU#1137 2024-04-03
 
 	@Override
 	protected void generateCode(Case _case, String _indent)
@@ -1326,9 +1370,9 @@ public class PasGenerator extends Generator
 
 		//String condition = BString.replace(transform(_while.getUnbrokenText().getText()),"\n","").trim();
 		String condition = transform(_while.getUnbrokenText().getLongString()).trim();
-		if(!condition.startsWith("(") && !condition.endsWith(")")) condition="("+condition+")";
+		if (!condition.startsWith("(") && !condition.endsWith(")")) condition = "("+condition+")";
 
-		addCode("while "+condition+" do", _indent, isDisabled);
+		addCode("while " + condition + " do", _indent, isDisabled);
 		addCode("begin", _indent, isDisabled);
 		generateCode(_while.q,_indent+this.getIndent());
 		addCode("end;", _indent, isDisabled);

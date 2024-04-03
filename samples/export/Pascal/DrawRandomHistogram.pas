@@ -153,13 +153,10 @@ begin
     if (values[k] > values[kMax]) then
     begin
       kMax := k;
-    end
-    else
+    end;
+    else if (values[k] < values[kMin]) then
     begin
-      if (values[k] < values[kMin]) then
-      begin
-        kMin := k;
-      end;
+      kMin := k;
     end;
   end;
   valMin := values[kMin];
@@ -302,13 +299,10 @@ begin
         if (numberArray[i] < min) then
         begin
           min := numberArray[i];
-        end
-        else
+        end;
+        else if (numberArray[i] > max) then
         begin
-          if (numberArray[i] > max) then
-          begin
-            max := numberArray[i];
-          end;
+          max := numberArray[i];
         end;
       end;
       { Interval width }

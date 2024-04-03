@@ -4,7 +4,7 @@ rem 1. Set the path of the Structorizer.bat file in the environment variable STR
 rem 2. Make sure that diagrdir is correctly defined.
 rem 3. Specify the appropriate inifile (if the given ini files are not appropriate)
 rem 4. The resulting files will occur in the diagrdir as well and ought to be moved to the
-rem    appropriate target directory (i.e. .\export_batch
+rem    appropriate target directory (i.e. .\export_batch\Pascal for .pas files etc.)
 set diagrdir=..\arrz
 rem set inifile=%USER_PROFILE%\.structorizer\structorizer.ini
 set inifile=export_basic0.ini
