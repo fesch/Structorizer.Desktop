@@ -25,7 +25,7 @@ Known issues (also see https://github.com/fesch/Structorizer.Desktop/issues):
 - ARM export is still experimental and relies on a specific and very restricted
   syntax for the element contents in order to produce meaningful results.
 
-Current development version 3.32-20 (2024-04-03)
+Current development version 3.32-20 (2024-04-08)
 - 01: Bugfix #987: Duplicate subroutine comment export by Pascal generator <2>
 - 01: Bugfix #988: Syntax error in Structorizer.bat and Arranger.bat fixed <2>
 - 01: Bugfix #989: Expressions in EXIT elements (e.g. return) were forgotten
@@ -234,6 +234,8 @@ Current development version 3.32-20 (2024-04-03)
 - 20: Bugfix #1155 Stack overflow risk on Pascal export / code preview <2>
 - 20: bugfix #1156 Defective export of typed constants to Perl and PHP code,
       introducing a new Perl-specific export option (pragma use constant) <2>
+- 20: Issue #1157 More verbose explanation of code import errors because of
+      trailing comments (code error.group_runaway) [K.-P. Reimers]2
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>
