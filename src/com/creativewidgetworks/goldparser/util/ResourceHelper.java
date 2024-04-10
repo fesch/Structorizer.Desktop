@@ -51,7 +51,7 @@ public class ResourceHelper {
             URL resource = resources.nextElement();
             String path = URLDecoder.decode(resource.getFile(), "UTF-8");
             jarFile = getJarFile(path);
-            if (jarFile != null) {                
+            if (jarFile != null) {
                 break;
             }
             dirs.add(new File(path));
@@ -152,10 +152,10 @@ public class ResourceHelper {
         if (filePath != null && filePath.contains(".jar!")) {
             filePath = filePath.replaceAll("%20", " ");
             filePath = filePath.substring((filePath.indexOf("jar:file:/") + 9), filePath.indexOf('!'));
-            JarFile jar = new JarFile(filePath);            
+            JarFile jar = new JarFile(filePath);
             Manifest mf = jar.getManifest();
             if (mf != null) {
-                return jar;                
+                return jar;
             } 
             jar.close();
         }
