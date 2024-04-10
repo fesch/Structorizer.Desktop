@@ -3,7 +3,9 @@
 
 	<plugin title="Pascal / Delphi" class="lu.fisch.structorizer.generators.PasGenerator"       icon="" case_matters="0" reserved_words="and,array,begin,case,const,div,do,downto,else,end,file,for,function,goto,if,in,label,message,mod,nil,not,of,or,packed,procedure,program,record,repeat,set,shl,shr,then,to,type,until,var,while,with" />
 	<plugin title="Oberon" 			class="lu.fisch.structorizer.generators.OberonGenerator"    icon="" reserved_words="ARRAY,BEGIN,BY,CASE,CONST,DIV,DO,ELSE,ELSIF,END,EXIT,FOR,IF,IMPORT,IN,IS,LOOP,MOD,MODULE,NIL,OF,OR,POINTER,PROCEDURE,RECORD,REPEAT,RETURN,THEN,TO,TYPE,UNTIL,VAR,WHILE,WITH,BOOLEAN,CHAR,FALSE,HALT,INTEGER,LONG,LONGINT,LONGREAL,NEW,REAL,SET,SHORT,SHORTINT,TRUE" />
-	<plugin title="Perl" 			class="lu.fisch.structorizer.generators.PerlGenerator"      icon="" case_matters="0" reserved_words="and,cmp,continue,do,else,elsif,eq,exp,for,foreach,ge,gt,if,le,lock,lt,ne,no,or,package,qq,qr,qw,qx,sub,tr,unless,until,while,xor" />
+	<plugin title="Perl" 			class="lu.fisch.structorizer.generators.PerlGenerator"      icon="" case_matters="0" reserved_words="and,cmp,continue,do,else,elsif,eq,exp,for,foreach,ge,gt,if,le,lock,lt,ne,no,or,package,qq,qr,qw,qx,sub,tr,unless,until,while,xor">
+		<option type="Boolean" name="pragmaUseConstant" title="Export constants via pragma use constant" help="Translates constant definitions into 'use constant' lines rather than to produce simple variable assignments." default="false" />
+	</plugin>
 	<plugin title="ksh" 			class="lu.fisch.structorizer.generators.KSHGenerator"       icon="" reserved_words="if,then,else,elif,fi,select,case,in,esac,for,do,done,while,until,function,return" />
 	<plugin title="bash" 			class="lu.fisch.structorizer.generators.BASHGenerator"      icon="" reserved_words="if,then,else,elif,fi,select,case,in,esac,for,do,done,while,until,function,return" />
 	<plugin title="C" 				class="lu.fisch.structorizer.generators.CGenerator"         icon="" reserved_words="auto,break,case,char,const,continue,default,do,double,else,enum,extern,float,for,goto,if,int,long,register,return,short,signed,sizeof,static,struct,switch,typedef,union,unsigned,void,volatile,while" />

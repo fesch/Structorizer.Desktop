@@ -100,6 +100,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2021-12-05      Bugfix #1024: Precautions against defective record initializers
  *      Kay Gürtzig         2023-09-28      Bugfix #1092: Sensible export of alias type definitions enabled
  *      Kay Gürtzig         2023-11-08      Bugfix #1109: generateCode(Jump) revised for throw
+ *      Kay Gürtzig         2024-04-02      Bugfix #1155: Risk of stack overflow on type conversion averted
+ *      Kay Gürtzig         2024-04-03      Issue #1148: Optimised code generation for "if else if" chains
  *
  ******************************************************************************************************
  *
@@ -152,6 +154,7 @@ import lu.fisch.structorizer.parsers.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Stack;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
@@ -476,19 +479,39 @@ public class PasGenerator extends Generator
 	// END KGU#16 2015-11-30	
 
 	// START KGU#140 2017-01-31: Enh. #113: Advanced array transformation
+	/**
+	 * Helper method for {@link #transformType(String, String)} to achieve a meaningful
+	 * type description for Pascal from an apparent array type specification.
+	 * 
+	 * @param _typeDescr - the type specification from a diagram element
+	 * @return ideally a Pascal type specification semantically equivalent to
+	 *    {@code _typeDescr}
+	 */
 	protected String transformArrayDeclaration(String _typeDescr)
 	{
-		if (_typeDescr.toLowerCase().startsWith("array") || _typeDescr.endsWith("]")) {
+		// START KGU#1141 2024-03-29: Bugfix #1155 Risk of endless recursion e.g. with ArrayList<...>
+		//if (_typeDescr.toLowerCase().startsWith("array") || _typeDescr.endsWith("]")) {
+		if (_typeDescr.toLowerCase().startsWith("array") 
+				&& Element.splitLexically(_typeDescr, true).get(0).equalsIgnoreCase("array")
+				|| _typeDescr.endsWith("]")) {
+		// END KGU#1141 2024-03-29
 			// TypeMapEntries are really good at analysing array definitions
 			TypeMapEntry typeInfo = new TypeMapEntry(_typeDescr, null, null, null, 0, false, true);
-			_typeDescr = transformTypeFromEntry(typeInfo, null, true);
+			// START KGU#1141 2024-04-02: Bugfix #1155 Avoid endless recursion if no array is detected
+			//_typeDescr = transformTypeFromEntry(typeInfo, null, true);
+			if (typeInfo != null && typeInfo.isArray()) {
+				_typeDescr = transformTypeFromEntry(typeInfo, null, true);
+			}
+			// END KGU#1141 2024-04-02
 		}
 		return _typeDescr;
 	}
 
 	/**
 	 * Creates a type description suited for Pascal code from the given TypeMapEntry {@code typeInfo}
-	 * @param typeInfo - the defining or derived TypeMapInfo of the type 
+	 * @param typeInfo - the defining or derived TypeMapInfo of the type
+	 * @param difiningWithin - a possible outer type context
+	 * @param preferName - whether the type name is to be preferred over the structure
 	 * @return a String suited as Pascal type description in declarations etc. 
 	 */
 	@Override
@@ -1008,6 +1031,56 @@ public class PasGenerator extends Generator
 		// END KGU 2014-11-16
 
 		//String condition = BString.replace(transform(_alt.getText().getText()),"\n","").trim();
+		// START KGU#311 2016-12-26: Enh. #314 File API support
+		//String condition = transform(_alt.getUnbrokenText().getLongString()).trim();
+		String condition = prepareCondition(_alt, _indent);
+		// END KGU#311 2016-12-26
+		addCode("if " + condition + " then", _indent, isDisabled);
+		addCode("begin", _indent, isDisabled);
+		generateCode(_alt.qTrue,_indent+this.getIndent());
+		// START KGU#1137 2024-04-03: Issue #1148 We ought to make use of ELSE IF if possible
+		Element ele = null;
+		// We must cater for the code mapping of the chained sub-alternatives
+		Stack<Element> processedAlts = new Stack<Element>();
+		Stack<Integer> storedLineNos = new Stack<Integer>();
+		while (_alt.qFalse.getSize() == 1 
+				&& (ele = _alt.qFalse.getElement(0)) instanceof Alternative) {
+			addCode("end;", _indent, isDisabled);
+			_alt = (Alternative)ele;
+			// We must care for the code mapping explicitly here since we circumvent generateCode()
+			markElementStart(_alt, _indent, processedAlts, storedLineNos);
+			appendComment(_alt, _indent);
+			condition = prepareCondition(_alt, _indent);
+			addCode("else if "+ condition + " then",
+					_indent, ele.isDisabled(false));
+			addCode("begin", _indent, ele.isDisabled(false));
+			generateCode(_alt.qTrue, _indent+this.getIndent());
+		}
+		// END KGU#1137 2024-04-03
+		if(_alt.qFalse.getSize()!=0)
+		{
+			addCode("end", _indent, _alt.isDisabled(false));
+			addCode("else", _indent, _alt.isDisabled(false));
+			addCode("begin", _indent, _alt.isDisabled(false));
+			generateCode(_alt.qFalse, _indent + this.getIndent());
+		}
+		addCode("end;", _indent, isDisabled);
+		// START KGU#1137 2024-04-03: Issue #1148 Accomplish the code map for the processed child alternatives
+		markElementEnds(processedAlts, storedLineNos);
+		// END KGU#1137 2024-04-03
+	}
+
+	// START KGU#1137 2024-04-03: Issue #1148 condition preparation extracted
+	/**
+	 * Helper method for {@link #generateCode(Alternative, String)}. Transforms
+	 * the condition of Alternative {@code _alt} and possibly adds an extra
+	 * comment if the condition refers to a file variable.
+	 * 
+	 * @param _alt - the {@link Alternative} the condition of which is needed
+	 * @param _indent - the current indentation (for the comment insertion)
+	 * @return the transformed condition expression
+	 */
+	private String prepareCondition(Alternative _alt, String _indent) {
 		String condition = transform(_alt.getUnbrokenText().getLongString()).trim();
 		// START KGU#311 2016-12-26: Enh. #314 File API support
 		if (this.usesFileAPI) {
@@ -1019,20 +1092,12 @@ public class PasGenerator extends Generator
 			}
 		}
 		// END KGU#311 2016-12-26
-		if(!condition.startsWith("(") && !condition.endsWith(")")) condition="("+condition+")";
-
-		addCode("if "+condition+" then", _indent, isDisabled);
-		addCode("begin", _indent, isDisabled);
-		generateCode(_alt.qTrue,_indent+this.getIndent());
-		if(_alt.qFalse.getSize()!=0)
-		{
-			addCode("end", _indent, isDisabled);
-			addCode("else", _indent, isDisabled);
-			addCode("begin", _indent, isDisabled);
-			generateCode(_alt.qFalse,_indent+this.getIndent());
+		if (!condition.startsWith("(") && !condition.endsWith(")")) {
+			condition = "(" + condition + ")";
 		}
-		addCode("end;", _indent, isDisabled);
+		return condition;
 	}
+	// END KGU#1137 2024-04-03
 
 	@Override
 	protected void generateCode(Case _case, String _indent)
@@ -1305,9 +1370,9 @@ public class PasGenerator extends Generator
 
 		//String condition = BString.replace(transform(_while.getUnbrokenText().getText()),"\n","").trim();
 		String condition = transform(_while.getUnbrokenText().getLongString()).trim();
-		if(!condition.startsWith("(") && !condition.endsWith(")")) condition="("+condition+")";
+		if (!condition.startsWith("(") && !condition.endsWith(")")) condition = "("+condition+")";
 
-		addCode("while "+condition+" do", _indent, isDisabled);
+		addCode("while " + condition + " do", _indent, isDisabled);
 		addCode("begin", _indent, isDisabled);
 		generateCode(_while.q,_indent+this.getIndent());
 		addCode("end;", _indent, isDisabled);

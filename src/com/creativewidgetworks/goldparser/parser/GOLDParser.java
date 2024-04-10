@@ -3,8 +3,8 @@
  *
  *      Revision List
  *
- *      Author          Date			Description
- *      ------			----			-----------
+ *      Author          Date            Description
+ *      ------          ----            -----------
  *      Kay Gürtzig     2018-09-18      Raw types (Class etc.) replaced by type inference, unused
  *                                      import disabled
  *      
@@ -354,14 +354,14 @@ public class GOLDParser extends Parser {
         
         boolean done = false;
         while (!done) { 
-            ParseMessage response = parse();      
+            ParseMessage response = parse();
             switch (response) {
                 case ACCEPT:
                     done = accept = processAccept();
                     break;
                     
                 case GROUP_ERROR:
-                    done = processGroupError();                 
+                    done = processGroupError();
                     break;
                     
                 case INTERNAL_ERROR:
@@ -369,7 +369,7 @@ public class GOLDParser extends Parser {
                     break;
                     
                 case LEXICAL_ERROR:
-                    done = processLexicalError();                 
+                    done = processLexicalError();
                     break;
                     
                 case NOT_LOADED_ERROR:

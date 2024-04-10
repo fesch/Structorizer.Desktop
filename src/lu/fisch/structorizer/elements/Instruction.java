@@ -76,7 +76,9 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2021-09-28      Issue #1091: Type definition detection mended (aliases and array types)
  *      Kay Gürtzig     2023-10-10/13   Issue #980: Declaration-related stuff revised
  *      Kay Gürtzig     2023-10-15      Bugfix #1096: More precise type and C-style declaration handling
- *      Kay Gürtzig     2024-03-15      Bugfix #1140: Function syntax check ignored the 'qualified' argument 
+ *      Kay Gürtzig     2024-03-15      Bugfix #1140: Function syntax check ignored the 'qualified' argument
+ *      Kay Gürtzig     2024-03-22      Issue #1154: Drawing of the hatch delegated to the disabled elements
+ *      Kay Gürtzig     2024-04-02      Bugfix #1156: getAssignedVarName used to return null on typed constant definitions 
  *
  ******************************************************************************************************
  *
@@ -405,7 +407,10 @@ public class Instruction extends Element {
 			// START KGU#277 2016-10-13: Enh. #270
 			if (_element.isDisabled(true)) {
 //				canvas.hatchRect(_top_left, 5, 10);
-				canvas.hatchRect(myrect, 5, 10);
+				// START KGU#1142 2024-03-22: Issue #1154 Allow element-specific adaptation
+				//canvas.hatchRect(myrect, 5, 10);
+				_element.drawHatched(myrect, canvas);
+				// END KGU#1142 2024-03-22
 			}
 			// END KGU#277 2016-10-13
 		}
@@ -869,15 +874,38 @@ public class Instruction extends Element {
 	
 	// START KGU#322 2016-07-06: Enh. #335
 	/**
-	 * Returns true if the current line of code is a variable declaration of one of the following types:<br/>
+	 * Returns true if the current line of code is a variable declaration of one of
+	 * the following types:<br/>
 	 * a) var &lt;id&gt; {, &lt;id&gt;} : &lt;type&gt; [&lt;- &lt;expr&gt;]<br/>
 	 * b) dim &lt;id&gt; {, &lt;id&gt;} as &lt;type&gt; [&lt;- &lt;expr&gt;]<br/>
 	 * c) &lt;type&gt; &lt;id&gt; &lt;- &lt;expr&gt;
 	 * 
 	 * @param line - String comprising one line of code
 	 * @return true iff line is of one of the forms a), b), c)
+	 * 
+	 * @see #isDeclaration(String, boolean)
 	 */
 	public static boolean isDeclaration(String line)
+	// START KGU#1143 2024-04-02: Issue #1156 An extended check for typed constants was useful
+	{
+		return isDeclaration(line, false);
+	}
+	/**
+	 * Returns true if the current line of code is a variable declaration of one of
+	 * the following types, where d) is only considered if {@code constantToo} is
+	 * {@code true}:<br/>
+	 * a) var &lt;id&gt; {, &lt;id&gt;} : &lt;type&gt; [&lt;- &lt;expr&gt;]<br/>
+	 * b) dim &lt;id&gt; {, &lt;id&gt;} as &lt;type&gt; [&lt;- &lt;expr&gt;]<br/>
+	 * c) &lt;type&gt; &lt;id&gt; &lt;- &lt;expr&gt;<br/>
+	 * d) const &lt;id&gt; : &lt;type&gt; &lt;- &lt;expr&gt;
+	 * 
+	 * @param line - String comprising one line of code
+	 * @param constantToo - whether type d) shall also lead to a {@code true} result
+	 * @return true iff line is of one of the forms a), b), c) - or d) if
+	 *    {@code constantToo} is {@code true}.
+	 */
+	public static boolean isDeclaration(String line, boolean constantToo)
+	// END KGU#1143 2024-04-02
 	{
 		StringList tokens = Element.splitLexically(line, true);
 		unifyOperators(tokens, true);
@@ -889,69 +917,31 @@ public class Instruction extends Element {
 		// END KGU#1089 2023-10-13
 		int posAsgn = tokens.indexOf("<-");
 		boolean typeC = false;
+		// START KGU#1143 2024-04-02: Issue #1156 extended support for typed constants
+		boolean typeD = false;
+		// END KGU#1143 2024-04-02
 		if (posAsgn > 1) {
 			tokens = tokens.subSequence(0, posAsgn);
 			tokens.removeAll(" ");
-//			int posLBrack = tokens.indexOf("[");
-//			// START KGU#1009 2021-11-02: Bugfix #1014: We must handle java array types, too
-//			//if (posLBrack > 0 && posLBrack < tokens.lastIndexOf("]")) {
-//			//	tokens = tokens.subSequence(0, posLBrack);
-//			//}
-//			int posRBrack = tokens.lastIndexOf("]");
-//			if (posLBrack > 0 && posLBrack < posRBrack) {
-//				// Remove all brackets
-//				// START KGU#1090 2023-10-15: Bugfix #1096
-//				//if (posRBrack < posAsgn-1
-//				//		&& tokens.concatenate(null, posLBrack+1, posRBrack).trim().isEmpty()
-//				//		&& Function.testIdentifier(tokens.concatenate(null, posRBrack+1).trim(), true, null)) {
-//				//	tokens.remove(posLBrack, posRBrack+1);
-//				//}
-//				//else {
-//				//	tokens = tokens.subSequence(0, posLBrack);
-//				//}
-//				tokens = Element.coagulateSubexpressions(tokens);
-//				for (int i = tokens.count()-1; i >= 0; i--) {
-//					if (tokens.get(i).startsWith("[")) {
-//						tokens.remove(i);
-//					}
-//				}
-//				tokens = Element.splitLexically(tokens.concatenate(null), true);
-//				// END KGU#1090 2023-10-15
-//			}
-//			// END KGU#1009 2021-11-02
-//			// START KGU#388 2017-09-27: Enh. #423 there might be a qualified name
-//			if (tokens.contains(".")) {
-//				int i = 1;
-//				// Remove component accessors (reduce qualified names to the base identifier)
-//				while (i < tokens.count() - 1) {
-//					if (tokens.get(i).equals(".") && Function.testIdentifier(tokens.get(i-1), false, null) && Function.testIdentifier(tokens.get(i+1), false, null)) {
-//						tokens.remove(i, i+2);
-//					}
-//					// START KGU#553 2018-07-12: Bugfix #557 We could get stuck in an endless loop here
-//					else {
-//						break;
-//					}
-//					// END KGU#553 2018-07-12
-//				}
-//			}
-//			// END KGU#388 2017-09-27
-//			// So, now if more than one identifier remains then it must be a C declaration
-//			// START KGU#1090 2023-10-15 Bugfix #1096
-//			//typeC = tokens.count() > 1;
-//			int nIds = 0;
-//			for (int i = 0; i < tokens.count() && !typeC; i++) {
-//				if (Function.testIdentifier(tokens.get(i), false, null)
-//						&& (i > 0 || !tokens.get(i).equalsIgnoreCase("const"))
-//						&& (++nIds > 1))
-//					typeC = true;
-//			}
-//			// END KGU#1090 2023-10-15
 			typeC = !Instruction.getDeclaredVariables(tokens).isEmpty();
+			// START KGU#1143 2024-04-02: Issue #1156 extended support for typed constants
+			typeD = constantToo
+					&& tokens.indexOf("const", false) == 0
+					&& tokens.indexOf(":") == 2
+					&& Function.testIdentifier(tokens.get(1), false, null);
+			// END KGU#1143 2024-04-02
 		}
-		return typeA || typeB || typeC;
+		// START KGU#1143 2024-04-02: Issue #1156 extended support for typed constants
+		//return typeA || typeB || typeC;
+		return typeA || typeB || typeC || typeD;
+		// END KGU#1143 2024-04-02
 	}
-	/** @return true if all non-empty lines are declarations
-	 * @see #isDeclaration(String) */
+	/**
+	 * @return {@code true} if all non-empty lines are declarations
+	 * 
+	 * @see #isDeclaration(String)
+	 * @see #isDeclaration(String, boolean)
+	 */
 	public boolean isDeclaration()
 	{
 		boolean isDecl = true;
@@ -968,8 +958,13 @@ public class Instruction extends Element {
 		// END KGU#413 2017-06-09
 		return isDecl;
 	}
-	/** @return true if at least one line of {@code this} complies to {@link #isDeclaration(String)}
-	 * @see #isDeclaration(String) */
+	/**
+	 * @return {@code true}  if at least one line of {@code this} complies to
+	 * {@link #isDeclaration(String)}
+	 * 
+	 * @see #isDeclaration(String)
+	 * @see #isDeclaration(String, boolean)
+	 */
 	public boolean hasDeclarations()
 	{
 		boolean hasDecl = false;
@@ -992,8 +987,9 @@ public class Instruction extends Element {
 	/**
 	 * Returns the list of variable names potentially declared in the line
 	 * represented by the token list {@code _tokens}. This is either the list
-	 * of names between a var/: or dim/as pair (Pascal style) or the names
-	 * of variables in a potential C/Java-style declaration.<br/>
+	 * of names between a {@code var}/{@code :} or {@code dim}/{@code as}
+	 * pair (Pascal/BASIC style) or the names of variables in a potential
+	 * C/Java-style declaration.<br/>
 	 * In a C/Java-style declaration, the type specification is assumed to
 	 * start the line. It may consist of one or more names (id syntax),
 	 * followed by zero or more index brackets. Type constructions like
@@ -1277,6 +1273,7 @@ public class Instruction extends Element {
 	/**
 	 * Checks whether the given {@code _line} of code is either a type definition or
 	 * a variable declaration without initialization.
+	 * 
 	 * @param line - instruction line
 	 * @return true if the line is a mere declaration
 	 * @see #isTypeDefinition(String)
@@ -1648,15 +1645,17 @@ public class Instruction extends Element {
 	}
 	
 	/**
-	 * Extracts the target variable name (or the the entire variable expression, see argument
-	 * {@code entireTarget} out of the given blank-free token sequence which may comprise
-	 * the entire line of an assignment or just its left part.<br/>
-	 * The variable name may be qualified, i.e. be a sequence of identifiers separated by dots.
-	 * Possible end-standing indices will not be part of the returned string, e.g. the result for
-	 * {@code foo.bar[i][j]} will be "foo.bar", whereas for a mixed expression {@code foo[i].bar[j]}
+	 * Extracts the target variable (or constant) name (or the the entire variable
+	 * expression, see argument {@code entireTarget} out of the given blank-free token
+	 * sequence which may comprise the entire line of an assignment or just its left
+	 * part.<br/>
+	 * The variable name may be qualified, i.e. be a sequence of identifiers separated
+	 * by dots. Possible end-standing indices will not be part of the returned string,
+	 * e.g. the result for {@code foo.bar[i][j]} will be "foo.bar", whereas for a mixed
+	 * expression {@code foo[i].bar[j]}
 	 * the result would be just "foo".<br/>
-	 * In case of a multi-variable declaration, the result will be {@code null} as a potential
-	 * initialisation would be rejected.
+	 * In case of a multi-variable declaration, the result will be {@code null} as a
+	 * potential initialisation would be rejected.
 	 * 
 	 * @param tokens - unified tokens of an assignment instruction without whitespace (otherwise
 	 *     the result may be nonsense)
@@ -1695,7 +1694,13 @@ public class Instruction extends Element {
 		}
 		// END KGU#388 2017-09-15
 		// START KGU#1089 2023-10-13: Issue #980 Don't return a name in a multi-var declaration
-		if (!tokens.isEmpty() && (tokens.get(0).equalsIgnoreCase("var") || tokens.get(0).equalsIgnoreCase("dim"))) {
+		// START KGU#1143 2024-04-02: Bugfix #1156 Typed constants caused null result
+		//if (!tokens.isEmpty() && (tokens.get(0).equalsIgnoreCase("var") || tokens.get(0).equalsIgnoreCase("dim"))) {
+		if (!tokens.isEmpty()
+				&& (tokens.get(0).equalsIgnoreCase("var")
+						|| tokens.get(0).equalsIgnoreCase("dim")
+						|| tokens.get(0).equalsIgnoreCase("const"))) {
+		// END KGU#1143 2024-04-02
 			// This should be the case, otherwise we had a syntax violation here
 			tokens.remove(0);
 			isDecl = true;

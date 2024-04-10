@@ -91,6 +91,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2023-10-04      Bugfix #1093 Undue final return 0 on function diagrams eliminated
  *      Kay Gürtzig             2023-10-12/18   Issue #980 Code generation for multi-variable and array declarations revised
  *      Kay Gürtzig             2023-11-08      Bugfix #1109: generateCode(Jump) revised for throw
+ *      Kay Gürtzig             2024-04-03      Issue #1148: Optimised code generation for "if else if" chains
  *
  ******************************************************************************************************
  *
@@ -133,6 +134,7 @@ package lu.fisch.structorizer.generators;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.Stack;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -752,13 +754,33 @@ public class PythonGenerator extends Generator
 		if (!isParenthesized(condition)) condition = "(" + condition + ")";
 		// END KGU#301 2016-12-01
 
-		addCode("if "+condition+":", _indent, isDisabled);
-		generateCode((Subqueue) _alt.qTrue,_indent + this.getIndent());
-		if(_alt.qFalse.getSize()!=0)
+		addCode("if " + condition + ":", _indent, isDisabled);
+		generateCode((Subqueue) _alt.qTrue, _indent + this.getIndent());
+		// START KGU#1137 2024-04-03: Issue #1148 We ought to make use of ELSE IF if possible
+		Element ele = null;
+		// We must cater for the code mapping of the chained sub-alternatives
+		Stack<Element> processedAlts = new Stack<Element>();
+		Stack<Integer> storedLineNos = new Stack<Integer>();
+		while (_alt.qFalse.getSize() == 1 
+				&& (ele = _alt.qFalse.getElement(0)) instanceof Alternative) {
+			_alt = (Alternative)ele;
+			// We must care for the code mapping explicitly here since we circumvent generateCode()
+			markElementStart(_alt, _indent, processedAlts, storedLineNos);
+			appendComment(_alt, _indent);
+			condition = transform(_alt.getUnbrokenText().getLongString()).trim();
+			if (!isParenthesized(condition)) condition = "(" + condition + ")";
+			addCode("elif "+ condition + ":", _indent, ele.isDisabled(false));
+			generateCode(_alt.qTrue, _indent + this.getIndent());
+		}
+		// END KGU#1137 2024-04-03
+		if (_alt.qFalse.getSize() != 0)
 		{
-			addCode("else:", _indent, isDisabled);
+			addCode("else:", _indent, _alt.isDisabled(false));
 			generateCode((Subqueue) _alt.qFalse, _indent + this.getIndent());
 		}
+		// START KGU#1137 2024-04-03: Issue #1148 Accomplish the code map for the processed child alternatives
+		markElementEnds(processedAlts, storedLineNos);
+		// END KGU#1137 2024-04-03
 		// START KGU#54 2015-10-19: Avoid accumulation of empty lines!
 		//code.add("");
 		if (code.count() > 0 && !code.get(code.count()-1).isEmpty())

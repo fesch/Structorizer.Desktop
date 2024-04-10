@@ -1,3 +1,17 @@
+/*
+ ******************************************************************************************************
+ *
+ *      Revision List
+ *
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Kay Gürtzig     2024-04-10      Bugfix #28 (https://github.com/ridencww/goldengine/issues/28)
+ *                                      Parsing used to fail with error.group_runaway if the file ended
+ *                                      with a line comment since the newlines before the EOF are
+ *                                      suppressed by lookahadDFA().
+ *      
+ ******************************************************************************************************
+ */
 package com.creativewidgetworks.goldparser.engine;
 
 import static com.creativewidgetworks.goldparser.util.FileHelper.toInputStream;
@@ -95,7 +109,7 @@ public class Parser {
     // Fields for Reductions and errors
     private SymbolList expectedSymbols; 
     protected boolean haveReduction;
-    private boolean trimReductions;      
+    private boolean trimReductions;
     
     // Locally used fields
     private boolean tablesLoaded;
@@ -141,7 +155,7 @@ public class Parser {
     private void consumeBuffer(int count) {
         if (count > 0 && count <= lookaheadBuffer.length()) {
             // Adjust position
-        	// START SSO 2017-06-26 - line counts were wrong
+            // START SSO 2017-06-26 - line counts were wrong
             //for (int i = 0; i < count; i++) {
             //    char c = lookaheadBuffer.charAt(i);
             //    if (c == 0x0A) {
@@ -375,7 +389,7 @@ public class Parser {
                         setAttribute(cgt.retrieveString(), cgt.retrieveString());
                         break;
                       
-                    // Counts for Symbols, Rules, DFA, and LALR lists    
+                    // Counts for Symbols, Rules, DFA, and LALR lists
                     case COUNTS:
                     case COUNTS5:
                         symbolTable = new SymbolList(cgt.retrieveInteger());
@@ -391,7 +405,7 @@ public class Parser {
                         }
                         break;
 
-                    // Character set     
+                    // Character set
                     case CHARSET:
                         index = cgt.retrieveInteger();
                         characterSet = new CharacterSet();
@@ -399,7 +413,7 @@ public class Parser {
                         characterSet.add(new CharacterRange(cgt.retrieveString()));
                         break;
                         
-                    // Character range     
+                    // Character range
                     case CHARRANGES:
                         index = cgt.retrieveInteger();
                         cgt.retrieveInteger(); // codepage
@@ -412,9 +426,9 @@ public class Parser {
                             characterSet.add(new CharacterRange(cgt.retrieveInteger(), cgt.retrieveInteger()));
                         }
 
-                        break;                        
+                        break;
                         
-                    // Symbols    
+                    // Symbols
                     case SYMBOL:
                         index = cgt.retrieveInteger();
                         String name = cgt.retrieveString();
@@ -423,7 +437,7 @@ public class Parser {
                         symbolTable.set(index, symbol);
                         break;
 
-                    // Rules (productions)    
+                    // Rules (productions)
                     case RULE:
                         index = cgt.retrieveInteger();
                         int headIndex = cgt.retrieveInteger();
@@ -436,15 +450,15 @@ public class Parser {
                             production.getHandle().add(symbolTable.get(symIndex));
                         }
                         
-                        break;                        
+                        break;
 
                     // Initial states for DFA and LALR
                     case INITIALSTATES:
                         dfa.setInitialState(cgt.retrieveInteger());
                         lrStates.setInitialState(cgt.retrieveInteger());
-                        break;                        
+                        break;
                         
-                    // Groups   
+                    // Groups
                     case GROUP:
                         index = cgt.retrieveInteger();
 
@@ -456,7 +470,7 @@ public class Parser {
                         group.setAdvanceMode(AdvanceMode.getAdvanceMode(cgt.retrieveInteger()));
                         group.setEndingMode(EndingMode.getEndingMode(cgt.retrieveInteger()));
 
-                        cgt.retrieveEntry(); // Reserved                        
+                        cgt.retrieveEntry(); // Reserved
                         
                         // Nesting levels
                         int count = cgt.retrieveInteger();
@@ -723,9 +737,13 @@ public class Parser {
                 inputTokens.push(read);
                 
                 // Handle the case where an unterminated comment block consumes the entire program
-                if (SymbolType.END.equals(read.getType()) && groupStack.size() > 0) {
+                // START KGU#1144 2024-04-10: Bugfix #28 With a line comment, we may tolerate EOF
+                //if (SymbolType.END.equals(read.getType()) && groupStack.size() > 0) {
+                if (SymbolType.END.equals(read.getType()) && groupStack.size() > 0
+                        && !(groupStack.size() == 1 && groupStack.peek().group.getEndingMode() == EndingMode.OPEN)) {
+                // END KGU#1144 2024-04-10
                     // Runaway group
-                    parseMessage = ParseMessage.GROUP_ERROR;                    
+                    parseMessage = ParseMessage.GROUP_ERROR;
                 } else {
                     // A good token was read
                     parseMessage = ParseMessage.TOKEN_READ;
@@ -742,10 +760,14 @@ public class Parser {
                 } else if (SymbolType.ERROR.equals(read.getType())) {
                     parseMessage = ParseMessage.LEXICAL_ERROR;
                     done = true;
-                } else if (SymbolType.END.equals(read.getType()) && groupStack.size() > 0) {
+                // START KGU#1144 2024-04-10: Bugfix #28 With a line comment, we may tolerate EOF
+                //} else if (SymbolType.END.equals(read.getType()) && groupStack.size() > 0) {
+                } else if (SymbolType.END.equals(read.getType()) && groupStack.size() > 0
+                        && !(groupStack.size() == 1 && groupStack.peek().group.getEndingMode() == EndingMode.OPEN)) {
+                // END KGU #1144 2024-04-10
                     // Runaway group
                     parseMessage = ParseMessage.GROUP_ERROR;
-                    done = true;                    
+                    done = true;
                 } else {
                     ParseResult parseResult = parseLALR(read);  // Same method as v1
                     switch (parseResult) {
@@ -859,7 +881,7 @@ public class Parser {
                 break;
                 
             case ERROR:      // fall-through intended
-            case GOTO:       // fall-through intended         
+            case GOTO:       // fall-through intended
             case UNDEFINED:
                 // Syntax error - produce a list of expected symbols to report
                 expectedSymbols.clear();
@@ -938,7 +960,7 @@ public class Parser {
                     read.setData(null);
                 }
                 
-                groupStack.push(read);                
+                groupStack.push(read);
             } else if (groupStack.size() == 0) {
                 // The token is ready to be analyzed
                 consumeBuffer(read.asString().length());
@@ -1038,8 +1060,8 @@ public class Parser {
                     group.setEndingMode(EndingMode.CLOSED);
                     groupTable.add(group);
                     
-                    symbolStart.setGroup(group);                         
-                    symbolEnd.setGroup(group);                         
+                    symbolStart.setGroup(group);
+                    symbolEnd.setGroup(group);
                     
                     break;
                 }
