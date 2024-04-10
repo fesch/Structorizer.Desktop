@@ -948,6 +948,7 @@ public class COBOLGenerator extends Generator {
 		String condition = transform(_alt.getUnbrokenText().getLongString()).trim();
 		
 		// TODO: check for File API needs
+		// TODO: check for #1148 transformation suitability (-> EVALUATE)
 
 		addCode("IF " + condition, _indent, isDisabled);
 		addCode("THEN", _indent, isDisabled);
