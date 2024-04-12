@@ -39,6 +39,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2020-04-19      Declaration part advanced.
  *      Kay Gürtzig             2020-04-22      Bugfix #854: Deterministic topological order of type definitions ensured
  *      Kay Gürtzig             2021-06-07      Issue #67: lineNumering option made plugin-specific
+ *      Kay Gürtzig             2024-04-12      Issue #1148: Special handling of ELSE-IF chains by EVALUATE
  *      
  ******************************************************************************************************
  *
@@ -70,6 +71,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Stack;
 import java.util.Map.Entry;
 
 import lu.fisch.structorizer.elements.Alternative;
@@ -948,18 +950,56 @@ public class COBOLGenerator extends Generator {
 		String condition = transform(_alt.getUnbrokenText().getLongString()).trim();
 		
 		// TODO: check for File API needs
-		// TODO: check for #1148 transformation suitability (-> EVALUATE)
-
-		addCode("IF " + condition, _indent, isDisabled);
-		addCode("THEN", _indent, isDisabled);
-		
-		generateCode(_alt.qTrue, _indent+this.getIndent());
-
-		if (_alt.qFalse.getSize() > 0) {
-			addCode("ELSE", _indent, isDisabled);
-			generateCode(_alt.qFalse, _indent+this.getIndent());
+		// START KGU#1145 2024-04-12: Issue #1148 treatment for ELSE-IF chains
+		final int EVAL_THRESHOLD = 2; // Min. number of else-if to prefer EVALUATE
+		int elseifCount = 0;
+		Alternative alt1 = _alt;
+		while (elseifCount < EVAL_THRESHOLD
+				&& alt1.qFalse.getSize() == 1
+				&& alt1.qFalse.getElement(0) instanceof Alternative) {
+			elseifCount++;
+			alt1 = (Alternative)alt1.qFalse.getElement(0);
 		}
-		addCode("END-IF", _indent, isDisabled);
+		if (elseifCount >= EVAL_THRESHOLD) {
+			addCode("EVAUATE TRUE", _indent, isDisabled);
+			addCode("WHEN " + condition, _indent, isDisabled);
+			generateCode(_alt.qTrue, _indent+this.getIndent());
+			Element ele = null;
+			// We must cater for the code mapping of the chained sub-alternatives
+			Stack<Element> processedAlts = new Stack<Element>();
+			Stack<Integer> storedLineNos = new Stack<Integer>();
+			while (_alt.qFalse.getSize() == 1
+					&& (ele = _alt.qFalse.getElement(0)) instanceof Alternative) {
+				_alt = (Alternative)ele;
+				// We must care for the code mapping explicitly here since we circumvent generateCode()
+				markElementStart(_alt, _indent, processedAlts, storedLineNos);
+				appendComment(_alt, _indent);
+				condition = transform(_alt.getUnbrokenText().getLongString()).trim();
+				addCode("WHEN " + condition, _indent, isDisabled);
+				generateCode(_alt.qTrue, _indent+this.getIndent());
+			}
+			if (_alt.qFalse.getSize() > 0) {
+				addCode("WHEN OTHER", _indent, isDisabled);
+				generateCode(_alt.qFalse, _indent+this.getIndent());
+			}
+			addCode("END-EVALUATE", _indent, isDisabled);
+			markElementEnds(processedAlts, storedLineNos);
+		}
+		else {
+			// END KGU#1145 2024-04-12
+			addCode("IF " + condition, _indent, isDisabled);
+			addCode("THEN", _indent, isDisabled);
+
+			generateCode(_alt.qTrue, _indent+this.getIndent());
+
+			if (_alt.qFalse.getSize() > 0) {
+				addCode("ELSE", _indent, isDisabled);
+				generateCode(_alt.qFalse, _indent+this.getIndent());
+			}
+			addCode("END-IF", _indent, isDisabled);
+			// START KGU#1145 2024-04-12: Issue #1148 treatment for ELSE-IF chains
+		}
+		// END KGU#1145 2024-04-12
 		// code.add(_indent+"");
 	}
 
