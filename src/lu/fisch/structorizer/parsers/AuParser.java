@@ -37,6 +37,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017-06-22      Enh. #420: Infrastructure for comment import
  *      Kay Gürtzig     2018-04-12      Issue #489: Fault tolerance improved, logger added, comments reorganized
  *      Kay Gürtzig     2021-02-15      Enh. #420: Comment retrieval mechanism revised (now group is checked)
+ *      Kay Gürtzig     2024-04-16      KGU#1146: Measures against commentMap littering
  *
  ******************************************************************************************************
  *
@@ -271,13 +272,21 @@ public class AuParser extends GOLDParser {
 		// END KGU#407 2021-02-15
 			String comment = token.asString();
 			if (lastToken != null) {
-				commentMap.put(lastToken, comment);
+				// START KGU#1146 2024-04-15 Avoid inflating the map
+				//commentMap.put(lastToken, comment);
+				if (!comment.isBlank()) {
+					commentMap.put(lastToken, comment);
+				}
+				// END KGU#1146 2024-04-15
 				lastToken = null;
 			}
 			else if (lastComment != null) {
 				lastComment += "\n" + comment;
 			}
-			else {
+			// START KGU#1146 2024-04-15 Avoid inflating the map
+			//else {
+			else if (!comment.isBlank()) {
+			// END KGU#1146 2024-04-15
 				lastComment = comment;
 			}
 		}
@@ -287,7 +296,9 @@ public class AuParser extends GOLDParser {
 		}
 		else if (!name.equalsIgnoreCase("whitespace")) {
 			if (lastComment != null) {
-				commentMap.put(token, lastComment);
+				// START KGU#1146 2024-04-15 Avoid inflating the map
+				commentMap.put(token, lastComment.trim());
+				// END KGU#1146 2024-04-15
 				lastComment = null;
 				lastToken = null;
 			}

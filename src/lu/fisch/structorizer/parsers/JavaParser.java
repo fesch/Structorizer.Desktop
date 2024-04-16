@@ -72,6 +72,8 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2024-03-20      Bugfix #1150: RuleConstants adapted to new grammar version 0.9
  *      Kay Gürtzig     2024-03-21      Bugfix #1136 revision (type parameter "?" is now accepted by the grammar),
  *                                      operator "instanceof" used as stop symbol in transformParameterisedTypes()
+ *      Kay Gürtzig     2024-04-16      Bugfix #1159/1: Full comment fetching for class definitions ensured,
+ *                                      bugfix #1159/2: Correct handling of labelled break instructions.
  *
  ******************************************************************************************************
  *
@@ -1646,6 +1648,14 @@ public class JavaParser extends CodeParser
 				classRoot.setText(name);
 				
 				this.equipWithSourceComment(classRoot, redClass);
+				// START KGU#1147 2024-04-16: Ensure all comments be fetched
+				if (redClass != _reduction && this.isRegisteredStatementRule(_reduction)) {
+					String comment = this.retrieveComment(_reduction);
+					if (comment != null) {
+						classRoot.getComment().add(comment);
+					}
+				}
+				// END KGU#1147 2024-04-16
 				// Get type parameters (if any)
 				String typePars = this.getContent_R(_reduction.get(2));
 				int ixBody = ixName + 2;
@@ -2032,6 +2042,9 @@ public class JavaParser extends CodeParser
 				// <TryStatement> ::= try <ResourceSpecification> <Block> <Finally>
 				int ixBlock = 1;
 				Try ele = new Try("exception");	// Just a temporary text
+				// START KGU#1148 2024-04-16: Bugfix #1159/2 For the label-loop mapping this must be done earlier
+				_parentNode.addElement(this.equipWithSourceComment(ele, _reduction));
+				// END KGU#1148 2024-04-16
 				if (ruleId >= RuleConstants.PROD_TRYSTATEMENT_TRY4) {
 					/* Insert an Instruction to declare the resources (and assign them null)
 					 * and prepare the specific instruction texts for Try block and Finally block
@@ -2182,7 +2195,9 @@ public class JavaParser extends CodeParser
 					// Build the FINALLY block
 					this.buildNSD_R(_reduction.get(ixFinally).asReduction().get(1).asReduction(), ele.qFinally);
 				}
-				_parentNode.addElement(this.equipWithSourceComment(ele, _reduction));
+				// START KGU#1148 2024-04-16: Bugfix #1159/2 For the label-loop mapping this must be done earlier
+				//_parentNode.addElement(this.equipWithSourceComment(ele, _reduction));
+				// END KGU#1148 204-04-16
 			}
 			break;
 			
@@ -2205,28 +2220,57 @@ public class JavaParser extends CodeParser
 			case RuleConstants.PROD_BREAKSTATEMENT_BREAK_IDENTIFIER_SEMI:
 			{
 				// <BreakStatement> ::= break Identifier ';'
-				// FIXME: Should we try the count the loop levels in order to construct a "leave n"?
-				String label = this.getContent_R(_reduction.get(0));
+				// We try the count the loop levels in order to construct a "leave n".
+				// START KGU#1148 2024-04-16: Bugfix #1159/2 Label association didn't work
+				//String label = this.getContent_R(_reduction.get(0));
+				String label = this.getContent_R(_reduction.get(1));
+				// END KGU#1148 2024-04-16
 				Element labelledEle = labels.get(label);
 				Element parent = _parentNode.parent;
 				Jump ele = null;
+				// START KGU#1148 2024-04-16: Bugfix #1159/2 Label association didn't work
+				// Find the closest containing loop context
+				while (parent != null && !(parent instanceof ILoop)) {
+					parent = parent.parent;
+				}
+				// END KGU#1148 2024-04-16
 				if (labelledEle != null && parent instanceof ILoop) {
 					Subqueue target = (Subqueue)labelledEle.parent;
 					int nLevels = 1;
-					while ((parent = parent.parent) != null
-							&& (parent = parent.parent) instanceof ILoop
-							&& parent.parent != target) {
-						nLevels++;
+					// START KGU#1148 2024-04-16: Bugfix #1159/2 Label association didn't work
+					//while ((parent = parent.parent) != null
+					//		&& (parent = parent.parent) instanceof ILoop
+					//		&& parent.parent != target) {
+					//	nLevels++;
+					//}
+					//if (parent != null && parent.parent == target) {
+					//	int ixLabel = target.getIndexOf(labelledEle);
+					//	if (ixLabel + 1 < target.getSize() && target.getElement(ixLabel + 1) instanceof ILoop
+					//			// Could be a decomposed For loop...
+					//			|| ixLabel + 2 < target.getSize() && target.getElement(ixLabel + 2) instanceof While) {
+					//		ele = new Jump(getKeyword("preLeave") + " " + Integer.toString(nLevels));
+					//		this.equipWithSourceComment(ele, _reduction);
+					//	}
+					//}
+					while (parent.parent != target &&
+							(parent = parent.parent) != null) {
+						if (parent instanceof ILoop) {
+							nLevels++;
+						}
 					}
 					if (parent != null && parent.parent == target) {
 						int ixLabel = target.getIndexOf(labelledEle);
-						if (ixLabel + 1 < target.getSize() && target.getElement(ixLabel + 1) instanceof ILoop
+						if (ixLabel + 1 < target.getSize()
+								&& target.getElement(ixLabel + 1) instanceof ILoop
 								// Could be a decomposed For loop...
-								|| ixLabel + 2 < target.getSize() && target.getElement(ixLabel + 2) instanceof While) {
+								|| ixLabel + 2 < target.getSize()
+								&& target.getElement(ixLabel + 1) instanceof Instruction
+								&& target.getElement(ixLabel + 2) instanceof While) {
 							ele = new Jump(getKeyword("preLeave") + " " + Integer.toString(nLevels));
 							this.equipWithSourceComment(ele, _reduction);
 						}
 					}
+					// END KGU#1148 2024-04-16
 				}
 				if (ele == null) {
 					ele = new Jump(getContent_R(_reduction, ""));
@@ -2243,6 +2287,17 @@ public class JavaParser extends CodeParser
 			{
 				Jump jmp = new Jump(this.getOptKeyword("preLeave", false, false));
 				this.equipWithSourceComment(jmp, _reduction);
+				// START KGU#1148 2024-04-16: Bugfix #1159/3 Mark breaks from CASE
+				Element parent = _parentNode.parent;
+				while (parent != null && !(parent instanceof Case) && !(parent instanceof ILoop)) {
+					parent = parent.parent;
+				}
+				if (parent instanceof Case) {
+					jmp.setColor(Color.RED);
+					jmp.comment.add("Restructure this CASE branch for a clean end.");
+					// FIXME this kind of Jump should be registered for final restructuring attempts
+				}
+				// END KGU#1148 2024-04-16
 				_parentNode.addElement(jmp);
 			}
 			break;
@@ -3013,7 +3068,7 @@ public class JavaParser extends CodeParser
 			}
 			break;
 			
-			// Now we can hanöde all binary expressions the same way
+			// Now we can handle all binary expressions the same way
 			case RuleConstants.PROD_CONDITIONALOREXPRESSION_PIPEPIPE:
 			case RuleConstants.PROD_CONDITIONALANDEXPRESSION_AMPAMP:
 			case RuleConstants.PROD_INCLUSIVEOREXPRESSION_PIPE:
@@ -3847,11 +3902,18 @@ public class JavaParser extends CodeParser
 		content = getOptKeyword("preCase", false, true)
 				+ content
 				+ getOptKeyword("postCase", true, false).trim();
+		// START KGU#1148 2024-04-16: Bugfix #1159/2 We need the context for label resolution
+		Case dummyCase = new Case();
+		dummyCase.parent = _parentNode;
+		// END KGU#1148 2024-04-16
 		StringList text = StringList.getNew(content);
 		Stack<Subqueue> branches = new Stack<Subqueue>();
 		// Add some pro-forma branch
 		text.add("%");
 		branches.add(new Subqueue());
+		// START KGU#1148 2024-04-16: Bugfix #1159/2 We need the context for label resolution
+		branches.peek().parent = dummyCase;
+		// END KGU#1148 2024-04-16
 		boolean hasDefault = false;
 		if (ruleId == RuleConstants.PROD_SWITCHBLOCK_LBRACE_RBRACE) {
 			// <SwitchBlock> ::= '{' <SwitchBlockStatementGroups> <SwitchLabels> '}'
@@ -3866,6 +3928,9 @@ public class JavaParser extends CodeParser
 				// This is an unnecessary empty branch, but let it be
 				text.insert(tailLabels.concatenate(", "), 1);
 				branches.add(new Subqueue());
+				// START KGU#1148 2024-04-16: Bugfix #1159/2 We need the context for label resolution
+				branches.peek().parent = dummyCase;
+				// END KGU#1148 2024-04-16
 			}
 		}
 		sr = sr.get(1).asReduction();
@@ -3888,7 +3953,7 @@ public class JavaParser extends CodeParser
 		 * In theory, all branches should end with a break instruction
 		 * unless they end with return or exit. Drop the break instructions
 		 * (and only these) now.
-		 * If there is non of them, however, then we must append a copy of
+		 * If there is none of them, however, then we must append a copy of
 		 * the following branch(es).
 		 */
 		int ixAppendTo = ele.qs.size();
@@ -3925,15 +3990,17 @@ public class JavaParser extends CodeParser
 	/**
 	 * Evaluates the case block represented by the passed in reduction {@code stmGroup},
 	 * inserts the labels into {@code text} and pushes the block onto {@code branches}.
+	 * 
 	 * @param stmGroup - {@link Reduction} representing a <SwitchBlockStatementGroup> rule
 	 * @param text - The Case text in progress - new entries are to be inserted at position 1
-	 * @param branches - a stack of provisional {@link Subqueues} to form the branches
+	 * @param branches - a stack of provisional {@link Subqueue}s to form the branches
 	 * @param hasDefault - whether there had been an (empty) default branch
 	 * @return whether there is a default branch now
 	 * @throws ParserCancelled if the user has aborted the import
 	 */
 	private boolean addCaseBranch(Reduction stmGroup, StringList text, Stack<Subqueue> branches, boolean hasDefault)
 			throws ParserCancelled {
+		assert !branches.isEmpty();
 		// <SwitchBlockStatementGroup> ::= <SwitchLabels> <BlockStatements>
 		StringList caseLabels = extractCaseLabels(stmGroup.get(0).asReduction());
 		if (!hasDefault && branches.size() == 1 
@@ -3950,7 +4017,12 @@ public class JavaParser extends CodeParser
 			else {
 				text.insert("???", 1);
 			}
+			// START KGU#1148 2024-04-16: Bugfix #1159/2 We need the context for label resolution
+			//branches.push(new Subqueue());
+			Element parent = branches.peek().parent;
 			branches.push(new Subqueue());
+			branches.peek().parent = parent;
+			// END KGU#1148 2024-04-16
 		}
 		this.buildNSD_R(stmGroup.get(1).asReduction(), branches.peek());
 		return hasDefault;
