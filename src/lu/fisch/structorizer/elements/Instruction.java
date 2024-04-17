@@ -228,6 +228,7 @@ public class Instruction extends Element {
 		return rect;
 	}
 	
+	@Override
 	public Rect prepareDraw(Canvas _canvas)
 	{
 		// START KGU#136 2016-03-01: Bugfix #97 (prepared)
@@ -457,6 +458,7 @@ public class Instruction extends Element {
 		}
 	}
 
+	@Override
 	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport, boolean _inContention)
 	{
 		// START KGU#502/KGU#524/KGU#553 2019-03-13: New approach to reduce drawing contention
@@ -516,6 +518,7 @@ public class Instruction extends Element {
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#findSelected()
 	 */
+	@Override
 	public Element findSelected()
 	{
 		// START KGU#477 2017-12-06: Enh. #487
@@ -527,6 +530,7 @@ public class Instruction extends Element {
 	}
 	// END KGU#183 2016-04-24
 
+	@Override
 	public Element copy()
 	{
 		Element ele = new Instruction(this.getText().copy());

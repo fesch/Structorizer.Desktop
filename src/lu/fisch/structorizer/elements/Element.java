@@ -2497,6 +2497,11 @@ public abstract class Element {
 					else {
 						_canvas.setColor(Color.BLUE);
 					}
+					// START KGU#1152 2024-04-17: Issue #1162 Avoid the background colour
+					if (isSimilarToFillColor(_canvas.getColor(), 25)) {
+						_canvas.setColor(Color.WHITE);
+					}
+					// END KGU#1152 2024-04-17
 					Rect markerBounds = getAnalyserMarkerBounds(_rect, false);
 					int[] xCoords = new int[] {
 							markerBounds.left,		// left base corner
@@ -2517,6 +2522,25 @@ public abstract class Element {
 		}
 	}
 	// END KGU#906 2021-01-02
+	
+	// START KGU#1152 2024-04-17: Issue #1162 Auxiliary method for colour comparison
+	/**
+	 * Compares the given {@code color} with the current fill colour of this element.
+	 * 
+	 * @param color - the proposed draw colour
+	 * @param tolerance - an integer tolerance for the RGB values
+	 * @return {@code true} if all RGB components differ no more than by
+	 *    {@code tolerance}
+	 */
+	private boolean isSimilarToFillColor(Color color, int tolerance)
+	{
+		Color fill = getFillColor();
+		System.out.println(fill + " <-> " + color);
+		return (Math.abs(color.getRed() - fill.getRed()) < tolerance
+				&& Math.abs(color.getGreen() - fill.getGreen()) < tolerance
+				&& Math.abs(color.getBlue() - fill.getBlue()) < tolerance);
+	}
+	// END KGU#1152 2024-04-17
 	
 	// START KGU#979 2021-06-10: Enh. #926, #979 - tooltip on the Analyser marker 
 	/**
