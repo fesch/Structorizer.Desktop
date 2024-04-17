@@ -580,7 +580,7 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	public static final LangTextHolder error16_4 = new LangTextHolder("Cannot leave or break more loop levels than being nested in («%»)!");
 	public static final LangTextHolder error16_5 = new LangTextHolder("You must not directly jump (%1, %2) out of a parallel thread!");
 	public static final LangTextHolder error16_6 = new LangTextHolder("Illegal argument for a «%» JUMP (must be an integer constant)!");
-	public static final LangTextHolder error16_7 = new LangTextHolder("Element isn't reachable (after a(n) @k)!");
+	public static final LangTextHolder error16_7 = new LangTextHolder("Element not reachable (because of @ks or @i loops)!");
 	public static final LangTextHolder error16_8 = new LangTextHolder("The argument for this «%» JUMP might be unsuited (should be an integer value).");
 	// END KGU#2 2015-11-25
 	// START KGU#47 2015-11-28: New check for concurrency problems

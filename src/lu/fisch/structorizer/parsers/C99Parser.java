@@ -62,6 +62,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2023-09-28      Issue #1091: Correct handling of alias, enum, and array type definitions
  *      Kay Gürtzig     2023-09-29      Bugfix #678: Unwanted side-effect on pointer types mended
  *      Kay Gürtzig     2024-03-17      Bugfix #1141: Measures against stack overflow in buildNSD_R()
+ *      Kay Gürtzig     2024-04-17      Bugfix #1163: Import of non-trivial switch structures improved
  *
  ******************************************************************************************************
  *
@@ -78,6 +79,7 @@ package lu.fisch.structorizer.parsers;
 
 import java.awt.Color;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Stack;
 import java.util.logging.Level;
@@ -92,6 +94,7 @@ import lu.fisch.structorizer.elements.Case;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.elements.Forever;
+import lu.fisch.structorizer.elements.ILoop;
 import lu.fisch.structorizer.elements.Instruction;
 import lu.fisch.structorizer.elements.Jump;
 import lu.fisch.structorizer.elements.Repeat;
@@ -616,6 +619,11 @@ public class C99Parser extends CPreParser
 
 	//---------------------- Build methods for structograms ---------------------------
 
+	// START KGU#1153 2024-04-17: Bugfix #1163
+	/** Registers all generated Jumps from found breaks in switch cases */
+	private final HashSet<Jump> switchBreaks = new HashSet<Jump>();
+	// END KGU#1153 2024-04-07
+	
 	private final Matcher MATCH_PTR_DECL = Pattern.compile("(\\s*([*]\\s*)+)(.+)").matcher("");
 	
 	/**
@@ -810,7 +818,7 @@ public class C99Parser extends CPreParser
 				}
 			}
 			else if (
-					// Labeled instruction?
+					// Labelled instruction?
 					ruleId == RuleConstants.PROD_LABELLEDSTMT_IDENTIFIER_COLON
 					)
 			{
@@ -832,7 +840,28 @@ public class C99Parser extends CPreParser
 					)
 			{
 				String content = getKeyword("preLeave");
-				_parentNode.addElement(this.equipWithSourceComment(new Jump(content.trim()), _reduction));
+				// START KGU#1153 2024-04-17: Bugfix #1163 check context
+				//_parentNode.addElement(this.equipWithSourceComment(new Jump(content.trim()), _reduction));
+				Jump leave = new Jump(content.trim());
+				this.equipWithSourceComment(leave, _reduction);
+				Element parent = _parentNode;
+				while (parent != null) {
+					if (parent instanceof ILoop) {
+						// We are inside a loop context, so this is a valid leave
+						break;
+					}
+					else if (parent instanceof Case) {
+						// This is meant to end a Case branch and should vanish
+						leave.setColor(Color.RED);
+						leave.comment.add("TODO: Restructure this CASE branch for clean end.");
+						// Register this kind of Jump for final restructuring attempts
+						switchBreaks.add(leave);
+						break;
+					}
+					parent = parent.parent;
+				}
+				_parentNode.addElement(leave);
+				// END KGU#1153 2024-04-17
 			}
 			else if (
 					// RETURN instruction
@@ -1385,9 +1414,17 @@ public class C99Parser extends CPreParser
 			int size = sq.getSize();
 			if (size > 0) {
 				Element el = sq.getElement(size-1);
-				if (el instanceof Jump && ((Jump)el).isLeave()) {
+				// START KGU#1153 2024-04-17: Bugfix #1163
+				//if (el instanceof Jump && ((Jump)el).isLeave()) {
+				//	sq.removeElement(size-1);
+				//}
+				if (el instanceof Jump && switchBreaks.contains(el)) {
 					sq.removeElement(size-1);
 				}
+				else if (!el.mayPassControl() && (el instanceof Alternative || el instanceof Case)) {
+					this.effaceTerminalSwitchBreaks(el);
+				}
+				// END KGU#1153 2024-04-17
 			}
 		}
 
@@ -1466,7 +1503,10 @@ public class C99Parser extends CPreParser
 		int lastCaseWithJump = -1;
 		for (int i = iNext-2; i >= 0; i--) {
 			int size = _case.qs.get(i).getSize();
-			if (size > 0 && (_case.qs.get(i).getElement(size-1) instanceof Jump)) {
+			// START KGU#1153 2024-04-17: Defective branch handling
+			//if (size > 0 && (_case.qs.get(i).getElement(size-1) instanceof Jump)) {
+			if (size > 0 && (!_case.qs.get(i).getElement(size-1).mayPassControl())) {
+			// END KGU#1153 2024-04-17
 				lastCaseWithJump = i;
 				break;
 			}
@@ -1476,6 +1516,11 @@ public class C99Parser extends CPreParser
 			Subqueue sq1 = _case.qs.get(i);
 			for (int j = 0; j < sq.getSize(); j++) {
 				Element el = sq.getElement(j).copy();	// FIXME: Need a new Id!
+				// START KGU#1153 2024-04-17: Bugfix #1163 a switch break copy must also be registered
+				if (el instanceof Jump && switchBreaks.contains(sq.getElement(j))) {
+					switchBreaks.add((Jump)el);
+				}
+				// END KGU#1153 2024-04-17
 				sq1.addElement(el);
 			}
 		}
@@ -1483,11 +1528,49 @@ public class C99Parser extends CPreParser
 		// If this is an explicit case branch then the last token holds the subsequent branches
 		if (_ruleId == RuleConstants.PROD_CASESTMTS_CASE_COLON) {
 			// We may pass an arbitrary subqueue, the case branch rule goes up to the Case element anyway
-			buildNSD_R(_reduction.get(stmListIx+1).asReduction(), _case.qs.get(0));					
+			buildNSD_R(_reduction.get(stmListIx+1).asReduction(), _case.qs.get(0));
 		}
 		
 	}
 	
+	// START KGU#1153 2024-04-17: Bugfix #1163
+	/**
+	 * Recursively eliminates all {@link #switchBreaks} elements that are placed
+	 * at the end of some branch of the forking element {@code forkEl}.
+	 * 
+	 * @param forkEl - either an {@link Alternative} or a {@link Case}
+	 */
+	private void effaceTerminalSwitchBreaks(Element forkEl)
+	{
+		if (forkEl instanceof Alternative) {
+			removeTerminalSwitchBreaks(((Alternative)forkEl).qTrue);
+			removeTerminalSwitchBreaks(((Alternative)forkEl).qFalse);
+		}
+		else if (forkEl instanceof Case) {
+			for (int i = 0; i < ((Case)forkEl).qs.size(); i++) {
+				removeTerminalSwitchBreaks(((Case)forkEl).qs.get(i));
+			}
+		}
+	}
+	/**
+	 * Recursively eliminates all {@link #switchBreaks} elements that are placed
+	 * at the end of Subqueue {@code sq}.
+	 * 
+	 * @param sq - a subqueue the end of which is to be cleaned
+	 */
+	private void removeTerminalSwitchBreaks(Subqueue sq) {
+		if (sq.getSize() > 0) {
+			Element lastEl = sq.getElement(sq.getSize()-1);
+			if (lastEl instanceof Jump && switchBreaks.contains(lastEl)) {
+				sq.removeElement(sq.getSize()-1);
+			}
+			else if (lastEl instanceof Alternative || lastEl instanceof Case) {
+				effaceTerminalSwitchBreaks(lastEl);
+			}
+		}
+	}
+	// END KGU#1153 2024-04-17
+
 	@Override
 	protected String[] checkForIncr(Token incrToken) throws ParserCancelled
 	{

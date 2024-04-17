@@ -2302,7 +2302,7 @@ public class JavaParser extends CodeParser
 				if (parent instanceof Case) {
 					jmp.setColor(Color.RED);
 					jmp.comment.add("TODO: Restructure this CASE branch for clean end.");
-					// Registered this kind of Jump for final restructuring attempts
+					// Register this kind of Jump for final restructuring attempts
 					this.switchBreaks.add(jmp);
 				}
 				// END KGU#1149 2024-04-16
@@ -3989,7 +3989,7 @@ public class JavaParser extends CodeParser
 						this.effaceTerminalSwitchBreaks(el);
 					}
 				}
-				else if (!sq.isReachable(size-1, true, null)) {
+				else if (!sq.isReachable(size-1, false, null)) {
 					// Last element of the branch unreachable - so branch is closed
 					jumps = true;
 				}
