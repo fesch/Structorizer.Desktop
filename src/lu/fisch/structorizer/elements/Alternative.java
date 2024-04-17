@@ -827,6 +827,7 @@ public class Alternative extends Element implements IFork {
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#mayPassControl()
 	 */
+	@Override
 	public boolean mayPassControl()
 	{
 		// An alternative may only pass control if being disabled or containing at least one
@@ -842,6 +843,7 @@ public class Alternative extends Element implements IFork {
 	 * is to be involved
 	 * @return the maximum line length
 	 */
+	@Override
 	public int getMaxLineLength(boolean _includeSubstructure)
 	{
 		int maxLen = super.getMaxLineLength(false);

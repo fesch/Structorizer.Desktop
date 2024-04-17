@@ -53,6 +53,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2021-02-26      Enh. #410: New field isMethodDeclaration and method derivates for
  *                                      the representation of imported methods (OOP approach)
  *      Kay Gürtzig     2024-03-22      Issue #1154: Modified drawing of CALLs diverted for method declarations
+ *      Kay Gürtzig     2024-04-17      Bugfix #1160: Rectification of rotated drawing
  *
  ******************************************************************************************************
  *
@@ -152,14 +153,26 @@ public class Call extends Instruction {
 	// END KGU#199 2016-07-07
 	
 	// START KGU#227 2016-07-30: Enh. #128
-	/**
-	 * Provides a subclassable left offset for drawing the text
-	 */
+	// START KGU#1150 2024-04-16: Bugfix #1160 For rotation we need X and Y
+	///**
+	// * Provides a subclassable left offset for drawing the text
+	// */
+	//@Override
+	//protected int getTextDrawingOffset()
+	//{
+	//	return (Element.E_PADDING/2);
+	//}
 	@Override
-	protected int getTextDrawingOffset()
+	protected int getTextDrawingOffsetX()
 	{
-		return (Element.E_PADDING/2);
+		return rotated ? 0 : (Element.E_PADDING/2);
 	}
+	@Override
+	protected int getTextDrawingOffsetY()
+	{
+		return rotated ? (Element.E_PADDING/2) : 0;
+	}
+	// END KGU#1150 2024-04-16
 	// END KGU#227 2016-07-30
 
 	@Override
@@ -171,7 +184,16 @@ public class Call extends Instruction {
 
 		// START KGU#227 2016-07-30: Enh. #128 - on this occasion, we just enlarge the instruction rect width
 		super.prepareDraw(_canvas);
-		rect0.right += 2*(E_PADDING/2);
+		// START KGU#1150 2024-04-16: Bugfix #1160 We must consider rotation
+		//rect0.right += 2*(E_PADDING/2);
+		if (rotated) {
+			// The border bars will virtually be drawn above and below the tetxt
+			rect0.bottom += 2*(E_PADDING/2); 
+		}
+		else {
+			rect0.right += 2*(E_PADDING/2);			
+		}
+		// END KGU#1150 2024-04-16
 		// END KGU#227 2016-07-30
 		return rect0;
 	}

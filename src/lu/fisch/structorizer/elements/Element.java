@@ -139,6 +139,7 @@ package lu.fisch.structorizer.elements;
  *                                      Issue #1129: Limitation of error lines in the Analyser warning popup
  *      Kay Gürtzig     2024-03-21      Bugfix #1128 revised (method retrieveComponentNmes()).
  *      Kay Gürtzig     2024-03-22      Issue #1154: New method drawHatched(Rect, Canvas) to allow subclassing
+ *      Kay Gürtzig     2024-04-16      Bugfix #1160: Separate X and Y text offset for drawing rotated elements
  *
  ******************************************************************************************************
  *
@@ -1110,13 +1111,29 @@ public abstract class Element {
 	}
 
 	// START KGU#227 2016-07-30: Enh. #128
+	// START KGU#1150 2024-04-16: Bugfix #1160 For rotation we need X and Y
+	///**
+	// * Provides a subclassable left offset for drawing the text
+	// */
+	//protected int getTextDrawingOffset()
+	//{
+	//	return 0;
+	//}
 	/**
 	 * Provides a subclassable left offset for drawing the text
 	 */
-	protected int getTextDrawingOffset()
+	protected int getTextDrawingOffsetX()
 	{
 		return 0;
 	}
+	/**
+	 * Provides a subclassable top offset for drawing the text
+	 */
+	protected int getTextDrawingOffsetY()
+	{
+		return 0;
+	}
+	// END KGU#1150 2024-04-16
 	// END KGU#227 2016-07-30
 
 	public void setText(String _text)
@@ -2432,6 +2449,7 @@ public abstract class Element {
 	 * Places a small red triangle in the upper left corner if this element
 	 * is referred to by some {@link DetectedError} record in the owning
 	 * {@link Root}.
+	 * 
 	 * @param _canvas - the drawing canvas
 	 * @param _rect - the outer drawing rectangle
 	 */
@@ -2504,6 +2522,7 @@ public abstract class Element {
 	/**
 	 * Returns the bounds for the Analyser marker "driehoekje" with respect to the given
 	 * Element rectangle {@code Rect}
+	 * 
 	 * @param _rect - The bounding rectangle of the Element (with whatever relative reference point)
 	 * @param _outer - whether {@code _rect} is the total bounds or just the text field's bounds
 	 * @return the "driehoekje" bounds with respect to {@code _rect}

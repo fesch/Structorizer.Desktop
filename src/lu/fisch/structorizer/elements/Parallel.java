@@ -31,31 +31,33 @@ package lu.fisch.structorizer.elements;
  *
  *      Revision List
  *
- *      Author          Date			Description
- *      ------		----			-----------
- *      Bob Fisch       2010.11.26      First Issue
- *      Kay Gürtzig     2015.10.11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
- *      Kay Gürtzig     2015.10.11      Comment drawing centralized and breakpoint mechanism prepared
- *      Kay Gürtzig     2015.10.16      Method clearExecutionStatus() duly overridden.
- *      Kay Gürtzig     2015.11.14      Bugfix #31 (= KGU#82) in method copy()
- *      Kay Gürtzig     2015.12.01      Bugfix #39 (= KGU#91) in draw methods (--> getText(false))
- *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): New method equals(Element)
- *      Kay Gürtzig     2016.01.03      Bugfix #87 (KGU#121): Correction in getElementByCoord(),
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Bob Fisch       2010-11-26      First Issue
+ *      Kay Gürtzig     2015-10-11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
+ *      Kay Gürtzig     2015-10-11      Comment drawing centralized and breakpoint mechanism prepared
+ *      Kay Gürtzig     2015-10-16      Method clearExecutionStatus() duly overridden.
+ *      Kay Gürtzig     2015-11-14      Bugfix #31 (= KGU#82) in method copy()
+ *      Kay Gürtzig     2015-12-01      Bugfix #39 (= KGU#91) in draw methods (--> getText(false))
+ *      Kay Gürtzig     2016-01-02      Bugfix #78 (KGU#119): New method equals(Element)
+ *      Kay Gürtzig     2016-01-03      Bugfix #87 (KGU#121): Correction in getElementByCoord(),
  *                                      method getCollapsedText() overridden for more clarity, getIcon()
- *      Kay Gürtzig     2016.02.27      Bugfix #97 (KGU#136): field rect replaced by rect0 in prepareDraw()
- *      Kay Gürtzig     2016.03.01      Bugfix #97 (KGU#136): Translation-neutral selection;
+ *      Kay Gürtzig     2016-02-27      Bugfix #97 (KGU#136): field rect replaced by rect0 in prepareDraw()
+ *      Kay Gürtzig     2016-03-01      Bugfix #97 (KGU#136): Translation-neutral selection;
  *                                      KGU#151: nonsense removed from prepareDraw() and draw().
- *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Method for test coverage tracking added
- *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
- *      Kay Gürtzig     2016.04.01      Issue #145 (KGU#162): Comment is yet to be shown in switchText mode
- *      Kay Gürtzig     2016.04.05      Issue #145 solution improved and setText() stabilized
- *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
- *      Kay Gürtzig     2016.07.21      KGU#207: Slight performance improvement in getElementByCoord()
- *      Kay Gürtzig     2016.07.31      Enh. #128: New mode "comments plus text" supported, drawing code delegated
- *      Kay Gürtzig     2018.04.04      Issue #529: Critical section in prepareDraw() reduced.
- *      Kay Gürtzig     2018.09.11      Issue #508: Font height retrieval concentrated to one method on Element
- *      Kay Gürtzig     2018.10.26      Enh. #619: Method getMaxLineLength() implemented
+ *      Kay Gürtzig     2016-03-06      Enh. #77 (KGU#117): Method for test coverage tracking added
+ *      Kay Gürtzig     2016-03-12      Enh. #124 (KGU#156): Generalized runtime data visualisation
+ *      Kay Gürtzig     2016-04-01      Issue #145 (KGU#162): Comment is yet to be shown in switchText mode
+ *      Kay Gürtzig     2016-04-05      Issue #145 solution improved and setText() stabilized
+ *      Kay Gürtzig     2016-04-24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
+ *      Kay Gürtzig     2016-07-21      KGU#207: Slight performance improvement in getElementByCoord()
+ *      Kay Gürtzig     2016-07-31      Enh. #128: New mode "comments plus text" supported, drawing code delegated
+ *      Kay Gürtzig     2018-04-04      Issue #529: Critical section in prepareDraw() reduced.
+ *      Kay Gürtzig     2018-09-11      Issue #508: Font height retrieval concentrated to one method on Element
+ *      Kay Gürtzig     2018-10-26      Enh. #619: Method getMaxLineLength() implemented
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
+ *      Kay Gürtzig     2024-04-16      Adaptation to bugfix #1160 - method getTextDrawingOffset() replaced
+
  *
  ******************************************************************************************************
  *
@@ -84,25 +86,25 @@ import lu.fisch.utils.*;
 public class Parallel extends Element
 {
 	
-    public Vector<Subqueue> qs = new Vector<Subqueue>();
+	public Vector<Subqueue> qs = new Vector<Subqueue>();
 
-    // START KGU#136 2016-03-01: Bugfix #97 - cache the upper left corners of all branches
-    private Vector<Integer> x0Branches = new Vector<Integer>();
-    private int y0Branches = 0;
-    // END KGU#136 2016-03-01
-	
-    // START KGU#91 2015-12-01: Bugfix #39 - Parallel may NEVER EVER interchange text and comment!
-    // START KGU#227 2016-07-31: Enh. #128 - obsolete code, argument no longer ignored -> super
+	// START KGU#136 2016-03-01: Bugfix #97 - cache the upper left corners of all branches
+	private Vector<Integer> x0Branches = new Vector<Integer>();
+	private int y0Branches = 0;
+	// END KGU#136 2016-03-01
+
+	// START KGU#91 2015-12-01: Bugfix #39 - Parallel may NEVER EVER interchange text and comment!
+	// START KGU#227 2016-07-31: Enh. #128 - obsolete code, argument no longer ignored -> super
 //	/**
 //	 * Returns the content of the text field Full stop. No swapping here!
 //	 * @return the text StringList
 //	 */
-//    @Override
+//	@Override
 //	public StringList getText(boolean _ignored)
 //	{
 //		return getText();
 //	}
-    // END KGU#227 2016-07-31
+	// END KGU#227 2016-07-31
 
 	/**
 	 * Returns the content of the comment field unless _alwaysTrueComment is false and
@@ -111,31 +113,31 @@ public class Parallel extends Element
 	 * @param _alwaysTrueText - if true then mode isSwitchTextAndComment is ignored
 	 * @return either the text or the comment
 	 */
-    @Override
+	@Override
 	public StringList getComment(boolean _trueComment)
 	{
-    	// START KGU#172 2016-04.01: Issue #145
+		// START KGU#172 2016-04.01: Issue #145
 		//return getComment();
-    	// START KGU#227 2016-07-31: Enh. #128
+		// START KGU#227 2016-07-31: Enh. #128
 //		if (!_alwaysTrueComment && this.isSwitchTextCommentMode())
 //		{
 //			return this.getCollapsedText();
 //		}
-    	if (!_trueComment)
-    	{
-    		if (this.isCollapsed(true))
-    		{
-    			return StringList.getNew(this.getGenericText());
-    		}
-    		else if (!isSwitchTextCommentMode())
-    		{
-    			return this.getComment();
-    		}
-    		else
-    		{
-    			return new StringList();
-    		}
-    	}
+		if (!_trueComment)
+		{
+			if (this.isCollapsed(true))
+			{
+				return StringList.getNew(this.getGenericText());
+			}
+			else if (!isSwitchTextCommentMode())
+			{
+				return this.getComment();
+			}
+			else
+			{
+				return new StringList();
+			}
+		}
 		// END KGU#227 2016-07-31
 		else
 		{
@@ -143,14 +145,14 @@ public class Parallel extends Element
 		}
 		// END KGU#172 2016-04-01
 	}
-    // END KGU#91 2015-12-01
+	// END KGU#91 2015-12-01
 
-    // START KGU#227 2016-07-31: Enh. #128 new helper method
-    private String getGenericText()
-    {
-        return getClass().getSimpleName() + "(" + this.text.get(0) + ")";
-    }
-    // END KGU#227 2016-07-31
+	// START KGU#227 2016-07-31: Enh. #128 new helper method
+	private String getGenericText()
+	{
+		return getClass().getSimpleName() + "(" + this.text.get(0) + ")";
+	}
+	// END KGU#227 2016-07-31
 
 	// START KGU#122 2016-01-04: Add the Class name (or some localized text?) to the number of threads
 	@Override
@@ -168,206 +170,211 @@ public class Parallel extends Element
 		// END KGU#227 2016-07-30
 		return sl;
 	}
-    // END KGU#122 2016-01-04
+	// END KGU#122 2016-01-04
 
-    @Override
-    public void setText(String _text)
-    {
+	@Override
+	public void setText(String _text)
+	{
 
 // START KGU#91 2015-12-01: Bugfix #39, D.R.Y. - employ setText(StringList) for the rest
-    	text.setText(_text);
-    	// This call seems redundant but is essential since it is the overridden StringList method 
-    	this.setText(text);
-            
-// END KGU#91 2015-12-01            
+		text.setText(_text);
+		// This call seems redundant but is essential since it is the overridden StringList method 
+		this.setText(text);
+// END KGU#91 2015-12-01
 
-    }
+	}
 
-    @Override
-    public void setText(StringList _textList)
-    {
-    	Subqueue s = null;
+	@Override
+	public void setText(StringList _textList)
+	{
+		Subqueue s = null;
 
-    	//setText(_textList);
-    	text = _textList;
+		//setText(_textList);
+		text = _textList;
 
-    	if (qs == null)
-    	{
-    		qs = new Vector<Subqueue>();
-    	}
+		if (qs == null)
+		{
+			qs = new Vector<Subqueue>();
+		}
 
-    	// we need at least one line
-    	if (!text.isEmpty())
-    	{
-    		int count = 10;
-    		try
-    		{
-    			// retrieve the number of parallel tasks
-    			count = Integer.valueOf(text.get(0).trim());
-    		}
-    		catch (java.lang.NumberFormatException e)
-    		{
-    			count = 10;
-    			JOptionPane.showMessageDialog(null,
-    					"Unknown number <" + text.get(0).trim() +
-    					">.\nSetting number of tasks to " + count + "!",
-    					"Error", JOptionPane.ERROR_MESSAGE);
-    			text = StringList.getNew(Integer.toString(count));
-    		}
+		// we need at least one line
+		if (!text.isEmpty())
+		{
+			int count = 10;
+			try
+			{
+				// retrieve the number of parallel tasks
+				count = Integer.valueOf(text.get(0).trim());
+			}
+			catch (java.lang.NumberFormatException e)
+			{
+				count = 10;
+				JOptionPane.showMessageDialog(null,
+						"Unknown number <" + text.get(0).trim() +
+						">.\nSetting number of tasks to " + count + "!",
+						"Error", JOptionPane.ERROR_MESSAGE);
+				text = StringList.getNew(Integer.toString(count));
+			}
 
-    		// add subqueues
-    		while(count>qs.size())
-    		{
-    			s = new Subqueue();
-    			s.parent = this;
-    			qs.add(s);
-    		}
-    		// remove subqueues
-    		while(count<qs.size())
-    		{
-    			qs.removeElementAt(qs.size()-1);
-    		}
-    	}
+			// add subqueues
+			while(count>qs.size())
+			{
+				s = new Subqueue();
+				s.parent = this;
+				qs.add(s);
+			}
+			// remove subqueues
+			while(count<qs.size())
+			{
+				qs.removeElementAt(qs.size()-1);
+			}
+		}
 
-    }
+	}
 
-    public Parallel()
-    {
-            super();
-    }
+	public Parallel()
+	{
+		super();
+	}
 
-    public Parallel(String _string)
-    {
-            super(_string);
-            //setText(_string);	// Already done by super
-    }
+	public Parallel(String _string)
+	{
+		super(_string);
+		//setText(_string);	// Already done by super
+	}
 
-    public Parallel(StringList _strings)
-    {
-            super(_strings);
-            //setText(_strings);	// Already done by super
-    }
+	public Parallel(StringList _strings)
+	{
+		super(_strings);
+		//setText(_strings);	// Already done by super
+	}
 
 	// START KGU#227 2016-07-30: Enh. #128
 	/**
 	 * Provides a subclassable left offset for drawing the text
 	 */
-	protected int getTextDrawingOffset()
+	// START KGU#1150 2024-04-16: Bugfix #1160
+	//protected int getTextDrawingOffset()
+	@Override
+	protected int getTextDrawingOffsetX()
+	// END KGU#1150 2024-04-16
 	{
 		return this.isCollapsed(true) ? 0 : (Element.E_PADDING/2);
 	}
 	// END KGU#227 2016-07-30
 
-   public Rect prepareDraw(Canvas _canvas)
-    {
-            // START KGU#136 2016-03-01: Bugfix #97
-            if (this.isRect0UpToDate) return rect0;
-            
-            // START KGU#516 2018-04-04: Directly to work on field rect0 was not so good an idea for re-entrance
-            //this.x0Branches.clear();
-            //this.y0Branches = 0;
-            // END KGU#516 2018-04-04
-            // END KGU#136 2016-03-01
+	@Override
+	public Rect prepareDraw(Canvas _canvas)
+	{
+		// START KGU#136 2016-03-01: Bugfix #97
+		if (this.isRect0UpToDate) return rect0;
 
-            // KGU#136 2016-02-27: Bugfix #97 - all rect references replaced by rect0
-            if (isCollapsed(true)) 
-            {
-                rect0 = Instruction.prepareDraw(_canvas, getCollapsedText(), this);
-                // START KGU#136 2016-03-01: Bugfix #97
-                isRect0UpToDate = true;
-                // END KGU#136 2016-03-01
-                return rect0;
-            }
+		// START KGU#516 2018-04-04: Directly to work on field rect0 was not so good an idea for re-entrance
+		//this.x0Branches.clear();
+		//this.y0Branches = 0;
+		// END KGU#516 2018-04-04
+		// END KGU#136 2016-03-01
 
-            // START KGU#516 2018-04-04: Issue #529 - Directly to work on field rect0 was not so good an idea for re-entrance
-            //rect0.top = 0;
-            //rect0.left = 0;
-            Rect rect0 = new Rect();
-            Vector<Integer> x0Branches = new Vector<Integer>();
-            int y0Branches = 0;
-            int fullWidth = 0, maxHeight = 0;
-            // END KGU#516 2018-04-04
+		// KGU#136 2016-02-27: Bugfix #97 - all rect references replaced by rect0
+		if (isCollapsed(true)) 
+		{
+			rect0 = Instruction.prepareDraw(_canvas, getCollapsedText(), this);
+			// START KGU#136 2016-03-01: Bugfix #97
+			isRect0UpToDate = true;
+			// END KGU#136 2016-03-01
+			return rect0;
+		}
 
-            rect0.right  = 3 * (E_PADDING/2);		// Minimum total width	(without comments, without thread area)
-            rect0.bottom = 4 * (E_PADDING/2);		// Minimum total height (without thread area)
-            // START KGU#136 2016-03-01: Bugfix #97
-            y0Branches = 2 * (E_PADDING/2);	// Y coordinate below which the branches are drawn
-            // END KGU#136 2016-03-01
+		// START KGU#516 2018-04-04: Issue #529 - Directly to work on field rect0 was not so good an idea for re-entrance
+		//rect0.top = 0;
+		//rect0.left = 0;
+		Rect rect0 = new Rect();
+		Vector<Integer> x0Branches = new Vector<Integer>();
+		int y0Branches = 0;
+		int fullWidth = 0, maxHeight = 0;
+		// END KGU#516 2018-04-04
 
-            // START KGU#227 2016-07-30: Issues #128, #145: New mode "comments plus text" required modification
-//            // START KGU#172 2016-04-01: Issue #145 Show comment in switch text/comment mode
-//            if (this.isSwitchTextCommentMode() && !this.comment.getText().trim().isEmpty())
-//            {
-//              // START KGU#494 2018-09-11: Issue #508 Retrieval concentrated for easier maintenance
-//              //FontMetrics fm = _canvas.getFontMetrics(Element.font);
-//              int fontHeight = getFontHeight(_canvas.getFontMetrics(Element.font));
-//              // END KGU#494 2018-09-11
-//            	for (int ci = 0; ci < this.comment.count(); ci++)
-//            	{
-//            		rect0.right = Math.max(rect0.right, getWidthOutVariables(_canvas, this.comment.get(ci), this) + 2 * E_PADDING);
-//            	}
-//            	int extraHeight = this.comment.count() * fontHeight;
-//            	rect0.bottom += extraHeight;
-//            	this.y0Branches += extraHeight;
-//            }
-//            // END KGU#172 2016-04-01
-            
-            // Unless some of the comment modes requires this, the upper stripe remains empty
-            if ((Element.E_COMMENTSPLUSTEXT || isSwitchTextCommentMode()) && !this.comment.getText().trim().isEmpty())
-            {
-                // In mode"comments plus text" there is no actual text, the comment is to be inserted in lower font
-                // Otherwise ("switch text/comments") the comment will be added as text in normal font.
-                StringList headerText = new StringList();	// No text in general
-                if (!Element.E_COMMENTSPLUSTEXT)
-                {
-                	headerText = this.getComment();			// It must be "switch text/comments" mode.
-                }
-               Rect textRect = Instruction.prepareDraw(_canvas, headerText, this);
-               rect0.right = Math.max(rect0.right, textRect.right + 2 * (E_PADDING/2));
-               rect0.bottom = Math.max(rect0.bottom, textRect.bottom + 2*(E_PADDING/2));
-               y0Branches = Math.max(this.y0Branches, textRect.bottom);
-            }
-            // END KGU#227 2016-07-30
-            
-            // retrieve the number of parallel tasks
-            int nTasks = Integer.valueOf(getText().get(0));
+		rect0.right  = 3 * (E_PADDING/2);		// Minimum total width	(without comments, without thread area)
+		rect0.bottom = 4 * (E_PADDING/2);		// Minimum total height (without thread area)
+		// START KGU#136 2016-03-01: Bugfix #97
+		y0Branches = 2 * (E_PADDING/2);	// Y coordinate below which the branches are drawn
+		// END KGU#136 2016-03-01
 
-            fullWidth = 0;
-            maxHeight = 0;
+		// START KGU#227 2016-07-30: Issues #128, #145: New mode "comments plus text" required modification
+//		// START KGU#172 2016-04-01: Issue #145 Show comment in switch text/comment mode
+//		if (this.isSwitchTextCommentMode() && !this.comment.getText().trim().isEmpty())
+//		{
+//			// START KGU#494 2018-09-11: Issue #508 Retrieval concentrated for easier maintenance
+//			//FontMetrics fm = _canvas.getFontMetrics(Element.font);
+//			int fontHeight = getFontHeight(_canvas.getFontMetrics(Element.font));
+//			// END KGU#494 2018-09-11
+//			for (int ci = 0; ci < this.comment.count(); ci++)
+//			{
+//				rect0.right = Math.max(rect0.right, getWidthOutVariables(_canvas, this.comment.get(ci), this) + 2 * E_PADDING);
+//			}
+//			int extraHeight = this.comment.count() * fontHeight;
+//			rect0.bottom += extraHeight;
+//			this.y0Branches += extraHeight;
+//		}
+//		// END KGU#172 2016-04-01
 
-            if (qs.size() != 0)
-            {
-                for (int i = 0; i < nTasks; i++)
-                {
-                    // START KGU#136 2016-03-01: Bugfix #97
-                    x0Branches.addElement(fullWidth);
-                    // END KGU#136 2016-03-01
-                    Rect rtt = qs.get(i).prepareDraw(_canvas);
-                    // START KGU#151 2016-03-01: Additional text lines should not influence the thread width!
-                    //fullWidth += Math.max(rtt.right, getWidthOutVariables(_canvas, getText(false).get(i+1), this) + (E_PADDING / 2));
-                    fullWidth += Math.max(rtt.right, E_PADDING / 2);
-                    // END KGU#151 2016-03-01
-                    if (maxHeight < rtt.bottom)
-                    {
-                        maxHeight = rtt.bottom;
-                    }
-                }
-            }
+		// Unless some of the comment modes requires this, the upper stripe remains empty
+		if ((Element.E_COMMENTSPLUSTEXT || isSwitchTextCommentMode()) && !this.comment.getText().trim().isEmpty())
+		{
+			// In mode"comments plus text" there is no actual text, the comment is to be inserted in lower font
+			// Otherwise ("switch text/comments") the comment will be added as text in normal font.
+			StringList headerText = new StringList();	// No text in general
+			if (!Element.E_COMMENTSPLUSTEXT)
+			{
+				headerText = this.getComment();			// It must be "switch text/comments" mode.
+			}
+			Rect textRect = Instruction.prepareDraw(_canvas, headerText, this);
+			rect0.right = Math.max(rect0.right, textRect.right + 2 * (E_PADDING/2));
+			rect0.bottom = Math.max(rect0.bottom, textRect.bottom + 2*(E_PADDING/2));
+			y0Branches = Math.max(this.y0Branches, textRect.bottom);
+		}
+		// END KGU#227 2016-07-30
 
-            rect0.right = Math.max(rect0.right, fullWidth)+1;
-            rect0.bottom = rect0.bottom + maxHeight;
+		// retrieve the number of parallel tasks
+		int nTasks = Integer.valueOf(getText().get(0));
 
-            // START KGU#516 2018-04-04: Issue #529 - reduced critical section
-            this.rect0 = rect0;
-            this.x0Branches = x0Branches;
-            this.y0Branches = y0Branches;
-            // END KGU#516 2018-04-04
-            // START KGU#136 2016-03-01: Bugfix #97
-            isRect0UpToDate = true;
-            // END KGU#136 2016-03-01
-            return rect0;
-    }
+		fullWidth = 0;
+		maxHeight = 0;
 
+		if (qs.size() != 0)
+		{
+			for (int i = 0; i < nTasks; i++)
+			{
+				// START KGU#136 2016-03-01: Bugfix #97
+				x0Branches.addElement(fullWidth);
+				// END KGU#136 2016-03-01
+				Rect rtt = qs.get(i).prepareDraw(_canvas);
+				// START KGU#151 2016-03-01: Additional text lines should not influence the thread width!
+				//fullWidth += Math.max(rtt.right, getWidthOutVariables(_canvas, getText(false).get(i+1), this) + (E_PADDING / 2));
+				fullWidth += Math.max(rtt.right, E_PADDING / 2);
+				// END KGU#151 2016-03-01
+				if (maxHeight < rtt.bottom)
+				{
+					maxHeight = rtt.bottom;
+				}
+			}
+		}
+
+		rect0.right = Math.max(rect0.right, fullWidth)+1;
+		rect0.bottom = rect0.bottom + maxHeight;
+
+		// START KGU#516 2018-04-04: Issue #529 - reduced critical section
+		this.rect0 = rect0;
+		this.x0Branches = x0Branches;
+		this.y0Branches = y0Branches;
+		// END KGU#516 2018-04-04
+		// START KGU#136 2016-03-01: Bugfix #97
+		isRect0UpToDate = true;
+		// END KGU#136 2016-03-01
+		return rect0;
+	}
+
+    @Override
     public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport, boolean _inContention)
     {
            // START KGU#502/KGU#524/KGU#553 2019-03-13: New approach to reduce drawing contention
@@ -390,7 +397,7 @@ public class Parallel extends Element
             StringList headerText = new StringList();
             if (!Element.E_COMMENTSPLUSTEXT && isSwitchTextCommentMode())
             {
-            	headerText = this.getComment();
+                headerText = this.getComment();
             }
             Instruction.draw(_canvas, _top_left, headerText, this, _inContention);
             // END KGU227 2016-07-30
@@ -466,10 +473,10 @@ public class Parallel extends Element
 */
                             else
                             {
-                            	// START KGU#151 2016-03-01: Additional text lines should not influence the thread width!
+                                // START KGU#151 2016-03-01: Additional text lines should not influence the thread width!
                                 //myrect.right = myrect.left + Math.max(rtt.right,getWidthOutVariables(_canvas,getText(false).get(i+1),this) + (E_PADDING / 2)) + 1;
                                 myrect.right = myrect.left + Math.max(rtt.right, E_PADDING / 2) + 1;
-                            	// END KGU#151 2016-03-01
+                                // END KGU#151 2016-03-01
                             }
 
                             // draw child
@@ -509,6 +516,7 @@ public class Parallel extends Element
 	 * @param _right - right border x coordinate
 	 * @param _top - upper border y coordinate
 	 */
+	@Override
 	protected void writeOutRuntimeInfo(Canvas _canvas, int _right, int _top)
 	{
 		super.writeOutRuntimeInfo(_canvas, _right - (Element.E_PADDING/2), _top);
@@ -585,6 +593,7 @@ public class Parallel extends Element
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#findSelected()
 	 */
+	@Override
 	public Element findSelected()
 	{
 		Element sel = selected ? this : null;
@@ -596,6 +605,7 @@ public class Parallel extends Element
 	}
 	// END KGU#183 2016-04-24
 
+	@Override
 	public Element copy() // Problem here???
 	{
 		Parallel ele = new Parallel(this.getText().getText());
@@ -649,6 +659,7 @@ public class Parallel extends Element
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#isTestCovered(boolean)
 	 */
+	@Override
 	public boolean isTestCovered(boolean _deeply)
 	{
 		boolean covered = true;
@@ -664,6 +675,7 @@ public class Parallel extends Element
 	// END KGU#117 2016-03-06
 
 	// START KGU#156 2016-03-13: Enh. #124
+	@Override
 	protected String getRuntimeInfoString()
 	{
 		String info = this.getExecCount() + " / ";
@@ -689,39 +701,39 @@ public class Parallel extends Element
 	 * @see lu.fisch.structorizer.elements.Element#addFullText(lu.fisch.utils.StringList, boolean)
 	 */
 	@Override
-    protected void addFullText(StringList _lines, boolean _instructionsOnly)
-    {
+	protected void addFullText(StringList _lines, boolean _instructionsOnly)
+	{
 		// Under no circumstances, the text may contain an instruction or even variable declaration (it's just the number of threads) 
 //		if (!_instructionsOnly)
 //		{
 //			_lines.add(this.getText());
 //		}
-    	if (qs!= null && !this.isDisabled(false))
-    	{
-    		for (int i = 0; i < qs.size(); i++)
-    		{
-    			qs.get(i).addFullText(_lines, _instructionsOnly);
-    		}
-    	}		
-    }
-    // END KGU 2015-10-16
-    
+		if (qs!= null && !this.isDisabled(false))
+		{
+			for (int i = 0; i < qs.size(); i++)
+			{
+				qs.get(i).addFullText(_lines, _instructionsOnly);
+			}
+		}		
+	}
+	// END KGU 2015-10-16
+
 	// START KGU#199 2016-07-07: Enh. #188 - ensure Call elements for known subroutines
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#convertToCalls(lu.fisch.utils.StringList)
 	 */
 	@Override
 	public void convertToCalls(StringList _signatures) {
-    	if (qs!= null)
-    	{
-    		for (int i = 0; i < qs.size(); i++)
-    		{
-    			qs.get(i).convertToCalls(_signatures);
-    		}
-    	}
+		if (qs!= null)
+		{
+			for (int i = 0; i < qs.size(); i++)
+			{
+				qs.get(i).convertToCalls(_signatures);
+			}
+		}
 	}
 	// END KGU#199 2016-07-07
-    
+	
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#traverse(lu.fisch.structorizer.elements.IElementVisitor)
 	 */
@@ -751,6 +763,7 @@ public class Parallel extends Element
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#mayPassControl()
 	 */
+	@Override
 	public boolean mayPassControl()
 	{
 		/* A Parallel section is only guaranteed to pass control if being disabled
@@ -774,6 +787,7 @@ public class Parallel extends Element
 	 * is to be involved
 	 * @return the maximum line length
 	 */
+	@Override
 	public int getMaxLineLength(boolean _includeSubstructure)
 	{
 		int maxLen = 0;

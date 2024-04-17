@@ -64,6 +64,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
  *      Kay Gürtzig     2021-01-02      Enh. #905: Mechanism to draw a warning symbol on related DetectedError
  *      Kay Gürtzig     2021-02-09      Bugfix #930: Wrong selector line width calculation in prepareDraw()
+ *      Kay Gürtzig     2024-04-16      Bugfix #1160: Separate X and Y text offset for drawing rotated elements
  *
  ******************************************************************************************************
  *
@@ -397,6 +398,9 @@ public class Case extends Element implements IFork
             Vector<Boolean> rotFlags = new Vector<Boolean>();
             // END KGU#401 217-05-17
 
+            // START KGU#1150 2024-04-16: Bugfix #1160 rotation defects
+            boolean shrinkByRot = caseShrinkByRot != 0 && nBranches > caseShrinkByRot;
+            // END KGU#1150 2024-04-16
             if (qs.size() > 0)
             {
             	for (int i = 0; i < nBranches; i++)
@@ -412,12 +416,26 @@ public class Case extends Element implements IFork
             			maxHeight = rtt.bottom;
             		}
             		// START KGU#401 2017-05-17: Issue #405
-            		boolean rotatable = rtt.bottom < rtt.right
+            		boolean rotatable = shrinkByRot
+            				&& rtt.bottom < rtt.right // This is no longer quite correct
             				&& sq.getSize() == 1 && (sq.getElement(0) instanceof Instruction ||
             						sq.getElement(0).isCollapsed(true));
             		rotX0Branches.addElement(rotatedWidth);
-            		int rotWidth = (rotatable ? rtt.bottom : rtt.right);
-            		int rotHeight = (rotatable ? rtt.right : rtt.bottom);
+            		// START KGU#1150 2024-04-16: Bugfix #1160
+            		//int rotWidth = (rotatable ? rtt.bottom : rtt.right);
+            		//int rotHeight = (rotatable ? rtt.right : rtt.bottom);
+            		int rotWidth = rtt.right;
+            		int rotHeight = rtt.bottom;
+            		if (rotatable) {
+            			sq.resetDrawingInfoDown();
+            			sq.getElement(0).rotated = true;
+            			// The bounds may differ on rotated drawing!
+            			rtt = sq.prepareDraw(_canvas);
+            			rotWidth = rtt.bottom;
+            			rotHeight = rtt.right;
+            			// Now the original condition may no longer hold, however
+            		}
+            		// END KGU#1150 2024-04-16
             		rotatedWidth += Math.max(rotWidth, textWidths[i]);
             		if (rotatedHeight < rotHeight) {
             			rotatedHeight = rotHeight;
@@ -428,7 +446,7 @@ public class Case extends Element implements IFork
             }
 
             // START KGU#401 2017-05-17: Issue #405            
-            if (caseShrinkByRot != 0 && nBranches > caseShrinkByRot && rotatedWidth < fullWidth) {
+            if (shrinkByRot && rotatedWidth < fullWidth) {
             	x0Branches = rotX0Branches;
             	fullWidth = rotatedWidth;
             	maxHeight = rotatedHeight;

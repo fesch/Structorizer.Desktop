@@ -74,6 +74,7 @@ package lu.fisch.structorizer.parsers;
  *                                      operator "instanceof" used as stop symbol in transformParameterisedTypes()
  *      Kay Gürtzig     2024-04-16      Bugfix #1159/1: Full comment fetching for class definitions ensured,
  *                                      bugfix #1159/2: Correct handling of labelled break instructions.
+ *                                      bugfix #1159/3: Heuristic approach to manage embedded breaks in CASE branches
  *
  ******************************************************************************************************
  *
@@ -92,6 +93,7 @@ import java.awt.Color;
 
 import java.io.*;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Stack;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
@@ -1453,6 +1455,11 @@ public class JavaParser extends CodeParser
 		operatorMap.put("!=", "<>");
 	}
 	
+	// START KGU#1149 2024-04-17: Bugfix #1159.3
+	/** Registers all generated Jumps from found breaks in switch cases */
+	protected final HashSet<Jump> switchBreaks = new HashSet<Jump>();
+	// END KGU#1149 2024-04-07
+	
 	/**
 	 * Subclassable configuration method. Decides whether methods of the top-level
 	 * class or interface are to be qualified or not.
@@ -2042,7 +2049,7 @@ public class JavaParser extends CodeParser
 				// <TryStatement> ::= try <ResourceSpecification> <Block> <Finally>
 				int ixBlock = 1;
 				Try ele = new Try("exception");	// Just a temporary text
-				// START KGU#1148 2024-04-16: Bugfix #1159/2 For the label-loop mapping this must be done earlier
+				// START KGU#1148 2024-04-16: Bugfix #1159.2 For the label-loop mapping this must be done earlier
 				_parentNode.addElement(this.equipWithSourceComment(ele, _reduction));
 				// END KGU#1148 2024-04-16
 				if (ruleId >= RuleConstants.PROD_TRYSTATEMENT_TRY4) {
@@ -2195,7 +2202,7 @@ public class JavaParser extends CodeParser
 					// Build the FINALLY block
 					this.buildNSD_R(_reduction.get(ixFinally).asReduction().get(1).asReduction(), ele.qFinally);
 				}
-				// START KGU#1148 2024-04-16: Bugfix #1159/2 For the label-loop mapping this must be done earlier
+				// START KGU#1148 2024-04-16: Bugfix #1159.2 For the label-loop mapping this must be done earlier
 				//_parentNode.addElement(this.equipWithSourceComment(ele, _reduction));
 				// END KGU#1148 204-04-16
 			}
@@ -2221,14 +2228,14 @@ public class JavaParser extends CodeParser
 			{
 				// <BreakStatement> ::= break Identifier ';'
 				// We try the count the loop levels in order to construct a "leave n".
-				// START KGU#1148 2024-04-16: Bugfix #1159/2 Label association didn't work
+				// START KGU#1148 2024-04-16: Bugfix #1159.2 Label association didn't work
 				//String label = this.getContent_R(_reduction.get(0));
 				String label = this.getContent_R(_reduction.get(1));
 				// END KGU#1148 2024-04-16
 				Element labelledEle = labels.get(label);
 				Element parent = _parentNode.parent;
 				Jump ele = null;
-				// START KGU#1148 2024-04-16: Bugfix #1159/2 Label association didn't work
+				// START KGU#1148 2024-04-16: Bugfix #1159.2 Label association didn't work
 				// Find the closest containing loop context
 				while (parent != null && !(parent instanceof ILoop)) {
 					parent = parent.parent;
@@ -2237,7 +2244,7 @@ public class JavaParser extends CodeParser
 				if (labelledEle != null && parent instanceof ILoop) {
 					Subqueue target = (Subqueue)labelledEle.parent;
 					int nLevels = 1;
-					// START KGU#1148 2024-04-16: Bugfix #1159/2 Label association didn't work
+					// START KGU#1148 2024-04-16: Bugfix #1159.2 Label association didn't work
 					//while ((parent = parent.parent) != null
 					//		&& (parent = parent.parent) instanceof ILoop
 					//		&& parent.parent != target) {
@@ -2287,17 +2294,18 @@ public class JavaParser extends CodeParser
 			{
 				Jump jmp = new Jump(this.getOptKeyword("preLeave", false, false));
 				this.equipWithSourceComment(jmp, _reduction);
-				// START KGU#1148 2024-04-16: Bugfix #1159/3 Mark breaks from CASE
+				// START KGU#1149 2024-04-16: Bugfix #1159.3 Mark breaks from CASE
 				Element parent = _parentNode.parent;
 				while (parent != null && !(parent instanceof Case) && !(parent instanceof ILoop)) {
 					parent = parent.parent;
 				}
 				if (parent instanceof Case) {
 					jmp.setColor(Color.RED);
-					jmp.comment.add("Restructure this CASE branch for a clean end.");
-					// FIXME this kind of Jump should be registered for final restructuring attempts
+					jmp.comment.add("TODO: Restructure this CASE branch for clean end.");
+					// Registered this kind of Jump for final restructuring attempts
+					this.switchBreaks.add(jmp);
 				}
-				// END KGU#1148 2024-04-16
+				// END KGU#1149 2024-04-16
 				_parentNode.addElement(jmp);
 			}
 			break;
@@ -3965,10 +3973,28 @@ public class JavaParser extends CodeParser
 			if (size > 0) {
 				Element el = sq.getElement(size-1);
 				boolean jumps = el instanceof Jump;
-				if (jumps && ((Jump)el).isLeave()) {
-					// remove the break instruction! All others remain
-					sq.removeElement(--size);
+				// START KGU#1149 2024-04-17: Bugfix #1159.3 Don't remove loop breaks
+				//if (jumps && ((Jump)el).isLeave()) {
+				if (jumps) {
+					if (switchBreaks.contains(el)) {
+				// END KGU#1149 2024-04-17
+						// remove the break instruction! All others remain
+						sq.removeElement(--size);
+					}
+				// START KGU#1149 2024-04-17: Bugfix #1159.3 check dead ends
 				}
+				else if (!el.mayPassControl()) {
+					jumps = true;
+					if (el instanceof Alternative || el instanceof Case) {
+						this.effaceTerminalSwitchBreaks(el);
+					}
+				}
+				else if (!sq.isReachable(size-1, true, null)) {
+					// Last element of the branch unreachable - so branch is closed
+					jumps = true;
+				}
+				// END KGU#1149 2024-04-17
+
 				// In case we had unclosed previous branches copy the content
 				for (int j = ixAppendTo; j < i; j++) {
 					for (int k = 0; k < size; k++) {
@@ -3986,6 +4012,44 @@ public class JavaParser extends CodeParser
 			}
 		}
 	}
+	
+	// START KGU#1149 2024-04-17: Bugfix #1159.3
+	/**
+	 * Recursively eliminates all {@link #switchBreaks} elements that are placed
+	 * at the end of some branch of the forking element {@code forkEl}.
+	 * 
+	 * @param forkEl - either an {@link Alternative} or a {@link Case}
+	 */
+	private void effaceTerminalSwitchBreaks(Element forkEl)
+	{
+		if (forkEl instanceof Alternative) {
+			removeTerminalSwitchBreaks(((Alternative)forkEl).qTrue);
+			removeTerminalSwitchBreaks(((Alternative)forkEl).qFalse);
+		}
+		else if (forkEl instanceof Case) {
+			for (int i = 0; i < ((Case)forkEl).qs.size(); i++) {
+				removeTerminalSwitchBreaks(((Case)forkEl).qs.get(i));
+			}
+		}
+	}
+	/**
+	 * Recursively eliminates all {@link #switchBreaks} elements that are placed
+	 * at the end of Subqueue {@code sq}.
+	 * 
+	 * @param sq - a subqueue the end of which is to be cleaned
+	 */
+	private void removeTerminalSwitchBreaks(Subqueue sq) {
+		if (sq.getSize() > 0) {
+			Element lastEl = sq.getElement(sq.getSize()-1);
+			if (lastEl instanceof Jump && switchBreaks.contains(lastEl)) {
+				sq.removeElement(sq.getSize()-1);
+			}
+			else if (lastEl instanceof Alternative || lastEl instanceof Case) {
+				effaceTerminalSwitchBreaks(lastEl);
+			}
+		}
+	}
+	// END KGU#1149 2024-04-17
 
 	/**
 	 * Evaluates the case block represented by the passed in reduction {@code stmGroup},

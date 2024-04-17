@@ -61,6 +61,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
  *      Kay Gürtzig     2021-01-06      Enh. #905: draw() method enhanced to ensure markers during tutorials be shown
  *      Kay Gürtzig     2022-07-30      Result type of removeElement(Element) changed from void to boolean
+ *      Kay Gürtzig     2024-04-17      Bugfix #1161: Reachability check revised (was defective for loops)
  *
  ******************************************************************************************************
  *
@@ -724,32 +725,64 @@ public class Subqueue extends Element implements IElementSequence {
 	
 	// START KGU 2017-10-21
 	/**
-	 * Checks whether {@link Element} {@code _ele} is member of this and may be reached i.e.
-	 * is neither directly nor indirectly preceded by a {@link Jump} element. If {@code _deepCheck}
-	 * is true then preceding structured elements are also checked if they may be left.  
+	 * Checks whether {@link Element} {@code _ele} is member of this and may be
+	 * reached, i.e., is neither directly nor indirectly preceded by a {@link Jump}
+	 * element. If {@code _deepCheck} is {@code true} then the reachability of the
+	 * embedding structured element(s)up to (but except) {@code _optContext} is also
+	 * checked.
+	 * 
 	 * @param _ele - the {@link Element} the reachability of which is to be tested
-	 * @param _deepCheck - whether preceding structured elements are to be checked particularly 
-	 * @return true if {@code _ele} is potentially reachable within this.
+	 * @param _deepCheck - whether preceding structured elements are to be checked
+	 *    particularly 
+	 * @param _optContext - a structured Element (not a Subqueue!) possibly limiting
+	 *    the outer hierarchical context for deep reachability check, i.e., the
+	 *    reachability of the ancestor {@code _optContext} or any outer Element will
+	 *    not be checked.
+	 * @return {@code true} if {@code _ele} is potentially reachable within this or
+	 *     the specified context.
+	 * 
+	 * @see Element#mayPassControl()
 	 */
-	public boolean isReachable(Element _ele, boolean _deepCheck)
+	public boolean isReachable(Element _ele, boolean _deepCheck, Element _optContext)
 	{
-		return isReachable(children.indexOf(_ele), _deepCheck); 
+		return isReachable(children.indexOf(_ele), _deepCheck, _optContext); 
 	}
 
 	/**
-	 * Checks whether {@link Element} with index {@code _index} exists may be reached i.e.
-	 * is neither directly nor indirectly preceded by a {@link Jump} element. If {@code _deepCheck}
-	 * is true then preceding structured elements are also checked if they may be left.  
-	 * @param _ele - the {@link Element} the reachability of which is to be tested
+	 * Checks whether {@link Element} with index {@code _index} may be reached, i.e.,
+	 * is neither directly nor indirectly preceded by a {@link Jump} element. If
+	 * {@code _deepCheck} is {@code true} then the reachability of the embedding
+	 * structured element(s) up to (but except) {@code _optContext} is also checked.
+	 * If {@code _optContext} is {@code null} or not an embedding context then the
+	 * the containing {@link Root} is the reachability context.
+	 * 
+	 * @param _index - index of the {@link Element} to be checked for reachability
 	 * @param _deepCheck - whether preceding structured elements are to be checked particularly 
-	 * @return true if {@code _ele} is potentially reachable within this.
+	 * @param _optContext - a structured Element (not a Subqueue!) possibly limiting
+	 *    the outer hierarchical context for deep reachability check, i.e., the
+	 *    reachability of the ancestor {@code _optContext} or any outer Element will
+	 *    not be checked.
+	 * @return {@code true} if {@code _ele} is potentially reachable within this or
+	 *     the specified context.
+	 * 
+	 * @see Element#mayPassControl()
 	 */
-	public boolean isReachable(int _index, boolean _deepCheck) {
+	public boolean isReachable(int _index, boolean _deepCheck, Element _optContext) {
 		boolean reachable = _index >= 0 && _index < this.children.size();
-		while (_index >= 0 && reachable) {
-			Element ele = children.get(_index--);
-			reachable = !_deepCheck && (ele.isDisabled(true) || !(ele instanceof Jump)) || ele.mayPassControl();
+		// START KGU#1151 2024-04-17: Bugfix #1161 Didn't work for eternal llops
+		//while (_index >= 0 && reachable) {
+		//	Element ele = children.get(_index--);
+		//	reachable = !_deepCheck && (ele.isDisabled(true) || !(ele instanceof Jump)) || ele.mayPassControl();
+		//}
+		while (_index > 0 && reachable) {
+			reachable = children.get(--_index).mayPassControl();
 		}
+		Element par = this.parent;
+		if (_deepCheck && reachable
+				&& par != null && par != _optContext && (par.parent) != null) {
+			reachable = ((Subqueue)par.parent).isReachable(par, true, _optContext);
+		}
+		// END KGU#1151 2024-04-17
 		return reachable;
 	}
 	
@@ -759,7 +792,10 @@ public class Subqueue extends Element implements IElementSequence {
 	public boolean mayPassControl()
 	{
 		int size = this.children.size();
-		return size == 0 || this.children.get(size-1).mayPassControl() && this.isReachable(size-1, true);
+		// START KGU#1151 2024-04-17: Bugfix #1161 Always told non-reachability
+		//return size == 0 || this.children.get(size-1).mayPassControl() && this.isReachable(size-1, true);
+		return size == 0 || this.children.get(size-1).mayPassControl() && this.isReachable(size-1, false, null);
+		// END KGU#1151 2024-04-17
 	}
 	// END KGU 2017-10-21
 
