@@ -75,6 +75,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2024-04-16      Bugfix #1159/1: Full comment fetching for class definitions ensured,
  *                                      bugfix #1159/2: Correct handling of labelled break instructions.
  *                                      bugfix #1159/3: Heuristic approach to manage embedded breaks in CASE branches
+ *      Kay Gürtzig     2024-04-18      Bugfix #1159.3: Approach to resolve certain cases of conditional switch breaks
  *
  ******************************************************************************************************
  *
@@ -4012,6 +4013,10 @@ public class JavaParser extends CodeParser
 				}
 			}
 		}
+		
+		// START KGU#1149 2024-04-18: Bugfix #1159.3 Address some non-trivial constellations
+		resolveConditionalSwitchBreaks(ele);
+		// END KGU#1149 2024-04-18
 	}
 	
 	// START KGU#1149 2024-04-17: Bugfix #1159.3
@@ -4052,6 +4057,83 @@ public class JavaParser extends CodeParser
 		}
 	}
 	// END KGU#1149 2024-04-17
+	
+	// START KGU#1149 2024-04-18: Bugfix #1159.3 Address some non-trivial constellations
+	/**
+	 * Resolves constellations where a conditioned switch break (illegal in Structorizer)
+	 * is placed at the end of one branch of an Alternative that is a direct element of
+	 * one of the Case branches. Accesses and possibly modifies {@link #switchBreaks}.
+	 *
+	 * @param _case - the owning {@link Case} element
+	 */
+	private void resolveConditionalSwitchBreaks(Case _case) {
+		/* In the following we try to find some further breaks that can be resolved
+		 * We concentrate on those that end one of the branches of an Alternative
+		 * which is an immediate member of a Case branch subqueue. In this case
+		 * we can append (move) all subsequent elements to the end of the other
+		 * branch of the Alternative, remove the break and possibly swap the
+		 * Alternative branches if the break had resided in the T branch and this
+		 * became empty.
+		 * If more than one of such constellations happen to occur within the same
+		 * Case branch then it i important to start with the last of them, otherwise
+		 * the conditions for its recognition would be spoiled.
+		 * Therefore we first sort all of these constallations by their indices within
+		 * their respective branches.
+		 */
+		// First find out the maximum length of all branches.
+		int maxLen = 0, len;
+		for (int i = 0; i < _case.qs.size(); i++) {
+			if ((len = _case.qs.get(i).getSize()) > maxLen) {
+				maxLen = len;
+			}
+		}
+		@SuppressWarnings("unchecked")
+		HashSet<Jump>[] removedBreaks = new HashSet[maxLen];
+		for (int i = 0; i < maxLen; i++) {
+			removedBreaks[i] = new HashSet<Jump>();
+		}
+		// Now register all relevant break elements with the index of the Alternative
+		for (Jump leave: switchBreaks) {
+			Subqueue sq0, sq1;
+			Alternative alt;
+			if (leave.parent instanceof Subqueue
+					&& (sq0 = (Subqueue)leave.parent).parent instanceof Alternative
+					&& (alt = (Alternative)sq0.parent).parent instanceof Subqueue
+					&& sq0.getElement(sq0.getSize()-1) == leave
+					&& (sq1 = (Subqueue)alt.parent).parent == _case) {
+				int ix = sq1.getIndexOf(alt);
+				removedBreaks[ix].add(leave);
+			}
+		}
+		// Now we rearrange the Alternatives and their subsequent elements to get a clean branch
+		for (int i = maxLen - 1; i >= 0; i--) {
+			for (Jump leave: removedBreaks[i]) {
+				Subqueue sq0 = (Subqueue)leave.parent;
+				Alternative alt = (Alternative)sq0.parent;
+				Subqueue sq = (Subqueue)alt.parent;
+				// Remove the break
+				sq0.removeElement(sq0.getSize()-1);
+				switchBreaks.remove(leave);	// Registration no longer needed
+				Subqueue sq1 = (alt.qTrue == sq0) ? alt.qFalse : alt.qTrue;
+				if (sq0.getSize() == 0 && sq0 == alt.qTrue) {
+					// Swap Alternative branches and invert condition
+					alt.qTrue = sq1;
+					alt.qFalse = sq0;
+					alt.setText(Element.negateCondition(alt.getUnbrokenText().concatenate()));
+				}
+				// Append the subsequent elements to the opposite alt branch
+				for (int k = i + 1; k < sq.getSize(); k++) {
+					sq1.addElement(sq.getElement(k));
+				}
+				// Remove the subsequent elements from the case branch
+				for (int k = sq.getSize() - 1; k > i; k--) {
+					sq.removeElement(k);
+				}
+			}
+		}
+	}
+	// END KGU#1149 2024-04-18
+
 
 	/**
 	 * Evaluates the case block represented by the passed in reduction {@code stmGroup},
