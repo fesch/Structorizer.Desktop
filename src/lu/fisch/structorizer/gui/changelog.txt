@@ -244,6 +244,7 @@ Current development version 3.32-21 (2024-04-18)
 - 21: Issue #1161 More consistent reachability check in Analyser <2>
 - 21: Issue #1162 Analyser markers will turn white on red or blue elements <2>
 - 21: Bugfix #1163 C99 import of non-trivial switch instructions improved <2>
+- 21: Bugfix #1164 ANSI-C99 grammar now allows expressions in case clauses <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>
