@@ -62,7 +62,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2023-09-28      Issue #1091: Correct handling of alias, enum, and array type definitions
  *      Kay Gürtzig     2023-09-29      Bugfix #678: Unwanted side-effect on pointer types mended
  *      Kay Gürtzig     2024-03-17      Bugfix #1141: Measures against stack overflow in buildNSD_R()
- *      Kay Gürtzig     2024-04-17      Bugfix #1163: Import of non-trivial switch structures improved
+ *      Kay Gürtzig     2024-04-17/18   Bugfix #1163: Import of non-trivial switch structures improved
  *
  ******************************************************************************************************
  *
@@ -1353,14 +1353,41 @@ public class C99Parser extends CPreParser
 	}
 	
 	/**
-	 * Converts a rule of type PROD_NORMALSTM_SWITCH_LPAREN_RPAREN_LBRACE_RBRACE into the
-	 * skeleton of a Case element. The case branches will be handled separately
+	 * Converts a rule of type PROD_NORMALSTM_SWITCH_LPAREN_RPAREN_LBRACE_RBRACE
+	 * into the skeleton of a Case element. The case branches will be handled
+	 * separately
+	 * 
 	 * @param _reduction - Reduction rule of a switch instruction
 	 * @param _parentNode - the Subqueue this Case element is to be appended to
-	 * @throws ParserCancelled 
+	 * 
+	 * @throws ParserCancelled
+	 * 
+	 * @see {@link #buildCaseBranch(Reduction, int, Case)}
 	 */
 	private void buildCase(Reduction _reduction, Subqueue _parentNode) throws ParserCancelled
 	{
+		// We should first make clear what could happen here. A case analysis
+		// switch(discriminator) {
+		// case 1:
+		// case 2:		// to be merged with previous one -> selector 1,2
+		//    instr21;
+		//    instr22;
+		// case 3:		// can be merged with 1,2 if instr1; instr2; are put to an alternative
+		// case 4:		// to be merged with previous one 
+		//    instr41;	// either to be copied to case 1,2 if 3 hadn't been merged with 1,2
+		//    instr42;	//		or to be merged to case 1,2,3 (if that had an alternative)
+		//    break;	// To be removed after all branches are complete 
+		// case 5:		// new branch
+		//    instr51;
+		//    instr52;
+		//    return;	// Must not be removed
+		// case 6:		// new branch
+		// default:		// cannot be merged with previous branch
+		//    instr0;	// must be copied to case 6
+		//    [break;]	// To be removed after all branches are complete
+		// }
+		// The first (easier) approach here is to copy/append instr41; instr42; (and instr0;)
+		// We should wipe off end-standing breaks, however, before we copy.
 		String content = new String();
 		// Put the discriminator into the first line of content
 		// START KGU#822 2020-03-09: Issue #835
@@ -1406,29 +1433,62 @@ public class C99Parser extends CPreParser
 		Reduction secReduc = _reduction.get(5).asReduction();
 		buildNSD_R(secReduc, (Subqueue) ele.qs.get(0));
 
+		if (j != ele.qs.size()) {
+			System.out.println("Counted branch no differs from created");
+		}
+		// Now it's time to clean and combine the branches
+		// START KGU#1153 2024-04-18: Bugfix #1163: prepare combination
+		boolean[] closedBranches = new boolean[ele.qs.size()];
+		// END KGU#1153 2024-04-18
 		// In theory, all branches should end with a break instruction
 		// unless they end with return or exit. Drop the break instructions
 		// (and only these) now.
 		for (int i = 0; i < ele.qs.size(); i++) {
 			Subqueue sq = ele.qs.get(i);
 			int size = sq.getSize();
+			// START KGU#1153 2024-04-18: Bugfix #1163
+			closedBranches[i] = false;
+			// END KGU#1153 2024-04-18
 			if (size > 0) {
 				Element el = sq.getElement(size-1);
-				// START KGU#1153 2024-04-17: Bugfix #1163
+				// START KGU#1153 2024-04-18: Bugfix #1163
 				//if (el instanceof Jump && ((Jump)el).isLeave()) {
 				//	sq.removeElement(size-1);
 				//}
-				if (el instanceof Jump && switchBreaks.contains(el)) {
-					sq.removeElement(size-1);
+				if (el instanceof Jump) {
+					if (switchBreaks.contains(el)) {
+						sq.removeElement(size-1);
+					}
+					closedBranches[i] = true;
 				}
 				else if (!el.mayPassControl() && (el instanceof Alternative || el instanceof Case)) {
 					this.effaceTerminalSwitchBreaks(el);
+					closedBranches[i] = true;
 				}
-				// END KGU#1153 2024-04-17
+				else if (!sq.isReachable(size-1, false, null)) {
+					closedBranches[i] = true;
+				}
+				// END KGU#1153 2024-04-18
 			}
 		}
 
-		// cut off else, if possible
+		// START KGU#1153 2024-04-18: Bugfix #1163
+		// From last to first, for all open branches, copy the respective
+		// successor branch to its end
+		for (int i = ele.qs.size()-2; i >= 0; i--) {
+			if (!closedBranches[i]) {
+				Subqueue sq0 = ele.qs.get(i);
+				Subqueue sq1 = ele.qs.get(i+1);
+				// TODO: Here we might decide between merging and copying
+				for (int k = 0; k < sq1.getSize(); k++) {
+					Element el = sq1.getElement(k).copy();	// FIXME: Need a new Id!
+					sq0.addElement(el);
+				}
+			}
+		}
+		// END KGU#1153 2024-04-18
+		
+		// cut off default, if possible
 		if (((Subqueue) ele.qs.get(j-1)).getSize()==0)
 		{
 			ele.getText().set(ele.getText().count()-1,"%");
@@ -1436,29 +1496,21 @@ public class C99Parser extends CPreParser
 
 	}
 
+	/**
+	 * Constructs one or more Case branches from the given {@link Reduction}
+	 * {@code _reduction} into the {@link Case} element {@code _case}.
+	 * 
+	 * @param _reduction - a {@code <Case Stmts>} Reduction
+	 * @param _ruleId - the related production table index
+	 * @param _case - the "owning" {@link Case} object
+	 * @throws ParserCancelled if the user happened to abort the import
+	 */
 	private void buildCaseBranch(Reduction _reduction, int _ruleId, Case _case) throws ParserCancelled
 	{
-		// We should first make clear what could happen here. A case analysis
-		// switch(discriminator) {
-		// case 1:
-		// case 2:		// to be merged with previous one -> selector 1,2
-		//    instr21;
-		//    instr22;
-		// case 3:		// can be merged with 1,2 if instr1; instr2; are put to an alternative
-		// case 4:		// to be merged with previous one 
-		//    instr41;	// either to be copied to case 1,2 if 3 hadn't been merged with 1,2
-		//    instr42;	//		or to be merged to case 1,2,3 (if that had an alternative)
-		//    break;	// To be removed after all branches are complete 
-		// case 5:		// new branch
-		//    instr51;
-		//    instr52;
-		//    return;	// Must not be removed
-		// case 6:		// new branch
-		// default:		// cannot be merged with previous branch
-		//    instr0;	// must be copied to case 6
-		//    [break;]	// To be removed after all branches are complete
-		// }
-		// The first (easier) approach here is to copy/append instr41; instr42; (and instr0;)
+		// Relevant grammar rules:
+		// <Case Stmts> ::= case <Selector> ':' <StmtList> <Case Stmts>
+		// <Case Stmts> ::= default ':' <StmtList>
+
 		int nLines = _case.getText().count();
 		int iNext = 0;	// line index of the next free selector entry
 		// buildCase(...) had marked all selector lines (but the default) with "??"
@@ -1499,31 +1551,32 @@ public class C99Parser extends CPreParser
 		// Fill the branch with the instructions (if there are any)
 		buildNSD_R(secReduc, sq);
 				
+		// START KGU#1153 2024-04-18: Bugfix #1163
+		/* We got into a conflict here: It does not make sense to copy
+		 * un-cleaned branches. On the other hand, we should not have
+		 * removed the final leave element if we want to use it for the
+		 * detection of closed branches. So the only sensible way is to
+		 * postpone the copying to buildCase()
+		 */
 		// Which is the last branch ending with jump instruction?
-		int lastCaseWithJump = -1;
-		for (int i = iNext-2; i >= 0; i--) {
-			int size = _case.qs.get(i).getSize();
-			// START KGU#1153 2024-04-17: Defective branch handling
-			//if (size > 0 && (_case.qs.get(i).getElement(size-1) instanceof Jump)) {
-			if (size > 0 && (!_case.qs.get(i).getElement(size-1).mayPassControl())) {
-			// END KGU#1153 2024-04-17
-				lastCaseWithJump = i;
-				break;
-			}
-		}
-		// append copies of the elements of the new case to all cases still not terminated
-		for (int i = lastCaseWithJump+1; i < iNext-1; i++) {
-			Subqueue sq1 = _case.qs.get(i);
-			for (int j = 0; j < sq.getSize(); j++) {
-				Element el = sq.getElement(j).copy();	// FIXME: Need a new Id!
-				// START KGU#1153 2024-04-17: Bugfix #1163 a switch break copy must also be registered
-				if (el instanceof Jump && switchBreaks.contains(sq.getElement(j))) {
-					switchBreaks.add((Jump)el);
-				}
-				// END KGU#1153 2024-04-17
-				sq1.addElement(el);
-			}
-		}
+		//int lastClosedBranch = -1;
+		//for (int i = iNext-2; i >= 0; i--) {
+		//	int size = _case.qs.get(i).getSize();
+		//	if (size > 0 && (!_case.qs.get(i).getElement(size-1).mayPassControl())) {
+		//		lastClosedBranch = i;
+		//		break;
+		//	}
+		//}
+		//
+		// Append copies of the elements of the new case to all cases still not terminated
+		//for (int i = lastClosedBranch+1; i < iNext-1; i++) {
+		//	Subqueue sq1 = _case.qs.get(i);
+		//	for (int j = 0; j < sq.getSize(); j++) {
+		//		Element el = sq.getElement(j).copy();	// FIXME: Need a new Id!
+		//		sq1.addElement(el);
+		//	}
+		//}
+		// END KGU#1153 2024-04-18
 		
 		// If this is an explicit case branch then the last token holds the subsequent branches
 		if (_ruleId == RuleConstants.PROD_CASESTMTS_CASE_COLON) {

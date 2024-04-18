@@ -2535,7 +2535,6 @@ public abstract class Element {
 	private boolean isSimilarToFillColor(Color color, int tolerance)
 	{
 		Color fill = getFillColor();
-		System.out.println(fill + " <-> " + color);
 		return (Math.abs(color.getRed() - fill.getRed()) < tolerance
 				&& Math.abs(color.getGreen() - fill.getGreen()) < tolerance
 				&& Math.abs(color.getBlue() - fill.getBlue()) < tolerance);
