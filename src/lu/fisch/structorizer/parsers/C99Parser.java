@@ -1458,6 +1458,7 @@ public class C99Parser extends CPreParser
 				if (el instanceof Jump) {
 					if (switchBreaks.contains(el)) {
 						sq.removeElement(size-1);
+						switchBreaks.remove(el);
 					}
 					closedBranches[i] = true;
 				}
@@ -1616,6 +1617,7 @@ public class C99Parser extends CPreParser
 			Element lastEl = sq.getElement(sq.getSize()-1);
 			if (lastEl instanceof Jump && switchBreaks.contains(lastEl)) {
 				sq.removeElement(sq.getSize()-1);
+				switchBreaks.remove(lastEl);
 			}
 			else if (lastEl instanceof Alternative || lastEl instanceof Case) {
 				effaceTerminalSwitchBreaks(lastEl);

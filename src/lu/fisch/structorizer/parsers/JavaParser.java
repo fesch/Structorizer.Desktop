@@ -3980,6 +3980,7 @@ public class JavaParser extends CodeParser
 				// END KGU#1149 2024-04-17
 						// remove the break instruction! All others remain
 						sq.removeElement(--size);
+						switchBreaks.remove(el);
 					}
 				// START KGU#1149 2024-04-17: Bugfix #1159.3 check dead ends
 				}
@@ -4043,6 +4044,7 @@ public class JavaParser extends CodeParser
 			Element lastEl = sq.getElement(sq.getSize()-1);
 			if (lastEl instanceof Jump && switchBreaks.contains(lastEl)) {
 				sq.removeElement(sq.getSize()-1);
+				switchBreaks.remove(lastEl);
 			}
 			else if (lastEl instanceof Alternative || lastEl instanceof Case) {
 				effaceTerminalSwitchBreaks(lastEl);
