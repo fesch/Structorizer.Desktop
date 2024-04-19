@@ -33,8 +33,9 @@ package lu.fisch.structorizer.elements;
  *
  *      Author           Date            Description
  *      ------           ----            -----------
- *      Kay Gürtzig      2015.11.30      First issue
- *      Kay Gürtzig      2016.10.13      Enh. #270: method isDisabled() added
+ *      Kay Gürtzig      2015-11-30      First issue
+ *      Kay Gürtzig      2016-10-13      Enh. #270: method isDisabled() added
+ *      Kay Gürtzig      2024-04-17      Bugfix #1161: LeaveDetector mended.
  *
  ******************************************************************************************************
  *
@@ -64,6 +65,15 @@ public interface ILoop {
 		int loopLevel = 1;
 		public boolean isLeavable = false;
 		
+		// START KGU#1151 2024-04-17: Bugfix #1161 Specify the reachability context
+		private Element context = null;
+		public LeaveDetector(boolean _exactly, Element _loop)
+		{
+			exactly = _exactly;
+			context = _loop;
+		}
+		// END KGU#1151 2024-04-17
+
 		public LeaveDetector(boolean _exactly)
 		{
 			exactly = _exactly;
@@ -72,7 +82,10 @@ public interface ILoop {
 		@Override
 		public boolean visitPreOrder(Element _ele) {
 			if (_ele instanceof Jump && !_ele.isDisabled(true) && (!exactly || ((Jump)_ele).isLeave())) {
-				if (_ele.parent instanceof Subqueue && ((Subqueue)_ele.parent).isReachable(_ele, true)) {
+				// START KGU#1151 2024-04-17: Bugfix #1161 Specify the reachability context
+				//if (_ele.parent instanceof Subqueue && ((Subqueue)_ele.parent).isReachable(_ele, true)) {
+				if (_ele.parent instanceof Subqueue && ((Subqueue)_ele.parent).isReachable(_ele, true, context)) {
+				// END KGU#1151 2024-04-17
 					int up = ((Jump)_ele).getLevelsUp();
 					isLeavable = exactly && up == loopLevel || up >= loopLevel;
 				}
@@ -109,13 +122,17 @@ public interface ILoop {
 	
 	// START KGU 2017-10-21
 	/**
-	 * Checks whether there is a reachable {@link Jump} element targeting outside this loop.
-	 * @param _exactly - if true then only a LEAVE jump with the exact unwinding level counts
-	 * @return true iff there is at least one {@link Jump} element inside meeting the requirements
+	 * Checks whether there is a reachable {@link Jump} element targeting
+	 * outside this loop.
+	 * 
+	 * @param _exactly - if {@code true} then only a LEAVE jump with the exact
+	 *    unwinding level counts
+	 * @return {@code true} iff there is at least one {@link Jump} element
+	 *    inside meeting the requirements
 	 */
 	public default boolean hasReachableLeave(boolean _exactly)
 	{
-		LeaveDetector finder = new LeaveDetector(_exactly);
+		LeaveDetector finder = new LeaveDetector(_exactly, (Element)this);
 		this.getBody().traverse(finder);
 		return finder.isLeavable;
 	}

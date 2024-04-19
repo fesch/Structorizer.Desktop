@@ -48,6 +48,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2022-08-23      Enh. #1066: New method getStandardTypeNames()
  *      Kay Gürtzig     2023-09-28      Enh. #1091: Facilities for the definition of array types
  *      Kay Gürtzig     2023-10-15      Bugfix #1096: Array type parsing completely rewritten
+ *      Kay Gürtzig     2024-04-14      Issue# 357: New method isNumeric()
  *
  ******************************************************************************************************
  *
@@ -1051,6 +1052,20 @@ public class TypeMapEntry {
 		}
 		return !_allDeclarations;
 	}
+	
+	// START KGU#395 2024-04-14: Issue #357 Attempt of a classification for COBOL
+	/**
+	 * @return {@code true} if the type is definitively a numeric type. i.e., its
+	 *    canonical type name equals one of the {@link #CANONICAL_NUMERIC_TYPES}.
+	 */
+	public boolean isNumeric()
+	{
+		String canonName = this.getCanonicalType(true, false);
+		return !isArray() && !isRecord() && !isEnum()
+				&& canonName != null
+				&& CANONICAL_NUMERIC_TYPES.contains(canonName);
+	}
+	// END KGU#395 2024-04-14
 	
 	/**
 	 * Indicates whether this type entry refers to a named type definition

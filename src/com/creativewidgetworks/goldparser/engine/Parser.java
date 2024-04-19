@@ -9,6 +9,7 @@
  *                                      Parsing used to fail with error.group_runaway if the file ended
  *                                      with a line comment since the newlines before the EOF are
  *                                      suppressed by lookahadDFA().
+ *      Kay Gürtzig     2024-04-15      Improved version of bugfix #28 -> preserving the comment
  *      
  ******************************************************************************************************
  */
@@ -737,11 +738,7 @@ public class Parser {
                 inputTokens.push(read);
                 
                 // Handle the case where an unterminated comment block consumes the entire program
-                // START KGU#1144 2024-04-10: Bugfix #28 With a line comment, we may tolerate EOF
-                //if (SymbolType.END.equals(read.getType()) && groupStack.size() > 0) {
-                if (SymbolType.END.equals(read.getType()) && groupStack.size() > 0
-                        && !(groupStack.size() == 1 && groupStack.peek().group.getEndingMode() == EndingMode.OPEN)) {
-                // END KGU#1144 2024-04-10
+                if (SymbolType.END.equals(read.getType()) && groupStack.size() > 0) {
                     // Runaway group
                     parseMessage = ParseMessage.GROUP_ERROR;
                 } else {
@@ -760,11 +757,7 @@ public class Parser {
                 } else if (SymbolType.ERROR.equals(read.getType())) {
                     parseMessage = ParseMessage.LEXICAL_ERROR;
                     done = true;
-                // START KGU#1144 2024-04-10: Bugfix #28 With a line comment, we may tolerate EOF
-                //} else if (SymbolType.END.equals(read.getType()) && groupStack.size() > 0) {
-                } else if (SymbolType.END.equals(read.getType()) && groupStack.size() > 0
-                        && !(groupStack.size() == 1 && groupStack.peek().group.getEndingMode() == EndingMode.OPEN)) {
-                // END KGU #1144 2024-04-10
+                } else if (SymbolType.END.equals(read.getType()) && groupStack.size() > 0) {
                     // Runaway group
                     parseMessage = ParseMessage.GROUP_ERROR;
                     done = true;
@@ -987,7 +980,21 @@ public class Parser {
                 }
             } else if (read.getType().equals(SymbolType.END)) {
                 // EOF always stops the loop. The caller method (parse) can flag a runaway group error.
-                token = read;
+                // START KGU#1144 2024-04-15: Bugfix #28 Save a line comment at end of file
+                //token = read;
+                // An open group (e.g. line comment) expecting just some NOISE, however, should be preserved
+                Token grp = null;
+                if (groupStack.size() == 1
+                        && (grp = groupStack.peek()).getGroup().getEndingMode() == EndingMode.OPEN
+                        && grp.getGroup().getEnd().getType().equals(SymbolType.NOISE)) {
+                    groupStack.pop();
+                    grp.setSymbol(grp.getGroup().getContainer());
+                    token = grp;
+                }
+                else {
+                    token = read;
+                }
+                // END KGU#1144 2024-04-15
                 done = true;
             } else {
                 // We are in a group, Append to the Token on the top of the stack.

@@ -78,7 +78,9 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2023-10-15      Bugfix #1096: More precise type and C-style declaration handling
  *      Kay Gürtzig     2024-03-15      Bugfix #1140: Function syntax check ignored the 'qualified' argument
  *      Kay Gürtzig     2024-03-22      Issue #1154: Drawing of the hatch delegated to the disabled elements
- *      Kay Gürtzig     2024-04-02      Bugfix #1156: getAssignedVarName used to return null on typed constant definitions 
+ *      Kay Gürtzig     2024-04-02      Bugfix #1156: getAssignedVarName used to return null on typed constant definitions
+ *      Kay Gürtzig     2024-04-16      Bugfix #1160: Drawing of rotated elements fixed,
+ *                                      issues #161, #1161: Method mayPassControl() overridden
  *
  ******************************************************************************************************
  *
@@ -226,6 +228,7 @@ public class Instruction extends Element {
 		return rect;
 	}
 	
+	@Override
 	public Rect prepareDraw(Canvas _canvas)
 	{
 		// START KGU#136 2016-03-01: Bugfix #97 (prepared)
@@ -301,6 +304,17 @@ public class Instruction extends Element {
 		canvas.setBackground(drawColor);
 		canvas.setColor(drawColor);
 
+		// START KGU#1150 2024-04-16: Bugfix #1160 This must be drawn before rotation
+		canvas.fillRect(_top_left);
+		// START KGU 2015-10-11: If _element is a breakpoint, mark it
+		_element.drawBreakpointMark(canvas, _top_left);
+		// END KGU 2015-10-11
+		
+		// START KGU#906 2021-01-02: Enh. #905
+		_element.drawWarningSignOnError(canvas, _top_left);
+		// END KGU#906 2021-01-02
+		// END KGU#1150 2024-04-16
+
 		myrect = _top_left.copy();
 		
 		AffineTransform oldTrans = null;
@@ -311,7 +325,9 @@ public class Instruction extends Element {
 			myrect.bottom = myrect.top + _top_left.right - _top_left.left;
 		}
 		
-		canvas.fillRect(myrect);
+		// START KGU#1150 2024-04-16: Bugfix #1160 This should be done before rotation
+		//canvas.fillRect(myrect);
+		// END KGU#1150 2024-04-16
 				
 		// draw comment indicator
 		if (Element.E_SHOWCOMMENTS && !_element.getComment(false).getText().trim().equals(""))
@@ -319,13 +335,13 @@ public class Instruction extends Element {
 			_element.drawCommentMark(canvas, myrect);
 		}
 		
-		// START KGU 2015-10-11: If _element is a breakpoint, mark it
-		_element.drawBreakpointMark(canvas, _top_left);
-		// END KGU 2015-10-11
-		
-		// START KGU#906 2021-01-02: Enh. #905
-		_element.drawWarningSignOnError(canvas, _top_left);
-		// END KGU#906 2021-01-02
+//		// START KGU 2015-10-11: If _element is a breakpoint, mark it
+//		_element.drawBreakpointMark(canvas, _top_left);
+//		// END KGU 2015-10-11
+//		
+//		// START KGU#906 2021-01-02: Enh. #905
+//		_element.drawWarningSignOnError(canvas, _top_left);
+//		// END KGU#906 2021-01-02
 
 		// START KGU#227 2016-07-30: Enh. #128
 		int commentHeight = 0;
@@ -336,14 +352,22 @@ public class Instruction extends Element {
 			Rect commentRect = _element.writeOutCommentLines(canvas,
 //					_top_left.left + (Element.E_PADDING / 2) + _element.getTextDrawingOffset(),
 //					_top_left.top + (Element.E_PADDING / 2),
-					myrect.left + (Element.E_PADDING / 2) + _element.getTextDrawingOffset(),
-					myrect.top + (Element.E_PADDING / 2),
+					// START KGU#1150 2024-04-16: Bugfix #1160 consider rotation
+					//myrect.left + (Element.E_PADDING / 2) + _element.getTextDrawingOffset(),
+					//myrect.top + (Element.E_PADDING / 2),
+					myrect.left + (Element.E_PADDING / 2) + _element.getTextDrawingOffsetX(),
+					myrect.top + (Element.E_PADDING / 2) + _element.getTextDrawingOffsetY(),
+					// END KGU#1150 2024-04-16
 					true);
 			commentHeight = commentRect.bottom - commentRect.top;
 		}
 		// START BOB## 2018-09-08: Issue  #508
 		//int yTextline = _top_left.top + (Element.E_PADDING / 3) + commentHeight/* + fontHeight*/;
-		int yTextline = _top_left.top + (Element.E_PADDING / 2) + commentHeight/* + fontHeight*/;
+		// START KGU#1150 2024-04-16: Bugfix #1160 consider rotation
+		//int yTextline = _top_left.top + (Element.E_PADDING / 2) + commentHeight/* + fontHeight*/;
+		int yTextline = _top_left.top + (Element.E_PADDING / 2) + commentHeight
+				+ _element.getTextDrawingOffsetY();
+		// END KGU#1150 2024-04-16
 		// END BOB## 2018-09-08
 		// END KGU#227 2016-07-30
 		
@@ -379,7 +403,10 @@ public class Instruction extends Element {
 			canvas.setColor(Color.BLACK);
 			writeOutVariables(canvas,
 //					_top_left.left + (Element.E_PADDING / 2) + _element.getTextDrawingOffset(),
-					myrect.left + leftPadding + _element.getTextDrawingOffset(),
+					// START KGU#1150 2024-04-16: Bugfix #1160 consider rotation
+					//myrect.left + leftPadding + _element.getTextDrawingOffset(),
+					myrect.left + leftPadding + _element.getTextDrawingOffsetX(),
+					// END KGU#1150 2024-04-16
 					// START KGU#227 2016-07-30: Enh. #128
 					//_top_left.top + (Element.E_PADDING / 2) + (i+1)*fontHeight,
 					yTextline += fontHeight,
@@ -431,6 +458,7 @@ public class Instruction extends Element {
 		}
 	}
 
+	@Override
 	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport, boolean _inContention)
 	{
 		// START KGU#502/KGU#524/KGU#553 2019-03-13: New approach to reduce drawing contention
@@ -490,6 +518,7 @@ public class Instruction extends Element {
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#findSelected()
 	 */
+	@Override
 	public Element findSelected()
 	{
 		// START KGU#477 2017-12-06: Enh. #487
@@ -501,6 +530,7 @@ public class Instruction extends Element {
 	}
 	// END KGU#183 2016-04-24
 
+	@Override
 	public Element copy()
 	{
 		Element ele = new Instruction(this.getText().copy());
@@ -2125,4 +2155,25 @@ public class Instruction extends Element {
 	}
 	// END KGU#906/KGU#926 2021-02-04
 
+	// START KGU#1151 2024-04-16: Issues #161, #1161#
+	@Override
+	public boolean mayPassControl()
+	{
+		if (!disabled) {
+			StringList unbroken = getUnbrokenText();
+			for (int i = 0; i < unbroken.count(); i++) {
+				String line = unbroken.get(i);
+				if (!line.isBlank() 
+						&& (Jump.isLeave(line)
+								|| Jump.isReturn(line)
+								|| Jump.isExit(line)
+								|| Jump.isThrow(line))
+						) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+	// END KGU#1151 2024-04-16
 }

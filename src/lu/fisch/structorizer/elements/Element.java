@@ -139,6 +139,7 @@ package lu.fisch.structorizer.elements;
  *                                      Issue #1129: Limitation of error lines in the Analyser warning popup
  *      Kay Gürtzig     2024-03-21      Bugfix #1128 revised (method retrieveComponentNmes()).
  *      Kay Gürtzig     2024-03-22      Issue #1154: New method drawHatched(Rect, Canvas) to allow subclassing
+ *      Kay Gürtzig     2024-04-16      Bugfix #1160: Separate X and Y text offset for drawing rotated elements
  *
  ******************************************************************************************************
  *
@@ -310,7 +311,7 @@ public abstract class Element {
 	public static final long E_HELP_FILE_SIZE = 12300000;
 	public static final String E_DOWNLOAD_PAGE = "https://www.fisch.lu/Php/download.php";
 	// END KGU#791 2020-01-20
-	public static final String E_VERSION = "3.32-20";
+	public static final String E_VERSION = "3.32-21";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -1110,13 +1111,29 @@ public abstract class Element {
 	}
 
 	// START KGU#227 2016-07-30: Enh. #128
+	// START KGU#1150 2024-04-16: Bugfix #1160 For rotation we need X and Y
+	///**
+	// * Provides a subclassable left offset for drawing the text
+	// */
+	//protected int getTextDrawingOffset()
+	//{
+	//	return 0;
+	//}
 	/**
 	 * Provides a subclassable left offset for drawing the text
 	 */
-	protected int getTextDrawingOffset()
+	protected int getTextDrawingOffsetX()
 	{
 		return 0;
 	}
+	/**
+	 * Provides a subclassable top offset for drawing the text
+	 */
+	protected int getTextDrawingOffsetY()
+	{
+		return 0;
+	}
+	// END KGU#1150 2024-04-16
 	// END KGU#227 2016-07-30
 
 	public void setText(String _text)
@@ -2432,6 +2449,7 @@ public abstract class Element {
 	 * Places a small red triangle in the upper left corner if this element
 	 * is referred to by some {@link DetectedError} record in the owning
 	 * {@link Root}.
+	 * 
 	 * @param _canvas - the drawing canvas
 	 * @param _rect - the outer drawing rectangle
 	 */
@@ -2479,6 +2497,11 @@ public abstract class Element {
 					else {
 						_canvas.setColor(Color.BLUE);
 					}
+					// START KGU#1152 2024-04-17: Issue #1162 Avoid the background colour
+					if (isSimilarToFillColor(_canvas.getColor(), 25)) {
+						_canvas.setColor(Color.WHITE);
+					}
+					// END KGU#1152 2024-04-17
 					Rect markerBounds = getAnalyserMarkerBounds(_rect, false);
 					int[] xCoords = new int[] {
 							markerBounds.left,		// left base corner
@@ -2500,10 +2523,29 @@ public abstract class Element {
 	}
 	// END KGU#906 2021-01-02
 	
+	// START KGU#1152 2024-04-17: Issue #1162 Auxiliary method for colour comparison
+	/**
+	 * Compares the given {@code color} with the current fill colour of this element.
+	 * 
+	 * @param color - the proposed draw colour
+	 * @param tolerance - an integer tolerance for the RGB values
+	 * @return {@code true} if all RGB components differ no more than by
+	 *    {@code tolerance}
+	 */
+	private boolean isSimilarToFillColor(Color color, int tolerance)
+	{
+		Color fill = getFillColor();
+		return (Math.abs(color.getRed() - fill.getRed()) < tolerance
+				&& Math.abs(color.getGreen() - fill.getGreen()) < tolerance
+				&& Math.abs(color.getBlue() - fill.getBlue()) < tolerance);
+	}
+	// END KGU#1152 2024-04-17
+	
 	// START KGU#979 2021-06-10: Enh. #926, #979 - tooltip on the Analyser marker 
 	/**
 	 * Returns the bounds for the Analyser marker "driehoekje" with respect to the given
 	 * Element rectangle {@code Rect}
+	 * 
 	 * @param _rect - The bounding rectangle of the Element (with whatever relative reference point)
 	 * @param _outer - whether {@code _rect} is the total bounds or just the text field's bounds
 	 * @return the "driehoekje" bounds with respect to {@code _rect}

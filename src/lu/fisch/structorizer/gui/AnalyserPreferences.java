@@ -108,7 +108,7 @@ public class AnalyserPreferences extends LangDialog {
 		/*13*/"Check if, in case of a function, it returns a result.",
 		/*14*/"Check for consistency of FOR loop parameters.",
 		/*15*/"Check for inappropriate subroutine CALLs.",
-		/*16*/"Check for incorrect JUMP element usage.",
+		/*16*/"Check for incorrect JUMP element usage and unreachable elements.",
 		/*17*/"Check for inconsistency risks in PARALLEL sections.",
 		/*18*/"Check that identifiers don't differ only by upper/lower case.",
 		/*19*/"Check if an identifier might collide with reserved words.",

@@ -68,7 +68,7 @@
 !   * The erroneous ',' was removed from the <StructDeclnList> rule
 !   * Rule for function call with empty argument list had been missing
 ! V 1.2 (2018-06-20)
-!   * Erroneous use of "Literal" in >Selector> rule corrected to <Literal>
+!   * Erroneous use of "Literal" in <Selector> rule corrected to <Literal>
 !   * Forgotten equality sign in assign operator '^=' added
 ! V 1.3 (2018-06-24)
 !   * Forgotten empty block (without <BlockItemList>) as possible
@@ -77,11 +77,13 @@
 ! V 1.4 (2020-02-12)
 !   * FloatLiteral variant without decimal point added
 ! V 1.5 (2024-03-20)
-!   * Tab character {#9} added to {String Ch} 
+!   * Tab character {#9} added to {String Ch}
+! V 1.6 (2024-04-18)
+!   * In <Case Stmts>, the <Selector> had to be replaced by <Cond Exp>
 ! -----------------------------------------------------------------------
 "Name"     = 'ANSI-C99'
 "Author"   = 'Kay Gürtzig'
-"Version"  = '1.5'
+"Version"  = '1.6'
 "About"    = 'ANSI C99 (ISO/IEC 9899:TC3 draft from September 7, 2007)'
 
 "Case Sensitive" = True
@@ -334,13 +336,13 @@ Comment Line  = '//'
                    |  if '(' <Expression> ')' <Statement> else <Statement>
                    |  switch '(' <Expression> ')' '{' <Case Stmts> '}'
 
-<Case Stmts>      ::= case <Selector> ':' <StmtList> <Case Stmts>
+<Case Stmts>      ::= case <Cond Exp> ':' <StmtList> <Case Stmts>
                    | default ':' <StmtList>                  
                    |
 
-<Selector>        ::= <Literal>
-                   |  Identifier
-                   |  '(' <Expression> ')'
+!<Selector>        ::= <Literal>
+!                   |  Identifier
+!                   |  '(' <Expression> ')'
                    
 <StmtList>        ::= <Statement> <StmtList>
                    |

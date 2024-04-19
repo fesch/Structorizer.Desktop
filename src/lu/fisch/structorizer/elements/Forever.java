@@ -31,26 +31,26 @@ package lu.fisch.structorizer.elements;
  *
  *      Revision List
  *
- *      Author          Date			Description
- *      ------			----			-----------
- *      Bob Fisch       2008.02.06      First Issue
- *      Kay Gürtzig     2015.10.11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
- *      Kay Gürtzig     2015.10.12      Breakpoint support prepared
- *      Kay Gürtzig     2015.11.14      Bugfixes #31 (= KGU#82) and #32 (= KGU#83) in method copy() 
- *      Kay Gürtzig     2015.11.30      Inheritance changed: implements ILoop
- *		Kay Gürtzig     2015.12.02      Bugfix #39 (KGU#91) -> getText(false) on drawing, constructors
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Bob Fisch       2008-02-06      First Issue
+ *      Kay Gürtzig     2015-10-11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
+ *      Kay Gürtzig     2015-10-12      Breakpoint support prepared
+ *      Kay Gürtzig     2015-11-14      Bugfixes #31 (= KGU#82) and #32 (= KGU#83) in method copy() 
+ *      Kay Gürtzig     2015-11-30      Inheritance changed: implements ILoop
+ *		Kay Gürtzig     2015-12-02      Bugfix #39 (KGU#91) -> getText(false) on drawing, constructors
  *                                      and methods setText() now ensure field text being empty
- *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): New method equals(Element)
- *      Kay Gürtzig     2016.01.03      Bugfix #87 (KGU#121): Correction in getElementByCoord(), geIcon()
- *      Kay Gürtzig     2016.02.27      Bugfix #97 (KGU#136): field rect replaced by rect0 in prepareDraw()
- *      Kay Gürtzig     2016.03.01      Bugfix #97 (KGU#136): Translation-neutral selection
- *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Method for test coverage tracking added
- *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
- *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
- *      Kay Gürtzig     2016.07.21      KGU#207: Slight performance improvement in getElementByCoord()
- *      Kay Gürtzig     2016.07.30      Enh. #128: New mode "comments plus text" supported, drawing code delegated
- *      Kay Gürtzig     2018.04.04      Issue #529: Critical section in prepareDraw() reduced.
- *      Kay Gürtzig     2018.10.26      Enh. #619: Method getMaxLineLength() implemented
+ *      Kay Gürtzig     2016-01-02      Bugfix #78 (KGU#119): New method equals(Element)
+ *      Kay Gürtzig     2016-01-03      Bugfix #87 (KGU#121): Correction in getElementByCoord(), geIcon()
+ *      Kay Gürtzig     2016-02-27      Bugfix #97 (KGU#136): field rect replaced by rect0 in prepareDraw()
+ *      Kay Gürtzig     2016-03-01      Bugfix #97 (KGU#136): Translation-neutral selection
+ *      Kay Gürtzig     2016-03-06      Enh. #77 (KGU#117): Method for test coverage tracking added
+ *      Kay Gürtzig     2016-03-12      Enh. #124 (KGU#156): Generalized runtime data visualisation
+ *      Kay Gürtzig     2016-04-24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
+ *      Kay Gürtzig     2016-07-21      KGU#207: Slight performance improvement in getElementByCoord()
+ *      Kay Gürtzig     2016-07-30      Enh. #128: New mode "comments plus text" supported, drawing code delegated
+ *      Kay Gürtzig     2018-04-04      Issue #529: Critical section in prepareDraw() reduced.
+ *      Kay Gürtzig     2018-10-26      Enh. #619: Method getMaxLineLength() implemented
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
  *      Kay Gürtzig     2019-03-17      Issue #56: Accordng to the user guide, Forever may not have a breakpoint
  *
@@ -353,13 +353,13 @@ public class Forever extends Element implements ILoop {
 	 * @see lu.fisch.structorizer.elements.Element#addFullText(lu.fisch.utils.StringList, boolean)
 	 */
 	@Override
-    protected void addFullText(StringList _lines, boolean _instructionsOnly)
-    {
+	protected void addFullText(StringList _lines, boolean _instructionsOnly)
+	{
 		if (!this.isDisabled(false)) {
 			this.q.addFullText(_lines, _instructionsOnly);
 		}
-    }
-    // END KGU 2015-10-16
+	}
+	// END KGU 2015-10-16
 
 	// START KGU 2015-11-30
 	@Override
@@ -379,7 +379,7 @@ public class Forever extends Element implements ILoop {
 	@Override
 	public void convertToCalls(StringList _signatures)
 	{
-    	getBody().convertToCalls(_signatures);
+		getBody().convertToCalls(_signatures);
 	}
 	// END KGU#199 2016-07-07
 	
@@ -410,9 +410,7 @@ public class Forever extends Element implements ILoop {
 	}
 
 	// START KGU 2017-10-21
-	/* (non-Javadoc)
-	 * @see lu.fisch.structorizer.elements.Element#mayPassControl()
-	 */
+	@Override
 	public boolean mayPassControl()
 	{
 		// This may only pass control if being disabled or containing a reachable leave jump

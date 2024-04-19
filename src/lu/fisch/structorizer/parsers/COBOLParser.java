@@ -11150,7 +11150,7 @@ public class COBOLParser extends CodeParser
 						client.setDisabled(false);
 					}
 					// At the original place we most likely won't need the Call anymore (not reachable).
-					if (!sq.isReachable(sop.startsAt, false)) {
+					if (!sq.isReachable(sop.startsAt, false, null)) {
 						sq.removeElement(replacingCall);
 						// START KGU#464 2017-12-03: Bugfix #475
 						sop.endsBefore--;
@@ -11165,7 +11165,7 @@ public class COBOLParser extends CodeParser
 					// both being un-reachable; then we will drop the two dummy elements now
 					if (startIndex > 0 && dummyJump.isDisabled(true) && dummyJump.getText().getLongString().startsWith("(") && (dummyCall = sq.getElement(startIndex-1)) instanceof Call) {
 						if (dummyCall.getText().getLongString().equalsIgnoreCase(sop.name)) {
-							if (!sq.isReachable(startIndex-1, false)) {
+							if (!sq.isReachable(startIndex-1, false, null)) {
 								//System.out.println("=== Cleanup Jump: " + sq.getElement(ix));
 								sq.removeElement(startIndex);	// This is the dummyJump itself
 								//System.out.println("=== Cleanup Call: " + sq.getElement(ix-1));

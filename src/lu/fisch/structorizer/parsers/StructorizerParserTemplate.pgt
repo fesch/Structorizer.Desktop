@@ -49,11 +49,12 @@ package lu.fisch.structorizer.parsers;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2017-03-02      First Issue for Iden GOLDEngine
+ *      Kay Gürtzig     2017-03-02      First Issue for Iden GOLDEngine (though based on Hawkins' template)
  *      Kay Gürtzig     2017-03-11      Parameter annotations and some comments corrected, indentation unified
  *      Kay Gürtzig     2018-03-26      Imports revised
  *      Kay Gürtzig     2018-06-30      Enh. #553: hooks for possible thread cancellation inserted.
  *      Kay Gürtzig     2021-02-17      Some updates to interface changes and e.g. date formatting 
+ *      Kay Gürtzig     2024-04-18      Parameter grammar version number added to the class comment
  *
  ******************************************************************************************************
  *
@@ -107,8 +108,9 @@ import lu.fisch.utils.BString;
 ##PARAMETERS
  * Code import parser class of Structorizer 3.27, based on GOLDParser 5.0 for the %Name% language.
  * This file contains grammar-specific constants and individual routines to build
- * structograms (Nassi-Shneiderman diagrams) from the parsing tree. 
- * @author Kay Gürtzig
+ * structograms (Nassi-Shneiderman diagrams) from the parsing tree.<br/>
+ * Grammar version: %Version%
+ * @author %Author%
  */
 public class %Name%Parser extends CodeParser
 ##END-PARAMETERS
@@ -321,7 +323,7 @@ public class %Name%Parser extends CodeParser
 			default:
 				if (_reduction.size()>0)
 				{
-					for (int i=0; i<_reduction.size(); i++)
+					for (int i = 0; i < _reduction.size(); i++)
 					{
 						if (_reduction.get(i).getType() == SymbolType.NON_TERMINAL)
 						{
