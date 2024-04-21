@@ -57,7 +57,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2023-10-09      Javadoc comments revised.
  *      Kay Gürtzig     2024-03-18      Standard colour names refactored (e.g. colorConst -> COLOR_CONST)
  *      Kay Gürtzig     2024-04-07      Issue #1157 Explanation text for "error.group_runaway" inserted.
- *      Kay Gürtzig    2024-04-16      KGU#1147: New auxiliary method isRegisteredStatementRule()
+ *      Kay Gürtzig     2024-04-16      KGU#1147: New auxiliary method isRegisteredStatementRule()
  *
  ******************************************************************************************************
  *

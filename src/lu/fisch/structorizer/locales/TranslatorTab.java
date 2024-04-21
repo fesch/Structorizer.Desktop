@@ -71,12 +71,12 @@ import lu.fisch.structorizer.gui.IconLoader;
  * @author Robert Fisch
  */
 @SuppressWarnings("serial")
-public class Tab extends javax.swing.JPanel {
+public class TranslatorTab extends javax.swing.JPanel {
 
     /**
      * Creates new form Tab
      */
-    public Tab() {
+    public TranslatorTab() {
         initComponents();
         
         // configure the table
