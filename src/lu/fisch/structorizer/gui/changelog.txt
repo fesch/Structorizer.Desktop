@@ -1289,7 +1289,7 @@ Version 3.23 (2015-12-04)
 - 21: Major revision of generators files <Kay Gürtzig>
 - 22: Possibility to switch text/comment in diagram [Samuel Schmidt]
 - 23: Bug while parsing NSD files [Benedict Thienpont]
-- 24: Fine tuning the ExportOptionDialoge <Kay Gürtzig>
+- 24: Fine tuning the ExportOptionDialog <Kay Gürtzig>
 - 24: Updated language files (RU,DE,EN,ES) <Kay Gürtzig>
 - 24: Updated language files (LU,FR) [Bob Fisch]
 - 25: Added hints to speed buttons [Rens Duijsens]
