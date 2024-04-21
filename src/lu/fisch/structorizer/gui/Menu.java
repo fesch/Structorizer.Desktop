@@ -502,7 +502,7 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	protected final JMenuItem menuHelpUpdate = new JMenuItem("Update ...",IconLoader.getIcon(52));
 
 	// START KGU#239 2016-08-12: Enh. #231
-	/** Generator plugins accessible for Analyser, {@link Diagram}, {@link ExportOptionDialoge} etc. */
+	/** Generator plugins accessible for Analyser, {@link Diagram}, {@link ExportOptionDialog} etc. */
 	public static Vector<GENPlugin> generatorPlugins = new Vector<GENPlugin>();
 	// END KGU#239 2016-08-12
 	// START KGU#448/KGU#480 2018-01-08: Enh. #443, #490

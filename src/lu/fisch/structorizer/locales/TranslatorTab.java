@@ -40,6 +40,7 @@ package lu.fisch.structorizer.locales;
  *      Kay Gürtzig     2017-12-12      Enh. #491: Tooltip for long master texts (otherwise not completely readable)
  *      Kay Gürtzig     2019-06-06      Enh. #726: Fourth column with pull-down buttons for launching more powerful editor
  *      Kay Gürtzig     2021-05-11      Enh. #972: Row filtering prepared
+ *      Kay Gürtzig     2024-04-21      Renamed Tab -> TranslatorTab
  *
  ******************************************************************************************************
  *

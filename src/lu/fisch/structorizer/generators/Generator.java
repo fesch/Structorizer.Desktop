@@ -996,7 +996,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 */
 	protected boolean appendAsComment(Element _element, String _indent)
 	{
-		// START KGU#173 2016-04-04: Issue #151 - Get rid of the inflationary ExportOptionDialoge threads
+		// START KGU#173 2016-04-04: Issue #151 - Get rid of the inflationary ExportOptionDialog threads
 		//if(eod.commentsCheckBox.isSelected()) {
 		if (this.exportAsComments) {
 		// END KGU#173 2016-04-04

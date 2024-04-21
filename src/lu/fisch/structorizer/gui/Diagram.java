@@ -72,7 +72,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016-07-21      Enh. #197: Selection may be expanded by Shift-Up and Shift-Down (KGU#206)
  *      Kay Gürtzig     2016-07-25      Enh. #158 / KGU#214: selection traversal accomplished for un-boxed Roots,
  *                                      and FOREVER / non-DIN FOR loops
- *      Kay Gürtzig     2016-07-26      Bugfix #204: Modified ExportOptionDialoge API (for correct sizing)
+ *      Kay Gürtzig     2016-07-26      Bugfix #204: Modified ExportOptionDialog API (for correct sizing)
  *      Kay Gürtzig     2016-07-28      Bugfix #208: Modification in setFunction(), setProgram(), and exportPNG()
  *                                      Bugfix #209: exportPNGmulti() corrected
  *      Kay Gürtzig     2016-07-31      Issue #158 Changes from 2016.07.25 partially withdrawn, additional restrictions
@@ -8911,7 +8911,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		try {
 			Ini ini = Ini.getInstance();
 			ini.load();
-			ExportOptionDialoge eod = new ExportOptionDialoge(NSDControl.getFrame(), Menu.generatorPlugins);
+			ExportOptionDialog eod = new ExportOptionDialog(NSDControl.getFrame(), Menu.generatorPlugins);
 			if (ini.getProperty("genExportComments", "false").equals("true")) {
 				eod.commentsCheckBox.setSelected(true);
 			} else {

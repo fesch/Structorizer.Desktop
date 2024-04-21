@@ -49,23 +49,23 @@
  *      Author          Date            Description
  *      ------          ----            -----------
  *      Bob Fisch       2008-01-14      First Issue
- *      Kay Gürtzig     2014-12-02      ExportOptionDialoge and further messages added
+ *      Kay Gürtzig     2014-12-02      ExportOptionDialog and further messages added
  *      Kay Gürtzig     2015-10-06      altPadRight added to Preferences dialog
  *      Kay Gürtzig     2015-10-16      Several additions to Editor and InputBox
  *      Kay Gürtzig     2015-11-03      Additions to Menu (errors) and AnalyserPreferences
  *      Kay Gürtzig     2015-11-09      Additions for ParserPreferences
  *      Kay Gürtzig     2015-11-30      Further additions to Menu (errors) and AnalyserPreferences
- *      Kay Gürtzig     2015-12-18      New messages for ExportOptionDialoge
+ *      Kay Gürtzig     2015-12-18      New messages for ExportOptionDialog
  *      Kay Gürtzig     2016-01-04      Enh. #87: New messages for collapsing / expanding elements
  *      Kay Gürtzig     2016-01-21      Breakpoint message also in Menu now
  *      Kay Gürtzig     2016-03-22      Enh. #84: messages related to FOR-IN loops added
  *      Kay Gürtzig     2016-03-31      Enh. #23: messages related to JUMP configuration added
- *      Kay Gürtzig     2016-04-02      Messages para #144 (ExportOptionDialoge and Menu)
+ *      Kay Gürtzig     2016-04-02      Messages para #144 (ExportOptionDialog and Menu)
  *      Kay Gürtzig     2016-04-04      Issue #149: New ExportOptionDialog messages for charset setting
  *      Kay Gürtzig     2016-04-12      Issue #161: New Analyser error message for Jump
  *      Kay Gürtzig     2016-04-24      Issue #173: New mnemonic configurations added
  *      Kay Gürtzig     2016-07-07      Enh. #188: Messages for transmute button and menu items
- *      Kay Gürtzig     2016-07-20      Enh. #160: New message for ExportOptionDialoge
+ *      Kay Gürtzig     2016-07-20      Enh. #160: New message for ExportOptionDialog
  *      Kay Gürtzig     2016-07-27      Enh. #207: New message Menu.warning_1 (must be consistent with menu entry names!) 
  *      Kay Gürtzig     2016-07-28      Issue #208: New dialog messages for PNG export
  *      Kay Gürtzig     2016-07-31      Enh. #128: New menu item captions for "Comments plus Text" mode
@@ -91,7 +91,7 @@
  *      Kay Gürtzig     2017-01-05      Enh. #319: Captions for the Arranger index popup menu
  *      Kay Gürtzig     2017-01-07      Enh. #329: Messages for Analyser check 21
  *      Kay Gürtzig     2017-01-11      Issue #81/#330: Messages for scaling Preview
- *      Kay Gürtzig     2017-02-26      Enh. #346: Additions for ExportOptionDialoge
+ *      Kay Gürtzig     2017-02-26      Enh. #346: Additions for ExportOptionDialog
  *      Kay Gürtzig     2017-03-08      Enh. #354, #368: New checkbox labels for ImportOptionDialog
  *      Kay Gürtzig     2017-03-12      Enh. #372: New saving options
  *      Kay Gürtzig     2017-03-14      Enh. #372: Messages for LicenseEditor, InputBoxRoot and others
@@ -123,7 +123,7 @@
  *      Kay Gürtzig     2019-08-02/06   Issues #733-#740: New messages for preferences mechanisms
  *      Kay Gürtzig     2020-01-20      Enh. #801: New messages for offline help support
  *      Kay Gürtzig     2020-03-09      Issue #835: New ImportOptionDialog messages
- *      Kay Gürtzig     2020-03-17      New messages for issues #828 (ArrangerIndex) and #837 (ExportOptionDialoge)
+ *      Kay Gürtzig     2020-03-17      New messages for issues #828 (ArrangerIndex) and #837 (ExportOptionDialog)
  *      Kay Gürtzig     2020-12-12      Enh. #704: New top-level section "DiagramController"
  *      Kay Gürtzig     2021-01-23      Enh. #714: InputBox.chkShowFinally added
  *      Kay Gürtzig     2021-01-25      Enh. #915: New class InputBoxCase added
@@ -139,6 +139,7 @@
  *      Kay Gürtzig     2024-03-09      Issue #1131: Messages for new PluginOptionDialog entry dissect_anon_inner_class
  *      Kay Gürtzig     2024-03-12      Bugfix #1136: New PluginOptionDialog import option separate_angular_brackets
  *      Kay Gürtzig     2024-03-17      Issue #1138: New / modified conflict messages for Surface
+ *      Kay Gürtzig     2024-04-21      ExportOptionDialoge renamed to ExportOptionDialog
  *
  ******************************************************************************************************
  *
@@ -1114,30 +1115,30 @@ PrintPreview.btnOK.tooltip=Print the diagram.
 PrintPreview.lblMarginX.text=horiz. Margin:
 PrintPreview.lblMarginY.text=vert. Margin:
 
------[ ExportOptionDialoge ]-----
-ExportOptionDialoge.title=Export options
-ExportOptionDialoge.tabbedPane.tab.0=General
-ExportOptionDialoge.tabbedPane.tab.1=Includes
-ExportOptionDialoge.noConversionCheckBox.text=No conversion of the expression/instruction contents.
-ExportOptionDialoge.noConversionCheckBox.tooltip=Select this option if the text content of your elements already represents target language syntax.
-ExportOptionDialoge.commentsCheckBox.text=Export instructions as comments.
-ExportOptionDialoge.bracesCheckBox.text=Put block-opening brace on same line (C/C++/Java etc.).
-ExportOptionDialoge.chkExportSubroutines.text=Involve called subroutines.
-ExportOptionDialoge.chkExportLicenseInfo.text=Export author and license attributes.
-ExportOptionDialoge.lbPrefGenerator.text=Favorite Code Export:
-ExportOptionDialoge.lbCharset.text=Character set:
-ExportOptionDialoge.chkCharsetAll.text=List all?
-ExportOptionDialoge.btnPluginOptions.text=Language-specific Options
-ExportOptionDialoge.msgOptionsForPlugin.text=Options for % Generator
-ExportOptionDialoge.jLabel1.text=Please select the options you want to activate...
-ExportOptionDialoge.jButton1.text=OK
-ExportOptionDialoge.jButton1.tooltip=Save these settings.
-ExportOptionDialoge.includeLists.*.tooltip=Fill in a comma-separated list of files or modules for which include/import/use clauses are to be inserted
-ExportOptionDialoge.spnPrefGenTrigger.tooltip=Number of code exports to another language that provokes a proposal to change the favorite export language (0 = don't ever make a proposal).
-ExportOptionDialoge.chkDirectoryFromNsd.text=Propose export directory from NSD location if available
-ExportOptionDialoge.chkDirectoryFromNsd.tooltip=Otherwise the most recent export directory will always be proposed.
-ExportOptionDialoge.chkArraySize.text=Default array size (if required)
-ExportOptionDialoge.chkStringLen.text=Default string length (if required)
+-----[ ExportOptionDialog ]-----
+ExportOptionDialog.title=Export options
+ExportOptionDialog.tabbedPane.tab.0=General
+ExportOptionDialog.tabbedPane.tab.1=Includes
+ExportOptionDialog.noConversionCheckBox.text=No conversion of the expression/instruction contents.
+ExportOptionDialog.noConversionCheckBox.tooltip=Select this option if the text content of your elements already represents target language syntax.
+ExportOptionDialog.commentsCheckBox.text=Export instructions as comments.
+ExportOptionDialog.bracesCheckBox.text=Put block-opening brace on same line (C/C++/Java etc.).
+ExportOptionDialog.chkExportSubroutines.text=Involve called subroutines.
+ExportOptionDialog.chkExportLicenseInfo.text=Export author and license attributes.
+ExportOptionDialog.lbPrefGenerator.text=Favorite Code Export:
+ExportOptionDialog.lbCharset.text=Character set:
+ExportOptionDialog.chkCharsetAll.text=List all?
+ExportOptionDialog.btnPluginOptions.text=Language-specific Options
+ExportOptionDialog.msgOptionsForPlugin.text=Options for % Generator
+ExportOptionDialog.jLabel1.text=Please select the options you want to activate...
+ExportOptionDialog.jButton1.text=OK
+ExportOptionDialog.jButton1.tooltip=Save these settings.
+ExportOptionDialog.includeLists.*.tooltip=Fill in a comma-separated list of files or modules for which include/import/use clauses are to be inserted
+ExportOptionDialog.spnPrefGenTrigger.tooltip=Number of code exports to another language that provokes a proposal to change the favorite export language (0 = don't ever make a proposal).
+ExportOptionDialog.chkDirectoryFromNsd.text=Propose export directory from NSD location if available
+ExportOptionDialog.chkDirectoryFromNsd.tooltip=Otherwise the most recent export directory will always be proposed.
+ExportOptionDialog.chkArraySize.text=Default array size (if required)
+ExportOptionDialog.chkStringLen.text=Default string length (if required)
 
 -----[ ImportOptionDialog ]-----
 ImportOptionDialog.title=Import options

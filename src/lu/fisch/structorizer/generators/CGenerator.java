@@ -252,10 +252,10 @@ public class CGenerator extends Generator {
 	
 
 
-// START KGU#16 2015-12-18: Moved to Generator.java	and made an ExportOptionDialoge option
+// START KGU#16 2015-12-18: Moved to Generator.java	and made an ExportOptionDialog option
 //	// START KGU#16 2015-11-29: Code style option for opening brace placement
 //	protected boolean optionBlockBraceNextLine() {
-//		// (KGU 2015-11-29): Should become an ExportOptionDialoge option
+//		// (KGU 2015-11-29): Should become an ExportOptionDialog option
 //		return true;
 //	}
 //	// END KGU#16 2015-11-29

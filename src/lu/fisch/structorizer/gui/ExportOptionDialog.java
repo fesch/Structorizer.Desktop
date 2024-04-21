@@ -97,7 +97,7 @@ import lu.fisch.structorizer.parsers.GENParser;
  * @author robertfisch, codemanyak
  */
 @SuppressWarnings("serial")
-public class ExportOptionDialoge extends LangDialog
+public class ExportOptionDialog extends LangDialog
 {
     private static final int INCLUDE_LIST_WIDTH = 20;
     private static final int MAX_ARRAY_SIZE = 10000;
@@ -105,16 +105,16 @@ public class ExportOptionDialoge extends LangDialog
     public boolean goOn = false;
 
     /** Creates new form ExportOptionDialogue */
-    public ExportOptionDialoge()
+    public ExportOptionDialog()
     {
         initComponents();
         setModal(true);
     }
 
     // START KGU#416 2017-06-20: Enh. #354,#357 - signature changed 
-    //public ExportOptionDialoge(Frame frame) //, String langFileName)
+    //public ExportOptionDialog(Frame frame) //, String langFileName)
     //{
-    public ExportOptionDialoge(Frame frame, Vector<GENPlugin> generatorPlugins)
+    public ExportOptionDialog(Frame frame, Vector<GENPlugin> generatorPlugins)
     {
     	plugins = generatorPlugins;
     // END KGU#416 2017-06-20
@@ -754,16 +754,16 @@ public class ExportOptionDialoge extends LangDialog
 //            }
 //        } catch (ClassNotFoundException ex)
 //        {
-//            java.util.logging.Logger.getLogger(ExportOptionDialoge.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+//            java.util.logging.Logger.getLogger(ExportOptionDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
 //        } catch (InstantiationException ex)
 //        {
-//            java.util.logging.Logger.getLogger(ExportOptionDialoge.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+//            java.util.logging.Logger.getLogger(ExportOptionDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
 //        } catch (IllegalAccessException ex)
 //        {
-//            java.util.logging.Logger.getLogger(ExportOptionDialoge.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+//            java.util.logging.Logger.getLogger(ExportOptionDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
 //        } catch (javax.swing.UnsupportedLookAndFeelException ex)
 //        {
-//            java.util.logging.Logger.getLogger(ExportOptionDialoge.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+//            java.util.logging.Logger.getLogger(ExportOptionDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
 //        }
 //        //</editor-fold>
 //
@@ -773,7 +773,7 @@ public class ExportOptionDialoge extends LangDialog
 //
 //            public void run()
 //            {
-//                new ExportOptionDialoge().setVisible(true);
+//                new ExportOptionDialog().setVisible(true);
 //            }
 //        });
 //    }
