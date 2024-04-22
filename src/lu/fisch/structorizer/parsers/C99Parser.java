@@ -903,7 +903,7 @@ public class C99Parser extends CPreParser
 				_parentNode.addElement(ele);
 				
 				Reduction secReduc = _reduction.get(4).asReduction();
-				buildNSD_R(secReduc, ele.q);
+				buildNSD_R(secReduc, ele.getBody());
 			}
 			else if (
 					// REPEAT loop?
@@ -927,7 +927,7 @@ public class C99Parser extends CPreParser
 				_parentNode.addElement(ele);
 				
 				Reduction secReduc = _reduction.get(1).asReduction();
-				buildNSD_R(secReduc, ele.q);
+				buildNSD_R(secReduc, ele.getBody());
 			}
 			else if (
 					// FOR loop?

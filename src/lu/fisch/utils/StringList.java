@@ -932,7 +932,7 @@ public class StringList {
     /**
      * Inserts the series of copies of all elements of {@code _strList} into
      * this StringList before position {@code _index}. Throws an exception if
-     * _index is negative or larger than the current length.
+     * {@code _index} is negative or larger than the current length.
      *
      * @param _strList - the StringList to be inserted
      * @param _index - the insertion index
@@ -947,6 +947,12 @@ public class StringList {
         }
     }
 
+    /**
+     * Overwrites the content by the list of all strings resulting from splitting
+     * {@code _text} into separate lines (at all contained newline characters)
+     * 
+     * @param _text - the source string (will be split by '\n')
+     */
     public void setText(String _text) {
         String[] lines = _text.split("\n");
         strings.clear();

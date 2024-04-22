@@ -995,7 +995,7 @@ public class PerlGenerator extends Generator {
 		}
 		// END KGU#61 2016-03-23
 		// END KGU#3 2015-11-02
-		generateCode(_for.q, _indent+this.getIndent());
+		generateCode(_for.getBody(), _indent+this.getIndent());
 		addCode("}", _indent, isDisabled);
 		// START KGU#78 2015-12-17: Enh. #23 Put a trailing label if this is a jump target
 		appendLabel(_for, _indent);
@@ -1013,7 +1013,7 @@ public class PerlGenerator extends Generator {
 		String condition = extractCondition(_while, _indent);
 		addCode("while " + condition + " {", _indent, isDisabled);
 		// END KGU#162 2016-04-01
-		generateCode(_while.q, _indent+this.getIndent());
+		generateCode(_while.getBody(), _indent+this.getIndent());
 		addCode("}", _indent, isDisabled);
 		// START KGU#78 2015-12-17: Enh. #23 Put a trailing label if this is a jump target
 		appendLabel(_while, _indent);
@@ -1032,7 +1032,7 @@ public class PerlGenerator extends Generator {
 		appendComment(_repeat, _indent);
 
 		addCode("do {", _indent, isDisabled);
-		generateCode(_repeat.q, _indent + this.getIndent());
+		generateCode(_repeat.getBody(), _indent + this.getIndent());
 		String condition = extractCondition(_repeat, _indent + this.getIndent());
 		addCode("} while (!" + condition + ");", _indent, isDisabled);
 		// END KGU#162 2016-04-01

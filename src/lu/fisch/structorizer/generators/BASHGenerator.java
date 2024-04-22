@@ -1494,7 +1494,7 @@ public class BASHGenerator extends Generator {
 		//code.add(_indent+"done");	
 		//code.add("");
 		addCode("do", _indent, disabled);
-		generateCode(_for.q,_indent+this.getIndent());
+		generateCode(_for.getBody(),_indent+this.getIndent());
 		addCode("done", _indent, disabled);	
 		addCode("", "", disabled);
 		// END KGU#277 2016-10-14
@@ -1541,7 +1541,7 @@ public class BASHGenerator extends Generator {
 		//code.add(_indent+"done");
 		//code.add("");
 		addCode("do", _indent, disabled);
-		generateCode(_while.q,_indent+this.getIndent());
+		generateCode(_while.getBody(),_indent+this.getIndent());
 		addCode("done", _indent, disabled);
 		addCode("", "", disabled);
 		// END KGU#277 2016-10-14
@@ -1574,7 +1574,7 @@ public class BASHGenerator extends Generator {
 		addCode("while :", _indent, disabled);
 		// END KGU#811 2020-02-21
 		addCode("do", _indent, disabled);
-		generateCode(_repeat.q, _indent + this.getIndent());
+		generateCode(_repeat.getBody(), _indent + this.getIndent());
 		// START KGU#311 2017-01-05: Enh. #314: We should at least put some File API remarks
 		if (this.usesFileAPI && !disabled) {
 			for (int j = 0; j < Executor.fileAPI_names.length; j++) {

@@ -5589,9 +5589,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			whileLoop.toggleBreakpoint();
 		}
 		whileLoop.setBreakTriggerCount(forLoop.getBreakTriggerCount());
-		whileLoop.q = forLoop.getBody();
-		whileLoop.q.parent = whileLoop;
-		whileLoop.q.addElement(elements[2]);
+		whileLoop.setBody(forLoop.getBody());
+		whileLoop.getBody().addElement(elements[2]);
 		whileLoop.setCollapsed(forLoop.isCollapsed(true));
 		for (int i = 0; i < elements.length; i++) {
 			Element elem = elements[i];

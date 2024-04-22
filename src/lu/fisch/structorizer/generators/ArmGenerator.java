@@ -1011,7 +1011,7 @@ public class ArmGenerator extends Generator {
         // END KGU#1001 2021-10-28
         
         // Generate the code into the block
-        generateCode(_for.q, "");
+        generateCode(_for.getBody(), "");
         addCode(op + " " + counterStr + ", " + counterStr + ", " + stepValueStr,
                 getIndent(), isDisabled);
 
@@ -1103,7 +1103,7 @@ public class ArmGenerator extends Generator {
         }
         // END KGU#968 2021-05-02
         // Generate the code into the block
-        generateCode(_while.q, _indent);
+        generateCode(_while.getBody(), _indent);
         // Add the label and the branch instruction
         addCode("B while_" + counter, getIndent(), isDisabled);
         addCode("end_" + counter + colon, "", isDisabled);
@@ -1148,7 +1148,7 @@ public class ArmGenerator extends Generator {
 
         addCode("do_" + counter + colon, "", isDisabled);
 
-        generateCode(_repeat.q, "");
+        generateCode(_repeat.getBody(), "");
 
         // START KGU#968 2021-04-25: Issue #967 c might contain newlines - which compromises line mapping
         //addCode(c, "", isDisabled);

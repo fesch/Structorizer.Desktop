@@ -1922,7 +1922,7 @@ public class CGenerator extends Generator {
 		appendBlockHeading(_for, header, _indent);
 		// END KGU#934 2021-02-13
 
-		generateCode(_for.q, _indent + this.getIndent());
+		generateCode(_for.getBody(), _indent + this.getIndent());
 
 		appendBlockTail(_for, null, _indent);
 
@@ -2105,7 +2105,7 @@ public class CGenerator extends Generator {
 					arrayName + "[" + indexName + "];").trim(), indent, isDisabled);
 
 			// Add the loop body as is
-			generateCode(_for.q, indent + this.getIndent());
+			generateCode(_for.getBody(), indent + this.getIndent());
 
 			// Accomplish the loop
 			appendBlockTail(_for, null, indent);
@@ -2124,7 +2124,7 @@ public class CGenerator extends Generator {
 			// Creation of the loop header
 			appendBlockHeading(_for, "foreach (" + var + " in " + transform(valueList, false) + ")", _indent);
 			// Add the loop body as is
-			generateCode(_for.q, _indent + this.getIndent());
+			generateCode(_for.getBody(), _indent + this.getIndent());
 			// Accomplish the loop
 			appendBlockTail(_for, null, _indent);
 			
@@ -2151,7 +2151,7 @@ public class CGenerator extends Generator {
 
 		appendBlockHeading(_while, "while " + condition, _indent);
 
-		generateCode(_while.q, _indent + this.getIndent());
+		generateCode(_while.getBody(), _indent + this.getIndent());
 
 		appendBlockTail(_while, null, _indent);
 
@@ -2164,7 +2164,7 @@ public class CGenerator extends Generator {
 
 		appendBlockHeading(_repeat, "do", _indent);
 
-		generateCode(_repeat.q, _indent + this.getIndent());
+		generateCode(_repeat.getBody(), _indent + this.getIndent());
 
 		// START KGU#301 2016-12-01: Bugfix #301
 		//insertBlockTail(_repeat, "while (!(" 

@@ -1496,7 +1496,7 @@ public class D7Parser extends CodeParser
 				_parentNode.addElement(ele);
 				
 				Reduction secReduc = _reduction.get(3).asReduction();
-				buildNSD_R(secReduc,ele.q);
+				buildNSD_R(secReduc,ele.getBody());
 			}
 			else if (
 					 ruleHead.equals("<RepeatStatement>")
@@ -1516,7 +1516,7 @@ public class D7Parser extends CodeParser
 				_parentNode.addElement(ele);
 				
 				Reduction secReduc = _reduction.get(1).asReduction();
-				buildNSD_R(secReduc,ele.q);
+				buildNSD_R(secReduc,ele.getBody());
 			}
 			else if (
 					 ruleHead.equals("<ForStatement>")
@@ -1547,7 +1547,7 @@ public class D7Parser extends CodeParser
 				
 				// Get and convert the body
 				Reduction secReduc = _reduction.get(7).asReduction();
-				buildNSD_R(secReduc,ele.q);
+				buildNSD_R(secReduc,ele.getBody());
 			}
 			else if (
 					 ruleHead.equals("<IfStatement>")

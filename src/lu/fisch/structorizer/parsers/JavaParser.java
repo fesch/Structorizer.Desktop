@@ -2408,7 +2408,7 @@ public class JavaParser extends CodeParser
 				ele.comment.add("synchronized (" + this.getContent_R(_reduction.get(2)) + ")");
 				ele.setColor(COLOR_CONST);
 				_parentNode.addElement(ele);
-				this.buildNSD_R(_reduction.get(4).asReduction(), ele.q);
+				this.buildNSD_R(_reduction.get(4).asReduction(), ele.getBody());
 			}
 			break;
 			

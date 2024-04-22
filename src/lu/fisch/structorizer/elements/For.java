@@ -71,6 +71,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2021-02-01      Bugfix #923: Type retrieval for value lists was too weak
  *      Kay Gürtzig     2021-10-09      Bugfix #997: Inconsistent blank handling between forms and text
  *      Kay Gürtzig     2022-08-15      Bugfix #997: Collateral damage of previous bugfix version mended.
+ *      Kay Gürtzig     2024-04-22      Inheritance modified (instead of implementing ILoop now extends Loop)
  *
  ******************************************************************************************************
  *
@@ -99,7 +100,7 @@ import lu.fisch.utils.*;
  * 
  * @author Bob Fisch
  */
-public class For extends Element implements Loop {
+public class For extends Loop {
 
 	// START KGU#61 2016-03-20: Enh. #84/#135
 	public enum ForLoopStyle {
@@ -108,15 +109,6 @@ public class For extends Element implements Loop {
 		TRAVERSAL
 	}
 	// END KGU#61 2016-03-26
-
-	public Subqueue q = new Subqueue();
-	
-	// START KGU#136 2016-02-27: Bugfix #97 - replaced by local variable in prepareDraw()
-	//private Rect r = new Rect();
-	// END KGU#136 2016-02-27
-	// START KGU#136 2016-03-01: Bugfix #97
-	private Point pt0Body = new Point(0,0);
-	// END KGU#136 2016-03-01
 
 	// START KGU#258 2016-09-26: Enh. #253
 	private static final String[] relevantParserKeysCount = {"preFor", "postFor", "stepFor"};
@@ -152,35 +144,44 @@ public class For extends Element implements Loop {
 	public For()
 	{
 		super();
-		q.parent=this;
 	}
 
 	/**
-	 * This constructor version is intended to be used by the code import. It automatically
-	 * fills in the dedicated parameter fields by analysing the passed-in header string _string. 
+	 * This constructor version is intended to be used by the code import. It
+	 * automatically fills in the dedicated parameter fields by analysing the
+	 * passed-in header string {@code _string}.
+	 * 
 	 * @param _string - the header string
+	 * 
+	 * @see #For(StringList)
+	 * @see #For(String, String)
+	 * @see #For(String, String, String, int)
 	 */
 	public For(String _string)
 	{
 		super(_string);
-		q.parent=this;
-		setText(_string);
+		//setText(_string);
 		// START KGU#192 2016-05-02: Bugfix #184 - Support for code import (Pascal)
 		this.updateFromForClause();
 		// END KGU#192 2016-05-02
 	}
 	
 	/**
-	 * This is a more low-level constructor e.g. to be used on copying. It simply adopts
-	 * the given StringList _strings as text content and does NOT attempt to fill in the
-	 * FOR-loop-specific parameter fields (this is supposed to be done explicitly afterwards)
-	 * @param _strings
+	 * This is a more low-level constructor e.g. to be used on copying. It simply
+	 * adopts the given StringList {@code _strings} as text content and does <b>NOT</b>
+	 * attempt to fill in the FOR-loop-specific parameter fields (this is supposed
+	 * to be done explicitly afterwards).
+	 * 
+	 * @param _strings - the header as {@link StringList}
+	 * 
+	 * @see #For(String)
+	 * @see #For(String, String)
+	 * @see #For(String, String, String, int)
 	 */
 	public For(StringList _strings)
 	{
 		super(_strings);
-		q.parent=this;
-		setText(_strings);
+		//setText(_strings);
 	}
 	
 	// START KGU#354 2017-04-30: Enh. #354 Further facilitation of import
@@ -1157,16 +1158,16 @@ public class For extends Element implements Loop {
 	}
 	// END KGU#61 2016-03-20
 
-	// START KGU 2015-11-30
-	@Override
-	public Subqueue getBody() {
-		return this.q;
-	}
-	// END KGU 2015-11-30
-	@Override
-	public Element getLoop() {
-		return this;
-	}
+//	// START KGU 2015-11-30
+//	@Override
+//	public Subqueue getBody() {
+//		return this.q;
+//	}
+//	// END KGU 2015-11-30
+//	@Override
+//	public Element getLoop() {
+//		return this;
+//	}
 
 	
 //    public static void main(String[] args)

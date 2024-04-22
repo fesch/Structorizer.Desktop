@@ -833,7 +833,7 @@ public class CSharpGenerator extends CGenerator
 		appendBlockHeading(_for, "foreach (" + itemType + " " + var + " in " +	valueList + ")", indent);
 
 		// Add the loop body as is
-		generateCode(_for.q, indent + this.getIndent());
+		generateCode(_for.getBody(), indent + this.getIndent());
 
 		// Accomplish the loop
 		appendBlockTail(_for, null, indent);

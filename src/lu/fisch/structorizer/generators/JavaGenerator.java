@@ -1005,7 +1005,7 @@ public class JavaGenerator extends CGenerator
 		appendBlockHeading(_for, "for (" + itemType + " " + var + " : " +	valueList + ")", indent);
 
 		// Add the loop body as is
-		generateCode(_for.q, indent + this.getIndent());
+		generateCode(_for.getBody(), indent + this.getIndent());
 
 		// Accomplish the loop
 		appendBlockTail(_for, null, indent);

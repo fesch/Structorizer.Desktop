@@ -448,9 +448,9 @@ public class Jump extends Instruction {
 	}
 	
 	/**
-	 * Identifies the chain of relevant structured elements (loops, actually, i.e. elements
-	 * implementing the {@link Loop} interface) to be left by this Jump.
-	 * The result will be null if this is not a Jump of leave flavour.<br/>
+	 * Identifies the chain of relevant structured elements (loops, actually, i.e.
+	 * subclasses of {@link Loop}) to be left by this Jump. The result will be
+	 * {@code null} if this is not a Jump of leave flavour.<br/>
 	 * The result may contain less loop elements than specified if the actual nesting
 	 * depth falls short of the specified number of if the given {@code _scope} or a
 	 * {@link Parallel} element limit the reachable hierarchy.<br/>
@@ -459,15 +459,17 @@ public class Jump extends Instruction {
 	 * result may be greater than the specified number of levels to leave.<br/>
 	 * Likewise, if {@code _addLimitingParallel} is true and the reach is limited by
 	 * an enclosing {@link #Parallel} element then this stopper will be appended to the
-	 * result instead of further loops. 
+	 * result instead of further loops.
+	 * 
 	 * @param _scope - a {@link Subqueue} limiting the hierarchy path or null
 	 * @param _includeCase - specifies whether enclosing {@link Case} structures are
-	 * also to be inserted into the list.
+	 *    also to be inserted into the list.
 	 * @param _addLimitingParallel - specifies whether a {@link Parallel} structure
-	 * blocking the upper hierarchy to be left is to be appended to the list (which
-	 * will not contain as many loops as specified then).
+	 *    blocking the upper hierarchy to be left is to be appended to the list (which
+	 *    will not contain as many loops as specified then).
 	 * @return a list of loops (and possibly {@link Case} and {@link Parallel} elements)
-	 * or {@code null}.
+	 *    or {@code null}.
+	 * 
 	 * @see #isLeave()
 	 * @see #getLevelsUp()
 	 * @see #getLeftLoop(Subqueue)
