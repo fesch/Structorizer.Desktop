@@ -449,7 +449,7 @@ public class Jump extends Instruction {
 	
 	/**
 	 * Identifies the chain of relevant structured elements (loops, actually, i.e. elements
-	 * implementing the {@link ILoop} interface) to be left by this Jump.
+	 * implementing the {@link Loop} interface) to be left by this Jump.
 	 * The result will be null if this is not a Jump of leave flavour.<br/>
 	 * The result may contain less loop elements than specified if the actual nesting
 	 * depth falls short of the specified number of if the given {@code _scope} or a
@@ -483,7 +483,7 @@ public class Jump extends Instruction {
 					&& !(parent instanceof Parallel)
 					&& (_scope == null || parent != _scope))
 			{
-				if (parent instanceof ILoop)
+				if (parent instanceof Loop)
 				{
 					structuresLeft.add(parent);
 					levelsUp--;

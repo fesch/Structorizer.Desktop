@@ -292,7 +292,7 @@ public class StrkParser extends DefaultHandler implements INSDImporter
 		else if (qualifiedName.equals("schleifeninhalt"))
 		{
 			// handle stacks
-			lastQ = ((ILoop) lastE).getBody();
+			lastQ = ((Loop) lastE).getBody();
 			qStack.push(lastQ);
 		}
 		else if (qualifiedName.equals("text")) {

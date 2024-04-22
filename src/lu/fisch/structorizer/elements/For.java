@@ -39,7 +39,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015-10-12      Comment drawing centralized and breakpoint mechanism prepared.
  *      Kay Gürtzig     2015-11-04      New mechanism to split and compose the FOR clause into/from dedicated fields
  *      Kay Gürtzig     2015-11-14      Bugfixes (#28 = KGU#80 and #31 = KGU#82) in Method copy
- *      Kay Gürtzig     2015-11-30      Inheritance changed: implements ILoop
+ *      Kay Gürtzig     2015-11-30      Inheritance changed: implements Loop
  *      Kay Gürtzig     2015-12-01      Bugfix #39 (=KGU#91) -> getText(false), prepareDraw() optimised
  *      Kay Gürtzig     2016-01-02      Bugfix #78 (KGU#119): New method equals(Element)
  *      Kay Gürtzig     2016-01-03      Bugfix #87 (KGU#121): Correction in getElementByCoord(), getIcon()
@@ -99,7 +99,7 @@ import lu.fisch.utils.*;
  * 
  * @author Bob Fisch
  */
-public class For extends Element implements ILoop {
+public class For extends Element implements Loop {
 
 	// START KGU#61 2016-03-20: Enh. #84/#135
 	public enum ForLoopStyle {
@@ -443,7 +443,7 @@ public class For extends Element implements ILoop {
 	public boolean combineRuntimeData(Element _cloneOfMine)
 	{
 		return super.combineRuntimeData(_cloneOfMine) &&
-				this.getBody().combineRuntimeData(((ILoop)_cloneOfMine).getBody());
+				this.getBody().combineRuntimeData(((Loop)_cloneOfMine).getBody());
 	}
 	// END KGU#117 2016-03-07
 

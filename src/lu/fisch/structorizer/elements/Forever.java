@@ -37,7 +37,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015-10-11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
  *      Kay Gürtzig     2015-10-12      Breakpoint support prepared
  *      Kay Gürtzig     2015-11-14      Bugfixes #31 (= KGU#82) and #32 (= KGU#83) in method copy() 
- *      Kay Gürtzig     2015-11-30      Inheritance changed: implements ILoop
+ *      Kay Gürtzig     2015-11-30      Inheritance changed: implements Loop
  *		Kay Gürtzig     2015-12-02      Bugfix #39 (KGU#91) -> getText(false) on drawing, constructors
  *                                      and methods setText() now ensure field text being empty
  *      Kay Gürtzig     2016-01-02      Bugfix #78 (KGU#119): New method equals(Element)
@@ -77,7 +77,7 @@ import lu.fisch.utils.*;
  * 
  * @author Bob Fisch
  */
-public class Forever extends Element implements ILoop {
+public class Forever extends Element implements Loop {
 	
 	public Subqueue q = new Subqueue();
 	
@@ -313,7 +313,7 @@ public class Forever extends Element implements ILoop {
 	public boolean combineRuntimeData(Element _cloneOfMine)
 	{
 		return super.combineRuntimeData(_cloneOfMine) &&
-				this.getBody().combineRuntimeData(((ILoop)_cloneOfMine).getBody());
+				this.getBody().combineRuntimeData(((Loop)_cloneOfMine).getBody());
 	}
 	// END KGU#117 2016-03-07
 

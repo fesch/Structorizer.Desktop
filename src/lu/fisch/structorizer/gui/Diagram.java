@@ -10705,11 +10705,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				break;
 			case CMD_DOWN:
 				// START KGU#495 2018-02-15: Bugfix #511 - we must never dive into collapsed loops!
-				//if (selected instanceof ILoop && !(selected instanceof Repeat))
-				if (selected instanceof ILoop && !selected.isCollapsed(false) && !(selected instanceof Repeat))
+				//if (selected instanceof Loop && !(selected instanceof Repeat))
+				if (selected instanceof Loop && !selected.isCollapsed(false) && !(selected instanceof Repeat))
 				// END KGU#495 2018-02-15
 				{
-					Subqueue body = ((ILoop) selected).getBody();
+					Subqueue body = ((Loop) selected).getBody();
 					y = body.getRectOffDrawPoint().top + 2;
 				}
 				// START KGU#346 2017-02-08: Issue #198 - Unification of forking elements
@@ -10766,11 +10766,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				break;
 			case CMD_RIGHT:
 				// START KGU#495 2018-02-15: Bugfix #511 - we must never dive into collapsed loops!
-				//if (selected instanceof ILoop)
-				if (selected instanceof ILoop && !selected.isCollapsed(false))
+				//if (selected instanceof Loop)
+				if (selected instanceof Loop && !selected.isCollapsed(false))
 				// END KGU#495 2018-02-15
 				{
-					Rect bodyRect = ((ILoop) selected).getBody().getRectOffDrawPoint();
+					Rect bodyRect = ((Loop) selected).getBody().getRectOffDrawPoint();
 					x = bodyRect.left + 2;
 					// The central element of the subqueue isn't the worst choice because from
 					// here the distances are minimal. The top element, on the other hand,
@@ -10817,7 +10817,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				else if (_direction == Editor.CursorMoveDirection.CMD_UP
 						&& (newSel instanceof Forever || !Element.E_DIN && newSel instanceof For)
 						&& newSel.getRectOffDrawPoint().bottom < selRect.bottom) {
-					Subqueue body = ((ILoop) newSel).getBody();
+					Subqueue body = ((Loop) newSel).getBody();
 					Element sel = root.getElementByCoord(x, body.getRectOffDrawPoint().bottom - 2, true);
 					if (sel != null) {
 						newSel = sel;

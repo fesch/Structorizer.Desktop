@@ -37,7 +37,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.10.11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
  *      Kay Gürtzig     2015.10.12      Breakpoint support prepared
  *      Kay Gürtzig     2015.11.14      Bugfix #31 (= KGU#82) in method copy()
- *      Kay Gürtzig     2015.11.30      Inheritance changed: implements ILoop
+ *      Kay Gürtzig     2015.11.30      Inheritance changed: implements Loop
  *      Kay Gürtzig     2015.12.01      Bugfix #39 (= KGU#91) in draw methods (--> getText(false))
  *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): New method equals(Element)
  *      Kay Gürtzig     2016.01.03      Bugfix #87 (KGU#121): Correction in getElementByCoord(), getIcon()
@@ -76,7 +76,7 @@ import lu.fisch.utils.*;
  * 
  * @author Bob Fisch
  */
-public class While extends Element implements ILoop {
+public class While extends Element implements Loop {
 
 	// START KGU#258 2016-09-26: Enh. #253
 	private static final String[] relevantParserKeys = {"preWhile", "postWhile"};
@@ -297,7 +297,7 @@ public class While extends Element implements ILoop {
 	public boolean combineRuntimeData(Element _cloneOfMine)
 	{
 		return super.combineRuntimeData(_cloneOfMine) &&
-				this.getBody().combineRuntimeData(((ILoop)_cloneOfMine).getBody());
+				this.getBody().combineRuntimeData(((Loop)_cloneOfMine).getBody());
 	}
 	// END KGU#117 2016-03-07
 

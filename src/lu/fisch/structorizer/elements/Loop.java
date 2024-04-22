@@ -52,7 +52,7 @@ package lu.fisch.structorizer.elements;
  * kind of loop. This interface presents the common behaviour.
  * @author Kay Gürtzig
  */
-public interface ILoop {
+public interface Loop {
 	
 	/**
 	 * Visitor class looking for a reachable LEAVE instruction
@@ -90,7 +90,7 @@ public interface ILoop {
 					isLeavable = exactly && up == loopLevel || up >= loopLevel;
 				}
 			}
-			else if (_ele instanceof ILoop) {
+			else if (_ele instanceof Loop) {
 				// We are entering a loop
 				loopLevel++;
 			}
@@ -99,7 +99,7 @@ public interface ILoop {
 
 		@Override
 		public boolean visitPostOrder(Element _ele) {
-			if (_ele instanceof ILoop) {
+			if (_ele instanceof Loop) {
 				// We are leaving a loop
 				loopLevel--;
 			}

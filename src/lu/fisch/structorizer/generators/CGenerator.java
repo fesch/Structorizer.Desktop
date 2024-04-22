@@ -929,7 +929,7 @@ public class CGenerator extends Generator {
 	protected void appendBlockHeading(Element elem, String _headingText, String _indent)
 	{
 		boolean isDisabled = elem.isDisabled(false);
-		if (elem instanceof ILoop && this.jumpTable.containsKey(elem) && this.isLabelAtLoopStart())  
+		if (elem instanceof Loop && this.jumpTable.containsKey(elem) && this.isLabelAtLoopStart())  
 		{
 				_headingText = this.labelBaseName + this.jumpTable.get(elem) + ": " + _headingText;
 		}
@@ -954,7 +954,7 @@ public class CGenerator extends Generator {
 			addCode("} " + _tailText + ";", _indent, isDisabled);
 		}
 		
-		if (elem instanceof ILoop && this.jumpTable.containsKey(elem) && !this.isLabelAtLoopStart()) {
+		if (elem instanceof Loop && this.jumpTable.containsKey(elem) && !this.isLabelAtLoopStart()) {
 			addCode(this.labelBaseName + this.jumpTable.get(elem) + ": ;", _indent, isDisabled);
 		}
 	}

@@ -207,7 +207,7 @@ import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.elements.Forever;
 import lu.fisch.structorizer.elements.IElementVisitor;
-import lu.fisch.structorizer.elements.ILoop;
+import lu.fisch.structorizer.elements.Loop;
 import lu.fisch.structorizer.elements.Instruction;
 import lu.fisch.structorizer.elements.Jump;
 import lu.fisch.structorizer.elements.Parallel;
@@ -2267,7 +2267,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 //				Element parent = elem.parent;
 //				while (parent != null && !(parent instanceof Parallel) && levelsUp > 0)
 //				{
-//					if (parent instanceof ILoop)
+//					if (parent instanceof Loop)
 //					{
 //						if (--levelsUp == 0 && !simpleBreak)	// Target reached?
 //						{
@@ -2351,9 +2351,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				}
 				if (willReturn) surelyReturns = true;
 			}
-			else if (elem instanceof ILoop)	// While, Repeat, For, Forever
+			else if (elem instanceof Loop)	// While, Repeat, For, Forever
 			{
-				if (mapJumps(((ILoop)elem).getBody())) surelyReturns = true;
+				if (mapJumps(((Loop)elem).getBody())) surelyReturns = true;
 			}
 			else if (elem instanceof Parallel)
 			{

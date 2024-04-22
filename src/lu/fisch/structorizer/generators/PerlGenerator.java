@@ -122,7 +122,7 @@ import lu.fisch.structorizer.elements.Case;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.elements.Forever;
-import lu.fisch.structorizer.elements.ILoop;
+import lu.fisch.structorizer.elements.Loop;
 import lu.fisch.structorizer.elements.Instruction;
 import lu.fisch.structorizer.elements.Jump;
 import lu.fisch.structorizer.elements.Parallel;
@@ -526,7 +526,7 @@ public class PerlGenerator extends Generator {
 	// Places a label with empty instruction into the code if elem is an exited loop
 	protected void appendLabel(Element elem, String _indent)
 	{
-		if (elem instanceof ILoop && this.jumpTable.containsKey(elem)) {
+		if (elem instanceof Loop && this.jumpTable.containsKey(elem)) {
 			addCode(this.labelBaseName + this.jumpTable.get(elem) + ": ;",
 					_indent, elem.isDisabled(false));
 		}

@@ -101,7 +101,7 @@ import lu.fisch.structorizer.elements.Case;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.elements.Forever;
-import lu.fisch.structorizer.elements.ILoop;
+import lu.fisch.structorizer.elements.Loop;
 import lu.fisch.structorizer.elements.Instruction;
 import lu.fisch.structorizer.elements.Jump;
 import lu.fisch.structorizer.elements.Parallel;
@@ -385,7 +385,7 @@ public class BasGenerator extends Generator
 		return prefix;
 	}
 
-	protected void placeJumpTarget(ILoop _loop, String _indent)
+	protected void placeJumpTarget(Loop _loop, String _indent)
 	{
 		if (this.jumpTable.containsKey(_loop.getLoop()))
 		{
