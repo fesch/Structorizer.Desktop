@@ -958,7 +958,7 @@ public class PythonGenerator extends Generator
 		appendComment(_forever, _indent);
 		// END KGU 2014-11-16
 		addCode("while True:", _indent, isDisabled);
-		generateCode((Subqueue) _forever.q, _indent + this.getIndent());
+		generateCode((Subqueue) _forever.getBody(), _indent + this.getIndent());
 		// START KGU#54 2015-10-19: Avoid accumulation of empty lines!
 		//code.add("");
 		if (code.count() > 0 && !code.get(code.count()-1).isEmpty())

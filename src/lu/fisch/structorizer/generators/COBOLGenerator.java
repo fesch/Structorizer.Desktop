@@ -1262,7 +1262,7 @@ public class COBOLGenerator extends Generator {
 		appendComment(_forever, _indent);
 		addCode("PERFORM " + bodyName + " FOREVER", _indent, isDisabled);
 		
-		processProcedure(_forever.q, bodyName, _indent, isDisabled);
+		processProcedure(_forever.getBody(), bodyName, _indent, isDisabled);
 	}
 
 	/**

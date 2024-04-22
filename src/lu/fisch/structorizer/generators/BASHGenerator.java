@@ -1613,7 +1613,7 @@ public class BASHGenerator extends Generator {
 		//code.add("");
 		addCode("while :", _indent, disabled);
 		addCode("do", _indent, disabled);
-		generateCode(_forever.q, _indent + this.getIndent());
+		generateCode(_forever.getBody(), _indent + this.getIndent());
 		addCode("done", _indent, disabled);
 		addCode("", "", disabled);
 		// END KGU#277 2016-10-14

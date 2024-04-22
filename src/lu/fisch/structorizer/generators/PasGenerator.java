@@ -1421,7 +1421,7 @@ public class PasGenerator extends Generator
 
 		addCode("while (true) do", _indent, isDisabled);
 		addCode("begin", _indent, isDisabled);
-		generateCode(_forever.q,_indent+this.getIndent());
+		generateCode(_forever.getBody(),_indent+this.getIndent());
 		addCode("end;", _indent, isDisabled);
 
 		// START KGU#74 2015-11-30: The following instruction is goto target

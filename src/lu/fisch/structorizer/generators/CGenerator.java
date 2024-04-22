@@ -2188,7 +2188,7 @@ public class CGenerator extends Generator {
 
 		appendBlockHeading(_forever, "while (true)", _indent);
 
-		generateCode(_forever.q, _indent + this.getIndent());
+		generateCode(_forever.getBody(), _indent + this.getIndent());
 
 		appendBlockTail(_forever, null, _indent);
 	}

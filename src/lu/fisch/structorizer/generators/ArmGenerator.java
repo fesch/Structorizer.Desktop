@@ -1171,7 +1171,7 @@ public class ArmGenerator extends Generator {
 
         // Create While True Block
         addCode("whileTrue_" + counter + colon, "", isDisabled);
-        generateCode(_forever.q, "");
+        generateCode(_forever.getBody(), "");
 
         // Add pointer to While True Block
         addCode("B whileTrue_" + counter + "\n", getIndent(), isDisabled);

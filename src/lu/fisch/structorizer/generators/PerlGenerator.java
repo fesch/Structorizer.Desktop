@@ -1052,7 +1052,7 @@ public class PerlGenerator extends Generator {
 		appendComment(_forever, _indent);
 
 		addCode("while (1) {", _indent, isDisabled);		
-		generateCode(_forever.q, _indent+this.getIndent());
+		generateCode(_forever.getBody(), _indent+this.getIndent());
 		addCode("}", _indent, isDisabled);
 		// START KGU#78 2015-12-17: Enh. #23 Put a trailing label if this is a jump target
 		appendLabel(_forever, _indent);

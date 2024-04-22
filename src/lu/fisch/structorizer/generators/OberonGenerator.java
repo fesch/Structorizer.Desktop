@@ -1302,7 +1302,7 @@ public class OberonGenerator extends Generator {
 		appendComment(_forever, _indent);
 		// END KGU 2014-11-16
 		addCode("LOOP", _indent, isDisabled);
-		generateCode(_forever.q,_indent+this.getIndent());
+		generateCode(_forever.getBody(),_indent+this.getIndent());
 		addCode("END;", _indent, isDisabled);
 	}
 	

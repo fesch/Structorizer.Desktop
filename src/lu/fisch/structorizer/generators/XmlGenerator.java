@@ -374,7 +374,7 @@ public class XmlGenerator extends Generator
 		//code.add(_indent+this.getIndent()+"<qForever>");
 		//generateCode(_forever.q,_indent+this.getIndent()+this.getIndent());
 		//code.add(_indent+this.getIndent()+"</qForever>");
-		generateCode(_forever.q, _indent+this.getIndent(), "qForever");
+		generateCode(_forever.getBody(), _indent+this.getIndent(), "qForever");
 		// END KGU 2016-12-21
 		code.add(_indent + "</forever>");
 	}

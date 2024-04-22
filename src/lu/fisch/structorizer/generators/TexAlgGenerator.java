@@ -1159,10 +1159,10 @@ public class TexAlgGenerator extends Generator {
 			boolean atomic = false;
 			addCode(LOOP_MACROS[packageIndex][0]
 					.replace("%C", makeInLineComment(_forever)), _indent, false);
-			if (needsBlocking && !(atomic = isAtomic(_forever.q))) {
+			if (needsBlocking && !(atomic = isAtomic(_forever.getBody()))) {
 				appendBlockMacro(_indent, true);
 			}
-			generateCode(_forever.q, _indent + this.getIndent());
+			generateCode(_forever.getBody(), _indent + this.getIndent());
 			if (needsBlocking && !atomic) {
 				appendBlockMacro(_indent, false);
 			}

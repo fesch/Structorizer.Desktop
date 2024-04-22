@@ -1171,7 +1171,7 @@ public class PapGenerator extends Generator {
 		 * @param loop
 		 */
 		public PapLoop(Loop loop) {
-			super((Element)loop);
+			super(loop);
 			body = new PapSequence(loop.getBody());
 			// FIXME we must handle exits (leave commands) here
 			int extraRows = 2;

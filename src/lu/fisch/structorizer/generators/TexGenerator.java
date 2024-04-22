@@ -562,7 +562,7 @@ public class TexGenerator extends Generator {
 	{
 		if (!_forever.isDisabled(false)) {
 			code.add(_indent+"\\forever");
-			generateCode(_forever.q, _indent + this.getIndent());
+			generateCode(_forever.getBody(), _indent + this.getIndent());
 			code.add(_indent+"\\foreverend");
 		}
 	}

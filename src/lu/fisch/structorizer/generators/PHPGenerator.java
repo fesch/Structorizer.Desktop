@@ -945,7 +945,7 @@ public class PHPGenerator extends Generator
 
         addCode("while (true)", _indent, isDisabled);
         addCode("{", _indent, isDisabled);
-        generateCode(_forever.q,_indent+this.getIndent());
+        generateCode(_forever.getBody(),_indent+this.getIndent());
         addCode("}", _indent, isDisabled);
     }
 

@@ -1145,7 +1145,7 @@ public class BasGenerator extends Generator
         boolean disabled = _forever.isDisabled(false);
         addCode(transformKeyword("DO"), _indent, disabled);
         // END KGU#277 2016-10-13
-        generateCode(_forever.q, _indent+this.getIndent());
+        generateCode(_forever.getBody(), _indent+this.getIndent());
         // START KGU#277 2016-10-13: Enh. #270
         //code.add(this.getLineNumber() + _indent + "LOOP");
         addCode(transformKeyword("LOOP"), _indent, disabled);
