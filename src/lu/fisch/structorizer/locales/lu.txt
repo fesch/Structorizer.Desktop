@@ -61,7 +61,8 @@
  *      Kay Gürtzig         2023-10-09      Issue #311: Menu reorganisation (menuDiagram split)
  *      Kay Gürtzig         2023-10-10      Large number of translations added (by means of
  *                                          https://www.webtran.de/luxembourgish/)
- *      Kay Gürtzig         2023-10-16      Issue #980/#1096: New messages for declaration syntax check (error31_*) 
+ *      Kay Gürtzig         2023-10-16      Issue #980/#1096: New messages for declaration syntax check (error31_*)
+ *      Kay Gürtzig         2024-04-21      ExportOptionDialoge renamed to ExportOptionDialog
  *
  ******************************************************************************************************
  *
@@ -1034,30 +1035,30 @@ PrintPreview.btnOK.tooltip=Den Diagramm elo ausdrécken.
 PrintPreview.lblMarginX.text=
 PrintPreview.lblMarginY.text=
 
------[ ExportOptionDialoge ]-----
-ExportOptionDialoge.title=Astellunge fir de Code-Export
-ExportOptionDialoge.tabbedPane.tab.0=
-ExportOptionDialoge.tabbedPane.tab.1=
-ExportOptionDialoge.noConversionCheckBox.text=
-ExportOptionDialoge.noConversionCheckBox.tooltip=
-ExportOptionDialoge.commentsCheckBox.text=Uweisungen als Kommentar exportéieren.
-ExportOptionDialoge.bracesCheckBox.text=Block opmaachent Klammer an selwecht Linn setzen (C/C++/Java etc.)
-ExportOptionDialoge.chkExportSubroutines.text=
-ExportOptionDialoge.chkExportLicenseInfo.text=
-ExportOptionDialoge.lbPrefGenerator.text=
-ExportOptionDialoge.lbCharset.text=
-ExportOptionDialoge.chkCharsetAll.text=
-ExportOptionDialoge.btnPluginOptions.text=
-ExportOptionDialoge.msgOptionsForPlugin.text=
-ExportOptionDialoge.jLabel1.text=Wiel déi Astellungen, déi's du gären aktivéiert häss...
-ExportOptionDialoge.jButton1.text=OK
-ExportOptionDialoge.jButton1.tooltip=Astellunge Späicheren
-ExportOptionDialoge.includeLists.*.tooltip=
-ExportOptionDialoge.spnPrefGenTrigger.tooltip=
-ExportOptionDialoge.chkDirectoryFromNsd.text=
-ExportOptionDialoge.chkDirectoryFromNsd.tooltip=
-ExportOptionDialoge.chkArraySize.text=
-ExportOptionDialoge.chkStringLen.text=
+-----[ ExportOptionDialog ]-----
+ExportOptionDialog.title=Astellunge fir de Code-Export
+ExportOptionDialog.tabbedPane.tab.0=
+ExportOptionDialog.tabbedPane.tab.1=
+ExportOptionDialog.noConversionCheckBox.text=
+ExportOptionDialog.noConversionCheckBox.tooltip=
+ExportOptionDialog.commentsCheckBox.text=Uweisungen als Kommentar exportéieren.
+ExportOptionDialog.bracesCheckBox.text=Block opmaachent Klammer an selwecht Linn setzen (C/C++/Java etc.)
+ExportOptionDialog.chkExportSubroutines.text=
+ExportOptionDialog.chkExportLicenseInfo.text=
+ExportOptionDialog.lbPrefGenerator.text=
+ExportOptionDialog.lbCharset.text=
+ExportOptionDialog.chkCharsetAll.text=
+ExportOptionDialog.btnPluginOptions.text=
+ExportOptionDialog.msgOptionsForPlugin.text=
+ExportOptionDialog.jLabel1.text=Wiel déi Astellungen, déi's du gären aktivéiert häss...
+ExportOptionDialog.jButton1.text=OK
+ExportOptionDialog.jButton1.tooltip=Astellunge Späicheren
+ExportOptionDialog.includeLists.*.tooltip=
+ExportOptionDialog.spnPrefGenTrigger.tooltip=
+ExportOptionDialog.chkDirectoryFromNsd.text=
+ExportOptionDialog.chkDirectoryFromNsd.tooltip=
+ExportOptionDialog.chkArraySize.text=
+ExportOptionDialog.chkStringLen.text=
 
 -----[ ImportOptionDialog ]-----
 ImportOptionDialog.title=Astellunge fir de Datei-Import

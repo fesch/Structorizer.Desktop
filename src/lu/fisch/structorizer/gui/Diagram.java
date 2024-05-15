@@ -72,7 +72,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016-07-21      Enh. #197: Selection may be expanded by Shift-Up and Shift-Down (KGU#206)
  *      Kay Gürtzig     2016-07-25      Enh. #158 / KGU#214: selection traversal accomplished for un-boxed Roots,
  *                                      and FOREVER / non-DIN FOR loops
- *      Kay Gürtzig     2016-07-26      Bugfix #204: Modified ExportOptionDialoge API (for correct sizing)
+ *      Kay Gürtzig     2016-07-26      Bugfix #204: Modified ExportOptionDialog API (for correct sizing)
  *      Kay Gürtzig     2016-07-28      Bugfix #208: Modification in setFunction(), setProgram(), and exportPNG()
  *                                      Bugfix #209: exportPNGmulti() corrected
  *      Kay Gürtzig     2016-07-31      Issue #158 Changes from 2016.07.25 partially withdrawn, additional restrictions
@@ -5589,9 +5589,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			whileLoop.toggleBreakpoint();
 		}
 		whileLoop.setBreakTriggerCount(forLoop.getBreakTriggerCount());
-		whileLoop.q = forLoop.getBody();
-		whileLoop.q.parent = whileLoop;
-		whileLoop.q.addElement(elements[2]);
+		whileLoop.setBody(forLoop.getBody());
+		whileLoop.getBody().addElement(elements[2]);
 		whileLoop.setCollapsed(forLoop.isCollapsed(true));
 		for (int i = 0; i < elements.length; i++) {
 			Element elem = elements[i];
@@ -8911,7 +8910,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		try {
 			Ini ini = Ini.getInstance();
 			ini.load();
-			ExportOptionDialoge eod = new ExportOptionDialoge(NSDControl.getFrame(), Menu.generatorPlugins);
+			ExportOptionDialog eod = new ExportOptionDialog(NSDControl.getFrame(), Menu.generatorPlugins);
 			if (ini.getProperty("genExportComments", "false").equals("true")) {
 				eod.commentsCheckBox.setSelected(true);
 			} else {
@@ -10705,11 +10704,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				break;
 			case CMD_DOWN:
 				// START KGU#495 2018-02-15: Bugfix #511 - we must never dive into collapsed loops!
-				//if (selected instanceof ILoop && !(selected instanceof Repeat))
-				if (selected instanceof ILoop && !selected.isCollapsed(false) && !(selected instanceof Repeat))
+				//if (selected instanceof Loop && !(selected instanceof Repeat))
+				if (selected instanceof Loop && !selected.isCollapsed(false) && !(selected instanceof Repeat))
 				// END KGU#495 2018-02-15
 				{
-					Subqueue body = ((ILoop) selected).getBody();
+					Subqueue body = ((Loop) selected).getBody();
 					y = body.getRectOffDrawPoint().top + 2;
 				}
 				// START KGU#346 2017-02-08: Issue #198 - Unification of forking elements
@@ -10766,11 +10765,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				break;
 			case CMD_RIGHT:
 				// START KGU#495 2018-02-15: Bugfix #511 - we must never dive into collapsed loops!
-				//if (selected instanceof ILoop)
-				if (selected instanceof ILoop && !selected.isCollapsed(false))
+				//if (selected instanceof Loop)
+				if (selected instanceof Loop && !selected.isCollapsed(false))
 				// END KGU#495 2018-02-15
 				{
-					Rect bodyRect = ((ILoop) selected).getBody().getRectOffDrawPoint();
+					Rect bodyRect = ((Loop) selected).getBody().getRectOffDrawPoint();
 					x = bodyRect.left + 2;
 					// The central element of the subqueue isn't the worst choice because from
 					// here the distances are minimal. The top element, on the other hand,
@@ -10817,7 +10816,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				else if (_direction == Editor.CursorMoveDirection.CMD_UP
 						&& (newSel instanceof Forever || !Element.E_DIN && newSel instanceof For)
 						&& newSel.getRectOffDrawPoint().bottom < selRect.bottom) {
-					Subqueue body = ((ILoop) newSel).getBody();
+					Subqueue body = ((Loop) newSel).getBody();
 					Element sel = root.getElementByCoord(x, body.getRectOffDrawPoint().bottom - 2, true);
 					if (sel != null) {
 						newSel = sel;

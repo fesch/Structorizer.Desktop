@@ -101,7 +101,7 @@ import lu.fisch.structorizer.elements.Case;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.elements.Forever;
-import lu.fisch.structorizer.elements.ILoop;
+import lu.fisch.structorizer.elements.Loop;
 import lu.fisch.structorizer.elements.Instruction;
 import lu.fisch.structorizer.elements.Jump;
 import lu.fisch.structorizer.elements.Parallel;
@@ -385,14 +385,14 @@ public class BasGenerator extends Generator
 		return prefix;
 	}
 
-	protected void placeJumpTarget(ILoop _loop, String _indent)
+	protected void placeJumpTarget(Loop _loop, String _indent)
 	{
-		if (this.jumpTable.containsKey(_loop.getLoop()))
+		if (this.jumpTable.containsKey(_loop))
 		{
 			if (this.optionCodeLineNumbering())
 			{
 				// Associate label number with line number of the following dummy comment 
-				this.labelMap[this.jumpTable.get(_loop.getLoop()).intValue()] = this.lineNumber;
+				this.labelMap[this.jumpTable.get(_loop).intValue()] = this.lineNumber;
 				appendComment("Exit point from above loop.", _indent);
 			}
 			else
@@ -400,7 +400,7 @@ public class BasGenerator extends Generator
 				// START KGU#277 2016-10-13: Enh. #270
 				//code.add(_indent + this.labelBaseName + this.jumpTable.get(_loop).toString() + ": " +
 				//		this.commentSymbolLeft() + " Exit point from above loop.");
-				addCode(this.labelBaseName + this.jumpTable.get(_loop.getLoop()).toString() + ": " +
+				addCode(this.labelBaseName + this.jumpTable.get(_loop).toString() + ": " +
 						this.commentSymbolLeft() + " Exit point from above loop.",
 						_indent, _loop.isDisabled(false));
 				// END KGU#277 2016-10-13
@@ -945,7 +945,7 @@ public class BasGenerator extends Generator
     			transformKeyword(" TO ") + transform(parts[2], false) + increment, _indent, disabled);
     	// END KGU#277 2016-10-13
     	// END KGU 2015-11-02
-    	generateCode(_for.q, _indent + this.getIndent());
+    	generateCode(_for.getBody(), _indent + this.getIndent());
     	// START KGU#277 2016-10-13: Enh. #270
     	//code.add(this.getLineNumber() + _indent + "NEXT " + parts[0]);
     	addCode(transformKeyword("NEXT ") + parts[0], _indent, disabled);
@@ -1063,7 +1063,7 @@ public class BasGenerator extends Generator
 		// END KGU#277 2016-10-13
 
 		// Creation of the loop body
-    	generateCode(_for.q, _indent + this.getIndent());
+    	generateCode(_for.getBody(), _indent + this.getIndent());
 		// START KGU#277 2016-10-13: Enh. #270
     	//code.add(this.getLineNumber() + _indent + "NEXT " + var);
     	addCode(transformKeyword("NEXT ") + var, _indent, disabled);
@@ -1094,7 +1094,7 @@ public class BasGenerator extends Generator
             boolean disabled = _while.isDisabled(false);
             addCode(transformKeyword("DO WHILE ") + condition, _indent, disabled);
             // END KGU#277 2016-10-13
-            generateCode(_while.q, _indent+this.getIndent());
+            generateCode(_while.getBody(), _indent+this.getIndent());
             // START KGU#2772 2016-10-13: Enh. #270
             //code.add(this.getLineNumber() + _indent + "LOOP");
             addCode(transformKeyword("LOOP"), _indent, disabled);
@@ -1122,7 +1122,7 @@ public class BasGenerator extends Generator
             boolean disabled = _repeat.isDisabled(false);
             addCode(transformKeyword("DO"), _indent, disabled);
             // END KGU#277 2016-10-13
-            generateCode(_repeat.q, _indent + this.getIndent());
+            generateCode(_repeat.getBody(), _indent + this.getIndent());
             // START KGU#277 2016-10-13: Enh. #270
             //code.add(this.getLineNumber() + _indent + "LOOP UNTIL " + condition);
             addCode(transformKeyword("LOOP UNTIL ") + condition, _indent, disabled);
@@ -1145,7 +1145,7 @@ public class BasGenerator extends Generator
         boolean disabled = _forever.isDisabled(false);
         addCode(transformKeyword("DO"), _indent, disabled);
         // END KGU#277 2016-10-13
-        generateCode(_forever.q, _indent+this.getIndent());
+        generateCode(_forever.getBody(), _indent+this.getIndent());
         // START KGU#277 2016-10-13: Enh. #270
         //code.add(this.getLineNumber() + _indent + "LOOP");
         addCode(transformKeyword("LOOP"), _indent, disabled);

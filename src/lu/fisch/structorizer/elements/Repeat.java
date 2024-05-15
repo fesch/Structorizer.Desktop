@@ -35,7 +35,7 @@ package lu.fisch.structorizer.elements;
  *      Bob Fisch       2007-12-12      First Issue
  *      Kay Gürtzig     2015-10-11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
  *      Kay Gürtzig     2015-11-14      Bugfix #31 (= KGU#82) in method copy()
- *      Kay Gürtzig     2015-11-30      Inheritance changed: implements ILoop
+ *      Kay Gürtzig     2015-11-30      Inheritance changed: implements Loop
  *      Kay Gürtzig     2015-12-01      Bugfix #39 (= KGU#91) in draw methods (--> getText(false))
  *      Kay Gürtzig     2016-01-02      Bugfix #78 (KGU#119): New method equals(Element)
  *      Kay Gürtzig     2016-01-03      Bugfix #87 (KGU#121): Correction in getElementByCoord(),
@@ -53,6 +53,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018-10-26      Enh. #619: Method getMaxLineLength() implemented
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
  *      Kay Gürtzig     2021-09-17      Enh. #979: Correct detection of Analyser marker bounds for popup
+ *      Kay Gürtzig     2024-04-22      Inheritance modified (instead of implementing ILoop now extends Loop)
  *
  ******************************************************************************************************
  *
@@ -76,18 +77,8 @@ import lu.fisch.utils.*;
  * 
  * @author Bob Fisch
  */
-public class Repeat extends Element implements ILoop {
+public class Repeat extends Loop {
 	
-	public Subqueue q = new Subqueue();
-	
-	// START KGU#136 206-02-27: Bugfix #97 - replaced by local variable in prepareDraw()
-	//private Rect r = new Rect();
-	// END KGU#136 2016-02-27
-	// START KGU#136 2016-03-01: Bugfix #97
-	/** Represents the body rectangle distance from element left and bottom(!) */
-	private Point pt0Body = new Point(0,0);
-	// END KGU#136 2016-03-01
-
 	// START KGU#258 2016-09-26: Enh. #253
 	private static final String[] relevantParserKeys = {"preRepeat", "postRepeat"};
 	// END KGU#258 2016-09-25
@@ -95,24 +86,22 @@ public class Repeat extends Element implements ILoop {
 	public Repeat()
 	{
 		super();
-		q.parent=this;
 	}
 	
 	public Repeat(String _strings)
 	{
 		super(_strings);
-		q.parent=this;
-		setText(_strings);
+		//setText(_strings);	// Already done by super
 	}
 	
 	public Repeat(StringList _strings)
 	{
 		super(_strings);
-		q.parent=this;
-		setText(_strings);
+		//setText(_strings);	// Already done by super
 	}
 	
 	// START KGU#122 2016-01-04: It makes more sense to revert the line order for Repeat (first ellipse, then condition)
+	@Override
 	public StringList getCollapsedText()
 	{
 		return super.getCollapsedText().reverse();
@@ -120,6 +109,7 @@ public class Repeat extends Element implements ILoop {
 	// END KGU#122 2016-01-04
 
 	// START KGU#227 2016-07-30: Enh. #128
+	@Override
 	protected boolean haveOuterRectDrawn()
 	{
 		// START KGU#308 2016-12-12: Bugfix #308
@@ -134,6 +124,7 @@ public class Repeat extends Element implements ILoop {
 	 * @param _canvas - the canvas to be drawn in
 	 * @param _rect - the surrounding rectangle of the Element (or relevant part of it)
 	 */
+	@Override
 	protected void drawBreakpointMark(Canvas _canvas, Rect _rect)
 	{
 		Rect bpRect = _rect.copy();
@@ -141,6 +132,7 @@ public class Repeat extends Element implements ILoop {
 		super.drawBreakpointMark(_canvas, bpRect);
 	}
 
+	@Override
 	public Rect prepareDraw(Canvas _canvas)
 	{
 		// START KGU#136 2016-03-01: Bugfix #97 (prepared)
@@ -192,6 +184,7 @@ public class Repeat extends Element implements ILoop {
 		// END KGU#136 2016-02-27
 	}
 	
+	@Override
 	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport, boolean _inContention)
 	{
 		// START KGU#502/KGU#524/KGU#553 2019-03-13: New approach to reduce drawing contention
@@ -401,19 +394,8 @@ public class Repeat extends Element implements ILoop {
 			this.q.addFullText(_lines, _instructionsOnly);
 		}
     }
-    // END KGU 2015-10-16
+	// END KGU 2015-10-16
 	
-	// START KGU 2015-11-30
-	@Override
-	public Subqueue getBody() {
-		return this.q;
-	}
-	// END KGU 2015-11-30
-	@Override
-	public Element getLoop() {
-		return this;
-	}
-
 	// START KGU#199 2016-07-07: Enh. #188 - ensure Call elements for known subroutines
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#convertToCalls(lu.fisch.utils.StringList)
@@ -421,7 +403,7 @@ public class Repeat extends Element implements ILoop {
 	@Override
 	public void convertToCalls(StringList _signatures)
 	{
-    	getBody().convertToCalls(_signatures);
+		getBody().convertToCalls(_signatures);
 	}
 	// END KGU#199 2016-07-07
 	

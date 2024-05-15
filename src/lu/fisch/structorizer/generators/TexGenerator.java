@@ -527,7 +527,7 @@ public class TexGenerator extends Generator {
 			}
 			code.add(_indent + "\\while{" + content + "}");
 			// END KGU#483 2017-12-30
-			generateCode(_for.q, _indent + this.getIndent());
+			generateCode(_for.getBody(), _indent + this.getIndent());
 			code.add(_indent + "\\whileend");
 		}
 	}
@@ -542,7 +542,7 @@ public class TexGenerator extends Generator {
 	{
 		if (!_while.isDisabled(true)) {
 			code.add(_indent + "\\while{\\(" + transform(_while.getUnbrokenText().getLongString()) + "\\)}");
-			generateCode(_while.q, _indent + this.getIndent());
+			generateCode(_while.getBody(), _indent + this.getIndent());
 			code.add(_indent + "\\whileend");
 		}
 	}
@@ -552,7 +552,7 @@ public class TexGenerator extends Generator {
 	{
 		if (!_repeat.isDisabled(true)) {
 			code.add(_indent + "\\until{\\(" + transform(_repeat.getUnbrokenText().getLongString()) + "\\)}");
-			generateCode(_repeat.q, _indent + this.getIndent());
+			generateCode(_repeat.getBody(), _indent + this.getIndent());
 			code.add(_indent + "\\untilend");
 		}
 	}
@@ -562,7 +562,7 @@ public class TexGenerator extends Generator {
 	{
 		if (!_forever.isDisabled(false)) {
 			code.add(_indent+"\\forever");
-			generateCode(_forever.q, _indent + this.getIndent());
+			generateCode(_forever.getBody(), _indent + this.getIndent());
 			code.add(_indent+"\\foreverend");
 		}
 	}

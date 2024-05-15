@@ -95,7 +95,7 @@ import lu.fisch.structorizer.elements.Case;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.elements.Forever;
-import lu.fisch.structorizer.elements.ILoop;
+import lu.fisch.structorizer.elements.Loop;
 import lu.fisch.structorizer.elements.Instruction;
 import lu.fisch.structorizer.elements.Jump;
 import lu.fisch.structorizer.elements.Repeat;
@@ -843,7 +843,7 @@ public class C99Parser extends CPreParser
 				this.equipWithSourceComment(leave, _reduction);
 				Element parent = _parentNode;
 				while (parent != null) {
-					if (parent instanceof ILoop) {
+					if (parent instanceof Loop) {
 						// We are inside a loop context, so this is a valid leave
 						break;
 					}
@@ -903,7 +903,7 @@ public class C99Parser extends CPreParser
 				_parentNode.addElement(ele);
 				
 				Reduction secReduc = _reduction.get(4).asReduction();
-				buildNSD_R(secReduc, ele.q);
+				buildNSD_R(secReduc, ele.getBody());
 			}
 			else if (
 					// REPEAT loop?
@@ -927,7 +927,7 @@ public class C99Parser extends CPreParser
 				_parentNode.addElement(ele);
 				
 				Reduction secReduc = _reduction.get(1).asReduction();
-				buildNSD_R(secReduc, ele.q);
+				buildNSD_R(secReduc, ele.getBody());
 			}
 			else if (
 					// FOR loop?

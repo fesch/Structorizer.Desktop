@@ -182,7 +182,7 @@ import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.elements.Forever;
 import lu.fisch.structorizer.elements.IElementVisitor;
-import lu.fisch.structorizer.elements.ILoop;
+import lu.fisch.structorizer.elements.Loop;
 import lu.fisch.structorizer.elements.Instruction;
 import lu.fisch.structorizer.elements.Jump;
 import lu.fisch.structorizer.elements.Repeat;
@@ -8309,7 +8309,7 @@ public class COBOLParser extends CodeParser
 		int optionIx = (bodyRuleId == RuleConstants.PROD_PERFORM_BODY) ? 1 : 0;
 		Reduction optRed = bodyRed.get(optionIx).asReduction();
 		String content = "";
-		ILoop loop = null;
+		Loop loop = null;
 		//System.out.println("\t" + optRed.getParent().toString());
 		switch (optRed.getParent().getTableIndex()) {
 		case RuleConstants.PROD_PERFORM_OPTION_TIMES:

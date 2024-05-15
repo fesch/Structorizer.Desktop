@@ -57,7 +57,7 @@ import bsh.EvalError;
 import bsh.Interpreter;
 import lu.fisch.structorizer.elements.Alternative;
 import lu.fisch.structorizer.elements.Element;
-import lu.fisch.structorizer.elements.ILoop;
+import lu.fisch.structorizer.elements.Loop;
 import lu.fisch.structorizer.elements.Instruction;
 import lu.fisch.structorizer.elements.Repeat;
 import lu.fisch.structorizer.elements.Root;
@@ -305,7 +305,7 @@ public class SbdImporter implements INSDImporter {
 			case 4:	// While
 			case 5:	// Repeat
 			{
-				ILoop loop = null;
+				Loop loop = null;
 				posBrace = tokens.indexOf("{", 1); // start of body
 				StringList cond = tokens.subSequence(3, posBrace);
 				cond.replaceAll("∧", "and");

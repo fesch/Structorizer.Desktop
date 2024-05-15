@@ -25,7 +25,7 @@ Known issues (also see https://github.com/fesch/Structorizer.Desktop/issues):
 - ARM export is still experimental and relies on a specific and very restricted
   syntax for the element contents in order to produce meaningful results.
 
-Current development version 3.32-21 (2024-04-18)
+Current development version 3.32-22 (2024-05-15)
 - 01: Bugfix #987: Duplicate subroutine comment export by Pascal generator <2>
 - 01: Bugfix #988: Syntax error in Structorizer.bat and Arranger.bat fixed <2>
 - 01: Bugfix #989: Expressions in EXIT elements (e.g. return) were forgotten
@@ -245,6 +245,7 @@ Current development version 3.32-21 (2024-04-18)
 - 21: Issue #1162 Analyser markers will turn white on red or blue elements <2>
 - 21: Bugfix #1163 C99 import of non-trivial switch instructions improved <2>
 - 21: Bugfix #1164 ANSI-C99 grammar now allows expressions in case clauses <2>
+- 22: Bugfix #1166 Java version strings like "23-ea" made Java test fail <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>
@@ -1288,7 +1289,7 @@ Version 3.23 (2015-12-04)
 - 21: Major revision of generators files <Kay Gürtzig>
 - 22: Possibility to switch text/comment in diagram [Samuel Schmidt]
 - 23: Bug while parsing NSD files [Benedict Thienpont]
-- 24: Fine tuning the ExportOptionDialoge <Kay Gürtzig>
+- 24: Fine tuning the ExportOptionDialog <Kay Gürtzig>
 - 24: Updated language files (RU,DE,EN,ES) <Kay Gürtzig>
 - 24: Updated language files (LU,FR) [Bob Fisch]
 - 25: Added hints to speed buttons [Rens Duijsens]

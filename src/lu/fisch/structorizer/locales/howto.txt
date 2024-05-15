@@ -94,7 +94,7 @@ Last Update: 2018-07-02
    --------
 
     >>> The title of a dialog:      
-        ExportOptionDialoge.title=Export options ...
+        ExportOptionDialog.title=Export options ...
 
     >>> The tooltip of a button:    
         PrintPreview.btnOrientation.tooltip=Turn the page by 90°.
@@ -106,7 +106,7 @@ Last Update: 2018-07-02
         AnalyserPreferences.checkboxes.1.text=Comprobar modificación de la variable del bucle.
         
     >>> The common tooltip of all text fields held in an array (asterisk means all indices):
-        ExportOptionDialoge.includeLists.*.tooltip=Fill in a comma-separated list of ... 
+        ExportOptionDialog.includeLists.*.tooltip=Fill in a comma-separated list of ... 
         
     >>> A common, but modified text of all labels held in an array (asterisk means all indices),
             but with inserted index (note that "[#]" will be replaced with the actual array index):

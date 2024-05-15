@@ -109,7 +109,7 @@ import lu.fisch.structorizer.elements.Case;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.elements.Forever;
-import lu.fisch.structorizer.elements.ILoop;
+import lu.fisch.structorizer.elements.Loop;
 import lu.fisch.structorizer.elements.Instruction;
 import lu.fisch.structorizer.elements.Jump;
 import lu.fisch.structorizer.elements.Repeat;
@@ -2238,22 +2238,22 @@ public class JavaParser extends CodeParser
 				Jump ele = null;
 				// START KGU#1148 2024-04-16: Bugfix #1159.2 Label association didn't work
 				// Find the closest containing loop context
-				while (parent != null && !(parent instanceof ILoop)) {
+				while (parent != null && !(parent instanceof Loop)) {
 					parent = parent.parent;
 				}
 				// END KGU#1148 2024-04-16
-				if (labelledEle != null && parent instanceof ILoop) {
+				if (labelledEle != null && parent instanceof Loop) {
 					Subqueue target = (Subqueue)labelledEle.parent;
 					int nLevels = 1;
 					// START KGU#1148 2024-04-16: Bugfix #1159.2 Label association didn't work
 					//while ((parent = parent.parent) != null
-					//		&& (parent = parent.parent) instanceof ILoop
+					//		&& (parent = parent.parent) instanceof Loop
 					//		&& parent.parent != target) {
 					//	nLevels++;
 					//}
 					//if (parent != null && parent.parent == target) {
 					//	int ixLabel = target.getIndexOf(labelledEle);
-					//	if (ixLabel + 1 < target.getSize() && target.getElement(ixLabel + 1) instanceof ILoop
+					//	if (ixLabel + 1 < target.getSize() && target.getElement(ixLabel + 1) instanceof Loop
 					//			// Could be a decomposed For loop...
 					//			|| ixLabel + 2 < target.getSize() && target.getElement(ixLabel + 2) instanceof While) {
 					//		ele = new Jump(getKeyword("preLeave") + " " + Integer.toString(nLevels));
@@ -2262,14 +2262,14 @@ public class JavaParser extends CodeParser
 					//}
 					while (parent.parent != target &&
 							(parent = parent.parent) != null) {
-						if (parent instanceof ILoop) {
+						if (parent instanceof Loop) {
 							nLevels++;
 						}
 					}
 					if (parent != null && parent.parent == target) {
 						int ixLabel = target.getIndexOf(labelledEle);
 						if (ixLabel + 1 < target.getSize()
-								&& target.getElement(ixLabel + 1) instanceof ILoop
+								&& target.getElement(ixLabel + 1) instanceof Loop
 								// Could be a decomposed For loop...
 								|| ixLabel + 2 < target.getSize()
 								&& target.getElement(ixLabel + 1) instanceof Instruction
@@ -2297,7 +2297,7 @@ public class JavaParser extends CodeParser
 				this.equipWithSourceComment(jmp, _reduction);
 				// START KGU#1149 2024-04-16: Bugfix #1159.3 Mark breaks from CASE
 				Element parent = _parentNode.parent;
-				while (parent != null && !(parent instanceof Case) && !(parent instanceof ILoop)) {
+				while (parent != null && !(parent instanceof Case) && !(parent instanceof Loop)) {
 					parent = parent.parent;
 				}
 				if (parent instanceof Case) {
@@ -2408,7 +2408,7 @@ public class JavaParser extends CodeParser
 				ele.comment.add("synchronized (" + this.getContent_R(_reduction.get(2)) + ")");
 				ele.setColor(COLOR_CONST);
 				_parentNode.addElement(ele);
-				this.buildNSD_R(_reduction.get(4).asReduction(), ele.q);
+				this.buildNSD_R(_reduction.get(4).asReduction(), ele.getBody());
 			}
 			break;
 			

@@ -56,6 +56,7 @@
  *      Kay Gürtzig     2018-07-02  KGU#245: all Colors stuff replaced with array keys
  *      Kay Gürtzig     2022-08-11  Enh. #84/#250: Parser configuration for FOR loops updated
  *      Kay Gürtzig     2023-10-06  Issue #311: Menu reorganisation (menuDiagram split)
+ *      Kay Gürtzig     2024-04-21  ExportOptionDialoge renmed to ExportOptionDialog
  *
  ******************************************************************************************************
  *
@@ -488,11 +489,11 @@ PrintPreview.btnOK.tooltip=打印此图。
 AnalyserPreferences.title=分析器参数设置
 
 
------[ ExportOptionDialoge ]-----
-ExportOptionDialoge.title=导出选项
-ExportOptionDialoge.jButton1.text=确定
-ExportOptionDialoge.commentsCheckBox.text=把说明作为注释导出
-ExportOptionDialoge.jLabel1.text=请选择你想激活的选项 ...
+-----[ ExportOptionDialog ]-----
+ExportOptionDialog.title=导出选项
+ExportOptionDialog.jButton1.text=确定
+ExportOptionDialog.commentsCheckBox.text=把说明作为注释导出
+ExportOptionDialog.jLabel1.text=请选择你想激活的选项 ...
 
 -----[ FindAndReplace ]-----
 FindAndReplace.chkRootTypes.0.text=@n

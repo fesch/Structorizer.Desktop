@@ -65,7 +65,7 @@ import lu.fisch.structorizer.elements.Case;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.elements.Forever;
-import lu.fisch.structorizer.elements.ILoop;
+import lu.fisch.structorizer.elements.Loop;
 import lu.fisch.structorizer.elements.Instruction;
 import lu.fisch.structorizer.elements.Jump;
 import lu.fisch.structorizer.elements.Parallel;
@@ -744,8 +744,8 @@ public class PapGenerator extends Generator {
 			for (int i = 0; i < sq.getSize(); i++) {
 				Element el = sq.getElement(i);
 				// FIXME: differentiate by Element type
-				if (el instanceof ILoop) {
-					addElement(new PapLoop((ILoop)el));
+				if (el instanceof Loop) {
+					addElement(new PapLoop((Loop)el));
 				}
 				else if (el instanceof Alternative) {
 					addElement(new PapAlternative((Alternative)el));
@@ -1166,12 +1166,12 @@ public class PapGenerator extends Generator {
 		private PapSequence body = null;
 		
 		/**
-		 * Creates a new PapLoop object from the given {@link ILoop} implementor class instance
+		 * Creates a new PapLoop object from the given {@link Loop} implementor class instance
 		 * {@code loop}.
 		 * @param loop
 		 */
-		public PapLoop(ILoop loop) {
-			super((Element)loop);
+		public PapLoop(Loop loop) {
+			super(loop);
 			body = new PapSequence(loop.getBody());
 			// FIXME we must handle exits (leave commands) here
 			int extraRows = 2;

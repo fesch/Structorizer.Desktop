@@ -122,7 +122,7 @@ import lu.fisch.structorizer.elements.Case;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.elements.Forever;
-import lu.fisch.structorizer.elements.ILoop;
+import lu.fisch.structorizer.elements.Loop;
 import lu.fisch.structorizer.elements.Instruction;
 import lu.fisch.structorizer.elements.Jump;
 import lu.fisch.structorizer.elements.Parallel;
@@ -526,7 +526,7 @@ public class PerlGenerator extends Generator {
 	// Places a label with empty instruction into the code if elem is an exited loop
 	protected void appendLabel(Element elem, String _indent)
 	{
-		if (elem instanceof ILoop && this.jumpTable.containsKey(elem)) {
+		if (elem instanceof Loop && this.jumpTable.containsKey(elem)) {
 			addCode(this.labelBaseName + this.jumpTable.get(elem) + ": ;",
 					_indent, elem.isDisabled(false));
 		}
@@ -995,7 +995,7 @@ public class PerlGenerator extends Generator {
 		}
 		// END KGU#61 2016-03-23
 		// END KGU#3 2015-11-02
-		generateCode(_for.q, _indent+this.getIndent());
+		generateCode(_for.getBody(), _indent+this.getIndent());
 		addCode("}", _indent, isDisabled);
 		// START KGU#78 2015-12-17: Enh. #23 Put a trailing label if this is a jump target
 		appendLabel(_for, _indent);
@@ -1013,7 +1013,7 @@ public class PerlGenerator extends Generator {
 		String condition = extractCondition(_while, _indent);
 		addCode("while " + condition + " {", _indent, isDisabled);
 		// END KGU#162 2016-04-01
-		generateCode(_while.q, _indent+this.getIndent());
+		generateCode(_while.getBody(), _indent+this.getIndent());
 		addCode("}", _indent, isDisabled);
 		// START KGU#78 2015-12-17: Enh. #23 Put a trailing label if this is a jump target
 		appendLabel(_while, _indent);
@@ -1032,7 +1032,7 @@ public class PerlGenerator extends Generator {
 		appendComment(_repeat, _indent);
 
 		addCode("do {", _indent, isDisabled);
-		generateCode(_repeat.q, _indent + this.getIndent());
+		generateCode(_repeat.getBody(), _indent + this.getIndent());
 		String condition = extractCondition(_repeat, _indent + this.getIndent());
 		addCode("} while (!" + condition + ");", _indent, isDisabled);
 		// END KGU#162 2016-04-01
@@ -1052,7 +1052,7 @@ public class PerlGenerator extends Generator {
 		appendComment(_forever, _indent);
 
 		addCode("while (1) {", _indent, isDisabled);		
-		generateCode(_forever.q, _indent+this.getIndent());
+		generateCode(_forever.getBody(), _indent+this.getIndent());
 		addCode("}", _indent, isDisabled);
 		// START KGU#78 2015-12-17: Enh. #23 Put a trailing label if this is a jump target
 		appendLabel(_forever, _indent);

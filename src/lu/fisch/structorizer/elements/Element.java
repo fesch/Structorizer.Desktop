@@ -256,6 +256,8 @@ import java.util.regex.Pattern;
 
 import javax.swing.ImageIcon;
 
+import org.freehep.graphicsio.emf.gdi.Text;
+
 /**
  * Abstract parent class for all kinds of elements of Nassi-Shneiderman diagrams,
  * i.e., the basic algorithmic structure blocks.
@@ -311,7 +313,7 @@ public abstract class Element {
 	public static final long E_HELP_FILE_SIZE = 12300000;
 	public static final String E_DOWNLOAD_PAGE = "https://www.fisch.lu/Php/download.php";
 	// END KGU#791 2020-01-20
-	public static final String E_VERSION = "3.32-21";
+	public static final String E_VERSION = "3.32-22";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -1136,6 +1138,13 @@ public abstract class Element {
 	// END KGU#1150 2024-04-16
 	// END KGU#227 2016-07-30
 
+	/**
+	 * Overwrites the text by the list of all strings resulting from splitting
+	 * {@code _text} into separate lines (at all contained newline characters).
+	 * Subclasses may override this with more complex behaviour.
+	 * 
+	 * @param _text - the source string (will be split by '\n')
+	 */
 	public void setText(String _text)
 	{
 		// START KGU#1108 2023-12-14: Bugfix #1119 Suppress empty text
@@ -1149,6 +1158,13 @@ public abstract class Element {
 		// END KGU#1108 2023-12-14
 	}
 
+	/**
+	 * Just overwrites the text StringList by the given {@link StringList}
+	 * {@code _text}
+	 * 
+	 * @param _text - the new content as {@link StringList}, will be assigned
+	 *    as is, unless subclasses override it with more complex behaviour.
+	 */
 	public void setText(StringList _text)
 	{
 		text = _text;

@@ -49,7 +49,7 @@
  *      Author          Date        Description
  *      ------          ----		-----------
  *      Yura Lebedev    ?           Initial release
- *      Kay Gürtzig     2014-12-02  ExportOptionDialoge and further messages added
+ *      Kay Gürtzig     2014-12-02  ExportOptionDialog and further messages added
  *      Kay Gürtzig     2015-10-06  altPadRight added to Preferences dialog
  *      Kay Gürtzig     2015-10-14  InputBox-specific part enhanced
  *      Kay Gürtzig     2016-03-22  Enh. #84: messages related to FOR-IN loops added, several
@@ -73,7 +73,8 @@
  *                                  issue #492 more consequent use of element name placeholders
  *      Kay Gürtzig     2023-08-01  Enh. #1082: Function name included in messages Menu.error13_*
  *      Kay Gürtzig     2023-10-06  Issue #311: Menu reorganisation (menuDiagram split)
- *      Kay Gürtzig     2023-10-16  Issue #980, #1096: New messages for declaration syntax check (error31_*) 
+ *      Kay Gürtzig     2023-10-16  Issue #980, #1096: New messages for declaration syntax check (error31_*)
+ *      Kay Gürtzig     2024-04-21  ExportOptionDialoge renamed to ExportOptionDialog
  *
  ******************************************************************************************************
  *
@@ -986,26 +987,26 @@ PrintPreview.btnOK.tooltip=Распечатать схему.
 PrintPreview.lblMarginX.text=
 PrintPreview.lblMarginY.text=
 
------[ ExportOptionDialoge ]-----
-ExportOptionDialoge.title=Настройки экспортa
-ExportOptionDialoge.tabbedPane.tab.0=
-ExportOptionDialoge.tabbedPane.tab.1=
-ExportOptionDialoge.noConversionCheckBox.text=
-ExportOptionDialoge.noConversionCheckBox.tooltip=
-ExportOptionDialoge.commentsCheckBox.text=Экспортировать инструкции кaк комментарии.
-ExportOptionDialoge.bracesCheckBox.text=
-ExportOptionDialoge.chkExportSubroutines.text=
-ExportOptionDialoge.chkExportLicenseInfo.text=
-ExportOptionDialoge.lbPrefGenerator.text=Предпочитаемый язык для экспортa
-ExportOptionDialoge.lbCharset.text=
-ExportOptionDialoge.chkCharsetAll.text=
-ExportOptionDialoge.btnPluginOptions.text=
-ExportOptionDialoge.msgOptionsForPlugin.text=
-ExportOptionDialoge.jLabel1.text=Выборите настройки, которые хочете активировать...
-ExportOptionDialoge.jButton1.text=ОК
-ExportOptionDialoge.jButton1.tooltip=Сохранить настройки.
-ExportOptionDialoge.includeLists.*.tooltip=
-ExportOptionDialoge.spnPrefGenTrigger.tooltip=
+-----[ ExportOptionDialog ]-----
+ExportOptionDialog.title=Настройки экспортa
+ExportOptionDialog.tabbedPane.tab.0=
+ExportOptionDialog.tabbedPane.tab.1=
+ExportOptionDialog.noConversionCheckBox.text=
+ExportOptionDialog.noConversionCheckBox.tooltip=
+ExportOptionDialog.commentsCheckBox.text=Экспортировать инструкции кaк комментарии.
+ExportOptionDialog.bracesCheckBox.text=
+ExportOptionDialog.chkExportSubroutines.text=
+ExportOptionDialog.chkExportLicenseInfo.text=
+ExportOptionDialog.lbPrefGenerator.text=Предпочитаемый язык для экспортa
+ExportOptionDialog.lbCharset.text=
+ExportOptionDialog.chkCharsetAll.text=
+ExportOptionDialog.btnPluginOptions.text=
+ExportOptionDialog.msgOptionsForPlugin.text=
+ExportOptionDialog.jLabel1.text=Выборите настройки, которые хочете активировать...
+ExportOptionDialog.jButton1.text=ОК
+ExportOptionDialog.jButton1.tooltip=Сохранить настройки.
+ExportOptionDialog.includeLists.*.tooltip=
+ExportOptionDialog.spnPrefGenTrigger.tooltip=
 
 -----[ ImportOptionDialog ]-----
 ImportOptionDialog.title=Настройки импортa

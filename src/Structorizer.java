@@ -86,6 +86,7 @@
  *      Kay Gürtzig     2022-08-11/12   Enh. #1047: Modified effect of -o option (also in combination with -k)
  *      Kay Gürtzig     2023-08-17      Bugfix #1083: Undue error message on using "-p Pascal ..." eliminated
  *      Kay Gürtzig     2023-10-29      Bugfix #1100: Precaution against insufficient Java version.
+ *      Kay Gürtzig     2024-05-15      Bugfix #1166: Self-test workaround for Java version strings like "23-ea".
  *
  ******************************************************************************************************
  *
@@ -343,6 +344,12 @@ public class Structorizer
 			String[] parts = javaVer.split("\\.", 2);
 			if (parts.length > 0) {
 				int mainVer = 0;
+				// START KGU#1156 2024-05-15: Workaround for #1166
+				int posHyphen = parts[0].indexOf('-');
+				if (posHyphen >= 0) {
+					parts[0] = parts[0].substring(0, posHyphen);
+				}
+				// END KGU#1156 2024-05-15
 				try {
 					mainVer = Integer.parseInt(parts[0]);
 				}

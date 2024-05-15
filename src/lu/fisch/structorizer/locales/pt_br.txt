@@ -68,6 +68,7 @@
  *      Kay Gürtzig     2024-03-04  Mnemonics adapted, some PluginOptionDialog messages added.
  *      PUC-Minas       2024-03-09  Issue #1131: Messages for new Java import option provided
  *      Kay Gürtzig     2024-03-17  Issue #1138: New / modified conflict messages for Surface
+ *      Kay Gürtzig     2024-04-21  ExportOptionDialoge renamed to ExportOptionDialog
  *
  ******************************************************************************************************
  *
@@ -1044,30 +1045,30 @@ PrintPreview.btnOK.tooltip=Imprimir o diagrama.
 PrintPreview.lblMarginX.text=Margem horizontal:
 PrintPreview.lblMarginY.text=Margem vertical:
 
------[ ExportOptionDialoge ]-----
-ExportOptionDialoge.title=Opções para exportar
-ExportOptionDialoge.tabbedPane.tab.0=Geral
-ExportOptionDialoge.tabbedPane.tab.1=Inclusões
-ExportOptionDialoge.noConversionCheckBox.text=Nenhuma conversão de conteúdo em expressão/instrução.
-ExportOptionDialoge.noConversionCheckBox.tooltip=Selecionar essa opção se o texto já estiver na linguagem escolhida
-ExportOptionDialoge.commentsCheckBox.text=Exportar instruções como comentários.
-ExportOptionDialoge.bracesCheckBox.text=Colocar início de bloco na mesma linha (C/C++/Java etc.).
-ExportOptionDialoge.chkExportSubroutines.text=Envolver subprogramas chamados.
-ExportOptionDialoge.chkExportLicenseInfo.text=Exportar autor e atributos da licença.
-ExportOptionDialoge.lbPrefGenerator.text=Exportar para código de preferência:
-ExportOptionDialoge.lbCharset.text=Conjunto de caracteres:
-ExportOptionDialoge.chkCharsetAll.text=Listar tudo?
-ExportOptionDialoge.btnPluginOptions.text=Opções específicas da linguagem
-ExportOptionDialoge.msgOptionsForPlugin.text=Opções para o gerador %
-ExportOptionDialoge.jLabel1.text=Favor selecionar as opções desejadas para ativação ...
-ExportOptionDialoge.jButton1.text=OK
-ExportOptionDialoge.jButton1.tooltip=Salvar configurações.
-ExportOptionDialoge.includeLists.*.tooltip=Preencher uma lista separada por vírgulas com arquivos ou módulos para os quais as cláusulas include/import/use deverão ser inseridas
-ExportOptionDialoge.spnPrefGenTrigger.tooltip=Número de exportações de código para outro idioma que provoque uma proposta para alterar o idioma de exportação favorito (0 = nunca fazer uma proposta).
-ExportOptionDialoge.chkDirectoryFromNsd.text=Sugerir o diretório de exportação do local do NSD, se disponível
-ExportOptionDialoge.chkDirectoryFromNsd.tooltip=Caso contrário, o diretório de exportação mais recente sempre será proposto.
-ExportOptionDialoge.chkArraySize.text=Tamanho padrão do arranjo (se necessário)
-ExportOptionDialoge.chkStringLen.text=Comprimento padrão da cadeia de caracteres (se necessário)
+-----[ ExportOptionDialog ]-----
+ExportOptionDialog.title=Opções para exportar
+ExportOptionDialog.tabbedPane.tab.0=Geral
+ExportOptionDialog.tabbedPane.tab.1=Inclusões
+ExportOptionDialog.noConversionCheckBox.text=Nenhuma conversão de conteúdo em expressão/instrução.
+ExportOptionDialog.noConversionCheckBox.tooltip=Selecionar essa opção se o texto já estiver na linguagem escolhida
+ExportOptionDialog.commentsCheckBox.text=Exportar instruções como comentários.
+ExportOptionDialog.bracesCheckBox.text=Colocar início de bloco na mesma linha (C/C++/Java etc.).
+ExportOptionDialog.chkExportSubroutines.text=Envolver subprogramas chamados.
+ExportOptionDialog.chkExportLicenseInfo.text=Exportar autor e atributos da licença.
+ExportOptionDialog.lbPrefGenerator.text=Exportar para código de preferência:
+ExportOptionDialog.lbCharset.text=Conjunto de caracteres:
+ExportOptionDialog.chkCharsetAll.text=Listar tudo?
+ExportOptionDialog.btnPluginOptions.text=Opções específicas da linguagem
+ExportOptionDialog.msgOptionsForPlugin.text=Opções para o gerador %
+ExportOptionDialog.jLabel1.text=Favor selecionar as opções desejadas para ativação ...
+ExportOptionDialog.jButton1.text=OK
+ExportOptionDialog.jButton1.tooltip=Salvar configurações.
+ExportOptionDialog.includeLists.*.tooltip=Preencher uma lista separada por vírgulas com arquivos ou módulos para os quais as cláusulas include/import/use deverão ser inseridas
+ExportOptionDialog.spnPrefGenTrigger.tooltip=Número de exportações de código para outro idioma que provoque uma proposta para alterar o idioma de exportação favorito (0 = nunca fazer uma proposta).
+ExportOptionDialog.chkDirectoryFromNsd.text=Sugerir o diretório de exportação do local do NSD, se disponível
+ExportOptionDialog.chkDirectoryFromNsd.tooltip=Caso contrário, o diretório de exportação mais recente sempre será proposto.
+ExportOptionDialog.chkArraySize.text=Tamanho padrão do arranjo (se necessário)
+ExportOptionDialog.chkStringLen.text=Comprimento padrão da cadeia de caracteres (se necessário)
 
 -----[ ImportOptionDialog ]-----
 ImportOptionDialog.title=Opções para importação

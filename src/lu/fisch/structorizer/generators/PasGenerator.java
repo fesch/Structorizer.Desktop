@@ -1180,7 +1180,7 @@ public class PasGenerator extends Generator
 					_indent, isDisabled);
 		}
 		addCode("begin", _indent, isDisabled);
-		generateCode(_for.q, _indent+this.getIndent());
+		generateCode(_for.getBody(), _indent+this.getIndent());
 		if (Math.abs(step) != 1)
 		{
 			addCode(counter + " := " + counter + ((step > 0) ? " + " : " ") + step,
@@ -1334,7 +1334,7 @@ public class PasGenerator extends Generator
 			addCode("begin", _indent, isDisabled);
 			addCode(var + " := " + arrayName + "[" + indexName + "];",
 					_indent+this.getIndent(), isDisabled);
-			generateCode(_for.q, _indent+this.getIndent());
+			generateCode(_for.getBody(), _indent+this.getIndent());
 			addCode("end;", _indent, isDisabled);
 
 			done = true;
@@ -1351,7 +1351,7 @@ public class PasGenerator extends Generator
 					_indent, isDisabled);
 			// Add the loop body as is
 			addCode("begin", _indent, isDisabled);
-			generateCode(_for.q, _indent + this.getIndent());
+			generateCode(_for.getBody(), _indent + this.getIndent());
 			addCode("end;", _indent, isDisabled);
 			
 			done = true;
@@ -1374,7 +1374,7 @@ public class PasGenerator extends Generator
 
 		addCode("while " + condition + " do", _indent, isDisabled);
 		addCode("begin", _indent, isDisabled);
-		generateCode(_while.q,_indent+this.getIndent());
+		generateCode(_while.getBody(),_indent+this.getIndent());
 		addCode("end;", _indent, isDisabled);
 
 		// START KGU#74 2015-11-30: The following instruction is goto target
@@ -1399,7 +1399,7 @@ public class PasGenerator extends Generator
 		if(!condition.startsWith("(") && !condition.endsWith(")")) condition="("+condition+")";
 
 		addCode("repeat", _indent, isDisabled);
-		generateCode(_repeat.q,_indent+this.getIndent());
+		generateCode(_repeat.getBody(),_indent+this.getIndent());
 		addCode(_indent+"until "+condition+";", _indent, isDisabled);
 
 		// START KGU#74 2015-11-30: The following instruction is goto target
@@ -1421,7 +1421,7 @@ public class PasGenerator extends Generator
 
 		addCode("while (true) do", _indent, isDisabled);
 		addCode("begin", _indent, isDisabled);
-		generateCode(_forever.q,_indent+this.getIndent());
+		generateCode(_forever.getBody(),_indent+this.getIndent());
 		addCode("end;", _indent, isDisabled);
 
 		// START KGU#74 2015-11-30: The following instruction is goto target

@@ -1204,7 +1204,7 @@ public class COBOLGenerator extends Generator {
 				+ " UNTIL " + varName + (step > 0 ? " > " : " < ") + endVal,
 				_indent + this.getIndent(), isDisabled);
 
-		processProcedure(_for.q, bodyName, _indent, isDisabled);
+		processProcedure(_for.getBody(), bodyName, _indent, isDisabled);
 	}
 
 	/**
@@ -1232,7 +1232,7 @@ public class COBOLGenerator extends Generator {
 		addCode("PERFORM " + bodyName + " TEST BEFORE UNTIL " + transform(cond),
 				_indent, isDisabled);
 
-		processProcedure(_while.q, bodyName, _indent, isDisabled);
+		processProcedure(_while.getBody(), bodyName, _indent, isDisabled);
 	}
 
 	@Override
@@ -1248,7 +1248,7 @@ public class COBOLGenerator extends Generator {
 		addCode("PERFORM " + bodyName + " TEST AFTER UNTIL " + transform(cond),
 				_indent, isDisabled);
 
-		processProcedure(_repeat.q, bodyName, _indent, isDisabled);
+		processProcedure(_repeat.getBody(), bodyName, _indent, isDisabled);
 	}
 
 	@Override
@@ -1262,7 +1262,7 @@ public class COBOLGenerator extends Generator {
 		appendComment(_forever, _indent);
 		addCode("PERFORM " + bodyName + " FOREVER", _indent, isDisabled);
 		
-		processProcedure(_forever.q, bodyName, _indent, isDisabled);
+		processProcedure(_forever.getBody(), bodyName, _indent, isDisabled);
 	}
 
 	/**

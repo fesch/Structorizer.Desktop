@@ -466,13 +466,13 @@ public class StgrImporter implements INSDImporter {
 
 	private Element readRepeat(InputStream is, StringList text) throws IOException {
 		Repeat loop = new Repeat(StringList.explode(text.concatenate("\\\n"), "\n"));
-		importSubqueue(is, loop.q);
+		importSubqueue(is, loop.getBody());
 		return loop;
 	}
 
 	private Element readWhile(InputStream is, StringList text) throws IOException {
 		While loop = new While(StringList.explode(text.concatenate("\\\n"), "\n"));
-		importSubqueue(is, loop.q);
+		importSubqueue(is, loop.getBody());
 		return loop;
 	}
 

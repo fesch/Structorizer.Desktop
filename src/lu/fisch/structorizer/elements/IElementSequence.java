@@ -130,8 +130,8 @@ public interface IElementSequence {
 			Element el = current.getElement(at);
 			// Try to get downwards or sidewards first
 			if (descend) {
-				if (el instanceof ILoop) {
-					Subqueue body = ((ILoop)el).getBody();
+				if (el instanceof Loop) {
+					Subqueue body = ((Loop)el).getBody();
 					if (body.getSize() > 0) {
 						next = body.getElement(0);
 					}
@@ -366,8 +366,8 @@ public interface IElementSequence {
 				positions.push(index);
 			}
 			if (descend && !(el instanceof Instruction)) {
-				if (el instanceof ILoop) {
-					Subqueue body = ((ILoop)el).getBody();
+				if (el instanceof Loop) {
+					Subqueue body = ((Loop)el).getBody();
 					if (body.getSize() > 0) {
 						el = getLastInSubtree(body, body.getSize() - 1, move);
 					}

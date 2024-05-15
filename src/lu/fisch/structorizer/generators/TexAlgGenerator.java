@@ -823,7 +823,7 @@ public class TexAlgGenerator extends Generator {
 	
 	/**
 	 * Tests whether the given {@link Element} {@code _el} may be expressed
-	 * within one line (need for the decision of blocking necessity)
+	 * within one line (needed for the decision of blocking necessity)
 	 * @param _el - the element to be scrutinised
 	 * @return {@code true} if a single line of code is sufficient to show
 	 * the element (or its header if it is a composed one).
@@ -1082,10 +1082,10 @@ public class TexAlgGenerator extends Generator {
 			// Generate body
 			boolean needsBlocking = FOR_MACROS[packageIndex][endIndex] == null;
 			boolean atomic = false;
-			if (needsBlocking && !(atomic = isAtomic(_for.q))) {
+			if (needsBlocking && !(atomic = isAtomic(_for.getBody()))) {
 				appendBlockMacro(_indent, true);
 			}
-			generateCode(_for.q, _indent + this.getIndent());
+			generateCode(_for.getBody(), _indent + this.getIndent());
 			if (needsBlocking) {
 				if (!atomic) {
 					appendBlockMacro(_indent, false);
@@ -1114,10 +1114,10 @@ public class TexAlgGenerator extends Generator {
 					.replace("%C", makeInLineComment(_while)), _indent, false);
 			boolean needsBlocking = WHILE_MACROS[packageIndex][1] == null;
 			boolean atomic = false;
-			if (needsBlocking && !(atomic = isAtomic(_while.q))) {
+			if (needsBlocking && !(atomic = isAtomic(_while.getBody()))) {
 				appendBlockMacro(_indent, true);
 			}
-			generateCode(_while.q, _indent + this.getIndent());
+			generateCode(_while.getBody(), _indent + this.getIndent());
 			if (needsBlocking && !atomic) {
 				appendBlockMacro(_indent, false);
 			}
@@ -1142,7 +1142,7 @@ public class TexAlgGenerator extends Generator {
 			addCode(REPEAT_MACROS[packageIndex][0]
 					.replace("%1", cond)
 					.replace("%C", makeInLineComment(_repeat)), _indent, false);
-			generateCode(_repeat.q, _indent + this.getIndent());
+			generateCode(_repeat.getBody(), _indent + this.getIndent());
 			addCode(REPEAT_MACROS[packageIndex][1]
 					.replace("%1", cond).replace("%2", semi), _indent, false);
 		}
@@ -1159,10 +1159,10 @@ public class TexAlgGenerator extends Generator {
 			boolean atomic = false;
 			addCode(LOOP_MACROS[packageIndex][0]
 					.replace("%C", makeInLineComment(_forever)), _indent, false);
-			if (needsBlocking && !(atomic = isAtomic(_forever.q))) {
+			if (needsBlocking && !(atomic = isAtomic(_forever.getBody()))) {
 				appendBlockMacro(_indent, true);
 			}
-			generateCode(_forever.q, _indent + this.getIndent());
+			generateCode(_forever.getBody(), _indent + this.getIndent());
 			if (needsBlocking && !atomic) {
 				appendBlockMacro(_indent, false);
 			}

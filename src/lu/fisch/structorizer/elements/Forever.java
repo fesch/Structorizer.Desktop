@@ -37,7 +37,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015-10-11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
  *      Kay Gürtzig     2015-10-12      Breakpoint support prepared
  *      Kay Gürtzig     2015-11-14      Bugfixes #31 (= KGU#82) and #32 (= KGU#83) in method copy() 
- *      Kay Gürtzig     2015-11-30      Inheritance changed: implements ILoop
+ *      Kay Gürtzig     2015-11-30      Inheritance changed: implements Loop
  *		Kay Gürtzig     2015-12-02      Bugfix #39 (KGU#91) -> getText(false) on drawing, constructors
  *                                      and methods setText() now ensure field text being empty
  *      Kay Gürtzig     2016-01-02      Bugfix #78 (KGU#119): New method equals(Element)
@@ -53,6 +53,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018-10-26      Enh. #619: Method getMaxLineLength() implemented
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
  *      Kay Gürtzig     2019-03-17      Issue #56: Accordng to the user guide, Forever may not have a breakpoint
+ *      Kay Gürtzig     2024-04-22      Inheritance modified (instead of implementing ILoop now extends Loop)
  *
  ******************************************************************************************************
  *
@@ -77,51 +78,46 @@ import lu.fisch.utils.*;
  * 
  * @author Bob Fisch
  */
-public class Forever extends Element implements ILoop {
-	
-	public Subqueue q = new Subqueue();
-	
-	// START KGU#136 2016-02-27: Bugfix #97 - replaced by local variable in prepareDraw()
-	//private Rect r = new Rect();
-	// END KGU#136 2016-02-27
-	// START KGU#136 2016-03-01: Bugfix #97
-	private Point pt0Body = new Point(0,0);
-	// END KGU#136 2016-03-01
-
-	
+public class Forever extends Loop {
+		
 	public Forever()
 	{
 		super();
-		q.parent=this;
 	}
 	
 	public Forever(String _strings)
 	{
 		super();	// Forever elements aren't supposed to have text
-		q.parent=this;
 		//setText(_strings);
 	}
 	
 	public Forever(StringList _strings)
 	{
 		super();	// Forever elements aren't supposed to have text
-		q.parent=this;
 		//setText(_strings);
 	}
 	
 	// START KGU#91 2015-12-02
-    @Override
-    public void setText(String _text)
-    {
-    	text.clear();
-    }
-	
-    @Override
-    public void setText(StringList _text)
-    {
-    	text.clear();
-    }
-    // END KGU#91 2015-12-02
+	/**
+	 * Just ignores {@code _text} and ensures an empty text field.
+	 * @param _text - a string (to be ignored here)
+	 */
+	@Override
+	public void setText(String _text)
+	{
+		text.clear();
+	}
+
+	/**
+	 * Just ignores {@code _text} and ensures an empty text field.
+	 * @param _text - a StringList (to be ignored here)
+	 */
+	@Override
+	public void setText(StringList _text)
+	{
+		text.clear();
+	}
+	// END KGU#91 2015-12-02
 	
 	public Rect prepareDraw(Canvas _canvas)
 	{
@@ -313,7 +309,7 @@ public class Forever extends Element implements ILoop {
 	public boolean combineRuntimeData(Element _cloneOfMine)
 	{
 		return super.combineRuntimeData(_cloneOfMine) &&
-				this.getBody().combineRuntimeData(((ILoop)_cloneOfMine).getBody());
+				this.getBody().combineRuntimeData(((Loop)_cloneOfMine).getBody());
 	}
 	// END KGU#117 2016-03-07
 
@@ -360,17 +356,6 @@ public class Forever extends Element implements ILoop {
 		}
 	}
 	// END KGU 2015-10-16
-
-	// START KGU 2015-11-30
-	@Override
-	public Subqueue getBody() {
-		return this.q;
-	}
-	// END KGU 2015-11-30
-	@Override
-	public Element getLoop() {
-		return this;
-	}
 
 	// START KGU#199 2016-07-07: Enh. #188 - ensure Call elements for known subroutines
 	/* (non-Javadoc)

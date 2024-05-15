@@ -7241,7 +7241,7 @@ public class Executor implements Runnable
 					// START KGU#117 2016-03-07: Enh. #77 - consistent subqueue handling
 					if (trouble.isEmpty())
 					{
-						trouble = stepSubqueue(((ILoop)element).getBody(), true);						
+						trouble = stepSubqueue(((Loop)element).getBody(), true);						
 					}
 					// END KGU#117 2016-03-07
 
@@ -7867,7 +7867,7 @@ public class Executor implements Runnable
 
 					if (trouble.isEmpty())
 					{
-						trouble = stepSubqueue(((ILoop)element).getBody(), true);						
+						trouble = stepSubqueue(((Loop)element).getBody(), true);						
 					}
 
 					element.executed = true;

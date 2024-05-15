@@ -37,7 +37,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.10.11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
  *      Kay Gürtzig     2015.10.12      Breakpoint support prepared
  *      Kay Gürtzig     2015.11.14      Bugfix #31 (= KGU#82) in method copy()
- *      Kay Gürtzig     2015.11.30      Inheritance changed: implements ILoop
+ *      Kay Gürtzig     2015.11.30      Inheritance changed: implements Loop
  *      Kay Gürtzig     2015.12.01      Bugfix #39 (= KGU#91) in draw methods (--> getText(false))
  *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): New method equals(Element)
  *      Kay Gürtzig     2016.01.03      Bugfix #87 (KGU#121): Correction in getElementByCoord(), getIcon()
@@ -52,6 +52,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2018.04.04      Issue #529: Critical section in prepareDraw() reduced.
  *      Kay Gürtzig     2018.10.26      Enh. #619: Method getMaxLineLength() implemented
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
+ *      Kay Gürtzig     2024-04-22      Inheritance modified (instead of implementing ILoop now extends Loop)
  *
  ******************************************************************************************************
  *
@@ -76,41 +77,30 @@ import lu.fisch.utils.*;
  * 
  * @author Bob Fisch
  */
-public class While extends Element implements ILoop {
+public class While extends Loop {
 
 	// START KGU#258 2016-09-26: Enh. #253
 	private static final String[] relevantParserKeys = {"preWhile", "postWhile"};
 	// END KGU#258 2016-09-25
 	
-	public Subqueue q = new Subqueue();
-	
-	// START KGU#136 2016-02-27: Bugfix #97 replaced by local variable in repareDraw()
-	//private Rect r = new Rect();
-	// END KGU#136 2016-02-27
-	// START KGU#136 2016-03-01: Bugfix #97
-	private Point pt0Body = new Point(0,0);
-	// END KGU#136 2016-03-01
-	
 	public While()
 	{
 		super();
-		q.parent=this;
 	}
 	
 	public While(String _strings)
 	{
 		super(_strings);
-		q.parent=this;
-		setText(_strings);
+		//setText(_strings);// Done by super
 	}
 	
 	public While(StringList _strings)
 	{
 		super(_strings);
-		q.parent=this;
-		setText(_strings);
+		//setText(_strings);// Done by super
 	}
 	
+	@Override
 	public Rect prepareDraw(Canvas _canvas)
 	{
 		// START KGU#136 2016-03-01: Bugfix #97 (prepared)
@@ -162,6 +152,7 @@ public class While extends Element implements ILoop {
 		// END KGU#136 2016-02-27
 	}
 	
+	@Override
 	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport, boolean _inContention)
 	{
 		// START KGU#502/KGU#524/KGU#553 2019-03-13: New approach to reduce drawing contention
@@ -297,7 +288,7 @@ public class While extends Element implements ILoop {
 	public boolean combineRuntimeData(Element _cloneOfMine)
 	{
 		return super.combineRuntimeData(_cloneOfMine) &&
-				this.getBody().combineRuntimeData(((ILoop)_cloneOfMine).getBody());
+				this.getBody().combineRuntimeData(((Loop)_cloneOfMine).getBody());
 	}
 	// END KGU#117 2016-03-07
 
@@ -358,18 +349,7 @@ public class While extends Element implements ILoop {
 			this.q.addFullText(_lines, _instructionsOnly);
 		}
     }
-    // END KGU 2015-10-16
-
-	// START KGU 2015-11-30
-	@Override
-	public Subqueue getBody() {
-		return this.q;
-	}
-	// END KGU 2015-11-30
-	@Override
-	public Element getLoop() {
-		return this;
-	}
+	// END KGU 2015-10-16
 
 	// START KGU#199 2016-07-07: Enh. #188 - ensure Call elements for known subroutines
 	/* (non-Javadoc)
@@ -378,7 +358,7 @@ public class While extends Element implements ILoop {
 	@Override
 	public void convertToCalls(StringList _signatures)
 	{
-    	getBody().convertToCalls(_signatures);
+		getBody().convertToCalls(_signatures);
 	}
 	// END KGU#199 2016-07-07
 	

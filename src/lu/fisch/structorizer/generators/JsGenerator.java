@@ -435,7 +435,7 @@ public class JsGenerator extends CGenerator {
 		appendBlockHeading(_for, "for (const " + var + " of " +	valueList + ")", _indent);
 
 		// Add the loop body as is
-		generateCode(_for.q, _indent + this.getIndent());
+		generateCode(_for.getBody(), _indent + this.getIndent());
 
 		// Accomplish the loop
 		appendBlockTail(_for, null, _indent);

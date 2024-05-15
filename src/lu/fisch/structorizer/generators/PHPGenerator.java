@@ -883,7 +883,7 @@ public class PHPGenerator extends Generator
 		// END KGU#61 2016-03-23
 		// END KGU#3 2015-11-02
 		addCode("{", _indent, isDisabled);
-		generateCode(_for.q,_indent+this.getIndent());
+		generateCode(_for.getBody(),_indent+this.getIndent());
 		addCode("}", _indent, isDisabled);
 	}
 
@@ -904,7 +904,7 @@ public class PHPGenerator extends Generator
 
 		addCode("while "+condition+" ", _indent, isDisabled);
 		addCode("{", _indent, isDisabled);
-		generateCode(_while.q,_indent+this.getIndent());
+		generateCode(_while.getBody(),_indent+this.getIndent());
 		addCode("}", _indent, isDisabled);
 	}
 
@@ -919,7 +919,7 @@ public class PHPGenerator extends Generator
 
 		addCode("do", _indent, isDisabled);
 		addCode("{", _indent, isDisabled);
-		generateCode(_repeat.q,_indent+this.getIndent());
+		generateCode(_repeat.getBody(),_indent+this.getIndent());
 		// START KGU#162 2016-04-01: Enh. #144 - more tentative approach
 		//code.add(_indent+"} while (!("+BString.replace(transform(_repeat.getText().getText()),"\n","").trim()+"));");
 		String condition = transform(_repeat.getUnbrokenText().getLongString()).trim();
@@ -945,7 +945,7 @@ public class PHPGenerator extends Generator
 
         addCode("while (true)", _indent, isDisabled);
         addCode("{", _indent, isDisabled);
-        generateCode(_forever.q,_indent+this.getIndent());
+        generateCode(_forever.getBody(),_indent+this.getIndent());
         addCode("}", _indent, isDisabled);
     }
 

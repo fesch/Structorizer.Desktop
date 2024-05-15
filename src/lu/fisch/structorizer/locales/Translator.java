@@ -279,7 +279,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
             String sectionName = sectionNames.get(i);
             
             // create a new tab
-            Tab tab = new Tab();
+            TranslatorTab tab = new TranslatorTab();
             
             // add it to the panel
             tabs.add(sectionName, tab);

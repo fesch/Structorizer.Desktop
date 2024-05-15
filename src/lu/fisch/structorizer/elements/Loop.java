@@ -20,12 +20,15 @@
 
 package lu.fisch.structorizer.elements;
 
+import java.awt.Point;
+
 /*
  ******************************************************************************************************
  *
  *      Author:         Kay Gürtzig
  *
- *      Description:    This interface is to facilitate unified handling of different loop types.
+ *      Description:    This common superclass of While, Repeat, For, and Forever is to facilitate
+ *                      unified handling of the different loop types.
  *
  ******************************************************************************************************
  *
@@ -36,6 +39,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig      2015-11-30      First issue
  *      Kay Gürtzig      2016-10-13      Enh. #270: method isDisabled() added
  *      Kay Gürtzig      2024-04-17      Bugfix #1161: LeaveDetector mended.
+ *      Kay Gürtzig      2024-04-22      Renamed to Loop and converted to an abstract subclass of Element
  *
  ******************************************************************************************************
  *
@@ -47,13 +51,25 @@ package lu.fisch.structorizer.elements;
  ******************************************************************************************************
  */
 
+import lu.fisch.utils.StringList;
+
 /**
- * Implementors of the interface are {@link Element} subclasses representing some
- * kind of loop. This interface presents the common behaviour.
+ * Inheritants of this {@link Element} subclass are the classes representing some
+ * kind of loop. This class provides common behaviour for simplicity.
  * @author Kay Gürtzig
  */
-public interface ILoop {
+public abstract class Loop extends Element {
 	
+	/** The loop body as {@link Subqueue} */
+	protected Subqueue q = new Subqueue();
+	
+	// START KGU#136 2016-02-27: Bugfix #97 - replaced by local variable in prepareDraw()
+	//private Rect r = new Rect();
+	// END KGU#136 2016-02-27
+	// START KGU#136 2016-03-01: Bugfix #97
+	protected Point pt0Body = new Point(0,0);
+	// END KGU#136 2016-03-01
+
 	/**
 	 * Visitor class looking for a reachable LEAVE instruction
 	 * @author kay
@@ -90,7 +106,7 @@ public interface ILoop {
 					isLeavable = exactly && up == loopLevel || up >= loopLevel;
 				}
 			}
-			else if (_ele instanceof ILoop) {
+			else if (_ele instanceof Loop) {
 				// We are entering a loop
 				loopLevel++;
 			}
@@ -99,7 +115,7 @@ public interface ILoop {
 
 		@Override
 		public boolean visitPostOrder(Element _ele) {
-			if (_ele instanceof ILoop) {
+			if (_ele instanceof Loop) {
 				// We are leaving a loop
 				loopLevel--;
 			}
@@ -107,18 +123,43 @@ public interface ILoop {
 		}	
 	}
 
-	/** @return this loop as Element (mere type bridging) */
-	public Element getLoop();
+	protected Loop()
+	{
+		super();
+		q.parent = this;
+	}
+	protected Loop(String _string)
+	{
+		super(_string);
+		q.parent = this;
+	}
+	
+	protected Loop(StringList _strings)
+	{
+		super(_strings);
+		q.parent = this;
+	}
+	
 	/** @return the {@link Subqueue} representing the body of this loop */
-	public Subqueue getBody();
-	// START KGU#277 2016-10-13: Enh. #270 (needed for a generator access)
+	public Subqueue getBody() {
+		return this.q;
+	}
 	/**
-	 * Checks whether this element or one of its ancestors is disabled 
-	 * @param individually - if {@code true} then only the individual setting will be reported
-	 * @return true if directly or indirectly disabled
+	 * Replaces the body by the given {@link Subqueue} {@code _newBody).
+	 * @param _newBody - a {@link Subqueue} to replace the former body
 	 */
-	public boolean isDisabled(boolean individually);
-	// END KGU#277 2016-10-13
+	public void setBody(Subqueue _newBody) {
+		this.q = _newBody;
+		this.q.parent = this;
+	}
+//	// START KGU#277 2016-10-13: Enh. #270 (needed for a generator access)
+//	/**
+//	 * Checks whether this element or one of its ancestors is disabled 
+//	 * @param individually - if {@code true} then only the individual setting will be reported
+//	 * @return true if directly or indirectly disabled
+//	 */
+//	public boolean isDisabled(boolean individually);
+//	// END KGU#277 2016-10-13
 	
 	// START KGU 2017-10-21
 	/**
@@ -130,7 +171,7 @@ public interface ILoop {
 	 * @return {@code true} iff there is at least one {@link Jump} element
 	 *    inside meeting the requirements
 	 */
-	public default boolean hasReachableLeave(boolean _exactly)
+	public boolean hasReachableLeave(boolean _exactly)
 	{
 		LeaveDetector finder = new LeaveDetector(_exactly, (Element)this);
 		this.getBody().traverse(finder);
