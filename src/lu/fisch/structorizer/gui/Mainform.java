@@ -104,6 +104,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-11-14      Issue #967: Ini support for plugin-specific Analyser checks
  *      Kay Gürtzig     2022-08-17      Issue #1065: GUI responsiveness problem with ArrangerIndex notifications solved
  *      Kay Gürtzig     2023-11-09      Issue #311: Preferences category "diagram" renamed to "view"
+ *      Kay Gürtzig     2024-10-08      Loading and saving view settings in loadFromIni() and saveToIni() bundled into
+ *                                      a static Element method on occasion of issue #1157
  *
  ******************************************************************************************************
  *
@@ -601,11 +603,14 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	 * (if class {@code Mainform} is responsible for the saving and loading of the properties
 	 * of this category. Currently, the following categories are supported here:
 	 * <ul>
-	 * <li>"diagram": Settings from the "Diagram" menu</li>
+	 * <li>"view": Settings from the "View" menu</li>
 	 * <li>"saving": File saving options</li>
+	 * <li>"wheel": Mouse wheel option</li>
+	 * <li>"update": preferences concerning product update
 	 * </ul>
-	 * @param category
+	 * @param category - name of the category of interest (see method comment)
 	 * @return a String array containing the relevant keys for the ini file
+	 * 
 	 * @see Element#getPreferenceKeys(String)
 	 * @see Root#getPreferenceKeys()
 	 * @see CodeParser#getPreferenceKeys()
@@ -745,9 +750,6 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			// START KGU#699 2019-03-27: Enh. #717
 			Element.E_WHEEL_SCROLL_UNIT = Integer.parseInt(ini.getProperty("wheelScrollUnit", "0"));
 			// END KGU#699 2019-03-27
-			// START KGU#494 2018-09-10: Issue #508
-			Element.E_PADDING_FIX = ini.getProperty("fixPadding", "0").equals("1");
-			// END KGU#494 2018-09-10
 
 			// START KGU#300 2016-12-02: Enh. #300
 			Diagram.retrieveVersion = ini.getProperty("retrieveVersion", "false").equals("true");
@@ -785,6 +787,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			Element.E_ANALYSER_MARKER = ini.getProperty("drawAnalyserMarks", "1").equals("1");
 			// END KGU#906 2021-01-02
 			
+			// START KGU#1157 2024-10-08: Issue #1171 Support batch image export
+			Element.fetchViewSettings(ini);
+			// END KGU#1157 2024-10-08
+			
 			if (diagram != null) 
 			{
 				// ======= current directories, recent files, find settings ======
@@ -792,56 +798,59 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 				diagram.fetchIniProperties(ini);
 				// END KGU#602 2018-10-28
 				
-				// ==================== diagram menu settings ====================
-				// DIN 66261
-				// START KGU#880 2020-10-18: Bugfix #876
-				//if (ini.getProperty("DIN","1").equals("1")) // default = 1 (since version 3.30)
-				//{
-				//	//diagram.setDIN();
-				//	Element.E_DIN = true;
-				//}
-				Element.E_DIN = ini.getProperty("DIN","1").equals("1");
-				// END KGU#880 2020-10-18
-				// comments
-				// START KGU#880 2020-10-18: Bugfix #876 - we may not only update in one direction
-				//if (ini.getProperty("showComments","1").equals("0")) // default = 1
-				//{
-				//	//diagram.setComments(false);
-				//	// START KGU#549 2018-07-09: Bugfix #555 - the mode of the last session wasn't restored anymore 
-				//	//Element.E_SHOWCOMMENTS = true;
-				//	Element.E_SHOWCOMMENTS = false;
-				//	// END KGU#549 2018-07-09
-				//}
-				Element.E_SHOWCOMMENTS = ini.getProperty("showComments","1").equals("1"); // default = 1
-				// END KGU#880 2020-10-18
-				// START KGU#227 2016-08-01: Enh. #128
-				//diagram.setCommentsPlusText(ini.getProperty("commentsPlusText","0").equals("1"));	// default = 0
-				Element.E_COMMENTSPLUSTEXT = ini.getProperty("commentsPlusText","0").equals("1");	// default = 0
-				// END KGU#227 2016-08-01
-				// START KGU#880 2020-10-18: Bugfix #876 - we may not only update in one direction
-				//if (ini.getProperty("switchTextComments","0").equals("1")) // default = 0
-				//{
-				//	//diagram.setToggleTC(true);
-				//	Element.E_TOGGLETC = true;
-				//}
-				//// syntax highlighting
-				//if (ini.getProperty("varHightlight","1").equals("1")) // default = 0
-				//{
-				//	//diagram.setHightlightVars(true);
-				//	Element.E_VARHIGHLIGHT = true;	// this is now directly used for drawing
-				//	diagram.resetDrawingInfo();
-				//}
-				Element.E_TOGGLETC = ini.getProperty("switchTextComments","0").equals("1");
-				// syntax highlighting
-				Element.E_VARHIGHLIGHT = ini.getProperty("varHightlight","1").equals("1");
-				// END KGU#880 2020-10-18
-				// START KGU#872 2020-10-17: Enh. #872 Operator display in C style
-				Element.E_SHOW_C_OPERATORS = ini.getProperty("showOpsLikeC", "0").equals("1");
-				// END KGU#872 2020-10-17
-				// START KGU#477 2017-12-06: Enh. #487
-				//diagram.setHideDeclarations(ini.getProperty("hideDeclarations","0").equals("1"));	// default = 0
-				Element.E_HIDE_DECL = ini.getProperty("hideDeclarations","0").equals("1");	// default = 0
-				// END KGU#227 2017-12-06
+				// ==================== view menu settings ====================
+				// START KGU#1157 2024-10-08: Issue #1171 delegated to Element
+//				// DIN 66261
+//				// START KGU#880 2020-10-18: Bugfix #876
+//				//if (ini.getProperty("DIN","1").equals("1")) // default = 1 (since version 3.30)
+//				//{
+//				//	//diagram.setDIN();
+//				//	Element.E_DIN = true;
+//				//}
+//				Element.E_DIN = ini.getProperty("DIN","1").equals("1");
+//				// END KGU#880 2020-10-18
+//				// comments
+//				// START KGU#880 2020-10-18: Bugfix #876 - we may not only update in one direction
+//				//if (ini.getProperty("showComments","1").equals("0")) // default = 1
+//				//{
+//				//	//diagram.setComments(false);
+//				//	// START KGU#549 2018-07-09: Bugfix #555 - the mode of the last session wasn't restored anymore 
+//				//	//Element.E_SHOWCOMMENTS = true;
+//				//	Element.E_SHOWCOMMENTS = false;
+//				//	// END KGU#549 2018-07-09
+//				//}
+//				Element.E_SHOWCOMMENTS = ini.getProperty("showComments","1").equals("1"); // default = 1
+//				// END KGU#880 2020-10-18
+//				// START KGU#227 2016-08-01: Enh. #128
+//				//diagram.setCommentsPlusText(ini.getProperty("commentsPlusText","0").equals("1"));	// default = 0
+//				Element.E_COMMENTSPLUSTEXT = ini.getProperty("commentsPlusText","0").equals("1");	// default = 0
+//				// END KGU#227 2016-08-01
+//				// START KGU#880 2020-10-18: Bugfix #876 - we may not only update in one direction
+//				//if (ini.getProperty("switchTextComments","0").equals("1")) // default = 0
+//				//{
+//				//	//diagram.setToggleTC(true);
+//				//	Element.E_TOGGLETC = true;
+//				//}
+//				//// syntax highlighting
+//				//if (ini.getProperty("varHightlight","1").equals("1")) // default = 0
+//				//{
+//				//	//diagram.setHightlightVars(true);
+//				//	Element.E_VARHIGHLIGHT = true;	// this is now directly used for drawing
+//				//	diagram.resetDrawingInfo();
+//				//}
+//				Element.E_TOGGLETC = ini.getProperty("switchTextComments","0").equals("1");
+//				// syntax highlighting
+//				Element.E_VARHIGHLIGHT = ini.getProperty("varHightlight","1").equals("1");
+//				// END KGU#880 2020-10-18
+//				// START KGU#872 2020-10-17: Enh. #872 Operator display in C style
+//				Element.E_SHOW_C_OPERATORS = ini.getProperty("showOpsLikeC", "0").equals("1");
+//				// END KGU#872 2020-10-17
+//				// START KGU#477 2017-12-06: Enh. #487
+//				//diagram.setHideDeclarations(ini.getProperty("hideDeclarations","0").equals("1"));	// default = 0
+//				Element.E_HIDE_DECL = ini.getProperty("hideDeclarations","0").equals("1");	// default = 0
+//				// END KGU#227 2017-12-06
+				// END KGU#1157 2024-10-08
+				
 				// analyser
 				// KGU 2016-07-27: Analyser should by default be switched on. See Issue #207
 				/*
@@ -947,10 +956,6 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			Arranger.A_STORE_RELATIVE_COORDS = ini.getProperty("arrangerRelCoords", "0").equals("1");
 			// END KGU#630 2019-01-13
 			
-			// START KGU#331 2017-01-15: Enh. #333 Comparison operator display
-			Element.E_SHOW_UNICODE_OPERATORS = ini.getProperty("unicodeCompOps", "1").equals("1");
-			// END KGU#331 2017-01-15
-			
 			// START KGU#428 2017-10-06: Enh. #430
 			InputBox.FONT_SIZE = Float.parseFloat(ini.getProperty("editorFontSize", "0"));
 			// END KGU#428 2017-10-06
@@ -1021,18 +1026,31 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			// =========================== language ==========================
 			ini.setProperty("Lang", Locales.getInstance().getLoadedLocaleFilename());
 			
-			// ==================== diagram menu settings ====================
-			// DIN, comments
-			ini.setProperty("DIN", (Element.E_DIN ? "1" : "0"));
-			ini.setProperty("showComments", (Element.E_SHOWCOMMENTS ? "1" : "0"));
-			// START KGU#227 2016-08-01: Enh. #128
-			ini.setProperty("commentsPlusText", Element.E_COMMENTSPLUSTEXT ? "1" : "0");
-			// END KGU#227 2016-08-01
-			ini.setProperty("switchTextComments", (Element.E_TOGGLETC ? "1" : "0"));
-			ini.setProperty("varHightlight", (Element.E_VARHIGHLIGHT ? "1" : "0"));
-			// START KGU#477 2017-12-06: Enh. #487
-			ini.setProperty("hideDeclarations", Element.E_HIDE_DECL ? "1" : "0");
-			// END KGU#227 2016-12-06
+			// ==================== view menu settings ====================
+			// START KGU#1157 2024-10-08: Issue #1171 Delegated to Elemet.cacheViewSettings(ini)
+//			// DIN, comments
+//			ini.setProperty("DIN", (Element.E_DIN ? "1" : "0"));
+//			ini.setProperty("showComments", (Element.E_SHOWCOMMENTS ? "1" : "0"));
+//			// START KGU#227 2016-08-01: Enh. #128
+//			ini.setProperty("commentsPlusText", Element.E_COMMENTSPLUSTEXT ? "1" : "0");
+//			// END KGU#227 2016-08-01
+//			ini.setProperty("switchTextComments", (Element.E_TOGGLETC ? "1" : "0"));
+//			ini.setProperty("varHightlight", (Element.E_VARHIGHLIGHT ? "1" : "0"));
+//			// START KGU#477 2017-12-06: Enh. #487
+//			ini.setProperty("hideDeclarations", Element.E_HIDE_DECL ? "1" : "0");
+//			// END KGU#227 2016-12-06
+//			// START KGU#494 2018-09-10: Issue #508
+//			ini.setProperty("fixPadding", (Element.E_PADDING_FIX ? "1" : "0"));
+//			// END KGU#494 2018-09-10
+//			// START KGU#331 2017-01-15: Enh. #333 Comparison operator display
+//			ini.setProperty("unicodeCompOps", (Element.E_SHOW_UNICODE_OPERATORS ? "1" : "0"));
+//			// END KGU#331 2017-01-15
+//			// START KGU#872 2020-10-17: Enh. #872 Operator display in C style
+//			ini.setProperty("showOpsLikeC", (Element.E_SHOW_C_OPERATORS ? "1" : "0"));
+//			// END KGU#872 2020-10-17
+			Element.cacheViewSettings(ini);
+			// END KGU#1157 2024-10-08
+			
 			// KGU 2016-07-27: Analyser should by default be switched on. See Issue #207
 			//ini.setProperty("analyser", (Element.E_ANALYSER ? "1" : "0"));
 			// START KGU#456 2017-11-05: Issue #452
@@ -1055,16 +1073,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			ini.setProperty("wheelScrollUnit", Integer.toString(Element.E_WHEEL_SCROLL_UNIT));
 			// END KGU#699 2019-03-27
 
-			// ========================== fonts ==============================
-			// START KGU#494 2018-09-10: Issue #508
-			ini.setProperty("fixPadding", (Element.E_PADDING_FIX ? "1" : "0"));
-			// END KGU#494 2018-09-10
-			// START KGU#331 2017-01-15: Enh. #333 Comparison operator display
-			ini.setProperty("unicodeCompOps", (Element.E_SHOW_UNICODE_OPERATORS ? "1" : "0"));
-			// END KGU#331 2017-01-15
-			// START KGU#872 2020-10-17: Enh. #872 Operator display in C style
-			ini.setProperty("showOpsLikeC", (Element.E_SHOW_C_OPERATORS ? "1" : "0"));
-			// END KGU#872 2020-10-17
+			// ========================== editor ==============================
 			// START KGU#428 2017-10-06: Enh. #430
 			if (InputBox.FONT_SIZE > 0) {
 				ini.setProperty("editorFontSize", Float.toString(InputBox.FONT_SIZE));

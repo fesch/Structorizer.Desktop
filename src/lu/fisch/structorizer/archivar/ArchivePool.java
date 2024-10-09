@@ -32,6 +32,8 @@ package lu.fisch.structorizer.archivar;
  *      Author          Date            Description
  *      ------          ----            -----------
  *      Kay Gürtzig     2019-03-12      First issue for Enh. Requ. #696, #697, #698
+ *      Kay Gürtzig     2024-10-09      Enh. #1171: New method getPositionOf(Root) to support batch
+ *                                      picture export
  *
  ******************************************************************************************************
  *
@@ -40,6 +42,7 @@ package lu.fisch.structorizer.archivar;
  *
  ******************************************************************************************************///
 
+import java.awt.Point;
 import java.io.File;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -272,6 +275,30 @@ public class ArchivePool implements IRoutinePool {
 		}
 		return roots;
 	}
+	
+	// START KGU#1157 2024-10-09: Enh. #1171 Allow to retrieve arrangement positions
+	/**
+	 * Tries to find the given Root in the archive index and returns its position
+	 * if there is an associated point.
+	 * 
+	 * @param _root - A diagram assumed in the archive
+	 * @return either a {@link Point} holding the upper left position or {@code null}
+	 */
+	public Point getPositionOf(Root _root) {
+		Point position = null;
+		ArchiveIndex index = this.nameMap.get(_root.getMethodName());
+		if (index != null && !index.isEmpty()) {
+			for (Iterator<ArchiveIndexEntry> iter = index.iterator(); iter.hasNext();) {
+				ArchiveIndexEntry entry = iter.next();
+				Root root = entry.getRoot();
+				if (root == _root) {
+					position = entry.point;
+				}
+			}
+		}
+		return position;
+	}
+	// END KGU#1157 2024-10-09
 
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.executor.IRoutinePool#clearExecutionStatus()

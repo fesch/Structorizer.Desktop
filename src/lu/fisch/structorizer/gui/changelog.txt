@@ -246,6 +246,7 @@ Current development version 3.32-23 (2024-10-09)
 - 21: Bugfix #1163 C99 import of non-trivial switch instructions improved <2>
 - 21: Bugfix #1164 ANSI-C99 grammar now allows expressions in case clauses <2>
 - 22: Bugfix #1166 Java version strings like "23-ea" made Java test fail <2>
+- 23: Enh. #1171 Picture export now also available as batch task [rpxrpxrpx]2
 - 23: Bugfix #1172 Replacement of Turtle instructions between integer and fine
       graphics (Edit menu) failed to redraw the diagram immediately <2>
 - 23: Bugfix #1174 Precaution against loading abort due to a missing file
