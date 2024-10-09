@@ -87,6 +87,8 @@
  *      Kay Gürtzig     2023-08-17      Bugfix #1083: Undue error message on using "-p Pascal ..." eliminated
  *      Kay Gürtzig     2023-10-29      Bugfix #1100: Precaution against insufficient Java version.
  *      Kay Gürtzig     2024-05-15      Bugfix #1166: Self-test workaround for Java version strings like "23-ea".
+ *      Kay Gürtzig     2024-06-04      Enh. #1171: Additional syntax variants for main option
+ *      Kay Gürtzig     2024-10-08      Enh. #1171: Tests for batch-driven export as picture
  *
  ******************************************************************************************************
  *
@@ -94,18 +96,25 @@
  *
  ******************************************************************************************************///
 
+import java.awt.Dimension;
 import java.awt.EventQueue;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.Reader;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
@@ -123,9 +132,17 @@ import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
+import javax.imageio.ImageIO;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 
+import org.freehep.graphicsio.AbstractVectorGraphicsIO;
+import org.freehep.graphicsio.emf.EMFGraphics2D;
+import org.freehep.graphicsio.pdf.PDFGraphics2D;
+import org.freehep.graphicsio.svg.SVGGraphics2D;
+
+import lu.fisch.graphics.Canvas;
+import lu.fisch.graphics.Rect;
 //import lu.fisch.structorizer.application.ApplicationFactory;
 import lu.fisch.structorizer.archivar.Archivar;
 import lu.fisch.structorizer.archivar.Archivar.ArchiveIndex;
@@ -134,6 +151,7 @@ import lu.fisch.structorizer.archivar.ArchivarException;
 import lu.fisch.structorizer.archivar.ArchivePool;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Root;
+import lu.fisch.structorizer.elements.Element.DrawingContext;
 import lu.fisch.structorizer.generators.Generator;
 import lu.fisch.structorizer.generators.XmlGenerator;
 import lu.fisch.structorizer.gui.Mainform;
@@ -152,6 +170,10 @@ public class Structorizer
 	// START KGU#1095 2023-10-29: Issue #1100 report insufficient JRE
 	private static final int REQUIRED_JAVA_VERSION = 11;
 	// END KGU#1095 2023-10-29
+	// START KGU#1157 2024-10-08: Enh. #1171 batch export as image
+	private static final StringList IMAGE_FILE_TYPES = StringList.explode(
+			"PNG,EMF,PDF,SVG", ",");
+	// END KGU#1157 2024-10-08
 
 	// entry point
 	public static void main(String args[])
@@ -164,6 +186,9 @@ public class Structorizer
 		Vector<String> fileNames = new Vector<String>();
 		String generator = null;
 		String parser = null;
+		// START KGU#1157 2024-10-08: Enh. #1171 batch export as image
+		int imageType = -1;
+		// END KGU#1157 2024-10-08
 		StringList switches = new StringList();
 		//String outFileName = null;
 		//String charSet = "UTF-8";
@@ -187,11 +212,17 @@ public class Structorizer
 		for (int i = 0; i < args.length; i++)
 		{
 			//System.out.println("arg " + i + ": " + args[i]);
-			if (i == 0 && args[i].equals("-x") && args.length > 1)
+			// START KGU#1157 2024-06-04: additional syntax variant
+			//if (i == 0 && args[i].equals("-x") && args.length > 1)
+			if (i == 0 && (args[i].equals("-x") || args[i].equals("--export")) && args.length > 1)
+			// END KGU#1157 2024-06-04
 			{
 				generator = args[++i];
 			}
-			else if (i == 0 && args[i].equals("-p") && args.length > 1)
+			// START KGU#1157 2024-06-04: additional syntax variant
+			//else if (i == 0 && args[i].equals("-p") && args.length > 1)
+			else if (i == 0 && (args[i].equals("-p") || args[i].equals("--parse")) && args.length > 1)
+			// END KGU#1157 2024-06-04
 			{
 				parser = "*";
 				// START KGU#538 2018-07-01: Bugfix #554 - was nonsense and had to be replaced
@@ -215,6 +246,11 @@ public class Structorizer
 				// END KGU#1072 2023-08-17
 				// END KGU#538 2018-07-01
 			}
+			// START KGU#1157 2024-10-08: Enh. #1171 batch image export
+			else if (i == 0 && (args[i].equals("-i") || args[i].equals("--image")) && args.length > 1) {
+				imageType = IMAGE_FILE_TYPES.indexOf(args[++i], false);
+			}
+			// END KGU#1157 2024-10-08
 			// START KGU#722 2019-08-07: Enh. #741
 			else if (i == 0 && args[i].equals("-open")) {
 				openFound = true;
@@ -231,7 +267,10 @@ public class Structorizer
 			{
 				// Output file name
 				// START KGU#722 2019-08-07: Enh. #741
-				if (openFound || generator == null && parser == null) {
+				// START KGU#1157 2024-10-08: Enh. #1171 batch image export
+				//if (openFound || generator == null && parser == null) {
+				if (openFound || generator == null && parser == null && imageType < 0) {
+				// END KGU#1157 2024-10-08
 					// Mark this as an illegal option
 					switches.add(args[i]);
 				}
@@ -317,8 +356,11 @@ public class Structorizer
 				catch (NumberFormatException ex) {}
 			}
 			// END KGU#602 2018-10-25
-			// Target standard output?
-			else if (args[i].equals("-")) {
+			// Target standard output? (Doesn't make sense for image export.)
+			// START KGU#1157 2024-10-08: Enh. #1171 batch image export
+			//else if (args[i].equals("-")) {
+			else if (args[i].equals("-") && imageType < 0) {
+			// END KGU#1157 2024-10-08
 				switches.add("-");
 			}
 			// Other options
@@ -403,7 +445,13 @@ public class Structorizer
 			return;
 		}
 		// END KGU#187 2016-04-28
-				
+		// START KGU#1157 2024-10-08: Enh. #1171 batch image export
+		else if (imageType >= 0) {
+			Structorizer.draw(imageType, fileNames, options, switches.concatenate());
+			return;
+		}
+		// END KGU#1157 2024-10-08
+		
 		// START KGU#521 2018-06-12: Workaround for #536 (corrupted rendering on certain machines) 
 		System.setProperty("sun.java2d.noddraw", "true");
 		// END KGU#521 2018-06-12
@@ -609,10 +657,17 @@ public class Structorizer
 	// START KGU#187 2016-05-02: Enh. #179
 	private static final String[] synopsis = {
 		"Structorizer [-s SETTINGSFILE] [-open] [NSDFILE|ARRFILE|ARRZFILE]...",
-		"Structorizer -x GENERATOR [-a] [-b] [-c] [-f] [-k] [-l] [-t] [-e CHARSET] [-s SETTINGSFILE] [-] [-o OUTFILE] (NSDFILE|ARRSPEC|ARRZSPEC)...",
-		"Structorizer -p [PARSER] [-f] [-z] [-v [LOGPATH]] [-l MAXLINELEN] [-e CHARSET] [-s SETTINGSFILE] [-o OUTFILE] SOURCEFILE...",
+		"Structorizer (-x|--export) GENERATOR [-a] [-b] [-c] [-f] [-k] [-l] [-t] [-e CHARSET] [-s SETTINGSFILE] [-] [-o OUTFILE] (NSDFILE|ARRSPEC|ARRZSPEC)...",
+		"Structorizer (-p|--parse) [PARSER] [-f] [-z] [-v [LOGPATH]] [-l MAXLINELEN] [-e CHARSET] [-s SETTINGSFILE] [-o OUTFILE] SOURCEFILE...",
+		// START KGU#1157 2024-10-08: Enh. #1171 batch image export
+		"Structorizer (-i|--image) (" + Structorizer.IMAGE_FILE_TYPES.concatenate("|").toLowerCase() + ") [-s SETTINGSFILE] [-o OUTDIR] (NSDFILE|ARRSPEC|ARRZSPEC)...",
+		// END KGU#1157 2024-10-08
 		"Structorizer -h",
-		"(See " + Element.E_HELP_PAGE + "?menu=96 or " + Element.E_HELP_PAGE + "?menu=136 for details.)"
+		// START KGU#1157 2024-10-08: Enh. #1171 batch image export
+		//"(See " + Element.E_HELP_PAGE + "?menu=96 or " + Element.E_HELP_PAGE + "?menu=136 for details.)"
+		"(See " + Element.E_HELP_PAGE + "?menu=68, " + Element.E_HELP_PAGE + "?menu=136, or "
+		+ Element.E_HELP_PAGE+ "?menu=69 for details.)"
+		// END KGU#1157 2024-10-08
 	};
 	// END KGU#187 2016-05-02
 	
@@ -629,7 +684,6 @@ public class Structorizer
 		Vector<Root> roots = new Vector<Root>();
 		// START KGU#679 2019-03-13: Enh. #696 - allow to export archives
 		HashMap<ArchivePool, Vector<Root>> pools = new LinkedHashMap<ArchivePool, Vector<Root>>();
-		Archivar archivar = new Archivar();
 		StringList poolFileNames = new StringList();
 		// END KGU#679 2019-02-13
 		String outFileName = _options.get("outFileName");
@@ -665,88 +719,11 @@ public class Structorizer
 		// START KGU#1040 2022-08-01: Issue #1047 separate nsd export and scissor fixing
 		boolean toStdOut = _switches.indexOf('-') >= 0;
 		// END KGU#1040 2022-08-01
-		for (String fName : _nsdOrArrNames)
-		{
-			try
-			{
-				// Test the existence of the current NSD or arrangement file
-				// START KGU#679 2019-03-13: Enh. #696 - allow to export archives
-				//File f = new File(fName);
-				//if (f.exists())
-				StringList arrSpec = StringList.explode(fName, "!");
-				File f = new File(arrSpec.get(0));
-				boolean isArrz = false;
-				if (f.exists() && StructogramFilter.isNSD(fName))
-				// END KGU#679 2019-02-13
-				{
-					// open an existing file and gather the Root
-					NSDParser parser = new NSDParser();
-					// START KGU#363 2017-05-21: Issue #372 API change
-					//root = parser.parse(f.toURI().toString());
-					Root root = parser.parse(f);
-					// END KGU#363 2017-05-21
-					root.filename = fName;
-					roots.add(root);
-					// If no output file name is given then derive one from the first NSD file
-					if (codeFileName == null && !toStdOut)
-					{
-						codeFileName = f.getCanonicalPath();
-						// START KGU#1051 2022-08-11: Issue #1047 handle output folder
-						if (outFolder != null) {
-							codeFileName = Path.of(outFolder.getPath(), f.getName()).toString();
-						}
-						// END KGU#1051 2022-08-11
-					}
-				}
-				// START KGU#679 2019-03-13: Enh. #696 - allow to export archives
-				else if (f.exists() && (ArrFilter.isArr(arrSpec.get(0)) || (isArrz = ArrZipFilter.isArr(arrSpec.get(0))))) {
-					arrSpec.remove(0);
-					// START KGU#851 2020-04-22: Bugfix #853 archivar must be able to derive the parent directory
-					if (!isArrz && !f.isAbsolute()) {
-						f = f.getAbsoluteFile();
-					}
-					// END KGU#851 2020-04-22
-					if (!addExportPool(pools, archivar, arrSpec, f, isArrz)) {
-						System.err.println("*** No starting diagrams in arrangement \"" + f.getAbsolutePath() + "\" found. Skipped.");
-					}
-					else 
-					{
-						// START KGU#1051 2022-08-11: Issue #1047 handle output folder
-						//String outFilePath = outFileName;
-						// If no output file name is given then derive one from the arrangement file
-						//if (outFilePath == null && !toStdOut) {
-						//	outFilePath = f.getCanonicalPath();
-						//}
-						String outFilePath = f.getCanonicalPath();
-						if (outFileName == null && toStdOut) {
-							outFilePath = null;
-						}
-						else if (outFolder != null) {
-							/*
-							 * If outFolder is given then it depends on -k whether the
-							 * target file base name is derived from the specified
-							 * outFileName (if it's not a folder) or from the arrangement
-							 * file name.
-							 */
-							String baseName = f.getName();
-							// Compose the out file path from the outFolder and the basename
-							outFilePath = Path.of(outFolder.getAbsolutePath(), baseName).toString();
-						}
-						// END KGU#1051 2022-08-11
-						poolFileNames.add(outFilePath);
-					}
-				}
-				// END KGU#679 2019-02-13
-				else
-				{
-					System.err.println("*** File \"" + fName + "\" not found or inappropriate. Skipped.");
-				}
-			}
-			catch (Exception e)
-			{
-				System.err.println("*** Error while trying to load " + fName + ": " + e.getMessage());
-			}
-		}
+		codeFileName = extractRootsAndPools(_nsdOrArrNames,
+				// Result collections
+				roots, pools, poolFileNames,
+				// Controlling arguments
+				outFileName, codeFileName, outFolder, toStdOut, true);
 		// START KGU#1051 2022-08-12: Issue #1047
 		// Special case of given file name and only a single arrangement in the list
 		if (roots.isEmpty() && pools.size() == 1 && outFile != null) {
@@ -914,19 +891,134 @@ public class Structorizer
 	// END KGU#187 2016-04-28
 
 	/**
+	 * Extracts {@link Root}s and diagram pools from the NSD and arrangement file name list
+	 * {@code _nsdOrArrNames}
+	 * 
+	 * @param _nsdOrArrNames - Vector of (nsd) file names and arrangement specifications
+	 * @param roots - Vector to which {@link Root}s read from nsd files are to be added
+	 * @param pools - Table to which mappings from arrangement pools to vectors of contained
+	 *     Roots are to be added
+	 * @param poolFileNames - StringList of gathered arrangement files
+	 * @param outFileName - possibly a specified file name for the file output
+	 * @param targetFileName - the name for the export file(s) as far as already known and
+	 *     standard output is not specified as target, or {@code null}
+	 * @param outFolder - the target folder for the export
+	 * @param toStdOut - whether the output is to be directed to standard output (cf
+	 *     {@code outFolder}, {@code outFileNme}, {@code targetFileName})
+	 * @param preferMains - whether the {@code pools} map should preferably refer to  program
+	 *     roots from the arrangement
+	 * @return a proposal for {@code targetFileName} if it was {@code null} on the call and
+	 *     {@code toStdOut} is {@code false}
+	 */
+	private static String extractRootsAndPools(Vector<String> _nsdOrArrNames,
+			Vector<Root> roots, HashMap<ArchivePool, Vector<Root>> pools, StringList poolFileNames,
+			String outFileName, String targetFileName, File outFolder, boolean toStdOut,
+			boolean preferMains) {
+		Archivar archivar = new Archivar();
+		for (String fName : _nsdOrArrNames)
+		{
+			try
+			{
+				// Test the existence of the current NSD or arrangement file
+				// START KGU#679 2019-03-13: Enh. #696 - allow to export archives
+				//File f = new File(fName);
+				//if (f.exists())
+				StringList arrSpec = StringList.explode(fName, "!");
+				File f = new File(arrSpec.get(0));
+				boolean isArrz = false;
+				if (f.exists() && StructogramFilter.isNSD(fName))
+				// END KGU#679 2019-02-13
+				{
+					// open an existing file and gather the Root
+					NSDParser parser = new NSDParser();
+					// START KGU#363 2017-05-21: Issue #372 API change
+					//root = parser.parse(f.toURI().toString());
+					Root root = parser.parse(f);
+					// END KGU#363 2017-05-21
+					root.filename = fName;
+					roots.add(root);
+					// If no output file name is given then derive one from the first NSD file
+					if (targetFileName == null && !toStdOut)
+					{
+						targetFileName = f.getCanonicalPath();
+						// START KGU#1051 2022-08-11: Issue #1047 handle output folder
+						if (outFolder != null) {
+							targetFileName = Path.of(outFolder.getPath(), f.getName()).toString();
+						}
+						// END KGU#1051 2022-08-11
+					}
+				}
+				// START KGU#679 2019-03-13: Enh. #696 - allow to export archives
+				else if (f.exists() && (ArrFilter.isArr(arrSpec.get(0)) || (isArrz = ArrZipFilter.isArr(arrSpec.get(0))))) {
+					arrSpec.remove(0);
+					// START KGU#851 2020-04-22: Bugfix #853 archivar must be able to derive the parent directory
+					if (!isArrz && !f.isAbsolute()) {
+						f = f.getAbsoluteFile();
+					}
+					// END KGU#851 2020-04-22
+					if (!addExportPool(pools, archivar, arrSpec, f, isArrz, preferMains)) {
+						System.err.println("*** No starting diagrams in arrangement \"" + f.getAbsolutePath() + "\" found. Skipped.");
+					}
+					else 
+					{
+						// START KGU#1051 2022-08-11: Issue #1047 handle output folder
+						//String outFilePath = outFileName;
+						// If no output file name is given then derive one from the arrangement file
+						//if (outFilePath == null && !toStdOut) {
+						//	outFilePath = f.getCanonicalPath();
+						//}
+						String outFilePath = f.getCanonicalPath();
+						if (outFileName == null && toStdOut) {
+							outFilePath = null;
+						}
+						else if (outFolder != null) {
+							/*
+							 * If outFolder is given then it depends on -k whether the
+							 * target file base name is derived from the specified
+							 * outFileName (if it's not a folder) or from the arrangement
+							 * file name.
+							 */
+							String baseName = f.getName();
+							// Compose the out file path from the outFolder and the basename
+							outFilePath = Path.of(outFolder.getAbsolutePath(), baseName).toString();
+						}
+						// END KGU#1051 2022-08-11
+						poolFileNames.add(outFilePath);
+					}
+				}
+				// END KGU#679 2019-02-13
+				else
+				{
+					System.err.println("*** File \"" + fName + "\" not found or inappropriate. Skipped.");
+				}
+			}
+			catch (Exception e)
+			{
+				System.err.println("*** Error while trying to load " + fName + ": " + e.getMessage());
+			}
+		}
+		return targetFileName;
+	}
+
+	/**
 	 * Tries to form an {@link ArchivePool} from arrangement file {@code aFile} and
 	 * to identify the pool roots for export from the signature list {@code arrSpec}
-	 * or (if empty) all program roots form the pool.
-	 * @param pools - a map from {@link ArchivePool}s to start diagram sets - this is where the
-	 * {@link ArchivePool} derived from {@code aFile} will be added to.
+	 * or (if empty) all program roots from the pool if {@code detectMains} is {@code true}
+	 * 
+	 * @param pools - a map from {@link ArchivePool}s to start diagram sets - this is
+	 *    where the {@link ArchivePool} derived from {@code aFile} will be added to.
 	 * @param archivar - the employed {@link Archivar}
 	 * @param arrSpec - the arrangement specification
 	 * @param f - the arrangement file (may be an archive - .arrz- or just a list - .arr -)
 	 * @param isArrz - indicates whether file {@code f} is a compressed arrangement archive
+	 * @param detectMains - whether in case the {@code arrSpec} does not name start roots
+	 *     program roots from the pool are preferably to be mapped to the pools (otherwise
+	 *     all contained roots would be mapped)
+	 * 
 	 * @throws Exception - if something goes wrong
 	 */
 	private static boolean addExportPool(HashMap<ArchivePool, Vector<Root>> pools, Archivar archivar, StringList arrSpec,
-			File f, boolean isArrz) throws Exception {
+			File f, boolean isArrz, boolean detectMains) throws Exception {
 		boolean done = false;
 		ArchiveIndex index = null;
 		if (isArrz) {
@@ -984,7 +1076,7 @@ public class Structorizer
 					//}
 					if (root != null) {
 						allRoots.add(root);
-						if (root.isProgram()) {
+						if (!detectMains || root.isProgram()) {
 							poolRoots.add(root);
 						}
 					}
@@ -1368,12 +1460,13 @@ public class Structorizer
 	 * Split the given file path at all dots and ensure a file name extension
 	 * {@code newExt} (as last name part of the resulting {@link StringList}.
 	 * If {@code filename} had ended with one of the old file extensions given
-	 * in {@code oldFileExts} then this extension will be eliminated before. 
+	 * in {@code oldFileExts} then this extension will be eliminated before.
+	 * 
 	 * @param filename - the file path or name to be prepared.
 	 * @param oldExts - a list of unwanted file name extensions (without dots!)
 	 * @param newExt - the new file name extension to be ensured (without dot!)
 	 * @return the split file name (should be concatenated with "." separator).
-	 * Last part will always be {@code newExt}.
+	 *     Last part will always be {@code newExt}.
 	 */
 	private static StringList ensureFileExtension(String filename, StringList oldExts, String newExt) {
 		StringList nameParts = StringList.explode(filename, "[.]");
@@ -1552,7 +1645,370 @@ public class Structorizer
 	}
 	// END KGU#416 2017-07-02
 
+	// START KGU#1157 2024-10-08: Enh. #1171
+	/*****************************************
+	 * batch image export method
+	 * @param _generatorName - name of the target language or generator class
+	 * @param _nsdOrArrNames - vector of the diagram and/or archive file names
+	 * @param _options - map of non-binary command line options
+	 * @param _switches - set of switches (on / off)
+	 *****************************************/
+	public static void draw(int _imageTypeCode, Vector<String> _nsdOrArrNames, HashMap<String, String> _options, String _switches)
+	{
+		String usage = "Usage: " + synopsis[3];
+		if (_imageTypeCode < 0 || _imageTypeCode >= IMAGE_FILE_TYPES.count()) {
+			System.err.println("*** Illegal file format specified for image export!");
+			System.err.println(usage);
+			System.exit(1);
+		}
+		if (_nsdOrArrNames.isEmpty()) {
+			System.err.println("*** You must specify at least one nsd, arr, or arrz file for export!");
+			System.err.println(usage);
+			System.exit(1);			
+		}
+		String outFileName = _options.get("outFileName");
+		File outFolder = null;
+		Vector<Root> roots = new Vector<Root>();
+		HashMap<ArchivePool, Vector<Root>> pools = new LinkedHashMap<ArchivePool, Vector<Root>>();
+		StringList poolFileNames = new StringList();
+		if (outFileName != null) {
+			outFolder = new File(outFileName);
+			if (!outFolder.isDirectory()) {
+				System.err.println("*** Output folder \"" + outFolder.getAbsolutePath()
+				+ "\" does not exist, -o will be ignored.");
+				outFolder = null;
+			}
+		}
+		extractRootsAndPools(_nsdOrArrNames,
+				// Result collections
+				roots, pools, poolFileNames,
+				// Controlling arguments
+				null, null, outFolder, false, false);
+		String settingsFile = _options.get("settingsFile");
+		if (settingsFile != null && (new File(settingsFile)).canRead()) {
+			Ini.setIniPath(settingsFile);
+		}
+		Element.loadFromINI();
+		Element.fetchViewSettings(Ini.getInstance());
+		CodeParser.loadFromINI();
+
+		// First operate the roots from nsd files
+		for (Root root: roots) {
+			switch (_imageTypeCode) {
+			case 0: // PNG
+				exportAsPNG(root, outFolder);
+				break;
+			case 1: // EMF
+			case 2: // PDF
+			case 3: // SVG
+				exportAsImageType(root, outFolder, _imageTypeCode);
+				break;
+			}
+		}
+		// Now we care for arrangements
+		int i = 0;
+		for (Entry<ArchivePool, Vector<Root>> entry: pools.entrySet()) {
+			Rect bounds = getArrangementBounds(entry);
+			String filename = poolFileNames.get(i++);
+			exportArrangementPicture(entry, bounds, outFolder, filename, _imageTypeCode);
+		}
+	}
+
+	/**
+	 * Exports the given diagram as PNG image file
+	 * 
+	 * @param root - The Nassi-Shneiderman diagram to be drawn into a file.
+	 * @param outFolder - File object specifying the target folder or {@code null}
+	 */
+	private static void exportAsPNG(Root root, File outFolder) {
+		File file = deriveImageFileObject(root.filename, outFolder, "png");
+		// Create a dummy buffered image to find out the size of the diagram
+		BufferedImage bi = new BufferedImage(1, 1, BufferedImage.TYPE_4BYTE_ABGR);
+		Graphics2D gr = bi.createGraphics();
+		root.prepareDraw(gr);
+		// Now establish a buffered image with the actually required size
+		bi = new BufferedImage(root.width + 1, root.height + 1, BufferedImage.TYPE_4BYTE_ABGR);
+		gr = bi.createGraphics();
+		Rectangle clipRect = gr.getClipBounds();
+		root.draw(gr, clipRect, DrawingContext.DC_IMAGE_EXPORT);
+		try {
+			ImageIO.write(bi, "png", file);
+		} catch (Exception e) {
+			String msg = e.getMessage();
+			if (msg == null || msg.isBlank()) {
+				msg = e.toString();
+			}
+			System.err.println("*** Error on saving the image file \"" + file.getAbsolutePath() + "\": " + msg);
+		}
+	}
+
+	/**
+	 * Exports the given diagram as EMF, PDF, or SVG image file according to the
+	 * given {@code imageTypeCode}. If the code is not supported then just an error
+	 * message will be written to stderr.
+	 * 
+	 * @param root - The Nassi-Shneiderman diagram to be drawn into a file.
+	 * @param outFolder - File object specifying the target folder or {@code null}
+	 * @param imageTypeCode - a supported image type code (should be 1, 2, or 3)
+	 */
+	private static void exportAsImageType(Root root, File outFolder, int imageTypeCode) {
+		File file = deriveImageFileObject(root.filename, outFolder, IMAGE_FILE_TYPES.get(imageTypeCode).toLowerCase());
+		// Create a dummy buffered image to find out the size of the diagram
+		BufferedImage bi = new BufferedImage(1, 1, BufferedImage.TYPE_4BYTE_ABGR);
+		Graphics2D gr = bi.createGraphics();
+		root.prepareDraw(gr);
+		// Now do the actual drawing with the required size
+		try {
+			AbstractVectorGraphicsIO g2D = null;
+			switch (imageTypeCode) {
+			case 1: // EMF
+				g2D = new EMFGraphics2D(new FileOutputStream(file),
+						new Dimension(root.width + 12, root.height + 12));
+				break;
+			case 2: // PDF
+				g2D = new PDFGraphics2D(new FileOutputStream(file),
+						new Dimension(root.width + 12, root.height + 12));
+				break;
+			case 3: // SVG
+				g2D = new SVGGraphics2D(new FileOutputStream(file),
+						new Dimension(root.width + 12, root.height + 12));
+				break;
+			default:
+				System.err.println("*** Illegal image type on graphics export!");
+				return;
+			}
+			g2D.startExport();
+			lu.fisch.graphics.Canvas c = new lu.fisch.graphics.Canvas(g2D);
+			lu.fisch.graphics.Rect myrect = root.prepareDraw(c);
+			myrect.left += 6;
+			myrect.top += 6;
+			root.draw(c, myrect, null, false);
+			g2D.endExport();
+
+			// Special handling for SVG to ensure proper UTF-8 text encoding
+			if (imageTypeCode == 3) {
+				// re-read the file ...
+				StringBuffer buffer = new StringBuffer();
+				InputStreamReader isr = new InputStreamReader(new FileInputStream(file));
+				Reader in = new BufferedReader(isr);
+				int ch;
+				while ((ch = in.read()) > -1) {
+					buffer.append((char) ch);
+				}
+				// START KGU 2015-12-04
+				in.close();
+				// END KGU 2015-12-04
+
+				// ... and encode it UTF-8
+				FileOutputStream fos = new FileOutputStream(file);
+				Writer out = new OutputStreamWriter(fos, "UTF-8");
+				out.write(buffer.toString());
+				out.close();
+			}
+
+		} catch (Exception e) {
+			String msg = e.getMessage();
+			if (msg == null || msg.isBlank()) {
+				msg = e.toString();
+			}
+			System.err.println("*** Error on saving the image file \"" + file.getAbsolutePath() + "\": " + msg);
+		}
+	}
+
+	/**
+	 * Helper routine to derive a {@link File} object from the diagram or arrangement
+	 * file path given as {@code filename} and a possibly given output folder.
+	 * 
+	 * @param filename - the file path of the object to be exported
+	 * @param outFolder - optionally a {@link File} object representing a specified
+	 *     output folder (with {@code null}, the results will be created either in the
+	 *     folder of the respective input file - if an absolute path is given -, or in
+	 *     the current directory)
+	 * @return the effective {@link File} object describing the file to be created
+	 */
+	private static File deriveImageFileObject(String filename, File outFolder, String ext) {
+		StringList extsToRemove = StringList.explode("nsd,arr,arrz", ",");
+		StringList nameParts = ensureFileExtension(filename, extsToRemove, ext);
+		Structorizer.makeUniqueFilename(nameParts);
+		File file = new File(nameParts.concatenate("."));
+		if (outFolder != null) {
+			file = new File(outFolder + File.separator + file.getName());
+		}
+		return file;
+	}
+	// END KGU#1157 2024-10-08
+
+	// START KGU#1157 2024-10-09: Enh. #1171
+	/**
+	 * Retrieves the size and position of every {@link Root} associated to the
+	 * given ArchivePool entry and evaluates the resulting coordinate bounds.
+	 * <b>Note:</b> If contained Roots are not equipped with an offset position
+	 * then they will be assumed to cling to the coordinate origin (i.e. to the
+	 * upper left corner of the drawing area). It is not attempted to rearrange
+	 * overlapping diagrams!
+	 * 
+	 * @param arrSubset - an arrangement subset, represented by a key-value pair of
+	 *    an ArchivePool and its Roots of interest.
+	 * @return a {@link Rect} representing the bounds of the diagrams
+	 */
+	private static Rect getArrangementBounds(Entry<ArchivePool, Vector<Root>> arrSubset) {
+		// Create a dummy buffered image to find out thesize of the diagram
+		BufferedImage bi = new BufferedImage(1, 1, BufferedImage.TYPE_4BYTE_ABGR);
+		Graphics2D gr = bi.createGraphics();
+		ArchivePool pool = arrSubset.getKey();
+		Rect bounds = null;
+		for (Root root: arrSubset.getValue()) {
+			Rect rect = root.prepareDraw(gr);
+			Point pos = pool.getPositionOf(root);
+			if (pos == null) {
+				pos = new Point();
+			}
+			if (bounds == null) {
+				bounds = new Rect(rect.left + pos.x, rect.top + pos.y,
+						rect.right + pos.x, rect.bottom + pos.y);
+			}
+			else {
+				bounds.left = Math.min(bounds.left, rect.left + pos.x);
+				bounds.top = Math.min(bounds.top, rect.top + pos.y);
+				bounds.right = Math.max(bounds.right, rect.right + pos.x);
+				bounds.bottom = Math.max(bounds.bottom, rect.bottom + pos.y);
+			}
+		}
+		return bounds;
+	}
+
+	/**
+	 * Actually creates a picture file from the ArchivePool and Root subset given by
+	 * {@code arrSubset}.
+	 * 
+	 * @param arrSubset - an arrangement subset, represented by a key-value pair of
+	 *    an ArchivePool and its Roots of interest
+	 * @param bounds - the bounding box of the diagram subset within the arrangement
+	 * @param outFolder - optionally a {@link File} object representing a specified
+	 *     output folder (with {@code null}, the results will be created either in the
+	 *     folder of the respective input file - if an absolute path is given -, or in
+	 *     the current directory)
+	 * @param filename - the file path of the object to be exported
+	 * @param imageTypeCode - a supported image type code (should be 0 through 3)
+	 */
+	private static void exportArrangementPicture(Entry<ArchivePool, Vector<Root>> arrSubset, Rect bounds, File outFolder,
+			String filename, int imageTypeCode) {
+		File file = deriveImageFileObject(filename, outFolder,
+				IMAGE_FILE_TYPES.get(imageTypeCode).toLowerCase());
+		ArchivePool pool = arrSubset.getKey();
+		int width = bounds.right - bounds.left;
+		int height = bounds.bottom - bounds.top;
+		if (imageTypeCode == 0) {
+			// PNG export
+			// Now establish a buffered image with the actually required size
+			BufferedImage bi = new BufferedImage(width + 1, height + 1,
+					BufferedImage.TYPE_4BYTE_ABGR);
+			Graphics2D gr = bi.createGraphics();
+			Canvas canvas = new Canvas(gr);
+			Rectangle clipRect = gr.getClipBounds();
+			for (Root root: arrSubset.getValue()) {
+				Point pos = pool.getPositionOf(root);
+				Rect myrect = root.prepareDraw(gr);
+				Rectangle topLeft = new Rectangle(
+						myrect.left - bounds.left,
+						myrect.top - bounds.top,
+						myrect.right - myrect.left,
+						myrect.bottom - myrect.top
+						);
+				if (pos != null) {
+					topLeft.x += pos.x;
+					topLeft.y += pos.y;
+				}
+				root.draw(canvas, new Rect(topLeft), clipRect, false, DrawingContext.DC_IMAGE_EXPORT);
+			}
+			try {
+				ImageIO.write(bi, "png", file);
+			} catch (Exception e) {
+				String msg = e.getMessage();
+				if (msg == null || msg.isBlank()) {
+					msg = e.toString();
+				}
+				System.err.println("*** Error on saving the image file \"" + file.getAbsolutePath() + "\": " + msg);
+			}
+		}
+		else {
+			// EMF, PDF, and SVG export
+			try {
+				AbstractVectorGraphicsIO g2D = null;
+				switch (imageTypeCode) {
+				case 1: // EMF
+					g2D = new EMFGraphics2D(new FileOutputStream(file),
+							new Dimension(width + 12, height + 12));
+					break;
+				case 2: // PDF
+					g2D = new PDFGraphics2D(new FileOutputStream(file),
+							new Dimension(width + 12, height + 12));
+					break;
+				case 3: // SVG
+					g2D = new SVGGraphics2D(new FileOutputStream(file),
+							new Dimension(width + 12, height + 12));
+					break;
+				default:
+					System.err.println("*** Illegal image type on graphics export!");
+					return;
+				}
+				lu.fisch.graphics.Canvas c = new lu.fisch.graphics.Canvas(g2D);
+				g2D.startExport();
+				for (Root root: arrSubset.getValue()) {
+					lu.fisch.graphics.Rect myrect = root.prepareDraw(c);
+					Point pos = pool.getPositionOf(root);
+					Rectangle topLeft = new Rectangle(
+							myrect.left - bounds.left + 6,
+							myrect.top - bounds.top + 6,
+							myrect.right - myrect.left,
+							myrect.bottom - myrect.top
+							);
+					if (pos != null) {
+						topLeft.x += pos.x;
+						topLeft.y += pos.y;
+					}
+					root.draw(c, new Rect(topLeft), null, false, DrawingContext.DC_IMAGE_EXPORT);
+				}
+				g2D.endExport();
+
+				// Special handling for SVG to ensure proper UTF-8 text encoding
+				if (imageTypeCode == 3) {
+					// re-read the file ...
+					StringBuffer buffer = new StringBuffer();
+					InputStreamReader isr = new InputStreamReader(new FileInputStream(file));
+					Reader in = new BufferedReader(isr);
+					int ch;
+					while ((ch = in.read()) > -1) {
+						buffer.append((char) ch);
+					}
+					// START KGU 2015-12-04
+					in.close();
+					// END KGU 2015-12-04
+
+					// ... and encode it UTF-8
+					FileOutputStream fos = new FileOutputStream(file);
+					Writer out = new OutputStreamWriter(fos, "UTF-8");
+					out.write(buffer.toString());
+					out.close();
+				}
+
+			} catch (Exception e) {
+				String msg = e.getMessage();
+				if (msg == null || msg.isBlank()) {
+					msg = e.toString();
+				}
+				System.err.println("*** Error on saving the image file \"" + file.getAbsolutePath() + "\": " + msg);
+			}
+		}
+	}
+	// END KGU#1157 2024-10-09
+
+	
 	// START KGU#187 2016-05-02: Enh. #179 - help might be sensible
+	/**
+	 * Writes the usage information to the standard output stream (i.e., the console
+	 * by default).
+	 */
 	private static void printHelp()
 	{
 		System.out.print("Usage:\n");

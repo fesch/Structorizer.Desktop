@@ -140,6 +140,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2024-03-21      Bugfix #1128 revised (method retrieveComponentNmes()).
  *      Kay Gürtzig     2024-03-22      Issue #1154: New method drawHatched(Rect, Canvas) to allow subclassing
  *      Kay Gürtzig     2024-04-16      Bugfix #1160: Separate X and Y text offset for drawing rotated elements
+ *      Kay Gürtzig     2024-10-09      Enh. #1171: New methods fetchViewSettings(Ini) and cacheViewSettings(Ini)
  *
  ******************************************************************************************************
  *
@@ -2738,8 +2739,81 @@ public abstract class Element {
 			logger.log(Level.SEVERE, "Error", e);
 		}
 	}
+	
+	// START KGU#1157 2024-10-08: Issue #1171 support for batch picture export
+	/**
+	 * Adopts several view settings held in fields from the given {@link Ini}
+	 * instance
+	 * 
+	 * @param ini - the {@link Ini} instance (a singleton)
+	 * 
+	 * @see #cacheViewSettings(Ini)
+	 */
+	public static void fetchViewSettings(Ini ini)
+	{
+		E_DIN = ini.getProperty("DIN","1").equals("1");
+		E_SHOWCOMMENTS = ini.getProperty("showComments","1").equals("1"); // default = 1
+		E_COMMENTSPLUSTEXT = ini.getProperty("commentsPlusText","0").equals("1");	// default = 0
+		E_TOGGLETC = ini.getProperty("switchTextComments","0").equals("1");
+		E_VARHIGHLIGHT = ini.getProperty("varHightlight","1").equals("1");
+		E_SHOW_C_OPERATORS = ini.getProperty("showOpsLikeC", "0").equals("1");
+		E_HIDE_DECL = ini.getProperty("hideDeclarations","0").equals("1");	// default = 0
+		// START KGU#331 2017-01-15: Enh. #333 Comparison operator display
+		E_SHOW_UNICODE_OPERATORS = ini.getProperty("unicodeCompOps", "1").equals("1");
+		// END KGU#331 2017-01-15
+		// START KGU#494 2018-09-10: Issue #508
+		E_PADDING_FIX = ini.getProperty("fixPadding", "0").equals("1");
+		// END KGU#494 2018-09-10
+	}
+	
+	/**
+	 * Caches several view settings held in fields to the given {@link Ini} instance
+	 *
+	 * @param ini - the {@link Ini} instance (a singleton)
+	 * 
+	 * @see #fetchViewSettings(Ini)
+	 */
+	public static void cacheViewSettings(Ini ini)
+	{
+		// DIN, comments
+		ini.setProperty("DIN", (Element.E_DIN ? "1" : "0"));
+		ini.setProperty("showComments", (E_SHOWCOMMENTS ? "1" : "0"));
+		// START KGU#227 2016-08-01: Enh. #128
+		ini.setProperty("commentsPlusText", E_COMMENTSPLUSTEXT ? "1" : "0");
+		// END KGU#227 2016-08-01
+		ini.setProperty("switchTextComments", (E_TOGGLETC ? "1" : "0"));
+		ini.setProperty("varHightlight", (E_VARHIGHLIGHT ? "1" : "0"));
+		// START KGU#477 2017-12-06: Enh. #487
+		ini.setProperty("hideDeclarations", E_HIDE_DECL ? "1" : "0");
+		// END KGU#227 2016-12-06
+		// START KGU#494 2018-09-10: Issue #508
+		ini.setProperty("fixPadding", (E_PADDING_FIX ? "1" : "0"));
+		// END KGU#494 2018-09-10
+		// START KGU#331 2017-01-15: Enh. #333 Comparison operator display
+		ini.setProperty("unicodeCompOps", (E_SHOW_UNICODE_OPERATORS ? "1" : "0"));
+		// END KGU#331 2017-01-15
+		// START KGU#872 2020-10-17: Enh. #872 Operator display in C style
+		ini.setProperty("showOpsLikeC", (E_SHOW_C_OPERATORS ? "1" : "0"));
+		// END KGU#872 2020-10-17
+	}
+	// END KGU#1157 2024-10-08
 
 	// START KGU#466 2019-08-02: Issue #733 - selective preferences export
+	/**
+	 * Returns the preference keys used in the ini file for the given {@code category}
+	 * (if class {@code Element} is responsible for the saving and loading of the properties
+	 * of this category. Currently, the following categories are supported here:
+	 * <ul>
+	 * <li>"structure": Structure preferences</li>
+	 * <li>"color": chosen set of colours</li>
+	 * </ul>
+	 * @param category - name of the category of interest (see method comment)
+	 * @return a String array containing the relevant keys for the ini file
+	 * 
+	 * @see Element#getPreferenceKeys(String)
+	 * @see Root#getPreferenceKeys()
+	 * @see CodeParser#getPreferenceKeys()
+	 */
 	public static String[] getPreferenceKeys(String category)
 	{
 		if (category.equals("structure")) {
