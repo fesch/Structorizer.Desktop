@@ -250,8 +250,7 @@ Current development version 3.32-23 (2024-10-09)
 - 23: Bugfix #1172 Replacement of Turtle instructions between integer and fine
       graphics (Edit menu) failed to redraw the diagram immediately <2>
 - 23: Bugfix #1174 Precaution against loading abort due to a missing file
-      creation date because it may not be conveyed via a network connection <2>
-      
+      creation date because it may not be conveyed via network connection <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>
