@@ -256,8 +256,6 @@ import java.util.regex.Pattern;
 
 import javax.swing.ImageIcon;
 
-import org.freehep.graphicsio.emf.gdi.Text;
-
 /**
  * Abstract parent class for all kinds of elements of Nassi-Shneiderman diagrams,
  * i.e., the basic algorithmic structure blocks.
