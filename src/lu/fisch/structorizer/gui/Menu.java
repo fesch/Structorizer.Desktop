@@ -212,7 +212,7 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	protected final JMenuItem menuFileExportPicturePNG = new JMenuItem("PNG ...",IconLoader.getIcon(88));
 	protected final JMenuItem menuFileExportPicturePNGmulti = new JMenuItem("PNG (multiple) ...",IconLoader.getIcon(88));
 	protected final JMenuItem menuFileExportPictureEMF = new JMenuItem("EMF ...",IconLoader.getIcon(88));
-	protected final JMenuItem menuFileExportPictureSWF = new JMenuItem("SWF ...",IconLoader.getIcon(88));
+	protected final JMenuItem menuFileExportPictureSWF = new JMenuItem("SWF (deprecated!) ...",IconLoader.getIcon(88));
 	protected final JMenuItem menuFileExportPicturePDF = new JMenuItem("PDF ...",IconLoader.getIcon(88));
 	protected final JMenuItem menuFileExportPictureSVG = new JMenuItem("SVG ...",IconLoader.getIcon(88));
 	// END KGU#486 2018-01-18
