@@ -1,4 +1,4 @@
-.TH Structorizer 1 "30 October 2023" "version 3.32-13" "User's Manual"
+.TH Structorizer 1 "10 October 2024" "version 3.32-23" "User's Manual"
 .SH NAME
 Structorizer \- Editor for Nassi-Shneiderman diagrams (NSD)
 and tool for algorithm design and analysis based on them.
@@ -7,11 +7,11 @@ and tool for algorithm design and analysis based on them.
 [ \fIoptions\fP ]
 .RI "[ " input\-file " ] ..."
 .br
-.B Structorizer \-x \fIgenerator\fP
+.B Structorizer (\-x|\-\-export) \fIgenerator\fP
 [ \fIoptions\fP ]
 \fIinput\-file\fP ...
 .br
-.B Structorizer -p
+.B Structorizer (\-p|\-\-parse)
 [
 .I parser
 ]
@@ -20,12 +20,17 @@ and tool for algorithm design and analysis based on them.
 ]
 \fIsource\-file\fP ...
 .br
+.B Structorizer (\-i|\-\-image) \fIformat\fP
+[ \fIoptions\fP ]
+\fIinput\-file\fP ...
+.br
 .B Structorizer \-h
 .br
 .SH DESCRIPTION
 \fBStructorizer\fP can be used as a powerful and easy-to-use interactive
 graphical editor for Nassi-Shneiderman diagrams or as a command-line tool
-to convert files between the XML-based diagram format and program source code.
+to convert files between the XML-based diagram format and program source code
+or to picture files.
 .br
 With no argument, just an \fB\-s\fP option, and/or a sequence of \fIinput\-file\fP
 names as argument, \fBStructorizer\fP will start in interactive mode. It allows
@@ -38,29 +43,44 @@ programming languages, and it may import source code of some programming languag
 and display the algorithmic content as Nassi-Shneiderman diagram.
 .br
 Used as a command-line tool, \fBStructorizer\fP either converts saved NSD files
-(or ARR or ARRZ files, respecively) to program source in one of several available
-programming languages (option \fB\-x\fP) or, conversely, generates NSD files by
-parsing source code (option \fB\-p\fP, by now only from Pascal, C, or COBOL sources)
-in batch mode.
+(or ARR or ARRZ files, respectively) to program source in one of several available
+programming languages (option \fB\-x\fP or, equivalently, \fB\-\-export\fP) or,
+conversely, generates NSD or ARRZ files by parsing source code (option \fB\-p\fP
+or, equivalently \fB\-\-parse\fP, by now only from Pascal, C, Java, Processing, or
+COBOL sources) in batch mode. In addition, a set of NSD, ARR, and ARRZ files (or
+subsets of the latter ones) may be drawn into picture files of several formats in
+batch mode (option \fB\-i\fP or, equivalently, \fB\-\-image\fP).
 .br
-By default, the resulting file will have the same name as the (first) input file name
-but with a different extension (NSD files will have extension .nsd, Pascal source
-files extension .p etc.). With option \fB\-o\fP a different output file name may be
-specified. By option \fB\-\fP the translation result may be directed to the standard
-output instead.
+By default, the resulting file will have the same name as the (first or respective)
+input file name but with a different extension (NSD files will have extension .nsd,
+Pascal source files extension .p etc.). With option \fB\-o\fP a different output file
+or folder name may be specified. By option \fB\-\fP the translation result may be
+directed to the standard output instead.
 .br
 For the conversions the parser preferences configurable in the interactive mode of
 \fBStructorizer\fP are relevant, whereas other preferences, particularly the export
 options are invalid and may only be controlled by the command line options described
 below. Alternatively, a settings file containing the relevant options may be specified
 via the \fB\-s\fP option. If both a settings file and specific export switches are
-given then the specific switches ovverride the respective settings from the settings file.
+given then the specific switches override the respective settings from the settings
+file.
 .SH OPTIONS
 .TP
 \fB\-\fP
 Write generated program code directly to StdOut instead of eporting it to the default
 output file (if \fB-o\fP is also used then the code will be written both to standard
 output and to the specified output file). (For export mode.)
+.BI \-\-export " generator"
+Same as \-x " generator"
+This option must be the first argument.
+.TP
+.BI \-\-image " format"
+Same as \-i " format"
+This option must be the first argument.
+.TP
+.BI \-\-parse [ \fIparser\fP ]
+Same as \-p [ \fIparser\fP ]
+This option must be the first argument.
 .TP
 .B \-a
 Also export attributes like author, creation date, license. (For export mode only.)
@@ -87,9 +107,21 @@ successful parsing. (For parsing mode only.)
 Specifies \fBH\fPelp mode: Gives a short help and lists the names of supported
 generators and parsers (must be the first and only option in order to work).
 .TP
-.B \-i
-Generate source code in free format (informal) - for languages like COBOL.
-(For export mode only.)
+.BI \-i " format"
+Specifies e\fBi\fPmage export mode: Generate picture files of the given format
+from the specified NSD or arrangement files.
+This option must be the first argument.
+.TP 10
+Accepted graphics (or document) file formats are:
+.RS 3
+.B PNG
+.br
+.B EMF
+.br
+.B PDF
+.br
+.B SVG
+.RE
 .TP
 .B \-l
 Generate line numbers for BASIC or COBOL export. (For export mode only.)
@@ -199,12 +231,13 @@ into an \fBarrz\-file\fP rather than be saved as a loose bunch of \fBnsd\-file\f
 .I arr\-file
 An arrangement list file generated by the Arranger component of Structorizer
 as a text file listing paths of \fBnsd\-file\fPs. (May be used as consistent input
-for code export.)
+for code or picture export.)
 .TP
 .I arrz\-file
 An arrangement archive generated by the Arranger component of Structorizer as a
 compressed file containing an \fBarr\-file\fP and the referenced \fBnsd\-file\fPs.
-(May be used as consistent input for code export or result from source code parsing.)
+(May be used as consistent input for code or picture export or may result from source
+code parsing.)
 .TP
 .I input\-file
 A file of one of the types \fBnsd\-file\fPs, \fBarr\-file\fP, or \fBarrz\-file\fP.
