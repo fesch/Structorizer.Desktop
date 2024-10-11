@@ -81,7 +81,7 @@ public class TranslatorTab extends javax.swing.JPanel {
         initComponents();
         
         // configure the table
-        table.setDefaultRenderer(Object.class, new BoardTableCellRenderer());
+        table.setDefaultRenderer(Object.class, new BoardTableCellRendererTT());
         table.setRowHeight(25);
         
         table.setModel(new TranslatorTableModel());
@@ -92,7 +92,7 @@ public class TranslatorTab extends javax.swing.JPanel {
         TableColumn col3 = table.getColumnModel().getColumn(3);
         col3.setHeaderValue(" ");
         int pulldownWidth = IconLoader.getIcon(80).getIconWidth();
-        col3.setCellEditor(new BoardButtonEditor());
+        col3.setCellEditor(new BoardButtonEditorTT());
         table.getColumnModel().getColumn(3).setMaxWidth(pulldownWidth);
         table.getColumnModel().getColumn(3).setPreferredWidth(pulldownWidth);
         // END KGU#709 2019-06-06
@@ -159,11 +159,11 @@ public class TranslatorTab extends javax.swing.JPanel {
  */
 // FIXME: This code is identical with PullDownButtonCellEditor
 @SuppressWarnings("serial")
-class BoardButtonEditor extends DefaultCellEditor {
+class BoardButtonEditorTT extends DefaultCellEditor {
 	protected JButton button;
 	private JTable table;
 
-	public BoardButtonEditor() {
+	public BoardButtonEditorTT() {
 		super(new javax.swing.JCheckBox());
 	}
 
@@ -199,7 +199,7 @@ class BoardButtonEditor extends DefaultCellEditor {
 }
 // END KGU#709 2019-06-06
 
-class BoardTableCellRenderer extends DefaultTableCellRenderer {
+class BoardTableCellRendererTT extends DefaultTableCellRenderer {
 
     Color backgroundColor = getBackground();
 
