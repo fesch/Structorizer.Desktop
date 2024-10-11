@@ -248,6 +248,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2024-03-17      Issue #1138: code import and arrangement loading now in serial mode to
  *                                      allow the user to suppress Arranger collision warnings (new serial aspect)
  *      Kay Gürtzig     2024-03-19      Bugfix #1149: On selection change from Code Preview doButtons() was forgotten
+ *      Kay Gürtzig     2024-10-06      Bugfix #1172: replaceTurtleizerAPI() failed to redraw the diagram after changes
+ *      Kay Gürtzig     2024-10-09      Issue #1173: exportSWF() marked as deprecated
  *
  ******************************************************************************************************
  *
@@ -5763,6 +5765,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 									//_ele.getText().set(i, functionPairs[j][1 - from] + line.trim().substring(oldName.length()));
 									if (this.act) {
 										_ele.getText().set(i, functionPairs[j][1 - from] + line.trim().substring(oldName.length()));
+										// START KGU#1187 2024-10-06: Bugfix #1172 We need to redraw the diagram
+										_ele.resetDrawingInfoUp();
+										// END KGU#1187 2024-10-06
 									}
 									nChanges++;
 									// END #272 2016-10-17
@@ -5808,6 +5813,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 			switcher.activate();
 			selected.traverse(switcher);
+			// START KGU#1187 2024-10-06: Bugfix #1172 We need to redraw the diagram
+			redraw();
+			// END KGU#1187 2024-10-06
 		}
 		JOptionPane.showMessageDialog(this.getFrame(),
 				Menu.msgReplacementsDone.getText().replace("%", Integer.toString(nReplaced)));
@@ -6398,10 +6406,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if (result == JFileChooser.APPROVE_OPTION) {
 			lastExportDir = dlgSave.getSelectedFile().getParentFile();
 			String filename = dlgSave.getSelectedFile().getAbsoluteFile().toString();
-			if (!filename.substring(filename.length() - 4, filename.length()).toLowerCase().equals(".png")) {
-				filename += ".png";
+			// START KGU 2024-10-08: Code revision
+			//if (!filename.substring(filename.length() - 4, filename.length()).toLowerCase().equals(".png")) {
+			//	filename += ".png";
+			//}
+			String ext = ExtFileFilter.getExtension(filename);
+			if (!ext.isEmpty()) {
+				filename = filename.substring(0, filename.length() - ext.length() - 1);
 			}
-
+			filename += ".png";
+			// END KGU 2024-10-08
 			File file = new File(filename);
 			if (checkOverwrite(file, false) == 0) {
 				BufferedImage bi = new BufferedImage(root.width + 1, root.height + 1, BufferedImage.TYPE_4BYTE_ABGR);
@@ -6648,7 +6662,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * @see #exportSVG()
 	 * @see #exportPDF()
 	 * @see #exportEMF()
+	 * 
+	 * @deprecated Shockwave Flash shouldn't be produced anymore
 	 */
+	@Deprecated
 	public void exportSWF() {
 		// START KGU#183 2016-04-24: Issue #169 - retain old selection
 		Element wasSelected = selected;

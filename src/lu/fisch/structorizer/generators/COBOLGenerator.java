@@ -915,6 +915,12 @@ public class COBOLGenerator extends Generator {
 					lineDone = generateAssignment(tokens, line, _indent, isDisabled);
 // END KGU#395 2024-04-13
 				}
+				// START KGU#395 2024-05-23: Enh. #357
+				else if (Instruction.isInput(line)) {
+					addCode(transfLine, _indent, isDisabled);
+					lineDone = true;
+				}
+				// END KGU#395 204-05-23
 				// START KGU#395 2024-04-13: Enh. #357
 				else if (Instruction.isOutput(line)) {
 					String keyOutput = CodeParser.getKeyword("output");
@@ -1592,6 +1598,7 @@ public class COBOLGenerator extends Generator {
 				}
 			}
 			if (!hasNumericResult) {
+				// In the CALL clause this argument will have to be specified "BY REFERENCE"
 				params.add("result");
 			}
 		}
@@ -1624,21 +1631,26 @@ public class COBOLGenerator extends Generator {
 	 * @param _typeEntry - a {@link TypeMapEntry} for the type to be
 	 * checked
 	 * @return true if the given {@code _typeEntry} designates a
-	 * primitive numeric type
+	 *    primitive numeric type
+	 *    
 	 * @see #isNumericType(String)
 	 * @see #hasNumericResult(Root)
 	 */
 	private boolean isNumericType(TypeMapEntry _typeEntry) {
-		// TODO Auto-generated method stub
-		// What about strings here?
-		return !_typeEntry.isArray() && !_typeEntry.isRecord();
+		// START KGU#395 2024-05-27: Issue #357 Attempt of a classification for COBOL
+		//// What about strings here?
+		//return !_typeEntry.isArray() && !_typeEntry.isRecord();
+		return _typeEntry.isNumeric();
+		// END KGU#395 2024-05-27
 	}
 	/**
 	 * Tries to decide whether the given type is primitive numeric (i.e.
 	 * a type that can be used by a COBOL function to RETURN a value).
+	 * 
 	 * @param _transfTypeName - a type name transformed to COBOL syntax
 	 * @return true if the given {@code _transfTypeName} designates a
-	 * primitive numeric type
+	 *    primitive numeric type
+	 * 
 	 * @see #isNumericType(TypeMapEntry)
 	 * @see #hasNumericResult(Root)
 	 */
@@ -1650,6 +1662,7 @@ public class COBOLGenerator extends Generator {
 	/**
 	 * Creates the appropriate code for returning a required result and adds it
 	 * (after the algorithm code of the body) to this.code)
+	 * 
 	 * @param _root - the diagram root element
 	 * @param _indent - the current indentation string
 	 * @param alwaysReturns - whether all paths of the body already force a return
@@ -1669,9 +1682,11 @@ public class COBOLGenerator extends Generator {
 				if (!hasNumericResult(_root)) {
 					option = "CORRESPONDING ";
 				}
+				// FIXME (KGU 2024-05-23) Should the target be RETURN-CODE? What if it's non-integer?
 				addCode("MOVE " + option + resultName + " TO result", _indent, false);
 			}
 		}
+		// FIXME (KGU 2024-05-23) Is this sensible at all - as an EXIT FUNCTION will follow anyway?
 		addCode("GOBACK", _indent, false);	// return to the caller (which may be the OS)
 		addCode(".", _indent, false);	// Ends the current section and the PROCEDURE DIVISION
 		return _indent;

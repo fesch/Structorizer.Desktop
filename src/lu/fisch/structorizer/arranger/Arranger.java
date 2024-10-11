@@ -83,6 +83,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2020-12-28  Slight modifications to the status bar layout (icons, tooltip)
  *      Kay Gürtzig     2021-03-01  Enh. #410: Temporary pool notification suppression introduced
  *      Kay Gürtzig     2022-05-31  Enh. #1035: New public method addToPool(ArchiveIndex, String)
+ *      Kay Gürtzig     2024-10-10  Bugfix #1175: loadArrangement() must make sure Arranger is visible
  *
  ******************************************************************************************************
  *
@@ -439,6 +440,9 @@ implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, Lang
      */
     public String loadArrangement(Mainform form, File arrFile)
     {
+        // START KGU#1160 2024-10-10: Bugfix #1175 Arranger might have been closed, which causes an error
+        this.setVisible(true);
+        // END KGU#1160 2024-10-10
         return surface.loadArrFile(form, arrFile);
     }
     // END KGU#259 2016-11-15

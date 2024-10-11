@@ -186,7 +186,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2023-11-08      Issue #1112: Analyser is to avoid error3_1 and error24_8 on java.lang.
  *                                      java.util. method calls like Math.sqrt(17.2) or Character.isDigit('5')
  *      Kay Gürtzig     2024-03-14      Bugfix #1139: NullPointerException in analyse_5_7_13() with empty Try
- *      Kay Gürtzig     2024-04-17      Issues #161, #1161 Improved reachability check (via mayPassControl())
+ *      Kay Gürtzig     2024-04-17      Issues #161, #1161: Improved reachability check (via mayPassControl())
+ *      Kay Gürtzig     2024-10-09      Bugfix #1174: Precaution against NullpPointerException in fetchAuthorDates()
  *
  ******************************************************************************************************
  *
@@ -648,7 +649,8 @@ public class Root extends Element {
 	 * author attributes before {@link #fetchAuthorDates(Attributes)} is called.<br/>
 	 * Be aware that the diagram meta data are meant to override the file meta data, the
 	 * use of which is only a workaround for legacy nsd files that didn't store own
-	 * meta data.  
+	 * meta data.
+	 * 
 	 * @param _file - the file from which this diagram was loaded
 	 * @param _arrzFile - the arrz file, which {@code _file} was extracted from, or null
 	 * @see #fetchAuthorDates(Attributes)
@@ -670,7 +672,10 @@ public class Root extends Element {
 			if (_arrzFile != null) {
 				createTime = Files.readAttributes(ownerPath, BasicFileAttributes.class).creationTime().toMillis();
 			}
-			Date created = null;
+			// START KGU#1159 2024-10-09: Bugfix #1174 Network drives might not convey all attributes
+			//Date created = null;
+			Date created = new Date();	// Don't risk a NullPointerException later
+			// END KGU#1159 2024-10-09
 			// Check if the OS supports creation time attributes at all
 			if (createTime > 0) {
 				created = new Date(createTime);

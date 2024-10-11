@@ -134,6 +134,8 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2021-03-01      Enh. #410: Temporary pool notification suppression introduced
  *      Kay Gürtzig     2022-06-01      Enh. #1035: New method getGroup(String)
  *      Kay Gürtzig     2024-03-16      Issue #1138: Provide a better and more usable diagram collision information
+ *      Kay Gürtzig     2024-10-10      Issue #1176: More sensible addition to recent file list after loading an arrz file
+ *                                      from Arranger button
  *
  ******************************************************************************************************
  *
@@ -1612,6 +1614,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				// START KGU#316 2016-12-28: Enh. #318
 				File unzippedFrom = null;
 				// END KGU#316 2016-12-28
+				// START KGU#1161 2024-10-10: Issue #1176 More sensible contribution to recent file list
+				boolean explicitlyExtracted = false;
+				// END KGU#1161 2024-10-10
 				// START KGU#110 2016-07-01: Enh. # 62 - unpack a zip file first
 				if (ArrZipFilter.isArr(file.getName()))
 				{
@@ -1624,6 +1629,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 					{
 						//extractTo = dlgOpen.getCurrentDirectory().getAbsolutePath();
 						extractTo = dlgOpen.getSelectedFile();
+						// START KGU#1161 2024-10-10: Issue #1176 More sensible contribution to recent file list
+						explicitlyExtracted = true;
+						// END KGU#1161 2024-10-10
 					}
 					else {
 						unzippedFrom = file;
@@ -1646,6 +1654,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				currentDirectory = oldCurrDir;
 				// START KGU#679 2019-03-12: Enh. #698 Ensure that loaded arrangements occur in the recent file lists
 				if (done) {
+					// START KGU#1161 2024-10-10: Issue #1176 Add the arrz path if only temporarily extracted
+					if (!explicitlyExtracted && unzippedFrom != null) {
+						file = unzippedFrom;
+					}
+					// END KGU#1161 2024-10-10
 					for (Mainform form: this.activeMainforms()) {
 						form.addRecentFile(file);
 					}
