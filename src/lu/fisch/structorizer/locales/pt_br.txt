@@ -666,7 +666,7 @@ Editor.popupMoveDown.text=Para baixo
 Editor.popupTransmute.text=Mudar
 Editor.popupOutsource.text=Terceirizar
 Editor.popupOutsource.tooltip=Terceirizar a sequência do elemento selecionado
-Editor.popupEditSub.text=Editar sub-rotina ...
+Editor.popupEditSub.text=Editar @o ...
 Editor.popupEditSub.tooltip=Chamar @o ou um diagrama @p referenciado para edição.
 // Collapsing
 Editor.popupCollapse.text=Colapsar

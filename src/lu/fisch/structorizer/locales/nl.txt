@@ -660,7 +660,7 @@ Editor.popupMoveDown.text=Naar beneden verplaatsen
 Editor.popupTransmute.text=Omzetten
 Editor.popupOutsource.text=Overbrengen
 Editor.popupOutsource.tooltip=De geselecteerde elementenrij overbrengen naar een nieuwe @o.
-Editor.popupEditSub.text=Subroutine bewerken ...
+Editor.popupEditSub.text=@o bewerken ...
 Editor.popupEditSub.tooltip=De aangeroepen @o of een geïmporteerde @p-diagram ophalen voor bewerking.
 // Collapsing
 Editor.popupCollapse.text=Invouwen

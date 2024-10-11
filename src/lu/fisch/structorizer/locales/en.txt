@@ -736,7 +736,7 @@ Editor.popupMoveDown.text=Move down
 Editor.popupTransmute.text=Transmute
 Editor.popupOutsource.text=Outsource
 Editor.popupOutsource.tooltip=Outsource the selected element sequence to a new @o.
-Editor.popupEditSub.text=Edit subroutine ...
+Editor.popupEditSub.text=Edit @o ...
 Editor.popupEditSub.tooltip=Summon the called @o or a referred @p diagram for editing.
 // Collapsing
 Editor.popupCollapse.text=Collapse

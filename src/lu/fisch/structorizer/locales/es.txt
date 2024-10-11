@@ -230,7 +230,7 @@ Menu.menuEditRedo.text=Rehacer
 Menu.menuEditCut.text=Cortar
 Menu.menuEditCopy.text=Copiar
 Menu.menuEditPaste.text=Pegar
-Menu.menuEditSummonSub.text=Editar subdiagrama ...
+Menu.menuEditSummonSub.text=Editar @o ...
 Menu.menuEditSummonSub.tooltip=Convocar la llamada @o o un diagrama incluido al editor.
 Menu.menuEditFindReplace.text=Buscar/Reemplazar ...
 Menu.menuEditUpgradeTurtle.text=Hacia comandos precisos
@@ -743,7 +743,7 @@ Editor.popupMoveDown.text=Desplazar Abajo
 Editor.popupTransmute.text=Transmutar
 Editor.popupOutsource.text=Delegar
 Editor.popupOutsource.tooltip=Delegar secuencia seleccionada a un subprograma nuevo.
-Editor.popupEditSub.text=Editar subrutina ...
+Editor.popupEditSub.text=Editar @o ...
 Editor.popupEditSub.tooltip=Convocar la llamada @o o un diagrama incluido al editor.
 // Collapsing
 Editor.popupCollapse.text=Reducir
