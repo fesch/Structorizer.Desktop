@@ -652,9 +652,9 @@ Editor.popupDelete.text=Удалить
 Editor.popupMoveUp.text=Переместить вверх
 Editor.popupMoveDown.text=Переместить вниз
 Editor.popupTransmute.text=Превратить
-Editor.popupOutsource.text=Выделить подпрограмму
+Editor.popupOutsource.text=Выделить подпрограмму ...
 Editor.popupOutsource.tooltip=
-Editor.popupEditSub.text=Изменить подпрограмму
+Editor.popupEditSub.text=Изменить подпрограмму ...
 Editor.popupEditSub.tooltip=Привести (может быть создать) подпрограмму за изменению
 // Collapsing
 Editor.popupCollapse.text=Сжать
