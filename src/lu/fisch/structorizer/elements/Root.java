@@ -6471,12 +6471,12 @@ public class Root extends Element {
     
     /**
      * Checks whether a call with {@code nArgs} arguments may use this routine diagram. If so,
-     * returns the number of default values needed to fill all parameters (0 in case o an exact
+     * returns the number of default values needed to fill all parameters (0 in case of an exact
      * match), otherwise returns a negative number.
      * 
      * @param nArgs - the number of given argument values
      * @return number of available defaults to be used in order to satisfy all parameters, or a
-     * negative number
+     *    negative number
      * 
      * @see #getMinParameterCount()
      * @see #getParameterNames()

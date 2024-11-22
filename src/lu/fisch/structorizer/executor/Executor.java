@@ -222,6 +222,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2023-10-16      Bugfix #980/#1096: Simple but effective workaround for complicated C-style
  *                                      initialisation (declaration + assignment) case where setVar used to fail.
  *      Kay Gürtzig     2024-03-14      Bugfix #1139: Catch now always saves message in a variable (possibly a generic one)
+ *      Kay Gürtzig     2024-11-22      Bugfix #1180: Propagation of full subroutine test coverage to potential callers
  *
  ******************************************************************************************************
  *
@@ -2451,10 +2452,16 @@ public class Executor implements Runnable
 				savingHandled = true;
 			}
 			// END KGU#1032 2022-06-22
+			// START KGU#1036 2024-11-22: Bugfix #1180 Clone deeplyCovered as well
+			boolean deeplyCovered = root.deeplyCovered;
+			// END KGU#1036 2024-11-22
 			// START KGU#749 2019-10-15: Issue #763 - we must compensate the changes in Diagram.saveNSD(Root, boolean)
 			//root = (Root)root.copy();
 			root = root.copyWithFilepaths();
 			// END KGU#749 2019-10-15
+			// START KGU#1036 2024-11-22: Bugfix #1180 Clone deeplyCovered as well
+			root.deeplyCovered = deeplyCovered;
+			// END KGU#1036 2024-11-22
 			// START KGU#1032 2022-06-22: Bugfix #1038 Retain the saving decision for the clone, too
 			if (savingHandled) {
 				askedToSave.add(root);
@@ -2498,17 +2505,50 @@ public class Executor implements Runnable
 		/////////////////////////////////////////////////////////
 		
 		// START KGU#156 2016-03-11: Enh. #124 / KGU#376 2017-07-01: Enh. #389 - caller may be null
-		if (caller != null) {
+		// START KGU#1036 2024-11-22: Bugfix #1180 It makes absolutely no sense to do this without necessity
+		//if (caller != null) {
+		if (caller != null && Element.E_COLLECTRUNTIMEDATA) {
+		// END KGU#1036 2024-11-11
 			// START KGU#539 2018-07-02 Bugfix - the call itself is also to be counted as an operation
 			//caller.addToExecTotalCount(root.getExecStepCount(true) - countBefore, true);
 			caller.addToExecTotalCount(root.getExecStepCount(true) - countBefore + 1, true);
 			// END KGU#539 2018-07-02
 			// START KGU#686 2019-03-17: Enh. #56 could be in a try context, so don't honour unsuccessful execution 
-			//if (cloned || root.isTestCovered(true))	
-			if (ok && (cloned || root.isTestCovered(true)))	
+			//if (cloned || root.isTestCovered(true))
+			// START KGU#1036 2024-11-22: Bugfix #1180 Avoid duplicate efforts
+			//if (ok && (cloned || root.isTestCovered(true)))
+			if (ok && !caller.deeplyCovered && (cloned || root.isTestCovered(true)))
+			// END KGU#1036 2024-11-22
 			// END KGU#686 2019-03-17
 			{
 				caller.deeplyCovered = true;
+				// START KGU#1036 2024-11-21: Bugfix #1180
+				//long before = System.currentTimeMillis();	// DEBUG
+				String routineName = root.getMethodName();
+				// There may be several references to actually the same pool (e.g., Arranger + Surface)...
+				HashSet<Root> seenRoots = new HashSet<Root>();
+				for (IRoutinePool pool: routinePools) {
+					for (Root dependent: pool.getAllRoots()) {
+						if (seenRoots.add(dependent) && !dependent.isTestCovered(true)) {
+							for (Call call: dependent.collectCalls()) {
+								if (call != caller && call.simplyCovered && !call.deeplyCovered) {
+									// Note that this will only return a result for single-line Calls, which is okay
+									Function callee = call.getCalledRoutine();
+									// FIXME: The following test is vague but findDiagramBySignature() is still much slower
+									if (callee != null
+											&& routineName.equals(callee.getName())
+											&& root.acceptsArgCount(callee.paramCount()) >= 0) {
+										call.deeplyCovered = true;
+										call.checkTestCoverage(true);
+									}
+								}
+							}
+						}
+					}
+				}
+				//long after = System.currentTimeMillis();	// DEBUG
+				//System.out.println("Time for " + root + ": " + (after - before) + " ms");
+				// END KGU#1036 2024-11-21
 			}
 		}
 		// END KGU#156 2016-03-11 / KGU#376 2017-07-01
@@ -5692,8 +5732,13 @@ public class Executor implements Runnable
 
 			try
 			{
-				// START KGU#117 2016-03-08: Enh. #77
-				element.deeplyCovered = false;
+				// START KGU#117 2016-03-08: Enh. #77 We want to make sure all lines count
+				// START KGU#1036 2024-11-22: Bugfix #1180 ... but only if the element hasn't been deeply covered
+				//element.deeplyCovered = false;
+				if (!wasDeeplyCovered) {
+					element.deeplyCovered = false;	// Undo a rash flagging from previous line
+				}
+				// END KGU#1036 2024-11-22
 				// END KGU#117 2016-03-08
 
 				// START KGU 2015-10-12: Allow to step within an instruction block (but no breakpoint here!) 
@@ -5757,13 +5802,19 @@ public class Executor implements Runnable
 		{
 			element.executed = false;
 			// START KGU#117 2016-03-08: Enh. #77
-			element.simplyCovered = true;	// (Should already have been set)
-			element.deeplyCovered = wasDeeplyCovered || allSubroutinesCovered;
-			if (!wasDeeplyCovered && allSubroutinesCovered ||
-					!wasSimplyCovered)
-			{
-				element.checkTestCoverage(true);
+			// START KGU#1036 2024-11-22: Bugfix #1180 Avoid unnecessary efforts
+			if (Element.E_COLLECTRUNTIMEDATA) {
+			// END KGU#1036 2024-11-22
+				element.simplyCovered = true;	// (Should already have been set)
+				element.deeplyCovered = wasDeeplyCovered || allSubroutinesCovered;
+				if (!wasDeeplyCovered && allSubroutinesCovered ||
+						!wasSimplyCovered)
+				{
+					element.checkTestCoverage(true);
+				}
+			// START KGU#1036 2024-11-22: Bugfix #1180 Avoid unnecessary efforts
 			}
+			// END KGU#1036 2024-11-22
 			// END KGU#117 2016-03-08
 		}
 		return trouble;
@@ -8133,7 +8184,7 @@ public class Executor implements Runnable
 			// END KGU#156 2016-03-11
 			i++;
 		}
-		if (sq.getSize() == 0)
+		if (Element.E_COLLECTRUNTIMEDATA && sq.getSize() == 0)
 		{
 			sq.deeplyCovered = sq.simplyCovered = true;
 			// START KGU#156 2016-03-11: Enh. #124

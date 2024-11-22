@@ -178,6 +178,7 @@ public interface IRoutinePool {
 	/**
 	 * Retrieves a set of all {@link Root} objects parked in this diagram pool.
 	 * @return the {@link Root} set
+	 * 
 	 * @see #findDiagramsByName(String)
 	 * @see #findIncludingRoots(String, boolean)
 	 */

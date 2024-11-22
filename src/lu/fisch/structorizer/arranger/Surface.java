@@ -4558,7 +4558,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				Diagram diagram = this.diagrams.get(d);
 				roots.add(diagram.root);
 			}
-		}    
+		}
 		return roots;
 	}
 	// END KGU#258 2016-09-26
