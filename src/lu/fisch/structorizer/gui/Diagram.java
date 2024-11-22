@@ -6654,99 +6654,101 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#456 2017-11-05
 	}
 
-	/**
-	 * Opens a {@link FileChooser} and performs the image export as SWF file.
-	 *
-	 * @see #exportPNG()
-	 * @see #exportPNGmulti()
-	 * @see #exportSVG()
-	 * @see #exportPDF()
-	 * @see #exportEMF()
-	 * 
-	 * @deprecated Shockwave Flash shouldn't be produced anymore
-	 */
-	@Deprecated
-	public void exportSWF() {
-		// START KGU#183 2016-04-24: Issue #169 - retain old selection
-		Element wasSelected = selected;
-		// END KGU#183 2016-04-24
-
-		// START KGU 2015-10-11
-		//root.selectElementByCoord(-1,-1);	// Unselect all elements
-		//redraw();
-		unselectAll(true);
-		// END KGU 2015-10-11
-
-		JFileChooser dlgSave = new JFileChooser("Export diagram as SWF ...");
-		// START KGU#287 2017-01-09: Bugfix #330 Ensure Label items etc. be scaled for L&F "Nimbus"
-		GUIScaler.rescaleComponents(dlgSave);
-		// END KGU#287 2017-01-09
-		// set directory
-		if (lastExportDir != null) {
-			dlgSave.setCurrentDirectory(lastExportDir);
-		} else if (root.getFile() != null) {
-			dlgSave.setCurrentDirectory(root.getFile());
-		} else {
-			dlgSave.setCurrentDirectory(currentDirectory);
-		}
-		// propose name
-		// START KGU 2015-10-16: D.R.Y. - there is already a suitable method
-		//String nsdName = root.getText().get(0);
-		//nsdName.replace(':', '_');
-		//if(nsdName.indexOf(" (")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf(" ("));}
-		//if(nsdName.indexOf("(")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf("("));}
-		String nsdName = root.proposeFileName();
-		// END KGU 2015-10-16
-		dlgSave.setSelectedFile(new File(nsdName));
-
-		// START KGU 2016-04-01: Enh. #110 - select the provided filter
-		//dlgSave.addChoosableFileFilter(new lu.fisch.structorizer.io.SWFFilter());
-		SWFFilter filter = new SWFFilter();
-		dlgSave.addChoosableFileFilter(filter);
-		dlgSave.setFileFilter(filter);
-		hideComments();	// Issue #143: Hide the current comment popup if visible
-		// END KGU 2016-04-01
-		int result = dlgSave.showSaveDialog(NSDControl.getFrame());
-		if (result == JFileChooser.APPROVE_OPTION) {
-			lastExportDir = dlgSave.getSelectedFile().getParentFile();
-			String filename = dlgSave.getSelectedFile().getAbsoluteFile().toString();
-			if (!filename.substring(filename.length() - 4, filename.length()).toLowerCase().equals(".swf")) {
-				filename += ".swf";
-			}
-
-			File file = new File(filename);
-			if (checkOverwrite(file, false) == 0) {
-				try {
-					SWFGraphics2D svg = new SWFGraphics2D(new FileOutputStream(filename), new Dimension(root.width + 12, root.height + 12));
-
-					svg.startExport();
-					lu.fisch.graphics.Canvas c = new lu.fisch.graphics.Canvas(svg);
-					lu.fisch.graphics.Rect myrect = root.prepareDraw(c);
-					myrect.left += 6;
-					myrect.top += 6;
-					root.draw(c, myrect, null, false);
-					svg.endExport();
-				} catch (Exception e) {
-					// START KGU#484 2018-04-05: Issue #463
-					//e.printStackTrace();
-					logger.log(Level.WARNING, "Trouble exporting as image.", e);
-					// END KGU#484 2018-04-05
-				}
-			}
-		}
-		// START KGU#183 2016-04-24: Issue #169 - restore old selection
-		selected = wasSelected;
-		if (selected != null) {
-			selected.setSelected(true);
-		}
-		redraw();
-		// END KGU#183 2016-04-24
-		// START KGU#456 2017-11-05: Enh. #452
-		if (root.advanceTutorialState(26, root)) {
-			analyse();
-		}
-		// END KGU#456 2017-11-05
-	}
+	// START KGU#1158 2024-11-22: Poll #1173 Code disabled (to be removed completely)
+//	/**
+//	 * Opens a {@link FileChooser} and performs the image export as SWF file.
+//	 *
+//	 * @see #exportPNG()
+//	 * @see #exportPNGmulti()
+//	 * @see #exportSVG()
+//	 * @see #exportPDF()
+//	 * @see #exportEMF()
+//	 * 
+//	 * @deprecated Shockwave Flash shouldn't be produced anymore
+//	 */
+//	@Deprecated
+//	public void exportSWF() {
+//		// START KGU#183 2016-04-24: Issue #169 - retain old selection
+//		Element wasSelected = selected;
+//		// END KGU#183 2016-04-24
+//
+//		// START KGU 2015-10-11
+//		//root.selectElementByCoord(-1,-1);	// Unselect all elements
+//		//redraw();
+//		unselectAll(true);
+//		// END KGU 2015-10-11
+//
+//		JFileChooser dlgSave = new JFileChooser("Export diagram as SWF ...");
+//		// START KGU#287 2017-01-09: Bugfix #330 Ensure Label items etc. be scaled for L&F "Nimbus"
+//		GUIScaler.rescaleComponents(dlgSave);
+//		// END KGU#287 2017-01-09
+//		// set directory
+//		if (lastExportDir != null) {
+//			dlgSave.setCurrentDirectory(lastExportDir);
+//		} else if (root.getFile() != null) {
+//			dlgSave.setCurrentDirectory(root.getFile());
+//		} else {
+//			dlgSave.setCurrentDirectory(currentDirectory);
+//		}
+//		// propose name
+//		// START KGU 2015-10-16: D.R.Y. - there is already a suitable method
+//		//String nsdName = root.getText().get(0);
+//		//nsdName.replace(':', '_');
+//		//if(nsdName.indexOf(" (")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf(" ("));}
+//		//if(nsdName.indexOf("(")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf("("));}
+//		String nsdName = root.proposeFileName();
+//		// END KGU 2015-10-16
+//		dlgSave.setSelectedFile(new File(nsdName));
+//
+//		// START KGU 2016-04-01: Enh. #110 - select the provided filter
+//		//dlgSave.addChoosableFileFilter(new lu.fisch.structorizer.io.SWFFilter());
+//		SWFFilter filter = new SWFFilter();
+//		dlgSave.addChoosableFileFilter(filter);
+//		dlgSave.setFileFilter(filter);
+//		hideComments();	// Issue #143: Hide the current comment popup if visible
+//		// END KGU 2016-04-01
+//		int result = dlgSave.showSaveDialog(NSDControl.getFrame());
+//		if (result == JFileChooser.APPROVE_OPTION) {
+//			lastExportDir = dlgSave.getSelectedFile().getParentFile();
+//			String filename = dlgSave.getSelectedFile().getAbsoluteFile().toString();
+//			if (!filename.substring(filename.length() - 4, filename.length()).toLowerCase().equals(".swf")) {
+//				filename += ".swf";
+//			}
+//
+//			File file = new File(filename);
+//			if (checkOverwrite(file, false) == 0) {
+//				try {
+//					SWFGraphics2D svg = new SWFGraphics2D(new FileOutputStream(filename), new Dimension(root.width + 12, root.height + 12));
+//
+//					svg.startExport();
+//					lu.fisch.graphics.Canvas c = new lu.fisch.graphics.Canvas(svg);
+//					lu.fisch.graphics.Rect myrect = root.prepareDraw(c);
+//					myrect.left += 6;
+//					myrect.top += 6;
+//					root.draw(c, myrect, null, false);
+//					svg.endExport();
+//				} catch (Exception e) {
+//					// START KGU#484 2018-04-05: Issue #463
+//					//e.printStackTrace();
+//					logger.log(Level.WARNING, "Trouble exporting as image.", e);
+//					// END KGU#484 2018-04-05
+//				}
+//			}
+//		}
+//		// START KGU#183 2016-04-24: Issue #169 - restore old selection
+//		selected = wasSelected;
+//		if (selected != null) {
+//			selected.setSelected(true);
+//		}
+//		redraw();
+//		// END KGU#183 2016-04-24
+//		// START KGU#456 2017-11-05: Enh. #452
+//		if (root.advanceTutorialState(26, root)) {
+//			analyse();
+//		}
+//		// END KGU#456 2017-11-05
+//	}
+	// END KGU#1158 2024-11-22
 
 	/**
 	 * Opens a {@link FileChooser} and performs the image export as PDF file.

@@ -64,6 +64,7 @@
  *      Kay Gürtzig     2023-08-01      Enh. #1082: Function name included in messages Menu.error13_*
  *      Kay Gürtzig     2023-10-16      Issues #980/#1096: New messages for declaration syntax check (error31_*)
  *      Kay Gürtzig     2024-04-21      ExportOptionDialoge renamed to ExportOptionDialog
+ *      Kay Gürtzig     2024-11-22      Poll #1173: menuFileExportPictureSWF removed.
  *
  ******************************************************************************************************
  *
@@ -122,7 +123,6 @@ Menu.menuFileExportCode.text=Code
 Menu.menuFileExportPicturePNG.text=
 Menu.menuFileExportPicturePNGmulti.text=PNG (meerdere) ...
 Menu.menuFileExportPictureEMF.text=
-Menu.menuFileExportPictureSWF.text=SWF (ouderwets!) ...
 Menu.menuFileExportPicturePDF.text=
 Menu.menuFileExportPictureSVG.text=
 Menu.lbFileExportCodeFavorite.text=Exporteren als % code

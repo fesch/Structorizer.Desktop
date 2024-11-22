@@ -133,6 +133,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2023-10-13      Issue #980: New messages for declaration syntax check (error31_*)
  *      Kay Gürtzig     2023-11-09      Issue #311: Preference dump selection dialog adapted to menu changes;
  *                                      menuEditCopyDiagramPNG and menuEditCopyDiagramEMF moved to menuDiagram
+ *      Kay Gürtzig     2024-11-22      Poll #1173: menuFileExportPictureSWF disabled (to be removed)
  *
  ******************************************************************************************************
  *
@@ -212,7 +213,7 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	protected final JMenuItem menuFileExportPicturePNG = new JMenuItem("PNG ...",IconLoader.getIcon(88));
 	protected final JMenuItem menuFileExportPicturePNGmulti = new JMenuItem("PNG (multiple) ...",IconLoader.getIcon(88));
 	protected final JMenuItem menuFileExportPictureEMF = new JMenuItem("EMF ...",IconLoader.getIcon(88));
-	protected final JMenuItem menuFileExportPictureSWF = new JMenuItem("SWF (deprecated!) ...",IconLoader.getIcon(88));
+	//protected final JMenuItem menuFileExportPictureSWF = new JMenuItem("SWF (deprecated!) ...",IconLoader.getIcon(88)); // Obsolete #1173
 	protected final JMenuItem menuFileExportPicturePDF = new JMenuItem("PDF ...",IconLoader.getIcon(88));
 	protected final JMenuItem menuFileExportPictureSVG = new JMenuItem("SVG ...",IconLoader.getIcon(88));
 	// END KGU#486 2018-01-18
@@ -1020,8 +1021,10 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		menuFileExportPicture.add(menuFileExportPictureEMF);
 		menuFileExportPictureEMF.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.exportEMF(); doButtons(); } } );
 
-		menuFileExportPicture.add(menuFileExportPictureSWF);
-		menuFileExportPictureSWF.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.exportSWF(); doButtons(); } } );
+		// START KGU#1158 2024-11-22: Discussion #1173 SWF export no longer supported
+		//menuFileExportPicture.add(menuFileExportPictureSWF);
+		//menuFileExportPictureSWF.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.exportSWF(); doButtons(); } } );
+		// END KGU#1158 2024-11-22
 
 		menuFileExportPicture.add(menuFileExportPicturePDF);
 		menuFileExportPicturePDF.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.exportPDF(); doButtons(); } } );

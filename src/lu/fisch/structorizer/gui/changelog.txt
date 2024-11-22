@@ -255,6 +255,7 @@ Current development version 3.32-24 (2024-11-22)
 - 23: Bugfix #1175 Loading an arrangement with closed Arranger failed <2>
 - 23: Issue #1176 Loading an .arrz file via Arranger button used to add a
       (temporary) .arr path to the recent file list <2>
+- 24: Poll #1173 SWF export removed from File/Export menu <2>
 - 24: Bugfix #1180 Proper propagation of subroutine test coverage to calls <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer

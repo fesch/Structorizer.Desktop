@@ -75,6 +75,7 @@
  *      Kay Gürtzig     2023-10-06  Issue #311: Menu reorganisation (menuDiagram split)
  *      Kay Gürtzig     2023-10-16  Issue #980, #1096: New messages for declaration syntax check (error31_*)
  *      Kay Gürtzig     2024-04-21  ExportOptionDialoge renamed to ExportOptionDialog
+ *      Kay Gürtzig     2024-11-22  Poll #1173: menuFileExportPictureSWF removed.
  *
  ******************************************************************************************************
  *
@@ -134,7 +135,6 @@ Menu.menuFileExportCode.text=Язык (код)
 Menu.menuFileExportPicturePNG.text=
 Menu.menuFileExportPicturePNGmulti.text=PNG (кафелями)
 Menu.menuFileExportPictureEMF.text=
-Menu.menuFileExportPictureSWF.text=SWF (устарело!) ...
 Menu.menuFileExportPicturePDF.text=
 Menu.menuFileExportPictureSVG.text=
 Menu.lbFileExportCodeFavorite.text=Экспорт % код
