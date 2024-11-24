@@ -222,7 +222,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2023-10-16      Bugfix #980/#1096: Simple but effective workaround for complicated C-style
  *                                      initialisation (declaration + assignment) case where setVar used to fail.
  *      Kay Gürtzig     2024-03-14      Bugfix #1139: Catch now always saves message in a variable (possibly a generic one)
- *      Kay Gürtzig     2024-11-22      Bugfix #1180: Propagation of full subroutine test coverage to potential callers
+ *      Kay Gürtzig     2024-11-22/24   Bugfix #1180: Propagation of full subroutine test coverage to potential callers
  *
  ******************************************************************************************************
  *
@@ -2515,39 +2515,20 @@ public class Executor implements Runnable
 			// END KGU#539 2018-07-02
 			// START KGU#686 2019-03-17: Enh. #56 could be in a try context, so don't honour unsuccessful execution 
 			//if (cloned || root.isTestCovered(true))
-			// START KGU#1036 2024-11-22: Bugfix #1180 Avoid duplicate efforts
+			// START KGU#1036 2024-11-22: Bugfix #1180 Note if the subroutine changed coverage status
 			//if (ok && (cloned || root.isTestCovered(true)))
 			if (ok && !caller.deeplyCovered && (cloned || root.isTestCovered(true)))
 			// END KGU#1036 2024-11-22
 			// END KGU#686 2019-03-17
 			{
 				caller.deeplyCovered = true;
-				// START KGU#1036 2024-11-21: Bugfix #1180
-				//long before = System.currentTimeMillis();	// DEBUG
-				String routineName = root.getMethodName();
-				// There may be several references to actually the same pool (e.g., Arranger + Surface)...
-				HashSet<Root> seenRoots = new HashSet<Root>();
-				for (IRoutinePool pool: routinePools) {
-					for (Root dependent: pool.getAllRoots()) {
-						if (seenRoots.add(dependent) && !dependent.isTestCovered(true)) {
-							for (Call call: dependent.collectCalls()) {
-								if (call != caller && call.simplyCovered && !call.deeplyCovered) {
-									// Note that this will only return a result for single-line Calls, which is okay
-									Function callee = call.getCalledRoutine();
-									// FIXME: The following test is vague but findDiagramBySignature() is still much slower
-									if (callee != null
-											&& routineName.equals(callee.getName())
-											&& root.acceptsArgCount(callee.paramCount()) >= 0) {
-										call.deeplyCovered = true;
-										call.checkTestCoverage(true);
-									}
-								}
-							}
-						}
-					}
+				// START KGU#1036 2024-11-21: Bugfix #1180 We have to propagate the coverage change
+				// It may induce some chain reaction - do it in a loop rather than recursively
+				Vector<Root> coveredSubs = new Vector<Root>();
+				coveredSubs.add(root);
+				while (!coveredSubs.isEmpty()) {
+					coveredSubs = propagateSubCoverage(coveredSubs, caller);
 				}
-				//long after = System.currentTimeMillis();	// DEBUG
-				//System.out.println("Time for " + root + ": " + (after - before) + " ms");
 				// END KGU#1036 2024-11-21
 			}
 		}
@@ -2689,6 +2670,89 @@ public class Executor implements Runnable
 		
 		return resultObject;
 	}
+
+	// START KGU#1036 2024-11-24: Fixes #1180 in a more exhaustive way (considers chain reaction)
+	/**
+	 * Propagates the (new) test coverage of the subroutines given by
+	 * {@code coveredSubs} among the Roots in the registered routine pools
+	 * 
+	 * @param coveredSubs - a vector of subroutines newly marked as completely covered
+	 * @param caller - the inducing {@link Call} (if already handled) or {@code null}
+	 * @return a vector of subroutines turned to completely covered by this propagation
+	 */
+	private Vector<Root> propagateSubCoverage(Vector<Root> coveredSubs, Call caller) {
+		Vector<Root> newCoveredSubs = new Vector<Root>();
+		for (Root sub: coveredSubs) {
+			//long before = System.currentTimeMillis();	// DEBUG
+			String routineName = sub.getMethodName();
+			// There may be several references to actually the same pool (e.g., Arranger + Surface)...
+			HashSet<Root> seenRoots = new HashSet<Root>();
+			for (IRoutinePool pool: routinePools) {
+				// Check all available Roots (at most once) for relevant Calls
+				for (Root dependent: pool.getAllRoots()) {
+					if (seenRoots.add(dependent) && !dependent.isTestCovered(true)) {
+						/* Check all contained referring Calls that have been run at least
+						 * once but haven't been marked as deeply covered yet.
+						 */
+						for (Call call: dependent.collectCalls()) {
+							if (call != caller && call.simplyCovered && !call.deeplyCovered
+									&& call.getText().getLongString().contains(routineName)) {
+								// Note that this will only return a result for single-line Calls
+								Function callee = call.getCalledRoutine();
+								// The matching done here avoids the effort of findDiagramWithSignature()
+								if (callee != null
+										&& routineName.equals(callee.getName())
+										&& sub.acceptsArgCount(callee.paramCount()) >= 0) {
+									call.deeplyCovered = true;
+									call.checkTestCoverage(true);
+								}
+								// Now cater for the rare multi-line Calls as well
+								else {
+									StringList unbrokenText = call.getUnbrokenText();
+									// If the Call has less than two lines now then it must be defective
+									boolean someUncovered = unbrokenText.count() < 2;
+									for (int i = 0; i < unbrokenText.count() && !someUncovered; i++) {
+										callee = call.getCalledRoutine(i);
+										if (callee != null) {
+											int paramCount = callee.paramCount();
+											// It is enough to check those call lines that do NOT match sub
+											if (!routineName.equals(callee.getName())
+												|| sub.acceptsArgCount(paramCount) < 0) {
+												try {
+													Root sub1 = this.findDiagramWithSignature(routineName, paramCount);
+													someUncovered = sub1 == null || !sub1.isTestCovered(true);
+												} catch (Exception exc) {
+													// Subroutine is ambiguous, call may not be deeply covered
+													someUncovered = true;
+												}
+											}
+										}
+										else {
+											// The line is syntactically incorrect
+											someUncovered = true;
+										}
+									}
+									if (!someUncovered) {
+										call.deeplyCovered = true;
+										call.checkTestCoverage(true);
+									}
+								}
+							}
+						}
+						// This may cause some chain reaction...
+						if (dependent.isSubroutine() && dependent.isTestCovered(true)) {
+							System.out.println("Chain propagation for " + dependent);	// DEBUG
+							newCoveredSubs.add(dependent);
+						}
+					}
+				}
+			}
+			//long after = System.currentTimeMillis();	// DEBUG
+			//System.out.println("Time for " + root + ": " + (after - before) + " ms");
+		}
+		return newCoveredSubs;
+	}
+	// END KGU#1036 2024-11-24
 	
 	// START KGU#2 2015-11-24: Stack trace support for execution errors
 	// START KGU#946 2021-02-28: Bugfix #947 We must also track during include list processing
