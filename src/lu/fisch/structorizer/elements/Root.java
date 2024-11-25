@@ -188,6 +188,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2024-03-14      Bugfix #1139: NullPointerException in analyse_5_7_13() with empty Try
  *      Kay Gürtzig     2024-04-17      Issues #161, #1161: Improved reachability check (via mayPassControl())
  *      Kay Gürtzig     2024-10-09      Bugfix #1174: Precaution against NullpPointerException in fetchAuthorDates()
+ *      Kay Gürtzig     2024-11-25      Bugfix #1180: Deep test coverage change on undo/redo propagated
  *
  ******************************************************************************************************
  *
@@ -266,6 +267,7 @@ import lu.fisch.structorizer.locales.LangTextHolder;
 import lu.fisch.structorizer.locales.Locales;
 import lu.fisch.structorizer.archivar.IRoutinePool;
 import lu.fisch.structorizer.arranger.Arranger;
+import lu.fisch.structorizer.executor.Executor;
 import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.generators.GeneratorSyntaxChecker;
 import lu.fisch.structorizer.gui.*;
@@ -2296,6 +2298,9 @@ public class Root extends Element {
             // START KGU#365 2017-03-19: Enh. #380
             }
             // END KGU#365 2017-03-19
+            // START KGU#1036 2024-11-25: Bugfix #1180 Special handling of deep coverage
+            boolean wasDeeplyCovered = this.isTestCovered(true);
+            // END KGU#1036 2024-11-25
             children = undoList.pop();
             children.parent = this;
             // START KGU#120 2016-01-02: Bugfix #85 - restore my StringList attributes from stack
@@ -2345,6 +2350,12 @@ public class Root extends Element {
                 }
             }
             // END KGU#703 2019-03-30
+            // START KGU#1036 2024-11-25: Bugfix #1180 Special handling of deep coverage
+            this.deeplyCovered = this.children.deeplyCovered;
+            if (Element.E_COLLECTRUNTIMEDATA && wasDeeplyCovered != this.isTestCovered(true)) {
+                propagateTestCoverage();
+            }
+            // END KGU#1036 2024-11-25
         }
     }
 
@@ -2370,11 +2381,14 @@ public class Root extends Element {
      */
     public void redo()
     {
-        if (redoList.size()>0)
+        if (redoList.size() > 0)
         {
             // START KGU#137 2016-01-11: Bugfix #103 - rely on undoList level comparison 
             //this.hasChanged=true;
             // END KGU#137 2016-01-11
+            // START KGU#1036 2024-11-25: Bugfix #1180 Special handling of deep coverage
+            boolean wasDeeplyCovered = this.isTestCovered(true);
+            // END KGU#1036 2024-11-25
             undoList.add((Subqueue)children.copy());
             // START KGU#120 2016-01-02: Bugfix #85 - park my StringList attributes on the stack top
             undoList.peek().setText(this.text.copy());
@@ -2426,6 +2440,28 @@ public class Root extends Element {
                 }
             }
             // END KGU#703 2019-03-30
+            // START KGU#1036 2024-11-25: Bugfix #1180 Special handling of deep coverage
+            this.deeplyCovered = this.children.deeplyCovered;
+            if (Element.E_COLLECTRUNTIMEDATA && wasDeeplyCovered != this.isTestCovered(true)) {
+                // Restore the test coverage status of possibly referring Calls and Roots
+                propagateTestCoverage();
+            }
+            // END KGU#1036 2024-11-25
+        }
+    }
+    
+    // START KGU#1036 2024-11-25: Bugfix #1180 auxiliary method
+    /**
+     * Propagates a change of deep test coverage state among potentially referring
+     * Roots if this is a subroutine. Will only work if there is an {@link Executor}
+     * instance already.
+     */
+    public void propagateTestCoverage() {
+        if (this.isSubroutine()) {
+            Executor exec = Executor.getInstance();
+            if (exec != null) {
+                exec.propagateSubCoverage(this, null);
+            }
         }
     }
 
@@ -3596,6 +3632,17 @@ public class Root extends Element {
 		}
 	}
 	// END KGU#261/KGU#332 2017-02-01
+	
+	// START KGU#1036 2024-11-25: Bugfix #1180 Propagate this to potential callers
+	@Override
+	public void clearRuntimeData()
+	{
+		super.clearRuntimeData();
+		if (Element.E_COLLECTRUNTIMEDATA && this.isSubroutine()) {
+			propagateTestCoverage();
+		}
+	}
+	// END KGU#1036 2024-11-25
 
 	// START BFI 2015-12-10
 	/**

@@ -222,7 +222,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2023-10-16      Bugfix #980/#1096: Simple but effective workaround for complicated C-style
  *                                      initialisation (declaration + assignment) case where setVar used to fail.
  *      Kay Gürtzig     2024-03-14      Bugfix #1139: Catch now always saves message in a variable (possibly a generic one)
- *      Kay Gürtzig     2024-11-22/24   Bugfix #1180: Propagation of full subroutine test coverage to potential callers
+ *      Kay Gürtzig     2024-11-22/25   Bugfix #1180: Propagation of full subroutine test coverage to potential callers
  *
  ******************************************************************************************************
  *
@@ -372,6 +372,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map.Entry;
+import java.util.Queue;
 import java.util.Random;
 import java.util.Set;
 import java.util.Stack;
@@ -2523,12 +2524,7 @@ public class Executor implements Runnable
 			{
 				caller.deeplyCovered = true;
 				// START KGU#1036 2024-11-21: Bugfix #1180 We have to propagate the coverage change
-				// It may induce some chain reaction - do it in a loop rather than recursively
-				Vector<Root> coveredSubs = new Vector<Root>();
-				coveredSubs.add(root);
-				while (!coveredSubs.isEmpty()) {
-					coveredSubs = propagateSubCoverage(coveredSubs, caller);
-				}
+				propagateSubCoverage(root, caller);
 				// END KGU#1036 2024-11-21
 			}
 		}
@@ -2673,16 +2669,19 @@ public class Executor implements Runnable
 
 	// START KGU#1036 2024-11-24: Fixes #1180 in a more exhaustive way (considers chain reaction)
 	/**
-	 * Propagates the (new) test coverage of the subroutines given by
+	 * Propagates the test coverage change of the subroutine given by
 	 * {@code coveredSubs} among the Roots in the registered routine pools
 	 * 
-	 * @param coveredSubs - a vector of subroutines newly marked as completely covered
+	 * @param turnedSub - a subroutine newly marked (or unmarked) as completely covered
 	 * @param caller - the inducing {@link Call} (if already handled) or {@code null}
-	 * @return a vector of subroutines turned to completely covered by this propagation
 	 */
-	private Vector<Root> propagateSubCoverage(Vector<Root> coveredSubs, Call caller) {
-		Vector<Root> newCoveredSubs = new Vector<Root>();
-		for (Root sub: coveredSubs) {
+	public void propagateSubCoverage(Root turnedSub, Call caller) {
+		boolean turnedOn = turnedSub.isTestCovered(true);
+		// The propagation may induce some kind of chain reaction, so build a queue for it
+		Queue<Root> newCoveredSubs = new LinkedList<Root>();
+		newCoveredSubs.add(turnedSub);
+		while (!newCoveredSubs.isEmpty()) {
+			Root sub = newCoveredSubs.remove();
 			//long before = System.currentTimeMillis();	// DEBUG
 			String routineName = sub.getMethodName();
 			// There may be several references to actually the same pool (e.g., Arranger + Surface)...
@@ -2690,12 +2689,14 @@ public class Executor implements Runnable
 			for (IRoutinePool pool: routinePools) {
 				// Check all available Roots (at most once) for relevant Calls
 				for (Root dependent: pool.getAllRoots()) {
-					if (seenRoots.add(dependent) && !dependent.isTestCovered(true)) {
+					boolean wasDeeplyCovered = dependent.isTestCovered(true);
+					if (seenRoots.add(dependent) && (!wasDeeplyCovered || !turnedOn)) {
 						/* Check all contained referring Calls that have been run at least
 						 * once but haven't been marked as deeply covered yet.
 						 */
 						for (Call call: dependent.collectCalls()) {
-							if (call != caller && call.simplyCovered && !call.deeplyCovered
+							// The inducing call itself will be handled by the outer context, so skip it
+							if (call != caller && call.simplyCovered && (call.deeplyCovered != turnedOn)
 									&& call.getText().getLongString().contains(routineName)) {
 								// Note that this will only return a result for single-line Calls
 								Function callee = call.getCalledRoutine();
@@ -2703,11 +2704,20 @@ public class Executor implements Runnable
 								if (callee != null
 										&& routineName.equals(callee.getName())
 										&& sub.acceptsArgCount(callee.paramCount()) >= 0) {
-									call.deeplyCovered = true;
-									call.checkTestCoverage(true);
+									call.deeplyCovered = turnedOn;
+									if (turnedOn) {
+										call.checkTestCoverage(true);	// May turn the owning root covered
+									}
+									else {
+										Element parent = call.parent;
+										while (parent != null) {
+											parent.deeplyCovered = false;
+											parent = parent.parent;
+										}
+									}
 								}
 								// Now cater for the rare multi-line Calls as well
-								else {
+								else if (callee == null) {
 									StringList unbrokenText = call.getUnbrokenText();
 									// If the Call has less than two lines now then it must be defective
 									boolean someUncovered = unbrokenText.count() < 2;
@@ -2726,6 +2736,9 @@ public class Executor implements Runnable
 													someUncovered = true;
 												}
 											}
+											else if (!turnedOn) {
+												someUncovered = true;
+											}
 										}
 										else {
 											// The line is syntactically incorrect
@@ -2733,24 +2746,32 @@ public class Executor implements Runnable
 										}
 									}
 									if (!someUncovered) {
-										call.deeplyCovered = true;
-										call.checkTestCoverage(true);
+										call.deeplyCovered = turnedOn;
+										if (turnedOn) {
+											call.checkTestCoverage(true);	// May turn the owning root covered
+										}
+										else {
+											Element parent = call.parent;
+											while (parent != null) {
+												parent.deeplyCovered = false;
+												parent = parent.parent;
+											}
+										}
 									}
 								}
 							}
 						}
-						// This may cause some chain reaction...
-						if (dependent.isSubroutine() && dependent.isTestCovered(true)) {
-							System.out.println("Chain propagation for " + dependent);	// DEBUG
+						// If the searched Root was turned deeply covered then we have to handle its references, too
+						if (dependent.isSubroutine() && dependent.isTestCovered(true) != wasDeeplyCovered) {
+							//System.out.println("Chain propagation for " + dependent);	// DEBUG
 							newCoveredSubs.add(dependent);
 						}
 					}
 				}
 			}
 			//long after = System.currentTimeMillis();	// DEBUG
-			//System.out.println("Time for " + root + ": " + (after - before) + " ms");
+			//System.out.println("Time for " + turnedSub + ": " + (after - before) + " ms");
 		}
-		return newCoveredSubs;
 	}
 	// END KGU#1036 2024-11-24
 	

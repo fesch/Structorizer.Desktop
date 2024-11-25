@@ -1817,9 +1817,9 @@ public abstract class Element {
 	/**
 	 * In test coverage mode, sets the local tested flag if element is fully covered
 	 * and then recursively checks test coverage upwards all ancestry if
-	 * _propagateUpwards is true (otherwise it would be postponed to the termination
-	 * of the superstructure).
-	 * @param _propagateUpwards if true then the change is immediately propagated  
+	 * {@code _propagateUpwards} is {@code true} (otherwise it would be postponed to
+	 * the termination of the superstructure).
+	 * @param _propagateUpwards if {@code true} then the change is immediately propagated  
 	 */
 	public void checkTestCoverage(boolean _propagateUpwards)
 	{
