@@ -61,9 +61,9 @@ import lu.fisch.structorizer.locales.Locale;
 /**
  * Lightweight class holding both user-specific GUI designations for Element types
  * and locale-specific default Element names available for message resolution.
- * Provides basic string processing methods to replace element name placeholders by
- * current external element names. 
- * Specific placeholders {@code "@[a-p]"} in message patterns mark by what Element
+ * Provides basic string processing methods to replace element name place holders
+ * by current external element names.<br/>
+ * Specific place holders {@code "@[a-p]"} in message patterns mark by what Element
  * caption this is required to be substituted where the letter stands for:<br/>
  * a - Instruction<br/>
  * b - Alternative<br/>
@@ -82,6 +82,10 @@ import lu.fisch.structorizer.locales.Locale;
  * o - Sub (Root type)<br/>
  * p - Includable (Root type)<br/>
  * q - Try<br/>
+ * <b>Note:</b> All behaviour is static. Where the provision of an instance
+ * is absolutely unavoidable use {@code ElementNames.getInstance()} rather
+ * than {@code new ElementNames()} to obtain such a singleton instance!
+ * 
  * @author Kay Gürtzig
  */
 @SuppressWarnings("serial")
@@ -118,6 +122,7 @@ public class ElementNames extends Component {
 	};
 	// END KGU#709 2019-06-07
 
+	/** The singleton instance */
 	private static ElementNames instance = null;
 	
 	/** Maps the Element class names (more correctly, the place holder keys) to their index */
@@ -183,6 +188,12 @@ public class ElementNames extends Component {
 			// END KGU#686 2019-03-17
 	};
 
+	/**
+	 * Provides the singleton instance for this class. In case there hadn't
+	 * been one yet, creates it.
+	 * 
+	 * @return the singleton instance of this class.
+	 */
 	public static ElementNames getInstance()
 	{
 		if (instance == null) {

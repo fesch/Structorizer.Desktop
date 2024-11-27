@@ -104,6 +104,12 @@ import lu.fisch.structorizer.locales.LangTextHolder;
 import lu.fisch.structorizer.parsers.CodeParser;
 import lu.fisch.utils.StringList;
 
+/**
+ * This is the basic dialog for editing an element and some of its properties
+ * 
+ * @author Robert Fisch
+ * @author Kay Gürtzig
+ */
 @SuppressWarnings("serial")
 public class InputBox extends LangDialog implements ActionListener, KeyListener {
 	
@@ -846,6 +852,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
     /**
      * Allows a subclass to add additional controls to the left of the font button
      * panel. Must return the number of columns created.
+     * 
      * @param _panel - the panel where the extra controls may be added
      * @param _gbc - the layout constraints
      * @param _maxGridX - the gridX value InputBox will claim (we must stay left of it)
@@ -1048,7 +1055,8 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
     // START KGU#916 2021-01-24: Enh. #915 Support for tables in subclasses
     /**
      * Determines the required maximum rendering width for column {@code _colNo} of
-     * {@link JTable} {@code _table} and fixes it as maximum and preferred width 
+     * {@link JTable} {@code _table} and fixes it as maximum and preferred width
+     * 
      * @param _table - the {@link JTable} to be optimized
      * @param _colNo - index of the interesting column (typically 0)
      * @return the determined width 
@@ -1068,6 +1076,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
      * Determines the required dimension of the given table {@code _table} in
      * order to display all rows and columns. If {@code _optimizeCol0Width} is
      * {@code true} then will adjust the width of the first column.
+     * 
      * @param _table - The {@link JTable} to be analysed
      * @param _optimizeCol0width - whether the first column width is to be
      *      optimized for the contained values.

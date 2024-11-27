@@ -39,7 +39,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017-04-27  Enh. #354: New option logDir, all layouts fundamentally revised
  *      Kay Gürtzig     2017-05-09  Issue #400: keyListener at all controls 
  *      Kay Gürtzig     2017-06-20  Enh. #354/#357: generator-specific option mechanism implemented
- *      Kay Gürtzig     2018-07-13  Issue #557: New limitation option for the number of imported roots to be displayed
+ *      Kay Gürtzig     2018-07-13  Issue #557: New limitation option for the number of imported roots to
+ *                                  be displayed
  *      Kay Gürtzig     2018-10-26  Enh. #419: New line length limitation option
  *      Kay Gürtzig     2019-03-29  Issue #557, #718: Limit for the max. number of roots could be enlarged
  *      Kay Gürtzig     2020-03-09  Issue #833: New option for the insertion of optional keywords (e.g. "preAlt")
@@ -86,15 +87,16 @@ import lu.fisch.structorizer.locales.LangTextHolder;
 import lu.fisch.structorizer.parsers.GENParser;
 
 /**
- * This Dialog allows to control certain settings for the file import.
- * @author kay
+ * This dialog allows to control certain settings for the file import.
+ * 
+ * @author Kay Gürtzig
  */
 @SuppressWarnings("serial")
 public class ImportOptionDialog extends LangDialog {
-	
-	// START KGU#701 2019-03-29: Issues #557, #718
-	private static final int MAX_DIAGRAMS = 300;	// was 150 before, no longer needed so strict
-	// END KGU#701 2019-03-29
+
+    // START KGU#701 2019-03-29: Issues #557, #718
+    private static final int MAX_DIAGRAMS = 300;	// was 150 before, no longer needed so strict
+    // END KGU#701 2019-03-29
 
     public boolean goOn = false;
 
@@ -498,8 +500,7 @@ public class ImportOptionDialog extends LangDialog {
         // END KGU#287 2017-01-09
 
         pack();
-        
-        
+
     }// </editor-fold>//GEN-END:initComponents
 
     // START KGU#416 2017-06-20: Enh. #354,#357
@@ -610,7 +611,9 @@ public class ImportOptionDialog extends LangDialog {
     /**
      * Returns a vector of the titles of all available Code Parsers. The list may be
      * restricted to those that provide specific options by {@code withOptionsOnly}
-     * @param withOptionsOnly - if true then only the titles of parsers with options will be returned
+     * 
+     * @param withOptionsOnly - if true then only the titles of parsers with options
+     *    will be returned
      * @return The parser titles (actually rather language names)
      */
     private Vector<String> getCodeParserNames(boolean withOptionsOnly)

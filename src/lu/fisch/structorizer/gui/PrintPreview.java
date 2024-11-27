@@ -32,9 +32,10 @@ package lu.fisch.structorizer.gui;
  *
  *      Author          Date			Description
  *      ------			----			-----------
- *      Bob Fisch       2008.01.27      First Issue
- *      Kay Gürtzig     2017.11.06      Enh. #456 Orientation switching reactivated, margin configuration added.
- *      Kay Gürtzig     2018.03.22      Issue #463 Console output replaced with logging mechanism
+ *      Bob Fisch       2008-01-27      First Issue
+ *      Kay Gürtzig     2017-11-06      Enh. #456 Orientation switching reactivated, margin configuration
+ *                                      added.
+ *      Kay Gürtzig     2018-03-22      Issue #463 Console output replaced with logging mechanism
  *
  ******************************************************************************************************
  *
@@ -56,6 +57,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 /**
+ * Configurable print preview with print function
+ * 
  * @author Bob Fisch
  */
 @SuppressWarnings("serial")
@@ -107,6 +110,9 @@ public class PrintPreview extends LangDialog implements Runnable{
 		initComponents();
 	}
 	
+	/**
+	 * Sets up the GUI components
+	 */
 	private void initComponents() {
 		// JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents
 		// Generated using JFormDesigner Evaluation license - Bob Fisch
@@ -487,8 +493,11 @@ public class PrintPreview extends LangDialog implements Runnable{
 	}
 
 	/**
-	 * Sets field {@link #m_preview} to a new {@link PreviewContainer}, generates the target pages and adds them to it. 
-	 * @param scale - a rough scale factor for the entire preview (not just its content!) in percent
+	 * Sets field {@link #m_preview} to a new {@link PreviewContainer}, generates
+	 * the target pages and adds them to it.
+	 * 
+	 * @param scale - a rough scale factor for the entire preview (not just its
+	 *    content!) in percent
 	 */
 	protected void generatePreviewPages(int scale) {
 		int w = (int)(m_wPage * scale / 100);

@@ -36,14 +36,13 @@ package lu.fisch.structorizer.gui;
  *
  ******************************************************************************************************
  *
- *      Comment:		
+ *      Comment:		Not actually used, analysis is done via Root.analyse()
  *
  ******************************************************************************************************///
 
 import lu.fisch.structorizer.elements.*;
 
 import java.util.*;
-
 
 import javax.swing.*;
 

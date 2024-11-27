@@ -95,10 +95,12 @@ public class LangFrame extends JFrame {
     
     // START KGU#631 2019-01-08: Issue #664 We need a handy way to decide whther he application is closing
     /**
-     * Subclasses that can represent the main class (and thread) of an application should
-     * override (re-implement) this method to return true.<br/>
+     * Subclasses that can represent the main class (and thread) of an application
+     * should override (re-implement) this method to return {@code true}.<br/>
      * Relevant for the {@link WindowListener#windowClosing()} event.
-     * @return true if this object represents the running application. Default is false.
+     * 
+     * @return {@code true} if this object represents the running application.
+     *    Default is {@code false}.
      */
     public boolean isApplicationMain()
     {

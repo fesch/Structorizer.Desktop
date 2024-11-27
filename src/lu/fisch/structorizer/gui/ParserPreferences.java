@@ -69,6 +69,9 @@ import javax.swing.border.*;
 
 
 /**
+ * Preferences dialog for the configuration of keywords for the element content
+ * parsing.
+ * 
  * @author Robert Fisch
  */
 @SuppressWarnings("serial")
@@ -174,6 +177,9 @@ public class ParserPreferences extends LangDialog {
 		initComponents();
 	}*/
 
+	/**
+	 * Sets up the GUI components
+	 */
 	private void initComponents() {
 		dialogPane = new JPanel();
 		// START KGU#657 2019-02-17: Issue #684 - new check for mandatory fields
@@ -528,6 +534,7 @@ public class ParserPreferences extends LangDialog {
 		// END KGU#323 2019-03-03
 	}
 
+	/** Callback for the OK button */
 	public void done()
 	{
 		HashSet<JTextField> conflictingFields = null;	// conflicting text fields
@@ -607,10 +614,11 @@ public class ParserPreferences extends LangDialog {
 
 	// START KGU#323 2019-03-03: Enh. #327 Offer localized sets of parser keywords
 	/**
-	 * Raises a pop-up menu next to the button "fetch from locale" containing menu items for
-	 * every locale providing at least one non-empty parser keyword in section "Keywords".
-	 * If the pop-up menu hadn't been realised before then it will be built here (lazy
-	 * initialisation).
+	 * Raises a pop-up menu next to the button "fetch from locale" containing
+	 * menu items for every locale providing at least one non-empty parser
+	 * keyword in section "Keywords".<br/>
+	 * If the pop-up menu hadn't been realised before then it will be built
+	 * here (lazy initialisation).
 	 */
 	protected void showLocalePulldown() {
 		if (popupLocales == null) {
@@ -645,8 +653,9 @@ public class ParserPreferences extends LangDialog {
 	/**
 	 * Checks if the given {@code locale} provides at least one non-empty localised value
 	 * in the "Keywords" section.
-	 * @param locale
-	 * @return true if we may expect some keyword entry from the locale 
+	 * 
+	 * @param locale - the {@link Locale} to be checked
+	 * @return {@code true} if we may expect some keyword entry from the locale 
 	 */
 	private boolean hasParserKeywords(Locale locale) {
 		for (String key: locale.getKeyList("Keywords")) {
@@ -660,7 +669,9 @@ public class ParserPreferences extends LangDialog {
 	/**
 	 * Fetches all available keywords matching one of the created edt* {@link JTextField}s
 	 * from the {@link Locale} specified by {@code localeName}.
-	 * @param locName - name of the source locale (which is not necessarily the current locale)
+	 * 
+	 * @param locName - name of the source locale (which is not necessarily the
+	 *    current locale)
 	 */
 	protected void fetchFromLang(String locName) {
 		Locale locale = Locales.getInstance().getLocale(locName);

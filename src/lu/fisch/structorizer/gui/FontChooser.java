@@ -37,7 +37,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016-11-02      Issue #81: Scaling Factor considered (DPI awareness workarond)
  *      Kay Gürtzig     2016-11-09      Issue #81: Scaling factor no longer rounded, ensured to be >= 1
  *      Kay Gürtzig     2017-05-09      Issue #400: commit field OK introduced, keyListener at all controls
- *      Kay Gürtzig     2018-09-10      Issue #508: displays current size in label if not in list, re-pack after font change
+ *      Kay Gürtzig     2018-09-10      Issue #508: displays current size in label if not in list, re-pack
+ *                                      after font change
  *      Kay Gürtzig     2018-12-19      Bugfix #650: Fix #508 had to be revised for Java functionality changes
  *      Kay Gürtzig     2021-01-26      Issue #400: keyListener applied to cbFixPadding
  *
@@ -74,6 +75,8 @@ import javax.swing.event.*;
  */
 
 /**
+ * Preference dialog for the font, its size and font-related sizing aspects
+ * 
  * @author Robert Fisch
  */
 @SuppressWarnings("serial")
@@ -133,6 +136,9 @@ public class FontChooser extends LangDialog
 		initComponents();
 	}*/
 
+	/**
+	 * Sets up the GUI components.
+	 */
 	private void initComponents() {
 		// JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents
 		// Generated using JFormDesigner Evaluation license - Robert Fisch
@@ -341,6 +347,11 @@ public class FontChooser extends LangDialog
 		btnOK.addActionListener(actionListener);
 	}
 	
+	/**
+	 * Identifies and returns the currently selected font for the element content.
+	 * 
+	 * @return the current Font (by default Helvetica 12)
+	 */
 	public Font getCurrentFont()
 	{	
 		// Provide default font (Helvetica 12 is usually both available and suited)
@@ -373,6 +384,9 @@ public class FontChooser extends LangDialog
 		return font;
 	}
 	
+	/**
+	 * Adapts the current selection to the given {@code font} (if possible).
+	 */
 	public void setFont(Font font)
 	{
 		if (font == null) font = lblTest.getFont();
@@ -426,11 +440,19 @@ public class FontChooser extends LangDialog
 	}
 	
 	// START KGU#494 2018-09-10: Issue #508
+	/**
+	 * @return {@code true} if fix (i.e. font-independent) padding is ticked.
+	 */
 	public boolean getFixPadding()
 	{
 		return this.cbFixPadding.isSelected();
 	}
 
+	/**
+	 * Switches the fix padding checkbox according to {@code fixPadding}.
+	 * 
+	 * @param fixPadding - whether the checkbox is to be selected.
+	 */
 	public void setFixPadding(boolean fixPadding)
 	{
 		this.cbFixPadding.setSelected(fixPadding);

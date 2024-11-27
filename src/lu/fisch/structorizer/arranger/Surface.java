@@ -2921,7 +2921,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED | IRoutinePoolListener.RPC_SELECTION_CHANGED);
 		Vector<Mainform> mainforms = activeMainforms();
 		if (form != null) {
-			if (!mainforms.contains(form) && !form.isStandalone() && (!ask || form.diagram.saveNSD(true))) {
+			if (!mainforms.contains(form) && !form.isApplicationMain() && (!ask || form.diagram.saveNSD(true))) {
 				// Form doesn't seem necessary any longer
 				form.dispose();
 				removeChangeListener(form);
@@ -3348,7 +3348,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// chance to save their currently maintained Root even if this was not arranged here.
 			if (goingToClose) {
 				for (Mainform form: mainforms) {
-					if (!form.isStandalone() && !handledRoots.contains(form.getRoot())) {
+					if (!form.isApplicationMain() && !handledRoots.contains(form.getRoot())) {
 						form.diagram.saveNSD(!(goingToClose && Element.E_AUTO_SAVE_ON_CLOSE));
 					}
 				}

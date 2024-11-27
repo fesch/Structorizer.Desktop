@@ -20,8 +20,6 @@
 
 package lu.fisch.structorizer.gui;
 
-import lu.fisch.structorizer.elements.Element;
-
 /******************************************************************************************************
  *
  *      Author:         Bob Fisch
@@ -40,6 +38,7 @@ import lu.fisch.structorizer.elements.Element;
  *      Kay Gürtzig     2018-07-02      KGU#245: Code revision - serial controls converted to arrays
  *      Kay Gürtzig     2018-12-20      Enh. #653: defaultColors aligned to those of Element, btnReset added
  *      Kay Gürtzig     2022-07-07      Issue #653: Consistency with Element.defaultColors ensured
+ *      Kay Gürtzig     2024-11-27      Issue #653: resetColors() loop hardened against smaller colors size
  *
  ******************************************************************************************************
  *
@@ -54,7 +53,9 @@ import lu.fisch.structorizer.elements.Element;
  *
  ******************************************************************************************************///
 
+import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.locales.LangDialog;
+
 import java.awt.*;
 import java.awt.event.*;
 
@@ -65,9 +66,9 @@ import javax.swing.border.*;
  * Created by JFormDesigner on Mon Dec 31 20:03:51 CET 2007 (NO LONGER VALID!)
  */
 
-
-
 /**
+ * The colour preferences dialog
+ * 
  * @author Robert Fisch
  */
 @SuppressWarnings("serial")
@@ -79,27 +80,6 @@ public class Colors extends LangDialog {
 	// Generated using JFormDesigner Evaluation license - Robert Fisch
 	protected JPanel dialogPane;
 	protected JPanel contentPanel;
-	// START KGU#245 2018-07-02
-//	protected JLabel lblColor0;
-//	protected JPanel color0;
-//	protected JLabel lblColor1;
-//	protected JPanel color1;
-//	protected JLabel lblColor2;
-//	protected JPanel color2;
-//	protected JLabel lblColor3;
-//	protected JPanel color3;
-//	protected JLabel lblColor4;
-//	protected JPanel color4;
-//	protected JLabel lblColor5;
-//	protected JPanel color5;
-//	protected JLabel lblColor6;
-//	protected JPanel color6;
-//	protected JLabel lblColor7;
-//	protected JPanel color7;
-//	protected JLabel lblColor8;
-//	protected JPanel color8;
-//	protected JLabel lblColor9;
-//	protected JPanel color9;
 	protected final JLabel[] lblColors;
 	protected final JPanel[] colors;
 	private final static Color[] defaultColors =
@@ -116,8 +96,7 @@ public class Colors extends LangDialog {
 	//			new Color(255, 128,   0),	//Color(255, 153, 102),	// 8
 	//			new Color(128, 128, 255)	//Color(153, 102, 255)	// 9
 	//	};
-			 Element.getDefaultColors();
-	// END KGU#245 2018-07-02
+			Element.getDefaultColors();
 	protected JPanel buttonBar;
 	protected JButton btnOK;
 	// START KGU#622 2018-12-20: Enh. #653 - Allow to reset the colours to the defaults
@@ -133,6 +112,13 @@ public class Colors extends LangDialog {
 		initComponents();
 	}*/
 
+	/**
+	 * Creates a colour preferences dialog for {@code nColors} choosable
+	 * colours.
+	 * 
+	 * @param owner - the owning GUI Fame
+	 * @param nColors - the number of colours to be configured
+	 */
 	// START KGU#54 2018-07-02
 	//public Colors(Frame owner) 
 	public Colors(Frame owner, final int nColors) 
@@ -158,32 +144,10 @@ public class Colors extends LangDialog {
 		// Generated using JFormDesigner Evaluation license - Robert Fisch
 		dialogPane = new JPanel();
 		contentPanel = new JPanel();
-		// START KGU#245 2018-07-02: Code revision
-//		lblColor0 = new JLabel();
-//		color0 = new JPanel();
-//		lblColor1 = new JLabel();
-//		color1 = new JPanel();
-//		lblColor2 = new JLabel();
-//		color2 = new JPanel();
-//		lblColor3 = new JLabel();
-//		color3 = new JPanel();
-//		lblColor4 = new JLabel();
-//		color4 = new JPanel();
-//		lblColor5 = new JLabel();
-//		color5 = new JPanel();
-//		lblColor6 = new JLabel();
-//		color6 = new JPanel();
-//		lblColor7 = new JLabel();
-//		color7 = new JPanel();
-//		lblColor8 = new JLabel();
-//		color8 = new JPanel();
-//		lblColor9 = new JLabel();
-//		color9 = new JPanel();
 		for (int i = 0; i < colors.length; i++) {
 			lblColors[i] = new JLabel();
 			colors[i] = new JPanel();
 		}
-		// END KGU#245 2018-07-02
 		buttonBar = new JPanel();
 		btnOK = new JButton();
 		// START KGU#622 2018-12-20: Enh. #653
@@ -211,130 +175,7 @@ public class Colors extends LangDialog {
 
 			//======== contentPanel ========
 			{
-				// START KGU#245 2018-07-02
-//				contentPanel.setLayout(new GridLayout(10, 2, 8, 8));
-//
-//				//---- lblColor0 ----
-//				lblColor0.setText("Color 0");
-//				contentPanel.add(lblColor0);
-//
-//				//======== color0 ========
-//				{
-//					color0.setBackground(Color.white);
-//					color0.setBorder(new LineBorder(Color.black));
-//					color0.setPreferredSize(new Dimension(100, 7));
-//					color0.setLayout(new BorderLayout());
-//				}
-//				contentPanel.add(color0);
-//
-//				//---- lblColor1 ----
-//				lblColor1.setText("Color 1");
-//				contentPanel.add(lblColor1);
-//
-//				//======== color1 ========
-//				{
-//					color1.setBackground(new Color(255, 204, 204));
-//					color1.setBorder(new LineBorder(Color.black));
-//					color1.setLayout(new BorderLayout());
-//				}
-//				contentPanel.add(color1);
-//
-//				//---- lblColor2 ----
-//				lblColor2.setText("Color 2");
-//				contentPanel.add(lblColor2);
-//
-//				//======== color2 ========
-//				{
-//					color2.setBackground(new Color(255, 255, 153));
-//					color2.setBorder(new LineBorder(Color.black));
-//					color2.setLayout(new BorderLayout());
-//				}
-//				contentPanel.add(color2);
-//
-//				//---- lblColor3 ----
-//				lblColor3.setText("Color 3");
-//				contentPanel.add(lblColor3);
-//
-//				//======== color3 ========
-//				{
-//					color3.setBackground(new Color(153, 255, 153));
-//					color3.setBorder(new LineBorder(Color.black));
-//					color3.setLayout(new BorderLayout());
-//				}
-//				contentPanel.add(color3);
-//
-//				//---- lblColor4 ----
-//				lblColor4.setText("Color 4");
-//				contentPanel.add(lblColor4);
-//
-//				//======== color4 ========
-//				{
-//					color4.setBackground(new Color(153, 204, 255));
-//					color4.setBorder(new LineBorder(Color.black));
-//					color4.setLayout(new BorderLayout());
-//				}
-//				contentPanel.add(color4);
-//
-//				//---- lblColor5 ----
-//				lblColor5.setText("Color 5");
-//				contentPanel.add(lblColor5);
-//
-//				//======== color5 ========
-//				{
-//					color5.setBackground(new Color(153, 153, 255));
-//					color5.setBorder(new LineBorder(Color.black));
-//					color5.setLayout(new BorderLayout());
-//				}
-//				contentPanel.add(color5);
-//
-//				//---- lblColor6 ----
-//				lblColor6.setText("Color 6");
-//				contentPanel.add(lblColor6);
-//
-//				//======== color6 ========
-//				{
-//					color6.setBackground(new Color(255, 153, 255));
-//					color6.setBorder(new LineBorder(Color.black));
-//					color6.setLayout(new BorderLayout());
-//				}
-//				contentPanel.add(color6);
-//
-//				//---- lblColor7 ----
-//				lblColor7.setText("Color 7");
-//				contentPanel.add(lblColor7);
-//
-//				//======== color7 ========
-//				{
-//					color7.setBackground(new Color(204, 204, 204));
-//					color7.setBorder(new LineBorder(Color.black));
-//					color7.setLayout(new BorderLayout());
-//				}
-//				contentPanel.add(color7);
-//
-//				//---- lblColor8 ----
-//				lblColor8.setText("Color 8");
-//				contentPanel.add(lblColor8);
-//
-//				//======== color8 ========
-//				{
-//					color8.setBackground(new Color(255, 153, 102));
-//					color8.setBorder(new LineBorder(Color.black));
-//					color8.setLayout(new BorderLayout());
-//				}
-//				contentPanel.add(color8);
-//
-//				//---- lblColor9 ----
-//				lblColor9.setText("Color 9");
-//				contentPanel.add(lblColor9);
-//
-//				//======== color9 ========
-//				{
-//					color9.setBackground(new Color(153, 102, 255));
-//					color9.setBorder(new LineBorder(Color.black));
-//					color9.setLayout(new BorderLayout());
-//				}
-//				contentPanel.add(color9);
-				
+
 				contentPanel.setLayout(new GridLayout(colors.length, 2, 8, 8));
 
 				for (int i = 0; i < colors.length; i++) {
@@ -360,7 +201,6 @@ public class Colors extends LangDialog {
 					contentPanel.add(colors[i]);
 					
 				}
-				// END KGU#245 2018-07-02
 			}
 			dialogPane.add(contentPanel, BorderLayout.CENTER);
 
@@ -402,9 +242,9 @@ public class Colors extends LangDialog {
 		}
 		contentPane.add(dialogPane, BorderLayout.CENTER);
 		
-        // START KGU#287 2017-01-11: Issues #81/#330 GUI scaling
-        GUIScaler.rescaleComponents(this);
-        // END KGU#287 2017-01-11
+		// START KGU#287 2017-01-11: Issues #81/#330 GUI scaling
+		GUIScaler.rescaleComponents(this);
+		// END KGU#287 2017-01-11
 		
 		pack();
 		btnOK.requestFocusInWindow();
@@ -481,26 +321,14 @@ public class Colors extends LangDialog {
 			public void mouseReleased(MouseEvent e) {}
 			public void mousePressed(MouseEvent e) {}
 		};
-		// START KGU#245 2018-07-02: Code revision
-//		color0.addMouseListener(mouseListener);
-//		color1.addMouseListener(mouseListener);
-//		color2.addMouseListener(mouseListener);
-//		color3.addMouseListener(mouseListener);
-//		color4.addMouseListener(mouseListener);
-//		color5.addMouseListener(mouseListener);
-//		color6.addMouseListener(mouseListener);
-//		color7.addMouseListener(mouseListener);
-//		color8.addMouseListener(mouseListener);
-//		color9.addMouseListener(mouseListener);
 		for (int i = 0; i < colors.length; i++) {
 			colors[i].addMouseListener(mouseListener);
 		}
-		// END KGU#245 2018-07-02
 	}
 
 	// START KGU#622 2018-12-20: Enh. #653
 	protected void resetColors() {
-		for (int i = 0; i < defaultColors.length; i++) {
+		for (int i = 0; i < Math.min(colors.length, defaultColors.length); i++) {
 			colors[i].setBackground(defaultColors[i]);
 		}
 	}

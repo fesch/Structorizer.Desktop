@@ -203,20 +203,12 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	protected final JMenu menuFileExport = new JMenu("Export");
 	// Submenu of "File -> Export"
 	protected final JMenu menuFileExportPicture = new JMenu("Picture");
-	// START KGU#486 2018-01-18: Issue #4 icon redesign
-//	protected final JMenuItem menuFileExportPicturePNG = new JMenuItem("PNG ...",IconLoader.getIcon(32));
-//	protected final JMenuItem menuFileExportPicturePNGmulti = new JMenuItem("PNG (multiple) ...",IconLoader.getIcon(32));
-//	protected final JMenuItem menuFileExportPictureEMF = new JMenuItem("EMF ...",IconLoader.getIcon(32));
-//	protected final JMenuItem menuFileExportPictureSWF = new JMenuItem("SWF ...",IconLoader.getIcon(32));
-//	protected final JMenuItem menuFileExportPicturePDF = new JMenuItem("PDF ...",IconLoader.getIcon(32));
-//	protected final JMenuItem menuFileExportPictureSVG = new JMenuItem("SVG ...",IconLoader.getIcon(32));
 	protected final JMenuItem menuFileExportPicturePNG = new JMenuItem("PNG ...",IconLoader.getIcon(88));
 	protected final JMenuItem menuFileExportPicturePNGmulti = new JMenuItem("PNG (multiple) ...",IconLoader.getIcon(88));
 	protected final JMenuItem menuFileExportPictureEMF = new JMenuItem("EMF ...",IconLoader.getIcon(88));
 	//protected final JMenuItem menuFileExportPictureSWF = new JMenuItem("SWF (deprecated!) ...",IconLoader.getIcon(88)); // Obsolete #1173
 	protected final JMenuItem menuFileExportPicturePDF = new JMenuItem("PDF ...",IconLoader.getIcon(88));
 	protected final JMenuItem menuFileExportPictureSVG = new JMenuItem("SVG ...",IconLoader.getIcon(88));
-	// END KGU#486 2018-01-18
 	// START KGU#396 2020-03-03: Enh. #440
 	protected final JMenu menuFileExportPap = new JMenu("PapDesigner");
 	protected final JMenuItem menuFileExportPap1966 = new JMenuItem("DIN 66001 / 1966 ...");
@@ -2030,7 +2022,7 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	@Override
 	public void doButtons()
 	{
-		if(NSDControl!=null)
+		if (NSDControl != null)
 		{
 			NSDControl.doButtons();
 		}

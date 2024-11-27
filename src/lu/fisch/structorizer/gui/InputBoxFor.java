@@ -102,6 +102,7 @@ import lu.fisch.utils.StringList;
 
 /**
  * Enhanced and specialized element editor for FOR loops
+ * 
  * @author Kay Gürtzig
  */
 @SuppressWarnings("serial")
@@ -162,31 +163,33 @@ public class InputBoxFor extends InputBox implements ItemListener {
 	private int prevTxtIncrContent = 1;		// Workaround for poor behaviour of JFormattedTextField;
 
 	/**
-	 * Constructs the dedicated editor for FOR loops 
-	 * @param owner
-	 * @param modal
+	 * Constructs the dedicated editor for FOR loops
+	 * 
+	 * @param owner - the owning GUI Frame
+	 * @param modal - whether this dialog is to behave as modal dialog
 	 */
 	public InputBoxFor(Frame owner, boolean modal) {
 		super(owner, modal);
 	}
 	
-    // START KGU#169 2016-07-14: Enh. #180 (see also: #39, #142) - helps to enable focus control
-    // START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround)
-    @Override
-    protected void setPreferredSize(double scaleFactor) {
-        setSize((int)(IBF_PREFERRED_WIDTH * scaleFactor), (int)(PREFERRED_SIZE[1] * scaleFactor));
-    }
-    // END KGU#287 2016-11-02
-    // END KGU#169 2016-07-14
+	// START KGU#169 2016-07-14: Enh. #180 (see also: #39, #142) - helps to enable focus control
+	// START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround)
+	@Override
+	protected void setPreferredSize(double scaleFactor) {
+		setSize((int)(IBF_PREFERRED_WIDTH * scaleFactor), (int)(PREFERRED_SIZE[1] * scaleFactor));
+	}
+	// END KGU#287 2016-11-02
+	// END KGU#169 2016-07-14
 
-    
-    /**
-     * Subclassable method to add specific stuff to the Panel top
-     * @param _panel the panel to be enhanced
-     * @param pnPanel0c the layout constraints
-     * @return number of lines (y cell units) inserted
-     */
-    @Override
+
+	/**
+	 * Subclassable method to add specific stuff to the Panel top.
+	 * 
+	 * @param _panel the panel to be enhanced
+	 * @param pnPanel0c the layout constraints
+	 * @return number of lines (y cell units) inserted
+	 */
+	@Override
 	protected int createPanelTop(JPanel _panel, GridBagLayout _gb, GridBagConstraints _gbc)
 	{
 		// START KGU#287 2016-11-11: Issue #81 (DPI awareness workaround
@@ -866,8 +869,10 @@ public class InputBoxFor extends InputBox implements ItemListener {
 	
 	/**
 	 * May be used to find out whether there is an equivalence between the full text
-	 * content and the loop-style-specific input fields 
-	 * @return true if full text and field contents correspond (according to the loop style)
+	 * content and the loop-style-specific input fields.
+	 * 
+	 * @return {@code true} if full text and field contents correspond (according to
+	 *    the loop style)
 	 */
 	public boolean isLoopDataConsistent()
 	{

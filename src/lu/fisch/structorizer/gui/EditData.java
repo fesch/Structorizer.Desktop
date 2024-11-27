@@ -26,14 +26,14 @@ package lu.fisch.structorizer.gui;
  *      Author:         Bob Fisch
  *
  *      Description:    This is a simple data class, defining what data the edit dialog
- *						of an element is returning.
+ *                      of an element is returning.
  *
  ******************************************************************************************************
  *
  *      Revision List
  *
- *      Author          Date			Description
- *      ------			----			-----------
+ *      Author          Date            Description
+ *      ------          ----            -----------
  *      Bob Fisch       2007-12-29      First Issue
  *      Kay Gürtzig     2015-10-12      Field for breakpoint control added (KGU#43)
  *      Kay Gürtzig     2015-10-25      Enh. #10: Fields for specific For loop support (KGU#3)
@@ -57,6 +57,12 @@ import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.elements.RootAttributes;
 import lu.fisch.utils.*;
 
+/**
+ * Simple structure for the transfer of data between element and edit dialog
+ * (some kind of InbutBox).
+ * 
+ * @author Robert Fisch
+ */
 public class EditData {
 
 	public String title = new String();

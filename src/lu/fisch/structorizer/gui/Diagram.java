@@ -23,7 +23,7 @@ package lu.fisch.structorizer.gui;
  *
  *      Author:         Bob Fisch
  *
- *      Description:    This class represents the visual diagram itself.
+ *      Description:    This class represents the diagram view and editing area itself.
  *
  ******************************************************************************************************
  *
@@ -321,7 +321,6 @@ import javax.swing.text.Highlighter.HighlightPainter;
 
 import org.freehep.graphicsio.emf.*;
 import org.freehep.graphicsio.pdf.*;
-import org.freehep.graphicsio.swf.*;
 
 import lu.fisch.diagrcontrol.DiagramController;
 import lu.fisch.graphics.*;
@@ -348,7 +347,7 @@ import org.freehep.graphicsio.svg.SVGGraphics2D;
 
 /**
  * Represents the working area of the Structorizer. Holds the current
- * Nassi-Shneiderman diagram and manages all editing ativities as well as
+ * Nassi-Shneiderman diagram and manages all editing activities as well as
  * loading, saving, import, export etc.
  *
  * @author Robert Fisch

@@ -72,6 +72,7 @@ import lu.fisch.structorizer.locales.LangTextHolder;
 
 /**
  * Dialog for the configuration of diagram saving options
+ * 
  * @author Kay Gürtzig
  *
  */
@@ -305,6 +306,7 @@ public class SaveOptionDialog extends LangDialog implements ActionListener, Wind
 	/**
 	 * Returns a File object for the license directory (which is identical to the
 	 * ini directory)
+	 * 
 	 * @return the File object of the directory for license files
 	 */
 	private File getLicenseDirectory()

@@ -145,9 +145,10 @@ import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
 
 /**
- * @author Kay Gürtzig
  * A dialog providing the usual tools to search a (sub) diagram for Elements matching certain string
  * patterns with the opportunity to replace the text parts by other patterns
+ * 
+ * @author Kay Gürtzig
  */
 @SuppressWarnings("serial")
 public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*implements WindowListener*/ {
@@ -1080,7 +1081,8 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 	}
 	
 	/**
-	 * Clears the given {@link StyledDocument} {@code doc} behind one of the preview text areas. 
+	 * Clears the given {@link StyledDocument} {@code doc} behind one of the preview text areas.
+	 * 
 	 * @param doc - the document to be emptied
 	 */
 	private void clearDoc(StyledDocument doc) {
@@ -1152,7 +1154,8 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 	
 	/**
 	 * Fills the document {@code doc} associated to {@link JTextPane} {@code txtPane} with the match preview
-	 * for the original {@link StringList} {@code txtLines}. 
+	 * for the original {@link StringList} {@code txtLines}.
+	 * 
 	 * @param textParts - source text split to matches and surrounding parts
 	 * @param doc - the target {@link StyledDocument} 
 	 * @param txtPane - the presenting {@link JTextPane}, to be enabled or disabled (according to {@code enable}) 
@@ -1221,6 +1224,7 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 	 * matching {@code pattern}, returns the split results and fills the matching substrings
 	 * into {@code realWords} (the name means that it contains the real strings matching
 	 * the patterns as needed for the preview highlighting.
+	 * 
 	 * @param text - the newline-separated source text as String
 	 * @param pattern - the search pattern as string
 	 * @param realWords - empty {@link StringList} to be filled with the matching substrings
@@ -1321,6 +1325,7 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 	 * matching {@code pattern} and fills the {@link StringList} {@code partList} with the
 	 * splitting results where the elements with even indices are the parts between the
 	 * matches and the elements with uneven indices are the matches themselves.
+	 * 
 	 * @param text - the newline-separated source text as String
 	 * @param partList - empty {@link StringList} to be filled with the splitting results
 	 * @param enabled - whether the search/replacement in this kind of text is enabled
@@ -1386,6 +1391,7 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 	/**
 	 * Enables or disables all element types (selects or unselects the corresponding
 	 * checkboxes) and updates button visibility.
+	 * 
 	 * @param toBeSelected - whether to select or unselect the checkboxes.
 	 */
 	protected void selectAllElementTypes(boolean toBeSelected)
@@ -1407,6 +1413,7 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 	 * possibly done a single replacement at the current matching position (if {@code replace} is true).
 	 * In case there is no {@link #currentNode}, the result tree will be refreshed
 	 * according to the current criteria.
+	 * 
 	 * @param evt - the triggering {@link ActionEvent}
 	 * @param replace - are replacements to be performed?
 	 * @param gotoNext - is the position to be moved to the next matching hit?
@@ -1611,7 +1618,8 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 	}
 	
 	/**
-	 * Initializes the result tree and sets {@link #currentNode} (if possible)
+	 * Initializes the result tree and sets {@link #currentNode} (if possible).
+	 * 
 	 * @see #updateResultTree()
 	 */
 	private void fillResultTree() {
@@ -1703,6 +1711,7 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 	/**
 	 * Action listener method for the "Replace All" button. Executes the find cycle
 	 * with replacement.
+	 * 
 	 * @param evt - the inducing event
 	 */
 	protected void replaceAllActionPerformed(ActionEvent evt) {
@@ -1725,9 +1734,12 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 	}
 
 	/**
-	 * Replaces one (= {@code pos}-th) or all matches within the given {@link StringList} {@code text}
+	 * Replaces one (= {@code pos}-th) or all matches within the given
+	 * {@link StringList} {@code text}.
+	 * 
 	 * @param splitText - the target text, already split.
-	 * @param all - whether all matches are to be replaced (then {@code pos} will be ignored)
+	 * @param all - whether all matches are to be replaced (then {@code pos}
+	 *    will be ignored)
 	 * @param pos - the number of the target match within the text otherwise
 	 * @return the replacement result as {@link StringList} of lines
 	 */
@@ -1778,8 +1790,9 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 	}
 
 	/**
-	 * Checks whether and how many matches of the configured search criteria are in the
-	 * given {@link Element} {@code _ele}.
+	 * Checks whether and how many matches of the configured search criteria are
+	 * in the given {@link Element} {@code _ele}.
+	 * 
 	 * @param _ele - the Structorizer element to be scrutinized.
 	 * @return number of matches within the relevant text fields.
 	 */
@@ -1805,6 +1818,7 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 	/**
 	 * Specific version of {@link #checkElementMatch(Element)} for the {@link #currentElement}
 	 * (which must be enabled)
+	 * 
 	 * @return number of matches in the current element (depending on current target settings)
 	 */
 	private int checkElementMatch()
@@ -1821,6 +1835,7 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 
 	/**
 	 * Determines the number of matches in the given {@link StringList} {@code text}
+	 * 
 	 * @param text - an element text or comment split into lines.
 	 * @return the number of matches
 	 */
@@ -1874,7 +1889,8 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 
 	/**
 	 * Item state change listener method for both the pattern combo boxes.
-	 * Ensures the new selected item is cached in the history
+	 * Ensures the new selected item is cached in the history.
+	 * 
 	 * @param evt - the inducing event
 	 */
 	protected void patternChanged(ItemEvent evt) {
@@ -1893,8 +1909,10 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 	}
 
 	/**
-	 * Updates the respective pattern history for the originating {@link JComboBox} {@code box}
-	 * and resets the find results if {@code box} is the combo box for the search patterns.
+	 * Updates the respective pattern history for the originating {@link JComboBox}
+	 * {@code box} and resets the find results if {@code box} is the combo box
+	 * for the search patterns.
+	 * 
 	 * @param box - the originating {@link JComboBox} 
 	 */
 	private void updatePatternList(JComboBox<String> box) {
@@ -1928,6 +1946,7 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 	/**
 	 * Refreshes the choice list of the given {@link JComboBox} {@code box} from
 	 * the cached history for that combobox.
+	 * 
 	 * @param _box the target combo-box or null if both comboboxes are to be filled.
 	 */
 	private void refillPatternCombos(JComboBox<String> _box)
@@ -1985,8 +2004,8 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 	}
 
 	/**
-	 * Updates the visibility or accessibility of the search scope ad result controls depending
-	 * on the current state
+	 * Updates the visibility or accessibility of the search scope ad result
+	 * controls depending on the current state
 	 */
 	protected void doButtonsScope()
 	{
@@ -2002,10 +2021,13 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 	}
 	
 	/**
-	 * Retrieves the matching elements in the given subsequence {@code _scope} and links them to a list.
-	 * THe restrieval is restricted to elements of one and the same {@link Root}.
+	 * Retrieves the matching elements in the given subsequence {@code _scope}
+	 * and links them to a list. The retrieval is restricted to elements of one
+	 * and the same {@link Root}.
+	 * 
 	 * @param _scope - linear subsequence of elements limiting the search scope
-	 * @param _deeply - whether the searh is to comprise all substructure (otherwise: flat)
+	 * @param _deeply - whether the search is to comprise all substructure
+	 *    (otherwise: flat)
 	 * @return ordered list of the elements matching the search criteria
 	 */
 	private LinkedList<Element> findElements(IElementSequence _scope, boolean _deeply)
@@ -2022,8 +2044,9 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 	}
 
 	/**
-	 * Has the given {@link Ini} instance {@code ini} save all relevant search criteria and
-	 * settings to the associated structorizer.ini file.
+	 * Has the given {@link Ini} instance {@code ini} save all relevant search
+	 * criteria and settings to the associated structorizer.ini file.
+	 * 
 	 * @param ini - instance of the {@link Ini} instance
 	 */
 	public void cacheToIni(Ini ini)
@@ -2064,8 +2087,8 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 	}
 	
 	/**
-	 * Ensures that certain listeners on LaF-specific components don't get lost by a
-	 * Look & Feel change.
+	 * Ensures that certain listeners on LaF-specific components don't get lost
+	 * by a Look & Feel change.
 	 */
 	public void adaptToNewLaF()
 	{

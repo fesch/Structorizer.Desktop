@@ -69,7 +69,7 @@ import javax.swing.border.*;
 
 /**
  * Structure preferences dialog, allows to configure default contents for the
- * different kinds of {@link Element}.
+ * different kinds of {@link Element}.<br/>
  * Originally created via JFormDesigner on Mon Dec 31 09:04:29 CET 2007
  * @author Robert Fisch
  */

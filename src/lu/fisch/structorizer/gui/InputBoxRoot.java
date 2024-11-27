@@ -78,6 +78,7 @@ import lu.fisch.utils.StringList;
 
 /**
  * Enhanced and specialized element editor for diagram Roots
+ * 
  * @author Kay Gürtzig
  */
 @SuppressWarnings("serial")
@@ -144,7 +145,8 @@ public class InputBoxRoot extends InputBox implements LangEventListener {
 
 	// START KGU#376 2017-06-30: Enh. #389
 	/**
-	 * Subclassable method to add specific stuff to the Panel top
+	 * Subclassable method to add specific stuff to the Panel top.
+	 * 
 	 * @param _panel the panel to be enhanced
 	 * @param pnPanel0c the layout constraints
 	 * @return number of lines (y cell units) inserted
@@ -319,6 +321,7 @@ public class InputBoxRoot extends InputBox implements LangEventListener {
 	/**
 	 * Adds additional controls to the left of the font button panel.
 	 * Returns the number of columns created.
+	 * 
 	 * @param _panel - the panel where the extra controls may be added
 	 * @param _gbc - a usable GridBagConstraints object 
 	 * @param _maxGridX - the gridX value InputBox will claim (we must stay left of it)
@@ -491,9 +494,11 @@ public class InputBoxRoot extends InputBox implements LangEventListener {
 
 	// START KGU#376 2017-07-01: Enh. #389 display-width-aware text setting
 	/**
-	 * Fills the Include List text area with the names of includable diagrams given
-	 * as {@code includeNames}
-	 * @param includeNames - a StringList holding a diagram name per line or null.
+	 * Fills the Include List text area with the names of includable diagrams
+	 * given as {@code includeNames}.
+	 * 
+	 * @param includeNames - a StringList holding a diagram name per line or
+	 *    {@code null}.
 	 */
 	public void setIncludeList(StringList includeNames)
 	{
@@ -532,8 +537,9 @@ public class InputBoxRoot extends InputBox implements LangEventListener {
 
 	/**
 	 * Extracts the items (names of includable diagrams) out of the multi-line
-	 * comma-separated text of this.txtIncludeList and returns them as a StringList.  
-	 * @return a StringList with a name per element or null
+	 * comma-separated text of this.txtIncludeList and returns them as a StringList.
+	 * 
+	 * @return a StringList with a name per element or {@code null}
 	 */
 	public StringList getIncludeList()
 	{

@@ -60,9 +60,10 @@ import lu.fisch.structorizer.locales.LangTextHolder;
 import lu.fisch.structorizer.locales.Locales;
 
 /**
- * Monitor dialog for a background parsing thread showing the current phase and possibly further progress info
+ * Monitor dialog for a background parsing thread showing the current phase and
+ * possibly further progress info
+ * 
  * @author Kay Gürtzig
- *
  */
 @SuppressWarnings("serial")
 public class CodeImportMonitor extends LangDialog implements PropertyChangeListener, ActionListener {
@@ -90,6 +91,14 @@ public class CodeImportMonitor extends LangDialog implements PropertyChangeListe
 	public static final LangTextHolder ttlImporting = new LangTextHolder("Importing % code...");
 	public static final LangTextHolder msgInterrupted = new LangTextHolder("Interrupted!");
 	
+	/**
+	 * Temporary dialog to inform about code import progress and allowing to abort
+	 * the import or decide about large amounts of imported diagrams
+	 * 
+	 * @param _owner - the main GUI Frame object of the controlling process
+	 * @param _worker - the code importing worker thread
+	 * @param _title - the dialog title
+	 */
 	public CodeImportMonitor(Frame _owner, SwingWorker<?,?> _worker, String _title)
 	{
 		super(_owner, true);
@@ -106,6 +115,9 @@ public class CodeImportMonitor extends LangDialog implements PropertyChangeListe
 		this.setVisible(true);
 	}
 
+	/**
+	 * Sets up the GUI components
+	 */
 	private void initComponents()
 	{
 		this.getContentPane();
@@ -240,7 +252,6 @@ public class CodeImportMonitor extends LangDialog implements PropertyChangeListe
 			this.dispose();
 		}
 	}
-	
-	
+
 
 }

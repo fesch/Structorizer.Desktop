@@ -24,14 +24,14 @@ package lu.fisch.structorizer.gui;
  *
  *      Author:         Bob Fisch
  *
- *      Description:    This class is a special speedbutton.
+ *      Description:    This class is a special speed button for colour choice.
  *
  ******************************************************************************************************
  *
  *      Revision List
  *
- *      Author          Date			Description
- *      ------			----			-----------
+ *      Author          Date            Description
+ *      ------          ----            -----------
  *      Bob Fisch       2007-12-31      First Issue
  *
  ******************************************************************************************************
@@ -44,7 +44,12 @@ import java.awt.*;
 
 import javax.swing.*;
 
-
+/**
+ * Special button for toolboxes, showing a specified colour for colouring
+ * purposes (e.g. of diagram elements or groups).
+ * 
+ * @author Robert Fisch
+ */
 @SuppressWarnings("serial")
 public class ColorButton extends JButton 
 {

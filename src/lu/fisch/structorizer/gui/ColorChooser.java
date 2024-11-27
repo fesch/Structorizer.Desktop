@@ -30,8 +30,8 @@ package lu.fisch.structorizer.gui;
  *
  *      Revision List
  *
- *      Author          Date			Description
- *      ------			----			-----------
+ *      Author          Date            Description
+ *      ------          ----            -----------
  *      Bob Fisch       2007-12-31      First Issue
  *
  ******************************************************************************************************
@@ -52,6 +52,8 @@ import javax.swing.border.*;
 
 
 /**
+ * Dialog presenting an opportunity to choose a colour
+ * 
  * @author Robert Fisch
  */
 @SuppressWarnings("serial")
@@ -96,8 +98,7 @@ public class ColorChooser extends LangDialog
 	
 	private void modalButtonActionPerformed(ActionEvent e) 
 	{
-		if (e.getSource()==btnOK) {RESULT=true;}
-		else {RESULT=false;}
+		RESULT = e.getSource() == btnOK;
 		setVisible(false);
 	}
 

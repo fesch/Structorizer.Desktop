@@ -99,7 +99,11 @@ import javax.swing.*;
 
 import lu.fisch.structorizer.locales.Locales;
 
-
+/**
+ * Class responsible for loading and scaling of all application icons.
+ * 
+ * @author Robert Fisch
+ */
 public class IconLoader {
 
 // START KGU 2021-01-09 Eventually disabled
@@ -243,6 +247,7 @@ public class IconLoader {
 			//"129_gnu.png"			// intended for #967 (ARM code export), but not used
 	};
 	
+	/** Array of supported icon sizes (in pixel) */
 	private static final int[] ICON_SIZES = {
 			16,
 			24,
@@ -450,7 +455,8 @@ public class IconLoader {
 	// END KGU 2020-04-02
 	
 	// START KGU#242 2016-09-05
-	public static HashMap<String, ImageIcon> icoLocales = new HashMap<String, ImageIcon>();
+	/** Cached locale icons */
+	private static HashMap<String, ImageIcon> icoLocales = new HashMap<String, ImageIcon>();
 	// END KGU#242 2016-09-05
 	
 	// START KGU#486 2018-01-25: Issues #4, #81
@@ -458,9 +464,12 @@ public class IconLoader {
 	 * New preferred icon retrieval mechanism to support qualitatively acceptable icon scaling
 	 * results and to facilitate the introduction of new icons (though it's going to get harder
 	 * to identify unused icons.)<br/>
-	 * The first call will cause the initialization of he icon cache.
+	 * The first call will cause the initialization of the icon cache.
+	 * 
 	 * @param iconNo - the index of he requested icon
-	 * @return the {@linkImageIcon} object for the requested icon if available, null otherwise
+	 * @return the {@linkImageIcon} object for the requested icon if available, {@code null}
+	 *    otherwise
+	 * 
 	 * @see #getIconImage(java.net.URL)
 	 * @see #getIconImage(String, double)
 	 * @see #setScaleFactor(double)
@@ -507,9 +516,11 @@ public class IconLoader {
 	// END KGU#486 2018-01-25
 
 	/**
-	 * Stores the given scale factor, clears the general icon cache (such that icon retrieval
-	 * refills it by lazy initialization with the new scale), and immediately rescales all
-	 * separately cached icons (e.g. product icon, locale icons).
+	 * Stores the given scale factor, clears the general icon cache (such that
+	 * icon retrieval refills it by lazy initialization with the new scale),
+	 * and immediately rescales all separately cached icons (e.g. product icon,
+	 * locale icons).
+	 * 
 	 * @param scale - the new scale factor.
 	 */
 	public static void setScaleFactor(double scale)
@@ -719,8 +730,10 @@ public class IconLoader {
 	/**
 	 * Produces a new, scaled {@link IconImage} from icon file at the given {@code url}
 	 * for the currently specified scale.
+	 * 
 	 * @param fileName - the file name of the icon file(s) in the cascaded icon folders.
 	 * @return the retrieved or scaled ImageIco
+	 * 
 	 * @see #getIcon(int)
 	 * @see #setScaleFactor(double)
 	 */
@@ -732,9 +745,11 @@ public class IconLoader {
 	/**
 	 * Produces a new, scaled {@link IconImage} from icon file at the given {@code url}
 	 * for the currently specified scale.
+	 * 
 	 * @param fileName - the file name of the icon file(s) in the cascaded icon folders;
 	 * @param extraFactor - additional (product-internal) scaling factor
-	 * @return the retrieved or scaled ImageIco
+	 * @return the retrieved or scaled {@link ImageIcon}
+	 * 
 	 * @see #getIcon(int)
 	 * @see #setScaleFactor(double)
 	 */
@@ -801,8 +816,10 @@ public class IconLoader {
 	/**
 	 * Produces a new, scaled {@link ImageIcon} from icon file at the given {@code url}
 	 * for the currently specified scale.
+	 * 
 	 * @param url - the source URL for the icon file.
 	 * @return A scaled {@link ImageIcon}, maybe a dummy item if the URL is null or illegal
+	 * 
 	 * @see #getIcon(int)
 	 * @see #getIconImage(java.net.URL,boolean)
 	 * @see #getIconImage(String)
@@ -817,9 +834,11 @@ public class IconLoader {
 	 * Produces a new, {@link ImageIcon} from icon file at the given {@code url}.
 	 * If {@code fixed} is {@code true} then the icon will be scaled for the
 	 * currently set {@link #scaleFactor}.
+	 * 
 	 * @param url - the source URL for the icon file.
 	 * @param fixed - if the icon is to be scaled with the current factor
 	 * @return An {@link ImageIcon}, maybe a dummy item if the URL is null or illegal
+	 * 
 	 * @see #getIcon(int)
 	 * @see #getIconImage(java.net.URL)
 	 * @see #getIconImage(String)
@@ -849,8 +868,10 @@ public class IconLoader {
 	/**
 	 * Produces a new, scaled {@link IconImage} from icon file at the given {@code url}
 	 * for the currently specified scale.
+	 * 
 	 * @param url - the source URL for the icon file.
-	 * @return
+	 * @return the scaled {@link ImageIcon}
+	 * 
 	 * @see #getIcon(int)
 	 * @see #setScaleFactor(double)
 	 */
@@ -880,9 +901,11 @@ public class IconLoader {
 	/**
 	 * Returns an ImageIcon version of src, which is magnified by length factor
 	 * {@code factor}. Uses method {@link #scaleTo(ImageIcon, int, int)}.
+	 * 
 	 * @param src - the source icon
 	 * @param factor - the magnification factor (values < 1 ignored)
 	 * @return the magnified icon
+	 * 
 	 * @see #scaleTo(ImageIcon, int, int)
 	 */
 	public static final ImageIcon scale(ImageIcon src, double factor)
@@ -900,11 +923,13 @@ public class IconLoader {
 
 	/**
 	 * Returns an ImageIcon version of src, which is magnified (or diminished) to the
-	 * given width and height
+	 * given width and height.
+	 * 
 	 * @param src - the source icon
 	 * @param width - the target icon width
 	 * @param height - the target icon height
 	 * @return the magnified (or diminished) icon
+	 * 
 	 * @see #scale(ImageIcon, double)
 	 */
 	public static final ImageIcon scaleTo(ImageIcon src, int width, int height)
@@ -930,8 +955,10 @@ public class IconLoader {
 	 * Generates a circular icon filled with the given colour {@code _color}
 	 * and a thin black border. The circle fill be as large as possible within
 	 * the current standard icon square of 16&nbsp;*&nbsp;{@link #scaleFactor} size.
+	 * 
 	 * @param _color - the fill colour
 	 * @return the created circular icon
+	 * 
 	 * @see #generateIcon(Color, int)
 	 */
 	public static ImageIcon generateIcon(Color _color)
@@ -944,10 +971,12 @@ public class IconLoader {
 	 * and a thin black border. The circle radius will be reduced by
 	 * {@code _insets} pixels with respect to the icon size of
 	 * 16&nbsp;*&nbsp;{@link #scaleFactor}.
+	 * 
 	 * @param _color - the fill colour
 	 * @param _insets - the distance of the circle circumference from the icon
-	 * border
+	 *    border
 	 * @return the created circular icon
+	 * 
 	 * @see #generateIcon(Color)
 	 */
 	public static ImageIcon generateIcon(Color _color, int _insets)
@@ -1013,7 +1042,8 @@ public class IconLoader {
 	// START KGU#929 2021-02-11: Enh. #929 Added for Translator support
 	/**
 	 * Places a diminished version of standarc icon {@code iconNoDecor} into the
-	 * upper left corner of the given icon {@code baseIcon}
+	 * upper left corner of the given icon {@code baseIcon}.
+	 * 
 	 * @param baseIcon - the base icon to be decorated
 	 * @param iconNoDecor - the index of the decoration item
 	 * @return the decorated icon
