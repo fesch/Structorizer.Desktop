@@ -30,8 +30,8 @@ package lu.fisch.structorizer.executor;
  *
  *      Revision List
  *
- *      Author          Date			Description
- *      ------			----			-----------
+ *      Author          Date            Description
+ *      ------          ----            -----------
  *      Bob Fisch                       First Issue
  *      Kay Gürtzig     2015-10-11      Method execute() now ensures that all elements get unselected
  *      Kay Gürtzig     2015-10-13      Method step decomposed into separate subroutines, missing
@@ -225,6 +225,8 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2024-11-22/25   Bugfix #1180: Propagation of full subroutine test coverage to potential callers
  *      Kay Gürtzig     2024-11-26      KGU#1165: Code deletions to prevent Surface being added to the routinePools
  *                                      (where Arranger will already have been registered if instantiated).
+ *      Kay Gürtzig     2024-11-27      Bugfix #1181: Execution highlighting in the code preview was compromised
+ *                                      after Calls and within multi-line Calls
  *
  ******************************************************************************************************
  *
@@ -5834,6 +5836,9 @@ public class Executor implements Runnable
 					// START KGU#907 2021-01-04: Enh. #907 different behaviour on stepping Calls
 					//delay();
 					this.currentCall = element;
+					// START KGU#1166 2024-11-27: Bugfix #1181 Synchronize code preview highlighting
+					diagram.redraw(element);
+					// END KGU#1166 2024-11-27
 					delay();
 					this.currentCall = null;
 					// END KGU#907 2021-01-04
@@ -5879,7 +5884,7 @@ public class Executor implements Runnable
 			i++;
 			// Among the lines of a single instruction element there is no further breakpoint check!
 			// START KGU#907 2021-01-04: Enh. #906 ... but a specific pause check
-			if (element.pauseAfterCall) {
+			if (element.pauseAfterCall) {			
 				setPaus(true);
 				element.pauseAfterCall = false;
 			}

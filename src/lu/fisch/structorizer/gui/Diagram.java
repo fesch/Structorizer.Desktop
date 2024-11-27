@@ -250,6 +250,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2024-03-19      Bugfix #1149: On selection change from Code Preview doButtons() was forgotten
  *      Kay Gürtzig     2024-10-06      Bugfix #1172: replaceTurtleizerAPI() failed to redraw the diagram after changes
  *      Kay Gürtzig     2024-10-09      Issue #1173: exportSWF() marked as deprecated
+ *      Kay Gürtzig     2024-11-27      Bugfix #1181: Ensure clean exec highlighting in redraw(Element)
  *
  ******************************************************************************************************
  *
@@ -1909,10 +1910,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// START KGU#978 2021-06-09: Workaround for mysterious bug #977
 			try {
 			// END KGU#978 2021-06-09
-				codeHighlighter.removeAllHighlights();
+				// START KGU#1166 2024-11-27: Bugfix #1181 this must be done within the thread
+				//codeHighlighter.removeAllHighlights();
+				// END KGU#1166 2024-11-27
 				SwingUtilities.invokeLater(new Runnable() {
 					@Override
 					public void run() {
+						// START KGU#1166 2024-11-27: Bugfix #1181 Make sure highlightings aren't mixed
+						codeHighlighter.removeAllHighlights();
+						// END KGU#1166 2024-11-27
 						highlightCodeForElement(element, true);
 					}
 				});
