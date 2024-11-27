@@ -5884,7 +5884,7 @@ public class Executor implements Runnable
 			i++;
 			// Among the lines of a single instruction element there is no further breakpoint check!
 			// START KGU#907 2021-01-04: Enh. #906 ... but a specific pause check
-			if (element.pauseAfterCall) {			
+			if (element.pauseAfterCall) {
 				setPaus(true);
 				element.pauseAfterCall = false;
 			}
