@@ -223,6 +223,8 @@ package lu.fisch.structorizer.executor;
  *                                      initialisation (declaration + assignment) case where setVar used to fail.
  *      Kay Gürtzig     2024-03-14      Bugfix #1139: Catch now always saves message in a variable (possibly a generic one)
  *      Kay Gürtzig     2024-11-22/25   Bugfix #1180: Propagation of full subroutine test coverage to potential callers
+ *      Kay Gürtzig     2024-11-26      KGU#1165: Code deletions to prevent Surface being added to the routinePools
+ *                                      (where Arranger will already have been registered if instantiated).
  *
  ******************************************************************************************************
  *
@@ -1691,17 +1693,17 @@ public class Executor implements Runnable
 		//addToStackTrace(root, arguments);	// KGU 2017-02-17 moved downwards, after the argument request
 		// END KGU#159 2016-03-17
 		
-		// START KGU#2 (#9) 2015-11-14
-		Iterator<Updater> iter = root.getUpdateIterator();
-		while (iter.hasNext())
-		{
-			Updater pool = iter.next();
-			if (pool instanceof IRoutinePool && !this.routinePools.contains((IRoutinePool)pool))
-			{
-				this.routinePools.addElement((IRoutinePool)pool);
-			}
-		}
-		// END KGU#2 (#9) 2015-11-14
+//		// START KGU#2 (#9) 2015-11-14 / KGU#1165 2024-11-26 Led to redundant content (Arranger + Surface)
+//		Iterator<Updater> iter = root.getUpdateIterator();
+//		while (iter.hasNext())
+//		{
+//			Updater pool = iter.next();
+//			if (pool instanceof IRoutinePool && !this.routinePools.contains((IRoutinePool)pool))
+//			{
+//				this.routinePools.addElement((IRoutinePool)pool);
+//			}
+//		}
+//		// END KGU#2 (#9) 2015-11-14
 
 		boolean analyserState = diagram.getAnalyser();
 		diagram.setAnalyser(false);
@@ -2971,10 +2973,10 @@ public class Executor implements Runnable
     			}
     			// END KGU#317 2016-12-29
     			// START KGU#125 2016-01-05: Is to force updating of the diagram status
-    			if (pool instanceof Updater)
-    			{
-    				diagr.addUpdater((Updater)pool);
-    			}
+    			//if (pool instanceof Updater)	// KGU#1165 2024-11-26: Obsolete and superfluous
+    			//{
+    			//	diagr.addUpdater((Updater)pool);
+    			//}
     			diagram.adoptArrangedOrphanNSD(diagr);
     			// END KGU#125 2016-01-05
     		}

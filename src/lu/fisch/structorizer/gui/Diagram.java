@@ -1862,6 +1862,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 
 	// START KGU#143 2016-01-21: Bugfix #114 - We need a possibility to update buttons from execution status
+	/**
+	 * Updates the visibility or accessibility of the buttons held in the button bar,
+	 * menus etc. depending on the current state.
+	 */
 	public void doButtons() {
 		if (NSDControl != null) {
 			NSDControl.doButtons();

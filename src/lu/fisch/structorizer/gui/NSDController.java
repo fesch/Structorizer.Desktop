@@ -48,7 +48,14 @@ import javax.swing.JFrame;
 public interface NSDController
 {
 
+	/**
+	 * Updates the visibility or accessibility of the buttons held e.g. in the button bar,
+	 * menus etc. depending on the current state.
+	 */
 	public void doButtons();
+	/**
+	 * Updates the visibility or accessibility of the local buttons, menu items etc.
+	 */
 	public void doButtonsLocal();
 
 	public void updateColors();
@@ -64,7 +71,7 @@ public interface NSDController
 
 	// START KGU#868 2020-06-03: Bugfix #868
 	/**
-	 * @return true if code export and import are suppressed
+	 * @return {@code true} if code export and import are suppressed
 	 */
 	public boolean isRestricted();
 	// END KGU#868 2020-06-03
