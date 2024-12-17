@@ -136,6 +136,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2024-03-16      Issue #1138: Provide a better and more usable diagram collision information
  *      Kay Gürtzig     2024-10-10      Issue #1176: More sensible addition to recent file list after loading an arrz file
  *                                      from Arranger button
+ *      Kay Gürtzig     2024-11-25      Issue #1180: deep test coverage consistency defects mended.
  *
  ******************************************************************************************************
  *
@@ -2920,7 +2921,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED | IRoutinePoolListener.RPC_SELECTION_CHANGED);
 		Vector<Mainform> mainforms = activeMainforms();
 		if (form != null) {
-			if (!mainforms.contains(form) && !form.isStandalone() && (!ask || form.diagram.saveNSD(true))) {
+			if (!mainforms.contains(form) && !form.isApplicationMain() && (!ask || form.diagram.saveNSD(true))) {
 				// Form doesn't seem necessary any longer
 				form.dispose();
 				removeChangeListener(form);
@@ -3028,8 +3029,12 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	/**
 	 * Toggles the "covered" status of the subroutine or includable diagrams among the
 	 * selected diagrams.<br/>
-	 * If the "covered" flag the selected diagrams differs then all diagrams will be set
-	 * "covered". Before unsetting the "covered" flag a confirmation dialog will pop up.
+	 * If the "deeplyCovered" flag of the selected diagrams differs then all diagrams
+	 * will be set "covered". Before unsetting the "covered" flag a confirmation dialog
+	 * will pop up.<br/>
+	 * The coverage changes will be considered across all Roots that contain calls to the
+	 * affected subroutines.
+	 * 
 	 * @param frame - the owner for the dialog box.
 	 */
 	public void setCovered(Frame frame)
@@ -3053,7 +3058,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			boolean someUncovered = false;
 			for (Diagram diagr: this.diagramsSelected) {
 				if (diagr.root != null && !diagr.root.isProgram()) {
-					if (!diagr.root.deeplyCovered) {
+					// START KGU#1036 2024-11-25: Bugfix #1180 Inconsistency mended
+					//if (!diagr.root.deeplyCovered) {
+					if (!diagr.root.isTestCovered(true)) {
+					// END KGU#1036 2024-11-25
 						someUncovered = true;
 						break;
 					}
@@ -3063,7 +3071,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			{
 				for (Diagram diagr: this.diagramsSelected) {
 					if (diagr.root != null && !diagr.root.isProgram()) {
+						// Note that this cannot suppress a coverage acquired by execution (children.deeplyCovered)
 						diagr.root.deeplyCovered = someUncovered;
+						// START KGU#1036 2024-11-25: Bugfix #1180 We must propagate the status change to make sense
+						diagr.root.propagateTestCoverage();
+						// END KGU#1036 2024-11-25
 					}
 				}
 				// FIXME This is of no good anymore with a multiple selection because selection cannot easily be restored
@@ -3336,7 +3348,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// chance to save their currently maintained Root even if this was not arranged here.
 			if (goingToClose) {
 				for (Mainform form: mainforms) {
-					if (!form.isStandalone() && !handledRoots.contains(form.getRoot())) {
+					if (!form.isApplicationMain() && !handledRoots.contains(form.getRoot())) {
 						form.diagram.saveNSD(!(goingToClose && Element.E_AUTO_SAVE_ON_CLOSE));
 					}
 				}
@@ -4558,7 +4570,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				Diagram diagram = this.diagrams.get(d);
 				roots.add(diagram.root);
 			}
-		}    
+		}
 		return roots;
 	}
 	// END KGU#258 2016-09-26

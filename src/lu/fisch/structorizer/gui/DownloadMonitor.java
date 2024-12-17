@@ -68,6 +68,7 @@ import lu.fisch.structorizer.locales.LangDialog;
 
 /**
  * Floating temporary dialog showing a progress bar during the download of a large file
+ * 
  * @author Kay Gürtzig
  */
 @SuppressWarnings("serial")
@@ -110,7 +111,7 @@ public class DownloadMonitor extends LangDialog implements PropertyChangeListene
 	}
 
 	/**
-	 * 
+	 * Sets up the GUI components
 	 */
 	private void initComponents() {
 

@@ -235,9 +235,11 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 	private boolean tempHintGiven = false;
 
 	/**
-	 * Constructs the dedicated editor for CASE elements 
-	 * @param owner
-	 * @param modal
+	 * Constructs the dedicated editor for CASE elements.
+	 * 
+	 * @param owner - the owning GUI Frame
+	 * @param modal - whether the dialog is to be modal
+	 * @param helper - a {@link CaseEditHelper} to be used for branch checks
 	 */
 	public InputBoxCase(Frame owner, boolean modal, CaseEditHelper helper) {
 		super(owner, modal);
@@ -592,6 +594,7 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 	 * into "broken lines", i.e. several lines where all but the last one end
 	 * with a backslash. All ending backslashes of the last part of the line will
 	 * be removed.
+	 * 
 	 * @param text - the {@link StringList} to be composed
 	 * @param line - the text line to be appended (after preparation)
 	 */
@@ -618,7 +621,8 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 	}
 
 	/**
-	 * Deletes the selected table lines
+	 * Deletes the selected table lines.
+	 * 
 	 * @param tm - the table model of {@link #tblSelectors}
 	 * @param ixSelected - the current selection span
 	 */
@@ -642,7 +646,8 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 	}
 
 	/**
-	 * Merges the lines of the selection interval {@code ixSelected}
+	 * Merges the lines of the selection interval {@code ixSelected}.
+	 * 
 	 * @param tm - TableModel of {@link #tblSelectors}
 	 * @param ixSelected - the index span of selected rows
 	 */
@@ -696,7 +701,7 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 	 * 
 	 * @param tm - the table model of {@link #tblSelectors}
 	 * @param ixSelected - the current selection span (if the length differs
-	 * from 1 them nothing will be done here)
+	 *    from 1 them nothing will be done here)
 	 */
 	private void splitRow(DefaultTableModel tm, int[] ixSelected) {
 		if (ixSelected.length == 1) {
@@ -725,6 +730,7 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 	 * Checks the lines for conflicts and redundancy. Also checks for orphaned
 	 * branches. Will pop up a message if {@code interactive} is {@code true},
 	 * otherwise only controls the colour of button {@link #btnCheckRows}.
+	 * 
 	 * @param tm - the table model of {@link #tblSelectors} or {@code null}
 	 * @param interactive - whether the result is to be reported as message box
 	 */
@@ -884,7 +890,8 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 	/**
 	 * Inserts new rows for missing enumerator values among the selectors and
 	 * replaces code literals in existing lines by the respective enumerator
-	 * constant names
+	 * constant names.
+	 * 
 	 * @param tm - TableModel of {@link #tblSelectors}
 	 */
 	private void forceEnumeratorCompleteness(DefaultTableModel tm) {
@@ -965,6 +972,7 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 	/**
 	 * Controls whether the magic wand button is to be enabled (and does so
 	 * in this case).
+	 * 
 	 * @param tm - TableModel of {@link #tblSelectors} or {@code null}
 	 */
 	private void checkEnumButton(DefaultTableModel tm) {
@@ -1104,8 +1112,9 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 	}
 
 	/**
-	 * Adjusts the actual tables size according to the number of rows and row widths
-	 * Will also ensure a sensible scroll pane width and the horizontal scrollbar
+	 * Adjusts the actual tables size according to the number of rows and row
+	 * widths. <br/>
+	 * Will also ensure a sensible scroll pane width and the horizontal scrollbar.
 	 */
 	public void adjustTableSize() {
 		Dimension tabSize = getRequiredTableSize(tblSelectors, true);
@@ -1126,7 +1135,7 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 	}
 
 	/**
-	 * Cares for enabling/disabling the table row selection related buttons
+	 * Cares for enabling/disabling the table row selection related buttons.
 	 */
 	private void doButtons() {
 		int[] ixSelected = tblSelectors.getSelectedRows();
@@ -1184,12 +1193,14 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 
 	/**
 	 * Adapts the width and height of the scroll pane associated to {@link #tblSelectors}
-	 * according to the current width of the left part of the top pane and the dialog width,
-	 * and regarding the extra height of the dialog wrt to the preferred height (we ensure
-	 * that the table scroll pane gets about an 7/8 share of the extra height).<br/>
-	 * The width mechanism is a precarious workaround for the lacking auto-resizing of a
-	 * JTable ScrollPane within a {@link GridBagLayout}: If the new size is a little to wide
-	 * then the layout will collapse, if it is a little too narrow then it will look ugly.
+	 * according to the current width of the left part of the top pane and the
+	 * dialog width, and regarding the extra height of the dialog wrt to the
+	 * preferred height (we ensure that the table scroll pane gets about an 7/8
+	 * share of the extra height).<br/>
+	 * The width mechanism is a precarious workaround for the lacking auto
+	 * resizing of a JTable ScrollPane within a {@link GridBagLayout}: If the
+	 * new size is a little to wide then the layout will collapse, if it is a
+	 * little too narrow then it will look ugly.
 	 */
 	private void resizeTableScrollPane() {
 		double scaleFactor = Double.parseDouble(Ini.getInstance().getProperty("scaleFactor", "1"));
@@ -1222,9 +1233,11 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 
 	// START KGU#927 2021-02-06: Enh. #915
 	/** 
+	 * Retrieves branches that are not associated to a table line.
+	 * 
 	 * @param rowNumber - the row index if called from a cell editor, otherwise -1
 	 * @return the (sorted) vector of branch numbers of non-empty branches
-	 * without current bond to a selector line.
+	 *    without current bond to a selector line.
 	 */
 	private Vector<String> getUnusedBranchNumbers(int rowNumber)
 	{

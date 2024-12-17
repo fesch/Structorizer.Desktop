@@ -70,7 +70,9 @@ import lu.fisch.structorizer.locales.Locale;
 import lu.fisch.structorizer.locales.Locales;
 
 /**
- * Preferences dialog allowing to introduce user-declared (and locale-independent) Element name aliases
+ * Preferences dialog allowing to introduce user-declared (and locale-independent)
+ * Element name aliases
+ * 
  * @author Kay Gürtzig
  */
 @SuppressWarnings("serial")
@@ -94,6 +96,12 @@ public class ElementNamePreferences extends LangDialog {
 	private JPanel headBar;
 	private JPanel buttonBar;
 	
+	/**
+	 * Creates a dialog allowing to introduce user-declared (and locale-independent)
+	 * Element name aliases
+	 * 
+	 * @param owner - the owning GUI Frame
+	 */
 	public ElementNamePreferences(Frame owner)
 	{
 		super(owner);
@@ -101,6 +109,9 @@ public class ElementNamePreferences extends LangDialog {
 		initComponents();
 	}
 	
+	/**
+	 * Sets up the GUI components
+	 */
 	private void initComponents()
 	{
 		setTitle("Element Name Preferences");

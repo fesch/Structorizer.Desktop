@@ -105,8 +105,9 @@ import lu.fisch.structorizer.locales.LangTextHolder;
 import lu.fisch.utils.StringList;
 
 /**
- * Tabular Dialog allowing to specify alias names for configured routines (functions
- * and procedures) of {@link DiagramController} subclasses.  
+ * Tabular dialog allowing to specify alias names for configured routines (functions
+ * and procedures) of {@link DiagramController} subclasses.
+ * 
  * @author Kay Gürtzig
  */
 @SuppressWarnings("serial")
@@ -223,6 +224,7 @@ public class DiagramControllerAliases extends LangDialog implements PropertyChan
 	 * {@code controllerPlugins}.<br/>
 	 * Does not automatically get visible ({@link #setVisible(boolean)}) will have to be
 	 * applied explicitly thefore.
+	 * 
 	 * @param owner - the {@link Frame} this dialog is to be owned by 
 	 * @param controllerPlugins - vector of available controller plugins
 	 */
@@ -370,7 +372,8 @@ public class DiagramControllerAliases extends LangDialog implements PropertyChan
 	 * of [0] this signature, [1] the configured routine alias and [2] the API specification
 	 * key each to {@code _routineList}. The signatures depend on argument {@code _withResult}
 	 * and look slightly Pascal-like:<br/>
-	 * {@code <routine_name>(<arg_type1>, <arg_type2>, ...): <result_type>}  
+	 * {@code <routine_name>(<arg_type1>, <arg_type2>, ...): <result_type>}
+	 * 
 	 * @param _className - qualified class name of the {@link DiagramController}
 	 * @param _routineList - the list of String tuples the extracted routine signatures are to be added to
 	 * @param _routineMap - the API map for procedures or functions, mapping a signature key to a {@link Method}
@@ -427,8 +430,9 @@ public class DiagramControllerAliases extends LangDialog implements PropertyChan
 	 * Checks the contents of the {@link JTable}s of all tabs and adopts all changes
 	 * in the {@link Ini} instance if the user had left the dialog via the OK button.<br/>
 	 * Does not save the Ini properties to file, though.
+	 * 
 	 * @param commit - whether the aliases are to be committed to the {@link Ini} instance
-	 *  (otherwise only a conflict check will be done)
+	 *     (otherwise only a conflict check will be done)
 	 * @return a {@link StringList} of signature conflicts if there any, null otherwise.
 	 */
 	private StringList adoptAliases(boolean commit) {
@@ -495,8 +499,11 @@ public class DiagramControllerAliases extends LangDialog implements PropertyChan
 	}
 
 	/**
-	 * Property change listener method reacting to cell editing events of a {@link JTable} in one
-	 * of the tabs. 
+	 * Property change listener method reacting to cell editing events of a
+	 * {@link JTable} in one of the tabs.
+	 * 
+	 * @param evt - the inducing {@link PropertyChangeEvent} object describing
+	 *    the event source and the property that has changed.
 	 */
 	@Override
 	public void propertyChange(PropertyChangeEvent evt) {

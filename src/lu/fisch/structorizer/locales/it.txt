@@ -75,6 +75,7 @@
  *      Kay Gürtzig     2023-10-13      Issue #980: New messages for declaration syntax check (error31_*) 
  *      Kay Gürtzig     2024-01-26      Issue #311/bugfix #1126: Menu reorganisation (menuDiagram split)
  *      Kay Gürtzig     2024-04-21      ExportOptionDialoge renamed to ExportOptionDialog
+ *      Kay Gürtzig     2024-11-22      Poll #1173: menuFileExportPictureSWF removed.
  *
  ******************************************************************************************************
  *
@@ -133,7 +134,6 @@ Menu.menuFileExportCode.text=Codice
 Menu.menuFileExportPicturePNG.text=
 Menu.menuFileExportPicturePNGmulti.text=PNG (piastrellato) ...
 Menu.menuFileExportPictureEMF.text=
-Menu.menuFileExportPictureSWF.text=SWF (decrepito!) ...
 Menu.menuFileExportPicturePDF.text=
 Menu.menuFileExportPictureSVG.text=
 Menu.lbFileExportCodeFavorite.text=Esporta come % code
@@ -156,8 +156,8 @@ Menu.menuEditRedo.text=Ripeti
 Menu.menuEditCut.text=Taglia
 Menu.menuEditCopy.text=Copia
 Menu.menuEditPaste.text=Incolla
-Menu.menuEditSummonSub.text=Modifica funzione
-Menu.menuEditSummonSub.tooltip=Richiama la funzione chiamata per modificarla
+Menu.menuEditSummonSub.text=Modifica @o
+Menu.menuEditSummonSub.tooltip=Richiama la @o chiamata per modificarla
 Menu.menuEditFindReplace.text=Ricercare/Sostituire ...
 Menu.menuEditUpgradeTurtle.text=Grafica precisa
 Menu.menuEditUpgradeTurtle.tooltip=
@@ -670,7 +670,7 @@ Editor.popupMoveDown.text=Sposta in basso
 Editor.popupTransmute.text=Trasmuta
 Editor.popupOutsource.text=
 Editor.popupOutsource.tooltip=
-Editor.popupEditSub.text=Modifica funzione ...
+Editor.popupEditSub.text=Modifica @{Root.DT_SUB} ...
 Editor.popupEditSub.tooltip=
 // Collapsing
 Editor.popupCollapse.text=Collassa

@@ -67,6 +67,7 @@
  *      Kay Gürtzig     2023-10-13      Issue #980: New messages for declaration syntax check (error31_*)
  *      Kay Gürtzig     2024-03-17      Issue #1138: New / modified conflict messages for Surface
  *      Kay Gürtzig     2024-04-21      ExportOptionDialoge renamed to ExportOptionDialog
+ *      Kay Gürtzig     2024-11-22      Poll #1173: menuFileExportPictureSWF removed.
  *
  ******************************************************************************************************
  *
@@ -125,7 +126,6 @@ Menu.menuFileExportCode.text=Code source
 Menu.menuFileExportPicturePNG.text=
 Menu.menuFileExportPicturePNGmulti.text=PNG (multiple) ...
 Menu.menuFileExportPictureEMF.text=
-Menu.menuFileExportPictureSWF.text=SWF (obsolète!) ...
 Menu.menuFileExportPicturePDF.text=
 Menu.menuFileExportPictureSVG.text=
 Menu.lbFileExportCodeFavorite.text=Exporter en tant que code %

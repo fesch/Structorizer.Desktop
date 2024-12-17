@@ -32,10 +32,11 @@ package lu.fisch.structorizer.gui;
  *      Author          Date            Description
  *      ------          ----            -----------
  *      Kay Gürtzig     2017-06-20      First Issue
- *      Kay Gürtzig     2018-01-22      Issue #484: Layout modified such that text fields will get all remaining width
+ *      Kay Gürtzig     2018-01-22      Issue #484: Layout modified such that text fields will get all
+ *                                      remaining width.
  *                                      Moreover, bug in item list processing fixed.
  *      Kay Gürtzig     2021-03-07      KGU#961: Preparations for option localisation, combined with
- *                                      subtle layout improvements
+ *                                      subtle layout improvements.
  *
  ******************************************************************************************************
  *
@@ -438,7 +439,7 @@ public class PluginOptionDialog extends LangDialog {
 	// START KGU#961 2021-03-07: Hook for a condition in the locale file
 	/**
 	 * @return the simplified class name for the plugin-associated Java class, e.g.
-	 * "CGenerator" or "JavaParser".
+	 *    "CGenerator" or "JavaParser".
 	 */
 	public String getPluginKey()
 	{

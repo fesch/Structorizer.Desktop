@@ -130,15 +130,17 @@ import lu.fisch.structorizer.parsers.GENParser;
 @SuppressWarnings("serial")
 public class Editor extends LangPanel implements NSDController, ComponentListener
 {
-	// Controller
+	/** Controller */
 	NSDController NSDControll = null;
 
 //	// Toolbars
 //	protected MyToolbar toolbar = null;
 	
 	// Splitpanes
+	/** Outer split pane (horizontal) for the diagram area and error list */
 	JSplitPane sp;
 	// START KGU#305 2016-12-12: Enh. #305 - add a diagram index for Arranger
+	/** Inner split pane (vertical) for the Arranger Index or Code preview next to the diagram area */
 	JSplitPane sp305;
 	// END KGU#305 2016-12-12
 	
@@ -152,6 +154,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	protected final JList<DetectedError> errorlist = new JList<DetectedError>(errors);
 
 	// START KGU#705 2019-09-23: Enh. #738 Code preview
+	/** Text area for the code preview */
 	protected final JTextArea txtCode = new JTextArea();
 	// END KGU#705 2019-09-23
 	// Panels
@@ -1344,6 +1347,10 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		errorlist.addListSelectionListener(diagram);
 	}
 
+	/**
+	 * Updates the visibility or accessibility of the buttons, menu items etc. held
+	 * by the {@link NSDControll}.
+	 */
 	public void doButtons()
 	{
 		if(NSDControll!=null)

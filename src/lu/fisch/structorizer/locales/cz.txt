@@ -63,6 +63,7 @@
  *      Kay Gürtzig     2023-10-06      Issue #311: Menu reorganisation (menuDiagram split)
  *      Kay Gürtzig     2023-10-16      Missing error messages automatically generated via https://www.webtran.de/
  *      Kay Gürtzig     2024-04-21      ExportOptionDialoge renamed to ExportOptionDialog
+ *      Kay Gürtzig     2024-11-22      Poll #1173: menuFileExportPictureSWF removed.
  *
  ******************************************************************************************************
  *
@@ -120,7 +121,6 @@ Menu.menuFileExportCode.text=Programovací jazyk
 Menu.menuFileExportPicturePNG.text=
 Menu.menuFileExportPicturePNGmulti.text=
 Menu.menuFileExportPictureEMF.text=
-Menu.menuFileExportPictureSWF.text=
 Menu.menuFileExportPicturePDF.text=
 Menu.menuFileExportPictureSVG.text=
 Menu.lbFileExportCodeFavorite.text=

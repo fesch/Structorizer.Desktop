@@ -23,7 +23,7 @@ package lu.fisch.structorizer.gui;
  *
  *      Author:         Bob Fisch
  *
- *      Description:    This class represents the visual diagram itself.
+ *      Description:    This class represents the diagram view and editing area itself.
  *
  ******************************************************************************************************
  *
@@ -250,6 +250,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2024-03-19      Bugfix #1149: On selection change from Code Preview doButtons() was forgotten
  *      Kay Gürtzig     2024-10-06      Bugfix #1172: replaceTurtleizerAPI() failed to redraw the diagram after changes
  *      Kay Gürtzig     2024-10-09      Issue #1173: exportSWF() marked as deprecated
+ *      Kay Gürtzig     2024-11-27      Bugfix #1181: Ensure clean exec highlighting in redraw(Element)
  *
  ******************************************************************************************************
  *
@@ -321,7 +322,6 @@ import javax.swing.text.Highlighter.HighlightPainter;
 
 import org.freehep.graphicsio.emf.*;
 import org.freehep.graphicsio.pdf.*;
-import org.freehep.graphicsio.swf.*;
 
 import lu.fisch.diagrcontrol.DiagramController;
 import lu.fisch.graphics.*;
@@ -348,7 +348,7 @@ import org.freehep.graphicsio.svg.SVGGraphics2D;
 
 /**
  * Represents the working area of the Structorizer. Holds the current
- * Nassi-Shneiderman diagram and manages all editing ativities as well as
+ * Nassi-Shneiderman diagram and manages all editing activities as well as
  * loading, saving, import, export etc.
  *
  * @author Robert Fisch
@@ -1862,6 +1862,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 
 	// START KGU#143 2016-01-21: Bugfix #114 - We need a possibility to update buttons from execution status
+	/**
+	 * Updates the visibility or accessibility of the buttons held in the button bar,
+	 * menus etc. depending on the current state.
+	 */
 	public void doButtons() {
 		if (NSDControl != null) {
 			NSDControl.doButtons();
@@ -1906,10 +1910,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// START KGU#978 2021-06-09: Workaround for mysterious bug #977
 			try {
 			// END KGU#978 2021-06-09
-				codeHighlighter.removeAllHighlights();
+				// START KGU#1166 2024-11-27: Bugfix #1181 this must be done within the thread
+				//codeHighlighter.removeAllHighlights();
+				// END KGU#1166 2024-11-27
 				SwingUtilities.invokeLater(new Runnable() {
 					@Override
 					public void run() {
+						// START KGU#1166 2024-11-27: Bugfix #1181 Make sure highlightings aren't mixed
+						codeHighlighter.removeAllHighlights();
+						// END KGU#1166 2024-11-27
 						highlightCodeForElement(element, true);
 					}
 				});
@@ -6654,99 +6663,101 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#456 2017-11-05
 	}
 
-	/**
-	 * Opens a {@link FileChooser} and performs the image export as SWF file.
-	 *
-	 * @see #exportPNG()
-	 * @see #exportPNGmulti()
-	 * @see #exportSVG()
-	 * @see #exportPDF()
-	 * @see #exportEMF()
-	 * 
-	 * @deprecated Shockwave Flash shouldn't be produced anymore
-	 */
-	@Deprecated
-	public void exportSWF() {
-		// START KGU#183 2016-04-24: Issue #169 - retain old selection
-		Element wasSelected = selected;
-		// END KGU#183 2016-04-24
-
-		// START KGU 2015-10-11
-		//root.selectElementByCoord(-1,-1);	// Unselect all elements
-		//redraw();
-		unselectAll(true);
-		// END KGU 2015-10-11
-
-		JFileChooser dlgSave = new JFileChooser("Export diagram as SWF ...");
-		// START KGU#287 2017-01-09: Bugfix #330 Ensure Label items etc. be scaled for L&F "Nimbus"
-		GUIScaler.rescaleComponents(dlgSave);
-		// END KGU#287 2017-01-09
-		// set directory
-		if (lastExportDir != null) {
-			dlgSave.setCurrentDirectory(lastExportDir);
-		} else if (root.getFile() != null) {
-			dlgSave.setCurrentDirectory(root.getFile());
-		} else {
-			dlgSave.setCurrentDirectory(currentDirectory);
-		}
-		// propose name
-		// START KGU 2015-10-16: D.R.Y. - there is already a suitable method
-		//String nsdName = root.getText().get(0);
-		//nsdName.replace(':', '_');
-		//if(nsdName.indexOf(" (")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf(" ("));}
-		//if(nsdName.indexOf("(")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf("("));}
-		String nsdName = root.proposeFileName();
-		// END KGU 2015-10-16
-		dlgSave.setSelectedFile(new File(nsdName));
-
-		// START KGU 2016-04-01: Enh. #110 - select the provided filter
-		//dlgSave.addChoosableFileFilter(new lu.fisch.structorizer.io.SWFFilter());
-		SWFFilter filter = new SWFFilter();
-		dlgSave.addChoosableFileFilter(filter);
-		dlgSave.setFileFilter(filter);
-		hideComments();	// Issue #143: Hide the current comment popup if visible
-		// END KGU 2016-04-01
-		int result = dlgSave.showSaveDialog(NSDControl.getFrame());
-		if (result == JFileChooser.APPROVE_OPTION) {
-			lastExportDir = dlgSave.getSelectedFile().getParentFile();
-			String filename = dlgSave.getSelectedFile().getAbsoluteFile().toString();
-			if (!filename.substring(filename.length() - 4, filename.length()).toLowerCase().equals(".swf")) {
-				filename += ".swf";
-			}
-
-			File file = new File(filename);
-			if (checkOverwrite(file, false) == 0) {
-				try {
-					SWFGraphics2D svg = new SWFGraphics2D(new FileOutputStream(filename), new Dimension(root.width + 12, root.height + 12));
-
-					svg.startExport();
-					lu.fisch.graphics.Canvas c = new lu.fisch.graphics.Canvas(svg);
-					lu.fisch.graphics.Rect myrect = root.prepareDraw(c);
-					myrect.left += 6;
-					myrect.top += 6;
-					root.draw(c, myrect, null, false);
-					svg.endExport();
-				} catch (Exception e) {
-					// START KGU#484 2018-04-05: Issue #463
-					//e.printStackTrace();
-					logger.log(Level.WARNING, "Trouble exporting as image.", e);
-					// END KGU#484 2018-04-05
-				}
-			}
-		}
-		// START KGU#183 2016-04-24: Issue #169 - restore old selection
-		selected = wasSelected;
-		if (selected != null) {
-			selected.setSelected(true);
-		}
-		redraw();
-		// END KGU#183 2016-04-24
-		// START KGU#456 2017-11-05: Enh. #452
-		if (root.advanceTutorialState(26, root)) {
-			analyse();
-		}
-		// END KGU#456 2017-11-05
-	}
+	// START KGU#1158 2024-11-22: Poll #1173 Code disabled (to be removed completely)
+//	/**
+//	 * Opens a {@link FileChooser} and performs the image export as SWF file.
+//	 *
+//	 * @see #exportPNG()
+//	 * @see #exportPNGmulti()
+//	 * @see #exportSVG()
+//	 * @see #exportPDF()
+//	 * @see #exportEMF()
+//	 * 
+//	 * @deprecated Shockwave Flash shouldn't be produced anymore
+//	 */
+//	@Deprecated
+//	public void exportSWF() {
+//		// START KGU#183 2016-04-24: Issue #169 - retain old selection
+//		Element wasSelected = selected;
+//		// END KGU#183 2016-04-24
+//
+//		// START KGU 2015-10-11
+//		//root.selectElementByCoord(-1,-1);	// Unselect all elements
+//		//redraw();
+//		unselectAll(true);
+//		// END KGU 2015-10-11
+//
+//		JFileChooser dlgSave = new JFileChooser("Export diagram as SWF ...");
+//		// START KGU#287 2017-01-09: Bugfix #330 Ensure Label items etc. be scaled for L&F "Nimbus"
+//		GUIScaler.rescaleComponents(dlgSave);
+//		// END KGU#287 2017-01-09
+//		// set directory
+//		if (lastExportDir != null) {
+//			dlgSave.setCurrentDirectory(lastExportDir);
+//		} else if (root.getFile() != null) {
+//			dlgSave.setCurrentDirectory(root.getFile());
+//		} else {
+//			dlgSave.setCurrentDirectory(currentDirectory);
+//		}
+//		// propose name
+//		// START KGU 2015-10-16: D.R.Y. - there is already a suitable method
+//		//String nsdName = root.getText().get(0);
+//		//nsdName.replace(':', '_');
+//		//if(nsdName.indexOf(" (")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf(" ("));}
+//		//if(nsdName.indexOf("(")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf("("));}
+//		String nsdName = root.proposeFileName();
+//		// END KGU 2015-10-16
+//		dlgSave.setSelectedFile(new File(nsdName));
+//
+//		// START KGU 2016-04-01: Enh. #110 - select the provided filter
+//		//dlgSave.addChoosableFileFilter(new lu.fisch.structorizer.io.SWFFilter());
+//		SWFFilter filter = new SWFFilter();
+//		dlgSave.addChoosableFileFilter(filter);
+//		dlgSave.setFileFilter(filter);
+//		hideComments();	// Issue #143: Hide the current comment popup if visible
+//		// END KGU 2016-04-01
+//		int result = dlgSave.showSaveDialog(NSDControl.getFrame());
+//		if (result == JFileChooser.APPROVE_OPTION) {
+//			lastExportDir = dlgSave.getSelectedFile().getParentFile();
+//			String filename = dlgSave.getSelectedFile().getAbsoluteFile().toString();
+//			if (!filename.substring(filename.length() - 4, filename.length()).toLowerCase().equals(".swf")) {
+//				filename += ".swf";
+//			}
+//
+//			File file = new File(filename);
+//			if (checkOverwrite(file, false) == 0) {
+//				try {
+//					SWFGraphics2D svg = new SWFGraphics2D(new FileOutputStream(filename), new Dimension(root.width + 12, root.height + 12));
+//
+//					svg.startExport();
+//					lu.fisch.graphics.Canvas c = new lu.fisch.graphics.Canvas(svg);
+//					lu.fisch.graphics.Rect myrect = root.prepareDraw(c);
+//					myrect.left += 6;
+//					myrect.top += 6;
+//					root.draw(c, myrect, null, false);
+//					svg.endExport();
+//				} catch (Exception e) {
+//					// START KGU#484 2018-04-05: Issue #463
+//					//e.printStackTrace();
+//					logger.log(Level.WARNING, "Trouble exporting as image.", e);
+//					// END KGU#484 2018-04-05
+//				}
+//			}
+//		}
+//		// START KGU#183 2016-04-24: Issue #169 - restore old selection
+//		selected = wasSelected;
+//		if (selected != null) {
+//			selected.setSelected(true);
+//		}
+//		redraw();
+//		// END KGU#183 2016-04-24
+//		// START KGU#456 2017-11-05: Enh. #452
+//		if (root.advanceTutorialState(26, root)) {
+//			analyse();
+//		}
+//		// END KGU#456 2017-11-05
+//	}
+	// END KGU#1158 2024-11-22
 
 	/**
 	 * Opens a {@link FileChooser} and performs the image export as PDF file.

@@ -163,6 +163,13 @@ import lu.fisch.structorizer.helpers.GENPlugin;
 import lu.fisch.structorizer.locales.LangFrame;
 import lu.fisch.structorizer.locales.Locales;
 
+/**
+ * This is the main application frame of Structorizer. May represent the entire
+ * process or just be a subordinate clone (distinguishable in the title).
+ * 
+ * @author Robert Fisch
+ * @author Kay Gürtzig
+ */
 @SuppressWarnings("serial")
 public class Mainform  extends LangFrame implements NSDController, IRoutinePoolListener
 {
@@ -608,6 +615,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	 * <li>"wheel": Mouse wheel option</li>
 	 * <li>"update": preferences concerning product update
 	 * </ul>
+	 * 
 	 * @param category - name of the category of interest (see method comment)
 	 * @return a String array containing the relevant keys for the ini file
 	 * 
@@ -1248,9 +1256,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 		Root.saveToINI();
 	}
 
-	/******************************
-	 * Local listener (empty)
-	 ******************************/
+	// Local listeners
 	@Override
 	public void doButtonsLocal()
 	{
@@ -1291,11 +1297,26 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 //		create();
 //	}
 
+	/**
+	 * Creates a Structorizer form as process representative.
+	 */
 	public Mainform()
 	{
 		this(true);
 	}
 
+	/**
+	 * Creates a Structorizer form (either as process representative or as dependent
+	 * sub-form).
+	 * 
+	 * @param standalone - if this Mainform is to represent the application process
+	 *    (otherwise it is handled as a dependent subform not representing the process
+	 *    root, i.e. it can be closed without ending the processs). The standalone
+	 *    status remains troughout the existence and can externally be checked via
+	 *    {@link #isApplicationMain()}.
+	 * 
+	 * @see #isApplicationMain()
+	 */
 	public Mainform(boolean standalone)
 	{
 		super();
@@ -1314,7 +1335,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	// END KGU#49/KGU#66
 
 	/**
-	 * @return the editor
+	 * @return the editor component
 	 */
 	public Editor getEditor()
 	{
@@ -1329,6 +1350,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	/**
 	 * @return the diagram {@link Root} currently held in the work area or
 	 * {@code null} if the work area has not been established yet.
+	 * 
 	 * @see #setRoot(Root)
 	 */
 	public Root getRoot()
@@ -1342,8 +1364,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	/**
 	 * Replaces the current {@link Root} in the work area by the given
 	 * diagram {@code root} if the former isn't currently under execution.
+	 * 
 	 * @param root -  top element of the new diagram to be placed
 	 * @return true if the replacement was effective, false otherwise.
+	 * 
 	 * @see #getRoot()
 	 */
 	public boolean setRoot(Root root)
@@ -1538,7 +1562,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	/**
 	 * Switches the GUI to the language {@code localeName} as chosen via the
 	 * welcome pane (something like "en", "lu", "pt_br", or "zh_cn").
+	 * 
 	 * @param localeName - name of the new locale
+	 * 
 	 * @see #popupWelcomePane()
 	 * @see Locales#setLocale(String)
 	 */
@@ -1580,9 +1606,12 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	// END KGU#655 2019-02-16
 
 	/**
-	 * @return true if this Mainform is representing the main thread (root of the
-	 * process), false otherwise (i.e. a subordinate instance).
+	 * @return {@code true} if this Mainform is representing the main thread
+	 *    (root of the process), false otherwise (i.e. a subordinate instance).
+	 * 
+	 * @deprecated Use {@link #isApplicationMain()} instead.
 	 */
+	@Deprecated
 	public boolean isStandalone()
 	{
 		return this.isStandalone;
@@ -1626,12 +1655,13 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	}
 	// END KGU#305 2016-12-16
 
-	// START KGU#631 2019-01-08: We need a handy way to decide whther he application is closing
+	// START KGU#631 2019-01-08: We need a handy way to decide whether the application is closing
 	/**
-	 * Checks whether this Mainform represents the main class (and thread) of the application
-	 * i.e. if it was started as a stand-alone object.<br/>
+	 * Checks whether this Mainform represents the main class (and thread) of
+	 * the application, i.e., if it was started as a stand-alone object.<br/>
 	 * Relevant for the {@link WindowListener#windowClosing()} event.
-	 * @return true if this object represents the running application.
+	 * 
+	 * @return {@code true} if this object represents the running application.
 	 */
 	public boolean isApplicationMain()
 	{
@@ -1641,9 +1671,11 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 
 	// START KGU#679 2019-03-12: Enh. #698 - we needed a way for Arranger to inform about recently loaded or saved arrangement files
 	/**
-	 * Registers the given {@code file} as recently used. Interface for other modules like
-	 * {@link Arranger} to inform about used files, e.g. arrangements.
-	 * @param file - a file interpretable for Structorizer and just loaded or saved or otherwise used
+	 * Registers the given {@code file} as recently used. Interface for other
+	 * modules like {@link Arranger} to inform about used files, e.g. arrangements.
+	 * 
+	 * @param file - a file interpretable for Structorizer and just loaded or
+	 *    saved or otherwise used
 	 */
 	public void addRecentFile(File file) {
 		if (diagram != null) {
@@ -1730,7 +1762,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	/**
 	 * General file handler for OS X; fed to the OSXAdapter as the method to call
 	 * when a file associated to Structorizer is double-clicked or dragged onto it.
+	 * 
 	 * @param filePath - the path of the (diagram) file to be loaded
+	 * 
 	 * @see #doOSX()
 	 */
 	public void loadFile(String filePath) {
@@ -1785,6 +1819,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	/**
 	 * General info dialog; fed to the OSXAdapter as the method to call when
 	 * "About OSXAdapter" is selected from the application menu.
+	 * 
 	 * @see #doOSX()
 	 */
 	public void about() {
@@ -1794,6 +1829,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	/**
 	 * General preferences dialog for OS X; fed to the OSXAdapter as the method
 	 * to call when "Preferences..." is selected from the application menu.
+	 * 
 	 * @see #doOSX()
 	 */
 	public void preferences() {
@@ -1805,7 +1841,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	 * when a system quit event occurs.<br/>
 	 * A quit event is triggered by Cmd-Q, selecting Quit from the application
 	 * or Dock menu, or logging out.
-	 * @return true if the user confirmed to quit and the event has been dispatched
+	 * 
+	 * @return {@code true} if the user confirmed to quit and the event has been
+	 *    dispatched
+	 * 
 	 * @see #doOSX()
 	 */
 	public boolean quit() { 
@@ -1829,6 +1868,8 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 
 	/**
 	 * Suppresses code import / export features (customer demand)
+	 * 
+	 * @see #isRestricted()
 	 */
 	// START KGU#868 2020-06-03
 //	public void setRestricted(boolean _restricted) {

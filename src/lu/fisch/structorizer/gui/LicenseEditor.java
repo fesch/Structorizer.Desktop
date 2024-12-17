@@ -769,6 +769,10 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 		super.dispose();
 	}
 	
+	/**
+	 * Updates the visibility or accessibility of the buttons held in the button bar,
+	 * menus etc. depending on the current state.
+	 */
 	private void doButtons()
 	{
 		boolean validFile = this.licenseFile.exists() && !this.licenseFile.isDirectory();

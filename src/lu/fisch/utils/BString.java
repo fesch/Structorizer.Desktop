@@ -228,10 +228,13 @@ public abstract class BString
 		
 		/**
 		 * Cuts blanks at the end and at the beginning of the string.
+		 * 
 		 *@param str - The string to be trimmed
 		 *@return The trimmed string
+		 *
 		 *@deprecated Use {@link String#trim()} instead.
 		 */
+		@Deprecated
 		public static String cutOut(String str)
 		{
 			return str.trim();
@@ -242,6 +245,7 @@ public abstract class BString
 		 * 
 		 *@param str - The string to check
 		 *@return true iff there is at least one non-blank character
+		 *
 		 *@deprecated Use {@code !str.isBlank()} or {@code !str.trim().isEmpty()} instead
 		 */
 		@Deprecated

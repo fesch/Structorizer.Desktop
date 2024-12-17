@@ -30,8 +30,8 @@ package lu.fisch.structorizer.executor;
  *
  *      Revision List
  *
- *      Author          Date			Description
- *      ------			----			-----------
+ *      Author          Date            Description
+ *      ------          ----            -----------
  *      Bob Fisch                       First Issue
  *      Kay Gürtzig     2015-10-11      Method execute() now ensures that all elements get unselected
  *      Kay Gürtzig     2015-10-13      Method step decomposed into separate subroutines, missing
@@ -222,6 +222,11 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2023-10-16      Bugfix #980/#1096: Simple but effective workaround for complicated C-style
  *                                      initialisation (declaration + assignment) case where setVar used to fail.
  *      Kay Gürtzig     2024-03-14      Bugfix #1139: Catch now always saves message in a variable (possibly a generic one)
+ *      Kay Gürtzig     2024-11-22/25   Bugfix #1180: Propagation of full subroutine test coverage to potential callers
+ *      Kay Gürtzig     2024-11-26      KGU#1165: Code deletions to prevent Surface being added to the routinePools
+ *                                      (where Arranger will already have been registered if instantiated).
+ *      Kay Gürtzig     2024-11-27      Bugfix #1181: Execution highlighting in the code preview was compromised
+ *                                      after Calls and within multi-line Calls
  *
  ******************************************************************************************************
  *
@@ -371,6 +376,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map.Entry;
+import java.util.Queue;
 import java.util.Random;
 import java.util.Set;
 import java.util.Stack;
@@ -1689,17 +1695,17 @@ public class Executor implements Runnable
 		//addToStackTrace(root, arguments);	// KGU 2017-02-17 moved downwards, after the argument request
 		// END KGU#159 2016-03-17
 		
-		// START KGU#2 (#9) 2015-11-14
-		Iterator<Updater> iter = root.getUpdateIterator();
-		while (iter.hasNext())
-		{
-			Updater pool = iter.next();
-			if (pool instanceof IRoutinePool && !this.routinePools.contains((IRoutinePool)pool))
-			{
-				this.routinePools.addElement((IRoutinePool)pool);
-			}
-		}
-		// END KGU#2 (#9) 2015-11-14
+//		// START KGU#2 (#9) 2015-11-14 / KGU#1165 2024-11-26 Led to redundant content (Arranger + Surface)
+//		Iterator<Updater> iter = root.getUpdateIterator();
+//		while (iter.hasNext())
+//		{
+//			Updater pool = iter.next();
+//			if (pool instanceof IRoutinePool && !this.routinePools.contains((IRoutinePool)pool))
+//			{
+//				this.routinePools.addElement((IRoutinePool)pool);
+//			}
+//		}
+//		// END KGU#2 (#9) 2015-11-14
 
 		boolean analyserState = diagram.getAnalyser();
 		diagram.setAnalyser(false);
@@ -2451,10 +2457,16 @@ public class Executor implements Runnable
 				savingHandled = true;
 			}
 			// END KGU#1032 2022-06-22
+			// START KGU#1036 2024-11-22: Bugfix #1180 Clone deeplyCovered as well
+			boolean deeplyCovered = root.deeplyCovered;
+			// END KGU#1036 2024-11-22
 			// START KGU#749 2019-10-15: Issue #763 - we must compensate the changes in Diagram.saveNSD(Root, boolean)
 			//root = (Root)root.copy();
 			root = root.copyWithFilepaths();
 			// END KGU#749 2019-10-15
+			// START KGU#1036 2024-11-22: Bugfix #1180 Clone deeplyCovered as well
+			root.deeplyCovered = deeplyCovered;
+			// END KGU#1036 2024-11-22
 			// START KGU#1032 2022-06-22: Bugfix #1038 Retain the saving decision for the clone, too
 			if (savingHandled) {
 				askedToSave.add(root);
@@ -2498,17 +2510,26 @@ public class Executor implements Runnable
 		/////////////////////////////////////////////////////////
 		
 		// START KGU#156 2016-03-11: Enh. #124 / KGU#376 2017-07-01: Enh. #389 - caller may be null
-		if (caller != null) {
+		// START KGU#1036 2024-11-22: Bugfix #1180 It makes absolutely no sense to do this without necessity
+		//if (caller != null) {
+		if (caller != null && Element.E_COLLECTRUNTIMEDATA) {
+		// END KGU#1036 2024-11-11
 			// START KGU#539 2018-07-02 Bugfix - the call itself is also to be counted as an operation
 			//caller.addToExecTotalCount(root.getExecStepCount(true) - countBefore, true);
 			caller.addToExecTotalCount(root.getExecStepCount(true) - countBefore + 1, true);
 			// END KGU#539 2018-07-02
 			// START KGU#686 2019-03-17: Enh. #56 could be in a try context, so don't honour unsuccessful execution 
-			//if (cloned || root.isTestCovered(true))	
-			if (ok && (cloned || root.isTestCovered(true)))	
+			//if (cloned || root.isTestCovered(true))
+			// START KGU#1036 2024-11-22: Bugfix #1180 Note if the subroutine changed coverage status
+			//if (ok && (cloned || root.isTestCovered(true)))
+			if (ok && !caller.deeplyCovered && (cloned || root.isTestCovered(true)))
+			// END KGU#1036 2024-11-22
 			// END KGU#686 2019-03-17
 			{
 				caller.deeplyCovered = true;
+				// START KGU#1036 2024-11-21: Bugfix #1180 We have to propagate the coverage change
+				propagateSubCoverage(root, caller);
+				// END KGU#1036 2024-11-21
 			}
 		}
 		// END KGU#156 2016-03-11 / KGU#376 2017-07-01
@@ -2649,6 +2670,114 @@ public class Executor implements Runnable
 		
 		return resultObject;
 	}
+
+	// START KGU#1036 2024-11-24: Fixes #1180 in a more exhaustive way (considers chain reaction)
+	/**
+	 * Propagates the test coverage change of the subroutine given by
+	 * {@code coveredSubs} among the Roots in the registered routine pools
+	 * 
+	 * @param turnedSub - a subroutine newly marked (or unmarked) as completely covered
+	 * @param caller - the inducing {@link Call} (if already handled) or {@code null}
+	 */
+	public void propagateSubCoverage(Root turnedSub, Call caller) {
+		boolean turnedOn = turnedSub.isTestCovered(true);
+		// The propagation may induce some kind of chain reaction, so build a queue for it
+		Queue<Root> newCoveredSubs = new LinkedList<Root>();
+		newCoveredSubs.add(turnedSub);
+		while (!newCoveredSubs.isEmpty()) {
+			Root sub = newCoveredSubs.remove();
+			//long before = System.currentTimeMillis();	// DEBUG
+			String routineName = sub.getMethodName();
+			// There may be several references to actually the same pool (e.g., Arranger + Surface)...
+			HashSet<Root> seenRoots = new HashSet<Root>();
+			for (IRoutinePool pool: routinePools) {
+				// Check all available Roots (at most once) for relevant Calls
+				for (Root dependent: pool.getAllRoots()) {
+					boolean wasDeeplyCovered = dependent.isTestCovered(true);
+					if (seenRoots.add(dependent) && (!wasDeeplyCovered || !turnedOn)) {
+						/* Check all contained referring Calls that have been run at least
+						 * once but haven't been marked as deeply covered yet.
+						 */
+						for (Call call: dependent.collectCalls()) {
+							// The inducing call itself will be handled by the outer context, so skip it
+							if (call != caller && call.simplyCovered && (call.deeplyCovered != turnedOn)
+									&& call.getText().getLongString().contains(routineName)) {
+								// Note that this will only return a result for single-line Calls
+								Function callee = call.getCalledRoutine();
+								// The matching done here avoids the effort of findDiagramWithSignature()
+								if (callee != null
+										&& routineName.equals(callee.getName())
+										&& sub.acceptsArgCount(callee.paramCount()) >= 0) {
+									call.deeplyCovered = turnedOn;
+									if (turnedOn) {
+										call.checkTestCoverage(true);	// May turn the owning root covered
+									}
+									else {
+										Element parent = call.parent;
+										while (parent != null) {
+											parent.deeplyCovered = false;
+											parent = parent.parent;
+										}
+									}
+								}
+								// Now cater for the rare multi-line Calls as well
+								else if (callee == null) {
+									StringList unbrokenText = call.getUnbrokenText();
+									// If the Call has less than two lines now then it must be defective
+									boolean someUncovered = unbrokenText.count() < 2;
+									for (int i = 0; i < unbrokenText.count() && !someUncovered; i++) {
+										callee = call.getCalledRoutine(i);
+										if (callee != null) {
+											int paramCount = callee.paramCount();
+											// It is enough to check those call lines that do NOT match sub
+											if (!routineName.equals(callee.getName())
+												|| sub.acceptsArgCount(paramCount) < 0) {
+												try {
+													Root sub1 = this.findDiagramWithSignature(routineName, paramCount);
+													someUncovered = sub1 == null || !sub1.isTestCovered(true);
+												} catch (Exception exc) {
+													// Subroutine is ambiguous, call may not be deeply covered
+													someUncovered = true;
+												}
+											}
+											else if (!turnedOn) {
+												someUncovered = true;
+											}
+										}
+										else {
+											// The line is syntactically incorrect
+											someUncovered = true;
+										}
+									}
+									if (!someUncovered) {
+										call.deeplyCovered = turnedOn;
+										if (turnedOn) {
+											call.checkTestCoverage(true);	// May turn the owning root covered
+										}
+										else {
+											Element parent = call.parent;
+											while (parent != null) {
+												parent.deeplyCovered = false;
+												parent = parent.parent;
+											}
+										}
+									}
+								}
+							}
+						}
+						// If the searched Root was turned deeply covered then we have to handle its references, too
+						if (dependent.isSubroutine() && dependent.isTestCovered(true) != wasDeeplyCovered) {
+							//System.out.println("Chain propagation for " + dependent);	// DEBUG
+							newCoveredSubs.add(dependent);
+						}
+					}
+				}
+			}
+			//long after = System.currentTimeMillis();	// DEBUG
+			//System.out.println("Time for " + turnedSub + ": " + (after - before) + " ms");
+		}
+	}
+	// END KGU#1036 2024-11-24
 	
 	// START KGU#2 2015-11-24: Stack trace support for execution errors
 	// START KGU#946 2021-02-28: Bugfix #947 We must also track during include list processing
@@ -2846,10 +2975,10 @@ public class Executor implements Runnable
     			}
     			// END KGU#317 2016-12-29
     			// START KGU#125 2016-01-05: Is to force updating of the diagram status
-    			if (pool instanceof Updater)
-    			{
-    				diagr.addUpdater((Updater)pool);
-    			}
+    			//if (pool instanceof Updater)	// KGU#1165 2024-11-26: Obsolete and superfluous
+    			//{
+    			//	diagr.addUpdater((Updater)pool);
+    			//}
     			diagram.adoptArrangedOrphanNSD(diagr);
     			// END KGU#125 2016-01-05
     		}
@@ -5692,8 +5821,13 @@ public class Executor implements Runnable
 
 			try
 			{
-				// START KGU#117 2016-03-08: Enh. #77
-				element.deeplyCovered = false;
+				// START KGU#117 2016-03-08: Enh. #77 We want to make sure all lines count
+				// START KGU#1036 2024-11-22: Bugfix #1180 ... but only if the element hasn't been deeply covered
+				//element.deeplyCovered = false;
+				if (!wasDeeplyCovered) {
+					element.deeplyCovered = false;	// Undo a rash flagging from previous line
+				}
+				// END KGU#1036 2024-11-22
 				// END KGU#117 2016-03-08
 
 				// START KGU 2015-10-12: Allow to step within an instruction block (but no breakpoint here!) 
@@ -5702,6 +5836,9 @@ public class Executor implements Runnable
 					// START KGU#907 2021-01-04: Enh. #907 different behaviour on stepping Calls
 					//delay();
 					this.currentCall = element;
+					// START KGU#1166 2024-11-27: Bugfix #1181 Synchronize code preview highlighting
+					diagram.redraw(element);
+					// END KGU#1166 2024-11-27
 					delay();
 					this.currentCall = null;
 					// END KGU#907 2021-01-04
@@ -5757,13 +5894,19 @@ public class Executor implements Runnable
 		{
 			element.executed = false;
 			// START KGU#117 2016-03-08: Enh. #77
-			element.simplyCovered = true;	// (Should already have been set)
-			element.deeplyCovered = wasDeeplyCovered || allSubroutinesCovered;
-			if (!wasDeeplyCovered && allSubroutinesCovered ||
-					!wasSimplyCovered)
-			{
-				element.checkTestCoverage(true);
+			// START KGU#1036 2024-11-22: Bugfix #1180 Avoid unnecessary efforts
+			if (Element.E_COLLECTRUNTIMEDATA) {
+			// END KGU#1036 2024-11-22
+				element.simplyCovered = true;	// (Should already have been set)
+				element.deeplyCovered = wasDeeplyCovered || allSubroutinesCovered;
+				if (!wasDeeplyCovered && allSubroutinesCovered ||
+						!wasSimplyCovered)
+				{
+					element.checkTestCoverage(true);
+				}
+			// START KGU#1036 2024-11-22: Bugfix #1180 Avoid unnecessary efforts
 			}
+			// END KGU#1036 2024-11-22
 			// END KGU#117 2016-03-08
 		}
 		return trouble;
@@ -8133,7 +8276,7 @@ public class Executor implements Runnable
 			// END KGU#156 2016-03-11
 			i++;
 		}
-		if (sq.getSize() == 0)
+		if (Element.E_COLLECTRUNTIMEDATA && sq.getSize() == 0)
 		{
 			sq.deeplyCovered = sq.simplyCovered = true;
 			// START KGU#156 2016-03-11: Enh. #124

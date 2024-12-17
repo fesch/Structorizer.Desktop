@@ -312,7 +312,7 @@ public abstract class Element {
 	public static final long E_HELP_FILE_SIZE = 12300000;
 	public static final String E_DOWNLOAD_PAGE = "https://www.fisch.lu/Php/download.php";
 	// END KGU#791 2020-01-20
-	public static final String E_VERSION = "3.32-23";
+	public static final String E_VERSION = "3.32-24";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -1817,9 +1817,9 @@ public abstract class Element {
 	/**
 	 * In test coverage mode, sets the local tested flag if element is fully covered
 	 * and then recursively checks test coverage upwards all ancestry if
-	 * _propagateUpwards is true (otherwise it would be postponed to the termination
-	 * of the superstructure).
-	 * @param _propagateUpwards if true then the change is immediately propagated  
+	 * {@code _propagateUpwards} is {@code true} (otherwise it would be postponed to
+	 * the termination of the superstructure).
+	 * @param _propagateUpwards if {@code true} then the change is immediately propagated  
 	 */
 	public void checkTestCoverage(boolean _propagateUpwards)
 	{

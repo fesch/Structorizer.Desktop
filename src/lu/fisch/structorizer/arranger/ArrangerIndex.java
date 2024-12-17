@@ -48,6 +48,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2021-01-11      Enh. #910: Menu items disabled if only DiagramController proxies are selected
  *      Kay Gürtzig     2021-02-23      Issue #901: WAIT_CURSOR now also set on group saving
  *      Kay Gürtzig     2022-08-17      Issue #1065: Right-click now overrides a previous single selection
+ *      Kay Gürtzig     2024-11-25      Issue #1180: Test coverage display inconsistency fixed
  *
  ******************************************************************************************************
  *
@@ -300,7 +301,10 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 				boolean withQualifiers = !showQualifiers.containsKey(tree) || showQualifiers.get(tree);
 				String s = root.getSignatureString(true, withQualifiers);
 				// END KGU#408 2021-02-26
-				boolean covered = Element.E_COLLECTRUNTIMEDATA && root.deeplyCovered; 
+				// START KGU#1036 2024-11-25: Bugfix #1180 We must accept both kinds of markings
+				//boolean covered = Element.E_COLLECTRUNTIMEDATA && root.deeplyCovered;
+				boolean covered = Element.E_COLLECTRUNTIMEDATA && root.isTestCovered(true);
+				// END KGU#1036 2024-11-25
 				setText(s);
 				// Enh. #319, #389: show coverage status of (imported) main diagrams
 				if (root.isProgram()) {

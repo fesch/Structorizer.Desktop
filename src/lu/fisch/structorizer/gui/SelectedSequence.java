@@ -71,8 +71,9 @@ import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.utils.StringList;
 
 /**
- * @author Kay Gürtzig
  * Class represents a selected subsequence of a {@link Subqueue}
+ * 
+ * @author Kay Gürtzig
  */
 public class SelectedSequence extends Element implements IElementSequence {
 
@@ -92,10 +93,11 @@ public class SelectedSequence extends Element implements IElementSequence {
 	/**
 	 * If this is used to replace (expand/reduce) a previous selection then the old
 	 * selection must be {@code _child1}.
+	 * 
 	 * @param _child1 - a selected {@link Element}, marking one end of the sequence,
-	 * may be a {@link SelectedSequence}
-	 * @param _child2 - a selected {@link Element}, marking the other end of  sequence,
-	 * must not be a {@link SelectedSequence}
+	 *    may be a {@link SelectedSequence}
+	 * @param _child2 - a selected {@link Element}, marking the other end of sequence,
+	 *    must not be a {@link SelectedSequence}
 	 */
 	public SelectedSequence(Element _child1, Element _child2)
 	{
@@ -149,7 +151,8 @@ public class SelectedSequence extends Element implements IElementSequence {
 	}
 
 	/**
-	 * Establishes new selection span with respect to the given {@code _owner}
+	 * Establishes new selection span with respect to the given {@code _owner}.
+	 * 
 	 * @param _owner - {@link Subqueue} this is to represent a subsequence of
 	 * @param _index1 - Index of the first Element of the sequence within {@code _owner}
 	 * @param _index2 - Index of the last Element of the sequence within {@code _owner}
@@ -161,11 +164,14 @@ public class SelectedSequence extends Element implements IElementSequence {
 	/**
 	 * Establishes new selection span with respect to the given {@code _owner}, where
 	 * element at {@code _index0} is retained as selection anchor for expansion/reduction.
+	 * 
 	 * @param _owner - {@link Subqueue} this is to represent a subsequence of
 	 * @param _index1 - Index of the Element marking the begin of the sequence
 	 * @param _index2 - Index of the Element marking the end of the sequence
-	 * @param _offset0 - Index offset of the selection anchor (w.r.t. {@code _index0} for expansion or reduction)
-	 * @param _modifiedBelow - true if last expanded or reduced at or below anchor (false otherwise)
+	 * @param _offset0 - Index offset of the selection anchor (w.r.t. {@code _index0}
+	 *    for expansion or reduction)
+	 * @param _modifiedBelow - {@code true} if last expanded or reduced at or below
+	 *    anchor ({@code false} otherwise)
 	 */
 	public SelectedSequence(Subqueue _owner, int _index1, int _index2, int _offset0, boolean _modifiedBelow) {
 		super("");
@@ -441,9 +447,10 @@ public class SelectedSequence extends Element implements IElementSequence {
 	}
 	
 	/**
-	 * Removes the element referenced by _index from its owning Subqueue and
-	 * drops the virtual reference here.
-	 * @param _index
+	 * Removes the element referenced by {@code _index} from its owning Subqueue
+	 * and drops the virtual reference here.
+	 * 
+	 * @param _index - the indx of the element to be removed (starting at 0)
 	 */
 	@Override
 	public void removeElement(int _index)
@@ -513,9 +520,12 @@ public class SelectedSequence extends Element implements IElementSequence {
 	}
 	
 	/**
-	 * Moves all {@link Element}s representing this selection one position downwards
-	 * within the owner {@link Subqueue} if possible
-	 * @return true if the selected {@link Element}s could be moved, false otherwise
+	 * Moves all {@link Element}s representing this selection one position
+	 * downwards within the owner {@link Subqueue} if possible.
+	 * 
+	 * @return {@code true} if the selected {@link Element}s could be moved,
+	 *    {@code false} otherwise
+	 * 
 	 * @see #canMoveDown()
 	 */
 	public boolean moveDown()
@@ -536,9 +546,12 @@ public class SelectedSequence extends Element implements IElementSequence {
 	}
 
 	/**
-	 * Moves all {@link Element}s representing this selection one position upwards
-	 * within the owner {@link Subqueue} if possible
-	 * @return true if the selected {@link Element}s could be moved, false otherwise
+	 * Moves all {@link Element}s representing this selection one position
+	 * upwards within the owner {@link Subqueue} if possible
+	 * 
+	 * @return {@code true} if the selected {@link Element}s could be moved,
+	 *    {@code false} otherwise
+	 * 
 	 * @see #canMoveUp()
 	 */
 	public boolean moveUp()
@@ -559,8 +572,9 @@ public class SelectedSequence extends Element implements IElementSequence {
 	// END KGU#144 2016-01-22
 	
 	/**
-	 * Clears the element references held by this (without removing them from the owning
-	 * Subqueue (if they are to be removed from the owning Subqueue, use removeElements())
+	 * Clears the element references held by this (without removing them from
+	 * the owning Subqueue (if they are to be removed from the owning Subqueue,
+	 * use {@link #removeElements()})
 	 */
 	public void clear()
 	{
@@ -569,7 +583,7 @@ public class SelectedSequence extends Element implements IElementSequence {
 	}
 
 	/**
-	 * Removes the referenced elements from the owning Subqueue and clears this 
+	 * Removes the referenced elements from the owning Subqueue and clears this.
 	 */
 	public void removeElements()
 	{
@@ -599,8 +613,8 @@ public class SelectedSequence extends Element implements IElementSequence {
 	}
 
 	/**
-	 * Sets this element sequence as a whole and also all individual members to selected
-	 * (if {@code _sel} is true) or unselected (otherwise).
+	 * Sets this element sequence as a whole and also all individual members
+	 * to selected (if {@code _sel} is {@code true}) or unselected (otherwise).
 	 */
 	@Override
 	public Element setSelected(boolean _sel)
@@ -625,19 +639,19 @@ public class SelectedSequence extends Element implements IElementSequence {
 		return selected ? this : null;
 	}
 	// END KGU#183 2016-04-24
-	    
+	
 	// START KGU#123 2016-01-03: We need a collective collapsing/expansion now
 	/**
 	 * Sets all members individually collapsed (true) or expanded (false). 
 	 */
 	@Override
-    public void setCollapsed(boolean collapsed) {
-        super.setCollapsed(false);	// the Subqueue itself will never be collapsed
+	public void setCollapsed(boolean collapsed) {
+		super.setCollapsed(false);	// the Subqueue itself will never be collapsed
 		for (int i = firstIndex; i <= lastIndex; i++)
-        {
+		{
 			((Subqueue)parent).getElement(i).setCollapsed(collapsed);
-        }
-    }
+		}
+	}
 	// END KGU#123 2016-01-03
 
 	@Override
@@ -739,9 +753,10 @@ public class SelectedSequence extends Element implements IElementSequence {
 
 	// START KGU#602 2018-10-25: Issue #419 - Mechanism to detect and handle long lines
 	/**
-	 * Detects the maximum text line length either on this very element 
-	 * @param _includeSubstructure - whether (in case of a complex element) the substructure
-	 * is to be involved
+	 * Detects the maximum text line length either on this very element.
+	 * 
+	 * @param _includeSubstructure - whether (in case of a complex element) the
+	 *    substructure is to be involved
 	 * @return the maximum line length
 	 */
 	public int getMaxLineLength(boolean _includeSubstructure)
@@ -761,7 +776,8 @@ public class SelectedSequence extends Element implements IElementSequence {
 	
 	// START KGU#866 2020-05-02: Issue #866 - modified expansion / reduction strategy
 	/**
-	 * @return the index offset of the first selected element within the parenting {@link Subqueue}
+	 * @return the index offset of the first selected element within the
+	 *    parenting {@link Subqueue}
 	 */
 	public int getStartOffset()
 	{
@@ -769,7 +785,8 @@ public class SelectedSequence extends Element implements IElementSequence {
 	}
 
 	/**
-	 * @return the index offset of the first selected element within the parenting {@link Subqueue}
+	 * @return the index offset of the last selected element within the
+	 *    parenting {@link Subqueue}
 	 */
 	public int getEndOffset()
 	{
@@ -777,7 +794,8 @@ public class SelectedSequence extends Element implements IElementSequence {
 	}
 	
 	/**
-	 * @return the index offset of the first selected element within the parenting {@link Subqueue}
+	 * @return the selection seed offset among the elements within the
+	 *    parenting {@link Subqueue}
 	 */
 	public int getAnchorOffset()
 	{
@@ -785,8 +803,9 @@ public class SelectedSequence extends Element implements IElementSequence {
 	}
 	
 	/**
-	 * @return true if last expansion/reduction was below anchor position (or if no
-	 * expansion / reduction had been done recently), false otherwise.
+	 * @return {@code true} if last expansion/reduction was below anchor
+	 *    position (or if no expansion / reduction had been done recently),
+	 *    {@code false} otherwise.
 	 */
 	public boolean wasModifiedBelowAnchor()
 	{

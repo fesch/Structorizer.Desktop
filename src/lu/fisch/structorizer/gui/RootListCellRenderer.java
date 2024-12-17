@@ -60,6 +60,7 @@ import lu.fisch.structorizer.elements.Root;
 
 /**
  * Special {@link ListCellRenderer} subclass rendering the cells of a {@link Root} list.
+ * 
  * @author Kay Gürtzig
  */
 

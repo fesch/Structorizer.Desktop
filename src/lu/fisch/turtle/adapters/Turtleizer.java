@@ -31,10 +31,10 @@ package lu.fisch.turtle.adapters;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2017.10.28      First issue for enhancement request #441 (possibility to use
+ *      Kay Gürtzig     2017-10-28      First issue for enhancement request #441 (possibility to use
  *                                      Turtleizer functionality by Java code e.g. exported from Structorizer)
- *      Kay Gürtzig     2018.01.21      Enh. #441, #443: Retrieval methods for API put deprecated
- *      Kay Gürtzig     2018.07.30      Enh. #576: New procedure clear() added to the API
+ *      Kay Gürtzig     2018-01-21      Enh. #441, #443: Retrieval methods for API put deprecated
+ *      Kay Gürtzig     2018-07-30      Enh. #576: New procedure clear() added to the API
  *
  ******************************************************************************************************
  *
@@ -71,6 +71,7 @@ public class Turtleizer {
 	 * obsolete routine check {@link #checkRoutine(String)} only.
 	 */
 	// FIXME: This field became superfluous since TurtleBox got a light-weight constructor.
+	@Deprecated
 	@SuppressWarnings("serial")
 	private static final HashMap<String, String> supportedRoutines = new HashMap<String, String>() {{
 		put("forward", "forward");
@@ -115,16 +116,19 @@ public class Turtleizer {
 	}
 	
 	/**
-	 * Checks whether a routine with the {@code candidateName} is supported by Turtleizer, and if so
-	 * returns the qualified method name, otherwise null. Note that {@code candidateName} will be
-	 * looked up case-ignorantly.<br/>
+	 * Checks whether a routine with the {@code candidateName} is supported by
+	 * Turtleizer, and if so returns the qualified method name, otherwise null.
+	 * Note that {@code candidateName} will be looked up case-ignorantly.<br/>
 	 * Became obsolete with Structorizer version 3.27-05
+	 * 
 	 * @param candidateName - a procedure or function identifier 
-	 * @return the qualified method name or null
+	 * @return the qualified method name or {@code null}
+	 * 
 	 * @deprecated Use {@link TurtleBox#providedRoutine(String, int)} instead
-	 * on a light-weight instance of {@link TurtleBox} (obtainable from the standard constructor,
-	 * NOT via {@link #getTurtleBox()}).
+	 *    on a light-weight instance of {@link TurtleBox} (obtainable from the
+	 *    standard constructor, NOT via {@link #getTurtleBox()}).
 	 */
+	@Deprecated
 	public static String checkRoutine(String candidateName)
 	{
 		String methodName = supportedRoutines.get(candidateName.trim().toLowerCase());
@@ -136,9 +140,12 @@ public class Turtleizer {
 	
 	// Drawing
 	/**
-	 * Moves the turtle forwards by exactly {@code pixels} within a virtual floating-point
-	 * coordinate system. If pen is down, draws a line in the current pen colour.
+	 * Moves the turtle forwards by exactly {@code pixels} within a virtual
+	 * floating-point coordinate system. If pen is down, draws a line in the
+	 * current pen colour.
+	 * 
 	 * @param pixels - exact length of the translation (in current orientation).
+	 * 
 	 * @see #backward(double)
 	 * @see #forward(double, Color)
 	 * @see #fd(int)
@@ -151,10 +158,13 @@ public class Turtleizer {
 		getTurtleBox().forward(pixels);;
 	}
 	/**
-	 * Moves the turtle forwards by exactly {@code pixels} within a virtual floating-point
-	 * coordinate system. If pen is down, draws a line in the given {@code color}.
+	 * Moves the turtle forwards by exactly {@code pixels} within a virtual
+	 * floating-point coordinate system. If pen is down, draws a line in the
+	 * given {@code color}.
+	 * 
 	 * @param pixels - exact length of the translation (in current orientation).
 	 * @param color - the pen colour to be used.
+	 * 
 	 * @see #backward(double, Color)
 	 * @see #forward(double)
 	 * @see #fd(int, Color)
@@ -166,9 +176,12 @@ public class Turtleizer {
 		getTurtleBox().forward(pixels, color);
 	}
 	/**
-	 * Moves the turtle backwards by exactly {@code pixels} within a virtual floating-point
-	 * coordinate system. If pen is down, draws a line in the current pen colour.
+	 * Moves the turtle backwards by exactly {@code pixels} within a virtual
+	 * floating-point coordinate system. If pen is down, draws a line in the
+	 * current pen colour.
+	 * 
 	 * @param pixels - exact length of the translation (in current orientation).
+	 * 
 	 * @see #forward(double)
 	 * @see #backward(double, Color)
 	 * @see #bk(int)
@@ -181,10 +194,13 @@ public class Turtleizer {
 		getTurtleBox().backward(pixels);
 	}
 	/**
-	 * Moves the turtle backwards by exactly {@code pixels} within a virtual floating-point
-	 * coordinate system. If pen is down, draws a line in the given {@code color}.
+	 * Moves the turtle backwards by exactly {@code pixels} within a virtual
+	 * floating-point coordinate system. If pen is down, draws a line in the
+	 * given {@code color}.
+	 * 
 	 * @param pixels - exact length of the translation (in current orientation).
 	 * @param color - the pen colour to be used.
+	 * 
 	 * @see #forward(double, Color)
 	 * @see #backward(double)
 	 * @see #bk(int, Color)
@@ -196,11 +212,13 @@ public class Turtleizer {
 		getTurtleBox().backward(pixels, color);
 	}
 	/**
-	 * Moves the turtle forwards by approximately {@code pixels} and coerces its position
-	 * to the nearest pixel coordinate in an integral coordinate system. If pen is down,
-	 * draws a line from the recent coordinate to the target coordinate in the current
-	 * pen colour.
+	 * Moves the turtle forwards by approximately {@code pixels} and coerces
+	 * its position to the nearest pixel coordinate in an integral coordinate
+	 * system. If pen is down, draws a line from the recent coordinate to the
+	 * target coordinate in the current pen colour.
+	 * 
 	 * @param pixels - integral length of the translation (in current orientation).
+	 * 
 	 * @see #forward(double)
 	 * @see #fd(int, Color)
 	 * @see #bk(int)
@@ -213,11 +231,13 @@ public class Turtleizer {
 		getTurtleBox().fd(pixels);
 	}
 	/**
-	 * Moves the turtle forwards by approximately {@code pixels} and coerces its position
-	 * to the nearest pixel coordinate in an integral coordinate system. If pen is down,
-	 * draws a line from the recent coordinate to the target coordinate in the given
-	 * pen colour.
+	 * Moves the turtle forwards by approximately {@code pixels} and coerces
+	 * its position to the nearest pixel coordinate in an integral coordinate
+	 * system. If pen is down, draws a line from the recent coordinate to the
+	 * target coordinate in the given pen colour.
+	 * 
 	 * @param pixels - integral length of the translation (in current orientation).
+	 * 
 	 * @see #forward(double, Color)
 	 * @see #fd(int)
 	 * @see #bk(int, Color)
@@ -229,11 +249,13 @@ public class Turtleizer {
 		getTurtleBox().fd(pixels, color);
 	}
 	/**
-	 * Moves the turtle backwards by approximately {@code pixels} and coerces its position
-	 * to the nearest pixel coordinate in an integral coordinate system. If pen is down,
-	 * draws a line from the recent coordinate to the target coordinate in the current
-	 * pen colour.
+	 * Moves the turtle backwards by approximately {@code pixels} and coerces
+	 * its position to the nearest pixel coordinate in an integral coordinate
+	 * system. If pen is down, draws a line from the recent coordinate to the
+	 * target coordinate in the current pen colour.
+	 * 
 	 * @param pixels - integral length of the translation (in current orientation).
+	 * 
 	 * @see #backward(double)
 	 * @see #bk(int, Color)
 	 * @see #fd(int)
@@ -246,11 +268,13 @@ public class Turtleizer {
 		getTurtleBox().bk(pixels);
 	}
 	/**
-	 * Moves the turtle backwards by approximately {@code pixels} and coerces its position
-	 * to the nearest pixel coordinate in an integral coordinate system. If pen is down,
-	 * draws a line from the recent coordinate to the target coordinate in the given
-	 * pen colour.
+	 * Moves the turtle backwards by approximately {@code pixels} and coerces
+	 * its position to the nearest pixel coordinate in an integral coordinate
+	 * system. If pen is down, draws a line from the recent coordinate to the
+	 * target coordinate in the given pen colour.
+	 * 
 	 * @param pixels - integral length of the translation (in current orientation).
+	 * 
 	 * @see #backward(double, Color)
 	 * @see #bk(int)
 	 * @see #fd(int, Color)
@@ -263,10 +287,26 @@ public class Turtleizer {
 	}
 	
 	// Rotation
+	/**
+	 * Rotates the turtle clockwise by {@code degrees} degrees.
+	 * 
+	 * @param degrees - the angle for clockwise rotation degrees, may be
+	 *    negative
+	 * 
+	 * @see #left(double)
+	 */
 	public static void right(double degrees)
 	{
 		getTurtleBox().right(degrees);
 	}
+	/**
+	 * Rotates the turtle counter-clockwise by {@code degrees} degrees.
+	 * 
+	 * @param degrees - the angle for counter-clockwise rotation degrees,
+	 *    may be negative
+	 * 
+	 * @see #right(double)
+	 */
 	public static void left(double degrees)
 	{
 		getTurtleBox().left(degrees);
@@ -286,73 +326,90 @@ public class Turtleizer {
 	
 	// Positioning
 	/** Places the turtle to the nearest integral coordinate (x,y) without drawing. */
-    public static void gotoXY(double x, double y)
-    {
-    	getTurtleBox().gotoXY((int) x, (int) y);
-    }
+	public static void gotoXY(double x, double y)
+	{
+		getTurtleBox().gotoXY((int) x, (int) y);
+	}
 	/** Places the turtle to the integral pixel position (x,y) where y is the current column. */
-    public static void gotoX(double x)
-    {
-    	getTurtleBox().gotoX((int) x);
-    }
+	public static void gotoX(double x)
+	{
+		getTurtleBox().gotoX((int) x);
+	}
 	/** Places the turtle to the integral pixel position (x,y) where x is the current roe. */
-    public static void gotoY(double y)
-    {
-    	getTurtleBox().gotoY((int) y);
-    }
-    
-    // Hiding
-    /** Makes the turtle invisible (this does not prevent it from drawing lines) */
-    public static void hideTurtle()
-    {
-    	getTurtleBox().hideTurtle();
-    }
-    /** Makes the turtle visible (this does not put the pen down if it's up!) */
-    public static void showTurtle()
-    {
-    	getTurtleBox().showTurtle();
-    }
+	public static void gotoY(double y)
+	{
+		getTurtleBox().gotoY((int) y);
+	}
 
-    // Changing Color
-    /**
-     * Sets the background colour of the canvas according to the given RGB values.<br/>
-     * Legacy method for Java exports prior to Structorizer version 3.27-05
-     * @see #setBackgroundColor(short, short, short)
-     */ 
-    public static void setBackground(short red, short green, short blue)
-    {
-    	getTurtleBox().setBackgroundColor(Math.abs(red), Math.abs(green), Math.abs(blue));
-    }
-    /** Sets the background colour of the canvas according to the given RGB values. */
-    public static void setBackgroundColor(short red, short green, short blue)
-    {
-    	getTurtleBox().setBackgroundColor(Math.abs(red), Math.abs(green), Math.abs(blue));
-    }
-    /** Sets the pen colour of the turtle according to the given RGB values. */
-    public static void setPenColor(short red, short green, short blue)
-    {
-    	getTurtleBox().setPenColor(Math.abs(red), Math.abs(green), Math.abs(blue));
-    }
-    
-    // Functions
-    /** Returns the current turtle orientation in degrees from North */
-    public static double getOrientation() {
-    	return (Double)getTurtleBox().getOrientation();
-    }
-    /** Returns the current virtual x coordinate of the turtle (as double) */
-    public static double getX() {
-    	return getTurtleBox().getX();
-    }
-    /** Returns the current virtual y coordinate of the turtle (as double) */
-    public static double getY() {
-    	return getTurtleBox().getY();
-    }
-    // START KGU#566 2018-07-30: Enh. API function allowing the user algorithm to wipe the box
-    /** Wipes the Turle canvas from all content */
-    public static void clear()
-    {
-    	getTurtleBox().clear();
-    }
-    // END KGU#566 2018-07-30
+	// Hiding
+	/** Makes the turtle invisible (this does not prevent it from drawing lines) */
+	public static void hideTurtle()
+	{
+		getTurtleBox().hideTurtle();
+	}
+	/** Makes the turtle visible (this does not put the pen down if it's up!) */
+	public static void showTurtle()
+	{
+		getTurtleBox().showTurtle();
+	}
+
+	// Changing Color
+	/**
+	 * Sets the background colour of the canvas according to the given RGB values.<br/>
+	 * Legacy method for Java exports prior to Structorizer version 3.27-05
+	 * 
+	 * @param red - a number in the interval 0..255
+	 * @param green - a number in the interval 0..255
+	 * @param blue - a number in the interval 0..255
+
+	 * @see #setBackgroundColor(short, short, short)
+	 */ 
+	public static void setBackground(short red, short green, short blue)
+	{
+		getTurtleBox().setBackgroundColor(Math.abs(red), Math.abs(green), Math.abs(blue));
+	}
+	/**
+	 * Sets the background colour of the canvas according to the given RGB values.
+	 * 
+	 * @param red - a number in the interval 0..255
+	 * @param green - a number in the interval 0..255
+	 * @param blue - a number in the interval 0..255
+	 */
+	public static void setBackgroundColor(short red, short green, short blue)
+	{
+		getTurtleBox().setBackgroundColor(Math.abs(red), Math.abs(green), Math.abs(blue));
+	}
+	/**
+	 * Sets the pen colour of the turtle according to the given RGB values.
+	 * 
+	 * @param red - a number in the interval 0..255
+	 * @param green - a number in the interval 0..255
+	 * @param blue - a number in the interval 0..255
+	 */
+	public static void setPenColor(short red, short green, short blue)
+	{
+		getTurtleBox().setPenColor(Math.abs(red), Math.abs(green), Math.abs(blue));
+	}
+
+	// Functions
+	/** @return the current turtle orientation in degrees from North */
+	public static double getOrientation() {
+		return (Double)getTurtleBox().getOrientation();
+	}
+	/** @return the current virtual x coordinate of the turtle (as double) */
+	public static double getX() {
+		return getTurtleBox().getX();
+	}
+	/** @return the current virtual y coordinate of the turtle (as double) */
+	public static double getY() {
+		return getTurtleBox().getY();
+	}
+	// START KGU#566 2018-07-30: Enh. API function allowing the user algorithm to wipe the box
+	/** Wipes the turtle canvas from all content */
+	public static void clear()
+	{
+		getTurtleBox().clear();
+	}
+	// END KGU#566 2018-07-30
 
 }

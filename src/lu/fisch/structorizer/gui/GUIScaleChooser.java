@@ -82,8 +82,9 @@ import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.locales.LangDialog;
 
 /**
+ * Dialog for the pre-choice of the GUI scale preview.
+ * 
  * @author codemanyak
- *
  */
 @SuppressWarnings("serial")
 public class GUIScaleChooser extends LangDialog implements ChangeListener {

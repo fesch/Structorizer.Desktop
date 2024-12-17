@@ -69,6 +69,7 @@
  *      PUC-Minas       2024-03-09  Issue #1131: Messages for new Java import option provided
  *      Kay Gürtzig     2024-03-17  Issue #1138: New / modified conflict messages for Surface
  *      Kay Gürtzig     2024-04-21  ExportOptionDialoge renamed to ExportOptionDialog
+ *      Kay Gürtzig     2024-11-22  Poll #1173: menuFileExportPictureSWF removed.
  *
  ******************************************************************************************************
  *
@@ -127,7 +128,6 @@ Menu.menuFileExportCode.text=Código
 Menu.menuFileExportPicturePNG.text=
 Menu.menuFileExportPicturePNGmulti.text=PNG (múltiplo) ...
 Menu.menuFileExportPictureEMF.text=
-Menu.menuFileExportPictureSWF.text=SWF (em desuso!) ...
 Menu.menuFileExportPicturePDF.text=
 Menu.menuFileExportPictureSVG.text=
 Menu.lbFileExportCodeFavorite.text=Exportar como código %
@@ -666,7 +666,7 @@ Editor.popupMoveDown.text=Para baixo
 Editor.popupTransmute.text=Mudar
 Editor.popupOutsource.text=Terceirizar
 Editor.popupOutsource.tooltip=Terceirizar a sequência do elemento selecionado
-Editor.popupEditSub.text=Editar sub-rotina ...
+Editor.popupEditSub.text=Editar @o ...
 Editor.popupEditSub.tooltip=Chamar @o ou um diagrama @p referenciado para edição.
 // Collapsing
 Editor.popupCollapse.text=Colapsar

@@ -1877,6 +1877,10 @@ implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, Lang
         surface.clearExecutionStatus();
     }
 
+    /**
+     * Updates the visibility or accessibility of the buttons held in the button bar,
+     * menus etc. depending on the current state.
+     */
     public void doButtons() {
         btnSetCovered.setEnabled(Element.E_COLLECTRUNTIMEDATA);
         // START KGU#624/KGU#626 2018-12-27: Enh. #655, #657
@@ -1924,6 +1928,7 @@ implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, Lang
 	/**
 	 * Statically removes the given {@code _listener} from the set of {@link IRoutinePoolListener}s
 	 * @param _listener - the listener to be unregistered.
+	 * 
 	 * @see #removeChangeListener(IRoutinePoolListener)
 	 * @see #addToChangeListeners(IRoutinePoolListener)
 	 */

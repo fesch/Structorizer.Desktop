@@ -367,15 +367,55 @@ public class Call extends Instruction {
 	}
 	// END #178 2016-07-19
 	
+//	// START KGU#1036 2024-11-22: Workaround for bug #1180 (alternative approach, withdrawn 2024-11-24)
+//	/**
+//	 * Detects shallow or deep test coverage of this element according to the
+//	 * argument _deeply
+//	 * @param _deeply if exhaustive coverage (including subroutines is requested)
+//	 * @return true iff element and all its sub-structure is test-covered
+//	 */
+//	@Override
+//	public boolean isTestCovered(boolean _deeply)
+//	{
+//		if (_deeply && this.simplyCovered && !this.deeplyCovered && Arranger.hasInstance()) {
+//			// We have to check if called routine(s) may have turned completely covered meanwhile
+//			StringList sl = this.getUnbrokenText();
+//			if (sl.count() > 1) {
+//				Root myRoot = getRoot(this);
+//				for (int i = 0; i < sl.count(); i++) {
+//					Function called = getCalledRoutine(i);
+//					if (called != null) {
+//						// The retrieval is restricted to the Arranger pool, which may not be consistent with Executor
+//						Vector<Root> candidates = Arranger.getInstance()
+//								.findRoutinesBySignature(called.getName(), called.paramCount(), myRoot, true);
+//						// If unique then update the deeplyCovered attribute accordingly
+//						if (candidates.size() != 1 || !candidates.get(0).isTestCovered(true)) {
+//							return false;	// No further check needed
+//						}
+//					}
+//				}
+//				this.deeplyCovered = true;
+//				if (this.parent != null) {
+//					this.parent.checkTestCoverage(true);
+//				}
+//			}
+//		}
+//		// The following ought to be identical with super
+//		return _deeply ? this.deeplyCovered : this.simplyCovered;
+//	}
+//	// END KGU#1036 2024-11-22
+	
 	// START KGU#408 2021-02-26: Enh. #410 Differing behaviour in case of a method reference
 	/**
 	 * Returns a {@link Function} object describing the signature of
 	 * <ul>
 	 * <li> the referred method declaration (in case this obect represents a method reference),</li>
 	 * <li> the called routine if the text complies to the call syntax described in the user guide,</li>
-	 * <li> {@code null} otherwise.</li>
+	 * <li> {@code null} otherwise. (Note that this may be the case if the element consists of more than
+	 *     one line!)</li>
 	 * </ul>
 	 * @return Function object or {@code null}.
+	 * 
 	 * @see #isFunctionCall(boolean)
 	 * @see #isProcedureCall(boolean)
 	 */

@@ -79,6 +79,7 @@ import lu.fisch.structorizer.io.Ini;
 
 /**
  * Helper class for the DPI awareness workaround, provides static methods for GUI scaling
+ * 
  * @author Kay Gürtzig
  */
 public class GUIScaler {
@@ -126,7 +127,8 @@ public class GUIScaler {
 	
 	// START KGU 2021-01-27: Issue #81
 	/**
-	 * Service method to retrieve a sensible system dpi factor
+	 * Service method to retrieve a sensible system dpi factor.
+	 * 
 	 * @return a normed DPI scale factor between 1.0f and 2.0f in 0.25f steps
 	 */
 	public static float getScreenScale()
@@ -154,6 +156,7 @@ public class GUIScaler {
 	/**
 	 * Recursively rescales all {@link Component}s in container {@code cont} that
 	 * can be adapted to the given relative size.
+	 * 
 	 * @param cont - the owning container
 	 */
 	public static void rescaleComponents(Container cont)
@@ -299,7 +302,8 @@ public class GUIScaler {
 	/**
 	 * Returns a scaled checkbox icon for {@link JToggleButton} {@code toggleButton}
 	 * (may also be a {@link JCheckbox} or {@link JRadioButton}) in mode given by
-	 * {@code selected} (checked or unchecked)
+	 * {@code selected} (checked or unchecked).
+	 * 
 	 * @param toggleButton - the toggle button the icon is requested for
 	 * @param selected - the kind of icon (true = selected, false = unselected)
 	 * @return an ImageIcon scaled to the font size of the checkbox or the scale factor
@@ -314,7 +318,8 @@ public class GUIScaler {
 	/**
 	 * Returns a scaled checkbox icon for {@link JToggleButton} {@code toggleButton}
 	 * (may also be a {@link JCheckbox} or {@link JRadioButton}) in mode given by
-	 * {@code selected} (checked or unchecked)
+	 * {@code selected} (checked or unchecked).
+	 * 
 	 * @param toggleButton - the toggle button the icon is requested for
 	 * @param selected - the kind of icon (true = selected, false = unselected)
 	 * @param useCache - whether an internal toggleIcon cache is to be used or not
