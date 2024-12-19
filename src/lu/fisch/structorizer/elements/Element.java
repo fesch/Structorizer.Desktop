@@ -1566,12 +1566,12 @@ public abstract class Element {
 	{
 //		Root root = getRoot(this);
 //		return (root != null && root.isSwitchTextAndComments());
-    	// START KGU#227 2016-07-31: Enh. #128 - Mode "comments and text" overrides "switch text/comments" 
-    	//return Element.E_TOGGLETC;
-    	return !Element.E_COMMENTSPLUSTEXT && Element.E_TOGGLETC;
-    	// END KGU#227 2016-07-31
+		// START KGU#227 2016-07-31: Enh. #128 - Mode "comments and text" overrides "switch text/comments" 
+		//return Element.E_TOGGLETC;
+		return !Element.E_COMMENTSPLUSTEXT && Element.E_TOGGLETC;
+		// END KGU#227 2016-07-31
 	}
-	/* END KGU#172 2916-04-01 */
+	/* END KGU#172 2016-04-01 */
 
 	/**
 	 * Returns whether this element appears as selected in the standard {@link DrawingContext}.

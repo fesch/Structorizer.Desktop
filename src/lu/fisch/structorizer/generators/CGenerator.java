@@ -125,6 +125,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2023-12-14      Bugfix #1118: The comment of Instructions without a line wasn't exported
  *      Kay Gürtzig             2023-12-26      Issue #1123: Translation of built-in function random() added.
  *      Kay Gürtzig             2024-03-19      Issue #1148: Special indentation for "if else if" chains
+ *      Kay Gürtzig             2024-12-19      Issue #423: Recursive record definitions via array components weren't
+ *                                              correctly translated (pointer insertion failed)
  *
  ******************************************************************************************************
  *
@@ -1001,10 +1003,20 @@ public class CGenerator extends Generator {
 		// END KGU#1082 2023-09-28
 		int nLevels = canonType.lastIndexOf('@')+1;
 		String elType = (canonType.substring(nLevels)).trim();
+		// START KGU#1167 2024-12-19: Bugfix #423 With a missing backlink it didn't work
+		//if (nLevels > 0 && typeInfo.getTypeMap() != null && typeInfo.getTypeMap().containsKey(":"+elType)) {
+		//	elTypeInfo = typeInfo.getTypeMap().get(":" + elType);
+		//}
 		TypeMapEntry elTypeInfo = typeInfo;
-		if (nLevels > 0 && typeInfo.getTypeMap() != null && typeInfo.getTypeMap().containsKey(":"+elType)) {
-			elTypeInfo = typeInfo.getTypeMap().get(":" + elType);
+		HashMap<String, TypeMapEntry> myTypeMap = typeInfo.getTypeMap();
+		if (myTypeMap == null) {
+			myTypeMap = typeMap;
 		}
+		if (nLevels > 0 && myTypeMap != null && myTypeMap.containsKey(":"+elType)) {
+			elTypeInfo = myTypeMap.get(":" + elType);
+		}
+		// END KGU#1167 2024-12-19
+		// FIXME KGU#1167 This might still fail with alias types...
 		if (elTypeInfo.isRecord() && elType.equals(elTypeInfo.typeName)) {
 			elType = transformRecordTypeRef(elType, elTypeInfo == definingWithin);
 		}

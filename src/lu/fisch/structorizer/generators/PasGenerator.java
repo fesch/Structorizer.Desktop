@@ -102,6 +102,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2023-11-08      Bugfix #1109: generateCode(Jump) revised for throw
  *      Kay Gürtzig         2024-04-02      Bugfix #1155: Risk of stack overflow on type conversion averted
  *      Kay Gürtzig         2024-04-03      Issue #1148: Optimised code generation for "if else if" chains
+ *      Kay Gürtzig         2024-12-18      Issue #423: Force pointer symbols in directly recursive record definitions
  *
  ******************************************************************************************************
  *
@@ -529,6 +530,12 @@ public class PasGenerator extends Generator
 		int nLevels = canonType.lastIndexOf('@')+1;
 		String elType = (canonType.substring(nLevels)).trim();
 		elType = transformType(elType, "(*???*)");
+		// START KGU#1025 2024-12-18: Issue #423 Add pointer symbol for recursive records
+		if (definingWithin != null && definingWithin.isRecord() &&
+				(typeInfo == definingWithin || elType.equals(definingWithin.typeName))) {
+			elType = "^" + elType;
+		}
+		// END KGU#1025 2024-12-18
 		_typeDescr = "";
 		for (int i = 0; i < nLevels; i++) {
 			_typeDescr += "array ";
@@ -2195,7 +2202,10 @@ public class PasGenerator extends Generator
 		if (_type.isRecord()) {
 			code.add(indentPlus1 + _typeName + " = RECORD");
 			for (Entry<String, TypeMapEntry> compEntry: _type.getComponentInfo(false).entrySet()) {
-				code.add(indentPlus3 + compEntry.getKey() + ":\t" + transformTypeFromEntry(compEntry.getValue(), null, true) + ";");
+				// START KGU#1025 2024-12-18: Issue #423 Special treatment for recursive record defs
+				//code.add(indentPlus3 + compEntry.getKey() + ":\t" + transformTypeFromEntry(compEntry.getValue(), null, true) + ";");
+				code.add(indentPlus3 + compEntry.getKey() + ":\t" + transformTypeFromEntry(compEntry.getValue(), _type, true) + ";");
+				// END#1025 2024-12-18
 			}
 			code.add(indentPlus2 + "END;");
 		}
