@@ -227,6 +227,7 @@ package lu.fisch.structorizer.executor;
  *                                      (where Arranger will already have been registered if instantiated).
  *      Kay Gürtzig     2024-11-27      Bugfix #1181: Execution highlighting in the code preview was compromised
  *                                      after Calls and within multi-line Calls
+ *      Kay Gürtzig     2025-01-21      Enh. #1184: Lazy multi-dimensional array creation on first element assignment
  *
  ******************************************************************************************************
  *
@@ -4389,16 +4390,27 @@ public class Executor implements Runnable
 			// Adjust the basic level - find the variable or object or create it
 			int level = 0;
 			boolean arrayWanted = false;
-			if ((targetObject == null) && accessPath.count() < 3) {
+			// START KGU#1169 2025-01-17: Issue #1184 Allow creation of multidimensional arrays
+			//if ((targetObject == null) && accessPath.count() < 3) {
+			int nPathItems = accessPath.count();
+			boolean onlyIndices = accessPath.get(1).startsWith("[");
+			for (int i = 2; onlyIndices && i < nPathItems; i++) {
+				onlyIndices = accessPath.get(i).startsWith("[");
+			}
+			if ((targetObject == null) && (onlyIndices || nPathItems < 3)) {
+			// END KGU#1169 2025-01-17
 				// We may generously create it, in particular if  the type is declared
 				String access = accessPath.get(1);
 				if ((arrayWanted = access.startsWith("["))
 						&& (targetType == null || targetType.isArray())) {
-					int index = Integer.parseInt(access = access.substring(1));
-					targetObject = objectArray = new ArrayList<Object>(index+1);
-					for (int i = 0; i <= index; i++) {
-						objectArray.add(0);
-					}
+					// START KGU#1169 2025-01-21: Issue #1184
+					//int index = Integer.parseInt(access = access.substring(1));
+					//targetObject = objectArray = new ArrayList<Object>(index+1);
+					//for (int i = 0; i <= index; i++) {
+					//	objectArray.add(0);
+					//}
+					targetObject = objectArray = createArrayForIndexList(accessPath.subSequence(1, nPathItems), true);
+					// END KGU#1169 2025-01-21
 					if (typeStr == null) {
 						typeStr = "@???";
 					}
@@ -4685,6 +4697,37 @@ public class Executor implements Runnable
 		return target;	// Base name of the assigned variable or constant
 		// END KGU#580 2018-09-24
 	}
+	
+	// START KGU#1169 2025-01-21: Issue #1184
+	/**
+	 * Recursive routine to construct a mult-dimensional array structure containing
+	 * at least the index path symbolized by {@code indexPath}.
+	 * 
+	 * @param indexPath - a StringList expected to contain strings of form {@code "[<int>"}
+	 *     where {@code <int>} is meant to be an unsigned integer literal
+	 * @param fill TODO
+	 * @return An ArrayList containing as many elements as the integer literal in
+	 *     the first element of {@code indexPath}. If {@code indexPath} has length
+	 *     1 then the ArrayList element will be 0, otherwise they will be ArrayLists
+	 *     themselves
+	 */
+	private ArrayList<Object> createArrayForIndexList(StringList indexPath, boolean fill)
+	{
+		String access = indexPath.get(0);
+		boolean interLevel = indexPath.count() > 1;
+		int index = Integer.parseInt(access = access.substring(1));
+		ArrayList<Object> targetArray = new ArrayList<Object>(index+1);
+		for (int i = 0; i <= index; i++) {
+			if (interLevel) {
+				targetArray.add(createArrayForIndexList(indexPath.subSequence(1, indexPath.count()), fill && i == index));
+			}
+			else if (fill) {
+				targetArray.add(0);
+			}
+		}
+		return targetArray;
+	}
+	// END KGU#1169 2025-01-21
 
 	/**
 	 * Checks compatibility of types between {@code target} (i.e. {@code targetType}

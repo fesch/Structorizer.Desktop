@@ -312,7 +312,7 @@ public abstract class Element {
 	public static final long E_HELP_FILE_SIZE = 12300000;
 	public static final String E_DOWNLOAD_PAGE = "https://www.fisch.lu/Php/download.php";
 	// END KGU#791 2020-01-20
-	public static final String E_VERSION = "3.32-24";
+	public static final String E_VERSION = "3.32-25";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -1566,12 +1566,12 @@ public abstract class Element {
 	{
 //		Root root = getRoot(this);
 //		return (root != null && root.isSwitchTextAndComments());
-    	// START KGU#227 2016-07-31: Enh. #128 - Mode "comments and text" overrides "switch text/comments" 
-    	//return Element.E_TOGGLETC;
-    	return !Element.E_COMMENTSPLUSTEXT && Element.E_TOGGLETC;
-    	// END KGU#227 2016-07-31
+		// START KGU#227 2016-07-31: Enh. #128 - Mode "comments and text" overrides "switch text/comments" 
+		//return Element.E_TOGGLETC;
+		return !Element.E_COMMENTSPLUSTEXT && Element.E_TOGGLETC;
+		// END KGU#227 2016-07-31
 	}
-	/* END KGU#172 2916-04-01 */
+	/* END KGU#172 2016-04-01 */
 
 	/**
 	 * Returns whether this element appears as selected in the standard {@link DrawingContext}.

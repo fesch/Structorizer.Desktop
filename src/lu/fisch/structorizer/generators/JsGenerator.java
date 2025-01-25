@@ -321,7 +321,7 @@ public class JsGenerator extends CGenerator {
 				else {
 					recordInit.append(", ");
 				}
-				recordInit.append(compName + ":");
+				recordInit.append(compName + ": ");
 				if (compType != null && compType.isRecord()) {
 					recordInit.append(transformRecordInit(compVal, compType));
 				}
