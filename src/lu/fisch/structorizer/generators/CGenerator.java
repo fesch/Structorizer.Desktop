@@ -127,6 +127,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2024-03-19      Issue #1148: Special indentation for "if else if" chains
  *      Kay Gürtzig             2024-12-19      Issue #423: Recursive record definitions via array components weren't
  *                                              correctly translated (pointer insertion failed)
+ *      Kay Gürtzig             2025-02-05      Bugfix #1186: The initialisation part of C-Style declarations got lost
  *
  ******************************************************************************************************
  *
@@ -1413,12 +1414,12 @@ public class CGenerator extends Generator {
 						StringList declZones = new StringList();
 						for (int i = 0; i < declVars.count(); i++) {
 							String declVar = declVars.get(i);
-							// END KGU#1089 2023-10-16
+						// END KGU#1089 2023-10-16
 							if (exprTokens == null && declVar != null
 									&& this.wasDefHandled(root, declVar, false)) {
 								return _commentInserted;
 							}
-							// END KGU#711 2019-10-01
+						// END KGU#711 2019-10-01
 							// START KGU#560 2018-07-22: Bugfix #564
 							//codeLine = transform(tokens.subSequence(0, posAsgn).concatenate().trim());
 							TypeMapEntry type = this.typeMap.get(declVar);
@@ -1452,8 +1453,14 @@ public class CGenerator extends Generator {
 								// END KGU#711 2019-09-30
 							}
 							// END KGU#560 2018-07-22
-							addCode(codeLine + ";", _indent, isDisabled);
-							codeLine = null;
+							// START KGU#1171 2025-02-05: Bugfix #1186 C-style inizialisations got lost
+							//addCode(codeLine + ";", _indent, isDisabled);
+							//codeLine = null;
+							if (i < declVars.count() - 1 || pureExprTokens == null || pureExprTokens.isEmpty()) {
+								addCode(codeLine + ";", _indent, isDisabled);
+								codeLine = null;
+							}
+							// END KGU#1171 2025-02-05
 						}
 					}
 					else if (exprTokens != null) {
