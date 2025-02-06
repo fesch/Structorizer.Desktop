@@ -456,7 +456,7 @@ public class PythonGenerator extends Generator
 				// START KGU#1021 2021-12-05: Bugfix #1024 Instruction might be defective
 				//HashMap<String, String> comps = Instruction.splitRecordInitializer(tokens.concatenate("", posLBrace), typeEntry, false);
 				String tail = tokens.concatenate("", posLBrace);
-				HashMap<String, String> comps = Instruction.splitRecordInitializer(tail, typeEntry, false);
+				HashMap<String, String> comps = Instruction.splitRecordInitializer(prevToken+tail, typeEntry, false);
 				// END KGU#1021 2021-12-05
 				// END KGU#559 2018-07-20
 				LinkedHashMap<String, TypeMapEntry> compDefs = typeEntry.getComponentInfo(true);

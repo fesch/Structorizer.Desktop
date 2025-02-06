@@ -5302,7 +5302,7 @@ public class Root extends Element {
 						else {
 							// START KGU#559 2018-07-20: Enh. #563  more intelligent initializer evaluation
 							//HashMap<String, String> components = Element.splitRecordInitializer(tokens.concatenate("", posBrace));
-							HashMap<String, String> components = Element.splitRecordInitializer(tokens.concatenate("", posBrace), recType, false);
+							HashMap<String, String> components = Element.splitRecordInitializer(tokens.concatenate("", posBrace-1), recType, false);
 							// END KGU#559 2018-07-20
 							// START KGU#1021 2021-12-05: Bugfix #1024 components may be null!
 							if (components == null) {
