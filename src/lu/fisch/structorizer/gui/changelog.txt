@@ -268,7 +268,7 @@ Current development version 3.32-26 (2025-02-07)
       arrays on first element assignment (though lazily filled) <2>
 - 26: Bugfix #1186: Code export of C-Style variable initialisations to C++,
       C#, Java, and Javascript was defective (initialisation missing) <2>
-- 26: 
+- 26: Bugfix #1187: Analyser unduly decried C-style array declarations <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>
