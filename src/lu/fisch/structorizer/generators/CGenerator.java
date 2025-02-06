@@ -656,7 +656,7 @@ public class CGenerator extends Generator {
 	// END KGU#311 2016-12-22
 	
 // START KGU#18/KGU#23 2015-11-01: Obsolete    
-//    public static String transform(String _input)
+//	public static String transform(String _input)
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.Generator#transform(java.lang.String, boolean)
 	 */

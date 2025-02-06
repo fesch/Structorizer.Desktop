@@ -33,7 +33,7 @@ function isLeapYear {
 
  fi
 
- result4eb7f003=${isLeapYear}
+ result11758f2a=${isLeapYear}
 }
 
 # Computes the number of days the given month (1..12) 
@@ -63,7 +63,7 @@ function daysInMonth423 {
     # a separate element (cannot be performed 
     # as part of the condition of an Alternative) 
     isLeapYear ${aDate[year]}
-    isLeap=${result4eb7f003}
+    isLeap=${result11758f2a}
 
     if [[ ${isLeap} ]]
     then
@@ -79,7 +79,7 @@ function daysInMonth423 {
   ;;
  esac
 
- result87f383f=${days}
+ result612679d6=${days}
 }
 # = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 
@@ -93,6 +93,7 @@ auxCopyAssocArray() {
  done
 }
 
+# Several declaration and initialisation variants for test of Analyser, Executor, and Generators 
 # TODO: Check and revise the syntax of all expressions! 
 
 typeset -A today
@@ -100,10 +101,11 @@ typeset -A someDay
 typeset -A me
 typeset -A someDay=([day]=24 [month]=2 [year]=2017)
 daysInMonth423 someDay
-nDays=${result87f383f}
+nDays=${result612679d6}
 typeset -A today=([year]=2018 [month]=7 [day]=20)
 typeset -A me=([name]="roger" [birth]=Date{1985, 3, 6} [test]={0, 8, 15})
 set -A declArray 9.0 7.5 $(( -6.4 )) 1.7 0.0
 set -A explArray 7.1 0.5 $(( -1.5 ))
 set -A doof 0.4
+set -A dull $(( -12.7 )) 96.03
 set -A values 47 11

@@ -58,6 +58,7 @@ def daysInMonth423(aDate) :
 
 # = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 
+# Several declaration and initialisation variants for test of Analyser, Executor, and Generators 
 someDay = {'year': 2017, 'month': 2, 'day': 24}
 nDays = daysInMonth423(someDay)
 today = {'year': 2018, 'month': 7, 'day': 20}
@@ -65,5 +66,6 @@ me = {'name': "roger", 'birth': {'year': 1985, 'month': 3, 'day': 6}, 'test': [0
 declArray = [9.0, 7.5, -6.4, 1.7, 0.0]
 explArray = [7.1, 0.5, -1.5]
 doof = [0.4]
+dull = [-12.7, 96.03]
 values = [47, 11]
 

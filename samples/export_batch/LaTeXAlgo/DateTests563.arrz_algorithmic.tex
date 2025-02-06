@@ -46,12 +46,12 @@
 
 \STATE \COMMENT{ Computes the number of days the given month (1..12) }
 \STATE \COMMENT{ has in the the given year }
-  \STATE \(discr7a3d45bd <- aDate.month\)
-  \IF{\(discr7a3d45bd=1\ \OR\ discr7a3d45bd=3\ \OR\ discr7a3d45bd=5\ \OR\ discr7a3d45bd=7\ \OR\ discr7a3d45bd=8\ \OR\ discr7a3d45bd=10\ \OR\ discr7a3d45bd=12\)}[select the case where illegal values are also considered]
+  \STATE \(discra38d7a3 <- aDate.month\)
+  \IF{\(discra38d7a3=1\ \OR\ discra38d7a3=3\ \OR\ discra38d7a3=5\ \OR\ discra38d7a3=7\ \OR\ discra38d7a3=8\ \OR\ discra38d7a3=10\ \OR\ discra38d7a3=12\)}[select the case where illegal values are also considered]
     \STATE \(days\gets\ 31\)
-  \ELSIF{\(discr7a3d45bd=4\ \OR\ discr7a3d45bd=6\ \OR\ discr7a3d45bd=9\ \OR\ discr7a3d45bd=11\)}[select the case where illegal values are also considered]
+  \ELSIF{\(discra38d7a3=4\ \OR\ discra38d7a3=6\ \OR\ discra38d7a3=9\ \OR\ discra38d7a3=11\)}[select the case where illegal values are also considered]
     \STATE \(days\gets\ 30\)
-  \ELSIF{\(discr7a3d45bd=2\)}[select the case where illegal values are also considered]
+  \ELSIF{\(discra38d7a3=2\)}[select the case where illegal values are also considered]
     \STATE \(days\gets\ 28\)
     \COMMENT{Default value for February}
     \STATE \COMMENT{ To make the call work it has to be done in }
@@ -80,6 +80,7 @@
 \caption{DateTests563()}
 \begin{algorithmic}[5]
 
+\STATE \COMMENT{ Several declaration and initialisation variants for test of Analyser, Executor, and Generators }
   \STATE \(Date\ someDay\gets\ Date\{day:24,month:2,year:2017\}\)
   \STATE \(nDays\gets\ daysInMonth423(someDay)\)
   \STATE \(today\gets\ Date\{2018,7,20\}\)
@@ -88,6 +89,7 @@
   \STATE \(var\ declArray:array\ of\ double\gets\{9.0,7.5,-6.4,1.7,0.0\}\)
   \STATE \(var\ explArray:double[3]\gets\{7.1,0.5,-1.5\}\)
   \STATE \(double\ doof[3]\gets\{0.4\}\)
+  \STATE \(double[2]dull\gets\{-12.7,96.03\}\)
   \STATE \(values\gets\{47,11\}\)
 
 \end{algorithmic}

@@ -85,6 +85,7 @@ function daysInMonth423($aDate)
 // = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 
 // program DateTests563 
+// Several declaration and initialisation variants for test of Analyser, Executor, and Generators 
 
 $someDay = array("day" => 24,"month" => 2,"year" => 2017);
 $nDays = daysInMonth423($someDay);
@@ -94,6 +95,7 @@ $me = array("name" => "roger","birth" => array("year" => 1985,"month" => 3,"day"
 $declArray = array(9.0,7.5,-6.4,1.7,0.0);
 $explArray = array(7.1,0.5,-1.5);
 $doof[3] = array(0.4);
+$dull = array(-12.7,96.03);
 $values = array(47,11);
 
 ?>

@@ -86,6 +86,7 @@ function daysInMonth423(aDate) {
 }
 // = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 
+// Several declaration and initialisation variants for test of Analyser, Executor, and Generators 
 initialize_CommonTypes423();
 
 var values;
@@ -93,6 +94,7 @@ var someDay;
 var nDays;
 var me;
 var explArray;
+var dull;
 var doof;
 var declArray;
 
@@ -103,5 +105,6 @@ me = {name: "roger", birth: {year: 1985, month: 3, day: 6}, test: [0, 8, 15]};
 var declArray = [9.0, 7.5, -6.4, 1.7, 0.0];
 var explArray = [7.1, 0.5, -1.5];
 var doof = [0.4];
+var dull = [-12.7, 96.03];
 values = [47, 11];
 </script>

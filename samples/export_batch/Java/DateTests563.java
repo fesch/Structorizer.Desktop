@@ -7,6 +7,7 @@
 // http://www.gnu.de/documents/gpl.de.html 
 
 /**
+ * Several declaration and initialisation variants for test of Analyser, Executor, and Generators
  */
 public class DateTests563 {
 
@@ -52,6 +53,7 @@ public class DateTests563 {
 		double[] declArray = new double[]{9.0, 7.5, -6.4, 1.7, 0.0};
 		double[] explArray = new double[]{7.1, 0.5, -1.5};
 		double[] doof = new double[]{0.4};
+		double[] dull = new double[]{-12.7, 96.03};
 		values = new int[]{47, 11};
 	}
 

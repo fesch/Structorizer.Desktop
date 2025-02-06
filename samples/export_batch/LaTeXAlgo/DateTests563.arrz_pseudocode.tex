@@ -43,12 +43,12 @@
 \COMMENT{ has in the the given year }\\
 \PROCEDURE{daysInMonth423}{aDate}
   \COMMENT{ select the case where illegal values are also considered }\\
-  discr7a3d45bd <- aDate.month\\
-  \IF discr7a3d45bd=1\ \OR\ discr7a3d45bd=3\ \OR\ discr7a3d45bd=5\ \OR\ discr7a3d45bd=7\ \OR\ discr7a3d45bd=8\ \OR\ discr7a3d45bd=10\ \OR\ discr7a3d45bd=12 \THEN
+  discra38d7a3 <- aDate.month\\
+  \IF discra38d7a3=1\ \OR\ discra38d7a3=3\ \OR\ discra38d7a3=5\ \OR\ discra38d7a3=7\ \OR\ discra38d7a3=8\ \OR\ discra38d7a3=10\ \OR\ discra38d7a3=12 \THEN
     days\gets\ 31\\
-  \ELSEIF discr7a3d45bd=4\ \OR\ discr7a3d45bd=6\ \OR\ discr7a3d45bd=9\ \OR\ discr7a3d45bd=11 \THEN
+  \ELSEIF discra38d7a3=4\ \OR\ discra38d7a3=6\ \OR\ discra38d7a3=9\ \OR\ discra38d7a3=11 \THEN
     days\gets\ 30\\
-  \ELSEIF discr7a3d45bd=2 \THEN
+  \ELSEIF discra38d7a3=2 \THEN
   \BEGIN
     \COMMENT{ Default value for February }\\
     days\gets\ 28\\
@@ -75,6 +75,7 @@
 
 \begin{pseudocode}{DateTests563}{ }
 \label{DateTests563}
+\COMMENT{ Several declaration and initialisation variants for test of Analyser, Executor, and Generators }\\
 \MAIN
   Date\ someDay\gets\ Date\{day:24,month:2,year:2017\}\\
   nDays\gets\CALL{daysInMonth423}{someDay}\\
@@ -84,6 +85,7 @@
   var\ declArray:array\ of\ double\gets\{9.0,7.5,-6.4,1.7,0.0\}\\
   var\ explArray:double[3]\gets\{7.1,0.5,-1.5\}\\
   double\ doof[3]\gets\{0.4\}\\
+  double[2]dull\gets\{-12.7,96.03\}\\
   values\gets\{47,11\}\\
 \ENDMAIN
 \end{pseudocode}

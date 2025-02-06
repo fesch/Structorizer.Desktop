@@ -105,6 +105,7 @@ int daysInMonth423(Date aDate)
 
 // program DateTests563 
 
+// Several declaration and initialisation variants for test of Analyser, Executor, and Generators 
 int main(void)
 {
 	// TODO: Check and accomplish variable declarations: 
@@ -127,6 +128,7 @@ int main(void)
 	double declArray[50] = {9.0, 7.5, -6.4, 1.7, 0.0};
 	double explArray[3] = {7.1, 0.5, -1.5};
 	double doof[3] = {0.4};
+	double dull[2] = {-12.7, 96.03};
 	values[0] = 47;
 	values[1] = 11;
 

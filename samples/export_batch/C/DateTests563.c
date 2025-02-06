@@ -105,6 +105,7 @@ int daysInMonth423(struct Date aDate)
 
 
 
+// Several declaration and initialisation variants for test of Analyser, Executor, and Generators 
 int main(void)
 {
 	// TODO: Check and accomplish variable declarations: 
@@ -118,6 +119,7 @@ int main(void)
 	int nDays;
 	struct Person me;
 	double explArray[3];
+	double dull[2];
 	double doof[3];
 	double declArray[50];
 
@@ -146,6 +148,8 @@ int main(void)
 	explArray[1] = 0.5;
 	explArray[2] = -1.5;
 	doof[0] = 0.4;
+	dull[0] = -12.7;
+	dull[1] = 96.03;
 	values[0] = 47;
 	values[1] = 11;
 

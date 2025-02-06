@@ -80,6 +80,7 @@ sub daysInMonth423 {
 
 # = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 
+# Several declaration and initialisation variants for test of Analyser, Executor, and Generators 
 
 my @values;
 my $today;
@@ -87,6 +88,7 @@ my $someDay;
 my $nDays;
 my $me;
 my @explArray;
+my @dull;
 my @doof;
 my @declArray;
 
@@ -102,4 +104,5 @@ $me = Person("roger",Date(1985,3,6),(0,8,15));
 @declArray = (9.0,7.5,-6.4,1.7,0.0);
 @explArray = (7.1,0.5,-1.5);
 @doof = (0.4);
+@dull = (-12.7,96.03);
 @values = (47,11);
