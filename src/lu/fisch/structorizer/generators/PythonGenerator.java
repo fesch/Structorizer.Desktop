@@ -92,6 +92,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2023-10-12/18   Issue #980 Code generation for multi-variable and array declarations revised
  *      Kay Gürtzig             2023-11-08      Bugfix #1109: generateCode(Jump) revised for throw
  *      Kay Gürtzig             2024-04-03      Issue #1148: Optimised code generation for "if else if" chains
+ *      Kay Gürtzig             2025-02-06      Bugfix #1188: The transformation of C-style array initialisations was wrong
  *
  ******************************************************************************************************
  *
@@ -572,6 +573,11 @@ public class PythonGenerator extends Generator
 			// END KGU#689 2019-03-21
 				String[] typeNameIndex = this.lValueToTypeNameIndexComp(lval);
 				String index = typeNameIndex[2];
+				// START KGU#1173 2025-02-06: Bugfix #1188 In case of a declaration suppress the index
+				if (!typeNameIndex[0].isEmpty() && !index.isEmpty()) {
+					index = "";	// It is the size, not an index - drop it
+				}
+				// END KGU#1173 2025-02-06
 				if (!index.isEmpty()) index = "[" + index + "]";
 				// START KGU#388 2017-09-27: Enh. #423
 				//_input = typeNameIndex[1] + index + " <- " + expr;

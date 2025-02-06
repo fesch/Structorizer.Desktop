@@ -1,0 +1,158 @@
+\documentclass[a4paper,10pt]{article}
+
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{ngerman}
+\usepackage{amsmath}
+
+\DeclareMathOperator{\oprdiv}{div}
+\DeclareMathOperator{\oprshl}{shl}
+\DeclareMathOperator{\oprshr}{shr}
+\algblockdefx[CASE]{Case}{EndCase}
+  [1]{\textbf{case} \(#1\) \textbf{of}}
+  {\textbf{end\ case}}
+\algblockdefx[SELECT]{Selector}{EndSelector}
+  [1]{#1\textbf{: begin}}
+  {\textbf{end}}
+\algblockdefx[OTHER]{Other}{EndOther}
+  {\textbf{otherwise: begin}}
+  {\textbf{end}}
+\algblockdefx[TRY]{Try}{EndTry}
+  {\textbf{try}}
+  {\textbf{end\ try}}
+\algblockdefx[CATCH]{Catch}{EndCatch}
+  [1]{\textbf{catch} (#1)}
+  {\textbf{end\ catch}}\algblockdefx[FINALLY]{Finally}{EndFinally}
+  {\textbf{finally}}
+  {\textbf{end\ finally}}
+\algblockdefx[PARALLEL]{Para}{EndPara}
+  {\textbf{parallel}}
+  {\textbf{end\ parallel}}
+\algblockdefx[THREAD]{Thread}{EndThread}
+  [1]{\textbf{thread} #1}
+  [1]{\textbf{end\ thread} #1}
+\algblockdefx[DECLARATION]{Decl}{EndDecl}
+  [1][]{\textbf{#1}}
+  {}
+
+\title{Structorizer LaTeX pseudocode Export of DateTests563.arrz}
+% Structorizer version 3.32-26
+\author{Kay G"urtzig}
+\date{06.02.2025}
+
+\begin{document}
+
+\begin{algorithm}
+\caption{isLeapYear(1)}
+\begin{algorithmic}[5]
+\Function{isLeapYear}{year}
+\State \Comment{ Detects whether the given year is a leap year in the Gregorian calendar }
+\State \Comment{ (extrapolated backwards beyonds its inauguration) }
+  \Decl{Parameters:}
+    \State year: ?
+  \EndDecl
+  \Decl{Result type:}
+    \State boolean
+  \EndDecl
+  \State \(isLeapYear\gets\ false\)
+  \Comment{Most years aren'{}t leap years...}
+  \If{\((year\bmod\ 4=0)\wedge(year\bmod\ 100\neq\ 0)\)}
+    \State \(isLeapYear\gets\ true\)
+    \Comment{This is a standard leap year}
+  \Else
+    \If{\(year\bmod\ 400=0\)}
+      \State \Comment{ One of the rare leap years }
+      \State \Comment{ occurring every 400 years }
+      \State \(isLeapYear\gets\ true\)
+    \EndIf
+  \EndIf
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{algorithm}
+\caption{daysInMonth423(1)}
+\begin{algorithmic}[5]
+\Function{daysInMonth423}{aDate}
+\State \Comment{ Computes the number of days the given month (1..12) }
+\State \Comment{ has in the the given year }
+  \Decl{Parameters:}
+    \State aDate: Date
+  \EndDecl
+  \Decl{Result type:}
+    \State int
+  \EndDecl
+  \Decl{Includes:}
+    \State CommonTypes423
+  \EndDecl
+  \Case{aDate.month}\Comment{select the case where illegal values are also considered}
+    \Selector{1,3,5,7,8,10,12}
+      \State \(days\gets\ 31\)
+    \EndSelector
+    \Selector{4,6,9,11}
+      \State \(days\gets\ 30\)
+    \EndSelector
+    \Selector{2}
+      \State \(days\gets\ 28\)
+      \Comment{Default value for February}
+      \State \Comment{ To make the call work it has to be done in }
+      \State \Comment{ a separate element (cannot be performed }
+      \State \Comment{ as part of the condition of an Alternative) }
+      \State \(isLeap\gets\Call{isLeapYear}{aDate.year}\)
+      \If{\(isLeap\)}
+        \State \(days\gets\ 29\)
+      \EndIf
+    \EndSelector
+    \Other
+      \State \Comment{ This is the return value for illegal months. }
+      \State \Comment{ It is easy to check }
+      \State \(days\gets\ 0\)
+    \EndOther
+  \EndCase
+  \State \textbf{return} \(days\)
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+
+\State \Comment{ = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = }
+
+
+\begin{algorithm}
+\caption{DateTests563}
+\begin{algorithmic}[5]
+\Procedure{DateTests563}{ }
+  \Decl{Includes:}
+    \State CommonTypes423
+  \EndDecl
+  \State \(Date\ someDay\gets\ Date\{day:24,month:2,year:2017\}\)
+  \State \(nDays\gets\Call{daysInMonth423}{someDay}\)
+  \State \(today\gets\ Date\{2018,7,20\}\)
+  \Decl{type:}
+    \State \(Person = record\{name:string;birth:Date;test:array[3]of\ int;\}\)
+  \EndDecl
+  \State \(var\ me:Person\gets\ Person\{\)"{}roger"{}\(,Date\{1985,3,6\},\{0,8,15\}\}\)
+  \State \(var\ declArray:array\ of\ double\gets\{9.0,7.5,-6.4,1.7,0.0\}\)
+  \State \(var\ explArray:double[3]\gets\{7.1,0.5,-1.5\}\)
+  \State \(double\ doof[3]\gets\{0.4\}\)
+  \State \(values\gets\{47,11\}\)
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{algorithm}
+\caption{CommonTypes423}
+\begin{algorithmic}[5]
+\Procedure{CommonTypes423}{ }
+\State \Comment{ Provides type definitions for other programs }
+  \Decl{type:}
+    \State \(Date = record\{year:int;month,day:short\}\)
+  \EndDecl
+  \State \(var\ today:Date\)
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\end{document}

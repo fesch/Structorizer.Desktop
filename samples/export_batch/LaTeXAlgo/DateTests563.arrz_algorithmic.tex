@@ -1,0 +1,109 @@
+\documentclass[a4paper,10pt]{article}
+
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{ngerman}
+\usepackage{amsmath}
+
+\DeclareMathOperator{\oprdiv}{div}
+\DeclareMathOperator{\oprshl}{shl}
+\DeclareMathOperator{\oprshr}{shr}
+\title{Structorizer LaTeX pseudocode Export of DateTests563.arrz}
+% Structorizer version 3.32-26
+\author{Kay G"urtzig}
+\date{06.02.2025}
+
+\begin{document}
+
+\floatname{algorithm}{Function}
+\begin{algorithm}
+\caption{isLeapYear(year)}
+\begin{algorithmic}[5]
+
+\STATE \COMMENT{ Detects whether the given year is a leap year in the Gregorian calendar }
+\STATE \COMMENT{ (extrapolated backwards beyonds its inauguration) }
+  \STATE \(isLeapYear\gets\FALSE\)
+  \COMMENT{Most years aren'{}t leap years...}
+  \IF{\((year\bmod\ 4=0)\ \AND(year\bmod\ 100\neq\ 0)\)}
+    \STATE \(isLeapYear\gets\TRUE\)
+    \COMMENT{This is a standard leap year}
+  \ELSE
+    \IF{\(year\bmod\ 400=0\)}
+      \STATE \COMMENT{ One of the rare leap years }
+      \STATE \COMMENT{ occurring every 400 years }
+      \STATE \(isLeapYear\gets\TRUE\)
+    \ENDIF
+  \ENDIF
+
+\end{algorithmic}
+\end{algorithm}
+
+
+\floatname{algorithm}{Function}
+\begin{algorithm}
+\caption{daysInMonth423(aDate)}
+\begin{algorithmic}[5]
+
+\STATE \COMMENT{ Computes the number of days the given month (1..12) }
+\STATE \COMMENT{ has in the the given year }
+  \STATE \(discr7a3d45bd <- aDate.month\)
+  \IF{\(discr7a3d45bd=1\ \OR\ discr7a3d45bd=3\ \OR\ discr7a3d45bd=5\ \OR\ discr7a3d45bd=7\ \OR\ discr7a3d45bd=8\ \OR\ discr7a3d45bd=10\ \OR\ discr7a3d45bd=12\)}[select the case where illegal values are also considered]
+    \STATE \(days\gets\ 31\)
+  \ELSIF{\(discr7a3d45bd=4\ \OR\ discr7a3d45bd=6\ \OR\ discr7a3d45bd=9\ \OR\ discr7a3d45bd=11\)}[select the case where illegal values are also considered]
+    \STATE \(days\gets\ 30\)
+  \ELSIF{\(discr7a3d45bd=2\)}[select the case where illegal values are also considered]
+    \STATE \(days\gets\ 28\)
+    \COMMENT{Default value for February}
+    \STATE \COMMENT{ To make the call work it has to be done in }
+    \STATE \COMMENT{ a separate element (cannot be performed }
+    \STATE \COMMENT{ as part of the condition of an Alternative) }
+    \STATE \(isLeap\gets\ isLeapYear(aDate.year)\)
+    \IF{\(isLeap\)}
+      \STATE \(days\gets\ 29\)
+    \ENDIF
+  \ELSE
+    \STATE \COMMENT{ This is the return value for illegal months. }
+    \STATE \COMMENT{ It is easy to check }
+    \STATE \(days\gets\ 0\)
+  \ENDIF
+  \RETURN\(days\)
+
+\end{algorithmic}
+\end{algorithm}
+
+
+\STATE \COMMENT{ = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = }
+
+
+\floatname{algorithm}{Program}
+\begin{algorithm}
+\caption{DateTests563()}
+\begin{algorithmic}[5]
+
+  \STATE \(Date\ someDay\gets\ Date\{day:24,month:2,year:2017\}\)
+  \STATE \(nDays\gets\ daysInMonth423(someDay)\)
+  \STATE \(today\gets\ Date\{2018,7,20\}\)
+  \STATE \(type\ Person=record\{name:string;birth:Date;test:array[3]of\ int;\}\)
+  \STATE \(var\ me:Person\gets\ Person\{\)"{}roger"{}\(,Date\{1985,3,6\},\{0,8,15\}\}\)
+  \STATE \(var\ declArray:array\ of\ double\gets\{9.0,7.5,-6.4,1.7,0.0\}\)
+  \STATE \(var\ explArray:double[3]\gets\{7.1,0.5,-1.5\}\)
+  \STATE \(double\ doof[3]\gets\{0.4\}\)
+  \STATE \(values\gets\{47,11\}\)
+
+\end{algorithmic}
+\end{algorithm}
+
+
+\floatname{algorithm}{Includable}
+\begin{algorithm}
+\caption{CommonTypes423()}
+\begin{algorithmic}[5]
+
+\STATE \COMMENT{ Provides type definitions for other programs }
+  \STATE \(type\ Date=record\{year:int;month,day:short\}\)
+  \STATE \(var\ today:Date\)
+
+\end{algorithmic}
+\end{algorithm}
+
+\end{document}

@@ -141,7 +141,7 @@
  *      Kay Gürtzig     2024-03-17      Issue #1138: New / modified conflict messages for Surface
  *      Kay Gürtzig     2024-04-21      ExportOptionDialoge renamed to ExportOptionDialog
  *      Kay Gürtzig     2024-11-22      Poll #1173: menuFileExportPictureSWF removed.
- *      Kay Gürtzig     2025-02-07      Bugfix #1187: Menu.error24_10 grammatically corrected.
+ *      Kay Gürtzig     2025-02-06      Bugfix #1187: Menu.error24_10 grammatically corrected.
  *
  ******************************************************************************************************
  *
