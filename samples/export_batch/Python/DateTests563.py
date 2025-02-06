@@ -64,6 +64,6 @@ today = {'year': 2018, 'month': 7, 'day': 20}
 me = {'name': "roger", 'birth': {'year': 1985, 'month': 3, 'day': 6}, 'test': [0, 8, 15]}
 declArray = [9.0, 7.5, -6.4, 1.7, 0.0]
 explArray = [7.1, 0.5, -1.5]
-doof[3] = [0.4]
+doof = [0.4]
 values = [47, 11]
 
