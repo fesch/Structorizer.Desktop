@@ -269,7 +269,8 @@ Current development version 3.32-26 (2025-02-06)
 - 26: Bugfix #1186: Code export of C-Style variable initialisations to C++,
       C#, Java, and Javascript was defective (initialisation missing) <2>
 - 26: Bugfix #1187: Analyser unduly decried C-style array declarations <2>
-- 26: Bugfix #1188: Python export of C-style array declarations was wrong <2>
+- 26: Bugfix #1188: Export of C-style array declarations to BASIC, PHP, and
+      BASIC was wrong, BASIC array declarations were defective <2>
 - 26: Bugfix #1189: Pascal, Oberon, and Python export of Java-style array
       declarations were defective (element type instead of variable name) <2> 
 

@@ -82,6 +82,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2023-10-04      Bugfix #1093 Undue final return 0 on function diagrams
  *      Kay Gürtzig             2024-03-19      Issue #1148: Special indentation for "if else if" chains
  *      Kay Gürtzig             2024-04-02      Bugfix #1156: Handling of typed constants rectified
+ *      Kay Gürtzig             2025-02-06      Bugfix #1188: Export of C-style array initialisations was defective
  *
  ******************************************************************************************************
  *
@@ -618,7 +619,9 @@ public class PHPGenerator extends Generator
 						//if (mereDecl) {
 							// Now we cut off all remnants of the declaration.
 							posEqu -= (posVar);	// Should still be >= 0 as there must be an assignment
-							tokens.remove(0, posVar);	// This way we should get rid of "var" or "dim"
+							tokens.remove(0, posVar);	// This way we should get rid of "var" or "dim" or types (C)
+							int posPostVar = 0;	// Next non-empty token position after varName
+							while (posPostVar+1 < tokens.count() && tokens.get(++posPostVar).isBlank());
 							int posColon = tokens.indexOf(":");
 							if (posColon < 0 || posColon > posEqu) {
 								posColon = tokens.indexOf("as", false);
@@ -627,6 +630,14 @@ public class PHPGenerator extends Generator
 								tokens.remove(posColon, posEqu);
 								tokens.insert(" ", posColon);
 							}
+							// START KGU#1173 2025-02-06: Bugfix #1188 Face C-style declarations
+							else if (posPostVar < posEqu && "[".equals(tokens.get(posPostVar))) {
+								tokens.remove(posPostVar, posEqu);
+								if (posPostVar == 1) {
+									tokens.insert(" ", posPostVar);
+								}
+							}
+							// END KGU#1173 2025-02-06
 							transf = tokens.concatenate(null);
 						}
 						else {
