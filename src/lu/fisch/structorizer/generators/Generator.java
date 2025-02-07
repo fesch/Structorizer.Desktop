@@ -128,6 +128,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2024-03-19      Issue #1148 Auxiliary methods markElementStart() and markElementEnds()
  *                                      moved up to Generator in order to facilitate IF ELSE IF chains
  *      Kay Gürtzig     2025-02-06      Bugfix #1189: lvalue splitting returned wrong result with Java-style declarations
+ *      Kay Gürtzig     2025-02-07      Bugfix #1190: wasDefHandled now fully recursive (not efficient but effective)
  *
  ******************************************************************************************************
  *
@@ -943,9 +944,17 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		if (_involveIncludables && _root.includeList != null) {
 			for (int i = 0; !handled && i < _root.includeList.count(); i++) {
 				String inclName = _root.includeList.get(i);
-				if ((definedIds  = this.declaredStuff.get(inclName)) != null) {
-					handled = definedIds.contains(_id);
+				// START KGU#1175 2025-02-07: Bugfix #1190 This must be recursive!
+				//if ((definedIds  = this.declaredStuff.get(inclName)) != null) {
+				//	handled = definedIds.contains(_id);
+				//}
+				for (Root incl: this.includedRoots) {
+					if (inclName.equals(incl.getMethodName())) {
+						handled = wasDefHandled(incl, _id, false, true);
+						break;
+					}
 				}
+				// END KGU#1175 2025-02-07
 			}
 		}
 		// The topLevel restriction for includables is here because only definitions of includables

@@ -76,6 +76,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2024-03-19      Issue #1148: Special indentation for "if else if" chains
  *      Kay Gürtzig         2025-02-06      Bugfix #1188: Array declarations in C style weren't correctly
  *                                          processed. Array declarations for vintage BASIC no longer suppressed
+ *      Kay Gürtzig         2025-02-07      Bugfix #1190: Declarations no longer in prefix but in line,
+ *                                          Includables now fully involved.
  *
  ******************************************************************************************************
  *
@@ -87,6 +89,9 @@ package lu.fisch.structorizer.generators;
  *        incomplete (particularly for vintage mode none were produced). No record definitions were produced
  *        for modern BASIC mode (no line numbering). Otherwise the variable declarations in the preamble
  *        preceded their type definitions. So this has to be fundamentally revised and updated.
+ *        In the event, it seems more adequate to add all definitions and declarations where they occur in
+ *        the diagrams rather than to concentrate them in the preamble. This does not of course apply to
+ *        definitions from involved Includables.
  *
  *      2015-12-21 - Bugfix #41/#68/#69 (Kay Gürtzig)
  *      - Operator replacement had induced unwanted padding and string literal modifications
@@ -654,7 +659,10 @@ public class BasGenerator extends Generator
 								&& compList.get(0).equals("{");
 						if (isRecordInit) {
 							TypeMapEntry type = root.getTypeInfo(routinePool).get(":" + exprTokens.get(0));
-							if (type != null && Function.testIdentifier(varName, false, null) && !this.wasDefHandled(root, varName, true)) {
+							// START KGU#1175 2025-02-07: Bugfx #1190 Duplicate declaration should be avoided
+							//if (type != null && Function.testIdentifier(varName, false, null) && !this.wasDefHandled(root, varName, true)) {
+							if (type != null && Function.testIdentifier(varName, false, null) && !this.wasDefHandled(root, varName, true, true)) {
+							// END KGU#1175 2025-02-07
 								addCode(transformKeyword("DIM ") + varName + transformKeyword(" AS ") + type.typeName, _indent, disabled);
 							}
 							this.generateRecordInit(varName, exprTokens.concatenate(), _indent, disabled, type);
@@ -672,10 +680,17 @@ public class BasGenerator extends Generator
 					}
 					// START KGU#993 2021-10-04: Bugfix #993 We suppress unused declarations
 					//addCode(codeLine, _indent, disabled);
-					// FIXME Can we know that the declaration is unused?
 					if (!Instruction.isMereDeclaration(line)) {
 						addCode(codeLine, _indent, disabled);
 					}
+					// START KGU#1175 2025-02-07: Bugfix #1190 We should not suppress within Includables
+					else if (root.isInclude()) {
+						StringList declNames = Instruction.getDeclaredVariables(tokens);
+						for (int j = 0; j < declNames.count(); j++) {
+							this.declareVariable(declNames.get(j), root, _indent);
+						}
+					}
+					// END KGU#1175 2025-02-07
 					// END KGU#993 2021-10-04
 					// END KGU#277/KGU#284 2016-10-13/16
 				// START KGU#100 2016-01-22: Enh. #84 (continued)
@@ -1520,6 +1535,13 @@ public class BasGenerator extends Generator
 			// START KGU#363 2017-05-16: Enh. #372
 			appendCopyright(_root, _indent, true);
 			// END KGU#363 2017-05-16
+
+			// START KGU#1175 2025-02-07: Bugfix #1190 Includables had been forgotten
+			if (_root.isSubroutine()) {
+				appendIncludeCode(_indent);
+			}
+			// END KGU#1175 2025-02-07
+			
 			subroutineInsertionLine = code.count();	// (this will be revised in line numbering mode)
 			appendComment("", _indent);
 		}
@@ -1601,14 +1623,19 @@ public class BasGenerator extends Generator
 			{
 				signature += transformKeyword(" AS ") + transformType(_resultType, "Real");
 			}
-			furtherIndent += this.getIndent();
+			// START KGU#1175 2025-02-07: Bugfix #1190
+			//furtherIndent += this.getIndent();
+			if (_root.isSubroutine()) {
+				furtherIndent += this.getIndent();
+			}
+			// END KGU#1175 2025-02-07
 		}
 
 		code.add(this.getLineNumber() + _indent + pr + " " + signature);
 
 		return furtherIndent;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.Generator#generatePreamble(lu.fisch.structorizer.elements.Root, java.lang.String, lu.fisch.utils.StringList)
 	 */
@@ -1626,68 +1653,31 @@ public class BasGenerator extends Generator
 			appendComment("TODO: add the respective type suffixes to your variable names if required", _indent );
 		}
 		// END KGU##1175 2025-02-06
+// START KGU#1173/KGU#1175 2025-02-07: Bugfix #1188, #1190 Disabled
 //		for (int v = 0; v < _varNames.count(); v++) {
 //			// START KGU#542 2019-12-01: Enh. #739 Don't do this for enumeration constants here
 //			//appendComment(transformKeyword("DIM ") + _varNames.get(v) + transformKeyword(" AS") + " <type>", indentPlusOne);
 //			declareVariable(_varNames.get(v), _root, _indent);
 //			// END KGU#542 2019-12-01
 //		}
+// END KGU#1173/KGU#1175 2025-02-07
 		appendComment("", _indent);
-		// START KGU#1175 2025-02-06: Bugfix #1188 Obsolete
-		//}
-		//else
-		//{
-		//	appendComment("TODO: add the respective type suffixes to your variable names if required", _indent );
-		//}
-		// END KGU#1175 2025-02-06
-		return _indent;
-	}
-
-	/**
-	 * Appends a variable declaration for variable {@code _varName} if possible.
-	 * 
-	 * @param _varName - name of the variable to be declared
-	 * @param _root - the owning {@link Root}
-	 * @param _indent - th current indentation
-	 */
-	private void declareVariable(String _varName, Root _root, String _indent) {
-		String constVal = null;
-		if (((constVal = _root.constants.get(_varName)) == null || !constVal.startsWith(":"))
-				&& !this.wasDefHandled(_root, _varName, true)) {
-			TypeMapEntry type = _root.getTypeInfo().get(_varName);
-			String typeName = "???";
-			if (type != null) {
-				StringList typeNames = this.getTransformedTypes(type, true);
-				if (typeNames.count() == 1) {
-					typeName = typeNames.get(0);
-				}
-				// START KGU#1175 2025-02-06: Bugfix #1188 We should add sizes if possible
-				int level = 0;
-				// END KGU#1175 2025-02-06
-				while (typeName.startsWith("@")) {
-					// START KGU#1175 2025-02-06: Bugfix #1188 produce sensible type info
-					//varName += "()";
-					int maxIx = type.getMaxIndex(level++);
-					_varName += "(";
-					if (maxIx >= 0) {
-						_varName += maxIx;
-					}
-					_varName += ")";
-					// END KGU#1175 2025-02-06
-					typeName = typeName.substring(1);
-				}
-				// START KGU#993 2021-10-04: Issue #993
-				_varName = _varName.replace(")(", ",");
-				// END KGU#993 2021-10-04
+		// START KGU#1175 2025-02-07: Bugfix #1190 Includables had been forgotten
+		if (topLevel) {
+			// With a top-level subroutine, it will have been done in the header
+			if (!_root.isSubroutine()) {
+				appendIncludeCode(_indent);
 			}
-			// START KGU#1175 2025-02-06: Bugfix #1188 Deoending on mode
-			//addCode(transformKeyword("DIM ") + varName + transformKeyword(" AS ") + typeName, _indent, false);
-			if (!this.optionCodeLineNumbering() || type != null && (type.isArray() || type.isRecord())) {
-				addCode(transformKeyword("DIM ") + _varName
-						+ transformKeyword(" AS ") + typeName, _indent, false);
-			}
-			// END KGU#1175 2025-02-06
 		}
+		else {
+			if (code.count() == subroutineInsertionLine) {
+				code.add("");	// Make sure the subroutines are inserted before library entry points
+			}
+			libraryInsertionLine = code.count();
+			addSepaLine();
+		}
+		// END KGU#1175 2025-02-07
+		return _indent;
 	}
 
 	/* (non-Javadoc)
@@ -1769,4 +1759,79 @@ public class BasGenerator extends Generator
 	}
 	// END KGU#74 2015-12-18
 	
+	// START KGU#1175 2025-02-07: Bugfix #1190 We must care for the includables
+	/**
+	 * Appends the generated code for all included stuff in topological order
+	 * Intended to be used at top level before the subroutine header or before
+	 * all local declarations occur. Likely to add at least one separation line
+	 * if the include queue isn't entirely empty.
+	 * 
+	 * @param _indent - current indentation level
+	 */
+	private void appendIncludeCode(String _indent) {
+		Root[] includes = new Root[] {};
+		includes = this.includedRoots.toArray(includes);
+		if (includes.length > 0) {
+			addSepaLine();
+		}
+		int nLines = this.code.count();
+		// Enh. #389 - code of includes is to be produced here
+		for (Root incl: includes) {
+			generateCode(incl.children, _indent);
+		}
+		if (code.count() > nLines) {
+			addSepaLine();
+		}
+	}
+	// END KGU#1175 2025-02-07
+
+	// START KGU#1173/KGU#1175 2025-02-06: Bugfix #1188, #1190 extracted from preamble
+	/**
+	 * Appends a variable declaration for variable {@code _varName} if possible.
+	 * 
+	 * @param _varName - name of the variable to be declared
+	 * @param _root - the owning {@link Root}
+	 * @param _indent - th current indentation
+	 */
+	private void declareVariable(String _varName, Root _root, String _indent) {
+		String constVal = null;
+		if (((constVal = _root.constants.get(_varName)) == null || !constVal.startsWith(":"))
+				&& !this.wasDefHandled(_root, _varName, true, true)) {
+			TypeMapEntry type = _root.getTypeInfo().get(_varName);
+			String typeName = "???";
+			if (type != null) {
+				StringList typeNames = this.getTransformedTypes(type, true);
+				if (typeNames.count() == 1) {
+					typeName = typeNames.get(0);
+				}
+				// START KGU#1175 2025-02-06: Bugfix #1188 We should add sizes if possible
+				int level = 0;
+				// END KGU#1175 2025-02-06
+				while (typeName.startsWith("@")) {
+					// START KGU#1175 2025-02-06: Bugfix #1188 produce sensible type info
+					//varName += "()";
+					int maxIx = type.getMaxIndex(level++);
+					_varName += "(";
+					if (maxIx >= 0) {
+						_varName += maxIx;
+					}
+					_varName += ")";
+					// END KGU#1175 2025-02-06
+					typeName = typeName.substring(1);
+				}
+				// START KGU#993 2021-10-04: Issue #993
+				_varName = _varName.replace(")(", ",");
+				// END KGU#993 2021-10-04
+			}
+			// START KGU#1175 2025-02-06: Bugfix #1188 Deoending on mode
+			//addCode(transformKeyword("DIM ") + varName + transformKeyword(" AS ") + typeName, _indent, false);
+			if (!this.optionCodeLineNumbering() || type != null && (type.isArray() || type.isRecord())) {
+				addCode(transformKeyword("DIM ") + _varName
+						+ transformKeyword(" AS ") + typeName, _indent, false);
+			}
+			// END KGU#1175 2025-02-06
+		}
+	}
+	// END KGU#1173/KGU#1175 2025-02-06
+
 }

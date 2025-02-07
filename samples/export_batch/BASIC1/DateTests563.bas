@@ -10,16 +10,16 @@ Rem http://www.gnu.de/documents/gpl.de.html
 Rem  
 Rem program DateTests563
 Rem TODO: Check and accomplish your variable declarations here: 
-Dim values() As Integer
-Dim today As Date
-Dim someDay As Date
-Dim nDays As Integer
-Dim me As Person
-Dim explArray() As double
-Dim dull() As double
-Dim doof() As double
-Dim declArray() As double
 Rem  
+
+Structure Date
+  Dim year As Integer
+  Dim month As short
+  Dim day As short
+End Structure
+Dim today As Date
+
+Dim someDay As Date
 Let someDay.day = 24
 Let someDay.month = 2
 Let someDay.year = 2017
@@ -27,13 +27,24 @@ nDays = daysInMonth423(someDay)
 Let today.year = 2018
 Let today.month = 7
 Let today.day = 20
+Structure Person
+  Dim name As String
+  Dim birth As Date
+  Dim test As @int
+End Structure
+Dim me As Person
 Let me.name = "roger"
 Let me.birth = DateArray(1985, 3, 6)
 Let me.test = Array(0, 8, 15)
+Dim declArray() As double
 Let declArray = Array(9.0, 7.5, -6.4, 1.7, 0.0)
+Dim explArray(2) As double
 Let explArray = Array(7.1, 0.5, -1.5)
-Let doof(3) = Array(0.4)
+Dim doof(2) As double
+Let doof = Array(0.4)
+Dim dull(1) As double
 Let dull = Array(-12.7, 96.03)
+Dim values(1) As Integer
 Let values = Array(47, 11)
 End
 Rem  
@@ -42,9 +53,10 @@ Rem (extrapolated backwards beyonds its inauguration)
 Rem TODO: Check (and specify if needed) the argument and result types! 
 Function isLeapYear(year) As boolean
   Rem TODO: Check and accomplish your variable declarations here: 
-  Dim isLeapYear As boolean
   Rem  
+
   Rem Most years aren't leap years... 
+  Dim isLeapYear As boolean
   isLeapYear = false
   If (year % 4 = 0) AND (year % 100 <> 0) Then
     Rem This is a standard leap year 
@@ -62,12 +74,12 @@ Rem has in the the given year
 Rem TODO: Check (and specify if needed) the argument and result types! 
 Function daysInMonth423(aDate As Date) As Integer
   Rem TODO: Check and accomplish your variable declarations here: 
-  Dim isLeap As boolean
-  Dim days As Integer
   Rem  
+
   Rem select the case where illegal values are also considered 
   Select Case aDate.month
     Case 1, 3, 5, 7, 8, 10, 12
+      Dim days As Integer
       days = 31
     Case 4, 6, 9, 11
       days = 30

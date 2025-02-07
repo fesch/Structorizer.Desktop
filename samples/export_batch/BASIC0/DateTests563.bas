@@ -10,97 +10,104 @@
 100 REM  
 110 REM program DateTests563
 120 REM TODO: add the respective type suffixes to your variable names if required 
-130 DIM someDay AS Date
-140 LET someDay.day = 24
-150 LET someDay.month = 2
-160 LET someDay.year = 2017
-170 LET nDays = daysInMonth423(someDay)
-180 DIM today AS Date
-190 LET today.year = 2018
-200 LET today.month = 7
-210 LET today.day = 20
-220 TYPE Person
-230   name AS String
-240   birth AS Date
-250   test AS @int
-260 END TYPE
-270 DIM me AS Person
-280 LET me.name = "roger"
-290 LET me.birth = Date{1985, 3, 6}
-300 LET me.test = {0, 8, 15}
-310 REM TODO: Check indexBase value (automatically generated) 
-320 LET indexBase = 0
-330 LET declArray(indexBase + 0) = 9.0
-340 LET declArray(indexBase + 1) = 7.5
-350 LET declArray(indexBase + 2) = -6.4
-360 LET declArray(indexBase + 3) = 1.7
-370 LET declArray(indexBase + 4) = 0.0
-380 REM TODO: Check indexBase value (automatically generated) 
-390 LET indexBase = 0
-400 LET explArray(indexBase + 0) = 7.1
-410 LET explArray(indexBase + 1) = 0.5
-420 LET explArray(indexBase + 2) = -1.5
-430 REM TODO: Check indexBase value (automatically generated) 
-440 LET indexBase = 0
-450 LET doof(3)(indexBase + 0) = 0.4
-460 REM TODO: Check indexBase value (automatically generated) 
-470 LET indexBase = 0
-480 LET dull(indexBase + 0) = -12.7
-490 LET dull(indexBase + 1) = 96.03
-500 REM TODO: Check indexBase value (automatically generated) 
-510 LET indexBase = 0
-520 LET values(indexBase + 0) = 47
-530 LET values(indexBase + 1) = 11
-540 END
-550 REM  
-560 REM Detects whether the given year is a leap year in the Gregorian calendar 
-570 REM (extrapolated backwards beyonds its inauguration) 
-580 REM TODO: Add type-specific suffixes where necessary! 
-590 FUNCTION isLeapYear(year) AS boolean
-600   REM TODO: add the respective type suffixes to your variable names if required 
-610   REM Most years aren't leap years... 
-620   LET isLeapYear = false
-630   IF (year % 4 = 0) AND (year % 100 <> 0) THEN
-640     REM This is a standard leap year 
-650     LET isLeapYear = true
-660   ELSE
-670     IF year % 400 = 0 THEN
-680       REM One of the rare leap years 
-690       REM occurring every 400 years 
-700       LET isLeapYear = true
-710     END IF
-720   END IF
-730   RETURN isLeapYear
-740 END FUNCTION
-750 REM  
-760 REM Computes the number of days the given month (1..12) 
-770 REM has in the the given year 
-780 REM TODO: Add type-specific suffixes where necessary! 
-790 FUNCTION daysInMonth423(aDate AS Date) AS Integer
-800   REM TODO: add the respective type suffixes to your variable names if required 
-810   REM select the case where illegal values are also considered 
-820   SELECT CASE aDate.month
-830     CASE 1, 3, 5, 7, 8, 10, 12
-840       LET days = 31
-850     CASE 4, 6, 9, 11
-860       LET days = 30
-870     CASE 2
-880       REM Default value for February 
-890       LET days = 28
-900       REM To make the call work it has to be done in 
-910       REM a separate element (cannot be performed 
-920       REM as part of the condition of an Alternative) 
-930       LET isLeap = isLeapYear(aDate.year)
-940       IF isLeap THEN
-950         LET days = 29
-960       END IF
-970     CASE ELSE
-980       REM This is the return value for illegal months. 
-990       REM It is easy to check 
-1000       LET days = 0
-1010   END SELECT
-1020   return days
-1030 END FUNCTION
+130 REM  
+140 
+150 TYPE Date
+160   year AS Integer
+170   month AS short
+180   day AS short
+190 END TYPE
+200 DIM today AS Date
+210 
+220 DIM someDay AS Date
+230 LET someDay.day = 24
+240 LET someDay.month = 2
+250 LET someDay.year = 2017
+260 LET nDays = daysInMonth423(someDay)
+270 LET today.year = 2018
+280 LET today.month = 7
+290 LET today.day = 20
+300 TYPE Person
+310   name AS String
+320   birth AS Date
+330   test AS @int
+340 END TYPE
+350 DIM me AS Person
+360 LET me.name = "roger"
+370 LET me.birth = Date{1985, 3, 6}
+380 LET me.test = {0, 8, 15}
+390 DIM declArray() AS double
+400 LET declArray(0) = 9.0
+410 LET declArray(1) = 7.5
+420 LET declArray(2) = -6.4
+430 LET declArray(3) = 1.7
+440 LET declArray(4) = 0.0
+450 DIM explArray(2) AS double
+460 LET explArray(0) = 7.1
+470 LET explArray(1) = 0.5
+480 LET explArray(2) = -1.5
+490 DIM doof(2) AS double
+500 LET doof(0) = 0.4
+510 DIM dull(1) AS double
+520 LET dull(0) = -12.7
+530 LET dull(1) = 96.03
+540 DIM values(1) AS Integer
+550 LET values(0) = 47
+560 LET values(1) = 11
+570 END
+580 REM  
+590 REM Detects whether the given year is a leap year in the Gregorian calendar 
+600 REM (extrapolated backwards beyonds its inauguration) 
+610 REM TODO: Add type-specific suffixes where necessary! 
+620 FUNCTION isLeapYear(year) AS boolean
+630   REM TODO: add the respective type suffixes to your variable names if required 
+640   REM  
+650 
+660   REM Most years aren't leap years... 
+670   LET isLeapYear = false
+680   IF (year % 4 = 0) AND (year % 100 <> 0) THEN
+690     REM This is a standard leap year 
+700     LET isLeapYear = true
+710   ELSE
+720     IF year % 400 = 0 THEN
+730       REM One of the rare leap years 
+740       REM occurring every 400 years 
+750       LET isLeapYear = true
+760     END IF
+770   END IF
+780   RETURN isLeapYear
+790 END FUNCTION
+800 REM  
+810 REM Computes the number of days the given month (1..12) 
+820 REM has in the the given year 
+830 REM TODO: Add type-specific suffixes where necessary! 
+840 FUNCTION daysInMonth423(aDate AS Date) AS Integer
+850   REM TODO: add the respective type suffixes to your variable names if required 
+860   REM  
+870 
+880   REM select the case where illegal values are also considered 
+890   SELECT CASE aDate.month
+900     CASE 1, 3, 5, 7, 8, 10, 12
+910       LET days = 31
+920     CASE 4, 6, 9, 11
+930       LET days = 30
+940     CASE 2
+950       REM Default value for February 
+960       LET days = 28
+970       REM To make the call work it has to be done in 
+980       REM a separate element (cannot be performed 
+990       REM as part of the condition of an Alternative) 
+1000       LET isLeap = isLeapYear(aDate.year)
+1010       IF isLeap THEN
+1020         LET days = 29
+1030       END IF
+1040     CASE ELSE
+1050       REM This is the return value for illegal months. 
+1060       REM It is easy to check 
+1070       LET days = 0
+1080   END SELECT
+1090   return days
+1100 END FUNCTION
 
 REM = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 
