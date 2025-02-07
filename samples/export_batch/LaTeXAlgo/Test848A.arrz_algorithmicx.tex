@@ -1,0 +1,114 @@
+\documentclass[a4paper,10pt]{article}
+
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{ngerman}
+\usepackage{amsmath}
+
+\DeclareMathOperator{\oprdiv}{div}
+\DeclareMathOperator{\oprshl}{shl}
+\DeclareMathOperator{\oprshr}{shr}
+\algblockdefx[CASE]{Case}{EndCase}
+  [1]{\textbf{case} \(#1\) \textbf{of}}
+  {\textbf{end\ case}}
+\algblockdefx[SELECT]{Selector}{EndSelector}
+  [1]{#1\textbf{: begin}}
+  {\textbf{end}}
+\algblockdefx[OTHER]{Other}{EndOther}
+  {\textbf{otherwise: begin}}
+  {\textbf{end}}
+\algblockdefx[TRY]{Try}{EndTry}
+  {\textbf{try}}
+  {\textbf{end\ try}}
+\algblockdefx[CATCH]{Catch}{EndCatch}
+  [1]{\textbf{catch} (#1)}
+  {\textbf{end\ catch}}\algblockdefx[FINALLY]{Finally}{EndFinally}
+  {\textbf{finally}}
+  {\textbf{end\ finally}}
+\algblockdefx[PARALLEL]{Para}{EndPara}
+  {\textbf{parallel}}
+  {\textbf{end\ parallel}}
+\algblockdefx[THREAD]{Thread}{EndThread}
+  [1]{\textbf{thread} #1}
+  [1]{\textbf{end\ thread} #1}
+\algblockdefx[DECLARATION]{Decl}{EndDecl}
+  [1][]{\textbf{#1}}
+  {}
+
+\title{Structorizer LaTeX pseudocode Export of Test848A.arrz}
+% Structorizer version 3.32-25
+\author{Kay G"urtzig}
+\date{07.02.2025}
+
+\begin{document}
+
+\begin{algorithm}
+\caption{testSub(3)}
+\begin{algorithmic}[5]
+\Function{testSub}{c1, param2, b1}
+  \Decl{Parameters:}
+    \State c1: real
+    \State param2: real
+    \State b1: string
+  \EndDecl
+  \Decl{Result type:}
+    \State int
+  \EndDecl
+  \Decl{Includes:}
+    \State IncludeA
+  \EndDecl
+  \State \(d1\gets\ a1\)
+  \State \(d2\gets\ a2\)
+  \State \(a1\gets\ 15\)
+  \State \textbf{return} \(length(a2 + b1) + floor(c1) * ceil(param2)\)
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+
+\State \Comment{ = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = }
+
+
+\begin{algorithm}
+\caption{TestMain}
+\begin{algorithmic}[5]
+\Procedure{TestMain}{ }
+\State \Comment{ Test for indirect and concurrent includes }
+  \Decl{Includes:}
+    \State IncludeB
+  \EndDecl
+  \State \(a1\gets\ 7\)
+  \State \(b1\gets\ a2+\)"{}\ oder\ bl"od"{}\(\)
+  \State \(c1\gets\ a1*b2\)
+  \State \(c2\gets\Call{testSub}{c1,a1+b2,b1}\)
+  \State \(\)print\((a1,\)"{}\ "{}\(,a2,\)"{}\ "{}\(,b1,\)"{}\ "{}\(,b2)\)
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{algorithm}
+\caption{IncludeA}
+\begin{algorithmic}[5]
+\Procedure{IncludeA}{ }
+  \State \(var\ a1:int\)
+  \State \(a2\gets\)"{}doof"{}\(\)
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{algorithm}
+\caption{IncludeB}
+\begin{algorithmic}[5]
+\Procedure{IncludeB}{ }
+  \Decl{Includes:}
+    \State IncludeA
+  \EndDecl
+  \State \(var\ b1:string\)
+  \State \(b2\gets\ 3.9\)
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\end{document}

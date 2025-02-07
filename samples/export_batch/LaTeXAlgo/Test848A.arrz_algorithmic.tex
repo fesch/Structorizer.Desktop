@@ -1,0 +1,74 @@
+\documentclass[a4paper,10pt]{article}
+
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{ngerman}
+\usepackage{amsmath}
+
+\DeclareMathOperator{\oprdiv}{div}
+\DeclareMathOperator{\oprshl}{shl}
+\DeclareMathOperator{\oprshr}{shr}
+\title{Structorizer LaTeX pseudocode Export of Test848A.arrz}
+% Structorizer version 3.32-25
+\author{Kay G"urtzig}
+\date{07.02.2025}
+
+\begin{document}
+
+\floatname{algorithm}{Function}
+\begin{algorithm}
+\caption{testSub(c1, param2, b1)}
+\begin{algorithmic}[5]
+
+  \STATE \(d1\gets\ a1\)
+  \STATE \(d2\gets\ a2\)
+  \STATE \(a1\gets\ 15\)
+  \RETURN\(length(a2 + b1) + floor(c1) * ceil(param2)\)
+
+\end{algorithmic}
+\end{algorithm}
+
+
+\STATE \COMMENT{ = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = }
+
+
+\floatname{algorithm}{Program}
+\begin{algorithm}
+\caption{TestMain()}
+\begin{algorithmic}[5]
+
+\STATE \COMMENT{ Test for indirect and concurrent includes }
+  \STATE \(a1\gets\ 7\)
+  \STATE \(b1\gets\ a2+\)"{}\ oder\ bl"od"{}\(\)
+  \STATE \(c1\gets\ a1*b2\)
+  \STATE \(c2\gets\ testSub(c1,a1+b2,b1)\)
+  \PRINT\(a1,\)"{}\ "{}\(,a2,\)"{}\ "{}\(,b1,\)"{}\ "{}\(,b2\)
+
+\end{algorithmic}
+\end{algorithm}
+
+
+\floatname{algorithm}{Includable}
+\begin{algorithm}
+\caption{IncludeA()}
+\begin{algorithmic}[5]
+
+  \STATE \(var\ a1:int\)
+  \STATE \(a2\gets\)"{}doof"{}\(\)
+
+\end{algorithmic}
+\end{algorithm}
+
+
+\floatname{algorithm}{Includable}
+\begin{algorithm}
+\caption{IncludeB()}
+\begin{algorithmic}[5]
+
+  \STATE \(var\ b1:string\)
+  \STATE \(b2\gets\ 3.9\)
+
+\end{algorithmic}
+\end{algorithm}
+
+\end{document}

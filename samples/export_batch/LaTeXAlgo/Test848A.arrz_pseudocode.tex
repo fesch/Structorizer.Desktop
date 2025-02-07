@@ -1,0 +1,61 @@
+\documentclass[a4paper,10pt]{article}
+
+\usepackage{pseudocode}
+\usepackage{ngerman}
+\usepackage{amsmath}
+
+\DeclareMathOperator{\oprdiv}{div}
+\DeclareMathOperator{\oprshl}{shl}
+\DeclareMathOperator{\oprshr}{shr}
+\title{Structorizer LaTeX pseudocode Export of Test848A.arrz}
+% Structorizer version 3.32-25
+\author{Kay G"urtzig}
+\date{07.02.2025}
+
+\begin{document}
+
+\begin{pseudocode}{testSub}{c1, param2, b1 }
+\label{testSub}
+\PROCEDURE{testSub}{c1, param2, b1}
+  d1\gets\ a1\\
+  d2\gets\ a2\\
+  a1\gets\ 15\\
+  \RETURN{length(a2 + b1) + floor(c1) * ceil(param2)}\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\COMMENT{ = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = }\\
+
+
+\begin{pseudocode}{TestMain}{ }
+\label{TestMain}
+\COMMENT{ Test for indirect and concurrent includes }\\
+\MAIN
+  a1\gets\ 7\\
+  b1\gets\ a2+\)"{}\ oder\ bl"od"{}\(\\
+  c1\gets\ a1*b2\\
+  c2\gets\CALL{testSub}{c1,a1+b2,b1}\\
+  \OUTPUT{a1,\)"{}\ "{}\(,a2,\)"{}\ "{}\(,b1,\)"{}\ "{}\(,b2}\\
+\ENDMAIN
+\end{pseudocode}
+
+
+\begin{pseudocode}{IncludeA}{ }
+\label{IncludeA}
+
+  var\ a1:int\\
+  a2\gets\)"{}doof"{}\(\\
+
+\end{pseudocode}
+
+
+\begin{pseudocode}{IncludeB}{ }
+\label{IncludeB}
+
+  var\ b1:string\\
+  b2\gets\ 3.9\\
+
+\end{pseudocode}
+
+\end{document}
