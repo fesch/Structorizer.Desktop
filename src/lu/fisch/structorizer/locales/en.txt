@@ -141,6 +141,7 @@
  *      Kay Gürtzig     2024-03-17      Issue #1138: New / modified conflict messages for Surface
  *      Kay Gürtzig     2024-04-21      ExportOptionDialoge renamed to ExportOptionDialog
  *      Kay Gürtzig     2024-11-22      Poll #1173: menuFileExportPictureSWF removed.
+ *      Kay Gürtzig     2025-02-06      Bugfix #1187: Menu.error24_10 grammatically corrected.
  *
  ******************************************************************************************************
  *
@@ -562,7 +563,7 @@ Menu.error24_6.text=Record component «%» will not be modified/initialized!
 Menu.error24_7.text=Record type «%1» hasn't got a component «%2»!
 Menu.error24_8.text=Variable «%1» hasn't got a component «%2»!
 Menu.error24_9.text=Illegal or defective declaration appendices (array specification): «%»!
-Menu.error24_10.text=At least one array dimension size possibly no integer constant > 0: «%»!
+Menu.error24_10.text=At least one array dimension size seems not to be an integer constant > 0: «%»!
 Menu.hint07_1.text=What is your algorithm to do? Replace «%» with a good name for it!
 Menu.hint25_1.text=Select the diagram centre and place a first element, e.g. an input instruction like «%1 %2».
 Menu.hint25_2.text=You might want to input data, e.g. with an instruction like «%1 %2». → Menu "%3"

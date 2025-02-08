@@ -1,0 +1,79 @@
+\documentclass[a4paper,10pt]{article}
+
+\usepackage{struktex}
+\usepackage{ngerman}
+
+\title{Structorizer StrukTeX Export of Test848A.arrz}
+% Structorizer version 3.32-25
+\author{Kay G"urtzig}
+\date{07.02.2025}
+
+\begin{document}
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[testSub]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{c1}}{type: \(real\)}
+      \description{\pVar{param2}}{type: \(real\)}
+      \description{\pVar{b1}}{type: \(string\)}
+    \end{declaration}
+    \begin{declaration}[Result type:]
+      \description{int}{}
+    \end{declaration}
+    \begin{declaration}[Requires:]
+      \description{IncludeA}{}
+    \end{declaration}
+  }
+  \assign{\(d1\ \gets\ a1\)}
+  \assign{\(d2\ \gets\ a2\)}
+  \assign{\(a1\ \gets\ 15\)}
+  \assign{\(\)\pKey{return}\(\ length(a2\ +\ b1)\ +\ floor(c1)\ *\ ceil(param2)\)}
+\end{struktogramm}
+
+
+% = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[TestMain]
+  \assign{%
+    \begin{declaration}[Requires:]
+      \description{IncludeB}{}
+    \end{declaration}
+  }
+  \assign{\(a1\ \gets\ 7\)}
+  \assign{\(b1\ \gets\ a2\ +\ \)"{}\ oder\ bl"od"{}\(\)}
+  \assign{\(c1\ \gets\ a1\ *\ b2\)}
+  \sub{\(c2\ \gets\ testSub(c1,\ a1\ +\ b2,\ b1)\)}
+  \assign{\(\)\pKey{OUTPUT}\(\ a1,\ \)"{}\ "{}\(,\ a2,\ \)"{}\ "{}\(,\ b1,\ \)"{}\ "{}\(,\ b2\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[IncludeA]
+  \assign{%
+    \begin{declaration}[variable:]
+      \description{a1}{var\ a1:\ int}
+    \end{declaration}
+  }
+  \assign{\(a2\ \gets\ \)"{}doof"{}\(\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[IncludeB]
+  \assign{%
+    \begin{declaration}[Requires:]
+      \description{IncludeA}{}
+    \end{declaration}
+  }
+  \assign{%
+    \begin{declaration}[variable:]
+      \description{b1}{var\ b1:\ string}
+    \end{declaration}
+  }
+  \assign{\(b2\ \gets\ 3.9\)}
+\end{struktogramm}
+
+\end{document}

@@ -189,6 +189,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2024-04-17      Issues #161, #1161: Improved reachability check (via mayPassControl())
  *      Kay Gürtzig     2024-10-09      Bugfix #1174: Precaution against NullpPointerException in fetchAuthorDates()
  *      Kay Gürtzig     2024-11-25      Bugfix #1180: Deep test coverage change on undo/redo propagated
+ *      Kay Gürtzig     2025-02-06      Bugfix #1187 in analyse_31 (complained the closing bracket)
  *
  ******************************************************************************************************
  *
@@ -5302,7 +5303,7 @@ public class Root extends Element {
 						else {
 							// START KGU#559 2018-07-20: Enh. #563  more intelligent initializer evaluation
 							//HashMap<String, String> components = Element.splitRecordInitializer(tokens.concatenate("", posBrace));
-							HashMap<String, String> components = Element.splitRecordInitializer(tokens.concatenate("", posBrace), recType, false);
+							HashMap<String, String> components = Element.splitRecordInitializer(tokens.concatenate("", posBrace-1), recType, false);
 							// END KGU#559 2018-07-20
 							// START KGU#1021 2021-12-05: Bugfix #1024 components may be null!
 							if (components == null) {
@@ -6057,7 +6058,10 @@ public class Root extends Element {
 						if (!"]".equals(sizes.get(sizes.count()-1))) {
 							defective.add(token);
 						}
-						for (int k = 0; k < sizes.count(); k++) {
+						// START KGU#1172 2025-02-06: Bugfix #1187 Analyser complained the "]" tail
+						//for (int k = 0; k < sizes.count(); k++) {
+						for (int k = 0; k < sizes.count() - 1; k++) {
+						// END KGU#1172 2025-02-06
 							String dim = sizes.get(k);
 							if (_constants.containsKey(dim)) {
 								dim = this.getConstValueString(dim);

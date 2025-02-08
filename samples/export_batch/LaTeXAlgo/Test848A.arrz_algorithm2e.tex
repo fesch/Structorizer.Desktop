@@ -1,0 +1,83 @@
+\documentclass[a4paper,10pt]{article}
+
+\usepackage[inoutnumbered]{algorithm2e}
+\usepackage{ngerman}
+\usepackage{amsmath}
+
+\DeclareMathOperator{\oprdiv}{div}
+\DeclareMathOperator{\oprshl}{shl}
+\DeclareMathOperator{\oprshr}{shr}
+\SetKwInput{Input}{input}
+\SetKwInput{Output}{output}
+\SetKwBlock{Parallel}{parallel}{end}
+\SetKwFor{Thread}{thread}{:}{end}
+\SetKwBlock{Try}{try}{end}
+\SetKwFor{Catch}{catch (}{)}{end}
+\SetKwBlock{Finally}{finally}{end}
+\SetKwProg{Prog}{Program}{ }{end}
+\SetKwProg{Proc}{Procedure}{ }{end}
+\SetKwProg{Func}{Function}{ }{end}
+\SetKwProg{Incl}{Includable}{ }{end}
+
+\SetKw{preLeave}{leave}
+\SetKw{preExit}{exit}
+\SetKw{preThrow}{throw}
+\DontPrintSemicolon
+\title{Structorizer LaTeX pseudocode Export of Test848A.arrz}
+% Structorizer version 3.32-25
+\author{Kay G"urtzig}
+\date{07.02.2025}
+
+\begin{document}
+\LinesNumbered
+
+\begin{function}
+\caption{testSub(c1, param2, b1)}
+\Func{\FuncSty{testSub(}\ArgSty{c1, param2, b1}\FuncSty{)}:int}{
+\KwData{\(c1\): real}
+\KwData{\(param2\): real}
+\KwData{\(b1\): string}
+\KwResult{int}
+  \(d1\leftarrow{}a1\)\;
+  \(d2\leftarrow{}a2\)\;
+  \(a1\leftarrow{}15\)\;
+  \Return{\(length(a2 + b1) + floor(c1) * ceil(param2)\)}
+}
+\end{function}
+
+
+\tcc{ = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = }
+
+
+\begin{algorithm}
+\caption{TestMain}
+\SetKwFunction{FntestSub}{testSub}
+\tcc{ Test for indirect and concurrent includes }
+\Prog{\FuncSty{TestMain}}{
+  \(a1\leftarrow{}7\)\;
+  \(b1\leftarrow{}a2+\)"{}\ oder\ bl"od"{}\(\)\;
+  \(c1\leftarrow{}a1*b2\)\;
+  \(c2\leftarrow{}\FntestSub(c1,a1+b2,b1)\)\;
+  \Output{\(a1,\)"{}\ "{}\(,a2,\)"{}\ "{}\(,b1,\)"{}\ "{}\(,b2\)}
+}
+\end{algorithm}
+
+
+\begin{algorithm}
+\caption{IncludeA}
+\Incl{\FuncSty{IncludeA}}{
+  \(var\ a1:int\)\;
+  \(a2\leftarrow{}\)"{}doof"{}\(\)\;
+}
+\end{algorithm}
+
+
+\begin{algorithm}
+\caption{IncludeB}
+\Incl{\FuncSty{IncludeB}}{
+  \(var\ b1:string\)\;
+  \(b2\leftarrow{}3.9\)\;
+}
+\end{algorithm}
+
+\end{document}

@@ -127,6 +127,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2024-03-14      Bugfix #1139: NullPointerException risk in generateCode(Try, String)
  *      Kay Gürtzig     2024-03-19      Issue #1148 Auxiliary methods markElementStart() and markElementEnds()
  *                                      moved up to Generator in order to facilitate IF ELSE IF chains
+ *      Kay Gürtzig     2025-02-06      Bugfix #1189: lvalue splitting returned wrong result with Java-style declarations
+ *      Kay Gürtzig     2025-02-07      Bugfix #1190: wasDefHandled now fully recursive (not efficient but effective)
  *
  ******************************************************************************************************
  *
@@ -904,7 +906,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @param _root - the currently exported Root
 	 * @param _id - the name of a constant, variable, or type (in the latter case prefixed with ':')
 	 * @param _setDefinedIfNot - whether the name is to be registered for {@code _root} now if not
-	 * @return true if there had already been a definition before
+	 * @return {@code true} if there had already been a definition before
 	 * 
 	 * @see #wasDefHandled(Root, String, boolean, boolean)
 	 * @see #setDefHandled(String, String)
@@ -942,9 +944,17 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		if (_involveIncludables && _root.includeList != null) {
 			for (int i = 0; !handled && i < _root.includeList.count(); i++) {
 				String inclName = _root.includeList.get(i);
-				if ((definedIds  = this.declaredStuff.get(inclName)) != null) {
-					handled = definedIds.contains(_id);
+				// START KGU#1175 2025-02-07: Bugfix #1190 This must be recursive!
+				//if ((definedIds  = this.declaredStuff.get(inclName)) != null) {
+				//	handled = definedIds.contains(_id);
+				//}
+				for (Root incl: this.includedRoots) {
+					if (inclName.equals(incl.getMethodName())) {
+						handled = wasDefHandled(incl, _id, false, true);
+						break;
+					}
 				}
+				// END KGU#1175 2025-02-07
 			}
 		}
 		// The topLevel restriction for includables is here because only definitions of includables
@@ -2392,12 +2402,15 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	
 	// START KGU#109/KGU#141 2016-01-16: New for ease of fixing #61 and #112
 	/**
-	 * Decomposes the left-hand side of an assignment passed in as _lval
+	 * Decomposes the left-hand side of an assignment passed in as {@code _lval}
 	 * into four strings:<br/>
 	 * [0] - type specification (a sequence of tokens, may be empty)<br/>
 	 * [1] - variable name (a single token supposed to be the identifier)<br/>
-	 * [2] - index expression (if _lval is an indexed variable, else empty)<br/>
-	 * [3] - component path (if _lval is a record component of an indexed variable, else empty)
+	 * [2] - index expression (if {@code _lval} is an indexed variable, else
+	 *    empty)<br/>
+	 * [3] - component path (if {@code _lval} is a record component of an
+	 *    indexed variable, else empty).
+	 * 
 	 * @param _lval - a string found on the left-hand side of an assignment operator
 	 * @return String array of [0] type, [1] name, [2] index, [3] component path; all but [1] may be empty
 	 */
@@ -2458,6 +2471,14 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 						break;
 					}
 				}
+				// START KGU#1174 2025-02-06: Bugfix #1189 Didn't cope with Java-style declarations
+				else if (Function.testIdentifier(token, false, null)
+						&& name.isEmpty() && after.isEmpty() && index.isEmpty()
+						&& (i == 0 || !".".equals(tokens.get(i-1)))) {
+					// This seems to be a C- or Java-style declaration
+					name.add(token);
+				}
+				// END KGU#1174 2025-02-06
 				else if (index.isEmpty()) {
 					if (name.isEmpty()) {
 						after.insert(token, 0);

@@ -1,0 +1,126 @@
+\documentclass[a4paper,10pt]{article}
+
+\usepackage[inoutnumbered]{algorithm2e}
+\usepackage{ngerman}
+\usepackage{amsmath}
+
+\DeclareMathOperator{\oprdiv}{div}
+\DeclareMathOperator{\oprshl}{shl}
+\DeclareMathOperator{\oprshr}{shr}
+\SetKwInput{Input}{input}
+\SetKwInput{Output}{output}
+\SetKwBlock{Parallel}{parallel}{end}
+\SetKwFor{Thread}{thread}{:}{end}
+\SetKwBlock{Try}{try}{end}
+\SetKwFor{Catch}{catch (}{)}{end}
+\SetKwBlock{Finally}{finally}{end}
+\SetKwProg{Prog}{Program}{ }{end}
+\SetKwProg{Proc}{Procedure}{ }{end}
+\SetKwProg{Func}{Function}{ }{end}
+\SetKwProg{Incl}{Includable}{ }{end}
+
+\SetKw{preLeave}{leave}
+\SetKw{preExit}{exit}
+\SetKw{preThrow}{throw}
+\DontPrintSemicolon
+\title{Structorizer LaTeX pseudocode Export of DateTests563.arrz}
+% Structorizer version 3.32-26
+\author{Kay G"urtzig}
+\date{06.02.2025}
+
+\begin{document}
+\LinesNumbered
+
+\begin{function}
+\caption{isLeapYear(year)}
+\tcc{ Detects whether the given year is a leap year in the Gregorian calendar }
+\tcc{ (extrapolated backwards beyonds its inauguration) }
+\Func{\FuncSty{isLeapYear(}\ArgSty{year}\FuncSty{)}:boolean}{
+\KwData{\(year\): ?}
+\KwResult{boolean}
+  \tcc{ Most years aren'{}t leap years... }
+  \(isLeapYear\leftarrow{}false\)\;
+  \eIf{\((year\bmod\ 4=0)\wedge(year\bmod\ 100\neq\ 0)\)}{
+    \tcc{ This is a standard leap year }
+    \(isLeapYear\leftarrow{}true\)\;
+  }{
+    \If{\(year\bmod\ 400=0\)}{
+      \tcc{ One of the rare leap years }
+      \tcc{ occurring every 400 years }
+      \(isLeapYear\leftarrow{}true\)\;
+    }
+  }
+}
+\end{function}
+
+
+\begin{function}
+\caption{daysInMonth423(aDate)}
+\SetKwFunction{FnisLeapYear}{isLeapYear}
+\tcc{ Computes the number of days the given month (1..12) }
+\tcc{ has in the the given year }
+\Func{\FuncSty{daysInMonth423(}\ArgSty{aDate}\FuncSty{)}:int}{
+\KwData{\(aDate\): Date}
+\KwResult{int}
+  \tcc{ select the case where illegal values are also considered }
+  \Switch{aDate.month}{
+    \Case{1,3,5,7,8,10,12}{
+      \(days\leftarrow{}31\)\;
+    }
+    \Case{4,6,9,11}{
+      \(days\leftarrow{}30\)\;
+    }
+    \Case{2}{
+      \tcc{ Default value for February }
+      \(days\leftarrow{}28\)\;
+      \tcc{ To make the call work it has to be done in }
+      \tcc{ a separate element (cannot be performed }
+      \tcc{ as part of the condition of an Alternative) }
+      \(isLeap\leftarrow{}\FnisLeapYear(aDate.year)\)\;
+      \If{\(isLeap\)}{
+        \(days\leftarrow{}29\)\;
+      }
+    }
+    \Other{
+      \tcc{ This is the return value for illegal months. }
+      \tcc{ It is easy to check }
+      \(days\leftarrow{}0\)\;
+    }
+  }
+  \Return{\(days\)}
+}
+\end{function}
+
+
+\tcc{ = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = }
+
+
+\begin{algorithm}
+\caption{DateTests563}
+\SetKwFunction{FndaysInMonth423}{daysInMonth423}
+\tcc{ Several declaration and initialisation variants for test of Analyser, Executor, and Generators }
+\Prog{\FuncSty{DateTests563}}{
+  \(Date\ someDay\leftarrow{}Date\{day:24,month:2,year:2017\}\)\;
+  \(nDays\leftarrow{}\FndaysInMonth423(someDay)\)\;
+  \(today\leftarrow{}Date\{2018,7,20\}\)\;
+  \(type\ Person=record\{name:string;birth:Date;test:array[3]of\ int;\}\)\;
+  \(var\ me:Person\leftarrow{}Person\{\)"{}roger"{}\(,Date\{1985,3,6\},\{0,8,15\}\}\)\;
+  \(var\ declArray:array\ of\ double\leftarrow{}\{9.0,7.5,-6.4,1.7,0.0\}\)\;
+  \(var\ explArray:double[3]\leftarrow{}\{7.1,0.5,-1.5\}\)\;
+  \(double\ doof[3]\leftarrow{}\{0.4\}\)\;
+  \(double[2]dull\leftarrow{}\{-12.7,96.03\}\)\;
+  \(values\leftarrow{}\{47,11\}\)\;
+}
+\end{algorithm}
+
+
+\begin{algorithm}
+\caption{CommonTypes423}
+\tcc{ Provides type definitions for other programs }
+\Incl{\FuncSty{CommonTypes423}}{
+  \(type\ Date=record\{year:int;month,day:short\}\)\;
+  \(var\ today:Date\)\;
+}
+\end{algorithm}
+
+\end{document}

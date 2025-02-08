@@ -1,0 +1,103 @@
+\documentclass[a4paper,10pt]{article}
+
+\usepackage{pseudocode}
+\usepackage{ngerman}
+\usepackage{amsmath}
+
+\DeclareMathOperator{\oprdiv}{div}
+\DeclareMathOperator{\oprshl}{shl}
+\DeclareMathOperator{\oprshr}{shr}
+\title{Structorizer LaTeX pseudocode Export of DateTests563.arrz}
+% Structorizer version 3.32-26
+\author{Kay G"urtzig}
+\date{06.02.2025}
+
+\begin{document}
+
+\begin{pseudocode}{isLeapYear}{year }
+\label{isLeapYear}
+\COMMENT{ Detects whether the given year is a leap year in the Gregorian calendar }\\
+\COMMENT{ (extrapolated backwards beyonds its inauguration) }\\
+\PROCEDURE{isLeapYear}{year}
+  \COMMENT{ Most years aren'{}t leap years... }\\
+  isLeapYear\gets\FALSE\\
+  \IF (year\bmod\ 4=0)\ \AND(year\bmod\ 100\neq\ 0) \THEN
+  \BEGIN
+    \COMMENT{ This is a standard leap year }\\
+    isLeapYear\gets\TRUE\\
+  \END\\
+  \ELSE
+    \IF year\bmod\ 400=0 \THEN
+    \BEGIN
+      \COMMENT{ One of the rare leap years }\\
+      \COMMENT{ occurring every 400 years }\\
+      isLeapYear\gets\TRUE\\
+    \END\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{daysInMonth423}{aDate }
+\label{daysInMonth423}
+\COMMENT{ Computes the number of days the given month (1..12) }\\
+\COMMENT{ has in the the given year }\\
+\PROCEDURE{daysInMonth423}{aDate}
+  \COMMENT{ select the case where illegal values are also considered }\\
+  discra38d7a3 <- aDate.month\\
+  \IF discra38d7a3=1\ \OR\ discra38d7a3=3\ \OR\ discra38d7a3=5\ \OR\ discra38d7a3=7\ \OR\ discra38d7a3=8\ \OR\ discra38d7a3=10\ \OR\ discra38d7a3=12 \THEN
+    days\gets\ 31\\
+  \ELSEIF discra38d7a3=4\ \OR\ discra38d7a3=6\ \OR\ discra38d7a3=9\ \OR\ discra38d7a3=11 \THEN
+    days\gets\ 30\\
+  \ELSEIF discra38d7a3=2 \THEN
+  \BEGIN
+    \COMMENT{ Default value for February }\\
+    days\gets\ 28\\
+    \COMMENT{ To make the call work it has to be done in }\\
+    \COMMENT{ a separate element (cannot be performed }\\
+    \COMMENT{ as part of the condition of an Alternative) }\\
+    isLeap\gets\CALL{isLeapYear}{aDate.year}\\
+    \IF isLeap \THEN
+      days\gets\ 29\\
+  \END\\
+  \ELSE
+  \BEGIN
+    \COMMENT{ This is the return value for illegal months. }\\
+    \COMMENT{ It is easy to check }\\
+    days\gets\ 0\\
+  \END\\
+  \RETURN{days}\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\COMMENT{ = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = }\\
+
+
+\begin{pseudocode}{DateTests563}{ }
+\label{DateTests563}
+\COMMENT{ Several declaration and initialisation variants for test of Analyser, Executor, and Generators }\\
+\MAIN
+  Date\ someDay\gets\ Date\{day:24,month:2,year:2017\}\\
+  nDays\gets\CALL{daysInMonth423}{someDay}\\
+  today\gets\ Date\{2018,7,20\}\\
+  type\ Person=record\{name:string;birth:Date;test:array[3]of\ int;\}\\
+  var\ me:Person\gets\ Person\{\)"{}roger"{}\(,Date\{1985,3,6\},\{0,8,15\}\}\\
+  var\ declArray:array\ of\ double\gets\{9.0,7.5,-6.4,1.7,0.0\}\\
+  var\ explArray:double[3]\gets\{7.1,0.5,-1.5\}\\
+  double\ doof[3]\gets\{0.4\}\\
+  double[2]dull\gets\{-12.7,96.03\}\\
+  values\gets\{47,11\}\\
+\ENDMAIN
+\end{pseudocode}
+
+
+\begin{pseudocode}{CommonTypes423}{ }
+\label{CommonTypes423}
+\COMMENT{ Provides type definitions for other programs }\\
+
+  type\ Date=record\{year:int;month,day:short\}\\
+  var\ today:Date\\
+
+\end{pseudocode}
+
+\end{document}

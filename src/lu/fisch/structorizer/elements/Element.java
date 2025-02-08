@@ -312,7 +312,7 @@ public abstract class Element {
 	public static final long E_HELP_FILE_SIZE = 12300000;
 	public static final String E_DOWNLOAD_PAGE = "https://www.fisch.lu/Php/download.php";
 	// END KGU#791 2020-01-20
-	public static final String E_VERSION = "3.32-25";
+	public static final String E_VERSION = "3.32-26";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -3635,24 +3635,35 @@ public abstract class Element {
 	}
 
 	/**
-	 * Decomposes the interior of a record initializer of the form
-	 * [typename]{compname1: value1, compname2: value2, ...} into a hash table
-	 * mapping the component names to the corresponding value strings.
-	 * If there is text following the closing brace it will be mapped to key "§TAIL§".
-	 * If the typename is given then it will be provided mapped to key "§TYPENAME§".
-	 * If {@code _typeInfo} is given and either {@code typename} was omitted or matches
-	 * name of {@code _typeInfo} then unprefixed component values will be associated
-	 * to the component names of the type in order of occurrence unless an explicit
-	 * component name prefix occurs.<br/>
-	 * If {@code _typeInfo} is null and {@code generateDummyCompNames} is true then generic
-	 * component names of form {@code "FIXME_<typename>_<i>"} may be provided for components
-	 * with missing names in the {@code _text}.
-	 * @param _text - the initializer expression with or without typename but with braces.
-	 * @param _typeInfo - the type map entry for the corresponding record type if available
-	 * @param _generateDummyCompNames - if true then missing component names (not retrievable) will be replaced by generic ones
+	 * Decomposes the interior of a record initializer of one of the forms
+	 * <ul>
+	 * <li> "[typename]{compname1: value1, compname2: value2, ...}"</li>
+	 * <li> "[typename]{value1, value2, ...}"</li>
+	 * </ul>
+	 * into a hash table mapping the component names to the corresponding value
+	 * strings.<br/>
+	 * If there is text following the closing brace it will be mapped to key
+	 * "§TAIL§". If {@code typename} is given then it will be mapped to key
+	 * "§TYPENAME§".<br/>
+	 * If {@code _typeInfo} is given and either {@code typename} was omitted or
+	 * matches the name of {@code _typeInfo} then unprefixed component values
+	 * will be associated to the component names of the type in order of
+	 * occurrence unless an explicit component name prefix occurs.<br/>
+	 * If {@code _typeInfo} is {@code null} and {@code generateDummyCompNames}
+	 * is {@code true} then generic pseudo component names of form
+	 * {@code "FIXME_<typename>_<i>"} may be provided for components with
+	 * missing names in the {@code _text}.
+	 * 
+	 * @param _text - the initializer expression with or without {@code typename}
+	 *    but with braces.
+	 * @param _typeInfo - the type map entry for the corresponding record type
+	 *    if available.
+	 * @param _generateDummyCompNames - if true then missing component names
+	 *     (not retrievable) will be replaced by generic ones.
 	 * @return the component map (or null if there are no braces).
 	 */
-	public static HashMap<String, String> splitRecordInitializer(String _text, TypeMapEntry _typeInfo, boolean _generateDummyCompNames)
+	public static HashMap<String, String> splitRecordInitializer(String _text,
+			TypeMapEntry _typeInfo, boolean _generateDummyCompNames)
 	{
 		// START KGU#526 2018-08-01: Enh. #423 - effort to make the component order more stable (at higher costs, though)
 		//HashMap<String, String> components = new HashMap<String, String>();
