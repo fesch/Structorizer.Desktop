@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root xmlns:nsd="https://structorizer.fisch.lu" version="3.32-25" preCase="case" preRepeat="until" postFor="to" preReturn="return" postForIn="in" preWhile="while" output="OUTPUT" input="INPUT" preAlt="if" preFor="for" preExit="exit" preLeave="leave" ignoreCase="false" preThrow="throw" preForIn="foreach" stepFor="step" namespace="" author="Kay Gürtzig" created="2022-06-21" changedby="Kay Gürtzig" changed="2025-02-08" origin="Structorizer 3.32-07" licenseName="GPLv3-link" license="GNU General Public License (V 3)&#10;https://www.gnu.org/licenses/gpl.html&#10;http://www.gnu.de/documents/gpl.de.html&#10;" text="&#34;hilbert(size: int; level: int; parity: int)&#34;" comment="&#34;Example taken from Python 3.9 IDLE examples after&#34;,&#34;* Turtle Geometry: The Computer as a Medium for Exploring Mathematics&#34;,&#34;* by Harold Abelson and Andrea diSessa&#34;,&#34;* p. 96-98&#34;,&#34;Parameters:&#34;,&#34;- size: the elementary line length in pixels&#34;,&#34;- level: a non-negative integer specifying the recursion depth&#34;,&#34;- parity: either +1 or -1, specifying the orientation&#34;" color="ffffff" type="sub" style="nice">
+	<children>
+		<alternative text="&#34;level = 0&#34;" comment="" color="ffffff" disabled="0">
+			<qTrue>
+				<jump text="&#34;return&#34;" comment="" color="ffffff" disabled="0"></jump>
+			</qTrue>
+			<qFalse color="ffffff">
+			</qFalse>
+		</alternative>
+		<instruction text="&#34;left(parity * 90)&#34;" comment="&#34;Rotate and draw first subcurve with opposite parity to big curve&#34;" color="ffffff" rotated="0" disabled="0"></instruction>
+		<call text="&#34;hilbert(size, level - 1, -parity)&#34;" comment="" color="ffffff" disabled="0" ismethoddecl="0"></call>
+		<instruction text="&#34;forward(size)&#34;,&#34;right(parity * 90)&#34;" comment="&#34;Interface to and draw second subcurve with same parity as big curve&#34;" color="ffffff" rotated="0" disabled="0"></instruction>
+		<call text="&#34;hilbert(size, level - 1, parity)&#34;" comment="" color="ffffff" disabled="0" ismethoddecl="0"></call>
+		<instruction text="&#34;forward(size)&#34;" comment="&#34;Third subcurve&#34;" color="ffffff" rotated="0" disabled="0"></instruction>
+		<call text="&#34;hilbert(size, level - 1, parity)&#34;" comment="" color="ffffff" disabled="0" ismethoddecl="0"></call>
+		<instruction text="&#34;right(parity * 90)&#34;,&#34;forward(size)&#34;" comment="&#34;Fourth subcurve&#34;" color="ffffff" rotated="0" disabled="0"></instruction>
+		<call text="&#34;hilbert(size, level - 1, -parity)&#34;" comment="" color="ffffff" disabled="0" ismethoddecl="0"></call>
+		<instruction text="&#34;left(parity * 90)&#34;" comment="&#34;Final turn to make the turtle end up facing outward&#34;,&#34;from the large square&#34;" color="ffffff" rotated="0" disabled="0"></instruction>
+	</children>
+</root>
