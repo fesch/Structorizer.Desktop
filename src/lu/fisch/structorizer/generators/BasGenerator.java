@@ -76,22 +76,25 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2024-03-19      Issue #1148: Special indentation for "if else if" chains
  *      Kay Gürtzig         2025-02-06      Bugfix #1188: Array declarations in C style weren't correctly
  *                                          processed. Array declarations for vintage BASIC no longer suppressed
- *      Kay Gürtzig         2025-02-07      Bugfix #1190: Declarations no longer in prefix but in line,
- *                                          Includables now fully involved.
+ *      Kay Gürtzig         2025-02-07/08   Bugfix #1190: Includables now fully involved. Declaration placement
+ *                                          fundamentally revised, record and array inits now recursive.
  *
  ******************************************************************************************************
  *
  *      Comments:
  *
  *      2025-02-06/07 - Bugfixes #1188, #1190 (Kay Gürtzig)
- *      - Severe deficiencies were found w.r.t. type definitions, decalarations and includes. Apparently
- *        the includes have never been considered here. The variable declarations in the preamble were
- *        incomplete (particularly for vintage mode none were produced). No record definitions were produced
- *        for modern BASIC mode (no line numbering). Otherwise the variable declarations in the preamble
- *        preceded their type definitions. So this has to be fundamentally revised and updated.
- *        In the event, it seems more adequate to add all definitions and declarations where they occur in
- *        the diagrams rather than to concentrate them in the preamble. This does not of course apply to
- *        definitions from involved Includables.
+ *      - Severe deficiencies were found w.r.t. type definitions, declarations and includes as well as
+ *        nested initialisation expressions. Apparently the includes have never been considered here. The
+ *        variable declarations in the preamble were incomplete (particularly for vintage mode none were
+ *        produced). No record type definitions were produced for modern BASIC mode (no line numbering).
+ *        Otherwise the variable declarations in the preamble preceded their type definitions. So this has
+ *        to be fundamentally revised and updated.
+ *        It was considered to add all definitions and declarations where they occur in the diagrams rather
+ *        than to concentrate them in the preamble (This would not of course apply to definitions from
+ *        involved Includables). But this turned out to produce nonsense e.g. for an iterative array filling
+ *        within loops where the target array variable wasn't mentioned before the loop.
+ *        
  *
  *      2015-12-21 - Bugfix #41/#68/#69 (Kay Gürtzig)
  *      - Operator replacement had induced unwanted padding and string literal modifications
@@ -595,17 +598,15 @@ public class BasGenerator extends Generator
 				String line = lines.get(i);
 				StringList tokens = Element.splitLexically(line, true);
 				Element.unifyOperators(tokens, false);
-				boolean isRecordInit = false;
+				boolean done = false;
 				// END KGU#779 2019-12-01
-				// START KGU#100 2016-01-22: Enh. #84 - resolve array initialisation
-				boolean isArrayInit = false;
-				// START KGU#171 2016-03-31: Enh. #144 / KGU#779 2019-12-01: bugfix #790 
 				//if (this.optionBasicLineNumbering())
 				if (!this.suppressTransformation /*&& this.optionCodeLineNumbering()*/)
 				// END KGU#171 2016-03-31 / KGU#779 2019-12-01
 				{
 					// START KGU#779 2019-12-01
 					if (Instruction.isTypeDefinition(line)) {
+						// In most cases this won't do anything because it's already generated
 						generateTypeDef(tokens, root, _indent, disabled);
 						continue;
 					}
@@ -626,7 +627,6 @@ public class BasGenerator extends Generator
 						// END KGU#1089 2023-10-17: Issue #980
 						declareVariable(varName, root, _indent);
 						StringList exprTokens = tokens.subSequence(asgnPos+1, tokens.count()).trim();
-						isArrayInit = !exprTokens.isEmpty() && exprTokens.get(0).equals("{") && exprTokens.get(exprTokens.count()-1).equals("}");
 						// START KGU#780 2019-12-01 - trouble with complicated left sides fixed
 						int posColon = leftSide.indexOf(":");
 						int posAs = leftSide.indexOf("as", false);
@@ -647,29 +647,34 @@ public class BasGenerator extends Generator
 						// END KGU#1173 2025-02-06
 						String target = leftSide.concatenate(null);
 						varName = transform(target.substring(target.indexOf(varName)));
-						// END KGU#780 2019-12-01
-						if (isArrayInit)
-						{
-							generateArrayInit(varName, exprTokens, _indent, disabled);
-						}
-						StringList compList = null;
-						isRecordInit = !isArrayInit && exprTokens.count() > 2 && Function.testIdentifier(exprTokens.get(0), false, null)
-								&& exprTokens.get(exprTokens.count()-1).equals("}")
-								&& !(compList = exprTokens.subSequence(1, exprTokens.count()).trim()).isEmpty()
-								&& compList.get(0).equals("{");
-						if (isRecordInit) {
-							TypeMapEntry type = root.getTypeInfo(routinePool).get(":" + exprTokens.get(0));
-							// START KGU#1175 2025-02-07: Bugfx #1190 Duplicate declaration should be avoided
-							//if (type != null && Function.testIdentifier(varName, false, null) && !this.wasDefHandled(root, varName, true)) {
-							if (type != null && Function.testIdentifier(varName, false, null) && !this.wasDefHandled(root, varName, true, true)) {
-							// END KGU#1175 2025-02-07
-								addCode(transformKeyword("DIM ") + varName + transformKeyword(" AS ") + type.typeName, _indent, disabled);
-							}
-							this.generateRecordInit(varName, exprTokens.concatenate(), _indent, disabled, type);
-						}
+						// START KGU#1175 2025-02-08: EXTRACTED to generateAssignment(...)
+//						boolean isArrayInit = !exprTokens.isEmpty() && exprTokens.get(0).equals("{") && exprTokens.get(exprTokens.count()-1).equals("}");
+//						// END KGU#780 2019-12-01
+//						if (isArrayInit)
+//						{
+//							generateArrayInit(varName, exprTokens, _indent, disabled);
+//						}
+//						StringList compList = null;
+//						boolean isRecordInit = !isArrayInit && exprTokens.count() > 2 && Function.testIdentifier(exprTokens.get(0), false, null)
+//								&& exprTokens.get(exprTokens.count()-1).equals("}")
+//								&& !(compList = exprTokens.subSequence(1, exprTokens.count()).trim()).isEmpty()
+//								&& compList.get(0).equals("{");
+//						if (isRecordInit) {
+//							TypeMapEntry type = root.getTypeInfo(routinePool).get(":" + exprTokens.get(0));
+//							// START KGU#1175 2025-02-07: Bugfx #1190 Duplicate declaration should be avoided
+//							//if (type != null && Function.testIdentifier(varName, false, null) && !this.wasDefHandled(root, varName, true)) {
+//							if (type != null && Function.testIdentifier(varName, false, null) && !this.wasDefHandled(root, varName, true, true)) {
+//							// END KGU#1175 2025-02-07
+//								addCode(transformKeyword("DIM ") + varName + transformKeyword(" AS ") + type.typeName, _indent, disabled);
+//							}
+//							this.generateRecordInit(varName, exprTokens.concatenate(), _indent, disabled, type);
+//						}
+						generateAssignment(varName, exprTokens, root, _indent, disabled);
+						done = true;
+						// END KGU#1175 2025-02-08
 					}
 				}
-				if (!isArrayInit && !isRecordInit)
+				if (!done)
 				{
 				// END KGU#100 2016-01-22
 					// START KGU#277/KGU#284 2016-10-13/16: Enh. #270 + Enh. #274
@@ -700,6 +705,47 @@ public class BasGenerator extends Generator
 		}
 	}
 
+	// START KGU#1175 2025-02-08: Bugfix #1190
+	/**
+	 * Generates the code for an assignment of the value represented by the token
+	 * list {@code _exprTokens} and may be a complex expression (e.g. an array or
+	 * record initialiser expression) to variable {@code _varName} (which might be
+	 * e.g. a qualified record component path).
+	 * 
+	 * @param _varName - the access path for the target variable (might e.g. be a
+	 *     record variable component)
+	 * @param _exprTokens - the tokenized value expression (operator-unified but not
+	 *     yet transformed).
+	 * @param _root - the {@link Root} the instruction originates from
+	 * @param _indent - the indentation string
+	 * @param _disabled - whether the instruction was enabled (such that the code
+	 *     will have to be "outcommented".
+	 */
+	private void generateAssignment(String _varName, StringList _exprTokens, Root _root, String _indent, boolean _disabled)
+	{
+		boolean isArrayInit = !_exprTokens.isEmpty() && _exprTokens.get(0).equals("{") && _exprTokens.get(_exprTokens.count()-1).equals("}");
+		// END KGU#780 2019-12-01
+		if (isArrayInit)
+		{
+			generateArrayInit(_varName, _exprTokens, _indent, _disabled);
+		}
+		StringList compList = null;
+		boolean isRecordInit = !isArrayInit && _exprTokens.count() > 2 && Function.testIdentifier(_exprTokens.get(0), false, null)
+				&& _exprTokens.get(_exprTokens.count()-1).equals("}")
+				&& !(compList = _exprTokens.subSequence(1, _exprTokens.count()).trim()).isEmpty()
+				&& compList.get(0).equals("{");
+		if (isRecordInit) {
+			this.generateRecordInit(_varName, _exprTokens, _root, _indent, _disabled);
+		}
+		if (!isArrayInit && !isRecordInit) {
+			String keyword = "";
+			if (this.optionCodeLineNumbering()) {
+				keyword = transformKeyword("Let ");
+			}
+			addCode(keyword + _varName + " = " + transform(_exprTokens.concatenate(null)), _indent, _disabled);
+		}
+	}
+	
 	/**
 	 * Adds code lines to fill the array {@code _targetVar} with the values
 	 * extracted from the initialiser expression {@code _exprTokens}.
@@ -721,7 +767,7 @@ public class BasGenerator extends Generator
 			// starts with 1 but may vary widely). We solve the problem
 			// by providing a configurable start index variable 
 			//appendComment("TODO: Check indexBase value (automatically generated)", _indent);
-			// START KGU#277 2016-10-13: Enh. #270
+			// START KGU#277 2016-10-13: Enh. #270 | 2025-02-06 Obsolete
 			//code.add(this.getLineNumber() + _indent + "LET indexBase = 0");
 			//addCode(transformKeyword("LET") + " indexBase = 0", _indent, _disabled);
 			// END KGU#277 2016-10-13
@@ -731,102 +777,18 @@ public class BasGenerator extends Generator
 				//code.add(this.getLineNumber() + _indent + "LET " + varName + 
 				//		"(indexBase + " + el + ") = " + 
 				//		transform(elements.get(el)));
+				// START KGU#1175 2025-02-06: Bugfix #1190 indexBase is obsolete
 				//addCode(transformKeyword("LET ") + _targetVar + "(indexBase + " + el + ") = " + 
-				addCode(transformKeyword("LET ") + _targetVar + "(" + el + ") = " + 
+				addCode(transformKeyword("LET ") + _targetVar + "(" + el + ") = " +
+				// END KGU1175 2025-02-06
 								transform(elements.get(el)), _indent, _disabled);
 				// END KGU#277 2016-10-13
 			}
 		}
 		else {
-			addCode(transformKeyword("LET ") + _targetVar + " = " + 
+			addCode(_targetVar + " = " + 
 					transform(_exprTokens.concatenate(null)), _indent, _disabled);
 		}
-	}
-
-	// START KGU#779 2019-12-01: Issue #790 Type (record/enum) definitions hadn't been handled at all
-	/**
-	 * Generates a type definition (as well as possible) from the given token list, depending on
-	 * the export preferences (vintage BASIC / modern BASIC)
-	 * @param _tokens - the lexically split type definition line
-	 * @param _root - the owning Root
-	 * @param _indent - the current indentation level
-	 * @param _disabled - whether the element is disabled
-	 */
-	private boolean generateTypeDef(StringList _tokens, Root _root, String _indent, boolean _disabled) {
-		_tokens.removeAll(" ");
-		String typeName = _tokens.get(1);
-		String typeKey = ":" + typeName;
-		TypeMapEntry type = _root.getTypeInfo(routinePool).get(typeKey);
-		String indentPlus1 = _indent + this.getIndent();
-		if (type == null) {
-			return false;
-		}
-		else if (this.wasDefHandled(_root, typeKey, false)) {
-			// Nothing to do
-			return true;
-		}
-		if (type.isRecord()) {
-			Map<String, TypeMapEntry> compSpecs = type.getComponentInfo(true);
-			// START KGU#1176 2025-02-07: Bugfix #1190 We need a definition for modern Basic too
-			//if (this.optionCodeLineNumbering()) {
-			String compKeyword = "Dim ";
-			if (this.optionCodeLineNumbering()) {
-				compKeyword = "";
-			}
-			// END KGU#1176 2025-02-07
-			// We apply a QBASIC construct (see https://en.wikibooks.org/wiki/QBasic/Arrays_and_Types)
-			addCode(transformKeyword("TYPE") + " " + typeName, _indent, _disabled);
-			for (Entry<String, TypeMapEntry> entry: compSpecs.entrySet()) {
-				String compTypeName = "???";
-				if (entry.getValue() != null) {
-					compTypeName = entry.getValue().getCanonicalType(true, true);
-				}
-				// START KGU#1176 2025-02-07: Bugfix #1190 We need a definition for modern Basic too
-				//addCode(entry.getKey() + transformKeyword(" AS ") + transformType(compTypeName, "???"), indentPlus1, _disabled);
-				addCode(compKeyword + entry.getKey() + transformKeyword(" AS ") +
-						transformType(compTypeName, "???"), indentPlus1, _disabled);
-				// END KGU#1176 2025-02-07
-			}
-			addCode(transformKeyword("END ") + transformKeyword("TYPE"), _indent, _disabled);
-			// START KGU#1176 2025-02-07: Bugfix #1190 We need a definition for modern Basic too
-			//}
-			// END KGU#1176 2025-02-07
-		}
-		else if (type.isEnum()) {
-			StringList enumItems = type.getEnumerationInfo();
-			if (this.optionCodeLineNumbering()) {
-				appendComment(_tokens.concatenate(null).replace("==", "="), _indent);
-				// In vintage BASIC, we will just generate separate variable definitions
-				int offset = 0;
-				String lastVal = "";
-				for (int i = 0; i < enumItems.count(); i++) {
-					String[] itemSpec = enumItems.get(i).split("=", 2);
-					if (itemSpec.length > 1) {
-						lastVal = itemSpec[1].trim();
-						offset = 0;
-						try {
-							int code = Integer.parseUnsignedInt(lastVal);
-							lastVal = "";
-							offset = code;
-						}
-						catch (NumberFormatException ex) {}
-					}
-					addCode(transformKeyword("LET ") + itemSpec[0] + " = " + transform(lastVal) + (lastVal.isEmpty() ? "" : "+") + offset, _indent, _disabled);
-					offset++;
-				}
-				appendComment("end type "+ typeName, _indent);
-			}
-			else {
-				// We use a VisualBasic feature here (see https://docs.microsoft.com/de-de/dotnet/visual-basic/language-reference/statements/enum-statement)
-				addCode(transformKeyword("ENUM ") + typeName, _indent, _disabled);
-				for (int i = 0; i < enumItems.count(); i++) {
-					addCode(transform(enumItems.get(i)), indentPlus1, _disabled);
-				}
-				addCode(transformKeyword("END ENUM"), _indent, _disabled);
-			}
-		}
-		this.setDefHandled(_root.getSignatureString(false, false), typeKey);
-		return true;
 	}
 
 	// START KGU#388 2019-12-01: Enh. #423
@@ -843,19 +805,21 @@ public class BasGenerator extends Generator
 	// START KGU#559 2018-07-20: Enh. #563
 	//protected void generateRecordInit(String _lValue, String _recordValue, String _indent, boolean _isDisabled) {
 	//	HashMap<String, String> comps = Instruction.splitRecordInitializer(_recordValue, null);
-	protected void generateRecordInit(String _lValue, String _recordValue, String _indent, boolean _isDisabled, TypeMapEntry _typeEntry)
+	protected void generateRecordInit(String _lValue, StringList _exprTokens, Root _root, String _indent, boolean _isDisabled)
 	{
+		TypeMapEntry type = _root.getTypeInfo(routinePool).get(":" + _exprTokens.get(0));
+		String recordValue = _exprTokens.concatenate();
 		// START KGU#771 2019-11-24: Bugfix #783 In case of an unknown record type we should at least write the original content
-		if (_typeEntry == null) {
-			addCode(transformKeyword("LET ") + transform(_lValue) + " = " + _recordValue + "\t" + this.commentSymbolLeft() + " FIXME: missing type information for struct! " + this.commentSymbolRight(),
+		if (type == null) {
+			addCode(transformKeyword("LET ") + transform(_lValue) + " = " + recordValue + "\t" + this.commentSymbolLeft() + " FIXME: missing type information for struct! " + this.commentSymbolRight(),
 					_indent, false);
 			return;
 		}
-		HashMap<String, String> comps = Instruction.splitRecordInitializer(_recordValue, _typeEntry, false);
+		HashMap<String, String> comps = Instruction.splitRecordInitializer(recordValue, type, false);
 		// START KGU#1021 2021-12-05: Bugfix #1024 Instruction might be defective
 		if (comps == null) {
 			appendComment("ERROR: defective record initializer in diagram:", _indent);
-			appendComment(_recordValue, _indent);
+			appendComment(recordValue, _indent);
 			return;
 		}
 		// END KGU#1021 2021-12-05
@@ -864,11 +828,43 @@ public class BasGenerator extends Generator
 			String compVal = comp.getValue();
 			if (!compName.startsWith("§") && compVal != null) {
 				// FIXME (KGU#560) 2018-07-21: how can we fix recursive initializers? See CGenerator
-				addCode(transformKeyword("LET ") + transform(_lValue) + "." + compName + " = " + transform(compVal), _indent, _isDisabled);
+				//addCode(transformKeyword("LET ") + transform(_lValue) + "." + compName + " = " + transform(compVal), _indent, _isDisabled);
+				generateAssignment(transform(_lValue) + "." + compName, Element.splitLexically(compVal, _isDisabled), _root, _indent, _isDisabled);
 			}
 		}
 	}
 	// END KGU#388 2019-12-01
+
+	// START KGU#779 2019-12-01: Issue #790 Type (record/enum) definitions hadn't been handled at all
+	/**
+	 * Generates a type definition (as well as possible) from the given token
+	 * list, depending on the export preferences (vintage BASIC / modern BASIC).
+	 * <br/>
+	 * This method tends to get obsolete. It became hardly more than a wrapper
+	 * for {@link #generateTypeDef(String, TypeMapEntry, Root, String, boolean)}
+	 * now. 
+	 * 
+	 * @param _tokens - the lexically split type definition line
+	 * @param _root - the owning Root
+	 * @param _indent - the current indentation level
+	 * @param _disabled - whether the element is disabled
+	 * @return {@code false} if the type could not be found in the type map,
+	 *     {@code true} otherwise (no matter whether the type definition was
+	 *     generated or redundant.
+	 * 
+	 * @see #generateTypeDef(String, TypeMapEntry, Root, String, boolean)T
+	 */
+	private boolean generateTypeDef(StringList _tokens, Root _root, String _indent, boolean _disabled) {
+		_tokens.removeAll(" ");
+		String typeName = _tokens.get(1);
+		String typeKey = ":" + typeName;
+		TypeMapEntry type = _root.getTypeInfo(routinePool).get(typeKey);
+		if (type != null && type.isEnum() && this.optionCodeLineNumbering()) {
+			appendComment(_tokens.concatenate(null).replace("==", "="), _indent);
+		}
+		return generateTypeDef(typeKey, type, _root, _indent, _disabled);
+	}
+	// END KGU#779 2019-12-01
 
     @Override
     protected void generateCode(Alternative _alt, String _indent)
@@ -1597,7 +1593,12 @@ public class BasGenerator extends Generator
 					}
 				}
 				// END KGU#993 2021-10-03
-				signature += (_paramNames.get(p)).trim();
+				// START KGU#1175 2025-02-08: Bugfix #1190 We better register params as declared
+				//signature += (_paramNames.get(p)).trim();
+				String paramName = _paramNames.get(p).trim();
+				signature += paramName;
+				this.wasDefHandled(_root, paramName, true);
+				// END KGU#2025-02-08
 				if (_paramTypes != null)
 				{
 					// START KGU#993 2021-10-03: Bugfix #993 Wrong handling of const and array parameters
@@ -1653,15 +1654,6 @@ public class BasGenerator extends Generator
 			appendComment("TODO: add the respective type suffixes to your variable names if required", _indent );
 		}
 		// END KGU##1175 2025-02-06
-// START KGU#1173/KGU#1175 2025-02-07: Bugfix #1188, #1190 Disabled
-//		for (int v = 0; v < _varNames.count(); v++) {
-//			// START KGU#542 2019-12-01: Enh. #739 Don't do this for enumeration constants here
-//			//appendComment(transformKeyword("DIM ") + _varNames.get(v) + transformKeyword(" AS") + " <type>", indentPlusOne);
-//			declareVariable(_varNames.get(v), _root, _indent);
-//			// END KGU#542 2019-12-01
-//		}
-// END KGU#1173/KGU#1175 2025-02-07
-		appendComment("", _indent);
 		// START KGU#1175 2025-02-07: Bugfix #1190 Includables had been forgotten
 		if (topLevel) {
 			// With a top-level subroutine, it will have been done in the header
@@ -1671,12 +1663,43 @@ public class BasGenerator extends Generator
 		}
 		else {
 			if (code.count() == subroutineInsertionLine) {
-				code.add("");	// Make sure the subroutines are inserted before library entry points
+				appendComment("", _indent);	// Make sure the subroutines are inserted before library entry points
 			}
 			libraryInsertionLine = code.count();
-			addSepaLine();
+			appendComment("", _indent);
 		}
 		// END KGU#1175 2025-02-07
+// START KGU#1173/KGU#1175 2025-02-07: Bugfix #1188, #1190 Disabled
+//		for (int v = 0; v < _varNames.count(); v++) {
+//			// START KGU#542 2019-12-01: Enh. #739 Don't do this for enumeration constants here
+//			//appendComment(transformKeyword("DIM ") + _varNames.get(v) + transformKeyword(" AS") + " <type>", indentPlusOne);
+//			declareVariable(_varNames.get(v), _root, _indent);
+//			// END KGU#542 2019-12-01
+//		}
+		// First: generate the constants
+		for (Entry<String, String> entry: _root.constants.entrySet()) {
+			// Constant routine parameters will usually have value null
+			// KGU#542 2019-12-01: Enh. #739 Don't do this for enumeration constants here
+			if (entry.getValue() != null && !entry.getValue().startsWith(":")) {
+				declareVariable(entry.getKey(), _root, _indent);
+			}
+		}
+		// Second: generate the type definitions
+		for (Entry<String, TypeMapEntry> entry: _root.getTypeInfo(routinePool).entrySet()) {
+			String typeKey = entry.getKey();
+			if (typeKey.startsWith(":")) {
+				this.generateTypeDef(typeKey, entry.getValue(), _root, _indent, false);
+			}
+		}
+		// Third: generate the remaining variable declarations
+		for (int v = 0; v < _varNames.count(); v++) {
+			String varName = _varNames.get(v);
+			if (_root.constants.get(varName) == null) {
+				declareVariable(varName, _root, _indent);
+			}
+		}
+// END KGU#1173/KGU#1175 2025-02-07
+		appendComment("", _indent);
 		return _indent;
 	}
 
@@ -1833,5 +1856,109 @@ public class BasGenerator extends Generator
 		}
 	}
 	// END KGU#1173/KGU#1175 2025-02-06
+
+	// START KGU#1175 2025-02-07: Bugfix #1190 We must place type definitions in the preamble when variables refer to them
+	/**
+	 * Generates a BASIC type definition for the type with name {@code _typeName}
+	 * represented by {@code _type} Enumeration
+	 *  
+	 * @param _typeKey - type map key of the type (name preceded by ':')
+	 * @param _type - the {@link TypeMapEntry} for the type
+	 * @param _root - the owning (defining) {@link Root}
+	 * @param _indent - the current indentation
+	 * @return {@code false} if the type could not be found in the type map,
+	 *     {@code true} otherwise (no matter whether the type definition was
+	 *     generated or redundant.
+	 */
+	private boolean generateTypeDef(String _typeKey, TypeMapEntry _type, Root _root, String _indent, boolean _isDisabled) {
+		String indentPlus1 = _indent + this.getIndent();
+		if (_type == null) {
+			return false;
+		} else if (wasDefHandled(_root, _typeKey, false, true)) {
+			return true;
+		}
+		String typeName = _typeKey.substring(1);
+		if (_type.isRecord()) {
+			Map<String, TypeMapEntry> compSpecs = _type.getComponentInfo(true);
+			// START KGU#1176 2025-02-07: Bugfix #1190 We need a definition for modern Basic too
+			//if (this.optionCodeLineNumbering()) {
+			// END KGU#1176 2025-02-07
+			// We apply a QBASIC construct (see https://en.wikibooks.org/wiki/QBasic/Arrays_and_Types)
+			addCode(transformKeyword("TYPE") + " " + typeName, _indent, _isDisabled);
+			for (Entry<String, TypeMapEntry> entry: compSpecs.entrySet()) {
+				String compKeyword = "";
+				if (!this.optionCodeLineNumbering()) {
+					compKeyword = "Dim ";
+				}
+				String compTypeName = "???";
+				String varSpec = entry.getKey();
+				TypeMapEntry compType = entry.getValue();
+				if (compType != null) {
+					compTypeName = entry.getValue().getCanonicalType(true, true);
+					StringList dims = new StringList();
+					while (compTypeName.startsWith("@")) {
+						int maxIndex = compType.getMaxIndex(dims.count());
+						if (maxIndex < 0) {
+							dims.add("");
+						}
+						else {
+							dims.add(Integer.toString(maxIndex));
+						}
+						compTypeName = compTypeName.substring(1);
+					}
+					if (!dims.isEmpty()) {
+						varSpec += "(" + dims.concatenate(", ") + ")";
+						compKeyword = "Dim ";
+					}
+				}
+				// START KGU#1176 2025-02-07: Bugfix #1190 We need a definition for modern Basic too
+				//addCode(entry.getKey() + transformKeyword(" AS ") + transformType(compTypeName, "???"), indentPlus1, _disabled);
+				addCode(compKeyword + varSpec + transformKeyword(" AS ") +
+						transformType(compTypeName, "???"), indentPlus1, _isDisabled);
+				// END KGU#1176 2025-02-07
+			}
+			addCode(transformKeyword("END ") + transformKeyword("TYPE"), _indent, _isDisabled);
+			// START KGU#1176 2025-02-07: Bugfix #1190 We need a definition for modern Basic too
+			//}
+			// END KGU#1176 2025-02-07
+		}
+		else if (_type.isEnum()) {
+			StringList enumItems = _type.getEnumerationInfo();
+			if (this.optionCodeLineNumbering()) {
+				if (!_isDisabled) {
+					this.appendComment("enum " + typeName + "(" + enumItems.concatenate(", ") + ")", _indent);
+				}
+				// In vintage BASIC, we will just generate separate constant definitions
+				int offset = 0;
+				String lastVal = "";
+				for (int i = 0; i < enumItems.count(); i++) {
+					String[] itemSpec = enumItems.get(i).split("=", 2);
+					if (itemSpec.length > 1) {
+						lastVal = itemSpec[1].trim();
+						offset = 0;
+						try {
+							int code = Integer.parseUnsignedInt(lastVal);
+							lastVal = "";
+							offset = code;
+						}
+						catch (NumberFormatException ex) {}
+					}
+					addCode(transformKeyword("CONST ") + itemSpec[0] + " = " + transform(lastVal) + (lastVal.isEmpty() ? "" : "+") + offset, _indent, _isDisabled);
+					offset++;
+				}
+				appendComment("end type "+ typeName, _indent);
+			}
+			else {
+				// We use a VisualBasic feature here (see https://docs.microsoft.com/de-de/dotnet/visual-basic/language-reference/statements/enum-statement)
+				addCode(transformKeyword("ENUM ") + typeName, _indent, _isDisabled);
+				for (int i = 0; i < enumItems.count(); i++) {
+					addCode(transform(enumItems.get(i)), indentPlus1, _isDisabled);
+				}
+				addCode(transformKeyword("END ENUM"), _indent, _isDisabled);
+			}
+		}
+		this.setDefHandled(_root.getSignatureString(false, false), _typeKey);
+		return true;
+	}
 
 }

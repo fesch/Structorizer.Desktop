@@ -13,16 +13,18 @@ Rem http://www.gnu.de/documents/gpl.de.html
 Rem  
 Rem program TextDemo
 Rem TODO: Check and accomplish your variable declarations here: 
+Dim y As Integer
+Dim text As ???
+Dim height As ???
+Dim colour As ???
 Rem  
 PRINT "This is a demo program for text writing with Turleizer."
 showTurtle()
 penDown()
-Dim y As Integer
 y = 0
 Do
   PRINT "Enter some text (empty string to exit)"; : INPUT text
   Rem Make sure the content is interpreted as string 
-  Dim text As ???
   text = "" + text
   If text <> "" Then
     Do
@@ -45,7 +47,7 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub backward(len, color)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
+  Rem  
   Select Case color
     Case 1
       backward(len) : Rem color = ffffff
@@ -75,8 +77,8 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub blank(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
   Dim width As ???
+  Rem  
   width = h/2.0
   penUp()
   right(90)
@@ -88,7 +90,7 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub forward(len, color)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
+  Rem  
   Select Case color
     Case 1
       forward(len) : Rem color = ffffff
@@ -119,7 +121,7 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub digit1(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
+  Rem  
   penUp()
   forward(h/2.0) : Rem color = ffffff
   penDown()
@@ -135,15 +137,15 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub digit4(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
-  Rem Octagon edge length 
+  Dim c As ???
   Dim b As ???
+  Dim angle As double
+  Rem  
+  Rem Octagon edge length 
   b = h * 0.5 / (sqrt(2.0) + 1)
   Rem Cathetus of the corner triangle outside the octagon 
-  Dim c As ???
   c = b / sqrt(2.0)
   Rem inner angle at top of the triangle 
-  Dim angle As double
   angle = toDegrees(atan(1 - 2.0*c/h))
   right(90)
   penUp()
@@ -167,8 +169,8 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub digit7(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
   Dim angle As ???
+  Rem  
   angle = 90 + toDegrees(atan(0.5))
   penUp()
   forward(h) : Rem color = ffffff
@@ -190,12 +192,12 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub letterA(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
   Dim width As ???
-  width = h/2.0
-  Dim hypo As double
-  hypo = sqrt(h*h + width*width/4.0)
   Dim rotAngle As double
+  Dim hypo As double
+  Rem  
+  width = h/2.0
+  hypo = sqrt(h*h + width*width/4.0)
   rotAngle = toDegrees(atan(width/2.0/h))
   right(rotAngle)
   Call forward(hypo/2.0, colorNo)
@@ -217,8 +219,8 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub letterE(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
   Dim width As ???
+  Rem  
   width = h/2.0
   Call forward(h, colorNo)
   right(90)
@@ -244,8 +246,8 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub letterF(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
   Dim width As ???
+  Rem  
   width = h/2.0
   Call forward(h, colorNo)
   right(90)
@@ -271,8 +273,8 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub letterH(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
   Dim width As ???
+  Rem  
   width = h/2.0
   Call forward(h, colorNo)
   penUp()
@@ -297,12 +299,12 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub letterI(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
-  Rem Octagon edge length 
+  Dim c As ???
   Dim b As ???
+  Rem  
+  Rem Octagon edge length 
   b = h * 0.5 / (sqrt(2.0) + 1)
   Rem Cathetus of the corner triangle outside the octagon 
-  Dim c As ???
   c = b / sqrt(2.0)
   penUp()
   right(90)
@@ -332,10 +334,10 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub letterK(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
   Dim width As ???
-  width = h/2.0
   Dim diag As ???
+  Rem  
+  width = h/2.0
   diag = h/sqrt(2.0)
   Call forward(h, colorNo)
   penUp()
@@ -355,8 +357,8 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub letterL(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
   Dim width As ???
+  Rem  
   width = h/2.0
   Call forward(h, colorNo)
   penUp()
@@ -373,12 +375,12 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub letterM(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
   Dim width As ???
-  width = h/2.0
-  Dim hypo As ???
-  hypo = sqrt(width*width + h*h)/2.0
   Dim rotAngle As double
+  Dim hypo As ???
+  Rem  
+  width = h/2.0
+  hypo = sqrt(width*width + h*h)/2.0
   rotAngle = toDegrees(atan(width/h))
   Call forward(h, colorNo)
   left(rotAngle)
@@ -395,12 +397,12 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub letterN(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
   Dim width As ???
-  width = h/2.0
-  Dim hypo As double
-  hypo = sqrt(width*width + h*h)
   Dim rotAngle As double
+  Dim hypo As double
+  Rem  
+  width = h/2.0
+  hypo = sqrt(width*width + h*h)
   rotAngle = toDegrees(atan(width/h))
   Call forward(h, colorNo)
   left(rotAngle)
@@ -418,8 +420,8 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub letterT(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
   Dim width As ???
+  Rem  
   width = h/2.0
   penUp()
   forward(h) : Rem color = ffffff
@@ -444,12 +446,12 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub letterV(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
   Dim width As ???
-  width = h/2.0
-  Dim hypo As double
-  hypo = sqrt(h*h + width*width/4.0)
   Dim rotAngle As double
+  Dim hypo As double
+  Rem  
+  width = h/2.0
+  hypo = sqrt(h*h + width*width/4.0)
   rotAngle = toDegrees(atan(width/2.0/h))
   penUp()
   forward(h) : Rem color = ffffff
@@ -470,14 +472,14 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub letterW(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
-  Dim width As ???
-  width = h/2.0
   Dim width_3 As ???
-  width_3 = width/3.0
-  Dim hypo As double
-  hypo = sqrt(width_3*width_3 + h*h)
+  Dim width As ???
   Dim rotAngle As double
+  Dim hypo As double
+  Rem  
+  width = h/2.0
+  width_3 = width/3.0
+  hypo = sqrt(width_3*width_3 + h*h)
   rotAngle = toDegrees(atan(width_3/h))
   penUp()
   forward(h) : Rem color = ffffff
@@ -506,12 +508,12 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub letterX(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
   Dim width As ???
-  width = h/2.0
-  Dim hypo As double
-  hypo = sqrt(width*width + h*h)
   Dim rotAngle As double
+  Dim hypo As double
+  Rem  
+  width = h/2.0
+  hypo = sqrt(width*width + h*h)
   rotAngle = toDegrees(atan(width/h))
   right(rotAngle)
   Call forward(hypo, colorNo)
@@ -530,12 +532,12 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub letterY(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
   Dim width As ???
-  width = h/2.0
-  Dim hypo As ???
-  hypo = sqrt(width*width + h*h)/2.0
   Dim rotAngle As double
+  Dim hypo As ???
+  Rem  
+  width = h/2.0
+  hypo = sqrt(width*width + h*h)/2.0
   rotAngle = toDegrees(atan(width/h))
   penUp()
   forward(h) : Rem color = ffffff
@@ -561,12 +563,12 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub letterZ(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
   Dim width As ???
-  width = h/2.0
-  Dim hypo As double
-  hypo = sqrt(width*width + h*h)
   Dim rotAngle As double
+  Dim hypo As double
+  Rem  
+  width = h/2.0
+  hypo = sqrt(width*width + h*h)
   rotAngle = toDegrees(atan(width/h))
   penUp()
   forward(h) : Rem color = ffffff
@@ -586,8 +588,9 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub polygonPart(a As double, n As integer, ctrclkws As boolean, nEdges As integer, color As Integer)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
   Dim rotAngle As ???
+  Dim k As Integer
+  Rem  
   rotAngle = 360.0/n
   If ctrclkws Then
     rotAngle = -rotAngle
@@ -604,16 +607,16 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub charDummy(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
   Dim width As ???
+  Dim d As ???
+  Dim c As ???
+  Dim b As ???
+  Rem  
   width = h / 2.0
   Rem Octagon edge length (here: edge lengzh of the square) 
-  Dim b As ???
   b = width / (sqrt(2.0) + 1)
   Rem Cathetus of the corner triangle outside the octagon 
-  Dim c As ???
   c = (width - b) / 2.0
-  Dim d As ???
   d = b / sqrt(2.0)
   penUp()
   forward(h/2.0-b/2.0) : Rem color = ffffff
@@ -637,16 +640,16 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub comma(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
-  Rem Octagon edge length 
+  Dim rotAngle As double
+  Dim hypo As ???
+  Dim c As ???
   Dim b As ???
+  Rem  
+  Rem Octagon edge length 
   b = h * 0.5 / (sqrt(2.0) + 1)
   Rem Cathetus of the outer corner triangle of the octagon 
-  Dim c As ???
   c = b / sqrt(2.0)
-  Dim rotAngle As double
   rotAngle = toDegrees(atan(0.5))
-  Dim hypo As ???
   hypo = c * sqrt(1.25)
   penUp()
   right(90)
@@ -674,14 +677,14 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub digit2(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
-  Rem Octagon edge length 
+  Dim c As ???
   Dim b As ???
+  Dim angle As double
+  Rem  
+  Rem Octagon edge length 
   b = h * 0.5 / (sqrt(2.0) + 1)
   Rem Cathetus of the corner triangle outside the octagon 
-  Dim c As ???
   c = b / sqrt(2.0)
-  Dim angle As double
   angle = toDegrees(atan(h/(h + 2*c)))
   penUp()
   forward(h - c) : Rem color = ffffff
@@ -702,12 +705,12 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub digit3(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
-  Rem Octagon edge length 
+  Dim c As ???
   Dim b As ???
+  Rem  
+  Rem Octagon edge length 
   b = h * 0.5 / (sqrt(2.0) + 1)
   Rem Cathetus of the corner triangle outside the octagon 
-  Dim c As ???
   c = b / sqrt(2.0)
   penUp()
   forward(c) : Rem color = ffffff
@@ -738,12 +741,12 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub digit5(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
-  Rem Octagon edge length 
+  Dim c As ???
   Dim b As ???
+  Rem  
+  Rem Octagon edge length 
   b = h * 0.5 / (sqrt(2.0) + 1)
   Rem Cathetus of the corner triangle outside the octagon 
-  Dim c As ???
   c = b / sqrt(2.0)
   penUp()
   forward(c) : Rem color = ffffff
@@ -768,12 +771,12 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub digit6(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
-  Rem Octagon edge length 
+  Dim c As ???
   Dim b As ???
+  Rem  
+  Rem Octagon edge length 
   b = h * 0.5 / (sqrt(2.0) + 1)
   Rem Cathetus of the corner triangle outside the octagon 
-  Dim c As ???
   c = b / sqrt(2.0)
   penUp()
   forward(c) : Rem color = ffffff
@@ -802,12 +805,12 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub digit8(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
-  Rem Octagon edge length 
+  Dim c As ???
   Dim b As ???
+  Rem  
+  Rem Octagon edge length 
   b = h * 0.5 / (sqrt(2.0) + 1)
   Rem Cathetus of the corner triangle outside the octagon 
-  Dim c As ???
   c = b / sqrt(2.0)
   penUp()
   forward(c) : Rem color = ffffff
@@ -841,12 +844,12 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub digit9(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
-  Rem Octagon edge length 
+  Dim c As ???
   Dim b As ???
+  Rem  
+  Rem Octagon edge length 
   b = h * 0.5 / (sqrt(2.0) + 1)
   Rem Cathetus of the corner triangle outside the octagon 
-  Dim c As ???
   c = b / sqrt(2.0)
   penUp()
   forward(c) : Rem color = ffffff
@@ -871,25 +874,25 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub exclMk(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
-  Rem Octagon edge length 
+  Dim width As ???
+  Dim rotAngle2 As double
+  Dim rotAngle As Integer
+  Dim length2 As ???
+  Dim length1 As ???
+  Dim hypo As double
+  Dim c As ???
   Dim b As ???
+  Rem  
+  Rem Octagon edge length 
   b = h * 0.5 / (sqrt(2.0) + 1)
   Rem Cathetus of the outer corner triangle of the octagon 
-  Dim c As ???
   c = b / sqrt(2.0)
-  Dim width As ???
   width = h/2.0
-  Dim length1 As ???
   length1 = h - (b+c)/2.0
-  Dim length2 As ???
   length2 = length1 - 2*c
-  Dim hypo As double
   hypo = sqrt(width*width/16.0 + length2*length2)
   Rem 360°/8 
-  Dim rotAngle As Integer
   rotAngle = 45
-  Dim rotAngle2 As double
   rotAngle2 = toDegrees(atan(width/4.0/length2))
   penUp()
   forward(length1) : Rem color = ffffff
@@ -927,12 +930,12 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub fullSt(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
-  Rem Octagon edge length 
+  Dim c As ???
   Dim b As ???
+  Rem  
+  Rem Octagon edge length 
   b = h * 0.5 / (sqrt(2.0) + 1)
   Rem Cathetus of the outer corner triangle of the octagon 
-  Dim c As ???
   c = b / sqrt(2.0)
   penUp()
   right(90)
@@ -953,7 +956,7 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub letterAe(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
+  Rem  
   penUp()
   forward(h) : Rem color = ffffff
   penDown()
@@ -983,12 +986,12 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub letterB(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
-  Rem Octagon edge length 
+  Dim c As ???
   Dim b As ???
+  Rem  
+  Rem Octagon edge length 
   b = h * 0.5 / (sqrt(2.0) + 1)
   Rem Cathetus of the outer corner triangle of the octagon 
-  Dim c As ???
   c = b / sqrt(2.0)
   Call forward(h, colorNo)
   right(90)
@@ -1016,15 +1019,15 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub letterC(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
-  Rem Octagon edge length 
+  Dim rotAngle As Integer
+  Dim c As ???
   Dim b As ???
+  Rem  
+  Rem Octagon edge length 
   b = h * 0.5 / (sqrt(2.0) + 1)
   Rem Cathetus of the outer triangle at the octagon corner 
-  Dim c As ???
   c = b / sqrt(2.0)
   Rem 360°/8 
-  Dim rotAngle As Integer
   rotAngle = 45
   penUp()
   forward(c) : Rem color = ffffff
@@ -1055,12 +1058,12 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub letterD(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
-  Rem Octagon edge length 
+  Dim c As ???
   Dim b As ???
+  Rem  
+  Rem Octagon edge length 
   b = h * 0.5 / (sqrt(2.0) + 1)
   Rem Cathetus of the outer corner triangle of the octagon 
-  Dim c As ???
   c = b / sqrt(2.0)
   Call forward(h, colorNo)
   right(90)
@@ -1086,12 +1089,12 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub letterG(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
-  Rem Octagon edge length 
+  Dim c As ???
   Dim b As ???
+  Rem  
+  Rem Octagon edge length 
   b = h * 0.5 / (sqrt(2.0) + 1)
   Rem Cathetus of the corner triangle outside the octagon. 
-  Dim c As ???
   c = b / sqrt(2.0)
   penUp()
   forward(c) : Rem color = ffffff
@@ -1126,15 +1129,15 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub letterJ(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
-  Rem Octagon edge length 
+  Dim rotAngle As Integer
+  Dim c As ???
   Dim b As ???
+  Rem  
+  Rem Octagon edge length 
   b = h * 0.5 / (sqrt(2.0) + 1)
   Rem Cathetus of the outer corner triangle of the octagon 
-  Dim c As ???
   c = b / sqrt(2.0)
   Rem 360°/8 
-  Dim rotAngle As Integer
   rotAngle = 45
   penUp()
   forward(c) : Rem color = ffffff
@@ -1156,12 +1159,12 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub letterO(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
-  Rem Octagon edge length 
+  Dim c As ???
   Dim b As ???
+  Rem  
+  Rem Octagon edge length 
   b = h * 0.5 / (sqrt(2.0) + 1)
   Rem Cathetus of the corner triangle outside the octagon 
-  Dim c As ???
   c = b / sqrt(2.0)
   penUp()
   forward(c) : Rem color = ffffff
@@ -1189,12 +1192,12 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub letterP(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
-  Rem Octagon edge length 
+  Dim c As ???
   Dim b As ???
+  Rem  
+  Rem Octagon edge length 
   b = h * 0.5 / (sqrt(2.0) + 1)
   Rem Cathetus of the corner triangle outside the octagon 
-  Dim c As ???
   c = b / sqrt(2.0)
   Call forward(h, colorNo)
   right(90)
@@ -1217,15 +1220,15 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub letterQ(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
-  Rem Octagon edge length 
+  Dim rotAngle As Integer
+  Dim c As ???
   Dim b As ???
+  Rem  
+  Rem Octagon edge length 
   b = h * 0.5 / (sqrt(2.0) + 1)
   Rem Cathetus of the outer corner triangle of the octagon 
-  Dim c As ???
   c = b / sqrt(2.0)
   Rem 360°/8 
-  Dim rotAngle As Integer
   rotAngle = 45
   penUp()
   forward(c) : Rem color = ffffff
@@ -1256,15 +1259,15 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub letterR(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
-  Rem Octagon edge length 
+  Dim rotAngle As Integer
+  Dim c As ???
   Dim b As ???
+  Rem  
+  Rem Octagon edge length 
   b = h * 0.5 / (sqrt(2.0) + 1)
   Rem Cathetus of the outer corner triangle of the octagon 
-  Dim c As ???
   c = b / sqrt(2.0)
   Rem 360°/8 
-  Dim rotAngle As Integer
   rotAngle = 45
   Call forward(h, colorNo)
   right(90)
@@ -1284,15 +1287,15 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub letterS(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
-  Rem Octagon edge length 
+  Dim rotAngle As Integer
+  Dim c As ???
   Dim b As ???
+  Rem  
+  Rem Octagon edge length 
   b = h * 0.5 / (sqrt(2.0) + 1)
   Rem Side length of the (outer) corner triangle of the octagon 
-  Dim c As ???
   c = b / sqrt(2.0)
   Rem 360°/8 
-  Dim rotAngle As Integer
   rotAngle = 45
   penUp()
   forward(c) : Rem color = ffffff
@@ -1317,15 +1320,15 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub letterU(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
-  Rem edge length of a regular octagon 
+  Dim rotAngle As Integer
+  Dim c As ???
   Dim b As ???
+  Rem  
+  Rem edge length of a regular octagon 
   b = h * 0.5 / (sqrt(2.0) + 1)
   Rem Cathetus of the outer corner triangle of the octagon 
-  Dim c As ???
   c = b / sqrt(2.0)
   Rem 360°/8 
-  Dim rotAngle As Integer
   rotAngle = 45
   penUp()
   forward(c) : Rem color = ffffff
@@ -1350,15 +1353,15 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub qstnMk(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
-  Rem Octagon edge length 
+  Dim rotAngle As Integer
+  Dim c As ???
   Dim b As ???
+  Rem  
+  Rem Octagon edge length 
   b = h * 0.5 / (sqrt(2.0) + 1)
   Rem Cathetus of the outer corner triangle of the octagon 
-  Dim c As ???
   c = b / sqrt(2.0)
   Rem 360°/8 
-  Dim rotAngle As Integer
   rotAngle = 45
   penUp()
   forward(h-c) : Rem color = ffffff
@@ -1390,12 +1393,12 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub digit0(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
+  Dim len As ???
+  Rem  
   penUp()
   forward(h/4.0) : Rem color = ffffff
   penDown()
   right(45)
-  Dim len As ???
   len = h/sqrt(2)
   Call forward(len, colorNo)
   penUp()
@@ -1411,7 +1414,7 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub letterOe(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
+  Rem  
   penUp()
   forward(h) : Rem color = ffffff
   penDown()
@@ -1443,7 +1446,7 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub letterUe(h, colorNo)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
+  Rem  
   penUp()
   forward(h) : Rem color = ffffff
   right(90)
@@ -1495,11 +1498,12 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub drawText(text As String, h As integer, c As integer)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
+  Dim letter As String
+  Dim k As Integer
   Dim gap As ???
+  Rem  
   gap = h/10.0
   For k = 1 To length(text)
-    Dim letter As String
     letter = uppercase(copy(text, k, 1))
     Select Case letter
       Case "A"

@@ -19,501 +19,506 @@
 190 REM  
 200 REM program ELIZA
 210 REM TODO: add the respective type suffixes to your variable names if required 
-220 REM  
-230 
-240 TYPE KeyMapEntry
-250   keyword AS String
-260   index AS Integer
-270 END TYPE
-280 
-290 REM Title information 
-300 PRINT "************* ELIZA **************"
-310 PRINT "* Original design by J. Weizenbaum"
-320 PRINT "**********************************"
-330 PRINT "* Adapted for Basic on IBM PC by"
-340 PRINT "* - Patricia Danielson"
-350 PRINT "* - Paul Hashfield"
-360 PRINT "**********************************"
-370 PRINT "* Adapted for Structorizer by"
-380 PRINT "* - Kay Gürtzig / FH Erfurt 2016"
-390 PRINT "* Version: 2.2 (2019-03-28)"
+220 
+230 TYPE KeyMapEntry
+240   keyword AS String
+250   index AS Integer
+260 END TYPE
+270 
+280 DIM replies(,) AS String
+290 DIM reflexions(,1) AS String
+300 DIM byePhrases(,1) AS String
+310 DIM keyMap() AS KeyMapEntry
+320 DIM offsets() AS Integer
+330 DIM history(5) AS ???
+340 DIM findInfo(1) AS integer
+350 DIM entry AS KeyMapEntry
+360 REM  
+370 REM Title information 
+380 PRINT "************* ELIZA **************"
+390 PRINT "* Original design by J. Weizenbaum"
 400 PRINT "**********************************"
-410 REM Stores the last five inputs of the user in a ring buffer, 
-420 REM the first element is the current insertion index 
-430 DIM history(5) AS ???
-440 LET history(0) = 0
-450 LET history(1) = ""
-460 LET history(2) = ""
-470 LET history(3) = ""
-480 LET history(4) = ""
-490 LET history(5) = ""
-500 LET replies = setupReplies()
-510 LET reflexions = setupReflexions()
-520 LET byePhrases = setupGoodByePhrases()
-530 LET keyMap = setupKeywords()
-540 DIM offsets() AS Integer
-550 LET offsets(length(keyMap)-1) = 0
-560 LET isGone = false
-570 REM Starter 
-580 PRINT "Hi! I\'m your new therapist. My name is Eliza. What\'s your problem?"
-590 DO
-600   INPUT userInput
-610   REM Converts the input to lowercase, cuts out interpunctation 
-620   REM and pads the string 
-630   LET userInput = normalizeInput(userInput)
-640   LET isGone = checkGoodBye(userInput, byePhrases)
-650   IF NOT isGone THEN
-660     LET reply = "Please don\'t repeat yourself!"
-670     LET isRepeated = checkRepetition(history, userInput)
-680     IF NOT isRepeated THEN
-690       LET findInfo = findKeyword(keyMap, userInput)
-700       LET keyIndex = findInfo(0)
-710       IF keyIndex < 0 THEN
-720         REM Should never happen... 
-730         LET keyIndex = length(keyMap)-1
-740       END IF
-750       DIM entry AS KeyMapEntry
-760       LET var entry: KeyMapEntry = keyMap(keyIndex)
-770       REM Variable part of the reply 
-780       LET varPart = ""
-790       IF length(entry.keyword) > 0 THEN
-800         LET varPart = conjugateStrings(userInput, entry.keyword, findInfo(1), reflexions)
-810       END IF
-820       LET replyRing = replies(entry.index)
-830       LET reply = replyRing(offsets(keyIndex))
-840       LET offsets(keyIndex) = (offsets(keyIndex) + 1) % length(replyRing)
-850       LET posAster = pos("*", reply)
-860       IF posAster > 0 THEN
-870         IF varPart = " " THEN
-880           LET reply = "You will have to elaborate more for me to help you."
-890         ELSE
-900           delete(reply, posAster, 1)
-910           insert(varPart, reply, posAster)
-920         END IF
-930       END IF
-940       LET reply = adjustSpelling(reply)
-950     END IF
-960     PRINT reply
-970   END IF
-980 LOOP UNTIL isGone
-990 END
-1000 REM  
-1010 REM Cares for correct letter case among others 
-1020 REM TODO: Add type-specific suffixes where necessary! 
-1030 FUNCTION adjustSpelling(sentence AS String) AS String
-1040   REM TODO: add the respective type suffixes to your variable names if required 
-1050   REM  
-1060 
-1070   LET result = sentence
-1080   LET position = 1
-1090   DO WHILE (position <= length(sentence)) AND (copy(sentence, position, 1) = " ")
-1100     LET position = position + 1
-1110   LOOP
-1120   IF position <= length(sentence) THEN
-1130     LET start = copy(sentence, 1, position)
-1140     delete(result, 1, position)
-1150     insert(uppercase(start), result, 1)
-1160   END IF
-1170   DIM array43738a82() AS String = {" i ", " i\'"}
-1180   FOR EACH word IN array43738a82
-1190     LET position = pos(word, result)
-1200     DO WHILE position > 0
-1210       delete(result, position+1, 1)
-1220       insert("I", result, position+1)
-1230       LET position = pos(word, result)
-1240     LOOP
-1250   NEXT word
-1260   RETURN result
-1270 END FUNCTION
-1280 REM  
-1290 REM Checks whether the given text contains some kind of 
-1300 REM good-bye phrase inducing the end of the conversation 
-1310 REM and if so writes a correspding good-bye message and 
-1320 REM returns true, otherwise false 
-1330 REM TODO: Add type-specific suffixes where necessary! 
-1340 FUNCTION checkGoodBye(text AS String, phrases AS String(50,0 TO 1)) AS boolean
-1350   REM TODO: add the respective type suffixes to your variable names if required 
-1360   REM  
-1370 
-1380   FOR EACH pair IN phrases
-1390     IF pos(pair(0), text) > 0 THEN
-1400       LET saidBye = true
-1410       PRINT pair(1)
-1420       RETURN true
-1430     END IF
-1440   NEXT pair
-1450   return false
-1460 END FUNCTION
-1470 REM  
-1480 REM Checks whether newInput has occurred among the last 
-1490 REM length(history) - 1 input strings and updates the history 
-1500 REM TODO: Add type-specific suffixes where necessary! 
-1510 FUNCTION checkRepetition(history AS array, newInput AS String) AS boolean
-1520   REM TODO: add the respective type suffixes to your variable names if required 
-1530   REM  
-1540 
-1550   LET hasOccurred = false
-1560   IF length(newInput) > 4 THEN
-1570     LET currentIndex = history(0);
-1580     FOR i = 1 TO length(history)-1
-1590       IF newInput = history(i) THEN
-1600         LET hasOccurred = true
-1610       END IF
-1620     NEXT i
-1630     DIM history() AS ???
-1640     LET history(history(0)+1) = newInput
-1650     LET history(0) = (history(0) + 1) % (length(history) - 1)
-1660   END IF
-1670   return hasOccurred
-1680 END FUNCTION
-1690 REM  
-1700 REM TODO: Add type-specific suffixes where necessary! 
-1710 FUNCTION conjugateStrings(sentence AS String, key AS String, keyPos AS integer, flexions AS String(50,0 TO 1)) AS String
-1720   REM TODO: add the respective type suffixes to your variable names if required 
-1730   REM  
-1740 
-1750   LET result = " " + copy(sentence, keyPos + length(key), length(sentence)) + " "
-1760   FOR EACH pair IN flexions
-1770     LET left = ""
-1780     LET right = result
-1790     LET position = pos(pair(0), right)
-1800     DO WHILE position > 0
-1810       LET left = left + copy(right, 1, position-1) + pair(1)
-1820       LET right = copy(right, position + length(pair(0)), length(right))
-1830       LET position = pos(pair(0), right)
-1840     LOOP
-1850     LET result = left + right
-1860   NEXT pair
-1870   REM Eliminate multiple spaces 
-1880   LET position = pos("  ", result)
-1890   DO WHILE position > 0
-1900     LET result = copy(result, 1, position-1) + copy(result, position+1, length(result))
-1910     LET position = pos("  ", result)
-1920   LOOP
-1930   RETURN result
-1940 END FUNCTION
-1950 REM  
-1960 REM Looks for the occurrence of the first of the strings 
-1970 REM contained in keywords within the given sentence (in 
-1980 REM array order). 
-1990 REM Returns an array of 
-2000 REM 0: the index of the first identified keyword (if any, otherwise -1), 
-2010 REM 1: the position inside sentence (0 if not found) 
-2020 REM TODO: Add type-specific suffixes where necessary! 
-2030 FUNCTION findKeyword(CONST keyMap AS KeyMapEntry(50), sentence AS String) AS integer(0 TO 1)
-2040   REM TODO: add the respective type suffixes to your variable names if required 
-2050   REM  
-2060 
-2070   REM Contains the index of the keyword and its position in sentence 
-2080   DIM result(1) AS Integer
-2090   LET result(0) = -1
-2100   LET result(1) = 0
-2110   LET i = 0
-2120   DO WHILE (result(0) < 0) AND (i < length(keyMap))
-2130     DIM entry AS KeyMapEntry
-2140     LET var entry: KeyMapEntry = keyMap(i)
-2150     LET position = pos(entry.keyword, sentence)
-2160     IF position > 0 THEN
-2170       LET result(0) = i
-2180       LET result(1) = position
-2190     END IF
-2200     LET i = i+1
-2210   LOOP
-2220   RETURN result
-2230 END FUNCTION
-2240 REM  
-2250 REM Converts the sentence to lowercase, eliminates all 
-2260 REM interpunction (i.e. ',', '.', ';'), and pads the 
-2270 REM sentence among blanks 
-2280 REM TODO: Add type-specific suffixes where necessary! 
-2290 FUNCTION normalizeInput(sentence AS String) AS String
-2300   REM TODO: add the respective type suffixes to your variable names if required 
-2310   REM  
-2320 
-2330   LET sentence = lowercase(sentence)
-2340   REM TODO: Specify an appropriate element type for the array! 
-2350   DIM array6ec8211c() AS FIXME_6ec8211c = {'.', ',', ';', '!', '?'}
-2360   FOR EACH symbol IN array6ec8211c
-2370     LET position = pos(symbol, sentence)
-2380     DO WHILE position > 0
-2390       LET sentence = copy(sentence, 1, position-1) + copy(sentence, position+1, length(sentence))
-2400       LET position = pos(symbol, sentence)
-2410     LOOP
-2420   NEXT symbol
-2430   LET result = " " + sentence + " "
-2440   RETURN result
-2450 END FUNCTION
-2460 REM  
-2470 REM TODO: Add type-specific suffixes where necessary! 
-2480 FUNCTION setupGoodByePhrases() AS String(50,0 TO 1)
-2490   REM TODO: add the respective type suffixes to your variable names if required 
-2500   REM  
-2510 
-2520   DIM phrases(,1) AS String
-2530   LET phrases(0)(0) = " shut"
-2540   LET phrases(0)(1) = "Okay. If you feel that way I\'ll shut up. ... Your choice."
-2550   LET phrases(1)(0) = "bye"
-2560   LET phrases(1)(1) = "Well, let\'s end our talk for now. See you later. Bye."
-2570   return phrases
-2580 END FUNCTION
-2590 REM  
-2600 REM The lower the index the higher the rank of the keyword (search is sequential). 
-2610 REM The index of the first keyword found in a user sentence maps to a respective 
-2620 REM reply ring as defined in `setupReplies()´. 
-2630 REM TODO: Add type-specific suffixes where necessary! 
-2640 FUNCTION setupKeywords() AS KeyMapEntry(50)
-2650   REM TODO: add the respective type suffixes to your variable names if required 
-2660   REM  
-2670 
-2680   REM The empty key string (last entry) is the default clause - will always be found 
-2690   DIM keywords() AS KeyMapEntry
-2700   LET keywords(39).keyword = ""
-2710   LET keywords(39).index = 29
-2720   LET keywords(0).keyword = "can you "
-2730   LET keywords(0).index = 0
-2740   LET keywords(1).keyword = "can i "
-2750   LET keywords(1).index = 1
-2760   LET keywords(2).keyword = "you are "
-2770   LET keywords(2).index = 2
-2780   LET keywords(3).keyword = "you\'re "
-2790   LET keywords(3).index = 2
-2800   LET keywords(4).keyword = "i don't "
-2810   LET keywords(4).index = 3
-2820   LET keywords(5).keyword = "i feel "
-2830   LET keywords(5).index = 4
-2840   LET keywords(6).keyword = "why don\'t you "
-2850   LET keywords(6).index = 5
-2860   LET keywords(7).keyword = "why can\'t i "
-2870   LET keywords(7).index = 6
-2880   LET keywords(8).keyword = "are you "
-2890   LET keywords(8).index = 7
-2900   LET keywords(9).keyword = "i can\'t "
-2910   LET keywords(9).index = 8
-2920   LET keywords(10).keyword = "i am "
-2930   LET keywords(10).index = 9
-2940   LET keywords(11).keyword = "i\'m "
-2950   LET keywords(11).index = 9
-2960   LET keywords(12).keyword = "you "
-2970   LET keywords(12).index = 10
-2980   LET keywords(13).keyword = "i want "
-2990   LET keywords(13).index = 11
-3000   LET keywords(14).keyword = "what "
-3010   LET keywords(14).index = 12
-3020   LET keywords(15).keyword = "how "
-3030   LET keywords(15).index = 12
-3040   LET keywords(16).keyword = "who "
-3050   LET keywords(16).index = 12
-3060   LET keywords(17).keyword = "where "
-3070   LET keywords(17).index = 12
-3080   LET keywords(18).keyword = "when "
-3090   LET keywords(18).index = 12
-3100   LET keywords(19).keyword = "why "
-3110   LET keywords(19).index = 12
-3120   LET keywords(20).keyword = "name "
-3130   LET keywords(20).index = 13
-3140   LET keywords(21).keyword = "cause "
-3150   LET keywords(21).index = 14
-3160   LET keywords(22).keyword = "sorry "
-3170   LET keywords(22).index = 15
-3180   LET keywords(23).keyword = "dream "
-3190   LET keywords(23).index = 16
-3200   LET keywords(24).keyword = "hello "
-3210   LET keywords(24).index = 17
-3220   LET keywords(25).keyword = "hi "
-3230   LET keywords(25).index = 17
-3240   LET keywords(26).keyword = "maybe "
-3250   LET keywords(26).index = 18
-3260   LET keywords(27).keyword = " no"
-3270   LET keywords(27).index = 19
-3280   LET keywords(28).keyword = "your "
-3290   LET keywords(28).index = 20
-3300   LET keywords(29).keyword = "always "
-3310   LET keywords(29).index = 21
-3320   LET keywords(30).keyword = "think "
-3330   LET keywords(30).index = 22
-3340   LET keywords(31).keyword = "alike "
-3350   LET keywords(31).index = 23
-3360   LET keywords(32).keyword = "yes "
-3370   LET keywords(32).index = 24
-3380   LET keywords(33).keyword = "friend "
-3390   LET keywords(33).index = 25
-3400   LET keywords(34).keyword = "computer"
-3410   LET keywords(34).index = 26
-3420   LET keywords(35).keyword = "bot "
-3430   LET keywords(35).index = 26
-3440   LET keywords(36).keyword = "smartphone"
-3450   LET keywords(36).index = 27
-3460   LET keywords(37).keyword = "father "
-3470   LET keywords(37).index = 28
-3480   LET keywords(38).keyword = "mother "
-3490   LET keywords(38).index = 28
-3500   return keywords
-3510 END FUNCTION
-3520 REM  
-3530 REM Returns an array of pairs of mutualy substitutable  
-3540 REM TODO: Add type-specific suffixes where necessary! 
-3550 FUNCTION setupReflexions() AS String(50,0 TO 1)
-3560   REM TODO: add the respective type suffixes to your variable names if required 
-3570   REM  
-3580 
-3590   DIM reflexions(,1) AS String
-3600   LET reflexions(0)(0) = " are "
-3610   LET reflexions(0)(1) = " am "
-3620   LET reflexions(1)(0) = " were "
-3630   LET reflexions(1)(1) = " was "
-3640   LET reflexions(2)(0) = " you "
-3650   LET reflexions(2)(1) = " I "
-3660   LET reflexions(3)(0) = " your"
-3670   LET reflexions(3)(1) = " my"
-3680   LET reflexions(4)(0) = " i\'ve "
-3690   LET reflexions(4)(1) = " you\'ve "
-3700   LET reflexions(5)(0) = " i\'m "
-3710   LET reflexions(5)(1) = " you\'re "
-3720   LET reflexions(6)(0) = " me "
-3730   LET reflexions(6)(1) = " you "
-3740   LET reflexions(7)(0) = " my "
-3750   LET reflexions(7)(1) = " your "
-3760   LET reflexions(8)(0) = " i "
-3770   LET reflexions(8)(1) = " you "
-3780   LET reflexions(9)(0) = " am "
-3790   LET reflexions(9)(1) = " are "
-3800   return reflexions
-3810 END FUNCTION
-3820 REM  
-3830 REM This routine sets up the reply rings addressed by the key words defined in 
-3840 REM routine `setupKeywords()´ and mapped hitherto by the cross table defined 
-3850 REM in `setupMapping()´ 
-3860 REM TODO: Add type-specific suffixes where necessary! 
-3870 FUNCTION setupReplies() AS String(50,50)
-3880   REM TODO: add the respective type suffixes to your variable names if required 
-3890   REM  
-3900 
-3910   REM We start with the highest index for performance reasons 
-3920   REM (is to avoid frequent array resizing) 
-3930   DIM replies(,) AS String
-3940   LET replies(29)(0) = "Say, do you have any psychological problems?"
-3950   LET replies(29)(1) = "What does that suggest to you?"
-3960   LET replies(29)(2) = "I see."
-3970   LET replies(29)(3) = "I'm not sure I understand you fully."
-3980   LET replies(29)(4) = "Come come elucidate your thoughts."
-3990   LET replies(29)(5) = "Can you elaborate on that?"
-4000   LET replies(29)(6) = "That is quite interesting."
-4010   LET replies(0)(0) = "Don't you believe that I can*?"
-4020   LET replies(0)(1) = "Perhaps you would like to be like me?"
-4030   LET replies(0)(2) = "You want me to be able to*?"
-4040   LET replies(1)(0) = "Perhaps you don't want to*?"
-4050   LET replies(1)(1) = "Do you want to be able to*?"
-4060   LET replies(2)(0) = "What makes you think I am*?"
-4070   LET replies(2)(1) = "Does it please you to believe I am*?"
-4080   LET replies(2)(2) = "Perhaps you would like to be*?"
-4090   LET replies(2)(3) = "Do you sometimes wish you were*?"
-4100   LET replies(3)(0) = "Don't you really*?"
-4110   LET replies(3)(1) = "Why don't you*?"
-4120   LET replies(3)(2) = "Do you wish to be able to*?"
-4130   LET replies(3)(3) = "Does that trouble you*?"
-4140   LET replies(4)(0) = "Do you often feel*?"
-4150   LET replies(4)(1) = "Are you afraid of feeling*?"
-4160   LET replies(4)(2) = "Do you enjoy feeling*?"
-4170   LET replies(5)(0) = "Do you really believe I don't*?"
-4180   LET replies(5)(1) = "Perhaps in good time I will*."
-4190   LET replies(5)(2) = "Do you want me to*?"
-4200   LET replies(6)(0) = "Do you think you should be able to*?"
-4210   LET replies(6)(1) = "Why can't you*?"
-4220   LET replies(7)(0) = "Why are you interested in whether or not I am*?"
-4230   LET replies(7)(1) = "Would you prefer if I were not*?"
-4240   LET replies(7)(2) = "Perhaps in your fantasies I am*?"
-4250   LET replies(8)(0) = "How do you know you can't*?"
-4260   LET replies(8)(1) = "Have you tried?"
-4270   LET replies(8)(2) = "Perhaps you can now*."
-4280   LET replies(9)(0) = "Did you come to me because you are*?"
-4290   LET replies(9)(1) = "How long have you been*?"
-4300   LET replies(9)(2) = "Do you believe it is normal to be*?"
-4310   LET replies(9)(3) = "Do you enjoy being*?"
-4320   LET replies(10)(0) = "We were discussing you--not me."
-4330   LET replies(10)(1) = "Oh, I*."
-4340   LET replies(10)(2) = "You're not really talking about me, are you?"
-4350   LET replies(11)(0) = "What would it mean to you if you got*?"
-4360   LET replies(11)(1) = "Why do you want*?"
-4370   LET replies(11)(2) = "Suppose you soon got*..."
-4380   LET replies(11)(3) = "What if you never got*?"
-4390   LET replies(11)(4) = "I sometimes also want*."
-4400   LET replies(12)(0) = "Why do you ask?"
-4410   LET replies(12)(1) = "Does that question interest you?"
-4420   LET replies(12)(2) = "What answer would please you the most?"
-4430   LET replies(12)(3) = "What do you think?"
-4440   LET replies(12)(4) = "Are such questions on your mind often?"
-4450   LET replies(12)(5) = "What is it that you really want to know?"
-4460   LET replies(12)(6) = "Have you asked anyone else?"
-4470   LET replies(12)(7) = "Have you asked such questions before?"
-4480   LET replies(12)(8) = "What else comes to mind when you ask that?"
-4490   LET replies(13)(0) = "Names don't interest me."
-4500   LET replies(13)(1) = "I don't care about names -- please go on."
-4510   LET replies(14)(0) = "Is that the real reason?"
-4520   LET replies(14)(1) = "Don't any other reasons come to mind?"
-4530   LET replies(14)(2) = "Does that reason explain anything else?"
-4540   LET replies(14)(3) = "What other reasons might there be?"
-4550   LET replies(15)(0) = "Please don't apologize!"
-4560   LET replies(15)(1) = "Apologies are not necessary."
-4570   LET replies(15)(2) = "What feelings do you have when you apologize?"
-4580   LET replies(15)(3) = "Don't be so defensive!"
-4590   LET replies(16)(0) = "What does that dream suggest to you?"
-4600   LET replies(16)(1) = "Do you dream often?"
-4610   LET replies(16)(2) = "What persons appear in your dreams?"
-4620   LET replies(16)(3) = "Are you disturbed by your dreams?"
-4630   LET replies(17)(0) = "How do you do ...please state your problem."
-4640   LET replies(18)(0) = "You don't seem quite certain."
-4650   LET replies(18)(1) = "Why the uncertain tone?"
-4660   LET replies(18)(2) = "Can't you be more positive?"
-4670   LET replies(18)(3) = "You aren't sure?"
-4680   LET replies(18)(4) = "Don't you know?"
-4690   LET replies(19)(0) = "Are you saying no just to be negative?"
-4700   LET replies(19)(1) = "You are being a bit negative."
-4710   LET replies(19)(2) = "Why not?"
-4720   LET replies(19)(3) = "Are you sure?"
-4730   LET replies(19)(4) = "Why no?"
-4740   LET replies(20)(0) = "Why are you concerned about my*?"
-4750   LET replies(20)(1) = "What about your own*?"
-4760   LET replies(21)(0) = "Can you think of a specific example?"
-4770   LET replies(21)(1) = "When?"
-4780   LET replies(21)(2) = "What are you thinking of?"
-4790   LET replies(21)(3) = "Really, always?"
-4800   LET replies(22)(0) = "Do you really think so?"
-4810   LET replies(22)(1) = "But you are not sure you*?"
-4820   LET replies(22)(2) = "Do you doubt you*?"
-4830   LET replies(23)(0) = "In what way?"
-4840   LET replies(23)(1) = "What resemblance do you see?"
-4850   LET replies(23)(2) = "What does the similarity suggest to you?"
-4860   LET replies(23)(3) = "What other connections do you see?"
-4870   LET replies(23)(4) = "Could there really be some connection?"
-4880   LET replies(23)(5) = "How?"
-4890   LET replies(23)(6) = "You seem quite positive."
-4900   LET replies(24)(0) = "Are you sure?"
-4910   LET replies(24)(1) = "I see."
-4920   LET replies(24)(2) = "I understand."
-4930   LET replies(25)(0) = "Why do you bring up the topic of friends?"
-4940   LET replies(25)(1) = "Do your friends worry you?"
-4950   LET replies(25)(2) = "Do your friends pick on you?"
-4960   LET replies(25)(3) = "Are you sure you have any friends?"
-4970   LET replies(25)(4) = "Do you impose on your friends?"
-4980   LET replies(25)(5) = "Perhaps your love for friends worries you."
-4990   LET replies(26)(0) = "Do computers worry you?"
-5000   LET replies(26)(1) = "Are you talking about me in particular?"
-5010   LET replies(26)(2) = "Are you frightened by machines?"
-5020   LET replies(26)(3) = "Why do you mention computers?"
-5030   LET replies(26)(4) = "What do you think machines have to do with your problem?"
-5040   LET replies(26)(5) = "Don't you think computers can help people?"
-5050   LET replies(26)(6) = "What is it about machines that worries you?"
-5060   LET replies(27)(0) = "Do you sometimes feel uneasy without a smartphone?"
-5070   LET replies(27)(1) = "Have you had these phantasies before?"
-5080   LET replies(27)(2) = "Does the world seem more real for you via apps?"
-5090   LET replies(28)(0) = "Tell me more about your family."
-5100   LET replies(28)(1) = "Who else in your family*?"
-5110   LET replies(28)(2) = "What does family relations mean for you?"
-5120   LET replies(28)(3) = "Come on, How old are you?"
-5130   DIM setupReplies(,) AS String
-5140   LET setupReplies = replies
-5150   RETURN setupReplies
-5160 END FUNCTION
+410 PRINT "* Adapted for Basic on IBM PC by"
+420 PRINT "* - Patricia Danielson"
+430 PRINT "* - Paul Hashfield"
+440 PRINT "**********************************"
+450 PRINT "* Adapted for Structorizer by"
+460 PRINT "* - Kay Gürtzig / FH Erfurt 2016"
+470 PRINT "* Version: 2.2 (2019-03-28)"
+480 PRINT "**********************************"
+490 REM Stores the last five inputs of the user in a ring buffer, 
+500 REM the first element is the current insertion index 
+510 LET history(0) = 0
+520 LET history(1) = ""
+530 LET history(2) = ""
+540 LET history(3) = ""
+550 LET history(4) = ""
+560 LET history(5) = ""
+570 LET replies = setupReplies()
+580 LET reflexions = setupReflexions()
+590 LET byePhrases = setupGoodByePhrases()
+600 LET keyMap = setupKeywords()
+610 LET offsets(length(keyMap)-1) = 0
+620 LET isGone = false
+630 REM Starter 
+640 PRINT "Hi! I\'m your new therapist. My name is Eliza. What\'s your problem?"
+650 DO
+660   INPUT userInput
+670   REM Converts the input to lowercase, cuts out interpunctation 
+680   REM and pads the string 
+690   LET userInput = normalizeInput(userInput)
+700   LET isGone = checkGoodBye(userInput, byePhrases)
+710   IF NOT isGone THEN
+720     LET reply = "Please don\'t repeat yourself!"
+730     LET isRepeated = checkRepetition(history, userInput)
+740     IF NOT isRepeated THEN
+750       LET findInfo = findKeyword(keyMap, userInput)
+760       LET keyIndex = findInfo(0)
+770       IF keyIndex < 0 THEN
+780         REM Should never happen... 
+790         LET keyIndex = length(keyMap)-1
+800       END IF
+810       LET entry = keyMap(keyIndex)
+820       REM Variable part of the reply 
+830       LET varPart = ""
+840       IF length(entry.keyword) > 0 THEN
+850         LET varPart = conjugateStrings(userInput, entry.keyword, findInfo(1), reflexions)
+860       END IF
+870       LET replyRing = replies(entry.index)
+880       LET reply = replyRing(offsets(keyIndex))
+890       LET offsets(keyIndex) = (offsets(keyIndex) + 1) % length(replyRing)
+900       LET posAster = pos("*", reply)
+910       IF posAster > 0 THEN
+920         IF varPart = " " THEN
+930           LET reply = "You will have to elaborate more for me to help you."
+940         ELSE
+950           delete(reply, posAster, 1)
+960           insert(varPart, reply, posAster)
+970         END IF
+980       END IF
+990       LET reply = adjustSpelling(reply)
+1000     END IF
+1010     PRINT reply
+1020   END IF
+1030 LOOP UNTIL isGone
+1040 END
+1050 REM  
+1060 REM Cares for correct letter case among others 
+1070 REM TODO: Add type-specific suffixes where necessary! 
+1080 FUNCTION adjustSpelling(sentence AS String) AS String
+1090   REM TODO: add the respective type suffixes to your variable names if required 
+1100   REM  
+1110   REM  
+1120   LET result = sentence
+1130   LET position = 1
+1140   DO WHILE (position <= length(sentence)) AND (copy(sentence, position, 1) = " ")
+1150     LET position = position + 1
+1160   LOOP
+1170   IF position <= length(sentence) THEN
+1180     LET start = copy(sentence, 1, position)
+1190     delete(result, 1, position)
+1200     insert(uppercase(start), result, 1)
+1210   END IF
+1220   DIM array43738a82() AS String = {" i ", " i\'"}
+1230   FOR EACH word IN array43738a82
+1240     LET position = pos(word, result)
+1250     DO WHILE position > 0
+1260       delete(result, position+1, 1)
+1270       insert("I", result, position+1)
+1280       LET position = pos(word, result)
+1290     LOOP
+1300   NEXT word
+1310   RETURN result
+1320 END FUNCTION
+1330 REM  
+1340 REM Checks whether the given text contains some kind of 
+1350 REM good-bye phrase inducing the end of the conversation 
+1360 REM and if so writes a correspding good-bye message and 
+1370 REM returns true, otherwise false 
+1380 REM TODO: Add type-specific suffixes where necessary! 
+1390 FUNCTION checkGoodBye(text AS String, phrases AS String(50,0 TO 1)) AS boolean
+1400   REM TODO: add the respective type suffixes to your variable names if required 
+1410   REM  
+1420   REM  
+1430   FOR EACH pair IN phrases
+1440     IF pos(pair(0), text) > 0 THEN
+1450       LET saidBye = true
+1460       PRINT pair(1)
+1470       RETURN true
+1480     END IF
+1490   NEXT pair
+1500   return false
+1510 END FUNCTION
+1520 REM  
+1530 REM Checks whether newInput has occurred among the last 
+1540 REM length(history) - 1 input strings and updates the history 
+1550 REM TODO: Add type-specific suffixes where necessary! 
+1560 FUNCTION checkRepetition(history AS array, newInput AS String) AS boolean
+1570   REM TODO: add the respective type suffixes to your variable names if required 
+1580   REM  
+1590   REM  
+1600   LET hasOccurred = false
+1610   IF length(newInput) > 4 THEN
+1620     LET currentIndex = history(0);
+1630     FOR i = 1 TO length(history)-1
+1640       IF newInput = history(i) THEN
+1650         LET hasOccurred = true
+1660       END IF
+1670     NEXT i
+1680     DIM history() AS ???
+1690     LET history(history(0)+1) = newInput
+1700     LET history(0) = (history(0) + 1) % (length(history) - 1)
+1710   END IF
+1720   return hasOccurred
+1730 END FUNCTION
+1740 REM  
+1750 REM TODO: Add type-specific suffixes where necessary! 
+1760 FUNCTION conjugateStrings(sentence AS String, key AS String, keyPos AS integer, flexions AS String(50,0 TO 1)) AS String
+1770   REM TODO: add the respective type suffixes to your variable names if required 
+1780   REM  
+1790   REM  
+1800   LET result = " " + copy(sentence, keyPos + length(key), length(sentence)) + " "
+1810   FOR EACH pair IN flexions
+1820     LET left = ""
+1830     LET right = result
+1840     LET position = pos(pair(0), right)
+1850     DO WHILE position > 0
+1860       LET left = left + copy(right, 1, position-1) + pair(1)
+1870       LET right = copy(right, position + length(pair(0)), length(right))
+1880       LET position = pos(pair(0), right)
+1890     LOOP
+1900     LET result = left + right
+1910   NEXT pair
+1920   REM Eliminate multiple spaces 
+1930   LET position = pos("  ", result)
+1940   DO WHILE position > 0
+1950     LET result = copy(result, 1, position-1) + copy(result, position+1, length(result))
+1960     LET position = pos("  ", result)
+1970   LOOP
+1980   RETURN result
+1990 END FUNCTION
+2000 REM  
+2010 REM Looks for the occurrence of the first of the strings 
+2020 REM contained in keywords within the given sentence (in 
+2030 REM array order). 
+2040 REM Returns an array of 
+2050 REM 0: the index of the first identified keyword (if any, otherwise -1), 
+2060 REM 1: the position inside sentence (0 if not found) 
+2070 REM TODO: Add type-specific suffixes where necessary! 
+2080 FUNCTION findKeyword(CONST keyMap AS KeyMapEntry(50), sentence AS String) AS integer(0 TO 1)
+2090   REM TODO: add the respective type suffixes to your variable names if required 
+2100   REM  
+2110   DIM result(1) AS Integer
+2120   DIM entry AS KeyMapEntry
+2130   REM  
+2140   REM Contains the index of the keyword and its position in sentence 
+2150   LET result(0) = -1
+2160   LET result(1) = 0
+2170   LET i = 0
+2180   DO WHILE (result(0) < 0) AND (i < length(keyMap))
+2190     LET entry = keyMap(i)
+2200     LET position = pos(entry.keyword, sentence)
+2210     IF position > 0 THEN
+2220       LET result(0) = i
+2230       LET result(1) = position
+2240     END IF
+2250     LET i = i+1
+2260   LOOP
+2270   RETURN result
+2280 END FUNCTION
+2290 REM  
+2300 REM Converts the sentence to lowercase, eliminates all 
+2310 REM interpunction (i.e. ',', '.', ';'), and pads the 
+2320 REM sentence among blanks 
+2330 REM TODO: Add type-specific suffixes where necessary! 
+2340 FUNCTION normalizeInput(sentence AS String) AS String
+2350   REM TODO: add the respective type suffixes to your variable names if required 
+2360   REM  
+2370   REM  
+2380   LET sentence = lowercase(sentence)
+2390   REM TODO: Specify an appropriate element type for the array! 
+2400   DIM array6ec8211c() AS FIXME_6ec8211c = {'.', ',', ';', '!', '?'}
+2410   FOR EACH symbol IN array6ec8211c
+2420     LET position = pos(symbol, sentence)
+2430     DO WHILE position > 0
+2440       LET sentence = copy(sentence, 1, position-1) + copy(sentence, position+1, length(sentence))
+2450       LET position = pos(symbol, sentence)
+2460     LOOP
+2470   NEXT symbol
+2480   LET result = " " + sentence + " "
+2490   RETURN result
+2500 END FUNCTION
+2510 REM  
+2520 REM TODO: Add type-specific suffixes where necessary! 
+2530 FUNCTION setupGoodByePhrases() AS String(50,0 TO 1)
+2540   REM TODO: add the respective type suffixes to your variable names if required 
+2550   REM  
+2560   DIM phrases(,1) AS String
+2570   REM  
+2580   LET phrases(0)(0) = " shut"
+2590   LET phrases(0)(1) = "Okay. If you feel that way I\'ll shut up. ... Your choice."
+2600   LET phrases(1)(0) = "bye"
+2610   LET phrases(1)(1) = "Well, let\'s end our talk for now. See you later. Bye."
+2620   return phrases
+2630 END FUNCTION
+2640 REM  
+2650 REM The lower the index the higher the rank of the keyword (search is sequential). 
+2660 REM The index of the first keyword found in a user sentence maps to a respective 
+2670 REM reply ring as defined in `setupReplies()´. 
+2680 REM TODO: Add type-specific suffixes where necessary! 
+2690 FUNCTION setupKeywords() AS KeyMapEntry(50)
+2700   REM TODO: add the respective type suffixes to your variable names if required 
+2710   REM  
+2720   DIM keywords() AS KeyMapEntry
+2730   REM  
+2740   REM The empty key string (last entry) is the default clause - will always be found 
+2750   LET keywords(39).keyword = ""
+2760   LET keywords(39).index = 29
+2770   LET keywords(0).keyword = "can you "
+2780   LET keywords(0).index = 0
+2790   LET keywords(1).keyword = "can i "
+2800   LET keywords(1).index = 1
+2810   LET keywords(2).keyword = "you are "
+2820   LET keywords(2).index = 2
+2830   LET keywords(3).keyword = "you\'re "
+2840   LET keywords(3).index = 2
+2850   LET keywords(4).keyword = "i don't "
+2860   LET keywords(4).index = 3
+2870   LET keywords(5).keyword = "i feel "
+2880   LET keywords(5).index = 4
+2890   LET keywords(6).keyword = "why don\'t you "
+2900   LET keywords(6).index = 5
+2910   LET keywords(7).keyword = "why can\'t i "
+2920   LET keywords(7).index = 6
+2930   LET keywords(8).keyword = "are you "
+2940   LET keywords(8).index = 7
+2950   LET keywords(9).keyword = "i can\'t "
+2960   LET keywords(9).index = 8
+2970   LET keywords(10).keyword = "i am "
+2980   LET keywords(10).index = 9
+2990   LET keywords(11).keyword = "i\'m "
+3000   LET keywords(11).index = 9
+3010   LET keywords(12).keyword = "you "
+3020   LET keywords(12).index = 10
+3030   LET keywords(13).keyword = "i want "
+3040   LET keywords(13).index = 11
+3050   LET keywords(14).keyword = "what "
+3060   LET keywords(14).index = 12
+3070   LET keywords(15).keyword = "how "
+3080   LET keywords(15).index = 12
+3090   LET keywords(16).keyword = "who "
+3100   LET keywords(16).index = 12
+3110   LET keywords(17).keyword = "where "
+3120   LET keywords(17).index = 12
+3130   LET keywords(18).keyword = "when "
+3140   LET keywords(18).index = 12
+3150   LET keywords(19).keyword = "why "
+3160   LET keywords(19).index = 12
+3170   LET keywords(20).keyword = "name "
+3180   LET keywords(20).index = 13
+3190   LET keywords(21).keyword = "cause "
+3200   LET keywords(21).index = 14
+3210   LET keywords(22).keyword = "sorry "
+3220   LET keywords(22).index = 15
+3230   LET keywords(23).keyword = "dream "
+3240   LET keywords(23).index = 16
+3250   LET keywords(24).keyword = "hello "
+3260   LET keywords(24).index = 17
+3270   LET keywords(25).keyword = "hi "
+3280   LET keywords(25).index = 17
+3290   LET keywords(26).keyword = "maybe "
+3300   LET keywords(26).index = 18
+3310   LET keywords(27).keyword = " no"
+3320   LET keywords(27).index = 19
+3330   LET keywords(28).keyword = "your "
+3340   LET keywords(28).index = 20
+3350   LET keywords(29).keyword = "always "
+3360   LET keywords(29).index = 21
+3370   LET keywords(30).keyword = "think "
+3380   LET keywords(30).index = 22
+3390   LET keywords(31).keyword = "alike "
+3400   LET keywords(31).index = 23
+3410   LET keywords(32).keyword = "yes "
+3420   LET keywords(32).index = 24
+3430   LET keywords(33).keyword = "friend "
+3440   LET keywords(33).index = 25
+3450   LET keywords(34).keyword = "computer"
+3460   LET keywords(34).index = 26
+3470   LET keywords(35).keyword = "bot "
+3480   LET keywords(35).index = 26
+3490   LET keywords(36).keyword = "smartphone"
+3500   LET keywords(36).index = 27
+3510   LET keywords(37).keyword = "father "
+3520   LET keywords(37).index = 28
+3530   LET keywords(38).keyword = "mother "
+3540   LET keywords(38).index = 28
+3550   return keywords
+3560 END FUNCTION
+3570 REM  
+3580 REM Returns an array of pairs of mutualy substitutable  
+3590 REM TODO: Add type-specific suffixes where necessary! 
+3600 FUNCTION setupReflexions() AS String(50,0 TO 1)
+3610   REM TODO: add the respective type suffixes to your variable names if required 
+3620   REM  
+3630   DIM reflexions(,1) AS String
+3640   REM  
+3650   LET reflexions(0)(0) = " are "
+3660   LET reflexions(0)(1) = " am "
+3670   LET reflexions(1)(0) = " were "
+3680   LET reflexions(1)(1) = " was "
+3690   LET reflexions(2)(0) = " you "
+3700   LET reflexions(2)(1) = " I "
+3710   LET reflexions(3)(0) = " your"
+3720   LET reflexions(3)(1) = " my"
+3730   LET reflexions(4)(0) = " i\'ve "
+3740   LET reflexions(4)(1) = " you\'ve "
+3750   LET reflexions(5)(0) = " i\'m "
+3760   LET reflexions(5)(1) = " you\'re "
+3770   LET reflexions(6)(0) = " me "
+3780   LET reflexions(6)(1) = " you "
+3790   LET reflexions(7)(0) = " my "
+3800   LET reflexions(7)(1) = " your "
+3810   LET reflexions(8)(0) = " i "
+3820   LET reflexions(8)(1) = " you "
+3830   LET reflexions(9)(0) = " am "
+3840   LET reflexions(9)(1) = " are "
+3850   return reflexions
+3860 END FUNCTION
+3870 REM  
+3880 REM This routine sets up the reply rings addressed by the key words defined in 
+3890 REM routine `setupKeywords()´ and mapped hitherto by the cross table defined 
+3900 REM in `setupMapping()´ 
+3910 REM TODO: Add type-specific suffixes where necessary! 
+3920 FUNCTION setupReplies() AS String(50,50)
+3930   REM TODO: add the respective type suffixes to your variable names if required 
+3940   REM  
+3950   DIM setupReplies(,) AS String
+3960   DIM replies(,) AS String
+3970   REM  
+3980   REM We start with the highest index for performance reasons 
+3990   REM (is to avoid frequent array resizing) 
+4000   LET replies(29)(0) = "Say, do you have any psychological problems?"
+4010   LET replies(29)(1) = "What does that suggest to you?"
+4020   LET replies(29)(2) = "I see."
+4030   LET replies(29)(3) = "I'm not sure I understand you fully."
+4040   LET replies(29)(4) = "Come come elucidate your thoughts."
+4050   LET replies(29)(5) = "Can you elaborate on that?"
+4060   LET replies(29)(6) = "That is quite interesting."
+4070   LET replies(0)(0) = "Don't you believe that I can*?"
+4080   LET replies(0)(1) = "Perhaps you would like to be like me?"
+4090   LET replies(0)(2) = "You want me to be able to*?"
+4100   LET replies(1)(0) = "Perhaps you don't want to*?"
+4110   LET replies(1)(1) = "Do you want to be able to*?"
+4120   LET replies(2)(0) = "What makes you think I am*?"
+4130   LET replies(2)(1) = "Does it please you to believe I am*?"
+4140   LET replies(2)(2) = "Perhaps you would like to be*?"
+4150   LET replies(2)(3) = "Do you sometimes wish you were*?"
+4160   LET replies(3)(0) = "Don't you really*?"
+4170   LET replies(3)(1) = "Why don't you*?"
+4180   LET replies(3)(2) = "Do you wish to be able to*?"
+4190   LET replies(3)(3) = "Does that trouble you*?"
+4200   LET replies(4)(0) = "Do you often feel*?"
+4210   LET replies(4)(1) = "Are you afraid of feeling*?"
+4220   LET replies(4)(2) = "Do you enjoy feeling*?"
+4230   LET replies(5)(0) = "Do you really believe I don't*?"
+4240   LET replies(5)(1) = "Perhaps in good time I will*."
+4250   LET replies(5)(2) = "Do you want me to*?"
+4260   LET replies(6)(0) = "Do you think you should be able to*?"
+4270   LET replies(6)(1) = "Why can't you*?"
+4280   LET replies(7)(0) = "Why are you interested in whether or not I am*?"
+4290   LET replies(7)(1) = "Would you prefer if I were not*?"
+4300   LET replies(7)(2) = "Perhaps in your fantasies I am*?"
+4310   LET replies(8)(0) = "How do you know you can't*?"
+4320   LET replies(8)(1) = "Have you tried?"
+4330   LET replies(8)(2) = "Perhaps you can now*."
+4340   LET replies(9)(0) = "Did you come to me because you are*?"
+4350   LET replies(9)(1) = "How long have you been*?"
+4360   LET replies(9)(2) = "Do you believe it is normal to be*?"
+4370   LET replies(9)(3) = "Do you enjoy being*?"
+4380   LET replies(10)(0) = "We were discussing you--not me."
+4390   LET replies(10)(1) = "Oh, I*."
+4400   LET replies(10)(2) = "You're not really talking about me, are you?"
+4410   LET replies(11)(0) = "What would it mean to you if you got*?"
+4420   LET replies(11)(1) = "Why do you want*?"
+4430   LET replies(11)(2) = "Suppose you soon got*..."
+4440   LET replies(11)(3) = "What if you never got*?"
+4450   LET replies(11)(4) = "I sometimes also want*."
+4460   LET replies(12)(0) = "Why do you ask?"
+4470   LET replies(12)(1) = "Does that question interest you?"
+4480   LET replies(12)(2) = "What answer would please you the most?"
+4490   LET replies(12)(3) = "What do you think?"
+4500   LET replies(12)(4) = "Are such questions on your mind often?"
+4510   LET replies(12)(5) = "What is it that you really want to know?"
+4520   LET replies(12)(6) = "Have you asked anyone else?"
+4530   LET replies(12)(7) = "Have you asked such questions before?"
+4540   LET replies(12)(8) = "What else comes to mind when you ask that?"
+4550   LET replies(13)(0) = "Names don't interest me."
+4560   LET replies(13)(1) = "I don't care about names -- please go on."
+4570   LET replies(14)(0) = "Is that the real reason?"
+4580   LET replies(14)(1) = "Don't any other reasons come to mind?"
+4590   LET replies(14)(2) = "Does that reason explain anything else?"
+4600   LET replies(14)(3) = "What other reasons might there be?"
+4610   LET replies(15)(0) = "Please don't apologize!"
+4620   LET replies(15)(1) = "Apologies are not necessary."
+4630   LET replies(15)(2) = "What feelings do you have when you apologize?"
+4640   LET replies(15)(3) = "Don't be so defensive!"
+4650   LET replies(16)(0) = "What does that dream suggest to you?"
+4660   LET replies(16)(1) = "Do you dream often?"
+4670   LET replies(16)(2) = "What persons appear in your dreams?"
+4680   LET replies(16)(3) = "Are you disturbed by your dreams?"
+4690   LET replies(17)(0) = "How do you do ...please state your problem."
+4700   LET replies(18)(0) = "You don't seem quite certain."
+4710   LET replies(18)(1) = "Why the uncertain tone?"
+4720   LET replies(18)(2) = "Can't you be more positive?"
+4730   LET replies(18)(3) = "You aren't sure?"
+4740   LET replies(18)(4) = "Don't you know?"
+4750   LET replies(19)(0) = "Are you saying no just to be negative?"
+4760   LET replies(19)(1) = "You are being a bit negative."
+4770   LET replies(19)(2) = "Why not?"
+4780   LET replies(19)(3) = "Are you sure?"
+4790   LET replies(19)(4) = "Why no?"
+4800   LET replies(20)(0) = "Why are you concerned about my*?"
+4810   LET replies(20)(1) = "What about your own*?"
+4820   LET replies(21)(0) = "Can you think of a specific example?"
+4830   LET replies(21)(1) = "When?"
+4840   LET replies(21)(2) = "What are you thinking of?"
+4850   LET replies(21)(3) = "Really, always?"
+4860   LET replies(22)(0) = "Do you really think so?"
+4870   LET replies(22)(1) = "But you are not sure you*?"
+4880   LET replies(22)(2) = "Do you doubt you*?"
+4890   LET replies(23)(0) = "In what way?"
+4900   LET replies(23)(1) = "What resemblance do you see?"
+4910   LET replies(23)(2) = "What does the similarity suggest to you?"
+4920   LET replies(23)(3) = "What other connections do you see?"
+4930   LET replies(23)(4) = "Could there really be some connection?"
+4940   LET replies(23)(5) = "How?"
+4950   LET replies(23)(6) = "You seem quite positive."
+4960   LET replies(24)(0) = "Are you sure?"
+4970   LET replies(24)(1) = "I see."
+4980   LET replies(24)(2) = "I understand."
+4990   LET replies(25)(0) = "Why do you bring up the topic of friends?"
+5000   LET replies(25)(1) = "Do your friends worry you?"
+5010   LET replies(25)(2) = "Do your friends pick on you?"
+5020   LET replies(25)(3) = "Are you sure you have any friends?"
+5030   LET replies(25)(4) = "Do you impose on your friends?"
+5040   LET replies(25)(5) = "Perhaps your love for friends worries you."
+5050   LET replies(26)(0) = "Do computers worry you?"
+5060   LET replies(26)(1) = "Are you talking about me in particular?"
+5070   LET replies(26)(2) = "Are you frightened by machines?"
+5080   LET replies(26)(3) = "Why do you mention computers?"
+5090   LET replies(26)(4) = "What do you think machines have to do with your problem?"
+5100   LET replies(26)(5) = "Don't you think computers can help people?"
+5110   LET replies(26)(6) = "What is it about machines that worries you?"
+5120   LET replies(27)(0) = "Do you sometimes feel uneasy without a smartphone?"
+5130   LET replies(27)(1) = "Have you had these phantasies before?"
+5140   LET replies(27)(2) = "Does the world seem more real for you via apps?"
+5150   LET replies(28)(0) = "Tell me more about your family."
+5160   LET replies(28)(1) = "Who else in your family*?"
+5170   LET replies(28)(2) = "What does family relations mean for you?"
+5180   LET replies(28)(3) = "Come on, How old are you?"
+5190   LET setupReplies = replies
+5200   RETURN setupReplies
+5210 END FUNCTION
 
 REM = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 

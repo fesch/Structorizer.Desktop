@@ -13,29 +13,29 @@
 130 REM  
 140 REM program SORTING_TEST_MAIN
 150 REM TODO: add the respective type suffixes to your variable names if required 
-160 REM  
-170 DO
-180   INPUT elementCount
-190 LOOP UNTIL elementCount >= 1
+160 DIM values3() AS Integer
+170 DIM values2() AS Integer
+180 DIM values1() AS Integer
+190 REM  
 200 DO
-210   PRINT "Filling: 1 = random, 2 = increasing, 3 = decreasing"; : INPUT modus
-220 LOOP UNTIL modus = 1 OR modus = 2 OR modus = 3
-230 FOR i = 0 TO elementCount-1
-240   SELECT CASE modus
-250     CASE 1
-260       DIM values1() AS Integer
-270       LET values1(i) = random(10000)
-280     CASE 2
-290       LET values1(i) = i
-300     CASE 3
-310       LET values1(i) = -i
-320   END SELECT
-330 NEXT i
-340 REM Copy the array for exact comparability 
-350 FOR i = 0 TO elementCount-1
-360   DIM values2() AS Integer
-370   LET values2(i) = values1(i)
-380   DIM values3() AS Integer
+210   INPUT elementCount
+220 LOOP UNTIL elementCount >= 1
+230 DO
+240   PRINT "Filling: 1 = random, 2 = increasing, 3 = decreasing"; : INPUT modus
+250 LOOP UNTIL modus = 1 OR modus = 2 OR modus = 3
+260 FOR i = 0 TO elementCount-1
+270   SELECT CASE modus
+280     CASE 1
+290       LET values1(i) = random(10000)
+300     CASE 2
+310       LET values1(i) = i
+320     CASE 3
+330       LET values1(i) = -i
+340   END SELECT
+350 NEXT i
+360 REM Copy the array for exact comparability 
+370 FOR i = 0 TO elementCount-1
+380   LET values2(i) = values1(i)
 390   LET values3(i) = values1(i)
 400 NEXT i
 410 
@@ -92,7 +92,7 @@
 920 SUB bubbleSort(values)
 930   REM TODO: add the respective type suffixes to your variable names if required 
 940   REM  
-950 
+950   REM  
 960   LET ende = length(values) - 2
 970   DO
 980     REM The index of the most recent swapping (-1 means no swapping done). 
@@ -118,7 +118,7 @@
 1180 SUB maxHeapify(heap, i, range)
 1190   REM TODO: add the respective type suffixes to your variable names if required 
 1200   REM  
-1210 
+1210   REM  
 1220   REM Indices of left and right child of node i 
 1230   LET right = (i+1) * 2
 1240   LET left = right - 1
@@ -151,7 +151,7 @@
 1510 FUNCTION partition(values, start, stop, p) AS Integer
 1520   REM TODO: add the respective type suffixes to your variable names if required 
 1530   REM  
-1540 
+1540   REM  
 1550   REM Cache the pivot element 
 1560   LET pivot = values(p)
 1570   REM Exchange the pivot element with the start element 
@@ -196,7 +196,7 @@
 1960 FUNCTION testSorted(numbers) AS bool
 1970   REM TODO: add the respective type suffixes to your variable names if required 
 1980   REM  
-1990 
+1990   REM  
 2000   LET isSorted = true
 2010   LET i = 0
 2020   REM As we compare with the following element, we must stop at the penultimate index 
@@ -219,7 +219,7 @@
 2190 SUB buildMaxHeap(heap)
 2200   REM TODO: add the respective type suffixes to your variable names if required 
 2210   REM  
-2220 
+2220   REM  
 2230   LET lgth = length(heap)
 2240   FOR k = lgth / 2 - 1 TO 0 STEP -1
 2250     CALL maxHeapify(heap, k, lgth)
@@ -233,7 +233,7 @@
 2330 SUB quickSort(values, start, stop)
 2340   REM TODO: add the respective type suffixes to your variable names if required 
 2350   REM  
-2360 
+2360   REM  
 2370   REM At least 2 elements? (Less don't make sense.) 
 2380   IF stop >= start + 2 THEN
 2390     REM Select a pivot element, be p its index. 
@@ -273,7 +273,7 @@
 2730 SUB heapSort(values)
 2740   REM TODO: add the respective type suffixes to your variable names if required 
 2750   REM  
-2760 
+2760   REM  
 2770   CALL buildMaxHeap(values)
 2780   LET heapRange = length(values)
 2790   FOR k = heapRange - 1 TO 1 STEP -1

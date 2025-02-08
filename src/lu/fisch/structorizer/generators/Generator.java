@@ -906,7 +906,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @param _root - the currently exported Root
 	 * @param _id - the name of a constant, variable, or type (in the latter case prefixed with ':')
 	 * @param _setDefinedIfNot - whether the name is to be registered for {@code _root} now if not
-	 * @return true if there had already been a definition before
+	 * @return {@code true} if there had already been a definition before
 	 * 
 	 * @see #wasDefHandled(Root, String, boolean, boolean)
 	 * @see #setDefHandled(String, String)

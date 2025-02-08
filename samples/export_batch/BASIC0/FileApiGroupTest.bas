@@ -45,7 +45,7 @@
 450 SUB drawBarChart(values AS double(50), nValues)
 460   REM TODO: add the respective type suffixes to your variable names if required 
 470   REM  
-480 
+480   REM  
 490   REM Used range of the Turtleizer screen 
 500   LET xSize = 500
 510   LET ySize = 500
@@ -130,20 +130,20 @@ REM = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 1270 REM  
 1280 REM program ComputeSum
 1290 REM TODO: add the respective type suffixes to your variable names if required 
-1300 REM  
-1310 LET fileNo = 1000
-1320 REM Disable this if you enable the loop below! 
-1330 PRINT "Name/path of the number file"; : INPUT file_name
-1340 REM If you enable this loop, then the preceding input instruction is to be disabled 
-1350 REM and the fileClose instruction in the alternative below is to be enabled. 
-1360 REM DO 
-1370 REM   PRINT "Name/path of the number file"; : INPUT file_name 
-1380 REM   LET fileNo = fileOpen(file_name) 
-1390 REM LOOP UNTIL fileNo > 0 OR file_name = "" 
-1400 IF fileNo > 0 THEN
-1410   REM This should be enabled if the input check loop above gets enabled. 
-1420 REM   fileClose(fileNo) 
-1430   DIM values() AS ???
+1300 DIM values() AS ???
+1310 REM  
+1320 LET fileNo = 1000
+1330 REM Disable this if you enable the loop below! 
+1340 PRINT "Name/path of the number file"; : INPUT file_name
+1350 REM If you enable this loop, then the preceding input instruction is to be disabled 
+1360 REM and the fileClose instruction in the alternative below is to be enabled. 
+1370 REM DO 
+1380 REM   PRINT "Name/path of the number file"; : INPUT file_name 
+1390 REM   LET fileNo = fileOpen(file_name) 
+1400 REM LOOP UNTIL fileNo > 0 OR file_name = "" 
+1410 IF fileNo > 0 THEN
+1420   REM This should be enabled if the input check loop above gets enabled. 
+1430 REM   fileClose(fileNo) 
 1440   LET nValues = 0
 1450   ON ERROR GOTO 1490
 1460   LET nValues = readNumbers(file_name, values, 1000)
@@ -179,23 +179,23 @@ REM = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 1730 REM  
 1740 REM program DrawRandomHistogram
 1750 REM TODO: add the respective type suffixes to your variable names if required 
-1760 REM  
-1770 LET fileNo = -10
-1780 DO
-1790   PRINT "Name/path of the number file"; : INPUT file_name
-1800   LET fileNo = fileOpen(file_name)
-1810 LOOP UNTIL fileNo > 0 OR file_name = ""
-1820 IF fileNo > 0 THEN
-1830   fileClose(fileNo)
-1840   PRINT "number of intervals"; : INPUT nIntervals
-1850   REM Initialize the interval counters 
-1860   FOR k = 0 TO nIntervals-1
-1870     DIM count() AS Integer
-1880     LET count(k) = 0
-1890   NEXT k
-1900   REM Index of the most populated interval 
-1910   LET kMaxCount = 0
-1920   DIM numberArray() AS ???
+1760 DIM numberArray() AS ???
+1770 DIM count() AS Integer
+1780 REM  
+1790 LET fileNo = -10
+1800 DO
+1810   PRINT "Name/path of the number file"; : INPUT file_name
+1820   LET fileNo = fileOpen(file_name)
+1830 LOOP UNTIL fileNo > 0 OR file_name = ""
+1840 IF fileNo > 0 THEN
+1850   fileClose(fileNo)
+1860   PRINT "number of intervals"; : INPUT nIntervals
+1870   REM Initialize the interval counters 
+1880   FOR k = 0 TO nIntervals-1
+1890     LET count(k) = 0
+1900   NEXT k
+1910   REM Index of the most populated interval 
+1920   LET kMaxCount = 0
 1930   LET nObtained = 0
 1940   ON ERROR GOTO 1980
 1950   LET nObtained = readNumbers(file_name, numberArray, 10000)
@@ -248,7 +248,7 @@ REM = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 2420 SUB drawBarChart(values AS double(50), nValues)
 2430   REM TODO: add the respective type suffixes to your variable names if required 
 2440   REM  
-2450 
+2450   REM  
 2460   REM Used range of the Turtleizer screen 
 2470   LET xSize = 500
 2480   LET ySize = 500

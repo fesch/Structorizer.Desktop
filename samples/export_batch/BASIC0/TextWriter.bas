@@ -43,7 +43,7 @@
 430 SUB backward(len, color)
 440   REM TODO: add the respective type suffixes to your variable names if required 
 450   REM  
-460 
+460   REM  
 470   SELECT CASE color
 480     CASE 1
 490       backward(len) : REM color = ffffff
@@ -73,7 +73,7 @@
 730 SUB blank(h, colorNo)
 740   REM TODO: add the respective type suffixes to your variable names if required 
 750   REM  
-760 
+760   REM  
 770   LET width = h/2.0
 780   penUp()
 790   right(90)
@@ -85,7 +85,7 @@
 850 SUB forward(len, color)
 860   REM TODO: add the respective type suffixes to your variable names if required 
 870   REM  
-880 
+880   REM  
 890   SELECT CASE color
 900     CASE 1
 910       forward(len) : REM color = ffffff
@@ -116,7 +116,7 @@
 1160 SUB digit1(h, colorNo)
 1170   REM TODO: add the respective type suffixes to your variable names if required 
 1180   REM  
-1190 
+1190   REM  
 1200   penUp()
 1210   forward(h/2.0) : REM color = ffffff
 1220   penDown()
@@ -132,7 +132,7 @@
 1320 SUB digit4(h, colorNo)
 1330   REM TODO: add the respective type suffixes to your variable names if required 
 1340   REM  
-1350 
+1350   REM  
 1360   REM Octagon edge length 
 1370   LET b = h * 0.5 / (sqrt(2.0) + 1)
 1380   REM Cathetus of the corner triangle outside the octagon 
@@ -161,7 +161,7 @@
 1610 SUB digit7(h, colorNo)
 1620   REM TODO: add the respective type suffixes to your variable names if required 
 1630   REM  
-1640 
+1640   REM  
 1650   LET angle = 90 + toDegrees(atan(0.5))
 1660   penUp()
 1670   forward(h) : REM color = ffffff
@@ -183,7 +183,7 @@
 1830 SUB letterA(h, colorNo)
 1840   REM TODO: add the respective type suffixes to your variable names if required 
 1850   REM  
-1860 
+1860   REM  
 1870   LET width = h/2.0
 1880   LET hypo = sqrt(h*h + width*width/4.0)
 1890   LET rotAngle = toDegrees(atan(width/2.0/h))
@@ -207,7 +207,7 @@
 2070 SUB letterE(h, colorNo)
 2080   REM TODO: add the respective type suffixes to your variable names if required 
 2090   REM  
-2100 
+2100   REM  
 2110   LET width = h/2.0
 2120   CALL forward(h, colorNo)
 2130   right(90)
@@ -233,7 +233,7 @@
 2330 SUB letterF(h, colorNo)
 2340   REM TODO: add the respective type suffixes to your variable names if required 
 2350   REM  
-2360 
+2360   REM  
 2370   LET width = h/2.0
 2380   CALL forward(h, colorNo)
 2390   right(90)
@@ -259,7 +259,7 @@
 2590 SUB letterH(h, colorNo)
 2600   REM TODO: add the respective type suffixes to your variable names if required 
 2610   REM  
-2620 
+2620   REM  
 2630   LET width = h/2.0
 2640   CALL forward(h, colorNo)
 2650   penUp()
@@ -284,7 +284,7 @@
 2840 SUB letterI(h, colorNo)
 2850   REM TODO: add the respective type suffixes to your variable names if required 
 2860   REM  
-2870 
+2870   REM  
 2880   REM Octagon edge length 
 2890   LET b = h * 0.5 / (sqrt(2.0) + 1)
 2900   REM Cathetus of the corner triangle outside the octagon 
@@ -317,7 +317,7 @@
 3170 SUB letterK(h, colorNo)
 3180   REM TODO: add the respective type suffixes to your variable names if required 
 3190   REM  
-3200 
+3200   REM  
 3210   LET width = h/2.0
 3220   LET diag = h/sqrt(2.0)
 3230   CALL forward(h, colorNo)
@@ -338,7 +338,7 @@
 3380 SUB letterL(h, colorNo)
 3390   REM TODO: add the respective type suffixes to your variable names if required 
 3400   REM  
-3410 
+3410   REM  
 3420   LET width = h/2.0
 3430   CALL forward(h, colorNo)
 3440   penUp()
@@ -355,7 +355,7 @@
 3550 SUB letterM(h, colorNo)
 3560   REM TODO: add the respective type suffixes to your variable names if required 
 3570   REM  
-3580 
+3580   REM  
 3590   LET width = h/2.0
 3600   LET hypo = sqrt(width*width + h*h)/2.0
 3610   LET rotAngle = toDegrees(atan(width/h))
@@ -374,7 +374,7 @@
 3740 SUB letterN(h, colorNo)
 3750   REM TODO: add the respective type suffixes to your variable names if required 
 3760   REM  
-3770 
+3770   REM  
 3780   LET width = h/2.0
 3790   LET hypo = sqrt(width*width + h*h)
 3800   LET rotAngle = toDegrees(atan(width/h))
@@ -394,7 +394,7 @@
 3940 SUB letterT(h, colorNo)
 3950   REM TODO: add the respective type suffixes to your variable names if required 
 3960   REM  
-3970 
+3970   REM  
 3980   LET width = h/2.0
 3990   penUp()
 4000   forward(h) : REM color = ffffff
@@ -419,7 +419,7 @@
 4190 SUB letterV(h, colorNo)
 4200   REM TODO: add the respective type suffixes to your variable names if required 
 4210   REM  
-4220 
+4220   REM  
 4230   LET width = h/2.0
 4240   LET hypo = sqrt(h*h + width*width/4.0)
 4250   LET rotAngle = toDegrees(atan(width/2.0/h))
@@ -442,7 +442,7 @@
 4420 SUB letterW(h, colorNo)
 4430   REM TODO: add the respective type suffixes to your variable names if required 
 4440   REM  
-4450 
+4450   REM  
 4460   LET width = h/2.0
 4470   LET width_3 = width/3.0
 4480   LET hypo = sqrt(width_3*width_3 + h*h)
@@ -474,7 +474,7 @@
 4740 SUB letterX(h, colorNo)
 4750   REM TODO: add the respective type suffixes to your variable names if required 
 4760   REM  
-4770 
+4770   REM  
 4780   LET width = h/2.0
 4790   LET hypo = sqrt(width*width + h*h)
 4800   LET rotAngle = toDegrees(atan(width/h))
@@ -495,7 +495,7 @@
 4950 SUB letterY(h, colorNo)
 4960   REM TODO: add the respective type suffixes to your variable names if required 
 4970   REM  
-4980 
+4980   REM  
 4990   LET width = h/2.0
 5000   LET hypo = sqrt(width*width + h*h)/2.0
 5010   LET rotAngle = toDegrees(atan(width/h))
@@ -523,7 +523,7 @@
 5230 SUB letterZ(h, colorNo)
 5240   REM TODO: add the respective type suffixes to your variable names if required 
 5250   REM  
-5260 
+5260   REM  
 5270   LET width = h/2.0
 5280   LET hypo = sqrt(width*width + h*h)
 5290   LET rotAngle = toDegrees(atan(width/h))
@@ -545,7 +545,7 @@
 5450 SUB polygonPart(a AS double, n AS integer, ctrclkws AS boolean, nEdges AS integer, color AS Integer)
 5460   REM TODO: add the respective type suffixes to your variable names if required 
 5470   REM  
-5480 
+5480   REM  
 5490   LET rotAngle = 360.0/n
 5500   IF ctrclkws THEN
 5510     LET rotAngle = -rotAngle
@@ -562,7 +562,7 @@
 5620 SUB charDummy(h, colorNo)
 5630   REM TODO: add the respective type suffixes to your variable names if required 
 5640   REM  
-5650 
+5650   REM  
 5660   LET width = h / 2.0
 5670   REM Octagon edge length (here: edge lengzh of the square) 
 5680   LET b = width / (sqrt(2.0) + 1)
@@ -591,7 +591,7 @@
 5910 SUB comma(h, colorNo)
 5920   REM TODO: add the respective type suffixes to your variable names if required 
 5930   REM  
-5940 
+5940   REM  
 5950   REM Octagon edge length 
 5960   LET b = h * 0.5 / (sqrt(2.0) + 1)
 5970   REM Cathetus of the outer corner triangle of the octagon 
@@ -624,7 +624,7 @@
 6240 SUB digit2(h, colorNo)
 6250   REM TODO: add the respective type suffixes to your variable names if required 
 6260   REM  
-6270 
+6270   REM  
 6280   REM Octagon edge length 
 6290   LET b = h * 0.5 / (sqrt(2.0) + 1)
 6300   REM Cathetus of the corner triangle outside the octagon 
@@ -649,7 +649,7 @@
 6490 SUB digit3(h, colorNo)
 6500   REM TODO: add the respective type suffixes to your variable names if required 
 6510   REM  
-6520 
+6520   REM  
 6530   REM Octagon edge length 
 6540   LET b = h * 0.5 / (sqrt(2.0) + 1)
 6550   REM Cathetus of the corner triangle outside the octagon 
@@ -683,7 +683,7 @@
 6830 SUB digit5(h, colorNo)
 6840   REM TODO: add the respective type suffixes to your variable names if required 
 6850   REM  
-6860 
+6860   REM  
 6870   REM Octagon edge length 
 6880   LET b = h * 0.5 / (sqrt(2.0) + 1)
 6890   REM Cathetus of the corner triangle outside the octagon 
@@ -711,7 +711,7 @@
 7110 SUB digit6(h, colorNo)
 7120   REM TODO: add the respective type suffixes to your variable names if required 
 7130   REM  
-7140 
+7140   REM  
 7150   REM Octagon edge length 
 7160   LET b = h * 0.5 / (sqrt(2.0) + 1)
 7170   REM Cathetus of the corner triangle outside the octagon 
@@ -743,7 +743,7 @@
 7430 SUB digit8(h, colorNo)
 7440   REM TODO: add the respective type suffixes to your variable names if required 
 7450   REM  
-7460 
+7460   REM  
 7470   REM Octagon edge length 
 7480   LET b = h * 0.5 / (sqrt(2.0) + 1)
 7490   REM Cathetus of the corner triangle outside the octagon 
@@ -780,7 +780,7 @@
 7800 SUB digit9(h, colorNo)
 7810   REM TODO: add the respective type suffixes to your variable names if required 
 7820   REM  
-7830 
+7830   REM  
 7840   REM Octagon edge length 
 7850   LET b = h * 0.5 / (sqrt(2.0) + 1)
 7860   REM Cathetus of the corner triangle outside the octagon 
@@ -808,7 +808,7 @@
 8080 SUB exclMk(h, colorNo)
 8090   REM TODO: add the respective type suffixes to your variable names if required 
 8100   REM  
-8110 
+8110   REM  
 8120   REM Octagon edge length 
 8130   LET b = h * 0.5 / (sqrt(2.0) + 1)
 8140   REM Cathetus of the outer corner triangle of the octagon 
@@ -856,7 +856,7 @@
 8560 SUB fullSt(h, colorNo)
 8570   REM TODO: add the respective type suffixes to your variable names if required 
 8580   REM  
-8590 
+8590   REM  
 8600   REM Octagon edge length 
 8610   LET b = h * 0.5 / (sqrt(2.0) + 1)
 8620   REM Cathetus of the outer corner triangle of the octagon 
@@ -880,7 +880,7 @@
 8800 SUB letterAe(h, colorNo)
 8810   REM TODO: add the respective type suffixes to your variable names if required 
 8820   REM  
-8830 
+8830   REM  
 8840   penUp()
 8850   forward(h) : REM color = ffffff
 8860   penDown()
@@ -910,7 +910,7 @@
 9100 SUB letterB(h, colorNo)
 9110   REM TODO: add the respective type suffixes to your variable names if required 
 9120   REM  
-9130 
+9130   REM  
 9140   REM Octagon edge length 
 9150   LET b = h * 0.5 / (sqrt(2.0) + 1)
 9160   REM Cathetus of the outer corner triangle of the octagon 
@@ -941,7 +941,7 @@
 9410 SUB letterC(h, colorNo)
 9420   REM TODO: add the respective type suffixes to your variable names if required 
 9430   REM  
-9440 
+9440   REM  
 9450   REM Octagon edge length 
 9460   LET b = h * 0.5 / (sqrt(2.0) + 1)
 9470   REM Cathetus of the outer triangle at the octagon corner 
@@ -977,7 +977,7 @@
 9770 SUB letterD(h, colorNo)
 9780   REM TODO: add the respective type suffixes to your variable names if required 
 9790   REM  
-9800 
+9800   REM  
 9810   REM Octagon edge length 
 9820   LET b = h * 0.5 / (sqrt(2.0) + 1)
 9830   REM Cathetus of the outer corner triangle of the octagon 
@@ -1006,7 +1006,7 @@
 10060 SUB letterG(h, colorNo)
 10070   REM TODO: add the respective type suffixes to your variable names if required 
 10080   REM  
-10090 
+10090   REM  
 10100   REM Octagon edge length 
 10110   LET b = h * 0.5 / (sqrt(2.0) + 1)
 10120   REM Cathetus of the corner triangle outside the octagon. 
@@ -1044,7 +1044,7 @@
 10440 SUB letterJ(h, colorNo)
 10450   REM TODO: add the respective type suffixes to your variable names if required 
 10460   REM  
-10470 
+10470   REM  
 10480   REM Octagon edge length 
 10490   LET b = h * 0.5 / (sqrt(2.0) + 1)
 10500   REM Cathetus of the outer corner triangle of the octagon 
@@ -1071,7 +1071,7 @@
 10710 SUB letterO(h, colorNo)
 10720   REM TODO: add the respective type suffixes to your variable names if required 
 10730   REM  
-10740 
+10740   REM  
 10750   REM Octagon edge length 
 10760   LET b = h * 0.5 / (sqrt(2.0) + 1)
 10770   REM Cathetus of the corner triangle outside the octagon 
@@ -1102,7 +1102,7 @@
 11020 SUB letterP(h, colorNo)
 11030   REM TODO: add the respective type suffixes to your variable names if required 
 11040   REM  
-11050 
+11050   REM  
 11060   REM Octagon edge length 
 11070   LET b = h * 0.5 / (sqrt(2.0) + 1)
 11080   REM Cathetus of the corner triangle outside the octagon 
@@ -1128,7 +1128,7 @@
 11280 SUB letterQ(h, colorNo)
 11290   REM TODO: add the respective type suffixes to your variable names if required 
 11300   REM  
-11310 
+11310   REM  
 11320   REM Octagon edge length 
 11330   LET b = h * 0.5 / (sqrt(2.0) + 1)
 11340   REM Cathetus of the outer corner triangle of the octagon 
@@ -1164,7 +1164,7 @@
 11640 SUB letterR(h, colorNo)
 11650   REM TODO: add the respective type suffixes to your variable names if required 
 11660   REM  
-11670 
+11670   REM  
 11680   REM Octagon edge length 
 11690   LET b = h * 0.5 / (sqrt(2.0) + 1)
 11700   REM Cathetus of the outer corner triangle of the octagon 
@@ -1189,7 +1189,7 @@
 11890 SUB letterS(h, colorNo)
 11900   REM TODO: add the respective type suffixes to your variable names if required 
 11910   REM  
-11920 
+11920   REM  
 11930   REM Octagon edge length 
 11940   LET b = h * 0.5 / (sqrt(2.0) + 1)
 11950   REM Side length of the (outer) corner triangle of the octagon 
@@ -1219,7 +1219,7 @@
 12190 SUB letterU(h, colorNo)
 12200   REM TODO: add the respective type suffixes to your variable names if required 
 12210   REM  
-12220 
+12220   REM  
 12230   REM edge length of a regular octagon 
 12240   LET b = h * 0.5 / (sqrt(2.0) + 1)
 12250   REM Cathetus of the outer corner triangle of the octagon 
@@ -1249,7 +1249,7 @@
 12490 SUB qstnMk(h, colorNo)
 12500   REM TODO: add the respective type suffixes to your variable names if required 
 12510   REM  
-12520 
+12520   REM  
 12530   REM Octagon edge length 
 12540   LET b = h * 0.5 / (sqrt(2.0) + 1)
 12550   REM Cathetus of the outer corner triangle of the octagon 
@@ -1286,7 +1286,7 @@
 12860 SUB digit0(h, colorNo)
 12870   REM TODO: add the respective type suffixes to your variable names if required 
 12880   REM  
-12890 
+12890   REM  
 12900   penUp()
 12910   forward(h/4.0) : REM color = ffffff
 12920   penDown()
@@ -1306,7 +1306,7 @@
 13060 SUB letterOe(h, colorNo)
 13070   REM TODO: add the respective type suffixes to your variable names if required 
 13080   REM  
-13090 
+13090   REM  
 13100   penUp()
 13110   forward(h) : REM color = ffffff
 13120   penDown()
@@ -1338,7 +1338,7 @@
 13380 SUB letterUe(h, colorNo)
 13390   REM TODO: add the respective type suffixes to your variable names if required 
 13400   REM  
-13410 
+13410   REM  
 13420   penUp()
 13430   forward(h) : REM color = ffffff
 13440   right(90)
@@ -1390,7 +1390,7 @@
 13900 SUB drawText(text AS String, h AS integer, c AS integer)
 13910   REM TODO: add the respective type suffixes to your variable names if required 
 13920   REM  
-13930 
+13930   REM  
 13940   LET gap = h/10.0
 13950   FOR k = 1 TO length(text)
 13960     LET letter = uppercase(copy(text, k, 1))

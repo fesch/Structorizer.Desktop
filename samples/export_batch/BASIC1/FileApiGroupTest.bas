@@ -13,17 +13,17 @@ Rem
 Rem TODO: Check (and specify if needed) the argument and result types! 
 Public Function readNumbers(fileName As String, numbers As integer(50), maxNumbers As integer) As integer
   Rem TODO: Check and accomplish your variable declarations here: 
-  Rem  
+  Dim number As Integer
   Dim nNumbers As Integer
-  nNumbers = 0
   Dim fileNo As Integer
+  Rem  
+  nNumbers = 0
   fileNo = fileOpen(fileName)
   If fileNo <= 0 Then
     Throw New Exception("File could not be opened!")
   End If
   Try
     Do While NOT fileEOF(fileNo) AND nNumbers < maxNumbers
-      Dim number As Integer
       number = fileReadInt(fileNo)
       Dim numbers() As integer
       numbers(nNumbers) = number
@@ -46,15 +46,22 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub drawBarChart(values As double(50), nValues)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
-  Rem Used range of the Turtleizer screen 
   Dim xSize As Integer
-  Const xSize = 500
   Dim ySize As Integer
-  Const ySize = 500
+  Dim yScale As ???
+  Dim yAxis As ???
+  Dim valMin As double
+  Dim valMax As double
+  Dim stripeWidth As ???
+  Dim stripeHeight As ???
   Dim kMin As Integer
-  kMin = 0
   Dim kMax As Integer
+  Dim k As Integer
+  Rem  
+  Rem Used range of the Turtleizer screen 
+  xSize = 500
+  ySize = 500
+  kMin = 0
   kMax = 0
   For k = 1 To nValues-1
     If values(k) > values(kMax) Then
@@ -63,13 +70,9 @@ Sub drawBarChart(values As double(50), nValues)
       kMin = k
     End If
   Next k
-  Dim valMin As double
   valMin = values(kMin)
-  Dim valMax As double
   valMax = values(kMax)
-  Dim yScale As ???
   yScale = valMax * 1.0 / (ySize - 1)
-  Dim yAxis As ???
   yAxis = ySize - 1
   If valMin < 0 Then
     If valMax > 0 Then
@@ -90,10 +93,8 @@ Sub drawBarChart(values As double(50), nValues)
   forward(xSize -1) : Rem color = ffffff
   penUp()
   backward(xSize-1) : Rem color = ffffff
-  Dim stripeWidth As ???
   stripeWidth = xSize / nValues
   For k = 0 To nValues-1
-    Dim stripeHeight As ???
     stripeHeight = values(k) * 1.0 / yScale
     Select Case k % 3
       Case 0
@@ -139,8 +140,13 @@ Rem http://www.gnu.de/documents/gpl.de.html
 Rem  
 Rem program ComputeSum
 Rem TODO: Check and accomplish your variable declarations here: 
-Rem  
+Dim values() As ???
+Dim sum As double
+Dim nValues As Integer
+Dim k As Integer
+Dim file_name As ???
 Dim fileNo As Integer
+Rem  
 fileNo = 1000
 Rem Disable this if you enable the loop below! 
 PRINT "Name/path of the number file"; : INPUT file_name
@@ -153,9 +159,7 @@ Rem Loop Until fileNo > 0 OR file_name = ""
 If fileNo > 0 Then
   Rem This should be enabled if the input check loop above gets enabled. 
 Rem   fileClose(fileNo) 
-  Dim values() As ???
-  Let values = Array()
-  Dim nValues As Integer
+  values = Array()
   nValues = 0
   Try
     nValues = readNumbers(file_name, values, 1000)
@@ -164,7 +168,6 @@ Rem   fileClose(fileNo)
     PRINT failure
     Stop
   End Try
-  Dim sum As double
   sum = 0.0
   For k = 0 To nValues-1
     sum = sum + values(k)
@@ -191,8 +194,20 @@ Rem http://www.gnu.de/documents/gpl.de.html
 Rem  
 Rem program DrawRandomHistogram
 Rem TODO: Check and accomplish your variable declarations here: 
-Rem  
+Dim width As ???
+Dim value As ???
+Dim numberArray() As ???
+Dim nObtained As Integer
+Dim nIntervals As ???
+Dim min As ???
+Dim max As ???
+Dim kMaxCount As Integer
+Dim k As Integer
+Dim i As Integer
+Dim file_name As ???
 Dim fileNo As Integer
+Dim count() As Integer
+Rem  
 fileNo = -10
 Do
   PRINT "Name/path of the number file"; : INPUT file_name
@@ -203,15 +218,11 @@ If fileNo > 0 Then
   PRINT "number of intervals"; : INPUT nIntervals
   Rem Initialize the interval counters 
   For k = 0 To nIntervals-1
-    Dim count() As Integer
     count(k) = 0
   Next k
   Rem Index of the most populated interval 
-  Dim kMaxCount As Integer
   kMaxCount = 0
-  Dim numberArray() As ???
-  Let numberArray = Array()
-  Dim nObtained As Integer
+  numberArray = Array()
   nObtained = 0
   Try
     nObtained = readNumbers(file_name, numberArray, 10000)
@@ -220,9 +231,7 @@ If fileNo > 0 Then
     PRINT failure
   End Try
   If nObtained > 0 Then
-    Dim min As ???
     min = numberArray(0)
-    Dim max As ???
     max = numberArray(0)
     For i = 1 To nObtained-1
       If numberArray(i) < min Then
@@ -232,12 +241,9 @@ If fileNo > 0 Then
       End If
     Next i
     Rem Interval width 
-    Dim width As ???
     width = (max - min) * 1.0 / nIntervals
     For i = 0 To nObtained - 1
-      Dim value As ???
       value = numberArray(i)
-      Dim k As Integer
       k = 1
       Do While k < nIntervals AND value > min + k * width
         k = k + 1
@@ -266,10 +272,10 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub drawBarChart(values As double(50), nValues)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
+  Rem  
   Rem Used range of the Turtleizer screen 
-  Const xSize = 500
-  Const ySize = 500
+  xSize = 500
+  ySize = 500
   kMin = 0
   kMax = 0
   For k = 1 To nValues-1

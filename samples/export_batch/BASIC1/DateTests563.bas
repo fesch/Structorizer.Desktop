@@ -10,7 +10,6 @@ Rem http://www.gnu.de/documents/gpl.de.html
 Rem  
 Rem program DateTests563
 Rem TODO: Check and accomplish your variable declarations here: 
-Rem  
 
 Structure Date
   Dim year As Integer
@@ -19,33 +18,37 @@ Structure Date
 End Structure
 Dim today As Date
 
-Dim someDay As Date
-Let someDay.day = 24
-Let someDay.month = 2
-Let someDay.year = 2017
-nDays = daysInMonth423(someDay)
-Let today.year = 2018
-Let today.month = 7
-Let today.day = 20
 Structure Person
   Dim name As String
   Dim birth As Date
-  Dim test As @int
+  Dim test(2) As Integer
 End Structure
-Dim me As Person
-Let me.name = "roger"
-Let me.birth = DateArray(1985, 3, 6)
-Let me.test = Array(0, 8, 15)
-Dim declArray() As double
-Let declArray = Array(9.0, 7.5, -6.4, 1.7, 0.0)
-Dim explArray(2) As double
-Let explArray = Array(7.1, 0.5, -1.5)
-Dim doof(2) As double
-Let doof = Array(0.4)
-Dim dull(1) As double
-Let dull = Array(-12.7, 96.03)
 Dim values(1) As Integer
-Let values = Array(47, 11)
+Dim someDay As Date
+Dim nDays As Integer
+Dim me As Person
+Dim explArray(2) As double
+Dim dull(1) As double
+Dim doof(2) As double
+Dim declArray() As double
+Rem  
+someDay.day = 24
+someDay.month = 2
+someDay.year = 2017
+nDays = daysInMonth423(someDay)
+today.year = 2018
+today.month = 7
+today.day = 20
+me.name = "roger"
+me.birth.year = 1985
+me.birth.month = 3
+me.birth.day = 6
+me.test = Array(0, 8, 15)
+declArray = Array(9.0, 7.5, -6.4, 1.7, 0.0)
+explArray = Array(7.1, 0.5, -1.5)
+doof = Array(0.4)
+dull = Array(-12.7, 96.03)
+values = Array(47, 11)
 End
 Rem  
 Rem Detects whether the given year is a leap year in the Gregorian calendar 
@@ -54,9 +57,9 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Function isLeapYear(year) As boolean
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
-  Rem Most years aren't leap years... 
   Dim isLeapYear As boolean
+  Rem  
+  Rem Most years aren't leap years... 
   isLeapYear = false
   If (year % 4 = 0) AND (year % 100 <> 0) Then
     Rem This is a standard leap year 
@@ -75,11 +78,12 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Function daysInMonth423(aDate As Date) As Integer
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
+  Dim isLeap As boolean
+  Dim days As Integer
+  Rem  
   Rem select the case where illegal values are also considered 
   Select Case aDate.month
     Case 1, 3, 5, 7, 8, 10, 12
-      Dim days As Integer
       days = 31
     Case 4, 6, 9, 11
       days = 30

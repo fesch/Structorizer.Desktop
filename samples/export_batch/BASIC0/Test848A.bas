@@ -10,11 +10,11 @@
 100 REM  
 110 REM program TestMain
 120 REM TODO: add the respective type suffixes to your variable names if required 
-130 REM  
-140 
-150 LET a2 = "doof"
-160 LET b2 = 3.9
-170 
+130 
+140 LET a2 = "doof"
+150 LET b2 = 3.9
+160 
+170 REM  
 180 LET a1 = 7
 190 LET b1 = a2 + " oder blöd"
 200 LET c1 = a1 * b2
@@ -26,7 +26,7 @@
 260 FUNCTION testSub(c1 AS real, param2 AS real, b1 AS String) AS Integer
 270   REM TODO: add the respective type suffixes to your variable names if required 
 280   REM  
-290 
+290   REM  
 300   LET d1 = a1
 310   LET d2 = a2
 320   LET a1 = 15

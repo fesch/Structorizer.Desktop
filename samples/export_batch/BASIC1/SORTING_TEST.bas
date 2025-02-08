@@ -13,6 +13,16 @@ Rem http://www.gnu.de/documents/gpl.de.html
 Rem  
 Rem program SORTING_TEST_MAIN
 Rem TODO: Check and accomplish your variable declarations here: 
+Dim values3() As Integer
+Dim values2() As Integer
+Dim values1() As Integer
+Dim show As ???
+Dim ok3 As bool
+Dim ok2 As bool
+Dim ok1 As bool
+Dim modus As ???
+Dim i As Integer
+Dim elementCount As ???
 Rem  
 Do
   INPUT elementCount
@@ -23,7 +33,6 @@ Loop Until modus = 1 OR modus = 2 OR modus = 3
 For i = 0 To elementCount-1
   Select Case modus
     Case 1
-      Dim values1() As Integer
       values1(i) = random(10000)
     Case 2
       values1(i) = i
@@ -33,9 +42,7 @@ For i = 0 To elementCount-1
 Next i
 Rem Copy the array for exact comparability 
 For i = 0 To elementCount-1
-  Dim values2() As Integer
   values2(i) = values1(i)
-  Dim values3() As Integer
   values3(i) = values1(i)
 Next i
 
@@ -92,16 +99,17 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub bubbleSort(values)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
+  Dim temp As ???
+  Dim posSwapped As Integer
+  Dim i As Integer
   Dim ende As ???
+  Rem  
   ende = length(values) - 2
   Do
     Rem The index of the most recent swapping (-1 means no swapping done). 
-    Dim posSwapped As Integer
     posSwapped = -1
     For i = 0 To ende
       If values(i) > values(i+1) Then
-        Dim temp As ???
         temp = values(i)
         Dim values() As ???
         values(i) = values(i+1)
@@ -121,14 +129,15 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub maxHeapify(heap, i, range)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
-  Rem Indices of left and right child of node i 
+  Dim temp As ???
   Dim right As ???
-  right = (i+1) * 2
+  Dim max As ???
   Dim left As ???
+  Rem  
+  Rem Indices of left and right child of node i 
+  right = (i+1) * 2
   left = right - 1
   Rem Index of the (local) maximum 
-  Dim max As ???
   max = i
   If left < range AND heap(left) > heap(i) Then
     max = left
@@ -137,7 +146,6 @@ Sub maxHeapify(heap, i, range)
     max = right
   End If
   If max <> i Then
-    Dim temp As ???
     temp = heap(i)
     Dim heap() As ???
     heap(i) = heap(max)
@@ -158,9 +166,10 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Function partition(values, start, stop, p) As Integer
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
-  Rem Cache the pivot element 
+  Dim seen As ???
   Dim pivot As ???
+  Rem  
+  Rem Cache the pivot element 
   pivot = values(p)
   Rem Exchange the pivot element with the start element 
   Dim values() As ???
@@ -181,7 +190,6 @@ Function partition(values, start, stop, p) As Integer
   Rem 4. stop < i → pivot < values[i] 
   Do While start <= stop
     Rem Fetch the first element of the undiscovered area 
-    Dim seen As ???
     seen = values(start)
     Rem Does the checked element belong to the smaller area? 
     If seen <= pivot Then
@@ -208,10 +216,10 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Function testSorted(numbers) As bool
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
   Dim isSorted As boolean
-  isSorted = true
   Dim i As Integer
+  Rem  
+  isSorted = true
   i = 0
   Rem As we compare with the following element, we must stop at the penultimate index 
   Do While isSorted AND (i <= length(numbers)-2)
@@ -233,8 +241,9 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub buildMaxHeap(heap)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
   Dim lgth As Integer
+  Dim k As Integer
+  Rem  
   lgth = length(heap)
   For k = lgth / 2 - 1 To 0 Step -1
     Call maxHeapify(heap, k, lgth)
@@ -248,12 +257,12 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub quickSort(values, start, stop)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
+  Dim p As ???
+  Rem  
   Rem At least 2 elements? (Less don't make sense.) 
   If stop >= start + 2 Then
     Rem Select a pivot element, be p its index. 
     Rem (here: randomly chosen element out of start ... stop-1) 
-    Dim p As ???
     p = random(stop-start) + start
     Rem Partition the array into smaller and greater elements 
     Rem Get the resulting (and final) position of the pivot element 
@@ -289,14 +298,15 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub heapSort(values)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
-  Call buildMaxHeap(values)
+  Dim maximum As ???
+  Dim k As Integer
   Dim heapRange As Integer
+  Rem  
+  Call buildMaxHeap(values)
   heapRange = length(values)
   For k = heapRange - 1 To 1 Step -1
     heapRange = heapRange - 1
     Rem Swap the maximum value (root of the heap) to the heap end 
-    Dim maximum As ???
     maximum = values(0)
     Dim values() As ???
     values(0) = values(heapRange)

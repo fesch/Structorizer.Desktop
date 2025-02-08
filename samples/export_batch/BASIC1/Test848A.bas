@@ -10,7 +10,6 @@ Rem http://www.gnu.de/documents/gpl.de.html
 Rem  
 Rem program TestMain
 Rem TODO: Check and accomplish your variable declarations here: 
-Rem  
 
 Dim a1 As Integer
 Dim a2 As String
@@ -19,9 +18,11 @@ Dim b1 As String
 Dim b2 As double
 b2 = 3.9
 
+Dim c2 As Integer
+Dim c1 As ???
+Rem  
 a1 = 7
 b1 = a2 + " oder blöd"
-Dim c1 As ???
 c1 = a1 * b2
 c2 = testSub(c1, a1 + b2, b1)
 PRINT a1; " "; a2; " "; b1; " "; b2
@@ -31,10 +32,10 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Function testSub(c1 As real, param2 As real, b1 As String) As Integer
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
-
-  Dim d1 As Integer
-  d1 = a1
   Dim d2 As String
+  Dim d1 As Integer
+  Rem  
+  d1 = a1
   d2 = a2
   a1 = 15
   return length(a2 + b1) + floor(c1) * ceil(param2)
