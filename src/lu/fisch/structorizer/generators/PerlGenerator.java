@@ -88,6 +88,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2023-10-04  Bugfix #1093 Undue final return 0 on function diagrams
  *      Kay Gürtzig         2024-03-19  Issue #1148: Special indentation for "if else if" chains
  *      Kay Gürtzig         2024-04-02  Bugfix #1156: Proper handling of constant definitions (new export option)
+ *      Kay Gürtzig         2025-02-16  Bugfix #1192: Return statements in Instruction elements weren't transformed
  *
  ******************************************************************************************************
  *
@@ -676,6 +677,11 @@ public class PerlGenerator extends Generator {
 					}
 					// END KGU#787 2019-12-03
 				}
+				// START KGU#1177 2025-02-16: Bugfix #1192: Translate the return keyword
+				else if (Jump.isReturn(line)) {
+					line = "return " + line.substring(CodeParser.getKeyword("preReturn").length()).trim();
+				}
+				// END KGU#1177  2025-02-16
 				if (text == null) {
 					text = transform(line);
 				}
