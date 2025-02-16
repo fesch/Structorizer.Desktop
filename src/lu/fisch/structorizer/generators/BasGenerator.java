@@ -1866,6 +1866,7 @@ public class BasGenerator extends Generator
 	 * @param _type - the {@link TypeMapEntry} for the type
 	 * @param _root - the owning (defining) {@link Root}
 	 * @param _indent - the current indentation
+	 * @param _isDisabled - whether the originating element is disabled
 	 * @return {@code false} if the type could not be found in the type map,
 	 *     {@code true} otherwise (no matter whether the type definition was
 	 *     generated or redundant.
