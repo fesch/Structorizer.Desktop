@@ -83,6 +83,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2024-03-19      Issue #1148: Special indentation for "if else if" chains
  *      Kay Gürtzig             2024-04-02      Bugfix #1156: Handling of typed constants rectified
  *      Kay Gürtzig             2025-02-06      Bugfix #1188: Export of C-style array initialisations was defective
+ *      Kay Gürtzig             2025-02-16      Bugfix #1192: Translation of tail return instruction keywords
  *
  ******************************************************************************************************
  *
@@ -587,6 +588,11 @@ public class PHPGenerator extends Generator
 						transf += " " + this.commentSymbolLeft() + " color = " + _inst.getHexColor();
 					}
 					// END KGU#284 2016-10-16
+					// START KGU#1177 2025-02-16: Bugfix #1192: Transform return keyword
+					else if (Jump.isReturn(line)) {
+						transf = "return" + transf.substring(CodeParser.getKeywordOrDefault("preReturn", "return").length());
+					}
+					// END KGU#1177 2025-02-16
 					// START KGU#839 2020-04-06: Bugfix #843 (issues #389, #782)
 					// START KGU#1144 2024-04-02: Bugfix #1156 consider typed constants
 					//else if (Instruction.isDeclaration(line)) {

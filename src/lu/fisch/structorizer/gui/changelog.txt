@@ -25,7 +25,7 @@ Known issues (also see https://github.com/fesch/Structorizer.Desktop/issues):
 - ARM export is still experimental and relies on a specific and very restricted
   syntax for the element contents in order to produce meaningful results.
 
-Current development version 3.32-27 (2025-02-08)
+Current development version 3.32-27 (2025-02-16)
 - 01: Bugfix #987: Duplicate subroutine comment export by Pascal generator <2>
 - 01: Bugfix #988: Syntax error in Structorizer.bat and Arranger.bat fixed <2>
 - 01: Bugfix #989: Expressions in EXIT elements (e.g. return) were forgotten
@@ -276,6 +276,7 @@ Current development version 3.32-27 (2025-02-08)
 - 26: Bugfix #1190: Includables now involved in BASIC export, recursive check
       for indirectly included declarations (effective for all languages),
       Nested initialiser expressions are now recursively resolved <2>
+- 27: Bugfix #1192: Code export of tail return statements ignored keyword <2>
 - 27:
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
