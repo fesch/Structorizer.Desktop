@@ -190,6 +190,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2024-10-09      Bugfix #1174: Precaution against NullpPointerException in fetchAuthorDates()
  *      Kay Gürtzig     2024-11-25      Bugfix #1180: Deep test coverage change on undo/redo propagated
  *      Kay Gürtzig     2025-02-06      Bugfix #1187 in analyse_31 (complained the closing bracket)
+ *      Kay Gürtzig     2025-02-27      Bugfix #1193 Flaws in detection of arguments and results on outsourcing
  *
  ******************************************************************************************************
  *
@@ -7527,17 +7528,19 @@ public class Root extends Element {
 	 * Replaces the given {@code elements} from this diagram by a subroutine call and
 	 * returns the new subroutine formed out of these elements.
 	 * Tries to derive the necessary arguments and places them in the parameter lists
-	 * of both the subroutine and the call.
-	 * The heuristic retrieval of necessary results is incomplete (it still cannot detect
-	 * mere updates of variables that had existed before). In case several result values
-	 * are detected, then an array of them will be returned. This may cause trouble for export
-	 * languages like C (where array can't be returned that easily) or strongly typed languages
-	 * (where a record/struct might have been necessary instead).
+	 * of both the subroutine and the call.<br/>
+	 * The heuristic retrieval of necessary results may still be unprecise (though it
+	 * also tries to detect mere updates of variables that had existed before). In case
+	 * several result values are detected, then an array of them will be returned. This
+	 * may cause trouble for export languages like C (where arrays can't be returned
+	 * that easily) or strongly typed languages (where a record/struct might have been
+	 * necessary instead).
+	 * 
 	 * @param elements - an element sequence from this Root
 	 * @param name - the name for the new subroutine
 	 * @param result - name of the result variable (if any) or null 
 	 * @return a new Root formed from the given elements or null if {@code elements} was
-	 * empty or didn't belong to this Root. 
+	 *    empty or didn't belong to this Root. 
 	 */
 	public Root outsourceToSubroutine(IElementSequence elements, String name, String result)
 	{ 
@@ -7585,6 +7588,23 @@ public class Root extends Element {
 					results.add(varName);
 				}
 			}
+			// START KGU#987 2025-02-27: Bugfix #1193
+			// If a supposed argument vanished then it is no argument but local
+			StringList vars = this.retrieveVarNames();
+			StringList subVars = subroutine.getVarNames();
+			for (int i = args.count() - 1; i >= 0; i--) {
+				String argName = args.get(i);
+				if (!vars.contains(argName)) {
+					args.remove(i);
+				}
+			}
+			for (int i = 0; i < subVars.count(); i++) {
+				String varName = subVars.get(i);
+				if (vars.contains(varName) || uninitializedVars1.contains(varName)) {
+					results.addIfNew(varName);
+				}
+			}
+			// END KGU#987 2025-02-27
 			if (results.isEmpty() && result != null) {
 				results.add(result);
 			}
