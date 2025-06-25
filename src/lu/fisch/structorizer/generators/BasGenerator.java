@@ -78,6 +78,7 @@ package lu.fisch.structorizer.generators;
  *                                          processed. Array declarations for vintage BASIC no longer suppressed
  *      Kay Gürtzig         2025-02-07/08   Bugfix #1190: Includables now fully involved. Declaration placement
  *                                          fundamentally revised, record and array inits now recursive.
+ *      Kay Gürtzig         2025-02-16      Bugfix #1192: Return keywords in Instruction elements weren't transformed
  *
  ******************************************************************************************************
  *
@@ -683,6 +684,11 @@ public class BasGenerator extends Generator
 					if (Instruction.isTurtleizerMove(line)) {
 						codeLine += " : " + this.commentSymbolLeft() + " color = " + _inst.getHexColor();
 					}
+					// START KGU#1177 2025-02-16: Bugfix #1192 Return instruction keywords weren't transformed
+					else if (Jump.isReturn(line)) {
+						codeLine = (transformKeyword("RETURN ") + transform(tokens.concatenate("", 1))).trim();
+					}
+					// END KGU#1177 2025-02-16
 					// START KGU#993 2021-10-04: Bugfix #993 We suppress unused declarations
 					//addCode(codeLine, _indent, disabled);
 					if (!Instruction.isMereDeclaration(line)) {
@@ -1866,6 +1872,7 @@ public class BasGenerator extends Generator
 	 * @param _type - the {@link TypeMapEntry} for the type
 	 * @param _root - the owning (defining) {@link Root}
 	 * @param _indent - the current indentation
+	 * @param _isDisabled - whether the originating element is disabled
 	 * @return {@code false} if the type could not be found in the type map,
 	 *     {@code true} otherwise (no matter whether the type definition was
 	 *     generated or redundant.

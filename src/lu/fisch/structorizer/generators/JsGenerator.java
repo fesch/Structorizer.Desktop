@@ -271,6 +271,7 @@ public class JsGenerator extends CGenerator {
 	 * @param _elemType - the {@link TypeMapEntry} of the element type is available
 	 * @param _isDecl - if this is part of a declaration (i.e. a true initialization)
 	 */
+	@Override
 	protected String transformOrGenerateArrayInit(String _lValue, StringList _arrayItems, String _indent, boolean _isDisabled, String _elemType, boolean _isDecl)
 	{
 		StringList transItems = new StringList();

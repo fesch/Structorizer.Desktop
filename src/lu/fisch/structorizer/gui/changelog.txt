@@ -7,25 +7,26 @@ Legend:
 
 Known issues (also see https://github.com/fesch/Structorizer.Desktop/issues):
 - Copying diagram images to the clipboard may fail with some OS/JRE combination
-  (#685), on Windows the image format may be JPG instead of PNG.
+  (#685), on Windows the actual image format may be JPG instead of PNG.
 - Pascal import does not cope with unit name aliases. ObjectPascal code should
   be tolerated by the parser but may produce nonsense from the OOP parts.
 - COBOL import may fail if certain single-letter identifiers are used (rename
   them!), it does not cope with some statement variants and variable
   redefinitions, either.
-- The import option to mitigate ambiguities between closing angular brackets (in
-  nested type arguments) and shift operators >> may fail in some cases. Then
-  it should be switched off and closing angular brackets be separated manually.
-  It does not cope with lambda expressions and some annotations. Because OOP
-  context is not actually supported in Structorizer, the imported diagrams will
-  usually not be executable and will raise a lot of Analyser warnings.
+- The Java-specific import option to mitigate ambiguities between closing
+  angular brackets (in nested type arguments) and shift operators >> may fail
+  in some cases. Then it should be switched off and closing angular brackets be
+  separated manually. Java import does not cope with lambda expressions and
+  some annotations. Because Structorizer not actually supports OOP context the
+  imported diagrams will usually not be executable but raise a lot of Analyser
+  warnings.
 - Shell export neither copes with nested array/record initialisers and
   component access nor with cleanly handling usual and associative arrays as
   parameters or results.
 - ARM export is still experimental and relies on a specific and very restricted
   syntax for the element contents in order to produce meaningful results.
 
-Current development version 3.32-26 (2025-02-08)
+Current development version 3.32-27 (2025-06-25)
 - 01: Bugfix #987: Duplicate subroutine comment export by Pascal generator <2>
 - 01: Bugfix #988: Syntax error in Structorizer.bat and Arranger.bat fixed <2>
 - 01: Bugfix #989: Expressions in EXIT elements (e.g. return) were forgotten
@@ -260,22 +261,26 @@ Current development version 3.32-26 (2025-02-08)
 - 24: Redundant routine pool reference compromised Executor efficiency <2>
 - 24: Bugfix #1181 Code preview highlighting wasn't always consistent with
       execution progress (particularly around Calls) <2>
-- 25: Issue #423: Code generation deficiencies on recursive record types
+- 25: Issue #423 Code generation deficiencies on recursive record types
       fixed for Pascal, C, and C++ <2>
-- 25: Bugfix #1183: Structorizer got stuck with multi-dimensional array
+- 25: Bugfix #1183 Structorizer got stuck with multi-dimensional array
       assignments like "field[i][j] <- expr" <2>
-- 25: Enh. #1184: Executor now manages to establish even multi-dimensional
+- 25: Enh. #1184 Executor now manages to establish even multi-dimensional
       arrays on first element assignment (though lazily filled) <2>
-- 26: Bugfix #1186: Code export of C-Style variable initialisations to C++,
+- 26: Bugfix #1186 Code export of C-Style variable initialisations to C++,
       C#, Java, and Javascript was defective (initialisation missing) <2>
-- 26: Bugfix #1187: Analyser unduly decried C-style array declarations <2>
-- 26: Bugfix #1188: Export of C-style array declarations to BASIC, PHP, and
+- 26: Bugfix #1187 Analyser unduly decried C-style array declarations <2>
+- 26: Bugfix #1188 Export of C-style array declarations to BASIC, PHP, and
       BASIC was wrong, BASIC array declarations were defective <2>
-- 26: Bugfix #1189: Pascal, Oberon, and Python export of Java-style array
+- 26: Bugfix #1189 Pascal, Oberon, and Python export of Java-style array
       declarations were defective (element type instead of variable name) <2>
-- 26: Bugfix #1190: Includables now involved in BASIC export, recursive check
+- 26: Bugfix #1190 Includables now involved in BASIC export, recursive check
       for indirectly included declarations (effective for all languages),
       Nested initialiser expressions are now recursively resolved <2>
+- 27: Bugfix #690/#1087 C99 import didn't reliably suppress "struct" etc.
+      in function parameter declaration lists.
+- 27: Bugfix #1192 Code export of tail return statements ignored keyword <2>
+- 27: Bugfix #1193 Flaws detecting arguments and results on outsourcing <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>

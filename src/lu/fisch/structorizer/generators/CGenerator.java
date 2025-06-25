@@ -128,6 +128,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2024-12-19      Issue #423: Recursive record definitions via array components weren't
  *                                              correctly translated (pointer insertion failed)
  *      Kay Gürtzig             2025-02-05      Bugfix #1186: The initialisation part of C-Style declarations got lost
+ *      Kay Gürtzig             2025-02-16      Bugfix #1192: Translation of tail return instruction keywords
  *
  ******************************************************************************************************
  *
@@ -1205,6 +1206,7 @@ public class CGenerator extends Generator {
 				// 2.2 as variable
 				// 3. type definition
 				// 4. Input / output
+				// 5. tail return statement
 				// START KGU#277/KGU#284 2016-10-13/16: Enh. #270 + Enh. #274
 				//code.add(_indent + transform(lines.get(i)) + ";");
 				// START KGU#504 2018-03-13: Bugfix #520/#521
@@ -1264,6 +1266,7 @@ public class CGenerator extends Generator {
 		// 2.2 as variable
 		// 3. type definition
 		// 4. Input / output
+		// 5. tail return statement
 		boolean isDisabled = _inst.isDisabled(false); 
 		StringList tokens = Element.splitLexically(_line.trim(), true);
 		// START KGU#796 2020-02-10: Bugfix #808
@@ -1625,6 +1628,16 @@ public class CGenerator extends Generator {
 			}
 		}
 		// END KGU#388 2017-09-25
+		// START KGU#1177 2025-02-16: Bugfix #1192: Transform return keyword
+		else if (Jump.isReturn(_line)) {
+			codeLine = _line;
+			if (!this.suppressTransformation) {
+				codeLine = transform(_line);
+			}
+			codeLine = "return" + codeLine.substring(CodeParser.getKeywordOrDefault("preReturn", "return").length());
+		}
+		// END KGU#1177 2025-02-16
+		
 		else {
 			// All other cases (e.g. input, output)
 			// START KGU#653 2019-02-14: Enh. #680 - care for multi-variable input lines
