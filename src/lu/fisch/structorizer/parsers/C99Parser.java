@@ -64,6 +64,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2024-03-17      Bugfix #1141: Measures against stack overflow in buildNSD_R()
  *      Kay Gürtzig     2024-04-17/18   Bugfix #1163: Import of non-trivial switch structures improved
  *      Kay Gürtzig     2024-04-18      Bugfix #1164: Adapted to new grammar version (1.6)
+ *      Kay Gürtzig     2025-06-24      Workaround #690 revised (also referred by #1087)
  *
  ******************************************************************************************************
  *
@@ -103,6 +104,7 @@ import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.structorizer.elements.While;
+import lu.fisch.structorizer.executor.Function;
 import lu.fisch.utils.StringList;
 
 /**
@@ -2435,7 +2437,7 @@ public class C99Parser extends CPreParser
 	/**
 	 * Processes a {@code <Direct Decl>} or {@code <Direct Abstr Decl>} rule, extracts the declared name and
 	 * fills the given {@link StringList}s with the surrounding text fragments.
-	 * @param _reduction - a reduction dreived from of either {@code <Direct Decl>} or {@code <Direct Abstr Decl>}
+	 * @param _reduction - a reduction derived from of either {@code <Direct Decl>} or {@code <Direct Abstr Decl>}
 	 * @param _pointers - the {@link StringList} intended for the prefix of the name
 	 * @param _arrays - the {@link StringList} intended for the postfix of the name (index ranges, arg lists)
 	 * @param _asPascal - a {@link StringList} intended to accumulate a Pascal-like notation
@@ -2549,6 +2551,7 @@ public class C99Parser extends CPreParser
 	 * @throws ParserCancelled 
 	 */
 	private String getParamList(Reduction _paramReduc, Subqueue _parentNode, boolean _pascalStyle, Reduction _declListRed) throws ParserCancelled {
+		final String[] typePrefixes = {"struct", "union", "enum"};
 		String params = ""; 
 		StringList paramList = new StringList();
 		String ellipse = "";
@@ -2602,9 +2605,25 @@ public class C99Parser extends CPreParser
 			// START KGU#668 2019-02-28: Workaround #690 - Suppress struct keywords in parameter lists (FIXME)
 			for (int i = 0; i < paramList.count(); i++) {
 				String param = paramList.get(i);
-				if (param.startsWith("struct ")) {
-					paramList.set(i, param.substring(7));
+				// START KGU#668/KGU#1077 2025-06-24: Workaround #690, #1087
+				// There could also be "union" or "enum", and it might be preceded by e.g. "const"
+				//if (param.startsWith("struct ")) {
+				//	paramList.set(i, param.substring(7));
+				//}
+				StringList pTokens = Element.splitLexically(param, true);
+				pTokens.removeAll(" ");
+				for (String prefix: typePrefixes) {
+					int pos = pTokens.indexOf(prefix);
+					if (pos >= 0 && pos+1 < pTokens.count()) {
+						String typeName = pTokens.get(pos+1);
+						if (Function.testIdentifier(typeName, false, null)) {
+							pTokens.remove(pos);
+							paramList.set(i, pTokens.concatenate(null));
+							break;
+						}
+					}
 				}
+				// END KGU#668/KGU#1077 2025-06-24
 			}
 			// END KGU#668 2019-02-28
 			params = paramList.reverse().concatenate(", ") + ellipse;
