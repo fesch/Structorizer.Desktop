@@ -34,6 +34,7 @@ package lu.fisch.structorizer.generators;
  *      ------          ----            -----------
  *      Kay Gürtzig     2021-06-08      First Issue on behalf of enhancement request #953
  *      Kay Gürtzig     2022-08-23      Structorizer version inserted as LaTeX comment
+ *      Kay Gürtzig     2025-07-03      Bugfix #1195: disabled check unified (--> isDisabled(true))
  *
  ******************************************************************************************************
  *
@@ -1151,7 +1152,7 @@ public class TexAlgGenerator extends Generator {
 	@Override
 	protected void generateCode(Forever _forever, String _indent)
 	{
-		if (!_forever.isDisabled(false)) {
+		if (!_forever.isDisabled(true)) {
 			if (packageIndex > 1 || _forever.getComment().count() > 1) {
 				appendComment(_forever, _indent);
 			}
@@ -1326,7 +1327,7 @@ public class TexAlgGenerator extends Generator {
 	@Override
 	protected void generateCode(Try _try, String _indent)
 	{
-		if (!_try.isDisabled(false)) {
+		if (!_try.isDisabled(true)) {
 			if (packageIndex > 1 || _try.getComment().count() > 1) {
 				appendComment(_try, _indent);
 			}

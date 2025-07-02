@@ -54,6 +54,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
  *      Kay Gürtzig     2021-09-17      Enh. #979: Correct detection of Analyser marker bounds for popup
  *      Kay Gürtzig     2024-04-22      Inheritance modified (instead of implementing ILoop now extends Loop)
+ *      Kay Gürtzig     2025-07-02      Bugfix #1195: Element is also to hatched if indirectly disabled
  *
  ******************************************************************************************************
  *
@@ -191,7 +192,7 @@ public class Repeat extends Loop {
 		if (!checkVisibility(_viewport, _top_left)) { return; }
 		// END KGU#502/KGU#524/KGU#553 2019-03-13
 
-		if(isCollapsed(true)) 
+		if (isCollapsed(true)) 
 		{
 			Instruction.draw(_canvas, _top_left, getCollapsedText(), this, _inContention);
 			// START KGU#502/KGU#524/KGU#553 2019-03-14: Bugfix #518,#544,#557
@@ -209,7 +210,11 @@ public class Repeat extends Loop {
 		_canvas.setColor(drawColor);
 		_canvas.fillRect(myrect);
 		// START KGU#277 2016-10-13: Enh. #270
-		if (this.disabled) {
+		// START KGU#1080 2025-07-02: Bugfix #1195 Should also be hatched if indirectly disabled
+		//if (this.disabled) {
+		boolean isDisabled = this.isDisabled(false);
+		if (isDisabled) {
+		// END KGU#1080 2025-07-02
 			_canvas.hatchRect(myrect, 5, 10);
 		}
 		// END KGU#277 2016-10-13
@@ -220,7 +225,10 @@ public class Repeat extends Loop {
 		Instruction.draw(_canvas, myrect, this.getCuteText(false), this, _inContention);
 		// END KGU#453 2017-11-01
 		// START KGU#277 2016-10-13: Enh. #270
-		if (this.disabled) {
+		// START KGU#1080 2025-07-02: Bugfix #1195 Should also be hatched if indirectly disabled
+		//if (this.disabled) {
+		if (isDisabled) {
+		// END KGU#1080 2025-07-02
 			_canvas.hatchRect(myrect, 5, 10);
 		}
 		// END KGU#277 2016-10-13

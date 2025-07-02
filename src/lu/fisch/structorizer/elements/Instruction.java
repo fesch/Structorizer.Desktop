@@ -434,7 +434,10 @@ public class Instruction extends Element {
 //			canvas.drawRect(_top_left);
 			canvas.drawRect(myrect);
 			// START KGU#277 2016-10-13: Enh. #270
-			if (_element.isDisabled(true)) {
+			// START KGU#1080 2025-07-02: Bugfix #1195 Indirect disabled elements should also get hatched
+			//if (_element.isDisabled(true)) {
+			if (_element.isDisabled(false)) {
+			// END KGU#1080 2025-07-02
 //				canvas.hatchRect(_top_left, 5, 10);
 				// START KGU#1142 2024-03-22: Issue #1154 Allow element-specific adaptation
 				//canvas.hatchRect(myrect, 5, 10);

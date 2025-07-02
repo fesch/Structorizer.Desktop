@@ -65,6 +65,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2021-01-02      Enh. #905: Mechanism to draw a warning symbol on related DetectedError
  *      Kay Gürtzig     2021-02-09      Bugfix #930: Wrong selector line width calculation in prepareDraw()
  *      Kay Gürtzig     2024-04-16      Bugfix #1160: Separate X and Y text offset for drawing rotated elements
+ *      Kay Gürtzig     2025-07-02      Issue #447: With broken lines, prepareDraw might reserve too large a width
+ *                                      Bugfix #1195: Element is also to hatched if indirectly disabled
  *
  ******************************************************************************************************
  *
@@ -294,7 +296,10 @@ public class Case extends Element implements IFork
             StringList discrLines = new StringList();
             if (nBranches > 0)
             {
-                if (getText().get(nBranches).equals("%")) nBranches--;
+                // START KGU#1178 2025-07-02: Issue #447 With broken lines, the element could get too wide
+                //if (getText().get(nBranches).equals("%")) nBranches--;
+                if (brokenText.get(nBranches).equals("%")) nBranches--;
+                // END KGU#1178 2025-07-02
                 // START KGU#453 2017-11-01: Issue #447 - cope with line continuation (end-standing backslashes)
                 //discrLines.add(getText().get(0));
                 discrLines = StringList.explode(brokenText.get(0), SOFT_LINE_BREAK);
@@ -751,7 +756,10 @@ public class Case extends Element implements IFork
     		canvas.lineTo(myrect.right, ay);
     	}
     	// START KGU#277 2016-10-13: Enh. #270
-    	if (this.disabled) {
+    	// START KGU#1080 2025-07-02: Bugfix #1195 Should also be hatched if indirectly disabled
+    	//if (this.disabled) {
+    	if (this.isDisabled(false)) {
+    	// END KGU#1080 2025-07-02
     		canvas.hatchRect(myrect, 5, 10);
     	}
     	// END KGU#277 2016-10-13

@@ -63,6 +63,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-03-28      Enh. #128: comment block height slightly enlarged
  *      Kay Gürtzig     2021-01-02      Enh. #905: Mechanism to draw a warning symbol on related DetectedError
  *      Kay Gürtzig     2022-07-31      Bugfix #1054: Element width did not always respect comment width
+ *      Kay Gürtzig     2025-07-02      Bugfix #1195: Element is also to hatched if indirectly disabled
  *
  ******************************************************************************************************
  *
@@ -554,7 +555,10 @@ public class Alternative extends Element implements IFork {
 		// END KGU#435 2017-10-22
 		
 		// START KGU#277 2016-10-13: Enh. #270
-		if (this.disabled) {
+		// START KGU#1080 2025-07-02: Bugfix #1195 Should also be hatched if indirectly disabled
+		//if (this.disabled) {
+		if (this.isDisabled(false)) {
+		// END KGU#1080 2025-07-02
 			canvas.hatchRect(myrect, 5, 10);
 		}
 		// END KGU#277 2016-10-13

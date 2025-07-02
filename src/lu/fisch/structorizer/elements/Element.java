@@ -141,6 +141,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2024-03-22      Issue #1154: New method drawHatched(Rect, Canvas) to allow subclassing
  *      Kay Gürtzig     2024-04-16      Bugfix #1160: Separate X and Y text offset for drawing rotated elements
  *      Kay Gürtzig     2024-10-09      Enh. #1171: New methods fetchViewSettings(Ini) and cacheViewSettings(Ini)
+ *      Kay Gürtzig     2025-07-02      Issue #270: Implementation of isDisabled(boolean) was defective.
  *
  ******************************************************************************************************
  *
@@ -778,7 +779,7 @@ public abstract class Element {
 	// START KGU#277 2016-10-13: Enh. #270 Option to disable an Element from execution and export
 	/**
 	 * If true then this element is to be skipped on execution and outcommented on code export!
-	 * Also see isDisabled() for recursively inherited disabled state
+	 * Also see {@link #isDisabled(boolean)} for recursively inherited disabled state
 	 */
 	protected boolean disabled = false;
 	// END KGU#277 2016-10-13
@@ -5201,12 +5202,16 @@ public abstract class Element {
 	// START KGU#277 2016-10-13: Enh. #270 - Option to disable an Element from execution and export
 	/**
 	 * Checks whether this element or one of its ancestors is disabled 
-	 * @param individually - if {@code true} then only the individual setting will be reported
-	 * @return true if directly or indirectly disabled
+	 * @param individually - if {@code true} then only the individual setting
+	 *    will be reported
+	 * @return {@code true} if directly (or indirectly) disabled
 	 */
 	public boolean isDisabled(boolean individually)
 	{
-		return this.disabled || (this.parent != null && this.parent.isDisabled(individually));
+		// START KGU#1179 2025-07-02: Issue #270 Implementation was flawed in case of true
+		//return this.disabled || (this.parent != null && this.parent.isDisabled(individually));
+		return disabled || !individually && (this.parent != null && this.parent.isDisabled(false));
+		// END KGU#1179 2025-07-02
 	}
 	// END KGU#277 2016-10-13
 	

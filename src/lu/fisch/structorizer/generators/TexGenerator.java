@@ -52,6 +52,7 @@ package lu.fisch.structorizer.generators;
  *                                      method transformText extracted for the token-internal substitution
  *      Kay Gürtzig     2022-08-23      Structorizer version inserted as LaTeX comment
  *      Kay Gürtzig     2025-02-16      Bugfix #1192: Export instructions with (tail) return statements as exit structure
+ *      Kay Gürtzig     2025-07-03      Bugfix #1195: disabled check unified (--> isDisabled(true))
  *
  ******************************************************************************************************
  *
@@ -566,7 +567,7 @@ public class TexGenerator extends Generator {
 	@Override
 	protected void generateCode(Forever _forever, String _indent)
 	{
-		if (!_forever.isDisabled(false)) {
+		if (!_forever.isDisabled(true)) {
 			code.add(_indent+"\\forever");
 			generateCode(_forever.getBody(), _indent + this.getIndent());
 			code.add(_indent+"\\foreverend");

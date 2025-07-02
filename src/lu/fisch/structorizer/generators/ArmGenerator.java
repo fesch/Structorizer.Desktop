@@ -72,7 +72,8 @@ package lu.fisch.structorizer.generators;
  *                                      Bugfix #1020: terminal return instructions had not been processed
  *      Kay Gürtzig     2022-09-30      Bugfix #1074: The generator code for (ARM) INSTRUCTION ran into that
  *                                      for INPUT instructions
- *                      2023-02-24      Bugfix #1074: Check for ARM INSTRUCTION syntax refined.
+ *      Kay Gürtzig     2023-02-24      Bugfix #1074: Check for ARM INSTRUCTION syntax refined.
+ *      Kay Gürtzig     2025-07-03      Bugfix #1195: All checks for disabled state extended to inherited
  *
  ******************************************************************************************************
  *
@@ -641,7 +642,7 @@ public class ArmGenerator extends Generator {
     protected void generateCode(Instruction _inst, String _indent) {
         appendComment(_inst, _indent + getIndent());
 
-        boolean isDisabled = _inst.isDisabled(true);
+        boolean isDisabled = _inst.isDisabled(false);
         Subqueue sq = (Subqueue)_inst.parent;
         boolean isLastRoutineElement = sq.parent instanceof Root
                 && _inst == sq.getElement(sq.getSize() - 1);
@@ -686,7 +687,7 @@ public class ArmGenerator extends Generator {
         String colon = syntaxDiffs[gnuEnabled ? 0 : 1][0];
         
         // the local caching of the COUNTER variable is essential
-        boolean isDisabled = _alt.isDisabled(true);
+        boolean isDisabled = _alt.isDisabled(false);
         appendComment(_alt, _indent + getIndent());
         // START KGU#1012 2021-11-14: Issue #967 Syntax restrictions
         if (checker != null && !isDisabled) {
@@ -754,7 +755,7 @@ public class ArmGenerator extends Generator {
 
         String colon = syntaxDiffs[gnuEnabled ? 0 : 1][0];
 
-        boolean isDisabled = _case.isDisabled(true);
+        boolean isDisabled = _case.isDisabled(false);
 
         // Extract the text in the block
         StringList lines = _case.getUnbrokenText();
@@ -1064,7 +1065,7 @@ public class ArmGenerator extends Generator {
     protected void generateCode(While _while, String _indent) {
         String colon = syntaxDiffs[gnuEnabled ? 0 : 1][0];
 
-        boolean isDisabled = _while.isDisabled(true);
+        boolean isDisabled = _while.isDisabled(false);
         appendComment(_while, _indent + getIndent());
         // START KGU#1012 2021-11-14: Issue #967 Syntax restrictions
         if (checker != null && !isDisabled) {
@@ -1113,7 +1114,7 @@ public class ArmGenerator extends Generator {
     protected void generateCode(Repeat _repeat, String _indent) {
         String colon = syntaxDiffs[gnuEnabled ? 0 : 1][0];
 
-        boolean isDisabled = _repeat.isDisabled(true);
+        boolean isDisabled = _repeat.isDisabled(false);
 
         appendComment(_repeat, _indent + getIndent());
         // START KGU#1012 2021-11-14: Issue #967 Syntax restrictions
@@ -1163,7 +1164,7 @@ public class ArmGenerator extends Generator {
     protected void generateCode(Forever _forever, String _indent) {
         String colon = syntaxDiffs[gnuEnabled? 0 : 1][0];
 
-        boolean isDisabled = _forever.isDisabled(true);
+        boolean isDisabled = _forever.isDisabled(false);
         appendComment(_forever, _indent + getIndent());
 
         int counter = COUNTER;
@@ -1460,7 +1461,7 @@ public class ArmGenerator extends Generator {
      */
     @Override
     protected void generateCode(Try _try, String _indent) {
-        boolean isDisabled = _try.isDisabled(true);
+        boolean isDisabled = _try.isDisabled(false);
         appendComment(_try, getIndent());
         addCode("LDMFD sp!,{R0-R12,pc}^", getIndent(), isDisabled);
         generateCode(_try.qTry, _indent);
