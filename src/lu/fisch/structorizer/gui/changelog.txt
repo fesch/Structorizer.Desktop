@@ -282,7 +282,8 @@ Current development version 3.32-28 (2025-07-03)
 - 27: Bugfix #1192 Code export of tail return statements ignored keyword <2>
 - 27: Bugfix #1193 Flaws detecting arguments and results on outsourcing <2>
 - 28: Issue #447 Case drawing could reserve unnecessary element width if
-      the text contains continued lines <2>
+      the text contains continued lines, potential flaws on exporting Case
+      elements with broken lines to bash code fixed. <2>
 - 28: Bugfix #1195 Some element types weren't hatched if indirectly disabled,
       Element editor unduly showed "disabled" check state in such a case,
       some generators (ARM, StrukTex, TextAlgo) behaved inconsistently <2>

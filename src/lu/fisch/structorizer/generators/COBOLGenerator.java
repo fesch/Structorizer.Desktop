@@ -1470,7 +1470,8 @@ public class COBOLGenerator extends Generator {
 		}
 		// code.add(_indent+"");
 	}
-		
+	
+	@Override
 	protected void generateCode(Try _try, String _indent)
 	{
 		/* FIXME this should somehow be converted to a "declarative procedure" declaration,

@@ -80,6 +80,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2023-10-15      Bugfix #1096 Initialisation for multidimensional arrays fixed
  *      Kay Gürtzig             2023-12-27      Issue #1123: Translation of built-in function random() added.
  *      Kay Gürtzig             2024-03-14      Bugfix #1139: Risk of NullPointerException in appendCatchHeading()
+ *      Kay Gürtzig             2025-07-03      Missing Override annotations added
  *
  ******************************************************************************************************
  *
@@ -155,16 +156,19 @@ public class CSharpGenerator extends CGenerator
 {
 
 	/************ Fields ***********************/
+	@Override
 	protected String getDialogTitle()
 	{
 		return "Export C# ...";
 	}
 
+	@Override
 	protected String getFileDescription()
 	{
 		return "C# Source Code";
 	}
 
+	@Override
 	protected String[] getFileExtensions()
 	{
 		String[] exts = {"cs"};
@@ -188,6 +192,7 @@ public class CSharpGenerator extends CGenerator
 	 * @return a {@link TryCatchSupportLevel} value
 	 * @see #appendCatchHeading(Try, String)
 	 */
+	@Override
 	protected TryCatchSupportLevel getTryCatchLevel()
 	{
 		return TryCatchSupportLevel.TC_TRY_CATCH_FINALLY;
@@ -314,6 +319,7 @@ public class CSharpGenerator extends CGenerator
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.Generator#transformInput(java.lang.String)
 	 */
+	@Override
 	protected String transformInput(String _interm)
 	{
 		String transf = super.transformInput(_interm);
@@ -387,6 +393,7 @@ public class CSharpGenerator extends CGenerator
 	 * @param _includeFileName a string from the user include configuration
 	 * @return the preprocessed string as to be actually inserted
 	 */
+	@Override
 	protected String prepareUserIncludeItem(String _includeFileName)
 	{
 		return _includeFileName;
@@ -404,6 +411,7 @@ public class CSharpGenerator extends CGenerator
 	 * @param _includeName a generic (language-independent) string for the generator include configuration
 	 * @return the converted string as to be actually added to {@link #generatorIncludes}
 	 */
+	@Override
 	protected String prepareGeneratorIncludeItem(String _includeName)
 	{
 		return _includeName;
@@ -540,6 +548,7 @@ public class CSharpGenerator extends CGenerator
 	 * @param _isDisabled - indicates whether the code is o be commented out
 	 * @param _typeEntry - an existing {@link TyeMapEntry} for the assumed record type (or null)
 	 */
+	@Override
 	protected void generateRecordInit(String _lValue, String _recordValue, String _indent, boolean _isDisabled, TypeMapEntry _typeEntry) {
 		// This is practically identical to Java
 		// START KGU#559 2018-07-21: Enh. #563 - Radically revised
@@ -565,6 +574,7 @@ public class CSharpGenerator extends CGenerator
 	 * @param _elemType - the {@link TypeMapEntry} of the element type is available
 	 * @param _isDecl - if this is part of a declaration (i.e. a true initialization)
 	 */
+	@Override
 	protected String transformOrGenerateArrayInit(String _lValue, StringList _arrayItems, String _indent, boolean _isDisabled, String _elemType, boolean _isDecl)
 	{
 		// START KGU#732 2019-10-03: Bugfix #755 - The operator new is always to be used.
@@ -715,6 +725,7 @@ public class CSharpGenerator extends CGenerator
 	 * @param _indent - the current indentation level
 	 * @return true iff the method created some loop code (sensible or not)
 	 */
+	@Override
 	protected boolean generateForInCode(For _for, String _indent)
 	{
 		// We simply use the range-based loop of Java (as far as possible)
@@ -1489,6 +1500,7 @@ public class CSharpGenerator extends CGenerator
 	 * @param _indent - current indentation
 	 * @see #appendGlobalInitialisations(Root, String)
 	 */
+	@Override
 	protected void appendGlobalInitialisationsLib(String _indent) {
 		// We simply call the global initialisation function of the library
 		addCode("initialize_" + this.libModuleName + "();", _indent, false);

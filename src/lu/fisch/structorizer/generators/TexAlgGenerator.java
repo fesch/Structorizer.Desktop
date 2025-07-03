@@ -34,7 +34,8 @@ package lu.fisch.structorizer.generators;
  *      ------          ----            -----------
  *      Kay Gürtzig     2021-06-08      First Issue on behalf of enhancement request #953
  *      Kay Gürtzig     2022-08-23      Structorizer version inserted as LaTeX comment
- *      Kay Gürtzig     2025-07-03      Bugfix #1195: disabled check unified (--> isDisabled(true))
+ *      Kay Gürtzig     2025-07-03      Bugfix #1195: disabled check unified (--> isDisabled(true)),
+ *                                      missing Override annotations added
  *
  ******************************************************************************************************
  *
@@ -1382,6 +1383,7 @@ public class TexAlgGenerator extends Generator {
 		}
 	}
 	
+	@Override
 	public String generateCode(Root _root, String _indent, boolean _public)
 	{
 		int line0 = code.count();
@@ -1627,6 +1629,7 @@ public class TexAlgGenerator extends Generator {
 	// END KGU#483 2017-12-30
 
 	// START KGU#483 2018-01-02: Enh. #389 + issue #497
+	@Override
 	protected void appendDefinitions(Root _root, String _indent, StringList _varNames, boolean _force) {
 		// Just generate the entire diagram...
 		boolean wasTopLevel = topLevel;

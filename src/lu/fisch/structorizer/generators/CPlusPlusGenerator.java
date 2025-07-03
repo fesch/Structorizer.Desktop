@@ -129,6 +129,7 @@ public class CPlusPlusGenerator extends CGenerator {
 	 * @return a {@link TryCatchSupportLevel} value
 	 * @see #appendCatchHeading(Try, String)
 	 */
+	@Override
 	protected TryCatchSupportLevel getTryCatchLevel()
 	{
 		return TryCatchSupportLevel.TC_TRY_CATCH;
@@ -426,6 +427,7 @@ public class CPlusPlusGenerator extends CGenerator {
 	 * @param _indent - the current indentation level
 	 * @return true iff the method created some loop code (sensible or not)
 	 */
+	@Override
 	protected boolean generateForInCode(For _for, String _indent)
 	{
 		// We simply use the range-based loop of C++11 (should be long enough established)

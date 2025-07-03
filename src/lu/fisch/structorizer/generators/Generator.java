@@ -3065,7 +3065,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	protected void generateCode(Case _case, String _indent)
 	{
 		// code.add(_indent+"");
-		for(int i=0; i < _case.qs.size(); i++)
+		for(int i = 0; i < _case.qs.size(); i++)
 		{
 			// code.add(_indent+"");
 			generateCode((Subqueue) _case.qs.get(i), _indent+this.getIndent());

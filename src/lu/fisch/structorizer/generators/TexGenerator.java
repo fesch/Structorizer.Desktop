@@ -52,7 +52,8 @@ package lu.fisch.structorizer.generators;
  *                                      method transformText extracted for the token-internal substitution
  *      Kay Gürtzig     2022-08-23      Structorizer version inserted as LaTeX comment
  *      Kay Gürtzig     2025-02-16      Bugfix #1192: Export instructions with (tail) return statements as exit structure
- *      Kay Gürtzig     2025-07-03      Bugfix #1195: disabled check unified (--> isDisabled(true))
+ *      Kay Gürtzig     2025-07-03      Bugfix #1195: disabled check unified (--> isDisabled(true)),
+ *                                      some missing Override annotations added
  *
  ******************************************************************************************************
  *
@@ -82,21 +83,25 @@ public class TexGenerator extends Generator {
 	private final int E_PADDING = 20;
 	
 	/************ Fields ***********************/
+	@Override
 	protected String getDialogTitle()
 	{
 		return "Export StrukTeX Code ...";
 	}
 	
+	@Override
 	protected String getFileDescription()
 	{
 		return "StrukTeX Source Code";
 	}
 	
+	@Override
 	protected String getIndent()
 	{
 		return "  ";
 	}
 	
+	@Override
 	protected String[] getFileExtensions()
 	{
 		String[] exts = {"tex"};
@@ -150,6 +155,7 @@ public class TexGenerator extends Generator {
 	 * construction in the target language.
 	 * @return a {@link TryCatchSupportLevel} value
 	 */
+	@Override
 	protected TryCatchSupportLevel getTryCatchLevel()
 	{
 		return TryCatchSupportLevel.TC_NO_TRY;
@@ -272,6 +278,7 @@ public class TexGenerator extends Generator {
 	// END KGU#483 2017-12-30
 	// END KGU#18/KGU#23 2015-11-01
 
+	@Override
 	protected String transform(String _input)
 	{
 		// das Zuweisungssymbol
@@ -476,7 +483,7 @@ public class TexGenerator extends Generator {
 			// END KGU#483 2017-12-31
 			generateCode((Subqueue) _case.qs.get(0), indentPlus2);
 			// The further branches have to be added witch switch clauses
-			for(int i=1; i < nBranches-1; i++)
+			for (int i = 1; i < nBranches-1; i++)
 			{
 				code.add(indentPlus1 + "\\switch{" + transform(caseText.get(i+1).trim()) + "}");
 				generateCode((Subqueue) _case.qs.get(i), indentPlus2);

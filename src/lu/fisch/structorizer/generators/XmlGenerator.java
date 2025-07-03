@@ -54,6 +54,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2019-11-13      Method loadLicenseText moved to Generator in order to fix bug #778
  *      Kay Gürtzig     2021-02-22      Enh. #410: New Root field "namespace" supported
  *      Kay Gürtzig     2021-02-26      Bugfix #945: Disabled status of parallel elements had not been saved
+ *      Kay Gürtzig     2025-07-03      Missing Override annotations added
  *
  ******************************************************************************************************
  *
@@ -80,21 +81,25 @@ public class XmlGenerator extends Generator
 	// END KGU#118 2015-12-31
 	
 	/************ Fields ***********************/
+	@Override
 	protected String getDialogTitle()
 	{
 		return "XML Code ...";
 	}
 	
+	@Override
 	protected String getFileDescription()
 	{
 		return "XML Code";
 	}
 	
+	@Override
 	protected String getIndent()
 	{
 		return "\t";
 	}
 	
+	@Override
 	protected String[] getFileExtensions()
 	{
 		String[] exts = {"xml","nsd"};
@@ -154,6 +159,7 @@ public class XmlGenerator extends Generator
 	 * construction in the target language.
 	 * @return a {@link TryCatchSupportLevel} value
 	 */
+	@Override
 	protected TryCatchSupportLevel getTryCatchLevel()
 	{
 		return TryCatchSupportLevel.TC_TRY_CATCH_FINALLY;
@@ -237,7 +243,7 @@ public class XmlGenerator extends Generator
 				"\" color=\"" + _case.getHexColor() +
 				"\" disabled=\"" + (_case.isDisabled(true) ? "1" : "0") +
 				"\">");
-		for(int i=0;i<_case.qs.size();i++)
+		for(int i = 0; i < _case.qs.size();i++)
 		{
 			// START KGU 2016-12-21: Bugfix #317
 			//code.add(_indent+this.getIndent()+"<qCase>");
