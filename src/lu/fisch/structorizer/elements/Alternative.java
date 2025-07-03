@@ -63,7 +63,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-03-28      Enh. #128: comment block height slightly enlarged
  *      Kay Gürtzig     2021-01-02      Enh. #905: Mechanism to draw a warning symbol on related DetectedError
  *      Kay Gürtzig     2022-07-31      Bugfix #1054: Element width did not always respect comment width
- *      Kay Gürtzig     2025-07-02      Bugfix #1195: Element is also to hatched if indirectly disabled
+ *      Kay Gürtzig     2025-07-02      Bugfix #1195: Element is also to be hatched if indirectly disabled,
+ *                                      missing Override annotations added.
  *
  ******************************************************************************************************
  *
@@ -129,6 +130,7 @@ public class Alternative extends Element implements IFork {
 		//setText(_strings);	// Already done
 	}
 	
+	@Override
 	public Rect prepareDraw(Canvas _canvas)
 	{
 		// START KGU#136 2016-03-01: Bugfix #97 (prepared)
@@ -350,6 +352,7 @@ public class Alternative extends Element implements IFork {
 		return rect0;
 	}
 	
+	@Override
 	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport, boolean _inContention)
 	{
 		// START KGU#502/KGU#524/KGU#553 2019-03-13: New approach to reduce drawing contention
@@ -662,6 +665,7 @@ public class Alternative extends Element implements IFork {
 	 * of the head partition (condition and branch labels). 
 	 * @return a rectangle starting at (0,0) and spanning to (width, head height) 
 	 */
+	@Override
 	public Rect getHeadRect()
 	{
 		return new Rect(rect.left, rect.top, rect.right, this.pt0Parting.y);
@@ -672,6 +676,7 @@ public class Alternative extends Element implements IFork {
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#findSelected()
 	 */
+	@Override
 	public Element findSelected()
 	{
 		Element sel = selected ? this : null;
@@ -683,6 +688,7 @@ public class Alternative extends Element implements IFork {
 	}
 	// END KGU#183 2016-04-24
 	
+	@Override
 	public Element copy()
 	{
 		Alternative ele = new Alternative(this.getText().copy());
@@ -731,16 +737,8 @@ public class Alternative extends Element implements IFork {
 	}
 	// END KGU#117 2016-03-07
 
-	/*@Override
-    public void setColor(Color _color) 
-    {
-        super.setColor(_color);
-        qFalse.setColor(_color);
-        qTrue.setColor(_color);
-    }*/
-	
-
 	// START KGU#156 2016-03-13: Enh. #124
+	@Override
 	protected String getRuntimeInfoString()
 	{
 		String info = this.getExecCount() + " / ";
@@ -765,6 +763,7 @@ public class Alternative extends Element implements IFork {
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#isTestCovered(boolean)
 	 */
+	@Override
 	public boolean isTestCovered(boolean _deeply)
 	{
 		return this.qTrue.isTestCovered(_deeply) && this.qFalse.isTestCovered(_deeply);

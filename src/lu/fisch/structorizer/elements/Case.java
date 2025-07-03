@@ -66,7 +66,9 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2021-02-09      Bugfix #930: Wrong selector line width calculation in prepareDraw()
  *      Kay Gürtzig     2024-04-16      Bugfix #1160: Separate X and Y text offset for drawing rotated elements
  *      Kay Gürtzig     2025-07-02      Issue #447: With broken lines, prepareDraw might reserve too large a width
- *                                      Bugfix #1195: Element is also to hatched if indirectly disabled
+ *                                      Bugfix #1195: Element is also to be hatched if indirectly disabled
+ *      Kay Gürtzig     2025-07-03      hasDefaultBranch() revised for the case of continued lines,
+ *                                      Missing @Override annotations inserted.
  *
  ******************************************************************************************************
  *
@@ -233,11 +235,17 @@ public class Case extends Element implements IFork
     // START KGU#227 2016-07-31: Apparently helpful method
     protected boolean hasDefaultBranch()
     {
-        int nLines = text.count();
-        return nLines > 1 && !text.get(nLines-1).trim().equals("%");
+        // START KGU#1178 2025-07-03: Bugfix #447 Didn't work with continued lines
+        //int nLines = text.count();
+        //return nLines > 1 && !text.get(nLines-1).trim().equals("%");
+        StringList unbrokenText = this.getUnbrokenText();
+        int nLines = unbrokenText.count();
+        return nLines > 1 && !unbrokenText.get(nLines-1).trim().equals("%");
+        // END KGU#1178 2025-07-03
     }
     // END KGU#227 2016-07-31
     
+    @Override
     public Rect prepareDraw(Canvas _canvas)
     {
             // START KGU#136 2016-03-01: Bugfix #97
@@ -298,7 +306,7 @@ public class Case extends Element implements IFork
             {
                 // START KGU#1178 2025-07-02: Issue #447 With broken lines, the element could get too wide
                 //if (getText().get(nBranches).equals("%")) nBranches--;
-                if (brokenText.get(nBranches).equals("%")) nBranches--;
+                if (brokenText.get(nBranches).replace(SOFT_LINE_BREAK, "").trim().equals("%")) nBranches--;
                 // END KGU#1178 2025-07-02
                 // START KGU#453 2017-11-01: Issue #447 - cope with line continuation (end-standing backslashes)
                 //discrLines.add(getText().get(0));
@@ -477,6 +485,7 @@ public class Case extends Element implements IFork
             return rect0;
     }
 
+    @Override
     public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport, boolean _inContention)
     {
     	// START KGU#502/KGU#524/KGU#553 2019-03-13: New approach to reduce drawing contention
@@ -931,9 +940,11 @@ public class Case extends Element implements IFork
 	// START KGU#346 2017-02-08: Issue #198 Provide a relative rect for the head
 	/**
 	 * Returns a copy of the (relocatable i. e. 0-bound) extension rectangle
-	 * of the head partition (discriminating expression and branch labels). 
+	 * of the head partition (discriminating expression and branch labels).
+	 * 
 	 * @return a rectangle starting at (0,0) and spanning to (width, head height) 
 	 */
+	@Override
 	public Rect getHeadRect()
 	{
 		return new Rect(rect.left, rect.top, rect.right, this.y0Branches);
@@ -944,6 +955,7 @@ public class Case extends Element implements IFork
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#findSelected()
 	 */
+	@Override
 	public Element findSelected()
 	{
 		Element sel = selected ? this : null;
@@ -955,19 +967,20 @@ public class Case extends Element implements IFork
 	}
 	// END KGU#183 2016-04-24
 
-    public Element copy() // Problem here???
-    {
-            Element ele = new Case(this.getText().getText());
-            copyDetails(ele, true);
-            ((Case) ele).qs.clear();
-            for(int i=0; i < qs.size(); i++)
-            {
-                    Subqueue ss = (Subqueue) ((Subqueue) this.qs.get(i)).copy();
-                    ss.parent=ele;
-                    ((Case) ele).qs.add(ss);
-            }
-            return ele;
-    }
+	@Override
+	public Element copy() // Problem here???
+	{
+		Element ele = new Case(this.getText().getText());
+		copyDetails(ele, true);
+		((Case) ele).qs.clear();
+		for(int i=0; i < qs.size(); i++)
+		{
+			Subqueue ss = (Subqueue) ((Subqueue) this.qs.get(i)).copy();
+			ss.parent=ele;
+			((Case) ele).qs.add(ss);
+		}
+		return ele;
+	}
 
 	// START KGU#119 2016-01-02: Bugfix #78
 	/**
@@ -1010,6 +1023,7 @@ public class Case extends Element implements IFork
 	// END KGU#117 2016-03-07
 
 	// START KGU#156 2016-03-13: Enh. #124
+	@Override
 	protected String getRuntimeInfoString()
 	{
 		String info = this.getExecCount() + " / ";
@@ -1034,6 +1048,7 @@ public class Case extends Element implements IFork
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#isTestCovered(boolean)
 	 */
+	@Override
 	public boolean isTestCovered(boolean _deeply)
 	{
 		boolean covered = true;
@@ -1165,6 +1180,7 @@ public class Case extends Element implements IFork
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#mayPassControl()
 	 */
+	@Override
 	public boolean mayPassControl()
 	{
 		// A Case selection may only pass control if being disabled or containing at least one
@@ -1186,6 +1202,7 @@ public class Case extends Element implements IFork
 	 * is to be involved
 	 * @return the maximum line length
 	 */
+	@Override
 	public int getMaxLineLength(boolean _includeSubstructure)
 	{
 		int maxLen = super.getMaxLineLength(false);

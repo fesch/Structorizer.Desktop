@@ -54,7 +54,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-03-13      Issues #518, #544, #557: Element drawing now restricted to visible rect.
  *      Kay Gürtzig     2021-09-17      Enh. #979: Correct detection of Analyser marker bounds for popup
  *      Kay Gürtzig     2024-04-22      Inheritance modified (instead of implementing ILoop now extends Loop)
- *      Kay Gürtzig     2025-07-02      Bugfix #1195: Element is also to hatched if indirectly disabled
+ *      Kay Gürtzig     2025-07-02      Bugfix #1195: Element is also to be hatched if indirectly disabled,
+ *                                      missing Override annotaions added
  *
  ******************************************************************************************************
  *
@@ -288,7 +289,7 @@ public class Repeat extends Loop {
 	{
 		Element selMe = super.getElementByCoord(_x, _y, _forSelection);
 		// START KGU#121 2016-01-03: A collapsed element has no visible substructure!
-    	// START KGU#207 2016-07-21: If this element isn't hit then there is no use searching the substructure
+		// START KGU#207 2016-07-21: If this element isn't hit then there is no use searching the substructure
 		//if (!this.isCollapsed())
 		if (!this.isCollapsed(true) && (selMe != null || _forSelection))
 		// START KGU#207 2016-07-21
@@ -345,13 +346,6 @@ public class Repeat extends Loop {
 	}
 	// END KGU#119 2016-01-02
 	
-    /*@Override
-    public void setColor(Color _color) 
-    {
-        super.setColor(_color);
-        q.setColor(_color);
-    }*/
-
 	// START KGU#156 2016-03-13: Enh. #124
 	protected String getRuntimeInfoString()
 	{
@@ -388,8 +382,8 @@ public class Repeat extends Loop {
 	 * @see lu.fisch.structorizer.elements.Element#addFullText(lu.fisch.utils.StringList, boolean)
 	 */
 	@Override
-    protected void addFullText(StringList _lines, boolean _instructionsOnly)
-    {
+	protected void addFullText(StringList _lines, boolean _instructionsOnly)
+	{
 		if (!this.isDisabled(false)) {
 			// The own text contains just a condition (i.e. a logical expression), not an instruction
 			if (!_instructionsOnly)
@@ -401,7 +395,7 @@ public class Repeat extends Loop {
 			}
 			this.q.addFullText(_lines, _instructionsOnly);
 		}
-    }
+	}
 	// END KGU 2015-10-16
 	
 	// START KGU#199 2016-07-07: Enh. #188 - ensure Call elements for known subroutines
@@ -449,6 +443,7 @@ public class Repeat extends Loop {
 	 * is to be involved
 	 * @return the maximum line length
 	 */
+	@Override
 	public int getMaxLineLength(boolean _includeSubstructure)
 	{
 		int maxLen = super.getMaxLineLength(false);

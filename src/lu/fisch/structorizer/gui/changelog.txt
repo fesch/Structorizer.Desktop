@@ -277,14 +277,15 @@ Current development version 3.32-28 (2025-07-03)
 - 26: Bugfix #1190 Includables now involved in BASIC export, recursive check
       for indirectly included declarations (effective for all languages),
       Nested initialiser expressions are now recursively resolved <2>
-- 27: Bugfix #690/#1087 C99 import didn't reliably suppress "struct" etc.
-      in function parameter declaration lists.
+- 27: Bugfix #690/#1087 C99 import didn't reliably suppress "struct", "enum"
+      etc. in function parameter declaration lists.
 - 27: Bugfix #1192 Code export of tail return statements ignored keyword <2>
 - 27: Bugfix #1193 Flaws detecting arguments and results on outsourcing <2>
-- 28: Issue #447 Case drawing could reserve unnecessary element width <2>
+- 28: Issue #447 Case drawing could reserve unnecessary element width if
+      the text contains continued lines <2>
 - 28: Bugfix #1195 Some element types weren't hatched if indirectly disabled,
       Element editor unduly showed "disabled" check state in such a case,
-      some generators (ARM, StrukTex, TextAlgo) accordingly revised <2>
+      some generators (ARM, StrukTex, TextAlgo) behaved inconsistently <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>
