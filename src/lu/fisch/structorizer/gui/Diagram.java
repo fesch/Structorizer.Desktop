@@ -251,6 +251,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2024-10-06      Bugfix #1172: replaceTurtleizerAPI() failed to redraw the diagram after changes
  *      Kay Gürtzig     2024-10-09      Issue #1173: exportSWF() marked as deprecated
  *      Kay Gürtzig     2024-11-27      Bugfix #1181: Ensure clean exec highlighting in redraw(Element)
+ *      Kay Gürtzig     2025-07-10      Enh. #1196: Some methods made static/public for new Analyser checks
  *
  ******************************************************************************************************
  *
@@ -10502,7 +10503,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 */
 	// START KGU#911 2021-01-10: Enh. #910 Result type changed
 	//protected ArrayList<DiagramController> getDiagramControllers() {
-	protected LinkedHashMap<DiagramController, Root> getDiagramControllers() {
+	// START KGU#1181 2025-07-10: Enh. #???? made public and static
+	//protected LinkedHashMap<DiagramController, Root> getDiagramControllers() {
+	public static LinkedHashMap<DiagramController, Root> getDiagramControllers() {
 	// END KGU#911 2021-01-10
 		if (diagramControllers != null) {
 			return diagramControllers;
@@ -10522,7 +10525,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if (plugins.isEmpty()) {
 			BufferedInputStream buff = null;
 			try {
-				buff = new BufferedInputStream(getClass().getResourceAsStream("controllers.xml"));
+				buff = new BufferedInputStream(Diagram.class.getResourceAsStream("controllers.xml"));
 				GENParser genp = new GENParser();
 				plugins = genp.parse(buff);
 			} catch (Exception ex) {
@@ -10568,7 +10571,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		if (!errors.isEmpty()) {
 			errors = Menu.msgTitleLoadingError.getText() + errors;
-			JOptionPane.showMessageDialog(this.getFrame(), errors,
+			// START KGU#1181 2025-07-10: Enh. ???? no parentComponent in a static routine
+			//JOptionPane.showMessageDialog(this.getFrame(), errors,
+			JOptionPane.showMessageDialog(null, errors,
+			// END KGU#1181 2025-07-10
 					Menu.msgTitleParserError.getText(), JOptionPane.ERROR_MESSAGE);
 		}
 		return diagramControllers;
@@ -10583,7 +10589,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * @param controller - a {@link DiagramController} implementor instance
 	 * @return a special immutable Includable
 	 */
-	private Root constructDiagrContrIncludable(DiagramController controller) {
+	// KGU#1181 2025-07-10: Enh. #???? Made static
+	private static Root constructDiagrContrIncludable(DiagramController controller) {
 		Root incl = new Root(StringList.getNew("$" + controller.getName().replace(" ", "_")));
 		incl.setInclude(false);
 		StringList comment = new StringList();
@@ -10645,7 +10652,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * be added to
 	 * @return number of routines
 	 */
-	public int addRoutineSignatures(HashMap<String, Method> routines, StringList comment) {
+	// KGU#1181 2025-07-10: Enh. #???? made static
+	public static int addRoutineSignatures(HashMap<String, Method> routines, StringList comment) {
 		int count = 0;
 		for (Map.Entry<String, Method> entry : routines.entrySet()) {
 			String[] parts = entry.getKey().split("#", -1);
@@ -11355,7 +11363,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 */
 	public boolean enableController(String className, boolean selected) {
 		// Ensure diagramControllers is initialised 
-		this.getDiagramControllers();
+		getDiagramControllers();
 		// START KGU#911 2021-01-10: Enh. #910 Status now held in associated Includables
 		//long mask = 1;
 		//for (DiagramController controller: diagramControllers) {

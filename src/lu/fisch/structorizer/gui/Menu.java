@@ -134,6 +134,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2023-11-09      Issue #311: Preference dump selection dialog adapted to menu changes;
  *                                      menuEditCopyDiagramPNG and menuEditCopyDiagramEMF moved to menuDiagram
  *      Kay Gürtzig     2024-11-22      Poll #1173: menuFileExportPictureSWF disabled (to be removed)
+ *      Kay Gürtzig     2025-07-10      Enh. #1196: Messages for new Analyser checks 32 and 33
  *
  ******************************************************************************************************
  *
@@ -662,6 +663,11 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	public static final LangTextHolder error31_5 = new LangTextHolder("For an initialization, the declaration list must contain exactly ONE variable, not %!");
 	public static final LangTextHolder error31_6 = new LangTextHolder("Anonymous type construction «%» is illegal here!");
 	// END KGU#1089 2023-10-13
+	// START KGU#1181 2025-07-10: Enh.#1196 New Analyser checks wrt controller routines
+	public static final LangTextHolder error32_1 = new LangTextHolder("Variable name «%1» may collide with a routine name in controller(s) %2 on code generation.");
+	public static final LangTextHolder error32_2 = new LangTextHolder("Routine «%1» with %2 arguments might collide with a routine in controller(s) %3.");
+	public static final LangTextHolder error33 = new LangTextHolder("Turtleizer routine «%1» uses a simplified coordinate model, drawings may degrade. Consider «%2» instead.");
+	// END KGU#1181 2025-07-10
 	// START KGU#459 2017-11-14: Enh. #459
 	public static final LangTextHolder msgGuidedTours = new LangTextHolder("You activated guided tours.\n\nWatch out for recommendations\nor instructions\nin the bottom text pane\n(Analyser report list)."
 			+ "\nLittle blue or red triangles in\nthe elements will remind you.");

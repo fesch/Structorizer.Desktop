@@ -148,6 +148,7 @@
  *      Kay Gürtzig         2024-03-17  Issue #1138: New / modified conflict messages for Surface
  *      Kay Gürtzig         2024-04-21  ExportOptionDialoge renamed to ExportOptionDialog
  *      Kay Gürtzig         2024-11-22  Poll #1173: menuFileExportPictureSWF removed.
+ *      Kay Gürtzig         2025-07-10  Enh. #1196: Messages for new Analyser checks 32, 33
  *
  ******************************************************************************************************
  *
@@ -592,6 +593,9 @@ Menu.error31_3.text=Diese Deklarationsobjekte sind keine geeigneten Bezeichner: 
 Menu.error31_4.text=Versuch, die bereits existierende(n) Variable(n) «%» erneut zu deklarieren!
 Menu.error31_5.text=Für eine Initialisierung muss die Deklaration genau EINE Variable enthalten, nicht % !
 Menu.error31_6.text=Eine anonyme Typkonstruction «%» ist an dieser Stelle unzulässig!
+Menu.error32_1.text=Variablenname «%1» kann (beim Code-Export) mit einem Unterprogrammnamen in Modul(en) %2 in Konflikt geraten.
+Menu.error32_2.text=Unterprogramm «%1» mit %2 Parametern könnte mit einer Routine in Modul(en) %3 kollidieren.
+Menu.error33.text=Die Turtleizer-Routine «%1» nutzt ein reduziertes Koordinatenmodell, Zeichnungen könnten entarten. «%2» wäre zu erwägen.
 Menu.errorLineReference.text= (Zeile %)
 
 -----[ AnalyserPreferences ]-----
@@ -631,6 +635,8 @@ AnalyserPreferences.checkboxes.28.text=Prüfen, dass keine Fallauswahl-Überschn
 AnalyserPreferences.checkboxes.29.text=Prüfen, dass der @c-Auswahlausdruck keinem strukturierten Typ angehört.
 AnalyserPreferences.checkboxes.30.text=Prüfen, dass Klammern ausgeglichen und richtig verschachtelt sind.
 AnalyserPreferences.checkboxes.31.text=Syntax von Variablendeklarationen mit und ohne Initialisierung prüfen.
+AnalyserPreferences.checkboxes.32.text=Auf Namenskollisionen mit Zusatzmodul-Routinen prüfen.
+AnalyserPreferences.checkboxes.33.text=Bei Verwendung der Turtleizer-Routinen «fd», «bk» vor Pixelrundung warnen.
 AnalyserPreferences.lblDrawWarningSign.text=Zeichne Warndreieck in betroffenen Elementen
 AnalyserPreferences.okButton.text=OK
 

@@ -142,6 +142,7 @@
  *      Kay Gürtzig     2024-04-21      ExportOptionDialoge renamed to ExportOptionDialog
  *      Kay Gürtzig     2024-11-22      Poll #1173: menuFileExportPictureSWF removed.
  *      Kay Gürtzig     2025-02-06      Bugfix #1187: Menu.error24_10 grammatically corrected.
+ *      Kay Gürtzig     2025-07-10      Enh. #1196: Messages for new Analyser checks 32, 33
  *
  ******************************************************************************************************
  *
@@ -588,6 +589,9 @@ Menu.error31_3.text=These declaration items are bad or no identifiers: «%»!
 Menu.error31_4.text=Attempt to re-declare existing variable(s) «%»!
 Menu.error31_5.text=For an initialization, the declaration list must contain exactly ONE variable, not % !
 Menu.error31_6.text=Anonymous type construction «%» is illegal here!
+Menu.error32_1.text=Variable name «%1» may collide with a routine name in controller(s) %2 on code generation.
+Menu.error32_2.text=Routine «%1» with %2 arguments might collide with a routine in controller(s) %3.
+Menu.error33.text=Turtleizer routine «%1» uses a simplified coordinate model, drawings may degrade. Consider «%2» instead.
 Menu.errorLineReference.text= (line %)
 
 -----[ AnalyserPreferences ]-----
@@ -627,6 +631,8 @@ AnalyserPreferences.checkboxes.28.text=Check that @c selector lists are disjoint
 AnalyserPreferences.checkboxes.29.text=Check that the @c choice value is not of a structured type.
 AnalyserPreferences.checkboxes.30.text=Check that brackets are balanced and correctly nested.
 AnalyserPreferences.checkboxes.31.text=Check variable declaration and initialisation syntax.
+AnalyserPreferences.checkboxes.32.text=Check if an identifier might collide with diagram controller routines.
+AnalyserPreferences.checkboxes.33.text=Warn on usage of pixel-rounding Turtleizer procedures «fd», «bk».
 AnalyserPreferences.lblDrawWarningSign.text=Draw warning sign in affected elements
 AnalyserPreferences.okButton.text=OK
 

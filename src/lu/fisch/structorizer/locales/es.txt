@@ -148,6 +148,7 @@
  *      Kay Gürtzig     2024-03-17  Issue #1138: New / modified conflict messages for Surface
  *      Kay Gürtzig     2024-04-21  ExportOptionDialoge renamed to ExportOptionDialog
  *      Kay Gürtzig     2024-11-22  Poll #1173: menuFileExportPictureSWF removed.
+ *      Kay Gürtzig     2025-07-10  Enh. #1196: Messages for new Analyser checks 32, 33
  * 
  ******************************************************************************************************
  *
@@ -595,6 +596,9 @@ Menu.error31_3.text=Estos objetos de declaración no son identificadores adecuad
 Menu.error31_4.text=¡No es leyal volver a declarar las variables ya existentes «%»!
 Menu.error31_5.text=Para una inicialización, la declaración debe contener exactamente UNA variable, ¡no % !
 Menu.error31_6.text=¡Construcción de un tipo anónimo «%» no es permitido en este lugar!
+Menu.error32_1.text=¡Variable «%1» puede collidir con el nombre de rutinas de modulos como %2!
+Menu.error32_2.text=Rutina «%1» con %2 parámetros podría collidir con rutines de modulos como %3.
+Menu.error33.text=Rutina «%1» de Turtleizer va a redondear coordinates, así comon dibujos podrían degenerar. Pondera el uso de «%2» en su vez.
 Menu.errorLineReference.text= (línea %)
 
 -----[ AnalyserPreferences ]-----
@@ -633,6 +637,9 @@ AnalyserPreferences.checkboxes.27.text=Comprobar que los selectores de @c son co
 AnalyserPreferences.checkboxes.28.text=Comprobar que las listas selectoras de @c son disjuntas.
 AnalyserPreferences.checkboxes.29.text=Comprobar que el valor de selectión en elementos @c no es de un tipo estructurado.
 AnalyserPreferences.checkboxes.30.text=Comprobar el equilibrio de los paréntesis y que sean anidados coréctamente.
+AnalyserPreferences.checkboxes.31.text=Combrobar la sintaxis de declaraciones y inicializaciones de variables.
+AnalyserPreferences.checkboxes.32.text=Comprobar si habrá colisiones entre identificadores y nombres de rutinas de módulos adicionales.
+AnalyserPreferences.checkboxes.33.text=Advertir del uso de las proceduras «fd», «bk» de Turtleizer, que redondean pixeles.
 AnalyserPreferences.lblDrawWarningSign.text=Dibuja señal de advertencia en elementos afectados
 AnalyserPreferences.okButton.text=Aceptar
 
