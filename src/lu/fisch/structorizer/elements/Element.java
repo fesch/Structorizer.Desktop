@@ -799,14 +799,14 @@ public abstract class Element {
 
 	// used for drawing
 	// START KGU#136 2016-02-25: Bugfix #97 - New separate 0-based Rect for prepareDraw()
-	/** bounds aligned to fit in the context, no longer public */
+	/** bounds aligned to fit in the context, no longer public (use {@link #getRect()} to read) */
 	protected Rect rect = new Rect();
 	/** minimum bounds for stand-alone representation */
 	protected Rect rect0 = new Rect();
 	/** upper left corner coordinate offset wrt drawPoint */
 	protected Point topLeft = new Point(0, 0);
 	// END KGU#136 2016-03-01
-	/** Will be set and used by prepareDraw() (validity of {@link rect0}, avoids repeated evaluation) - to be reset on changes */
+	/** Will be set and used by {@link #prepareDraw(Canvas)} (validity of {@link rect0}, avoids repeated evaluation) - to be reset on changes */
 	protected boolean isRect0UpToDate = false;
 	// START KGU#502/KGU#524/KGU#553 2019-03-14: We need a second flag for correct drawing confinement
 	/** Will be set after the first complete drawing of the element (validity of {@link rect} - to be reset on changes */
@@ -858,6 +858,11 @@ public abstract class Element {
 
 	/**
 	 * Resets my cached drawing info
+	 * 
+	 * @see #isRect0UpToDate
+	 * @see #prepareDraw(Canvas)
+	 * @see #resetDrawingInfoUp()
+	 * @see #resetDrawingInfoDown()
 	 */
 	protected final void resetDrawingInfo()
 	{
@@ -874,6 +879,10 @@ public abstract class Element {
 	}
 	/**
 	 * Resets my drawing info and that of all of my ancestors
+	 * 
+	 * @see #isRect0UpToDate
+	 * @see #prepareDraw(Canvas)
+	 * @see #resetDrawingInfoDown()
 	 */
 	public final void resetDrawingInfoUp()
 	{
@@ -885,6 +894,10 @@ public abstract class Element {
 	}
 	/**
 	 * Recursively clears all drawing info this subtree down
+	 * 
+	 * @see #isRect0UpToDate
+	 * @see #prepareDraw(Canvas)
+	 * @see #resetDrawingInfoUp()
 	 */
 	// START KGU#238 2016-08-11: Code revision
 	//public abstract void resetDrawingInfoDown();
@@ -905,6 +918,15 @@ public abstract class Element {
 	// END KGU#238 2016-08-11
 	
 	// START KGU#502/KGU#524/KGU#553 2019-03-13: New approach to reduce drawing contention
+	/**
+	 * Checks whether parts of this element will be visible within the given
+	 * drawing region {@code _viewport}.
+	 * 
+	 * @param _viewport - the extent of the visible area
+	 * @param _topLeft - the predicted upper left corner of this element
+	 * @return {@code true} if some part of this elements bounds will be placed
+	 *     within {@code _viewport}
+	 */
 	protected boolean checkVisibility(Rectangle _viewport, Rect _topLeft)
 	{
 		// START KGU#502/KGU#524/KGU#553 2019-03-14: Issues #518,#544,#557 - we must refer to the eventual record
@@ -919,21 +941,32 @@ public abstract class Element {
 	// abstract things
 	/**
 	 * Recursively computes the drawing extensions of the element and stores
-	 * them in the 0-based rect0 attribute, which is also returned
+	 * them in the 0-based rect0 attribute, which is also returned.
+	 * 
 	 * @param _canvas - the drawing canvas for which the drawing is to be prepared
 	 * @return the origin-based extension record.
+	 * 
+	 * @see #draw(Canvas, Rect, Rectangle, boolean)
+	 * @see #resetDrawingInfo()
+	 * @see #resetDrawingInfoDown()
+	 * @see #resetDrawingInfoUp()
 	 */
 	public abstract Rect prepareDraw(Canvas _canvas);
 
 	/**
-	 * Actually draws this element within the given canvas, using _top_left
-	 * for the placement of the upper left corner. Uses attribute rect0 as
-	 * prepared by prepareDraw() to determine the expected extensions and
-	 * stores the the actually drawn bounds in attribute rect.
+	 * Actually draws this element within the given canvas, using argument
+	 * {@code _top_left} for the placement of the upper left corner. Uses
+	 * attribute {@link #rect0} as prepared by {@link #prepareDraw(Canvas)}
+	 * to determine the expected extensions and stores the the actually drawn
+	 * bounds in attribute {@link #rect}.
+	 * 
 	 * @param _canvas - the drawing canvas where the drawing is to be done in 
 	 * @param _top_left - conveyes the upper-left corner for the placement
 	 * @param _viewport - the visible area
 	 * @param _inContention - whether there is a massive drawing event contention
+	 * 
+	 * @see #checkVisibility(Rectangle, Rect)
+	 * @see #isRect0UpToDate
 	 */
 	public abstract void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport, boolean _inContention);
 	
@@ -2586,8 +2619,12 @@ public abstract class Element {
 	// END KGU#979 2021-06-10
 
 	/**
-	 * Returns a copy of the (relocatable i. e. 0-bound) extension rectangle 
-	 * @return a rectangle starting at (0,0) and spanning to (width, height) 
+	 * Returns a copy of the (relocatable i. e. 0-bound) extension rectangle.
+	 * 
+	 * @return a rectangle starting at (0,0) and spanning to (width, height).
+	 * 
+	 * @see #getRect(Point)
+	 * @see #getRectOffDrawPoint()
 	 */
 	public Rect getRect()
 	{
@@ -2596,8 +2633,12 @@ public abstract class Element {
 
 	// START KGU#136 2016-03-01: Bugfix #97
 	/**
-	 * Returns the bounding rectangle translated to point {@code relativeTo}
+	 * Returns the bounding rectangle translated to point {@code relativeTo}.
+	 * 
 	 * @return a rectangle having {@code relativeTo} as its upper left corner.
+	 * 
+	 * @see #getRect()
+	 * @see #getRectOffDrawPoint()
 	 */
 	public Rect getRect(Point relativeTo)
 	{
@@ -2606,8 +2647,12 @@ public abstract class Element {
 	}
 
 	/**
-	 * Returns the bounding rectangle translated relative to the drawingPoint 
-	 * @return a rectangle starting at relativeTo 
+	 * Returns the bounding rectangle translated relative to the drawingPoint.
+	 * 
+	 * @return a rectangle starting at {@link #topLeft}.
+	 * 
+	 * @see #getRect()
+	 * @see #getRect(Point)
 	 */
 	public Rect getRectOffDrawPoint()
 	{
@@ -2615,11 +2660,25 @@ public abstract class Element {
 	}
 	// END KGU#136 2016-03-01
 	
+	/** 
+	 * @return the font currently used for diagram element texts
+	 * 
+	 * @see #setFont(Font)
+	 */
 	public static Font getFont()
 	{
 		return font;
 	}
 
+	/**
+	 * Sets the font to be used for diagram element texts to {@code _font}.
+	 * Does not trigger a redrawing of all diagrams but is effective for
+	 * subsequent drawing.
+	 * 
+	 * @param _font - the new font to be used for further diagram rendering
+	 * 
+	 * @see #getFont()
+	 */
 	public static void setFont(Font _font)
 	{
 		font = _font;
@@ -2651,6 +2710,7 @@ public abstract class Element {
 	 * from the given {@link FontMetrics} (should correspond to on an UNzoomed (!) {@link Graphics2D}
 	 * object).<br/>
 	 * Note: This method is possibly subject to tuning.
+	 * 
 	 * @param fm - the underlying {@link FontMetrics}
 	 * @return the font height in px.
 	 */
