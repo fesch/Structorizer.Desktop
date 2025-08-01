@@ -82,6 +82,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-01-13      126_info added to replace 017 in some places.
  *      Kay Gürtzig     2021-02-06      Enh. #915: 127_merge and 128_split added
  *      Kay Gürtzig     2021-03-18      Issue #966: Icon 081 (language) replaced
+ *      Kay Gürtzig     2025-08-01      Enh. #1197: generateIcon() now also accepts null as argument
  *
  ******************************************************************************************************
  *
@@ -970,9 +971,10 @@ public class IconLoader {
 	 * Generates a circular icon filled with the given colour {@code _color}
 	 * and a thin black border. The circle radius will be reduced by
 	 * {@code _insets} pixels with respect to the icon size of
-	 * 16&nbsp;*&nbsp;{@link #scaleFactor}.
+	 * 16&nbsp;*&nbsp;{@link #scaleFactor}. If {@code _color} is {@code null}
+	 * then the icon will be transparent with an red cross withn the circle.
 	 * 
-	 * @param _color - the fill colour
+	 * @param _color - the fill colour or {@code null}
 	 * @param _insets - the distance of the circle circumference from the icon
 	 *    border
 	 * @return the created circular icon
@@ -985,18 +987,29 @@ public class IconLoader {
 		BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D graphics = (Graphics2D) image.getGraphics();
 		graphics.setColor(Color.BLACK);
-		// START KGU#493 2018-02-14: The colour buttons should look different from the Instruction button
-		//graphics.fillRect(0,0,size,size);
 		graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                RenderingHints.VALUE_ANTIALIAS_ON);
+				RenderingHints.VALUE_ANTIALIAS_ON);
 		graphics.setColor(Color.BLACK);
-		graphics.fillOval(_insets, _insets, size - 2 * _insets, size - 2 * _insets);
-		// END KGU#493 2018-02-14
-		graphics.setColor(_color);
-		// START KGU#493 2018-02-14: The colour buttons should look different from the Instruction button
-		//graphics.fillRect(1,1,size-2,size-2);
-		graphics.fillOval(_insets+1, _insets+1, size-2*(_insets+1), size-2*(_insets+1));
-		// END KGU#493 2018-02-14
+		// START KGU#2025-08-01: Enh. #1197 We need a style for "no colour"
+		if (_color != null) {
+		// END KGU#1182 2025-08-01
+			graphics.fillOval(_insets, _insets, size - 2 * _insets, size - 2 * _insets);
+			graphics.setColor(_color);
+			graphics.fillOval(_insets+1, _insets+1, size-2*(_insets+1), size-2*(_insets+1));
+		// START KGU#2025-08-01: Enh. #1197 (continued)
+		}
+		else {
+			//graphics.drawOval(_insets, _insets, size - 2 * _insets, size - 2 * _insets);
+			graphics.drawOval(_insets+1, _insets+1, size - 2*(_insets+1), size - 2*(_insets+1));
+			// Now place a red cross into the oval
+			int offset = (int)Math.round((size/2 - _insets) / Math.sqrt(2.0f)) - 1;
+			graphics.setColor(Color.RED);
+			int iMin = _insets + size/2 - offset;
+			int iMax = _insets + size/2 + offset;
+			graphics.drawLine(iMin, iMin, iMax, iMax);
+			graphics.drawLine(iMin, iMax, iMax, iMin);			
+		}
+		// END KGU#1182 2025-08-01
 		// START KGU 2018-09-17 free resources no longer needed
 		graphics.dispose();
 		// END KGU 2018-09-17

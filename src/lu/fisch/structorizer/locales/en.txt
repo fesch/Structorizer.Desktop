@@ -689,6 +689,7 @@ Editor.btnAbout.tooltip=Show the information message about Structorizer.
 Editor.btnHelp.tooltip=Show the Online User Guide in the browser.
 // colors
 Editor.btnColors.*.tooltip=Colorize the selected element with this color.
+Editor.btnNoColor.tooltip=Remove the specific color(s) from the selected (or all) branches.
 // collapsing
 Editor.btnCollapse.tooltip=Collapse the selected element.
 Editor.btnExpand.tooltip=Expand the selected element.

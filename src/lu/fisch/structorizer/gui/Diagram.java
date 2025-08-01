@@ -1484,6 +1484,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					}
 					// END KGU#87 2015-11-23
 				}
+				// START KGU#1182 2025-07-31: Enh. #1197 Allow to subselect headers in IFork
+				else if (ele instanceof IFork) {
+					// Element had already been selected, now check branch head
+					if (((IFork)selected).selectBranchHead(selX, selY)) {
+						redraw();
+					}
+				}
+				// END KGU#1182 2025-07-31
 				//redraw();
 				// START KGU#926 2021-02-04: Enh. #926
 				scrollErrorListToSelected();
@@ -10687,7 +10695,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * @see #enableController(String, boolean)
 	 */
 	private DiagramController[] getEnabledControllers() {
-		this.getDiagramControllers();
+		getDiagramControllers();
 		LinkedList<DiagramController> controllers = new LinkedList<DiagramController>();
 		// START KGU#911 2021-01-09: Enh. #910 status now coded in the Includables
 		//long mask = 1;

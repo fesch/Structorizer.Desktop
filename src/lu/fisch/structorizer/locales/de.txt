@@ -693,6 +693,7 @@ Editor.btnAbout.tooltip=Zeigen eines Informationsfensters über den Structorizer
 Editor.btnHelp.tooltip=Öffnen des Online-Nutzerhandbuchs
 // colors
 Editor.btnColors.*.tooltip=Einfärben des ausgewählten Elements mit dieser Farbe.
+Editor.btnNoColor.tooltip=Die speziell zugeordnete Farbe vom ausgewählten Zweig-Kopf (oder allen des Elements) entfernen.
 // collapsing
 Editor.btnCollapse.tooltip=Reduzieren des ausgewählten Elements.
 Editor.btnExpand.tooltip=Erweitern des ausgewählten Elements.

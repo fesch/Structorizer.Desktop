@@ -69,6 +69,7 @@ package lu.fisch.structorizer.elements;
  *                                      Bugfix #1195: Element is also to be hatched if indirectly disabled
  *      Kay Gürtzig     2025-07-03      hasDefaultBranch() revised for the case of continued lines,
  *                                      Missing @Override annotations inserted.
+ *      Kay Gürtzig     2025-07-31      Enh. #1197: Branch selector colouring enabled
  *
  ******************************************************************************************************
  *
@@ -81,11 +82,13 @@ import java.util.HashMap;
 import java.util.Vector;
 import java.awt.Color;
 import java.awt.Point;
+import java.awt.Polygon;
 import java.awt.Rectangle;
 
 import javax.swing.ImageIcon;
 
 import lu.fisch.graphics.*;
+import lu.fisch.structorizer.elements.Element.DrawingContext;
 import lu.fisch.structorizer.gui.FindAndReplace;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.utils.*;
@@ -98,62 +101,75 @@ import lu.fisch.utils.*;
 public class Case extends Element implements IFork
 {
 	
-    public Vector<Subqueue> qs = new Vector<Subqueue>();
-    
-    // START KGU#453 2017-11-01: Issue #447 - cope with line continuation
-    private static final String SOFT_LINE_BREAK = "\u00B6";
-    // END KGU#453 2017-11-01
+	public Vector<Subqueue> qs = new Vector<Subqueue>();
 
-    //private Rect r = new Rect();
-    private int fullWidth = 0;
-    // START KGU#136 2016-03-01: Bugfix #97 - cache the upper left corners of all branches
-    private Vector<Integer> x0Branches = new Vector<Integer>();
-    private int y0Branches = 0;
-    // END KGU#136 2016-03-01
-    // START KGU#453 2017-11-01: Performance improvement - we cache the text width in prepareDraw() for draw()
-    /** Widths of the selector texts per branch */
-    private int[] textWidths;
-    /** maximum number of the selector lines over all branch selectors */
-    private int nSelectorLines = 1;
-    // END KGU#453 2017-11-01
-    // START KGU#227 2016-07-31: Enh. #128
-    private Rect commentRect = new Rect();
-    // END KGU#227 2016-07-31
+	// START KGU#453 2017-11-01: Issue #447 - cope with line continuation
+	private static final String SOFT_LINE_BREAK = "\u00B6";
+	// END KGU#453 2017-11-01
+
+	//private Rect r = new Rect();
+	private int fullWidth = 0;
+	// START KGU#136 2016-03-01: Bugfix #97 - cache the upper left corners of all branches
+	private Vector<Integer> x0Branches = new Vector<Integer>();
+	private int y0Branches = 0;
+	// END KGU#136 2016-03-01
+	// START KGU#453 2017-11-01: Performance improvement - we cache the text width in prepareDraw() for draw()
+	/** Widths of the selector texts per branch */
+	private int[] textWidths;
+	/** maximum height of the selector lines over all branch selectors */
+	//private int nSelectorLines = 1;
+	private int selectorHeight = 1;
+	// END KGU#453 2017-11-01
+	// START KGU#227 2016-07-31: Enh. #128
+	private Rect commentRect = new Rect();
+	// END KGU#227 2016-07-31
 
 	// START KGU#258 2016-09-26: Enh. #253
 	private static final String[] relevantParserKeys = {"preCase", "postCase"};
 	// END KGU#258 2016-09-25
 	
-    // START KGU#91 2015-12-01: Bugfix #39 - Case may NEVER EVER interchange text and comment!
+	// START KGU#1182 2025-07-31: Enh. #1197 Allow to subselect headers in IFork
+	/**
+	 * Index of the currently selected branch head (0 -> T, 1 -> F, -1 - none).
+	 */
+	private int selectedBranchHead = -1;
+	
+	/**
+	 * Possible chosen colours for the existing branch selector head polygons
+	 */
+	private Vector<Color> branchHeadColors = new Vector<Color>();
+	// END KGU#1182 2025-07-31
+
+	// START KGU#91 2015-12-01: Bugfix #39 - Case may NEVER EVER interchange text and comment!
 	/**
 	 * Returns the content of the text field. Full stop. No swapping here!
 	 * @return the text StringList
 	 */
-    @Override
+	@Override
 	public StringList getText(boolean _ignored)
 	{
 		return getText();
 	}
 
-    /* (non-Javadoc)
-     * @see lu.fisch.structorizer.elements.Element#getComment(boolean)
-     */
-    @Override
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#getComment(boolean)
+	 */
+	@Override
 	public StringList getComment(boolean _alwaysTrueComment)
 	{
-    	// START KGU#172 2016-04-01: Bugfix #145
+		// START KGU#172 2016-04-01: Bugfix #145
 		//return getComment();
-        if (!_alwaysTrueComment && isSwitchTextCommentMode())
-        {
-        	return StringList.getNew(text.get(0));
-        }
-        else
-        {
-        	return comment;
-        }
+		if (!_alwaysTrueComment && isSwitchTextCommentMode())
+		{
+			return StringList.getNew(text.get(0));
+		}
+		else
+		{
+			return comment;
+		}
 		// END KGU#172 2016-04-01
 	}
-    // END KGU#91 2015-12-01
+	// END KGU#91 2015-12-01
 
 
 	@Override
@@ -173,7 +189,7 @@ public class Case extends Element implements IFork
 
             text = _textList;
 
-            if (qs==null)
+            if (qs == null)
             {
                 qs = new Vector<Subqueue>();
             }
@@ -212,24 +228,34 @@ public class Case extends Element implements IFork
                 qs.removeElementAt(qs.size()-1);
             }
             // END KGU#91 2015-12-01
+            // START KGU#1182 2025-07-31: Enh. #1197 head colour vector adjustment
+            if (this.branchHeadColors == null) {
+                this.branchHeadColors = new Vector<Color>();
+            }
+            else {
+                while (this.branchHeadColors.size() > qs.size()) {
+                    this.branchHeadColors.remove(this.branchHeadColors.size()-1);
+                }
+            }
+            // END KGU#1182 2025-07-31
 
     }
 
     public Case()
     {
-            super();
+        super();
     }
 
     public Case(String _strings)
     {
-            super(_strings);
-            setText(_strings);
+        super(_strings);
+        setText(_strings);
     }
 
     public Case(StringList _strings)
     {
-            super(_strings);
-            setText(_strings);
+        super(_strings);
+        setText(_strings);
     }
 
     // START KGU#227 2016-07-31: Apparently helpful method
@@ -349,7 +375,7 @@ public class Case extends Element implements IFork
             int width = 0;
             //int[] textWidths = new int[nBranches];
             textWidths = new int[nBranches];
-            nSelectorLines = 1;
+            int nSelectorLines = 1;
             for(int i = 0; i < nBranches; i++)
             {
                 // Instead of computing the text width three times (!?) we just store the result the first time
@@ -479,6 +505,9 @@ public class Case extends Element implements IFork
             this.textWidths = textWidths;
             this.fullWidth = fullWidth;
             // END KGU#516 2018-04-04
+            // START KGU#1182 2025-07-31: Enh. #1197 we need the selector part height
+            this.selectorHeight = nSelectorLines * fontHeight;
+            // END KGU#1182 2025-07-31
             // START KGU#136 2016-03-01: Bugfix #97  --> draw()
             isRect0UpToDate = true;
             // END KGU#136 2016-03-01
@@ -528,7 +557,7 @@ public class Case extends Element implements IFork
 
     	// START KGU#453 2017-11-02: Issue #447
     	//int minHeight = 2 * fontHeight + 4 * (E_PADDING / 2);
-    	int minHeight = (1 + nSelectorLines) * fontHeight + 4 * (E_PADDING / 2);
+    	int minHeight = fontHeight + selectorHeight + 4 * (E_PADDING / 2);
     	// END KGU#453 2017-11-02
     	// START KGU#172 2016-04-01: Bugfix #145 - we might have to put several comment lines in here
     	// START KGU#453 2017-11-01: Issue #447 - cope with line continuation
@@ -558,6 +587,64 @@ public class Case extends Element implements IFork
     	myrect.bottom = _top_left.top + minHeight;
     	//myrect.right-=1;
     	canvas.fillRect(myrect);
+    	
+    	// START KGU#1182 2025-07-31: Enh. #1197 Allow separate colouring of branch heads
+    	if ((!E_COLLECTRUNTIMEDATA ||
+    			E_RUNTIMEDATAPRESENTMODE == RuntimeDataPresentMode.NONE) &&
+    			(this.selectedBranchHead != -1 || !this.branchHeadColors.isEmpty())) {
+    		int nBranches = this.getBranchCount();
+    		boolean hasDeflt = this.hasDefaultBranch();
+    		int ixCleav = nBranches;
+    		int xCleav = rect.right;
+    		if (hasDeflt) {
+    			xCleav = this.x0Branches.get(--ixCleav);
+    		}
+			int top = _top_left.top + commentRect.bottom;
+    		int obliqueHeight = this.y0Branches - this.commentRect.bottom - this.selectorHeight - E_PADDING/2;
+    		// gradient of (left) oblique line
+    		double grad = 1.0 * obliqueHeight / xCleav;
+    		for (int i = 0; i < nBranches; i++) {
+    			Color brCol = Element.E_DRAWCOLOR;
+    			if (this.selectedBranchHead == i || (brCol = getBranchHeadColor(i)) != null) {
+    				int bottom = _top_left.top + this.y0Branches;
+    				int left = this.x0Branches.get(i);
+    				int right = rect.right;
+    				if (i+1 < x0Branches.size()) {
+    					right = this.x0Branches.get(i+1);
+    				}
+    				// Draw the respective trapezoid in the specified colour
+    				int[] xList = new int[] {
+    						_top_left.left + left,
+    						_top_left.left + left,
+    						_top_left.left + right,
+    						_top_left.left + right
+    						};
+    				int[] yList;
+    				if (i < ixCleav) {
+    					yList = new int[] {
+    							bottom,
+    							top + (int)Math.round(left * grad),
+    							top + (int)Math.round(right * grad),
+    							bottom
+    					};
+    				}
+    				else {
+    					grad = 1.0 * obliqueHeight / (xCleav - rect.right);
+    					top += obliqueHeight;
+    					yList = new int[] {
+    							bottom,
+    							top,
+    							top + (int)Math.round((right - left) * grad),
+    							bottom
+    					};
+    				}
+    				canvas.setColor(brCol);
+    				canvas.fillPoly(new Polygon(xList, yList, 4));
+    				canvas.setColor(drawColor);
+    			}
+    		}
+    	}
+    	// END KGU#1182 2025-07-31
 
     	// draw shape
     	myrect = _top_left.copy();
@@ -571,7 +658,7 @@ public class Case extends Element implements IFork
     	//int d = myrect.bottom-1;
     	int d = myrect.bottom-1 - commentRect.bottom;
     	// END KGU#435 2017-10-22
-    	// About the horizontal position of the cleave
+    	// About the horizontal position of the cleavage
     	int x = ((y-b)*(c-a) + a*(d-b)) / (d-b);
     	
     	// START KGU#227 2016-07-31: Enh. #128
@@ -598,7 +685,7 @@ public class Case extends Element implements IFork
     	}
     	// END KGU#227 2016-07-31
 
-    	// draw the selection expression (text 0)
+    	// draw the selection (discriminator) expression (text 0)
     	// START KGU#91 2015-12-01: Bugfix #39 Nonsense replaced
     	//for (int i=0; i<1; i++)
     	// START KGU#453 2017-11-01: Issue #447 - cope with line continuation
@@ -742,7 +829,7 @@ public class Case extends Element implements IFork
     	// END KGU#435 2017-10-22
     	int bx = myrect.left + lineWidth;
     	//int by = myrect.bottom-1 - fontHeight - E_PADDING / 2;
-    	int by = myrect.bottom-1 - (nSelectorLines * fontHeight) - E_PADDING / 2;
+    	int by = myrect.bottom-1 - selectorHeight - E_PADDING / 2;
 
     	// START KGU#91 2015-12-01: Bugfix #39: We should be aware of pathological cases...
     	//if(  ((String) getText().get(getText().count()-1)).equals("%") )
@@ -779,7 +866,7 @@ public class Case extends Element implements IFork
     	//myrect.top = _top_left.top + minHeight -1;
     	myrect.top = _top_left.top + this.y0Branches;
 
-    	if (qs.size()!=0)
+    	if (qs.size() != 0)
     	{
 
     		// if the last line isn't '%', then draw an else part
@@ -799,7 +886,7 @@ public class Case extends Element implements IFork
     			// Should already have been cached, so it won't cost time
     			rtt = qs.get(i).prepareDraw(_canvas);
 
-    			if (i==count-1)
+    			if (i == count-1)
     			{
     				myrect.right = _top_left.right;
     			}
@@ -837,7 +924,7 @@ public class Case extends Element implements IFork
     			for (int j = 0; j < brokenLine.length; j++) {
     				writeOutVariables(canvas,
     						myrect.right + (myrect.left-myrect.right) / 2 - (textWidths[i] - E_PADDING/2)/ 2,
-    						myrect.top - E_PADDING / 4  + (j+1 - nSelectorLines) * fontHeight,
+    						myrect.top - E_PADDING / 4  + (j+1) * fontHeight - selectorHeight,
     						brokenLine[j], this,
     						_inContention);
     			}
@@ -891,6 +978,11 @@ public class Case extends Element implements IFork
 	public Element getElementByCoord(int _x, int _y, boolean _forSelection)
 	{
 		Element selMe = super.getElementByCoord(_x, _y, _forSelection);
+		// START KGU#1182 2025-07-31: Enh. #1197 Clear branch header selection too
+		if (selMe == null && _forSelection) {
+			selectedBranchHead = -1;
+		}
+		// END KGU#1182 2025-07-31
 		// START KGU#121 2016-01-03: Bugfix #87 - A collapsed element has no visible substructure!
 		// START KGU#207 2016-07-21: If this element isn't hit then there is no use searching the substructure
 		//if (!this.isCollapsed())
@@ -904,7 +996,7 @@ public class Case extends Element implements IFork
 			//for(int i = 0; i < qs.size(); i++)
 			int nBranches = qs.size();
 			if (!hasDefaultBranch()) nBranches--;
-			for(int i = 0; i < nBranches; i++)
+			for (int i = 0; i < nBranches; i++)
 			// END KGU#296 2016-11-22
 			{
 				// START KGU#136 2016-03-01: Bugfix #97
@@ -918,15 +1010,22 @@ public class Case extends Element implements IFork
 				Element pre = qs.get(i).getElementByCoord(_x-xOff, _y-y0Branches+1, _forSelection);
 				// END KGU#346 2017-02-08
 				// END KGU#136 2016-03-01
-				if (pre!=null)
+				if (pre != null)
 				{
 					selCh = pre;
 				}
 			}
 
-			if(selCh!=null)
+			if (selCh != null)
 			{
 				if (_forSelection) selected = false;
+				// START KGU#1182 2025-07-31: Enh. #1197 Clear branch header selection too
+				//if (_forSelection) selected = false;
+				if (_forSelection) {
+					selected = false;
+					selectedBranchHead = -1;
+				}
+				// END KGU#1182 2025-07-31
 				selMe = selCh;
 			}
 		// START KGU#121 2016-01-03: Bugfix #87 (continued)
@@ -970,14 +1069,20 @@ public class Case extends Element implements IFork
 	@Override
 	public Element copy() // Problem here???
 	{
-		Element ele = new Case(this.getText().getText());
+		Case ele = new Case(this.getText().getText());
 		copyDetails(ele, true);
-		((Case) ele).qs.clear();
-		for(int i=0; i < qs.size(); i++)
+		ele.qs.clear();
+		for (int i = 0; i < qs.size(); i++)
 		{
 			Subqueue ss = (Subqueue) ((Subqueue) this.qs.get(i)).copy();
-			ss.parent=ele;
-			((Case) ele).qs.add(ss);
+			ss.parent = ele;
+			ele.qs.add(ss);
+			// START KGU#1182 2025-07-31: Enh. #1197: copy branch head colours
+			Color brCol = this.getBranchHeadColor(i);
+			if (brCol != null) {
+				ele.setBranchHeadColor(i, brCol);
+			}
+			// END KGU#1182 2025-07-31
 		}
 		return ele;
 	}
@@ -1228,10 +1333,15 @@ public class Case extends Element implements IFork
 		if (newBranchOrder != null) {
 			// Rearrange the existing branches according to the given array
 			Subqueue[] sqs = new Subqueue[newBranchOrder.length];
+			// START KGU#1182 2025-07-31: Enh. #1197: Consider branch head colours
+			Vector<Color> bhcs = new Vector<Color>(sqs.length);
+			this.selectedBranchHead = -1;
+			// END KGU#1182 2025-07-31
 			int nBranches = qs.size();
 			// We must check for duplicates here - branches may have to be copied!
 			long branchSet = 0;
 			for (int i = 0; i < sqs.length; i++) {
+				Color brCol = null;
 				int ixBranch = newBranchOrder[i] - 1;
 				if (ixBranch >= 0 && ixBranch < nBranches) {
 					sqs[i] = qs.get(ixBranch);
@@ -1243,18 +1353,150 @@ public class Case extends Element implements IFork
 						sqs[i].setSelected(false);
 					}
 					branchSet |= (1 << ixBranch);
+					// START KGU#1182 2025-07-31: Enh. #1197: Consider branch head colours
+					brCol = this.getBranchHeadColor(ixBranch);
+					// END KGU#1182 2025-07-31
 				}
 				else {
 					sqs[i] = new Subqueue();
 					sqs[i].parent = this;
 				}
+				// START KGU#1182 2025-07-31: Enh. #1197: Consider branch head colours
+				bhcs.add(brCol);
+				// END KGU#1182 2025-07-31
 			}
 			qs.clear();
 			for (Subqueue sq: sqs) {
 				qs.add(sq);
 			}
+			// START KGU#1182 2025-07-31: Enh. #1197: Consider branch head colours
+			this.branchHeadColors = bhcs;
+			// END KGU#1182 2025-07-31
 		}
 	}
 	// END KGU#916 2021-01-24
+
+	// START KGU#1182 2025-07-31: Enh. #1197 Allow to subselect branch headers
+	@Override
+	public int getBranchCount() {
+		// FIXME: Is this always true and appropriate?
+		return qs.size();
+	}
+
+	@Override
+	public boolean selectBranchHead(int _relX, int _relY) {
+		int oldSel = this.selectedBranchHead;
+		if (this.wasDrawn && this.isRect0UpToDate && !isCollapsed(true)) {
+			this.selectedBranchHead = -1;
+			if (_relY > this.y0Branches) {
+				// If the mouse is below the "equator" then we can end this
+				return oldSel >= 0;
+			}
+			int nBranches = this.getBranchCount();
+			boolean hasDeflt = this.hasDefaultBranch();
+			int ixCleav = nBranches;
+			int xCleav = rect.right;
+			if (hasDeflt) {
+				xCleav = this.x0Branches.get(--ixCleav);
+			}
+			// gradient of (left) oblique line
+			int obliqueHeight = this.y0Branches - this.commentRect.bottom - this.selectorHeight - E_PADDING/2;
+			double grad = 1.0 * obliqueHeight / xCleav;
+			for (int i = 0; i < nBranches; i++) {
+				int top = rect.top + commentRect.bottom;
+				int left = this.x0Branches.get(i);
+				int right = rect.right;
+				if (i+1 < x0Branches.size()) {
+					right = this.x0Branches.get(i+1);
+				}
+				if (i >= ixCleav) {
+					grad = 1.0 * obliqueHeight / (xCleav - rect.right);
+					top = this.y0Branches - this.selectorHeight - (int)Math.round(left * grad);
+				}
+				if (_relX > left && _relX < right && _relY > top + _relX * grad) {
+						this.selectedBranchHead = i;
+						break;
+				}
+			}
+		}
+		return oldSel != this.selectedBranchHead;
+	}
+	
+	@Override
+	public int getSelectedBranchHead()
+	{
+		return this.selectedBranchHead;
+	}
+
+	@Override
+	public Color getBranchHeadColor(int _branchIndex) {
+		if (_branchIndex < 0 || _branchIndex >= this.getBranchCount()
+				|| _branchIndex >= this.branchHeadColors.size()) {
+			return null;
+		}
+		return this.branchHeadColors.get(_branchIndex);
+	}
+	
+	@Override
+	public String getHexBranchColorList()
+	{
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < this.getBranchCount(); i++) {
+			if (i > 0) {
+				sb.append(",");
+			}
+			// The method sensibly reacts to a shorter colour vector
+			sb.append(getHexColor(this.getBranchHeadColor(i)));
+		}
+		return sb.toString();
+	}
+
+	@Override
+	public boolean setBranchHeadColor(int _branchIndex, Color _branchColor) {
+		if (_branchIndex < 0 || _branchIndex >= this.getBranchCount()) {
+			return false;
+		}
+		while (_branchIndex >= this.branchHeadColors.size()) {
+			this.branchHeadColors.add(null);
+		}
+		this.branchHeadColors.set(_branchIndex, _branchColor);
+		return true;
+	}
+
+	@Override
+	public Element setSelected(boolean _sel)
+	{
+		this.selectedBranchHead = -1;
+		return super.setSelected(_sel);
+	}
+	
+	@Override
+	public void setColor(Color _color)
+	{
+		if (this.selectedBranchHead >= 0) {
+			this.setBranchHeadColor(this.selectedBranchHead, _color);
+		}
+		else if (_color == null) {
+			// Wipe all branch head colours (if any)
+			this.branchHeadColors.clear();
+		}
+		else {
+			super.setColor(_color);
+		}
+	}
+	
+	@Override
+	protected Color getFillColor(DrawingContext drawingContext)
+	{
+		Color fillColor = super.getFillColor(drawingContext);
+		// Check if the colour is the designated selection colour
+		if (this.getSelected(drawingContext) && this.selectedBranchHead != -1
+				&& fillColor == Color.YELLOW) {
+			// In case a branch head is selected, use the element background colour
+			fillColor = this.getColor();
+		}
+		return fillColor;
+	}
+	// END KGU#1182 2025-07-31
 
 }

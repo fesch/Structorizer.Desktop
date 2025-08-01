@@ -142,6 +142,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2024-04-16      Bugfix #1160: Separate X and Y text offset for drawing rotated elements
  *      Kay Gürtzig     2024-10-09      Enh. #1171: New methods fetchViewSettings(Ini) and cacheViewSettings(Ini)
  *      Kay Gürtzig     2025-07-02      Issue #270: Implementation of isDisabled(boolean) was defective.
+ *      Kay Gürtzig     2025-08-01      Enh. #1197: Support/precaution for IFork branch colouring
  *
  ******************************************************************************************************
  *
@@ -1938,32 +1939,67 @@ public abstract class Element {
 	public abstract void convertToCalls(StringList _signatures);
 	// END KGU#199 2016-07-07
 
+	/**
+	 * @return the current background colour of this element
+	 * 
+	 * @see #getFillColor()
+	 * @see #getHexColor()
+	 * @see #setColor(Color)
+	 */
 	public Color getColor()
 	{
 		return color;
 	}
 
+	/**
+	 * @return the hexadecimal RGB repesentation of the current background colour
+	 *     of this element
+	 * 
+	 * @see #getColor()
+	 */
 	public String getHexColor()
 	{
 		String rgb = Integer.toHexString(color.getRGB());
 		return rgb.substring(2, rgb.length());
 	}
 
+	/**
+	 * Extracts a hexadecimal string representation of the pure RGB value of 
+	 * given Color {@code _color}.
+	 * 
+	 * @param _color - the Color to get the hex representation from
+	 * @return the hexadecimal string of the pure RGB components
+	 */
 	public static String getHexColor(Color _color)
 	{
 		String rgb = Integer.toHexString(_color.getRGB());
 		return rgb.substring(2, rgb.length());
 	}
 
+	/**
+	 * Sets the general background colour for this Element
+	 * 
+	 * @param _color - the new Color to be assigned
+	 * 
+	 * @see #getColor()
+	 * @see #getHexColor()
+	 */
 	public void setColor(Color _color)
 	{
-		color = _color;
+		// START KGU#1182 2025-08-01: Enh. #1197 precaution against possible null
+		//color = _color;
+		if (_color != null) {
+			color = _color;
+		}
+		// END KGU#1182 2025-08-01
 	}
 	
 	/**
 	 * Returns the status-dependent background color or just the user-defined background color
 	 * for this element.
+	 * 
 	 * @see #getFillColor(DrawingContext)
+	 * @see #getColor()o
 	 */
 	protected Color getFillColor()
 	{
