@@ -289,6 +289,7 @@ Current development version 3.32-28 (2025-08-01)
       some generators (ARM, StrukTex, TextAlgo) behaved inconsistently <2>
 - 28: Enh. #1196 New controller-routine-related Analyser checks 32 and 33 <2>
 - 28: Enh. #1197 Independent branch header colouring enabled [brucetrask2]<2>
+- 28: Enh. #1198 Third choice option for CASE editing introduced <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>

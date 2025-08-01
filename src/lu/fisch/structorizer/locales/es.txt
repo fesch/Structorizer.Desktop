@@ -149,6 +149,7 @@
  *      Kay Gürtzig     2024-04-21  ExportOptionDialoge renamed to ExportOptionDialog
  *      Kay Gürtzig     2024-11-22  Poll #1173: menuFileExportPictureSWF removed.
  *      Kay Gürtzig     2025-07-10  Enh. #1196: Messages for new Analyser checks 32, 33
+ *      Kay Gürtzig     2025-08-01  Enh. #1197, #1198 New/different messages for Editor, Preferences
  * 
  ******************************************************************************************************
  *
@@ -696,6 +697,7 @@ Editor.btnAbout.tooltip=Mostrar mensaje de información acerca de Structorizer.
 Editor.btnHelp.tooltip=Abrir al manual (inglés) en el browser.
 // colors
 Editor.btnColors.*.tooltip=Colorear el elemento seleccionado con este color.
+Editor.btnNoColor.tooltip=Quitar el color especial del ramo seleccionado (o de todos).
 // collapsing
 Editor.btnCollapse.tooltip=Reducir el elemento seleccionado.
 Editor.btnExpand.tooltip=Expandir el elemento seleccionado.
@@ -1010,7 +1012,10 @@ Preferences.lblCase.text=Contenido por defecto
 Preferences.lblCase.tooltip=El contenido por defecto de una ramificación @c
 Preferences.lblCaseRot.text=Min. brazos para rotar
 Preferences.lblCaseRot.tooltip=Número de brazos encima del cual es tratado de reducir el ancho por rotation de brazos (0 = nunca)
-Preferences.chkCaseEditor.text=Utilizar editor especial para elementos @c
+Preferences.lblCaseEditor.text=Utilizar editor especial
+Preferences.cbCaseEditor.item.0.text=nunca
+Preferences.cbCaseEditor.item.1.text=no vacío
+Preferences.cbCaseEditor.item.2.text=siempre
 Preferences.pnlRoot.border=Encabezamiento del diagrama
 Preferences.lblRoot.text=Rótulo de la lista de incluíbles
 Preferences.lblRoot.tooltip=El rótulo debajo del cual la lista de diagramas a ser incluidos debe ser dibujada.

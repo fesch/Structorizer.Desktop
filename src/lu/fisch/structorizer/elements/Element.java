@@ -142,7 +142,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2024-04-16      Bugfix #1160: Separate X and Y text offset for drawing rotated elements
  *      Kay Gürtzig     2024-10-09      Enh. #1171: New methods fetchViewSettings(Ini) and cacheViewSettings(Ini)
  *      Kay Gürtzig     2025-07-02      Issue #270: Implementation of isDisabled(boolean) was defective.
- *      Kay Gürtzig     2025-08-01      Enh. #1197: Support/precaution for IFork branch colouring
+ *      Kay Gürtzig     2025-08-01      Enh. #1197: Support/precaution for IFork branch colouring,
+ *                                      Enh. #1198: Case editor choice option changed from boolean to enum
  *
  ******************************************************************************************************
  *
@@ -631,7 +632,10 @@ public abstract class Element {
 	public static int caseShrinkByRot = 8;
 	// END KGU#401 2017-05-17
 	// START KGU#916 2021-01-25: Enh. #915
-	public static boolean useInputBoxCase = true;
+	// START KGU#997 2025-08-01: Enh. #1198 More than two choices sensible
+	//public static boolean useInputBoxCase = true;
+	public static CaseEditorChoice useInputBoxCase = CaseEditorChoice.NON_EMPTY;
+	// END KGU#997 2025-08-01
 	// END KGU#916 2021-01-25
 	
 	// START KGU 2017-09-19: Performance tuning for syntax analysis
@@ -2793,7 +2797,20 @@ public abstract class Element {
 			caseShrinkByRot = Integer.parseInt(ini.getProperty("CaseShrinkRot", "8"));
 			// END KGU#401 2017-05-18
 			// START KGU#916 2021-01-25: Enh. #915
-			useInputBoxCase = ini.getProperty("CaseEditor", "true").equals("true");
+			// START KGU#997 2025-08-01: Enh. #1198
+			//useInputBoxCase = ini.getProperty("CaseEditor", "true").equals("true");
+			String caseEditorMode = ini.getProperty("CaseEditor", "NON-EMPTY");
+			// Legacy identification
+			useInputBoxCase = CaseEditorChoice.NEVER;
+			if (caseEditorMode.equals("true")) {
+				useInputBoxCase = CaseEditorChoice.ALWAYS;
+			}
+			for (CaseEditorChoice ce: CaseEditorChoice.values()) {
+				if (caseEditorMode.equals(ce.name())) {
+					useInputBoxCase = ce;
+				}
+			}
+			// END KGU#997 2025-08-01
 			// END KGU#916 2021-01-25
 			preFor    = ini.getProperty("For", "for ? <- ? to ?");
 			preWhile  = ini.getProperty("While", "while (?)");
@@ -2971,7 +2988,10 @@ public abstract class Element {
 		ini.setProperty("CaseShrinkRot", Integer.toString(caseShrinkByRot));
 		// END KGU#401 2017-05-18
 		// START KGU#916 2021-01-25: Enh.#915 - offer alternative CASE editor
-		ini.setProperty("CaseEditor", Boolean.toString(useInputBoxCase));
+		// START KGU#997 2025-08-01: Enh. #1198 - more choice options
+		//ini.setProperty("CaseEditor", Boolean.toString(useInputBoxCase));
+		ini.setProperty("CaseEditor", useInputBoxCase.name());
+		// END KGU#997 2025-08-01
 		// END KGU#916 2021-01-25
 		ini.setProperty("For", preFor);
 		ini.setProperty("While", preWhile);

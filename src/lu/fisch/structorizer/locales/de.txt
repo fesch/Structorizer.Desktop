@@ -149,6 +149,7 @@
  *      Kay Gürtzig         2024-04-21  ExportOptionDialoge renamed to ExportOptionDialog
  *      Kay Gürtzig         2024-11-22  Poll #1173: menuFileExportPictureSWF removed.
  *      Kay Gürtzig         2025-07-10  Enh. #1196: Messages for new Analyser checks 32, 33
+ *      Kay Gürtzig         2025-08-01  Enh. #1197, #1198 New/different messages for Editor, Preferences
  *
  ******************************************************************************************************
  *
@@ -1008,7 +1009,10 @@ Preferences.lblCase.text=Voreinstellungs-Text
 Preferences.lblCase.tooltip=Die Voreinstellung für den steuernden Text der @c-Anweisung.
 Preferences.lblCaseRot.text=Min. Zweiganzahl für Rotation
 Preferences.lblCaseRot.tooltip=Zweiganzahl, ab der versucht wird, durch Drehen der Zweiganweisungen die Breite des @c-Elements zu verringern (0 = aus)
-Preferences.chkCaseEditor.text=Speziellen Editor for @c benutzen
+Preferences.lblCaseEditor.text=Speziellen Editor benutzen
+Preferences.cbCaseEditor.item.0.text=nie
+Preferences.cbCaseEditor.item.1.text=nicht leer
+Preferences.cbCaseEditor.item.2.text=immer
 Preferences.pnlRoot.border=Diagrammkopf
 Preferences.lblRoot.text=Beschriftung der Importliste
 Preferences.lblRoot.tooltip=Dieser Text wird im Diagramm über die Liste einzubeziehender Diagramme geschrieben.

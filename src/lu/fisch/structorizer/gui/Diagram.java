@@ -252,6 +252,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2024-10-09      Issue #1173: exportSWF() marked as deprecated
  *      Kay Gürtzig     2024-11-27      Bugfix #1181: Ensure clean exec highlighting in redraw(Element)
  *      Kay Gürtzig     2025-07-10      Enh. #1196: Some methods made static/public for new Analyser checks
+ *      Kay Gürtzig     2025-08-01      Enh. #915/#1198: Adaptations for new Case editor choice option
  *
  ******************************************************************************************************
  *
@@ -8262,7 +8263,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		preferences.edtRoot.setText(Element.preImport);
 		// END KGU#376 2017-07-02
 		// START KGU#916 2021-01-25: Enh. #915
-		preferences.chkCaseEditor.setSelected(Element.useInputBoxCase);
+		// START KGU#997 2025-08-01: Enh. #1198
+		//preferences.chkCaseEditor.setSelected(Element.useInputBoxCase);
+		preferences.cbCaseEditor.setSelectedItem(Element.useInputBoxCase);
+		// END KGU#997 2025-08-01
 		// END KGU#916 2021-01-25
 
 		// START KGU#686 2019-03-22: Enh. #56
@@ -8312,7 +8316,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			Element.caseShrinkByRot = newShrinkThreshold;
 			// END KGU#401 2017-05-18
 			// START KGU#916 2021-01-25: Enh. #915
-			Element.useInputBoxCase = preferences.chkCaseEditor.isSelected();
+			// START KGU#997 2025-08-01: Enh. #1198 More options
+			//Element.useInputBoxCase = preferences.chkCaseEditor.isSelected();
+			Element.useInputBoxCase = (CaseEditorChoice)preferences.cbCaseEditor.getSelectedItem();
+			// END KGU#997 2025-08-01
 			// END KGU#916 2021-01-25
 			// START KGU#376 2017-07-02: Enh. #389
 			Element.preImport = preferences.edtRoot.getText();
@@ -9908,14 +9915,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * Opens the appropriate element editor version for element type
 	 * {@code _elementType} and gathers the editing results in {@code _data}.
 	 *
-	 * @param _data - container for the content transfer between the element and
-	 * the InputBox
-	 * @param _elementType - Class name of the {@link Element} we offer editing
-	 * for
+	 * @param _data - container for the content transfer between the element
+	 *    and the InputBox
+	 * @param _elementType - Class name of the {@link Element} we offer
+	 *    editing for
 	 * @param _isInsertion - Indicates whether or not the element is a new
-	 * object
-	 * @param _allowCommit - Whether the OK button is enabled (not for immutable
-	 * elements)
+	 *    object
+	 * @param _allowCommit - Whether the OK button is enabled (not for
+	 *    immutable elements)
 	 */
 	public void showInputBox(EditData _data, String _elementType, boolean _isInsertion, boolean _allowCommit) // END KGU 2015-10-14
 	{
@@ -9979,7 +9986,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 			// END KGU#363 2017-03-13
 			// START KGU#916 2021-01-24: Enh. #915
-			else if (_elementType.equals("Case") && Element.useInputBoxCase) {
+			// START KGU#997 2025-08-01: Enh. #1198
+			//else if (_elementType.equals("Case") && Element.useInputBoxCase) {
+			else if (_elementType.equals("Case") && (
+					Element.useInputBoxCase == CaseEditorChoice.ALWAYS
+					|| Element.useInputBoxCase == CaseEditorChoice.NON_EMPTY &&
+							_data.branchOrder != null &&
+							Arrays.stream(_data.branchOrder).sum() > 0)
+					) {
+			// END KGU#997 2025-08-01
 				// START KGU#927 2021-02-06: Enh. #915
 				//inputbox = new InputBoxCase(getFrame(), true);
 				inputbox = new InputBoxCase(getFrame(), true, new CaseEditHelper(root));

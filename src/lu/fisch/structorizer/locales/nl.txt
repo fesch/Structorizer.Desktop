@@ -65,6 +65,7 @@
  *      Kay Gürtzig     2023-10-16      Issues #980/#1096: New messages for declaration syntax check (error31_*)
  *      Kay Gürtzig     2024-04-21      ExportOptionDialoge renamed to ExportOptionDialog
  *      Kay Gürtzig     2024-11-22      Poll #1173: menuFileExportPictureSWF removed.
+ *      Kay Gürtzig     2025-08-01      Enh. #1198: Messages for Preferences.lblCaseEditor, ~.cbCaseEditor
  *
  ******************************************************************************************************
  *
@@ -907,7 +908,10 @@ Preferences.lblCase.text=Standaard inhoud
 Preferences.lblCase.tooltip=De standaard inhoud van een @c-statement.
 Preferences.lblCaseRot.text=Min. aftakkingen voor rotatie
 Preferences.lblCaseRot.tooltip=Drempelwaarde voor aantal aftakkingen bij pogingen breedte te beperken door elementen te roteren (0=uit)
-Preferences.chkCaseEditor.text=De speciaal editor voor @c-elementen gebruiken
+Preferences.lblCaseEditor.text=De speciaal editor gebruiken
+Preferences.cbCaseEditor.item.0.text=nimmer
+Preferences.cbCaseEditor.item.1.text=niet leeg
+Preferences.cbCaseEditor.item.2.text=altijd
 Preferences.pnlRoot.border=@m-header
 Preferences.lblRoot.text=Ook koptekst lijst
 Preferences.lblRoot.tooltip=De koptekst van de lijst van @p-diagrammen bij tekenen.
