@@ -97,9 +97,11 @@ public interface DiagramController
 	}
 
 	/**
-	 * Returns a title for this controller
-	 * (The default implementation just returns the simple class name. Override this if needed) 
+	 * Returns a title for this controller. (The default implementation just
+	 * returns the simple class name. Override this if needed.)
+	 * 
 	 * @return the title string
+	 * 
 	 * @see #setName(String)
 	 */
 	public default String getName()
@@ -108,10 +110,13 @@ public interface DiagramController
 	}
 	
 	/**
-	 * May allow to set the title or name for this controller (e.g. from plugin)
-	 * The default implementation ignores the given {@code title} (i.e. does not influence
-	 * the result of {@link #getName()}, so override both if needed).
+	 * May allow to set the title or name for this controller (e.g. from plugin).
+	 * The default implementation ignores the given {@code title} (i.e. does not
+	 * influence the result of inherited {@link #getName()}, so override both if
+	 * needed).
+	 * 
 	 * @param title - the proposed new title string
+	 * 
 	 * @see #getName()
 	 */
 	public default void setName(String title)
@@ -121,9 +126,10 @@ public interface DiagramController
 	
 	// START KGU#911 2021-01-11: Enh. #910
 	/**
-	 * Possibly subclassable method for execution startup - must be repeatedly applicable
-	 * to the instance.<br/>
+	 * Possibly subclassable method for execution startup - must be repeatedly
+	 * applicable to the instance.<br/>
 	 * The default implementation does not do anything.
+	 * 
 	 * @param args - array of arguments
 	 */
 	public default void restart(Object ... args)
@@ -133,9 +139,12 @@ public interface DiagramController
 	
 	/**
 	 * Returns a map associating Strings of format {@code"<function_name>#<arg_count>"}
-	 * with a {@link Method} object each for every supported function. The argument classes
-	 * and the result class can be obtained from the associated {@link Method} object.
+	 * with a {@link Method} object each for every supported function. The argument
+	 * classes and the result class can be obtained from the associated {@link Method}
+	 * object. The {@code <function_name>} is supposed to be in lower-case.
+	 * 
 	 * @return the function map
+	 * 
 	 * @see #getProcedureMap()
 	 * @see #execute(String, Object[])
 	 */
@@ -143,9 +152,12 @@ public interface DiagramController
 
 	/**
 	 * Returns a map associating Strings of format {@code"<procedure_name>#<arg_count>"}
-	 * with a {@link Method} object each for every supported procedure. The argument classes
-	 * can be obtained from the associated {@link Method} object.
+	 * with a {@link Method} object each for every supported procedure. The argument
+	 * classes can be obtained from the associated {@link Method} object.
+	 * The {@code <procedure_name>} is supposed to be in lower-case.
+	 * 
 	 * @return the procedure map
+	 * 
 	 * @see #getFunctionMap()
 	 * @see #execute(String, Object[])
 	 */
@@ -153,10 +165,11 @@ public interface DiagramController
 
 	// START KGU#911 2021-01-09: Enh. #910 This shall facilitate the creation of new controllers
 	/**
-	 * May provide the Java definition texts of enumerator types to by made available via
-	 * Analyser and Executor for argument (de-)coding and possibly be used by code generators
-	 * of Structorizer.<br/>
+	 * May provide the Java definition texts of enumerator types to by made
+	 * available via Analyser and Executor for argument (de-)coding and possibly
+	 * be used by code generators of Structorizer.<br/>
 	 * The default implementation returns {@code null}.
+	 * 
 	 * @return a String array of definitions like "enum TrafficLights {GREEN, YELLOW, RED}",
 	 * or {@code null}
 	 */
@@ -173,10 +186,12 @@ public interface DiagramController
 	 * are ignored.<br/>
 	 * If there is a matching routine then its actual name is returned.<br/>
 	 * For a more precise test see {@link #providesRoutine(String, Object[], boolean)}.
+	 * 
 	 * @param name - case-ignorant routine name
 	 * @param nArguments - number of arguments
-	 * @return An exact routine name if there is a routine with the roughly given signature,
-	 * null otherwise.
+	 * @return An exact routine name if there is a routine with the roughly given
+	 *    signature, {@code null} otherwise.
+	 * 
 	 * @see #providesRoutine(String, Object[], boolean)
 	 */
 	public default String providedRoutine(String name, int nArguments)
@@ -195,12 +210,15 @@ public interface DiagramController
 	// END KGU#446/KGU#448 2018-01-21
 
 	/**
-	 * Checks whether there is a either a function or procedure exposed for this API the
-	 * declared parameters for which match the given arguments in type.
+	 * Checks whether there is a either a function or procedure exposed for
+	 * this API the declared parameters for which match the given arguments
+	 * in type.
+	 * 
 	 * @param name - the function name (lower-case)
 	 * @param arguments - Array of the argument values
 	 * @param isFunction - true if we need a result value.
 	 * @return true if a matching method is provided
+	 * 
 	 * @see #getFunctionMap()
 	 * @see #getProcedureMap()
 	 * @see #execute(String, Object[])
@@ -232,13 +250,17 @@ public interface DiagramController
 	}
 
 	/**
-	 * Executes a function or procedure registered in either the function map (obtainable
-	 * by {@link #getFunctionMap()}) or the procedure map (obtainable via {@link #getProcedureMap()})
+	 * Executes a function or procedure registered in either the function map
+	 * (obtainable by {@link #getFunctionMap()}) or the procedure map
+	 * (obtainable via {@link #getProcedureMap()}).
 	 * Delay isn't applied here.
+	 * 
 	 * @param name - the function name (lower-case)
 	 * @param arguments - Array of the argument values
-	 * @return the obtained result value (as Object) 
+	 * @return the obtained result value (as Object)
+	 * 
 	 * @throws FunctionException
+	 * 
 	 * @see #getFunctionMap()
 	 * @see #getProcedureMap()
 	 */
@@ -312,10 +334,12 @@ public interface DiagramController
 	}
 
 	/**
-	 * Helper method trying to convert the argument type to the declared parameter type
-	 * (particularly in case of numbers, since casting between different Number classes
-	 * - though assignment-compatible as primitive types - will fail).
-	 * Override this if some more tricky conversions are necessary. 
+	 * Helper method trying to convert the argument type to the declared
+	 * parameter type (particularly in case of numbers, since casting between
+	 * different Number classes - though assignment-compatible as primitive
+	 * types - will fail).
+	 * Override this if some more tricky conversions are necessary.
+	 * 
 	 * @param argument - an evaluated argument object
 	 * @param argClass - the declared argument class
 	 */
@@ -350,7 +374,8 @@ public interface DiagramController
 	
 	// START KGU#356 2019-03-02: Issue #366 - Allow focus control of he DiagramController copes with it
 	/**
-	 * Returns whether this DiagramController is or has a focusable window and if this window is focused.
+	 * Returns whether this DiagramController is or has a focusable window and
+	 *    if this window is focused.
 	 * @return whether this DiagramController is focused (default: false)
 	 */
 	public default boolean isFocused()
@@ -359,8 +384,8 @@ public interface DiagramController
 	}
 	
 	/**
-	 * If this DiagramController is or has a focusable window then it will have this window request the focus.
-	 * (Default: doesn't do anything)
+	 * If this DiagramController is or has a focusable window then it will have
+	 * this window request the focus. (Default: doesn't do anything.)
 	 */
 	public default void requestFocus() {}
 	// END KGU#356 2019-03-02

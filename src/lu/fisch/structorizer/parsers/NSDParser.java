@@ -56,6 +56,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2018.09.11      Refines #372: More sensible attributes for Roots from an arrz file.
  *      Kay Gürtzig     2019-03-17      Enh. #56: Import of new Try element implemented
  *      Kay Gürtzig     2021-02-22      Enh. #410: New Root field "namespace" supported
+ *      Kay Gürtzig     2025-07-31      Enh. #1197: Branch selector colouring and its re-import enabled
  *
  ******************************************************************************************************
  *
@@ -384,6 +385,17 @@ public class NSDParser extends DefaultHandler {
 			if (attributes.getIndex("color") != -1 && !attributes.getValue("color").equals("")) {
 				ele.setColor(Color.decode("0x" + attributes.getValue("color")));
 			}
+			// START KGU#1182 2025-07-31: Enh. #1197 Support for brach head colours
+			if (attributes.getIndex("branch_colors") != -1 && !attributes.getValue("branch_colors").equals("")) {
+				StringList colorList = StringList.explode(attributes.getValue("branch_colors"), ",");
+				for (int i = 0; i < Math.min(2, colorList.count()); i++) {
+					String hexCol = colorList.get(i).trim();
+					if (!hexCol.isEmpty()) {
+						ele.setBranchHeadColor(i, Color.decode("0x" + hexCol));
+					}
+				}
+			}
+			// END KGU#1182 2025-07-31
 			// START KGU#277 2016-10-13: Enh. #270
 			if (attributes.getIndex("disabled") != -1)  {ele.setDisabled("1".equals(attributes.getValue("disabled")));}
 			// END KGU#277 2016-10-13
@@ -624,12 +636,32 @@ public class NSDParser extends DefaultHandler {
 			Case ele = new Case(StringList.getNew("???"));
 
 			// read attributes
-			if (attributes.getIndex("text") != -1)  {ele.getText().setCommaText(attributes.getValue("text")); /*System.out.println(attributes.getValue("text"));*/}
+			// START KGU#1182 2025-07-31: Enh. #1197: Temporarily we must establish empty branches
+			//if (attributes.getIndex("text") != -1)  {ele.getText().setCommaText(attributes.getValue("text")); /*System.out.println(attributes.getValue("text"));*/}
+			//ele.qs.clear();	// We want to add the parsed branches
+			if (attributes.getIndex("text") != -1) {
+				StringList text = new StringList();
+				text.setCommaText(attributes.getValue("text"));
+				ele.setText(text);
+			}
+			if (attributes.getIndex("branch_colors") != -1 && !attributes.getValue("branch_colors").equals("")) {
+				StringList colorList = StringList.explode(attributes.getValue("branch_colors"), ",");
+				int nColors = Math.min(ele.getBranchCount(), colorList.count());
+				for (int i = 0; i < nColors; i++) {
+					String hexCol = colorList.get(i).trim();
+					if (!hexCol.isEmpty()) {
+						ele.setBranchHeadColor(i, Color.decode("0x" + hexCol));
+					}
+				}
+			}
 			ele.qs.clear();
+			// END KGU#1182 2025-07-31
 			if (attributes.getIndex("comment") != -1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
 			if (attributes.getIndex("color") != -1 && !attributes.getValue("color").equals("")) {
 				ele.setColor(Color.decode("0x" + attributes.getValue("color")));
 			}
+			// START KGU#1182 2025-07-31: Enh. #1197 Support for brach head colours
+			// END KGU#1182 2025-07-31
 			// START KGU#277 2016-10-13: Enh. #270
 			if (attributes.getIndex("disabled") != -1)  {ele.setDisabled("1".equals(attributes.getValue("disabled")));}
 			// END KGU#277 2016-10-13

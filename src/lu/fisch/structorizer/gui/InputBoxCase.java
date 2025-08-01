@@ -1219,7 +1219,7 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 			tempHintGiven = true;
 			String message = ElementNames.resolveElementNames(
 					Menu.msgVersionHint_3_30_15.getText()
-					.replace("%1", Locales.getValue("Structorizer", "Preferences.chkCaseEditor.text", rootPaneCheckingEnabled))
+					.replace("%1", Locales.getValue("Structorizer", "Preferences.lblCaseEditor.text", rootPaneCheckingEnabled))
 					.replace("%2", Locales.getValue("Structorizer", "Preferences.title", true)),
 					null);
 			JOptionPane.showMessageDialog(this.getOwner(),

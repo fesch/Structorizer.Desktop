@@ -148,6 +148,8 @@
  *      Kay Gürtzig         2024-03-17  Issue #1138: New / modified conflict messages for Surface
  *      Kay Gürtzig         2024-04-21  ExportOptionDialoge renamed to ExportOptionDialog
  *      Kay Gürtzig         2024-11-22  Poll #1173: menuFileExportPictureSWF removed.
+ *      Kay Gürtzig         2025-07-10  Enh. #1196: Messages for new Analyser checks 32, 33
+ *      Kay Gürtzig         2025-08-01  Enh. #1197, #1198 New/different messages for Editor, Preferences
  *
  ******************************************************************************************************
  *
@@ -592,6 +594,9 @@ Menu.error31_3.text=Diese Deklarationsobjekte sind keine geeigneten Bezeichner: 
 Menu.error31_4.text=Versuch, die bereits existierende(n) Variable(n) «%» erneut zu deklarieren!
 Menu.error31_5.text=Für eine Initialisierung muss die Deklaration genau EINE Variable enthalten, nicht % !
 Menu.error31_6.text=Eine anonyme Typkonstruction «%» ist an dieser Stelle unzulässig!
+Menu.error32_1.text=Variablenname «%1» kann (beim Code-Export) mit einem Unterprogrammnamen in Modul(en) %2 in Konflikt geraten.
+Menu.error32_2.text=Unterprogramm «%1» mit %2 Parametern könnte mit einer Routine in Modul(en) %3 kollidieren.
+Menu.error33.text=Die Turtleizer-Routine «%1» nutzt ein reduziertes Koordinatenmodell, Zeichnungen könnten entarten. «%2» wäre zu erwägen.
 Menu.errorLineReference.text= (Zeile %)
 
 -----[ AnalyserPreferences ]-----
@@ -631,6 +636,8 @@ AnalyserPreferences.checkboxes.28.text=Prüfen, dass keine Fallauswahl-Überschn
 AnalyserPreferences.checkboxes.29.text=Prüfen, dass der @c-Auswahlausdruck keinem strukturierten Typ angehört.
 AnalyserPreferences.checkboxes.30.text=Prüfen, dass Klammern ausgeglichen und richtig verschachtelt sind.
 AnalyserPreferences.checkboxes.31.text=Syntax von Variablendeklarationen mit und ohne Initialisierung prüfen.
+AnalyserPreferences.checkboxes.32.text=Auf Namenskollisionen mit Zusatzmodul-Routinen prüfen.
+AnalyserPreferences.checkboxes.33.text=Bei Verwendung der Turtleizer-Routinen «fd», «bk» vor Pixelrundung warnen.
 AnalyserPreferences.lblDrawWarningSign.text=Zeichne Warndreieck in betroffenen Elementen
 AnalyserPreferences.okButton.text=OK
 
@@ -687,6 +694,7 @@ Editor.btnAbout.tooltip=Zeigen eines Informationsfensters über den Structorizer
 Editor.btnHelp.tooltip=Öffnen des Online-Nutzerhandbuchs
 // colors
 Editor.btnColors.*.tooltip=Einfärben des ausgewählten Elements mit dieser Farbe.
+Editor.btnNoColor.tooltip=Die speziell zugeordnete Farbe vom ausgewählten Zweig-Kopf (oder allen des Elements) entfernen.
 // collapsing
 Editor.btnCollapse.tooltip=Reduzieren des ausgewählten Elements.
 Editor.btnExpand.tooltip=Erweitern des ausgewählten Elements.
@@ -1001,7 +1009,10 @@ Preferences.lblCase.text=Voreinstellungs-Text
 Preferences.lblCase.tooltip=Die Voreinstellung für den steuernden Text der @c-Anweisung.
 Preferences.lblCaseRot.text=Min. Zweiganzahl für Rotation
 Preferences.lblCaseRot.tooltip=Zweiganzahl, ab der versucht wird, durch Drehen der Zweiganweisungen die Breite des @c-Elements zu verringern (0 = aus)
-Preferences.chkCaseEditor.text=Speziellen Editor for @c benutzen
+Preferences.lblCaseEditor.text=Speziellen Editor benutzen
+Preferences.cbCaseEditor.item.0.text=nie
+Preferences.cbCaseEditor.item.1.text=nicht leer
+Preferences.cbCaseEditor.item.2.text=immer
 Preferences.pnlRoot.border=Diagrammkopf
 Preferences.lblRoot.text=Beschriftung der Importliste
 Preferences.lblRoot.tooltip=Dieser Text wird im Diagramm über die Liste einzubeziehender Diagramme geschrieben.

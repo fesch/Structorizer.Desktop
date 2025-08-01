@@ -89,6 +89,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2024-03-19  Issue #1148: Special indentation for "if else if" chains
  *      Kay Gürtzig         2024-04-02  Bugfix #1156: Proper handling of constant definitions (new export option)
  *      Kay Gürtzig         2025-02-16  Bugfix #1192: Return statements in Instruction elements weren't transformed
+ *      Kay Gürtzig         2025-07-03  Some missing Override annotations added
  *
  ******************************************************************************************************
  *
@@ -146,21 +147,25 @@ public class PerlGenerator extends Generator {
 	// END KGU#61 2016-03-22
 
 	/************ Fields ***********************/
+	@Override
 	protected String getDialogTitle()
 	{
 		return "Export Perl Code ...";
 	}
 	
+	@Override
 	protected String getFileDescription()
 	{
 		return "Perl Source Code";
 	}
 	
+	@Override
 	protected String getIndent()
 	{
 		return "    ";	// KGU 2015-12-17: Changed from " " to "    " (www.tutorialspoint.com/perl/perl_coding_standard.html)
 	}
 	
+	@Override
 	protected String[] getFileExtensions()
 	{
 		String[] exts = {"pl", "pm"};
@@ -203,6 +208,7 @@ public class PerlGenerator extends Generator {
 	 * @return either {@link TryCatchSupportLevel#TC_NO_TRY} or {@link TryCatchSupportLevel#TC_TRY_CATCH},
 	 * or {@link TryCatchSupportLevel#TC_TRY_CATCH_FINALLY}
 	 */
+	@Override
 	protected TryCatchSupportLevel getTryCatchLevel()
 	{
 		return TryCatchSupportLevel.TC_TRY_CATCH;
@@ -302,6 +308,7 @@ public class PerlGenerator extends Generator {
 	//	return "$1 = <STDIN>; chomp $1";
 	//	// END KGU#108 2015-12-22
 	//}
+	@Override
 	protected String getInputReplacer(boolean withPrompt)
 	{
 		if (withPrompt) {
@@ -316,6 +323,7 @@ public class PerlGenerator extends Generator {
 	 * into the target code
 	 * @return a regex replacement pattern, e.g. "System.out.println($1);"
 	 */
+	@Override
 	protected String getOutputReplacer()
 	{
 		// START KGU#103 2015-12-12: Bugfix #57 - Too few backslashes - were consumed by the regex replacement 
@@ -601,7 +609,7 @@ public class PerlGenerator extends Generator {
 	}
 	// END KGU#388 2019-11-19
 
-
+	@Override
 	protected void generateCode(Instruction _inst, String _indent) {
 
 		if (!appendAsComment(_inst, _indent))
@@ -782,6 +790,7 @@ public class PerlGenerator extends Generator {
 
 	}
 	
+	@Override
 	protected void generateCode(Alternative _alt, String _indent) {
 		
 		boolean isDisabled = _alt.isDisabled(false);
@@ -872,6 +881,7 @@ public class PerlGenerator extends Generator {
 	}
 	// END KGU#1137 2024-03-19
 	
+	@Override
 	protected void generateCode(Case _case, String _indent) {
 		
 		boolean isDisabled = _case.isDisabled(false);
@@ -898,7 +908,7 @@ public class PerlGenerator extends Generator {
 		addCode("switch " + discriminator + " {", _indent, isDisabled);
 		// END KGU#162 2016-04-01
 		
-		for (int i=0; i<_case.qs.size()-1; i++)
+		for (int i = 0; i < _case.qs.size()-1; i++)
 		{
 			addCode("", "", isDisabled);
 			// START KGU#15 2015-11-02: Support multiple constants per branch
@@ -938,7 +948,7 @@ public class PerlGenerator extends Generator {
 		
 	}
 	
-	
+	@Override
 	protected void generateCode(For _for, String _indent) {
 		
 		boolean isDisabled = _for.isDisabled(false);

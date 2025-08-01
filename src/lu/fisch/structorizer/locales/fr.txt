@@ -68,6 +68,7 @@
  *      Kay Gürtzig     2024-03-17      Issue #1138: New / modified conflict messages for Surface
  *      Kay Gürtzig     2024-04-21      ExportOptionDialoge renamed to ExportOptionDialog
  *      Kay Gürtzig     2024-11-22      Poll #1173: menuFileExportPictureSWF removed.
+ *      Kay Gürtzig     2025-08-01      Enh. #1197, #1198 New/different messages for Editor, Preferences
  *
  ******************************************************************************************************
  *
@@ -610,6 +611,7 @@ Editor.btnAbout.tooltip=Afficher le message d'informations sur Structorizer.
 Editor.btnHelp.tooltip=Afficher le manuel de l'utilisateur en ligne dans le navigateur.
 // colors
 Editor.btnColors.*.tooltip=Colorer l'élément sélectionné avec cette couleur.
+Editor.btnNoColor.tooltip=Effacer la couleur spéciale du bras sélectionné (ou des tous).
 // collapsing
 Editor.btnCollapse.tooltip=Replier l'élément sélectionné.
 Editor.btnExpand.tooltip=Déplier l'élément sélectionné.
@@ -921,7 +923,10 @@ Preferences.lblCase.text=Contenu par défaut
 Preferences.lblCase.tooltip=Le contenu par défaut d'une structure @c.
 Preferences.lblCaseRot.text=Nombre min. de branches pour la rotation
 Preferences.lblCaseRot.tooltip=Seuil de comptage des branches pour les tentatives de réduction de la largeur par rotation des éléments (0 = désactivé)
-Preferences.chkCaseEditor.text=Utiliser un éditeur dédié pour les éléments @c
+Preferences.lblCaseEditor.text=Utiliser un éditeur dédié
+Preferences.cbCaseEditor.item.0.text=jamais
+Preferences.cbCaseEditor.item.1.text=non-vide
+Preferences.cbCaseEditor.item.2.text=toujours
 Preferences.pnlRoot.border=En-tête @m
 Preferences.lblRoot.text=Inclure la légende de la liste
 Preferences.lblRoot.tooltip=La légende de la liste des diagrammes @p lorsqu'elle est dessinée.

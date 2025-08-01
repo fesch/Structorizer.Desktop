@@ -2454,6 +2454,7 @@ public class CGenerator extends Generator {
 	}
 
 	// START KGU#47 2015-11-30: Offer at least a sequential execution (which is one legal execution order)
+	@Override
 	protected void generateCode(Parallel _para, String _indent)
 	{
 
@@ -2802,6 +2803,7 @@ public class CGenerator extends Generator {
 	 * @param _force - {@code true} means that the addition is forced even if some adversary option like
 	 *    e.g. {@link #isInternalDeclarationAllowed()} is set 
 	 */
+	@Override
 	protected void appendDefinitions(Root _root, String _indent, StringList _varNames, boolean _force) {
 		// TODO: structured constants must be defined after the type definitions (see PasGenerator)!
 		int lastLine = code.count();

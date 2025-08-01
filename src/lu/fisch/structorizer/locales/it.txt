@@ -76,6 +76,8 @@
  *      Kay Gürtzig     2024-01-26      Issue #311/bugfix #1126: Menu reorganisation (menuDiagram split)
  *      Kay Gürtzig     2024-04-21      ExportOptionDialoge renamed to ExportOptionDialog
  *      Kay Gürtzig     2024-11-22      Poll #1173: menuFileExportPictureSWF removed.
+ *      Kay Gürtzig     2025-08-01      Enh. #1198: New messages Preferences.lblCaseEditor, ~.cbCaseEditor
+ *                                      instead of ~.chkCaseEditor
  *
  ******************************************************************************************************
  *
@@ -927,7 +929,10 @@ Preferences.lblCase.text=Contenuto di default
 Preferences.lblCase.tooltip=Il contenuto di default di una @{Case}.
 Preferences.lblCaseRot.text=
 Preferences.lblCaseRot.tooltip=
-Preferences.chkCaseEditor.text=
+Preferences.lblCaseEditor.text=Utilizzare editor specifico
+Preferences.cbCaseEditor.0.text=mais
+Preferences.cbCaseEditor.1.text=non vuoto
+Preferences.cbCaseEditor.2.text=sempre
 Preferences.pnlRoot.border=
 Preferences.lblRoot.text=
 Preferences.lblRoot.tooltip=

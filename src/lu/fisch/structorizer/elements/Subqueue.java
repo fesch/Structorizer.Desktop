@@ -62,6 +62,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2021-01-06      Enh. #905: draw() method enhanced to ensure markers during tutorials be shown
  *      Kay Gürtzig     2022-07-30      Result type of removeElement(Element) changed from void to boolean
  *      Kay Gürtzig     2024-04-17      Bugfix #1161: Reachability check revised (was defective for loops)
+ *      Kay Gürtzig     2025-07-31      Enh. #1197: Branch selection precaution in setSelected()
  *
  ******************************************************************************************************
  *
@@ -608,8 +609,15 @@ public class Subqueue extends Element implements IElementSequence {
 		selected = _sel;
 		for (int i = 0; i < getSize(); i++)
 		{
+			Element child = children.get(i);
 			// This must not be recursive!
-			children.get(i).selected = _sel;
+			child.selected = _sel;
+			// START KGU#1182 2025-07-31: Enh. #1197 Clear branch head selections
+			if (child instanceof IFork) {
+				// Unselect branch heads
+				((IFork)child).selectBranchHead(-1, -1);
+			}
+			// END KGU#1182 2025-07-31
 		}
 		return _sel ? this : null;
 	}

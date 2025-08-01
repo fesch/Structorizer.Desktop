@@ -189,8 +189,9 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2024-04-17      Issues #161, #1161: Improved reachability check (via mayPassControl())
  *      Kay Gürtzig     2024-10-09      Bugfix #1174: Precaution against NullpPointerException in fetchAuthorDates()
  *      Kay Gürtzig     2024-11-25      Bugfix #1180: Deep test coverage change on undo/redo propagated
- *      Kay Gürtzig     2025-02-06      Bugfix #1187 in analyse_31 (complained the closing bracket)
- *      Kay Gürtzig     2025-02-27      Bugfix #1193 Flaws in detection of arguments and results on outsourcing
+ *      Kay Gürtzig     2025-02-06      Bugfix #1187: in analyse_31 (complained the closing bracket)
+ *      Kay Gürtzig     2025-02-27      Bugfix #1193: Flaws in detection of arguments and results on outsourcing
+ *      Kay Gürtzig     2025-07-10      Enh. #1196: New Analyser checks 32, 33
  *
  ******************************************************************************************************
  *
@@ -260,6 +261,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.EmptyStackException;
 
+import lu.fisch.diagrcontrol.DiagramController;
 import lu.fisch.graphics.*;
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
@@ -795,7 +797,7 @@ public class Root extends Element {
 		true,	true,	true,	true,	true,	// 16 .. 20
 		true,	true,	true,	true,	false,	// 21 .. 25
 		false,	true,	true,	true,	true,	// 26 .. 30
-		true									// 31
+		true,	false,	false					// 31 .. 33
 		// Add another element for every new check...
 		// and DON'T FORGET to append its description to
 		// AnalyserPreferences.checkCaptions
@@ -980,6 +982,13 @@ public class Root extends Element {
 	// START KGU#239 2017-04-11: Some structorizer-internal keywords are also to be checked against
 	private static Set<String> structorizerKeywords = new HashSet<String>();
 	// END KGU#239 2017-04-11
+	// START KGU#1181 2025-07-10: Enh. #1196 Mapping routine name -> Controller name
+	private static Hashtable<String, StringList> controllerRoutineNames = null;
+	private static Hashtable<String, StringList> controllerRoutineSignatures = null;
+	private static StringList controllerNames = null;
+	private static final StringList CHECK33_NAMES_1 = StringList.explode("fd,bk", ",");
+	private static final String[] CHECK33_NAMES_2 = new String[] {"forward", "backward"};
+	// END KGU#1181 2025-07-08
 
 	private Vector<Updater> updaters = new Vector<Updater>();
 
@@ -3729,7 +3738,7 @@ public class Root extends Element {
     		StringList myVars = getVarNames(ele);
 
     		// START KGU#1012 2021-11-14: Enh. #967
-    		if (pluginSyntaxCheckers != null && !eleClassName.equals("Root") && !eleClassName.equals("Parallel")) {
+    		if (pluginSyntaxCheckers != null && /*!eleClassName.equals("Root") &&*/ !eleClassName.equals("Parallel")) {
     			for (Map.Entry<String, GeneratorSyntaxChecker> chkEntry: pluginSyntaxCheckers.entrySet()) {
     				if (pluginChecks.get(chkEntry.getKey()) == true) {
     					GeneratorSyntaxChecker checker = chkEntry.getValue();
@@ -3793,6 +3802,11 @@ public class Root extends Element {
     			// END KGU#1089 2023-1-13
     			// END KGU#388 2017-09-16
     			// END KGU#375 2017-04-04
+    			// START KGU#1181 2025-07-10: Enh. #1196 New check for fd / bk calls
+    			if (check(33)) {
+    				analyse_33((Instruction)ele, _errors);
+    			}
+    			// END KGU#1181 2025-07-10
     		}
 
     		// START KGU#992 2021-10-05: Enh. #992
@@ -4968,6 +4982,7 @@ public class Root extends Element {
 	 * CHECK #18: Variable names only differing in case<br/>
 	 * CHECK #19: Possible name collisions with reserved words<br/>
 	 * CHECK #21: Discourage use of variable names 'I', 'l', and 'O'
+	 * CHECK #32: Possible name collisions with controller routine names
 	 * @param _ele - the element to be checked
 	 * @param _errors - the global error list
 	 * @param _vars - variables definitely introduced so far
@@ -5004,6 +5019,7 @@ public class Root extends Element {
 				addError(_errors, new DetectedError(errorMsg(Menu.error18, substitutions), _ele), 18);			
 			}
 			// START KGU#327 2017-01-07: Enh. #329 discourage use of 'I', 'l', and 'O'
+			// Check 21
 			if (varName.equals("I") || varName.equals("l") || varName.equals("O")) {
 				// warning "Variable names I (upper-case i), l (lower-case L), and O (upper-case o) are hard to distinguish from each other, 1, or 0."
 				addError(_errors, new DetectedError(errorMsg(Menu.error21, ""), _ele), 21);
@@ -5039,6 +5055,18 @@ public class Root extends Element {
 				// END KGU#239 2017-04-11
 			}
 		}
+		// START KGU#1181 2025-07-10: Enh. #1196 Also check for controller routine names
+		if (check(32)) {
+			for (int i = 0; i < _myVars.count(); i++)
+			{
+				String varName = _myVars.get(i);
+				StringList ctrlNames = controllerRoutineNames.get(varName.toLowerCase());
+				if (ctrlNames != null) {
+					addError(_errors, new DetectedError(errorMsg(Menu.error32_1, new String[]{varName, ctrlNames.concatenate(", ")}), _ele), 32);
+				}
+			}
+		}
+		// END KGU#1181 2025-07-10
 	}
 
 	// START KGU#253 2016-09-22: Enh. #249
@@ -6164,6 +6192,29 @@ public class Root extends Element {
 	}
 	// END KGU#1090 2023-10-17
 
+	// START KGU#1181 2025-07-10: Enh. #1196.2
+	/**
+	 * CHECK #33: Use of Turtleizer procedures fd or bk
+	 * 
+	 * @param _instr - {@link Instruction} to be analysed
+	 * @param _errors - global error list
+	 */
+	public void analyse_33(Instruction _instr, Vector<DetectedError> _errors)
+	{
+		StringList unbrokenText = _instr.getUnbrokenText();
+		for (int i = 0; i < unbrokenText.count(); i++) {
+			String line = unbrokenText.get(i);
+			if (Instruction.isProcedureCall(line, false)) {
+				StringList tokens = splitLexically(line, true);
+				tokens.removeAll(" ");
+				int ix = CHECK33_NAMES_1.indexOf(tokens.get(0));
+				if (ix >= 0) {
+					addError(_errors, new DetectedError(errorMsg(Menu.error33, new String[] {CHECK33_NAMES_1.get(ix), CHECK33_NAMES_2[ix]}), _instr), 33);
+				}
+			}
+		}
+	}
+	// END KGU#1181 2025-07-10
 	
 	// START KGU#456 2017-11-06: Enh. #452
 	/**
@@ -7136,13 +7187,18 @@ public class Root extends Element {
             initialiseKeyTables();
         }
         // END KGU#239 2016-08-12
+        // START KGU#1181 2025-07-10: Enh. #1196.1
+        if (check(32)) {
+            ensureControllerKeyTables();
+        }
+        // END KGU#1181 2025-07-10
 
         // CHECK: upper-case for program name (#6)
         if (!programName.toUpperCase().equals(programName))
         {
             //error  = new DetectedError("The programname «"+programName+"» must be written in uppercase!",this);
-            error  = new DetectedError(errorMsg(Menu.error06,programName),this);
-            addError(errors,error,6);
+            error  = new DetectedError(errorMsg(Menu.error06, programName), this);
+            addError(errors, error, 6);
         }
 
         // CHECK: correct identifier for program name (#7)
@@ -7182,6 +7238,20 @@ public class Root extends Element {
             addError(errors, new DetectedError(errorMsg(Menu.error07_5, programName), this), 7);
         }
         // END KGU#877 2020-10-16
+        // START KGU#1181 2025-07-10: Enh. #1196.1 Check for controller routine collision
+        if (check(32) && this.isSubroutine()) {
+            int minArgs = this.getMinParameterCount();
+            int maxArgs = this.getParameterNames().count();
+            for (int i = minArgs; i <= maxArgs; i++) {
+                String sign = programName + "#" + i;
+                StringList ctrlNames = controllerRoutineSignatures.get(sign.toLowerCase());
+                if (ctrlNames != null) {
+                    addError(errors, new DetectedError(errorMsg(Menu.error32_2,
+                            new String[] {programName, Integer.toString(i), ctrlNames.concatenate(", ")}), this), 32);
+                }
+            }
+        }
+        // END KGU#1181 2025-07-10
         
         // START KGU#456 2017-11-04: Enh. #452 - charm initiative
         analyseGuides(errors, hasValidName);
@@ -7203,7 +7273,7 @@ public class Root extends Element {
         // END KGU#239 2016-08-12
 
         // CHECK: two checks in one loop: (#12 - new!) & (#7)
-        for (int j=0; j < rootVars.count(); j++)
+        for (int j = 0; j < rootVars.count(); j++)
         {
             String para = rootVars.get(j);
             // CHECK: non-conform parameter name (#12 - new!)
@@ -7248,8 +7318,8 @@ public class Root extends Element {
         if (!isFunction && getCachedVarNames().contains(programName))
         {
             //error  = new DetectedError("Your program («"+programName+"») may not have the same name as a variable!",this);
-            error  = new DetectedError(errorMsg(Menu.error09,programName),this);
-            addError(errors,error,9);
+            error  = new DetectedError(errorMsg(Menu.error09, programName),this);
+            addError(errors, error, 9);
         }
 
         // CHECK: sub does not return any result (#13 - new!)
@@ -7349,7 +7419,7 @@ public class Root extends Element {
 
 	// START KGU#239 2016-08-12: Enh. #231
 	/**
-	 * Initializes the lookup tables for the identifier check 19 of analyser 
+	 * Initializes the lookup tables for the identifier check 19 of analyser
 	 */
 	private static final void initialiseKeyTables()
 	{
@@ -7402,6 +7472,53 @@ public class Root extends Element {
 //		}
 	}
 	// END KGU#239 2016-06-12
+	
+	// START KGU#1181 2025-07-10: Enh. #1196 Retrieval for controller-based keywords
+	/**
+	 * Ensured an up-to-date lookup table of controller-routine names for
+	 * Anlyser check 32
+	 */
+	private static final void ensureControllerKeyTables()
+	{
+		// Check the set of registered controllers
+		LinkedHashMap<DiagramController, Root> controllers = Diagram.getDiagramControllers();
+		StringList ctrlNameList = new StringList();
+		for (DiagramController ctrl: controllers.keySet()) {
+			ctrlNameList.addOrdered(ctrl.getName());
+		}
+		if (controllerNames == null || controllerNames.count() != ctrlNameList.count()
+				|| !controllerNames.concatenate(",").equals(ctrlNameList.concatenate(","))) {
+			controllerNames = ctrlNameList;
+			// Establish the up-to-date lookup table
+			controllerRoutineNames = new Hashtable<String, StringList>();
+			controllerRoutineSignatures = new Hashtable<String, StringList>();
+			// Now add the table entries for every DiagramController
+			for (DiagramController ctrl: controllers.keySet()) {
+				Set<String> routineNames = new HashSet<String>();
+				routineNames.addAll(ctrl.getFunctionMap().keySet());
+				routineNames.addAll(ctrl.getProcedureMap().keySet());
+				//String[] enums = ctrl.getEnumerators();
+				String ctrlName = ctrl.getName();
+				for (String sign: routineNames) {
+					int posHatch = sign.indexOf('#');
+					if (posHatch > 0) {
+						StringList ctrlSignatures = controllerRoutineNames.get(sign);
+						if (ctrlSignatures == null) {
+							controllerRoutineSignatures.put(sign, ctrlSignatures = new StringList());
+						}
+						ctrlSignatures.addIfNew(ctrlName);
+						String rName = sign.substring(0, posHatch).toLowerCase();
+						StringList ctrlNames = controllerRoutineNames.get(rName);
+						if (ctrlNames == null) {
+							controllerRoutineNames.put(rName, ctrlNames = new StringList());
+						}
+						ctrlNames.addIfNew(ctrlName);
+					}
+				}
+			}
+		}
+	}
+	// END KGU#1181 2025-07-10
 	
 	// START KGU#466 2019-08-02: Issue #733
 	/**

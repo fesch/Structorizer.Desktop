@@ -30,8 +30,8 @@ package lu.fisch.structorizer.elements;
  *
  *      Revision List
  *
- *      Author          Date			Description
- *      ------			----			-----------
+ *      Author          Date            Description
+ *      ------          ----            -----------
  *      Bob Fisch       2007-12-10      First Issue
  *      Kay Gürtzig     2015-10-11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
  *      Kay Gürtzig     2015-10-11      Comment drawing centralized and breakpoint mechanism prepared
@@ -63,6 +63,9 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2019-03-28      Enh. #128: comment block height slightly enlarged
  *      Kay Gürtzig     2021-01-02      Enh. #905: Mechanism to draw a warning symbol on related DetectedError
  *      Kay Gürtzig     2022-07-31      Bugfix #1054: Element width did not always respect comment width
+ *      Kay Gürtzig     2025-07-02      Bugfix #1195: Element is also to be hatched if indirectly disabled,
+ *                                      missing Override annotations added.
+ *      Kay Gürtzig     2025-07-31      Enh. #1197: Branch selector colouring enabled
  *
  ******************************************************************************************************
  *
@@ -72,6 +75,7 @@ package lu.fisch.structorizer.elements;
 
 import java.awt.Color;
 import java.awt.Point;
+import java.awt.Polygon;
 import java.awt.Rectangle;
 
 import javax.swing.ImageIcon;
@@ -105,6 +109,18 @@ public class Alternative extends Element implements IFork {
 	private static final String[] relevantParserKeys = {"preAlt", "postAlt"};
 	// END KGU#258 2016-09-25
 	
+	// START KGU#1182 2025-07-31: Enh. #1197 Allow to subselect headers in IFork
+	/**
+	 * Index of the currently selected branch head (0 -> T, 1 -> F, -1 - none).
+	 */
+	private int selectedBranchHead = -1;
+	
+	/**
+	 * Possible chosen colours for the existing branch selector head polygons
+	 */
+	private Color branchHeadColors[] = new Color[] {null, null};
+	// END KGU#1182 2025-07-31
+	
 	public Alternative()
 	{
 		super();
@@ -128,6 +144,7 @@ public class Alternative extends Element implements IFork {
 		//setText(_strings);	// Already done
 	}
 	
+	@Override
 	public Rect prepareDraw(Canvas _canvas)
 	{
 		// START KGU#136 2016-03-01: Bugfix #97 (prepared)
@@ -349,6 +366,7 @@ public class Alternative extends Element implements IFork {
 		return rect0;
 	}
 	
+	@Override
 	public void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport, boolean _inContention)
 	{
 		// START KGU#502/KGU#524/KGU#553 2019-03-13: New approach to reduce drawing contention
@@ -429,12 +447,12 @@ public class Alternative extends Element implements IFork {
 		// upper right corner
 		double dx = _top_left.right - _top_left.left;
 		double dy = cy;
-		// the the lowest point of the triangle
+		// the lowest point of the upper triangle
 		double ax = pt0Parting.x;
 		double ay = 0;
-		// gradient coefficient of the left traverse line
+		// gradient coefficient of the left oblique line
 		double coeffleft = (cy-ay)/(cx-ax);
-		// coefficient of the right traverse line
+		// coefficient of the right oblique line
 		double coeffright = (dy-ay)/(dx-ax);
 
 		// START KGU#227 2016-07-31: Enh. #128 - revised KGU#435 2017-10-22
@@ -447,6 +465,39 @@ public class Alternative extends Element implements IFork {
 					_top_left.top + E_PADDING/2, true);
 		}
 		// END KGU#227/KGU#435 2016-07-31 / 2017-10-22
+		
+		// START KGU#1182 2025-07-31: Enh. #1197 Allow to colourize branch headers
+		if (!E_COLLECTRUNTIMEDATA ||
+				E_RUNTIMEDATAPRESENTMODE == RuntimeDataPresentMode.NONE) {
+			for (int i = 0; i < 2; i++) {
+				if (this.selectedBranchHead == i || branchHeadColors[i] != null) {
+					int top = _top_left.top + commentRect.bottom;
+					Polygon tri;
+					// Draw the respective triangle in the specified colour
+					if (i == 0) {
+						tri = new Polygon(
+								new int[] {_top_left.left, _top_left.left + pt0Parting.x, _top_left.left},
+								new int[] {top, _top_left.top + pt0Parting.y, _top_left.top + pt0Parting.y},
+								3);
+					}
+					else {
+						tri = new Polygon(
+								new int[] {_top_left.left + pt0Parting.x, _top_left.right, _top_left.right},
+								new int[] {_top_left.top + pt0Parting.y, top, _top_left.top + pt0Parting.y},
+								3);
+					}
+					if (this.selectedBranchHead == i) {
+						canvas.setColor(Element.E_DRAWCOLOR);
+					}
+					else {
+						canvas.setColor(branchHeadColors[i]);
+					}
+					canvas.fillPoly(tri);
+					canvas.setColor(drawColor);
+				}
+			}
+		}
+		// END KGU#1182 2025-07-31
 		
 		// draw text
 		for (int i=0; i < nLines; i++)
@@ -482,7 +533,7 @@ public class Alternative extends Element implements IFork {
 					_top_left.left + (E_PADDING/2) + (int) leftside + (int) (boxWidth - textWidth)/2,
 					// START KGU#227 2016-07-31: Enh. #128
 					//_top_left.top + (E_PADDING / 3) + (i+1)*fontHeight,
-					_top_left.top + (E_PADDING / 3) + commentRect.bottom + (i+1)*fontHeight,
+					_top_left.top + (E_PADDING/3) + commentRect.bottom + (i+1)*fontHeight,
 					// END KGU#227 2016-07-31
 					myLine, this, _inContention
 					);
@@ -554,7 +605,10 @@ public class Alternative extends Element implements IFork {
 		// END KGU#435 2017-10-22
 		
 		// START KGU#277 2016-10-13: Enh. #270
-		if (this.disabled) {
+		// START KGU#1080 2025-07-02: Bugfix #1195 Should also be hatched if indirectly disabled
+		//if (this.disabled) {
+		if (this.isDisabled(false)) {
+		// END KGU#1080 2025-07-02
 			canvas.hatchRect(myrect, 5, 10);
 		}
 		// END KGU#277 2016-10-13
@@ -616,6 +670,11 @@ public class Alternative extends Element implements IFork {
 	public Element getElementByCoord(int _x, int _y, boolean _forSelection)
 	{
 		Element selMe = super.getElementByCoord(_x,_y, _forSelection);
+		// START KGU#1182 2025-07-31: Enh. #1197 Clear branch header selection too
+		if (selMe == null && _forSelection) {
+			selectedBranchHead = -1;
+		}
+		// END KGU#1182 2025-07-31
 		// START KGU#121 2016-01-03: Bugfix #87 - A collapsed element has no visible substructure!
 		// START KGU#207 2016-07-21: Bugfix #198 - If this is not hit then there is no need to check the children
 		//if (!this.isCollapsed())
@@ -634,14 +693,24 @@ public class Alternative extends Element implements IFork {
 			// END KGU#136 2016-03-01
 			if (selT != null) 
 			{
-				//selected=false;
-				if (_forSelection) selected = false;
+				// START KGU#1182 2025-07-31: Enh. #1197 Clear branch header selection too
+				//if (_forSelection) selected = false;
+				if (_forSelection) {
+					selected = false;
+					selectedBranchHead = -1;
+				}
+				// END KGU#1182 2025-07-31
 				selMe = selT;
 			}
 			else if (selF != null)
 			{
-				//selected=false
-				if (_forSelection) selected = false;
+				// START KGU#1182 2025-07-31: Enh. #1197 Clear branch header selection too
+				//if (_forSelection) selected = false;
+				if (_forSelection) {
+					selected = false;
+					selectedBranchHead = -1;
+				}
+				// END KGU#1182 2025-07-31
 				selMe = selF;
 			}
 		// START KGU#121 2016-01-03: Bugfix #87 (continued)
@@ -658,6 +727,7 @@ public class Alternative extends Element implements IFork {
 	 * of the head partition (condition and branch labels). 
 	 * @return a rectangle starting at (0,0) and spanning to (width, head height) 
 	 */
+	@Override
 	public Rect getHeadRect()
 	{
 		return new Rect(rect.left, rect.top, rect.right, this.pt0Parting.y);
@@ -668,6 +738,7 @@ public class Alternative extends Element implements IFork {
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#findSelected()
 	 */
+	@Override
 	public Element findSelected()
 	{
 		Element sel = selected ? this : null;
@@ -679,6 +750,7 @@ public class Alternative extends Element implements IFork {
 	}
 	// END KGU#183 2016-04-24
 	
+	@Override
 	public Element copy()
 	{
 		Alternative ele = new Alternative(this.getText().copy());
@@ -687,6 +759,11 @@ public class Alternative extends Element implements IFork {
 		ele.qFalse = (Subqueue)this.qFalse.copy();
 		ele.qTrue.parent  = ele;
 		ele.qFalse.parent = ele;
+		// START KGU#1182 2025-07-31: Enh. #1197 Colours for branch heads
+		for (int i = 0; i < this.branchHeadColors.length; i++) {
+			ele.branchHeadColors[i] = this.branchHeadColors[i]; 
+		}
+		// END KGU#1182 2025-07-31
 		return ele;
 	}
 	
@@ -727,16 +804,8 @@ public class Alternative extends Element implements IFork {
 	}
 	// END KGU#117 2016-03-07
 
-	/*@Override
-    public void setColor(Color _color) 
-    {
-        super.setColor(_color);
-        qFalse.setColor(_color);
-        qTrue.setColor(_color);
-    }*/
-	
-
 	// START KGU#156 2016-03-13: Enh. #124
+	@Override
 	protected String getRuntimeInfoString()
 	{
 		String info = this.getExecCount() + " / ";
@@ -761,6 +830,7 @@ public class Alternative extends Element implements IFork {
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#isTestCovered(boolean)
 	 */
+	@Override
 	public boolean isTestCovered(boolean _deeply)
 	{
 		return this.qTrue.isTestCovered(_deeply) && this.qFalse.isTestCovered(_deeply);
@@ -854,5 +924,122 @@ public class Alternative extends Element implements IFork {
 		return maxLen;
 	}
 	// END KGU#602 2018-10-25
+
+	// START KGU#1182 2025-07-31: Enh. #1197 Allow to subselect branch headers
+	@Override
+	public int getBranchCount() {
+		return 2;
+	}
+
+	@Override
+	public boolean selectBranchHead(int _relX, int _relY) {
+		int oldSel = this.selectedBranchHead;
+		if (this.wasDrawn && this.isRect0UpToDate && !isCollapsed(true)) {
+			/* The TRUE header triangle is selected if _relX is between 0 and
+			 * pt0Parting.x and _relY is above the oblique line from origin to
+			 * pt0Parting.
+			 * We use the determinant of matrix {{selX, selY, 1}, {0,0,1},
+			 * {pt0Parting.x, pt0Parting.y, 1}} to decide this (must be > 0)
+			 */
+			if (_relX > 0 && _relX < pt0Parting.x) {
+				double det = _relY * pt0Parting.x - _relX * pt0Parting.y;
+				if (det > 0) {
+					this.selectedBranchHead = 0;
+				}
+			}
+			/* The FALSE header triangle is selected if _relX is between
+			 * pt0Parting.x and rect0.right and _relY is above the oblique
+			 * line from pt0Parting to upper right corner of rect0.
+			 * We use the determinant of matrix {{selX, selY, 1},
+			 * {pt0Parting.x, pt0Parting.y, 1}, {rect.right,0,1},} to decide
+			 * this (must be > 0)
+			 */
+			else if (_relX > pt0Parting.x && _relX < rect0.right) {
+				double det = _relX * pt0Parting.y + _relY * rect.right
+						- _relY * pt0Parting.x - rect.right * pt0Parting.y;
+				if (det > 0) {
+					this.selectedBranchHead = 1;
+				}
+			}
+			else {
+				this.selectedBranchHead = -1;
+			}
+		}
+		return oldSel != this.selectedBranchHead;
+	}
+	
+	@Override
+	public int getSelectedBranchHead()
+	{
+		return this.selectedBranchHead;
+	}
+
+	@Override
+	public Color getBranchHeadColor(int _branchIndex) {
+		if (_branchIndex < 0 || _branchIndex > 1) {
+			return null;
+		}
+		return this.branchHeadColors[_branchIndex];
+	}
+	
+	@Override
+	public String getHexBranchColorList()
+	{
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < this.getBranchCount(); i++) {
+			if (i > 0) {
+				sb.append(",");
+			}
+			sb.append(getHexColor(this.getBranchHeadColor(i)));
+		}
+		return sb.toString();
+	}
+
+	@Override
+	public boolean setBranchHeadColor(int _branchIndex, Color _branchColor) {
+		if (_branchIndex < 0 || _branchIndex > 1) {
+			return false;
+		}
+		this.branchHeadColors[_branchIndex] = _branchColor;
+		return true;
+	}
+	
+	@Override
+	public Element setSelected(boolean _sel)
+	{
+		this.selectedBranchHead = -1;
+		return super.setSelected(_sel);
+	}
+	
+	@Override
+	public void setColor(Color _color)
+	{
+		if (this.selectedBranchHead >= 0) {
+			this.branchHeadColors[this.selectedBranchHead] = _color;
+		}
+		else if (_color == null) {
+			// Wipe all branch head colours (if any)
+			for (int i = 0; i < 2; i++) {
+				this.branchHeadColors[i] = null;
+			}
+		}
+		else {
+			super.setColor(_color);
+		}
+	}
+	
+	@Override
+	protected Color getFillColor(DrawingContext drawingContext)
+	{
+		Color fillColor = super.getFillColor(drawingContext);
+		// Check if the colour is the designated selection colour
+		if (this.getSelected(drawingContext) && this.selectedBranchHead != -1
+				&& fillColor == Color.YELLOW) {
+			// In case a branch head is selected, use the element background colour
+			fillColor = this.getColor();
+		}
+		return fillColor;
+	}
+	// END KGU#1182 2025-07-31
 
 }

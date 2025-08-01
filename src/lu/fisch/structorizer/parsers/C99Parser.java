@@ -64,7 +64,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2024-03-17      Bugfix #1141: Measures against stack overflow in buildNSD_R()
  *      Kay Gürtzig     2024-04-17/18   Bugfix #1163: Import of non-trivial switch structures improved
  *      Kay Gürtzig     2024-04-18      Bugfix #1164: Adapted to new grammar version (1.6)
- *      Kay Gürtzig     2025-06-24      Workaround #690 revised (also referred by #1087)
+ *      Kay Gürtzig     2025-06-24/25   Workaround #690 revised (also referred by #1087)
  *
  ******************************************************************************************************
  *
@@ -1155,6 +1155,10 @@ public class C99Parser extends CPreParser
 				content = content.replaceAll("(^|.*\\W)const(\\s+.*)", "$1$2");
 				// START KGU#668 2019-02-28: Workaround #690 to get rid of struct keywords here
 				content = content.replaceAll("(^|.*\\W)struct(\\s+.*)", "$1$2");
+				// START KGU#668 2025-06-25: Workaround #690 extended
+				content = content.replaceAll("(^|.*\\W)enum(\\s+.*)", "$1$2");
+				content = content.replaceAll("(^|.*\\W)union(\\s+.*)", "$1$2");
+				// END KGU#668 2025-06-25
 				// END KGU#668 2019-02-28
 			}
 			content += prefix.concatenate(" ").trim();

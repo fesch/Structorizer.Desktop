@@ -54,6 +54,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2019-11-13      Method loadLicenseText moved to Generator in order to fix bug #778
  *      Kay Gürtzig     2021-02-22      Enh. #410: New Root field "namespace" supported
  *      Kay Gürtzig     2021-02-26      Bugfix #945: Disabled status of parallel elements had not been saved
+ *      Kay Gürtzig     2025-07-03      Missing Override annotations added
+ *      Kay Gürtzig     2025-07-31      Enh. #1197: Branch selector colouring and its export enabled
  *
  ******************************************************************************************************
  *
@@ -80,21 +82,25 @@ public class XmlGenerator extends Generator
 	// END KGU#118 2015-12-31
 	
 	/************ Fields ***********************/
+	@Override
 	protected String getDialogTitle()
 	{
 		return "XML Code ...";
 	}
 	
+	@Override
 	protected String getFileDescription()
 	{
 		return "XML Code";
 	}
 	
+	@Override
 	protected String getIndent()
 	{
 		return "\t";
 	}
 	
+	@Override
 	protected String[] getFileExtensions()
 	{
 		String[] exts = {"xml","nsd"};
@@ -154,6 +160,7 @@ public class XmlGenerator extends Generator
 	 * construction in the target language.
 	 * @return a {@link TryCatchSupportLevel} value
 	 */
+	@Override
 	protected TryCatchSupportLevel getTryCatchLevel()
 	{
 		return TryCatchSupportLevel.TC_TRY_CATCH_FINALLY;
@@ -214,6 +221,9 @@ public class XmlGenerator extends Generator
 		code.add(_indent + "<alternative text=\"" + BString.encodeToHtml(_alt.getText().getCommaText()) +
 				"\" comment=\"" + BString.encodeToHtml(_alt.getComment().getCommaText()) +
 				"\" color=\"" + _alt.getHexColor() +
+				// START KGU#1182 2025-07-31: Enh. #1197 Support for brach head colours
+				"\" branch_colors=\"" + _alt.getHexBranchColorList() +
+				// END KGU#1182 2025-07-31
 				"\" disabled=\"" + (_alt.isDisabled(true) ? "1" : "0") +
 				"\">");
 		// START KGU 2016-12-21: Bugfix #317
@@ -235,9 +245,12 @@ public class XmlGenerator extends Generator
 		code.add(_indent + "<case text=\"" + BString.encodeToHtml(_case.getText().getCommaText()) +
 				"\" comment=\"" + BString.encodeToHtml(_case.getComment().getCommaText()) +
 				"\" color=\"" + _case.getHexColor() +
+				// START KGU#1182 2025-07-31: Enh. #1197 Support for brach head colours
+				"\" branch_colors=\"" + _case.getHexBranchColorList() +
+				// END KGU#1182 2025-07-31
 				"\" disabled=\"" + (_case.isDisabled(true) ? "1" : "0") +
 				"\">");
-		for(int i=0;i<_case.qs.size();i++)
+		for(int i = 0; i < _case.getBranchCount(); i++)
 		{
 			// START KGU 2016-12-21: Bugfix #317
 			//code.add(_indent+this.getIndent()+"<qCase>");

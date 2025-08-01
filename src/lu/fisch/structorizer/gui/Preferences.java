@@ -43,6 +43,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2019-03-22      Enh. #56: Preferences for Try blocks added, Layout revised
  *      Kay Gürtzig     2021-01-25      Enh. #915: Alternative editor for Case elements offered
  *      Kay Gürtzig     2021-01-26      Issue #163: Tab and Shift Tab as traversal keys for txtCase
+ *      Kay Gürtzig     2025-08-01      Enh. #915/#1198 Case editor choice modified to combobox
  *
  ******************************************************************************************************
  *
@@ -56,6 +57,7 @@ package lu.fisch.structorizer.gui;
  *
  ******************************************************************************************************///
 
+import lu.fisch.structorizer.elements.CaseEditorChoice;
 import lu.fisch.structorizer.elements.Element;
 
 import lu.fisch.structorizer.io.Ini;
@@ -125,7 +127,12 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 	protected JSpinner spnCaseRot;
 	// END KGU#401 2017-05-18
 	// START KGU#916 2021-01-25: Enh. #915 Case editor
-	protected JCheckBox chkCaseEditor;
+	// START KGU#997 2025-08-01: Enh. #915/#1198 More choices
+	//protected JCheckBox cbCaseEditor;
+	protected JPanel pnlCaseEditor;
+	protected JLabel lblCaseEditor;
+	protected JComboBox<CaseEditorChoice> cbCaseEditor;
+	// END KGU#997 2025-08-01
 	// END KGU#916 2021-01-15
 	// START KGU#686 2019-03-22: Enh. #56 (Try elements)
 	protected JPanel pnlTry;
@@ -199,7 +206,12 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 		spnCaseRot = new JSpinner();
 		// END KGU#401 2017-05-18
 		// START KGU#916 2021-01-25: Enh. #915 Case editor
-		chkCaseEditor = new JCheckBox();
+		// START KGU#997 2025-08-01: Enh. #915/#1198 More choices
+		//cbCaseEditor = new JCheckBox();
+		pnlCaseEditor = new JPanel();
+		lblCaseEditor = new JLabel();
+		cbCaseEditor = new JComboBox<CaseEditorChoice>(CaseEditorChoice.values());
+		// END KGU#997 2025-08-01
 		// END KGU#916 2021-01-15
 		// START KGU#686 2019-03-22: Enh. #56 (Try elements)
 		pnlTry = new JPanel();
@@ -330,8 +342,14 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 						pnlCase.add(pnlCaseRot, BorderLayout.SOUTH);
 						// END KGU#401 2017-05-18
 						// START KGU#916 2021-01-25: Enh. #915
-						chkCaseEditor.setText("Use dedicated editor for CASE elements");
-						pnlCaseRot.add(chkCaseEditor, BorderLayout.SOUTH);
+						// START KGU#997 2025-08-01: Enh. #915/#1198
+						//cbCaseEditor.setText("Use dedicated editor for CASE elements");
+						//pnlCaseRot.add(cbCaseEditor, BorderLayout.SOUTH);
+						pnlCaseEditor.setLayout(new BorderLayout());
+						lblCaseEditor.setText("Use dedicated editor");
+						pnlCaseEditor.add(lblCaseEditor, BorderLayout.WEST);
+						pnlCaseEditor.add(cbCaseEditor, BorderLayout.EAST);
+						pnlCaseRot.add(pnlCaseEditor, BorderLayout.SOUTH);
 						// END KGU#916 2021-01-25
 					}
 					pnlLeft.add(pnlCase, BorderLayout.CENTER);
@@ -478,7 +496,7 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 		edtFinal.addKeyListener(this);
 		// END KGU#686 2019-03-22
 		// START KGU#393/KGU#916 2021-01-26: Issue #400, enh. #915
-		chkCaseEditor.addKeyListener(this);
+		cbCaseEditor.addKeyListener(this);
 		// END KGU#393/KGU#916 2021-01-26
 		addKeyListener(this);
 		

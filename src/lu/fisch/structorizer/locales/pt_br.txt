@@ -70,6 +70,7 @@
  *      Kay Gürtzig     2024-03-17  Issue #1138: New / modified conflict messages for Surface
  *      Kay Gürtzig     2024-04-21  ExportOptionDialoge renamed to ExportOptionDialog
  *      Kay Gürtzig     2024-11-22  Poll #1173: menuFileExportPictureSWF removed.
+ *      Kay Gürtzig     2025-08-01  Enh. #1198 Messages for Preferences.lblCaseEditor, ~.cbCaseEditor
  *
  ******************************************************************************************************
  *
@@ -926,7 +927,10 @@ Preferences.lblCase.text=Conteúdo padrão
 Preferences.lblCase.tooltip=O conteúdo padrão de uma alternativa @c.
 Preferences.lblCaseRot.text=Mínimo de desvios para rotação
 Preferences.lblCaseRot.tooltip=Limite de contagem de desvios para tentativas de reduzir a largura rotacioando elementos (0 = desligado)
-Preferences.chkCaseEditor.text=Usar editor dedicado para @c
+Preferences.lblCaseEditor.text=Usar editor dedicado
+Preferences.cbCaseEditor.item.0.text=nunca
+Preferences.cbCaseEditor.item.1.text=si nem vazio
+Preferences.cbCaseEditor.item.0.text=sempre
 Preferences.pnlRoot.border=Cabeçalho @m
 Preferences.lblRoot.text=Legenda da lista de Inclusões
 Preferences.lblRoot.tooltip=A legenda para a lista de diagramas @p ao ser desenhada.

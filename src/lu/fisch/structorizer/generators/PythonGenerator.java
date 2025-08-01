@@ -94,6 +94,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2024-04-03      Issue #1148: Optimised code generation for "if else if" chains
  *      Kay Gürtzig             2025-02-06      Bugfix #1188: The transformation of C-style array initialisations was wrong
  *      Kay Gürtzig             2025-02-16      Bugfix #1192: Translation of tail return instruction keywords
+ *      Kay Gürtzig             2025-07-03      Several missing Override annotations added.
  *
  ******************************************************************************************************
  *
@@ -154,21 +155,25 @@ public class PythonGenerator extends Generator
 {
 		
 	/************ Fields ***********************/
+	@Override
 	protected String getDialogTitle()
 	{
 		return "Export Python ...";
 	}
 
+	@Override
 	protected String getFileDescription()
 	{
 		return "Python Source Code";
 	}
 
+	@Override
 	protected String getIndent()
 	{
 		return "    ";
 	}
 
+	@Override
 	protected String[] getFileExtensions()
 	{
 		String[] exts = {"py"};
@@ -221,6 +226,7 @@ public class PythonGenerator extends Generator
 	 * construction in the target language.
 	 * @return a {@link TryCatchSupportLevel} value
 	 */
+	@Override
 	protected TryCatchSupportLevel getTryCatchLevel()
 	{
 		return TryCatchSupportLevel.TC_TRY_CATCH_FINALLY;
@@ -817,7 +823,7 @@ public class PythonGenerator extends Generator
 		// END KGU#453 2017-11-02
 		String condition = transform(lines.get(0));
 
-		for(int i=0; i<_case.qs.size()-1; i++)
+		for(int i = 0; i < _case.qs.size()-1; i++)
 		{
 			String caseline = _indent + ((i == 0) ? "if" : "elif") + " (";
 			// START KGU#15 2015-10-21: Support for multiple constants per branch
@@ -1081,6 +1087,7 @@ public class PythonGenerator extends Generator
 	}
 
 	// START KGU#47 2015-12-17: Offer at least a sequential execution (which is one legal execution order)
+	@Override
 	protected void generateCode(Parallel _para, String _indent)
 	{
 		boolean isDisabled = _para.isDisabled(false);
@@ -1208,6 +1215,7 @@ public class PythonGenerator extends Generator
 	// END KGU#47/KGU#348 2017-02-19
 	
 	// START KGU#686 2019-03-21: Enh. #56
+	@Override
 	protected void generateCode(Try _try, String _indent)
 	{
 		boolean isDisabled = _try.isDisabled(false);
@@ -1335,6 +1343,7 @@ public class PythonGenerator extends Generator
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.Generator#appendGlobalInitialisations(java.lang.String)
 	 */
+	@Override
 	protected void appendGlobalInitialisations(Root _root, String _indent) {
 		if (topLevel) {
 			// START KGU#852 2020-04-22: Don't leave a foreign typeMap here

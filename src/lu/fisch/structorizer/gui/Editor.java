@@ -93,6 +93,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-01-28      Accelerator associations for the context menu items set.
  *      Kay Gürtzig     2021-03-03      Issue #954: Modified behaviour of "btnDropBrk" button
  *      Kay Gürtzig     2021-03-09      Issue #966: Precaution for dark look & feel themes
+ *      Kay Gürtzig     2025-08-01      Enh. 1197: Paintbox toolbar enhanced by a colour detach button
  *
  ******************************************************************************************************
  *
@@ -265,7 +266,10 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	// colors
 	// START KGU#245 2018-07-02: Individual color buttons converted to an array
 	protected ColorButton[] btnColors = new ColorButton[Element.colors.length];
-	// END KGU#245 2018-07-02	
+	// END KGU#245 2018-07-02
+	// START KGU#1182 2025-08-01: Enh. #1197 Need a colour deletion button
+	protected ColorButton btnNoColor = new ColorButton(null);
+	// END KGU#1182 2025-08-01
 	// START KGU#872 2020-10-17: Enh. #872
 	// display modes
 	protected final JLabel lblSwitchComments = new JLabel(IconLoader.getIcon(102));
@@ -933,6 +937,11 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 			btnColors[i].setFocusable(false);
 		}
 		// END KGU#245 2018-07-02
+		// START KGU#1182 2025-08-01: Enh. #1197 Add a detach button
+		toolbar.add(btnNoColor);
+		btnNoColor.addActionListener(colorButtonListener);
+		btnNoColor.setFocusable(false);
+		// END KGU#1182 2025-08-01
 
 		// START KGU#123 2016-01-04: Enh. #87 - Preparation for fix #65
 		toolbar = newToolBar("Collapsing", false);
@@ -1373,7 +1382,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		Element selected = diagram.getSelected();
 		boolean conditionAny =  selected != null && !selected.isExecuted();
 		// END KGU#143 2016-01-21
-		boolean condition =  conditionAny && diagram.getSelected()!=diagram.getRoot();
+		boolean condition =  conditionAny && selected != diagram.getRoot();
 		// START KGU#87 2015-11-22: For most operations, multiple selections are not supported
 		boolean conditionNoMult = condition && !diagram.selectedIsMultiple();
 		// END KGU#87 2015-11-22
@@ -1470,6 +1479,10 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 			btnColors[i].setEnabled(condition);
 		}
 		// END KGU#245 2018-07-02
+		// START KGU#1182 2025-08-01: Enh. #1197 Allow branch head selection and colouring
+		btnNoColor.setEnabled(conditionNoMult && selected instanceof IFork
+				&& (((IFork)selected).getSelectedBranchHead() == -1 || ((IFork)selected).getBranchHeadColor(((IFork)selected).getSelectedBranchHead()) != null));
+		// END KGU#1182 2025-08-01
 
 		// START KGU#123 2016-01-03: Enh. #87 - We allow multiple selection for collapsing
 		// collapse & expand - for multiple selection always allowed, otherwise only if a change would occur

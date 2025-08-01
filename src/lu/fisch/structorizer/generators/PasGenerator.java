@@ -103,6 +103,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2024-04-02      Bugfix #1155: Risk of stack overflow on type conversion averted
  *      Kay Gürtzig         2024-04-03      Issue #1148: Optimised code generation for "if else if" chains
  *      Kay Gürtzig         2024-12-18      Issue #423: Force pointer symbols in directly recursive record definitions
+ *      Kay Gürtzig         2025-07-03      Some missing Override annotations added
  *
  ******************************************************************************************************
  *
@@ -171,44 +172,44 @@ public class PasGenerator extends Generator
 	protected String procName = "";
 	
 	/************ Fields ***********************/
-    @Override
-    protected String getDialogTitle()
-    {
-            return "Export Pascal Code ...";
-    }
+	@Override
+	protected String getDialogTitle()
+	{
+		return "Export Pascal Code ...";
+	}
 
-    @Override
-    protected String getFileDescription()
-    {
-            return "Pascal / Delphi Source Code";
-    }
+	@Override
+	protected String getFileDescription()
+	{
+		return "Pascal / Delphi Source Code";
+	}
 
-    @Override
-    protected String getIndent()
-    {
-            return "  ";
-    }
+	@Override
+	protected String getIndent()
+	{
+		return "  ";
+	}
 
-    @Override
-    protected String[] getFileExtensions()
-    {
-            String[] exts = {"pas", "dpr", "pp", "lpr"};
-            return exts;
-    }
+	@Override
+	protected String[] getFileExtensions()
+	{
+		String[] exts = {"pas", "dpr", "pp", "lpr"};
+		return exts;
+	}
 
-    // START KGU 2015-10-18: New pseudo field
-    @Override
-    protected String commentSymbolLeft()
-    {
-    	return "{";
-    }
+	// START KGU 2015-10-18: New pseudo field
+	@Override
+	protected String commentSymbolLeft()
+	{
+		return "{";
+	}
 
-    @Override
-    protected String commentSymbolRight()
-    {
-    	return "}";
-    }
-    // END KGU 2015-10-18
+	@Override
+	protected String commentSymbolRight()
+	{
+		return "}";
+	}
+	// END KGU 2015-10-18
 
 	// START KGU#78 2015-12-18: Enh. #23 We must know whether to create labels for simple breaks
 	/* (non-Javadoc)
@@ -238,6 +239,7 @@ public class PasGenerator extends Generator
 	 * construction in the target language.
 	 * @return a {@link TryCatchSupportLevel} value
 	 */
+	@Override
 	protected TryCatchSupportLevel getTryCatchLevel()
 	{
 		return TryCatchSupportLevel.TC_TRY_CATCH_FINALLY;
@@ -438,6 +440,7 @@ public class PasGenerator extends Generator
 	 * @param _default - a default string returned if _type happens to be null
 	 * @return a type identifier (or the unchanged _type value if matching failed)
 	 */
+	@Override
 	protected String transformType(String _type, String _default) {
 		if (_type == null)
 			_type = _default;
@@ -659,7 +662,7 @@ public class PasGenerator extends Generator
 		// END KGU#195 2016-05-05
 		
 		return transline.trim(); 
-    }
+	}
 	
 	// START KGU#61 2016-03-23: New for enh. #84 (FOREACH loop support)
 	private void insertDeclaration(String _category, String text, int _maxIndent)
@@ -1561,6 +1564,7 @@ public class PasGenerator extends Generator
     }
 
 	// START KGU#47 2015-11-30: Offer at least a sequential execution (which is one legal execution order)
+	@Override
 	protected void generateCode(Parallel _para, String _indent)
 	{
 		boolean isDisabled = _para.isDisabled(false);

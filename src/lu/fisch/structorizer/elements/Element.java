@@ -141,6 +141,9 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2024-03-22      Issue #1154: New method drawHatched(Rect, Canvas) to allow subclassing
  *      Kay Gürtzig     2024-04-16      Bugfix #1160: Separate X and Y text offset for drawing rotated elements
  *      Kay Gürtzig     2024-10-09      Enh. #1171: New methods fetchViewSettings(Ini) and cacheViewSettings(Ini)
+ *      Kay Gürtzig     2025-07-02      Issue #270: Implementation of isDisabled(boolean) was defective.
+ *      Kay Gürtzig     2025-08-01      Enh. #1197: Support/precaution for IFork branch colouring,
+ *                                      Enh. #1198: Case editor choice option changed from boolean to enum
  *
  ******************************************************************************************************
  *
@@ -312,7 +315,7 @@ public abstract class Element {
 	public static final long E_HELP_FILE_SIZE = 12300000;
 	public static final String E_DOWNLOAD_PAGE = "https://www.fisch.lu/Php/download.php";
 	// END KGU#791 2020-01-20
-	public static final String E_VERSION = "3.32-27";
+	public static final String E_VERSION = "3.32-28";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -629,7 +632,10 @@ public abstract class Element {
 	public static int caseShrinkByRot = 8;
 	// END KGU#401 2017-05-17
 	// START KGU#916 2021-01-25: Enh. #915
-	public static boolean useInputBoxCase = true;
+	// START KGU#997 2025-08-01: Enh. #1198 More than two choices sensible
+	//public static boolean useInputBoxCase = true;
+	public static CaseEditorChoice useInputBoxCase = CaseEditorChoice.NON_EMPTY;
+	// END KGU#997 2025-08-01
 	// END KGU#916 2021-01-25
 	
 	// START KGU 2017-09-19: Performance tuning for syntax analysis
@@ -778,7 +784,7 @@ public abstract class Element {
 	// START KGU#277 2016-10-13: Enh. #270 Option to disable an Element from execution and export
 	/**
 	 * If true then this element is to be skipped on execution and outcommented on code export!
-	 * Also see isDisabled() for recursively inherited disabled state
+	 * Also see {@link #isDisabled(boolean)} for recursively inherited disabled state
 	 */
 	protected boolean disabled = false;
 	// END KGU#277 2016-10-13
@@ -798,14 +804,14 @@ public abstract class Element {
 
 	// used for drawing
 	// START KGU#136 2016-02-25: Bugfix #97 - New separate 0-based Rect for prepareDraw()
-	/** bounds aligned to fit in the context, no longer public */
+	/** bounds aligned to fit in the context, no longer public (use {@link #getRect()} to read) */
 	protected Rect rect = new Rect();
 	/** minimum bounds for stand-alone representation */
 	protected Rect rect0 = new Rect();
 	/** upper left corner coordinate offset wrt drawPoint */
 	protected Point topLeft = new Point(0, 0);
 	// END KGU#136 2016-03-01
-	/** Will be set and used by prepareDraw() (validity of {@link rect0}, avoids repeated evaluation) - to be reset on changes */
+	/** Will be set and used by {@link #prepareDraw(Canvas)} (validity of {@link rect0}, avoids repeated evaluation) - to be reset on changes */
 	protected boolean isRect0UpToDate = false;
 	// START KGU#502/KGU#524/KGU#553 2019-03-14: We need a second flag for correct drawing confinement
 	/** Will be set after the first complete drawing of the element (validity of {@link rect} - to be reset on changes */
@@ -857,6 +863,11 @@ public abstract class Element {
 
 	/**
 	 * Resets my cached drawing info
+	 * 
+	 * @see #isRect0UpToDate
+	 * @see #prepareDraw(Canvas)
+	 * @see #resetDrawingInfoUp()
+	 * @see #resetDrawingInfoDown()
 	 */
 	protected final void resetDrawingInfo()
 	{
@@ -873,6 +884,10 @@ public abstract class Element {
 	}
 	/**
 	 * Resets my drawing info and that of all of my ancestors
+	 * 
+	 * @see #isRect0UpToDate
+	 * @see #prepareDraw(Canvas)
+	 * @see #resetDrawingInfoDown()
 	 */
 	public final void resetDrawingInfoUp()
 	{
@@ -884,6 +899,10 @@ public abstract class Element {
 	}
 	/**
 	 * Recursively clears all drawing info this subtree down
+	 * 
+	 * @see #isRect0UpToDate
+	 * @see #prepareDraw(Canvas)
+	 * @see #resetDrawingInfoUp()
 	 */
 	// START KGU#238 2016-08-11: Code revision
 	//public abstract void resetDrawingInfoDown();
@@ -904,6 +923,15 @@ public abstract class Element {
 	// END KGU#238 2016-08-11
 	
 	// START KGU#502/KGU#524/KGU#553 2019-03-13: New approach to reduce drawing contention
+	/**
+	 * Checks whether parts of this element will be visible within the given
+	 * drawing region {@code _viewport}.
+	 * 
+	 * @param _viewport - the extent of the visible area
+	 * @param _topLeft - the predicted upper left corner of this element
+	 * @return {@code true} if some part of this elements bounds will be placed
+	 *     within {@code _viewport}
+	 */
 	protected boolean checkVisibility(Rectangle _viewport, Rect _topLeft)
 	{
 		// START KGU#502/KGU#524/KGU#553 2019-03-14: Issues #518,#544,#557 - we must refer to the eventual record
@@ -918,21 +946,32 @@ public abstract class Element {
 	// abstract things
 	/**
 	 * Recursively computes the drawing extensions of the element and stores
-	 * them in the 0-based rect0 attribute, which is also returned
+	 * them in the 0-based rect0 attribute, which is also returned.
+	 * 
 	 * @param _canvas - the drawing canvas for which the drawing is to be prepared
 	 * @return the origin-based extension record.
+	 * 
+	 * @see #draw(Canvas, Rect, Rectangle, boolean)
+	 * @see #resetDrawingInfo()
+	 * @see #resetDrawingInfoDown()
+	 * @see #resetDrawingInfoUp()
 	 */
 	public abstract Rect prepareDraw(Canvas _canvas);
 
 	/**
-	 * Actually draws this element within the given canvas, using _top_left
-	 * for the placement of the upper left corner. Uses attribute rect0 as
-	 * prepared by prepareDraw() to determine the expected extensions and
-	 * stores the the actually drawn bounds in attribute rect.
+	 * Actually draws this element within the given canvas, using argument
+	 * {@code _top_left} for the placement of the upper left corner. Uses
+	 * attribute {@link #rect0} as prepared by {@link #prepareDraw(Canvas)}
+	 * to determine the expected extensions and stores the the actually drawn
+	 * bounds in attribute {@link #rect}.
+	 * 
 	 * @param _canvas - the drawing canvas where the drawing is to be done in 
 	 * @param _top_left - conveyes the upper-left corner for the placement
 	 * @param _viewport - the visible area
 	 * @param _inContention - whether there is a massive drawing event contention
+	 * 
+	 * @see #checkVisibility(Rectangle, Rect)
+	 * @see #isRect0UpToDate
 	 */
 	public abstract void draw(Canvas _canvas, Rect _top_left, Rectangle _viewport, boolean _inContention);
 	
@@ -1904,32 +1943,67 @@ public abstract class Element {
 	public abstract void convertToCalls(StringList _signatures);
 	// END KGU#199 2016-07-07
 
+	/**
+	 * @return the current background colour of this element
+	 * 
+	 * @see #getFillColor()
+	 * @see #getHexColor()
+	 * @see #setColor(Color)
+	 */
 	public Color getColor()
 	{
 		return color;
 	}
 
+	/**
+	 * @return the hexadecimal RGB repesentation of the current background colour
+	 *     of this element
+	 * 
+	 * @see #getColor()
+	 */
 	public String getHexColor()
 	{
 		String rgb = Integer.toHexString(color.getRGB());
 		return rgb.substring(2, rgb.length());
 	}
 
+	/**
+	 * Extracts a hexadecimal string representation of the pure RGB value of 
+	 * given Color {@code _color}.
+	 * 
+	 * @param _color - the Color to get the hex representation from
+	 * @return the hexadecimal string of the pure RGB components
+	 */
 	public static String getHexColor(Color _color)
 	{
 		String rgb = Integer.toHexString(_color.getRGB());
 		return rgb.substring(2, rgb.length());
 	}
 
+	/**
+	 * Sets the general background colour for this Element
+	 * 
+	 * @param _color - the new Color to be assigned
+	 * 
+	 * @see #getColor()
+	 * @see #getHexColor()
+	 */
 	public void setColor(Color _color)
 	{
-		color = _color;
+		// START KGU#1182 2025-08-01: Enh. #1197 precaution against possible null
+		//color = _color;
+		if (_color != null) {
+			color = _color;
+		}
+		// END KGU#1182 2025-08-01
 	}
 	
 	/**
 	 * Returns the status-dependent background color or just the user-defined background color
 	 * for this element.
+	 * 
 	 * @see #getFillColor(DrawingContext)
+	 * @see #getColor()o
 	 */
 	protected Color getFillColor()
 	{
@@ -2585,8 +2659,12 @@ public abstract class Element {
 	// END KGU#979 2021-06-10
 
 	/**
-	 * Returns a copy of the (relocatable i. e. 0-bound) extension rectangle 
-	 * @return a rectangle starting at (0,0) and spanning to (width, height) 
+	 * Returns a copy of the (relocatable i. e. 0-bound) extension rectangle.
+	 * 
+	 * @return a rectangle starting at (0,0) and spanning to (width, height).
+	 * 
+	 * @see #getRect(Point)
+	 * @see #getRectOffDrawPoint()
 	 */
 	public Rect getRect()
 	{
@@ -2595,8 +2673,12 @@ public abstract class Element {
 
 	// START KGU#136 2016-03-01: Bugfix #97
 	/**
-	 * Returns the bounding rectangle translated to point {@code relativeTo}
+	 * Returns the bounding rectangle translated to point {@code relativeTo}.
+	 * 
 	 * @return a rectangle having {@code relativeTo} as its upper left corner.
+	 * 
+	 * @see #getRect()
+	 * @see #getRectOffDrawPoint()
 	 */
 	public Rect getRect(Point relativeTo)
 	{
@@ -2605,8 +2687,12 @@ public abstract class Element {
 	}
 
 	/**
-	 * Returns the bounding rectangle translated relative to the drawingPoint 
-	 * @return a rectangle starting at relativeTo 
+	 * Returns the bounding rectangle translated relative to the drawingPoint.
+	 * 
+	 * @return a rectangle starting at {@link #topLeft}.
+	 * 
+	 * @see #getRect()
+	 * @see #getRect(Point)
 	 */
 	public Rect getRectOffDrawPoint()
 	{
@@ -2614,11 +2700,25 @@ public abstract class Element {
 	}
 	// END KGU#136 2016-03-01
 	
+	/** 
+	 * @return the font currently used for diagram element texts
+	 * 
+	 * @see #setFont(Font)
+	 */
 	public static Font getFont()
 	{
 		return font;
 	}
 
+	/**
+	 * Sets the font to be used for diagram element texts to {@code _font}.
+	 * Does not trigger a redrawing of all diagrams but is effective for
+	 * subsequent drawing.
+	 * 
+	 * @param _font - the new font to be used for further diagram rendering
+	 * 
+	 * @see #getFont()
+	 */
 	public static void setFont(Font _font)
 	{
 		font = _font;
@@ -2650,6 +2750,7 @@ public abstract class Element {
 	 * from the given {@link FontMetrics} (should correspond to on an UNzoomed (!) {@link Graphics2D}
 	 * object).<br/>
 	 * Note: This method is possibly subject to tuning.
+	 * 
 	 * @param fm - the underlying {@link FontMetrics}
 	 * @return the font height in px.
 	 */
@@ -2696,7 +2797,20 @@ public abstract class Element {
 			caseShrinkByRot = Integer.parseInt(ini.getProperty("CaseShrinkRot", "8"));
 			// END KGU#401 2017-05-18
 			// START KGU#916 2021-01-25: Enh. #915
-			useInputBoxCase = ini.getProperty("CaseEditor", "true").equals("true");
+			// START KGU#997 2025-08-01: Enh. #1198
+			//useInputBoxCase = ini.getProperty("CaseEditor", "true").equals("true");
+			String caseEditorMode = ini.getProperty("CaseEditor", "NON-EMPTY");
+			// Legacy identification
+			useInputBoxCase = CaseEditorChoice.NEVER;
+			if (caseEditorMode.equals("true")) {
+				useInputBoxCase = CaseEditorChoice.ALWAYS;
+			}
+			for (CaseEditorChoice ce: CaseEditorChoice.values()) {
+				if (caseEditorMode.equals(ce.name())) {
+					useInputBoxCase = ce;
+				}
+			}
+			// END KGU#997 2025-08-01
 			// END KGU#916 2021-01-25
 			preFor    = ini.getProperty("For", "for ? <- ? to ?");
 			preWhile  = ini.getProperty("While", "while (?)");
@@ -2874,7 +2988,10 @@ public abstract class Element {
 		ini.setProperty("CaseShrinkRot", Integer.toString(caseShrinkByRot));
 		// END KGU#401 2017-05-18
 		// START KGU#916 2021-01-25: Enh.#915 - offer alternative CASE editor
-		ini.setProperty("CaseEditor", Boolean.toString(useInputBoxCase));
+		// START KGU#997 2025-08-01: Enh. #1198 - more choice options
+		//ini.setProperty("CaseEditor", Boolean.toString(useInputBoxCase));
+		ini.setProperty("CaseEditor", useInputBoxCase.name());
+		// END KGU#997 2025-08-01
 		// END KGU#916 2021-01-25
 		ini.setProperty("For", preFor);
 		ini.setProperty("While", preWhile);
@@ -5201,12 +5318,16 @@ public abstract class Element {
 	// START KGU#277 2016-10-13: Enh. #270 - Option to disable an Element from execution and export
 	/**
 	 * Checks whether this element or one of its ancestors is disabled 
-	 * @param individually - if {@code true} then only the individual setting will be reported
-	 * @return true if directly or indirectly disabled
+	 * @param individually - if {@code true} then only the individual setting
+	 *    will be reported
+	 * @return {@code true} if directly (or indirectly) disabled
 	 */
 	public boolean isDisabled(boolean individually)
 	{
-		return this.disabled || (this.parent != null && this.parent.isDisabled(individually));
+		// START KGU#1179 2025-07-02: Issue #270 Implementation was flawed in case of true
+		//return this.disabled || (this.parent != null && this.parent.isDisabled(individually));
+		return disabled || !individually && (this.parent != null && this.parent.isDisabled(false));
+		// END KGU#1179 2025-07-02
 	}
 	// END KGU#277 2016-10-13
 	

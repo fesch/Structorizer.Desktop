@@ -60,6 +60,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2020-03-18      Bugfix #839 - sticky returns flag mended
  *      Kay Gürtzig             2020-03-19/29   Enh. #828: Modifications to support group export
  *      Kay Gürtzig             2021-10-03      Bugfix #990: returnsValue field of the handled root filled
+ *      Kay Gürtzig             2025-07-03      Some missing Override annotations added
  *
  ******************************************************************************************************
  *
@@ -81,21 +82,25 @@ import lu.fisch.structorizer.elements.TypeMapEntry;
 public class KSHGenerator extends BASHGenerator {
 
 	/************ Fields ***********************/
+	@Override
 	protected String getDialogTitle()
 	{
 		return "Export KSH Code ...";
 	}
 	
+	@Override
 	protected String getFileDescription()
 	{
 		return "KSH Source Code";
 	}
 	
+	@Override
 	protected String getIndent()
 	{
 		return " ";
 	}
 	
+	@Override
 	protected String[] getFileExtensions()
 	{
 		String[] exts = {"ksh", "sh"};
@@ -238,6 +243,7 @@ public class KSHGenerator extends BASHGenerator {
 //	}
 //	// END KGU 2016-01-08
 
+	@Override
 	public String generateCode(Root _root, String _indent, boolean _public) {
 
 		String indent = _indent;
@@ -387,5 +393,4 @@ public class KSHGenerator extends BASHGenerator {
 	}
 
 }
-
 
