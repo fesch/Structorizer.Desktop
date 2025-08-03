@@ -69,6 +69,7 @@
  *      Kay Gürtzig     2024-04-21      ExportOptionDialoge renamed to ExportOptionDialog
  *      Kay Gürtzig     2024-11-22      Poll #1173: menuFileExportPictureSWF removed.
  *      Kay Gürtzig     2025-08-01      Enh. #1197, #1198 New/different messages for Editor, Preferences
+ *      Kay Gürtzig     2025-08-03      Enh. #1196: Messages for Analyser checks 32, 33 added
  *
  ******************************************************************************************************
  *
@@ -517,6 +518,9 @@ Menu.error31_3.text=Ces objets de déclaration ne sont pas des identifiants adap
 Menu.error31_4.text=Une tentative de re-déclarer la ou les variables déjà existantes «%»!
 Menu.error31_5.text=Pour une initialisation, la déclaration doit contenir exactement UNE variable, pas % !
 Menu.error31_6.text=Une construction de type anonyme «%» n'est pas autorisée à ce stade!
+Menu.error32_1.text=La variable «%1» peut entrer en conflit avec les noms de routines des modules tels que %2!
+Menu.error32_2.text=La routine «%1» avec %2 paramètre(s) pourrait entrer en conflit avec des routines des modules tels que %3.
+Menu.error33.text=La routine «%1» de Turtleizer va arrondir des coordonnées, de sorte que des dessins pourraient dégénérer. Considérez l'usage de «%2» en lieu de ceta.
 Menu.errorLineReference.text=(ligne %)
 
 -----[ AnalyserPreferences ]-----
@@ -555,6 +559,9 @@ AnalyserPreferences.checkboxes.27.text=Vérifier si les items de sélecteur @c s
 AnalyserPreferences.checkboxes.28.text=Vérifier si les listes de sélecteurs @c sont disjointes.
 AnalyserPreferences.checkboxes.29.text=Vérifier si la valeur de choix de @c n'est pas de type structuré.
 AnalyserPreferences.checkboxes.30.text=Vérifier si les parenthèses sont équilibrées et correctement imbriquées.
+AnalyserPreferences.checkboxes.31.text=Vérifier la syntaxe des déclarations et des initialisations des variables.
+AnalyserPreferences.checkboxes.32.text=Chercher des conflits entre les identificateurs et des nombres de routines accessoires.
+AnalyserPreferences.checkboxes.33.text=Déconceiller l'usage des procédures «fd», «bk» de Turtleizer, qui arrondissent pixels.
 AnalyserPreferences.lblDrawWarningSign.text=Tracer un signe d'alerte dans les éléments affectés
 AnalyserPreferences.okButton.text=OK
 
