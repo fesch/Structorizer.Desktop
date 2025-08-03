@@ -954,7 +954,7 @@ public class Alternative extends Element implements IFork {
 			 * {pt0Parting.x, pt0Parting.y, 1}, {rect.right,0,1},} to decide
 			 * this (must be > 0)
 			 */
-			else if (_relX > pt0Parting.x && _relX < rect0.right) {
+			else if (_relX > pt0Parting.x && _relX < rect.right) {
 				double det = _relX * pt0Parting.y + _relY * rect.right
 						- _relY * pt0Parting.x - rect.right * pt0Parting.y;
 				if (det > 0) {
