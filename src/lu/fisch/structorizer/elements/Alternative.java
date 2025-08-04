@@ -984,22 +984,6 @@ public class Alternative extends Element implements IFork {
 	}
 	
 	@Override
-	public String getHexBranchColorList()
-	{
-		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < this.getBranchCount(); i++) {
-			if (i > 0) {
-				sb.append(",");
-			}
-			Color brColor = this.getBranchHeadColor(i);
-			if (brColor != null) {
-				sb.append(getHexColor(brColor));
-			}
-		}
-		return sb.toString();
-	}
-
-	@Override
 	public boolean setBranchHeadColor(int _branchIndex, Color _branchColor) {
 		if (_branchIndex < 0 || _branchIndex > 1) {
 			return false;
