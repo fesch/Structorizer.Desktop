@@ -35,7 +35,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-01-24/25   First Issue (on behalf of #915)
  *      Kay Gürtzig     2021-02-06/10   More functionality implemented, resizing behaviour fixed
  *      Kay Gürtzig     2025-08-03      Enh. #1198: Version hint mechanism updated and fixed against repetition
- *      Kay Gürtzig     2025-08-04      Issue #1200: Content assist and undo/redo added to txtDiscriminator
+ *      Kay Gürtzig     2025-08-04      Issue #1200: Content assist and undo/redo added to txtDiscriminator,
+ *                                      undo/redo also applied to selector line table cell editor
  *
  ******************************************************************************************************
  *
