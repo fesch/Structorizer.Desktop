@@ -71,6 +71,7 @@
  *      Kay Gürtzig     2024-04-21  ExportOptionDialoge renamed to ExportOptionDialog
  *      Kay Gürtzig     2024-11-22  Poll #1173: menuFileExportPictureSWF removed.
  *      Kay Gürtzig     2025-08-01  Enh. #1198 Messages for Preferences.lblCaseEditor, ~.cbCaseEditor
+ *      Kay Gürtzig     2025-08-04  Enh. #1198: Menu.msgVersionHint_3_30_15 replaced by ~_3_32_29
  *
  ******************************************************************************************************
  *
@@ -418,7 +419,7 @@ Menu.prefsArranger.text=Organizador
 Menu.msgErrorSettingLaF.text=Problema ao trocar Aparências %1: %2
 Menu.msgRootCloned.text=Clonado o diagrama «%1».\n\nO atual é cópia independente:\n%2
 Menu.msgAnalyserHint_3_30_14.text=Novos símbolos indicadores\nirão lembrá-lo\que há alertas\no Analisador para os elementos marcados.\n\nPoderá desativá-los via:\n%
-Menu.msgVersionHint_3_30_15.text=Este novo editor para elementos @c\né opcional.\nEle promete manter a ligação entre os casos\ne suas ramificações ao permutá-los.\n\nSe preferir o editor tradicional de elementos,\npoderá desmarcar a caixa de seleção \n"%1"\nem %2.
+Menu.msgVersionHint_3_32_29.text=Este editor dedicado para elementos @c\né opcional.\nEle pode manter a ligação entre os casos\ne suas ramificações ao permutá-los.\n\nSe preferir o editor tradicional de elementos,\npoderá escolher na lista "%1"\nem %2\nem qual caso o editor dedicado se deve abrir.
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Assinatura de rotina
 Menu.msgTabHdrAlias.text=Nome alternativo

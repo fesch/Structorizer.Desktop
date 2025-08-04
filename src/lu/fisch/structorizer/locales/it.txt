@@ -424,7 +424,7 @@ Menu.prefsArranger.text=
 Menu.msgErrorSettingLaF.text=
 Menu.msgRootCloned.text=
 Menu.msgAnalyserHint_3_30_14.text=
-Menu.msgVersionHint_3_30_15.text=
+Menu.msgVersionHint_3_32_29.text=
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=
 Menu.msgTabHdrAlias.text=

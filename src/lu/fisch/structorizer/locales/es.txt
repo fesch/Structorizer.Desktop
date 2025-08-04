@@ -150,6 +150,7 @@
  *      Kay Gürtzig     2024-11-22  Poll #1173: menuFileExportPictureSWF removed.
  *      Kay Gürtzig     2025-07-10  Enh. #1196: Messages for new Analyser checks 32, 33
  *      Kay Gürtzig     2025-08-01  Enh. #1197, #1198 New/different messages for Editor, Preferences
+ *      Kay Gürtzig     2025-08-04  Enh. #1198: Menu.msgVersionHint_3_30_15 replaced by ~_3_32_29
  * 
  ******************************************************************************************************
  *
@@ -497,7 +498,7 @@ Menu.prefsArranger.text=Arranger
 Menu.msgErrorSettingLaF.text=Problema en cambiar Aspecto y Ambiente para %1: %2
 Menu.msgRootCloned.text=Diagrama «%1» fue clonado.\n\nEstás trabajando en una copia independiente ahora:\n%2
 Menu.msgAnalyserHint_3_30_14.text=Triangulitos rojos o azules\nahora te recordarán de que\nhay advertencias del comprobador\npara esos elementos.\n\nPuedes desactivarlos via:\n%
-Menu.msgVersionHint_3_30_15.text=Este nuevo editor para elementos\ndel tipo @c es opcional.\nPromete mantener la conección entre casos\ny sus brazos cuando cambias su orden.\n\nSi prefieres el diseño tradicional,\nsin embargo, puedes deshabilitar la opción\n"%1"\nen las %2.
+Menu.msgVersionHint_3_32_29.text=Este editor dedicado para elementos\ndel tipo @c es opcional.\nPuede mantener la conección entre casos\ny sus brazos cuando cambias su orden.\n\nPara nuevos elementos @c o tales con brazos\nvacíos, sin embargo, el diseño tradicional,\npuede parecer más cómodo. Con opción "%1"\nen las %2 puedes\ndecidir cuando el editor dedicado se debe abrir.
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Signatura de la rutina
 Menu.msgTabHdrAlias.text=Nombre alias

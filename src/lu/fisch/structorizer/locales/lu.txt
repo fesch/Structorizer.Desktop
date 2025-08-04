@@ -64,6 +64,7 @@
  *      Kay Gürtzig         2023-10-16      Issue #980/#1096: New messages for declaration syntax check (error31_*)
  *      Kay Gürtzig         2024-04-21      ExportOptionDialoge renamed to ExportOptionDialog
  *      Kay Gürtzig         2024-11-22      Poll #1173: menuFileExportPictureSWF removed.
+ *      Kay Gürtzig         2025-08-04      Enh. #1198: Menu.msgVersionHint_3_30_15 renamed to ~_3_32_29
  *
  ******************************************************************************************************
  *
@@ -408,7 +409,7 @@ Menu.prefsArranger.text=Arrangeur
 Menu.msgErrorSettingLaF.text=Problem beim Änneren vum Look and Feel op %1: %2
 Menu.msgRootCloned.text=Diagramm «%1» gouf gekloont.\n\nDir schafft elo mat enger onofhängeger Kopie:\n%2
 Menu.msgAnalyserHint_3_30_14.text=Nei Symboler an e puer Elementer weisen elo\ndatt et Analysatorwarnunge\nfir dës Elementer sinn.\n\nDir kënnt den Ecran ausschalten iwwer:\n%
-Menu.msgVersionHint_3_30_15.text=Dëse nei designt @c Element Editor ass fakultativ.\nEt kann d'Verbindung tëscht Falllëschten an hiren\nassoziéierte Zweigen erhalen wann se nei sortéiert.\n\nWann Dir den traditionellen Element Editor léiwer hutt,\nkënnt Dir\n"% 1"\nan % 2 ausschalten.
+Menu.msgVersionHint_3_32_29.text=Dëse nei designt @c Element Editor ass fakultativ.\nEt kann d'Verbindung tëscht Falllëschten an hiren\nassoziéierte Zweigen erhalen wann se nei sortéiert.\n\nWann Dir den traditionellen Element Editor léiwer hutt,\nkënnt Dir\n"% 1"\nan % 2 ausschalten.
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Routine Signatur
 Menu.msgTabHdrAlias.text=Alias Numm

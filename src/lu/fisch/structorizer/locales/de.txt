@@ -149,7 +149,8 @@
  *      Kay Gürtzig         2024-04-21  ExportOptionDialoge renamed to ExportOptionDialog
  *      Kay Gürtzig         2024-11-22  Poll #1173: menuFileExportPictureSWF removed.
  *      Kay Gürtzig         2025-07-10  Enh. #1196: Messages for new Analyser checks 32, 33
- *      Kay Gürtzig         2025-08-01  Enh. #1197, #1198 New/different messages for Editor, Preferences
+ *      Kay Gürtzig         2025-08-01  Enh. #1197, #1198: New/different messages for Editor, Preferences
+ *      Kay Gürtzig         2025-08-04  Enh. #1198: Menu.msgVersionHint_3_30_15 replaced by ~_3_32_29
  *
  ******************************************************************************************************
  *
@@ -494,7 +495,7 @@ Menu.prefsArranger.text=Arranger
 Menu.msgErrorSettingLaF.text=Problem beim Wechsel von Aussehen & Bedienung zu %1: %2
 Menu.msgRootCloned.text=Diagramm «%1» wurde geklont.\n\nSie arbeiten jetzt mit einer unabhängigen Kopie:\n%2
 Menu.msgAnalyserHint_3_30_14.text=Neue Symbole in manchen Elementen\nmachen jetzt darauf aufmerksam,\ndass Analyser-Warnungen\nfür diese Elemente vorliegen.\n\nSie können die Anzeige abschalten über:\n%
-Menu.msgVersionHint_3_30_15.text=Dieser neu entworfene Editor für @c-Elemente\nist optional.\nEr kann den Zusammenhang zwischen\nFall-Listen und den zugehörigen Zweigen\nbeim Umordnen bewahren.\n\nWenn Sie den traditionellen Elementeditor\nbevorzugen, dann können Sie das Häkchen bei\n"%1"\nin den %2 entfernen.
+Menu.msgVersionHint_3_32_29.text=Dieser spezialisierte Editor für @c-Elemente\nist optional.\nEr kann den Zusammenhang zwischen\nFall-Listen und den zugehörigen Zweigen\nbeim Umordnen bewahren.\n\nFür neue @c-Elemente oder solche mit leeren\nZweigen mag der traditionelle Elementeditor\nbequemer scheinen.\nÜber die Auswahl "%1"\nin den %2 können Sie\nentscheiden, in welchen Fällen der spezielle\nEditor sich öffnen soll.
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Routinensignatur
 Menu.msgTabHdrAlias.text=Alias (Ersatzname)

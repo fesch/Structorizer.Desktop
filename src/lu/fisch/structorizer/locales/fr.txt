@@ -70,6 +70,7 @@
  *      Kay Gürtzig     2024-11-22      Poll #1173: menuFileExportPictureSWF removed.
  *      Kay Gürtzig     2025-08-01      Enh. #1197, #1198 New/different messages for Editor, Preferences
  *      Kay Gürtzig     2025-08-03      Enh. #1196: Messages for Analyser checks 32, 33 added
+ *      Kay Gürtzig     2025-08-04      Enh. #1198: Menu.msgVersionHint_3_30_15 replaced by ~_3_32_29
  *
  ******************************************************************************************************
  *
@@ -418,7 +419,7 @@ Menu.prefsArranger.text=Arrangeur
 Menu.msgErrorSettingLaF.text=Problème lors du changement du Look & Feel to %1: %2
 Menu.msgRootCloned.text=Le diagramme «%1» a été cloné.\n\nVous travaillez à présent avec une copie indépendante:\n%2
 Menu.msgAnalyserHint_3_30_14.text=De nouveaux symboles indicateurs\nvous rappelleront\nqu'il y a des avertissements de l'analyseur\npour les éléments marqués.\n\nVous pouvez les désactiver via:\n%
-Menu.msgVersionHint_3_30_15.text=Si vous préférez l'éditeur d'éléments traditionnel,\ncependant, vous pouvez désélectionner la case à cocher\n"%1"\ndans la section %2.
+Menu.msgVersionHint_3_32_29.text=Cet éditeur dédié pour éléments @c est optional.\nIl peut maintenir la connexion entre les cas et\nleurs bras pendant que vous les permutez.\n\nSi vous préférez l'éditeur d'éléments traditionnel,\ncependant, vous pouvez choisir en quelles cas\nl'éditeur dédié doit ouvrier: "%1"\ndans la section %2.
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Signature de routine
 Menu.msgTabHdrAlias.text=Nom d'alias
