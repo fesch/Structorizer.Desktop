@@ -897,7 +897,7 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	// ===================== TEMPORARY VERSION HINTS =======================
 	// START KGU#906 2021-01-18: Enh. #905 FIXME temporary message for version 3.30-14
 	public static final LangTextHolder msgAnalyserHint_3_30_14 = new LangTextHolder(
-			"New indicator symbols\n"
+			"Triangular indicator symbols\n"
 			+ "may remind you\n"
 			+ "that there are Analyser\n"
 			+ "warnings for the marked\n"
@@ -905,15 +905,19 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 			+ "them off via:\n%");
 	// END KGU#906 2021-01-18
 	// START KGU#916 2021-01-28: Enh. #915 FIXME temporary version hint for 3.30-15
-	public static final LangTextHolder msgVersionHint_3_30_15 = new LangTextHolder(
-			"This new-designed editor for CASE elements\n"
+	// KGU#997 2025-08-03: Enh. #1198 Updated
+	public static final LangTextHolder msgVersionHint_3_32_29 = new LangTextHolder(
+			"This dedicated editor for CASE elements\n"
 			+ "is optional.\n"
-			+ "It promises to maintain the bond between cases\n"
-			+ "and their branches on permutating them.\n\n"
-			+ "If you prefer the traditional element editor,\n"
-			+ "however, then you may unselect the checkbox\n"
-			+ "\"%1\"\n"
-			+ "in the %2.");
+			+ "It ensures to maintain the bond between cases\n"
+			+ "and their branches on permuting them.\n\n"
+			+ "For new CASE elements and those with empty branches,\n"
+			+ "however, the traditional element editor may seem more\n"
+			+ "convenient.\n"
+			+ "Via the choice list \"%1\"\n"
+			+ "in the %2\n"
+			+ "you may decide for what cases the dedicated\n"
+			+ "editor will open.");
 	// END KGU#916 2021-01-28
 	//=======================================================================
 	

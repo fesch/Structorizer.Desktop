@@ -150,6 +150,7 @@
  *      Kay Gürtzig     2024-11-22  Poll #1173: menuFileExportPictureSWF removed.
  *      Kay Gürtzig     2025-07-10  Enh. #1196: Messages for new Analyser checks 32, 33
  *      Kay Gürtzig     2025-08-01  Enh. #1197, #1198 New/different messages for Editor, Preferences
+ *      Kay Gürtzig     2025-08-04  Enh. #1198: Menu.msgVersionHint_3_30_15 replaced by ~_3_32_29
  * 
  ******************************************************************************************************
  *
@@ -497,7 +498,7 @@ Menu.prefsArranger.text=Arranger
 Menu.msgErrorSettingLaF.text=Problema en cambiar Aspecto y Ambiente para %1: %2
 Menu.msgRootCloned.text=Diagrama «%1» fue clonado.\n\nEstás trabajando en una copia independiente ahora:\n%2
 Menu.msgAnalyserHint_3_30_14.text=Triangulitos rojos o azules\nahora te recordarán de que\nhay advertencias del comprobador\npara esos elementos.\n\nPuedes desactivarlos via:\n%
-Menu.msgVersionHint_3_30_15.text=Este nuevo editor para elementos\ndel tipo @c es opcional.\nPromete mantener la conección entre casos\ny sus brazos cuando cambias su orden.\n\nSi prefieres el diseño tradicional,\nsin embargo, puedes deshabilitar la opción\n"%1"\nen las %2.
+Menu.msgVersionHint_3_32_29.text=Este editor dedicado para elementos\ndel tipo @c es opcional.\nPuede mantener la conección entre casos\ny sus brazos cuando cambias su orden.\n\nPara nuevos elementos @c o tales con brazos\nvacíos, sin embargo, el diseño tradicional,\npuede parecer más cómodo. Con opción "%1"\nen las %2 puedes\ndecidir cuando el editor dedicado se debe abrir.
 // Table column headers for DiagramControllerAliases
 Menu.msgTabHdrSignature.text=Signatura de la rutina
 Menu.msgTabHdrAlias.text=Nombre alias
@@ -548,7 +549,7 @@ Menu.error16_7.text=Elemento no es alcanzable (por @k o bucle @i)!
 Menu.error16_8.text=¡Parámetro posíblemente inadecuado para @k de tipo «%» - debe ser un valor entero.
 Menu.error17.text=¡Varios hilos de ejecución compiten por el acceso a la variable «%» y así riesgan la consistencia!
 Menu.error18.text=¡Variable «%1» podría coincidir con variable(s) «%2» en lenguages sin distincción entre mayúsculas y minúsculas!
-Menu.error19_1.text=¡Variable «%1» puede collidir con palabras claves en lenguages como %2!
+Menu.error19_1.text=¡Variable «%1» puede colisionar con palabras claves en lenguages como %2!
 Menu.error19_2.text=¡El nombre «%1» está reservado en Structorizer y puede provocar problemas on ejecución!
 Menu.error20_1.text=El encabezamiento de un subprograma debe tener un paréntesis para parámetros.
 Menu.error20_2.text=Parámetros con valores de incumplimiento tenien que estar puestos anéxamente al fin de la lista.
@@ -597,9 +598,9 @@ Menu.error31_3.text=Estos objetos de declaración no son identificadores adecuad
 Menu.error31_4.text=¡No es leyal volver a declarar las variables ya existentes «%»!
 Menu.error31_5.text=Para una inicialización, la declaración debe contener exactamente UNA variable, ¡no % !
 Menu.error31_6.text=¡Construcción de un tipo anónimo «%» no es permitido en este lugar!
-Menu.error32_1.text=¡Variable «%1» puede collidir con el nombre de rutinas de modulos como %2!
-Menu.error32_2.text=Rutina «%1» con %2 parámetros podría collidir con rutines de modulos como %3.
-Menu.error33.text=Rutina «%1» de Turtleizer va a redondear coordinates, así comon dibujos podrían degenerar. Pondera el uso de «%2» en su vez.
+Menu.error32_1.text=¡Variable «%1» puede colisionar con el nombre de rutinas de modulos como %2!
+Menu.error32_2.text=Rutina «%1» con %2 parámetros podría colisionar con rutinas de modulos como %3.
+Menu.error33.text=Rutina «%1» de Turtleizer va a redondear coordinates, así como dibujos podrían degenerar. Pondera el uso de «%2» en su vez.
 Menu.errorLineReference.text= (línea %)
 
 -----[ AnalyserPreferences ]-----

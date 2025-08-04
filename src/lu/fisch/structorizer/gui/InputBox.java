@@ -62,6 +62,7 @@ package lu.fisch.structorizer.gui;
  *                                  SuggestionDropDownDecorator) and keyword inclusion
  *      Kay Gürtzig     2022-08-23  Enh. #1066: Auto-complete switched off on disabled JTextComponents
  *      Kay Gürtzig     2022-08-23  Enh. #1066: Context sensitivity for call proposals improved
+ *      Kay Gürtzig     2025-08-05  Issue #1200 New method setCaretOnQuestionMark()
  *
  ******************************************************************************************************
  *
@@ -254,7 +255,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
                     if (posOpen > 0) {
                         cp = previousWordIndex + posOpen + 1;
                         if (selectedValue.contains("?")) {
-                            // Routine with at least on argument - select the first '?'
+                            // Routine with at least one argument - select the first '?'
                             tc.setCaretPosition(cp+1);
                             tc.moveCaretPosition(cp);
                         } else if (selectedValue.contains("...")) {
@@ -1093,8 +1094,23 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         }
         return new Dimension(width0 + width1 + 10, height);
     }
-
-
     // END KGU#916 2021-01-24
 
+    // START KGU#1184 2025-08-05: Extracted on behalf of issue #1200
+    /**
+     * Ensures the caret position and selection on the first question mark
+     * within the content of the given {@link JTextComponent} {@code txtComp}.
+     * 
+     * @param txtComp - the text field or area to select the first '?' in
+     */
+    public void setCaretOnQuestionMark(JTextComponent txtComp) {
+        int posQM = txtComp.getText().indexOf('?');
+        if (posQM > 0) {
+            txtComp.setCaretPosition(posQM);
+            txtComp.setSelectionEnd(posQM+1);
+        }
+    }
+    // END KGU#1184 2025-08-05
+
+    
 }

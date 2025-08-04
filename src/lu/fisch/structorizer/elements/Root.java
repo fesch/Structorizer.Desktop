@@ -3734,7 +3734,7 @@ public class Root extends Element {
     		// END KGU#277 2016-10-13
     		String eleClassName = ele.getClass().getSimpleName();
     		
-    		// get all set variables from actual instruction (just this level, no substructre)
+    		// get all set variables from actual instruction (just this level, no substructure)
     		StringList myVars = getVarNames(ele);
 
     		// START KGU#1012 2021-11-14: Enh. #967

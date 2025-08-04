@@ -650,6 +650,7 @@ public class Case extends Element implements IFork
     	myrect = _top_left.copy();
     	myrect.bottom = _top_left.top + minHeight;
 
+    	// Prepare a heuristically optimal horizontal position of the condition lines
     	int y = myrect.top + E_PADDING;
     	int a = myrect.left + (myrect.right - myrect.left) / 2;
     	int b = myrect.top;
@@ -732,7 +733,7 @@ public class Case extends Element implements IFork
     			int textWidth = getWidthOutVariables(_canvas, text.get(ln), this);
     			// Without default branch all text can be placed right-bound
     			int xStart = myrect.right - textWidth - E_PADDING/2;
-    			// With default branch we should centre it weightedly 
+    			// With default branch we should centre it in a weighted manner
     			if (hasDefaultBranch)
     			{
     				xStart = Math.min(xStart, x - textWidth / divisor);

@@ -34,6 +34,9 @@ package lu.fisch.structorizer.gui;
  *      ------          ----            -----------
  *      Kay Gürtzig     2021-01-24/25   First Issue (on behalf of #915)
  *      Kay Gürtzig     2021-02-06/10   More functionality implemented, resizing behaviour fixed
+ *      Kay Gürtzig     2025-08-03      Enh. #1198: Version hint mechanism updated and fixed against repetition
+ *      Kay Gürtzig     2025-08-04      Issue #1200: Content assist and undo/redo added to txtDiscriminator,
+ *                                      undo/redo also applied to selector line table cell editor
  *
  ******************************************************************************************************
  *
@@ -58,11 +61,14 @@ import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Vector;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.BoxLayout;
 import javax.swing.DefaultCellEditor;
@@ -83,6 +89,14 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 //import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.text.Document;
+import javax.swing.text.JTextComponent;
+import javax.swing.undo.CannotRedoException;
+import javax.swing.undo.CannotUndoException;
+import javax.swing.undo.UndoManager;
+
+import com.logicbig.uicommon.SuggestionClient;
+import com.logicbig.uicommon.SuggestionDropDownDecorator;
 
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.io.Ini;
@@ -231,7 +245,13 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 //	private DefaultCellEditor activeCellEditor = null;
 	//private boolean discriminatorModified = false;
 	
-	// FIXME temporary field
+	// START KGU#1184 2025-08-04: Enh. #914, #1200
+	private UndoManager umDiscr;
+	private UndoManager umSelector;
+	private Component cellComponent;
+	// END KGU#11834 2025-08-04
+
+	// This is to avoid that the version hint is raised more than once in a loop
 	private boolean tempHintGiven = false;
 
 	/**
@@ -325,6 +345,11 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 		chkMoveBranches.setEnabled(false);
 		chkDefaultBranch.addItemListener(this);
 		
+		// START KGU#1057 2025-08-04: Enh. #1066, issue #1191
+		SuggestionClient<JTextComponent> assist = new InputSuggestionClient();
+		SuggestionDropDownDecorator.decorate(txtDiscriminator, assist);
+		// END KGU#1057 2025-08-04
+		
 		txtDiscriminator.addKeyListener(this);
 		txtDefaultLabel.addKeyListener(this);
 		btnAddRow.addActionListener(this);
@@ -340,7 +365,12 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 		chkDefaultBranch.addKeyListener(this);
 		// END KGU#393 2021-01-26
 		// START KGU#927 2021-02-06: Enh. #915 More functionality
-		txtDiscriminator.getDocument().addDocumentListener(this);
+		Document docText = txtDiscriminator.getDocument();
+		docText.addDocumentListener(this);
+		// START KGU#1184 2025-08-04: Issue #1200
+		umDiscr = new UndoManager();
+		docText.addUndoableEditListener(umDiscr);
+		// END KGU#1184 2025-08-04
 //		txtDiscriminator.addFocusListener(new FocusListener() {
 //			@Override
 //			public void focusGained(FocusEvent e) {
@@ -483,6 +513,33 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 			// Don't close the window, this is to end table cell editing
 			return;
 		}
+		// START KGU#1184 2025-08-04: Enh. #914, issue #1200
+		else if (keyCode == KeyEvent.VK_Z && e.isControlDown() && !e.isShiftDown()) {
+			Object src = e.getSource();
+			try {
+				if (src == txtDiscriminator && umDiscr.canUndo()) {
+					umDiscr.undo();
+				}
+				else if (src == cellComponent && umSelector.canUndo()) {
+					umSelector.undo();
+				}
+			}
+			catch (CannotUndoException ex) {}
+		}
+		else if (keyCode == KeyEvent.VK_Y && e.isControlDown() && !e.isShiftDown()
+				|| keyCode == KeyEvent.VK_Z && e.isControlDown() && e.isShiftDown()) {
+			Object src = e.getSource();
+			try {
+				if (src == txtDiscriminator && umDiscr.canRedo()) {
+					umDiscr.redo();
+				}
+				else if (src == cellComponent && umSelector.canRedo()) {
+					umSelector.redo();
+				}
+			}
+			catch (CannotRedoException ex) {}
+		}
+		// END KGU#1184 2025-08-04
 		super.keyPressed(e);
 	}
 
@@ -1078,9 +1135,20 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 			Object cellEditor = evt.getNewValue();
 			if (cellEditor != null && cellEditor instanceof DefaultCellEditor) {
 				// First ensure acceptable behaviour for scaled mode
-				if (((DefaultCellEditor)cellEditor).getComponent() != null) {
-					((DefaultCellEditor)cellEditor).getComponent().setFont(tblSelectors.getFont());
-					((DefaultCellEditor)cellEditor).getComponent().requestFocusInWindow();
+				cellComponent = ((DefaultCellEditor)cellEditor).getComponent();
+				if (cellComponent != null) {
+					cellComponent.setFont(tblSelectors.getFont());
+					cellComponent.requestFocusInWindow();
+					// START KGU#1184 2025-08-04: Issue #1200
+					Document cellDocument = null;
+					if (umSelector == null &&
+							cellComponent instanceof JTextComponent &&
+							(cellDocument = ((JTextComponent)cellComponent).getDocument()) != null) {
+						umSelector = new UndoManager();
+						cellDocument.addUndoableEditListener(umSelector);
+						((JTextComponent)cellComponent).addKeyListener(this);
+					}
+					// END KGU#1184 2025-08-04
 				}
 				ixEdit = tblSelectors.getSelectedRow();
 				btnOK.setEnabled(false);
@@ -1103,6 +1171,11 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 								selector, JOptionPane.WARNING_MESSAGE);
 					}
 				}
+				// START KGU#1184 2025-08-04: Issue #1200
+				if (umSelector != null) {
+					umSelector.discardAllEdits();
+				}
+				// END KGU#1184 2025-08-04
 				ixEdit = -1;	// Editing ended
 				doButtons();
 				this.checkRows(null, false);
@@ -1213,21 +1286,30 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 		int newTableHeight = (int)(scaleFactor * TABLE_SIZE[1]) + 7 * extraHeight / 8;
 		scrSelectors.setPreferredSize(new Dimension((int)(diff - 25 * scaleFactor), (int)(newTableHeight)));
 		adjustTableSize();
-		// FIXME: Temporary version hint
+		// KGU#997 2025-08-03: Enh. #1198 version hint updated
 		String lastHint = Ini.getInstance().getProperty("versionHint", "");
-		if (!tempHintGiven && lastHint.compareTo("3.30-15") < 0) {
+		if (!tempHintGiven && lastHint.compareTo("3.32-29") < 0) {
+			// This method is called several times on opening, so avoid multiple hints in a queue
 			tempHintGiven = true;
 			String message = ElementNames.resolveElementNames(
-					Menu.msgVersionHint_3_30_15.getText()
+					Menu.msgVersionHint_3_32_29.getText()
 					.replace("%1", Locales.getValue("Structorizer", "Preferences.lblCaseEditor.text", rootPaneCheckingEnabled))
 					.replace("%2", Locales.getValue("Structorizer", "Preferences.title", true)),
 					null);
 			JOptionPane.showMessageDialog(this.getOwner(),
 					message, this.getClass().getSimpleName(),
 					JOptionPane.INFORMATION_MESSAGE,
-					IconLoader.getIconImage(getClass().getResource("icons/EditorHint_3.30-15.png")));
+					IconLoader.getIconImage(getClass().getResource("icons/EditorHint_3.32-29.png")));
 				
-			Ini.getInstance().setProperty("versionHint", "3.30-15");
+			Ini.getInstance().setProperty("versionHint", "3.32-29");
+			// START KGU#997 2025-08-03: Enh. #1198 Code preview reloads Ini, so ensure it's saved before
+			try {
+				Ini.getInstance().save();
+			} catch (IOException exc) {
+				Logger logger = Logger.getLogger(this.getClass().getName());
+				logger.log(Level.WARNING, exc.toString());
+			}
+			// END KGU#997 2025-08-03
 		}
 	}
 

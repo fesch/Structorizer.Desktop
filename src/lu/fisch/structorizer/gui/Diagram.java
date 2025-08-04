@@ -253,6 +253,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2024-11-27      Bugfix #1181: Ensure clean exec highlighting in redraw(Element)
  *      Kay Gürtzig     2025-07-10      Enh. #1196: Some methods made static/public for new Analyser checks
  *      Kay Gürtzig     2025-08-01      Enh. #915/#1198: Adaptations for new Case editor choice option
+ *      Kay Gürtzig     2025-08-04      Issue #1200: Mechanism #1114 extended to InputBoxCase
  *
  ******************************************************************************************************
  *
@@ -321,6 +322,7 @@ import javax.swing.text.DefaultFormatter;
 import javax.swing.text.DefaultHighlighter;
 import javax.swing.text.Highlighter;
 import javax.swing.text.Highlighter.HighlightPainter;
+import javax.swing.text.JTextComponent;
 
 import org.freehep.graphicsio.emf.*;
 import org.freehep.graphicsio.pdf.*;
@@ -10107,11 +10109,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// START KGU#1104 2023-11-09: Enh. #1114 Place the caret to the first question mark for new elements
 			if (_isInsertion) {
 				// Typically, the default texts contain a question mark where the condition is to be inserted
-				int posQM = inputbox.txtText.getText().indexOf('?');
-				if (posQM > 0) {
-					inputbox.txtText.setCaretPosition(posQM);
-					inputbox.txtText.setSelectionEnd(posQM+1);
+				JTextComponent txtComp = inputbox.txtText;
+				// START KGU#1184 2025-08-04: Issue #1200
+				if (inputbox instanceof InputBoxCase) {
+					txtComp = ((InputBoxCase) inputbox).txtDiscriminator;
 				}
+				// END KGU#1184 2025-08-04
+				inputbox.setCaretOnQuestionMark(txtComp);
 			}
 			// END KGU#1104 2023-11-09
 			inputbox.setVisible(true);
