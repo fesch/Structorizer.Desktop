@@ -70,7 +70,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2025-07-03      hasDefaultBranch() revised for the case of continued lines,
  *                                      Missing @Override annotations inserted.
  *      Kay Gürtzig     2025-07-31      Enh. #1197: Branch selector colouring enabled
- *      Kay Gürtzig     2025-08-05      Bugfix #1197: It wasn't possible to save an Alternative anymore
+ *      Kay Gürtzig     2025-08-04      Bugfix #1197: It wasn't possible to save an Alternative anymore
  *
  ******************************************************************************************************
  *
