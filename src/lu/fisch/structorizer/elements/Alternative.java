@@ -66,6 +66,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2025-07-02      Bugfix #1195: Element is also to be hatched if indirectly disabled,
  *                                      missing Override annotations added.
  *      Kay Gürtzig     2025-07-31      Enh. #1197: Branch selector colouring enabled
+ *      Kay Gürtzig     2025-08-04      Bugfix #1197: It wasn't possible to save an Alternative anymore
  *
  ******************************************************************************************************
  *
@@ -990,7 +991,10 @@ public class Alternative extends Element implements IFork {
 			if (i > 0) {
 				sb.append(",");
 			}
-			sb.append(getHexColor(this.getBranchHeadColor(i)));
+			Color brColor = this.getBranchHeadColor(i);
+			if (brColor != null) {
+				sb.append(getHexColor(brColor));
+			}
 		}
 		return sb.toString();
 	}

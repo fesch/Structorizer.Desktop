@@ -7188,6 +7188,7 @@ public class Root extends Element {
         }
         // END KGU#239 2016-08-12
         // START KGU#1181 2025-07-10: Enh. #1196.1
+        // CHECK 32: identifier collision with controller module routines
         if (check(32)) {
             ensureControllerKeyTables();
         }
@@ -7239,6 +7240,7 @@ public class Root extends Element {
         }
         // END KGU#877 2020-10-16
         // START KGU#1181 2025-07-10: Enh. #1196.1 Check for controller routine collision
+        // CHECK 32: identifier collision with controller module routines
         if (check(32) && this.isSubroutine()) {
             int minArgs = this.getMinParameterCount();
             int maxArgs = this.getParameterNames().count();
