@@ -26,7 +26,7 @@ Known issues (also see https://github.com/fesch/Structorizer.Desktop/issues):
 - ARM export is still experimental and relies on a specific and very restricted
   syntax for the element contents in order to produce meaningful results.
 
-Current development version 3.32-30 (2025-08-04)
+Current development version 3.32-31 (2025-08-04)
 - 01: Bugfix #987: Duplicate subroutine comment export by Pascal generator <2>
 - 01: Bugfix #988: Syntax error in Structorizer.bat and Arranger.bat fixed <2>
 - 01: Bugfix #989: Expressions in EXIT elements (e.g. return) were forgotten
@@ -295,6 +295,7 @@ Current development version 3.32-30 (2025-08-04)
 - 29: Enh. #1198 Version hint for the special CASE editor was obsolete <2>
 - 29: Issue #1200 Ensures content assist and undo/redo in CASE editor <2>
 - 30: Bugfix #1197 It wasn't possible to save an Alternative anymore <2>
+- 31:
 
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
