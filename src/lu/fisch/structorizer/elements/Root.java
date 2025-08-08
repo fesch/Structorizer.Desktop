@@ -7319,7 +7319,7 @@ public class Root extends Element {
             addError(errors, error, 9);
         }
 
-        // CHECK: sub does not return any result (#13 - new!)
+        // CHECK #13: sub does not return any result
         // pre-requirement: we have a sub that returns something ...  FUNCTIONNAME () <return type>
         // check to see if
         // _ EITHER _
