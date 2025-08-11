@@ -253,7 +253,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2024-11-27      Bugfix #1181: Ensure clean exec highlighting in redraw(Element)
  *      Kay Gürtzig     2025-07-10      Enh. #1196: Some methods made static/public for new Analyser checks
  *      Kay Gürtzig     2025-08-01      Enh. #915/#1198: Adaptations for new Case editor choice option
- *      Kay Gürtzig     2025-08-04      Issue #1200: Mechanism #1114 extended to InputBoxCase
+ *      Kay Gürtzig     2025-08-04      Issue #1200: Mechanism #1114 extended to InputBoxCase.
+ *      Kay Gürtzig     2025-08-08      Issue #1204: Mechanism #1114 extended to Root elements.
  *
  ******************************************************************************************************
  *
@@ -10117,6 +10118,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// END KGU#1184 2025-08-04
 				inputbox.setCaretOnQuestionMark(txtComp);
 			}
+			// START KGU#1187 2025-08-08: Issue #1204
+			else if (isRoot && _data.text.getLongString().startsWith("?")) {
+				inputbox.setCaretOnQuestionMark(inputbox.txtText);
+			}
+			// END KGU#1187 2025-08-9
 			// END KGU#1104 2023-11-09
 			inputbox.setVisible(true);
 

@@ -4208,11 +4208,11 @@ public class Root extends Element {
 		/**/
 
 		boolean check = false;
-		for(int j=0; j<loopVars.count(); j++)
+		for(int j = 0; j < loopVars.count(); j++)
 		{
 			check = check || modifiedVars.contains(loopVars.get(j));
 		}
-		if (check==false)
+		if (check == false)
 		{
 			//error  = new DetectedError("No change of the variables in the condition detected. Possible endless loop ...",(Element) _node.getElement(i));
 			addError(_errors, new DetectedError(errorMsg(Menu.error02,""), ele), 2);

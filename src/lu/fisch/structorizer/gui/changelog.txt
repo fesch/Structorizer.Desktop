@@ -296,6 +296,8 @@ Current development version 3.32-31 (2025-08-08)
 - 29: Issue #1200 Ensures content assist and undo/redo in CASE editor <2>
 - 30: Bugfix #1197 It wasn't possible to save Alternatives/CASE anymore <2>
 - 31: Bugfix #1203 Analyser got out of date after Find&Replace action <2>
+- 31: Issue #1204 Caret positioning in element editor didn't work for '?'
+      at line start and neither for the initial diagram name "???". <2>
 - 31:
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer

@@ -5081,6 +5081,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	// END KGU#624 2018-12-26
 
 	// START KGU#305 2016-12-16: Code revision
+	// FIXME Replace this by a central notification mechanism
 	@Override
 	public void addChangeListener(IRoutinePoolListener _listener) {
 		if (_listener instanceof Arranger) {
@@ -5091,6 +5092,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		}
 	}
 
+	// FIXME Replace this by a central notification mechanism
 	@Override
 	public void removeChangeListener(IRoutinePoolListener _listener) {
 		if (_listener instanceof Arranger) {
