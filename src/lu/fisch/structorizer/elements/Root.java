@@ -193,6 +193,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2025-02-27      Bugfix #1193: Flaws in detection of arguments and results on outsourcing
  *      Kay Gürtzig     2025-07-10      Enh. #1196: New Analyser checks 32, 33
  *      Kay Gürtzig     2025-08-04      Partial indentation revision (blanks -> tabs)
+ *      Kay Gürtzig     2025-08-08      Issue #1205: Refinement of check 2 (method analyse_2) to avoid false
+ *                                      complaining endless loops on fileEOF or Turtleizer conditions
  *
  ******************************************************************************************************
  *
@@ -3917,7 +3919,7 @@ public class Root extends Element {
 			if (eleClassName.equals("While")
 					|| eleClassName.equals("Repeat"))
 			{
-				analyse_2(ele, _errors);
+				analyse_2((Loop)ele, _errors);
 			}
 
 			// CHECK: loop var modified (#1) and loop parameter consistency (#14 new!)
@@ -4191,15 +4193,15 @@ public class Root extends Element {
 
 	/**
 	 * CHECK #2: Endless loop
-	 * @param ele - Loop element to be analysed
+	 * @param _ele - Loop element to be analysed
 	 * @param _errors - global error list
 	 */
-	private void analyse_2(Element ele, Vector<DetectedError> _errors)
+	private void analyse_2(Loop _ele, Vector<DetectedError> _errors)
 	{
 		// get modified and introduced variables from inside the loop
-		StringList modifiedVars = getVarNames(ele, false);
+		StringList modifiedVars = getVarNames(_ele, false);
 		// get loop condition variables
-		StringList loopVars = getUsedVarNames(ele, true, true);
+		StringList loopVars = getUsedVarNames(_ele, true, true);
 
 		/*
 		System.out.println(eleClassName + " : " + ele.getText().getLongString());
@@ -4208,16 +4210,110 @@ public class Root extends Element {
 		/**/
 
 		boolean check = false;
-		for(int j = 0; j < loopVars.count(); j++)
+		// START KGU#1188 2025-08-11: Issue #1205 - more intelligent check for file vars
+		//for(int j = 0; j < loopVars.count(); j++)
+		for(int j = 0; j < loopVars.count() && !check; j++)
+		// END KGU#1188 2025-08-11 
 		{
 			check = check || modifiedVars.contains(loopVars.get(j));
 		}
+		// START KGU#1188 2025-08-11: Issue #1205 - more intelligent check for file vars
+		if (check == false && !(_ele instanceof For)) {
+			String cond = _ele.getUnbrokenText().getLongString();
+			boolean fileCond = cond.contains("fileEOF(");
+			// Also consider Turtleizer position checks
+			cond = cond.toLowerCase();
+			boolean turtleCond1 = cond.contains("getorientation(");
+			boolean turtleCond2 = cond.contains("getx(") || cond.contains("gety(");
+			if (fileCond || turtleCond1 || turtleCond2) {
+				check = analyse_2_funct(_ele, loopVars, fileCond, turtleCond1, turtleCond2);
+			}
+		}
+		// END KGU#1188 2025-08-11 
 		if (check == false)
 		{
 			//error  = new DetectedError("No change of the variables in the condition detected. Possible endless loop ...",(Element) _node.getElement(i));
-			addError(_errors, new DetectedError(errorMsg(Menu.error02,""), ele), 2);
+			addError(_errors, new DetectedError(errorMsg(Menu.error02,""), _ele), 2);
 		}
 	}
+	
+	// START KGU#1188 2025-08-11: Issue #1205 - more intelligent check for file vars
+	/**
+	 * CHECK #2: Extra check against file variables in fileEOF function and Turtleizer
+	 * functions in case of a potential endless loop
+	 * @param _ele - Loop element to be analysed
+	 * @param _loopVars - the list of variables occurring in the condition
+	 * @param _condEof - whether the condition contains a fileEOF() call
+	 * @param _condRot - whether the condition contains a getOrientation() call
+	 * @param _condMov - whether the condition contains a getX() or getY() call
+	 * @return {@code true} if <ul>
+	 *    <li>some of the {@code _loopVars} is argument of the
+	 *    {@code fileEOF} function and the loop body contains some {@code fileRead}
+	 *    call for it or</li>
+	 *    <li>{@code _condRot} is {@code true} and the loop body contains some of
+	 *    {@code right}, {@code left}, {@code rr}, or {@code rl} procedure calls or</li>
+	 *    <li>{@code _condMov} is {@code true} and the loop body contains some of
+	 *    the Turtleizer procedure calls {@code forward}, {@code backward}, {@code fd},
+	 *    {@code bk}, {@code gotoXY}, {@code getoX}, {@code gotoY}.</li>
+	 * </ul>
+	 */
+	private boolean analyse_2_funct(Loop _ele, StringList _loopVars,
+			boolean _condEof, boolean _condRot, boolean _condMov)
+	{
+		final StringList readProcs = StringList.explode(
+				"fileRead,fileReadChar,fileReadInt,fileReadDouble,fileReadLine", ",");
+		final StringList rotProcs = StringList.explode("right,left,rr,rl", ",");
+		final StringList movProcs = StringList.explode(
+				"forward,backward,fd,bk,gotox,gotoy,gotoxy", ",");
+		StringList fileVars = new StringList();
+		if (_condEof) {
+			StringList condTokens = Element.splitLexically(_ele.getUnbrokenText().getLongString(), true);
+			condTokens.removeAll(" ");
+			int posEof = -1;
+			int posVar = -1;
+			while ((posEof = condTokens.indexOf("fileEOF", posEof+1)) >= 0) {
+				if (posEof+3 < condTokens.count() && condTokens.get(posEof+1).equals("(")
+						&& condTokens.get(posEof+3).equals(")")
+						&& (posVar = _loopVars.indexOf(condTokens.get(posEof+2))) >= 0) {
+					fileVars.add(_loopVars.get(posVar));
+				}
+			}
+		}
+		// Get the aggregated element texts of the loop body
+		StringList bodyText = new StringList();
+		_ele.getBody().addFullText(bodyText, false);
+		// Just a search pattern to be adapted with the file variable name
+		StringList paramList = StringList.explode("(,dummy,)", ",");
+		for (int i = 0; i < bodyText.count(); i++) {
+			// Tokenize one text line
+			StringList tokens = Element.splitLexically(bodyText.get(i), true);
+			tokens.removeAll(" ");
+			int nTokens = tokens.count();
+			// Now check for file read routines on relevant file variables
+			for (int j = 0; j < fileVars.count(); j++) {
+				paramList.set(1, fileVars.get(j));
+				int posVar = -2;
+				while ((posVar = tokens.indexOf(paramList, posVar + 3, true)) > 0) {
+					if (readProcs.contains(tokens.get(posVar-1))) {
+						return true;
+					}
+				}
+			}
+			// Check for Turtleizer procedures affecting the condition
+			if ((_condRot || _condMov) && nTokens > 3
+					&& tokens.get(1).equals("(")
+					&& tokens.get(nTokens-1).equals(")")) {
+				// Check for rotating or translative Turtleizer procedures
+				String fnName = tokens.get(0).toLowerCase();
+				if (_condRot && rotProcs.contains(fnName)
+						|| _condMov && movProcs.contains(fnName)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	// END KGU#1188 2025-08-11 
 
 	/**
 	 * CHECK #3: non-initialised variables (except REPEAT)
