@@ -1168,7 +1168,7 @@ public class BASHGenerator extends Generator {
 				// START KGU#277/KGU#284 2016-10-13/16: Enh. #270 + Enh. #274
 				//code.add(_indent + transform(_inst.getText().get(i)));
 				String line = text.get(i);
-				// START KGU#653 2019-02-15: Enh. #680 - special treatment for mult-variable input instructions
+				// START KGU#653 2019-02-15: Enh. #680 - special treatment for multi-variable input instructions
 				StringList inputItems = Instruction.getInputItems(line);
 				// START KGU#803 2020-02-17: Issue #816 ensure local declaration where necessary
 				if (inputItems != null) {

@@ -2799,7 +2799,7 @@ public abstract class Element {
 			// START KGU#916 2021-01-25: Enh. #915
 			// START KGU#997 2025-08-01: Enh. #1198
 			//useInputBoxCase = ini.getProperty("CaseEditor", "true").equals("true");
-			String caseEditorMode = ini.getProperty("CaseEditor", "NON-EMPTY");
+			String caseEditorMode = ini.getProperty("CaseEditor", "NON_EMPTY");
 			// Legacy identification
 			useInputBoxCase = CaseEditorChoice.NEVER;
 			if (caseEditorMode.equals("true")) {
