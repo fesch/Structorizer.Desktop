@@ -26,7 +26,7 @@ Known issues (also see https://github.com/fesch/Structorizer.Desktop/issues):
 - ARM export is still experimental and relies on a specific and very restricted
   syntax for the element contents in order to produce meaningful results.
 
-Current development version 3.32-31 (2025-08-17)
+Current development version 3.32-32 (2025-08-18)
 - 01: Bugfix #987: Duplicate subroutine comment export by Pascal generator <2>
 - 01: Bugfix #988: Syntax error in Structorizer.bat and Arranger.bat fixed <2>
 - 01: Bugfix #989: Expressions in EXIT elements (e.g. return) were forgotten
@@ -303,6 +303,8 @@ Current development version 3.32-31 (2025-08-17)
       Turtleizer position conditions as endless <2>
 - 31: Bugfix #1206: Oberon export of exit instruction wasn't implemented <2>
 - 31: Bugfix #1207: Defective bash export on multi-expression output <2>
+- 32: Issues #1138, #1198: Obsolete message keys removed from IT, PT-BR <2>
+- 32:
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>
