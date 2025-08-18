@@ -17,16 +17,16 @@ Known issues (also see https://github.com/fesch/Structorizer.Desktop/issues):
   angular brackets (in nested type arguments) and shift operators >> may fail
   in some cases. Then it should be switched off and closing angular brackets be
   separated manually. Java import does not cope with lambda expressions and
-  some annotations. Because Structorizer not actually supports OOP context the
-  imported diagrams will usually not be executable but raise a lot of Analyser
-  warnings.
+  some annotations. Because Structorizer does not actually support OOP context
+  the imported diagrams will usually not be executable but raise a lot of
+  Analyser warnings.
 - Shell export neither copes with nested array/record initialisers and
   component access nor with cleanly handling usual and associative arrays as
   parameters or results.
 - ARM export is still experimental and relies on a specific and very restricted
   syntax for the element contents in order to produce meaningful results.
 
-Current development version 3.32-30 (2025-08-04)
+Current development version 3.32-31 (2025-08-17)
 - 01: Bugfix #987: Duplicate subroutine comment export by Pascal generator <2>
 - 01: Bugfix #988: Syntax error in Structorizer.bat and Arranger.bat fixed <2>
 - 01: Bugfix #989: Expressions in EXIT elements (e.g. return) were forgotten
@@ -173,7 +173,7 @@ Current development version 3.32-30 (2025-08-04)
       Defective log record configuration fixed <2>.
 - 14: Error messages for string comparison conversion in Executor now show
       more precise context. <2>
-- 14: Bugfix #1108 C import may fail because of nested comments [csrabak]<2>
+- 14: Bugfix #1108 C import may fail because of nested comments [csrabak]2
 - 14: Bugfix #1109 Code generation for throw (rethrow) was defective <2>
 - 14: Bugfix #1110 Math.* conversion failed on Java/Processing import <2>
 - 14: Issue #1112 Analyser no longer complains about missing initialisation
@@ -183,7 +183,7 @@ Current development version 3.32-30 (2025-08-04)
       to menu changes, "copy PNG image" and "copy EMF image" moved to menu
       "Diagram" <2>
 - 15: Enh. #1115 New C99 import option to convert #defines into consts in
-      order to preserve symbolic names [csrabak]<2>
+      order to preserve symbolic names [csrabak]2
 - 15: Bugfix #1116 C99 import failed on array typedefs with named ranges <2>
 - 15: Enh. #1117 Changelog on About window now with active HTML links <2>
 - 15: Bugfix #1118 The comment of empty Instructions wasn't exported to C,
@@ -199,7 +199,7 @@ Current development version 3.32-30 (2025-08-04)
 - 16: Completion and corrections of the Portuguese/Brazilian locale <T. Cruz>
 - 17: Menu mnemonics for the PT_BR locale rectified <T. Cruz>
 - 17: Bugfix #1128 Risk of getting stuck on record component retrieval (in
-      Analyser or Input assist) eliminated [K.-P. Reimers]<2>
+      Analyser or Input assist) eliminated [K.-P. Reimers]2
 - 17: Issue #1129 Analyser popup didn't open with too many error entries <2>
 - 17: Bugfix #1130 C import expanded macros within char literals [csrabak]2
 - 17: Issue #1131 Handling of anonymous inner classes on Java import <2>
@@ -294,8 +294,15 @@ Current development version 3.32-30 (2025-08-04)
       could fail <2>
 - 29: Enh. #1198 Version hint for the special CASE editor was obsolete <2>
 - 29: Issue #1200 Ensures content assist and undo/redo in CASE editor <2>
-- 30: Bugfix #1197 It wasn't possible to save an Alternative anymore <2>
-
+- 30: Bugfix #1197 It wasn't possible to save Alternatives/CASE anymore <2>
+- 31: Enh. #1198 The initial preference for the CASE editor was defective <2>
+- 31: Bugfix #1203 Analyser got out of date after Find&Replace action <2>
+- 31: Issue #1204 Caret positioning in element editor didn't work for '?'
+      at line start and neither for the initial diagram name "???". <2>
+- 31: Issue #1205 Analyser constantly decried loops with fileEOF tests or
+      Turtleizer position conditions as endless <2>
+- 31: Bugfix #1206: Oberon export of exit instruction wasn't implemented <2>
+- 31: Bugfix #1207: Defective bash export on multi-expression output <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>
@@ -1037,7 +1044,7 @@ Version: 3.26 (2017-01-06)
 - 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>
 - 01: Issue #213: Selected state of FOR transmutation result now visible <2>
 - 01: Bugfix #241: Translation bugs for element editor mended <2>
-- 01: Bugfix #243: Forgotten translations for some message boxes [Rolf Schmidt]<2>
+- 01: Bugfix #243: Forgotten translations for some message boxes [Rolf Schmidt]2
 - 01: Bugfix #244: Flawed logic for the save actions mended <2>
 - 01: Bugfix #246: Executor now checks conditions for Boolean results <2>
 - 01: Issue #245: Browser launching workaround for Linux systems [Rolf Schmidt]2
@@ -1110,14 +1117,14 @@ Version: 3.26 (2017-01-06)
 - 10: Issue #307: Executor error on manipulation of FOR loop variables [newboerg]2
 - 10: Bugfix #308: Collapsed REPEAT loops weren't properly drawn <2>
 - 11: Enh. #305: New menu item + key binding to show/hide Arranger index <2>
-- 11: Enh. #310: New options for saving diagrams [newboerg]<2>
+- 11: Enh. #310: New options for saving diagrams [newboerg]2
 - 11: Enh. #311: Partial menu re-organisation: Debug menu <2>
 - 11: Issue #312: Focus control among work area, error list, Arranger index fixed <2>
 - 11: Bugfix #305: Arranger index now sorted case-indifferently <2>
 - 12: Issue #305: Clicking into the Arranger index should force Arranger visibility <2>
 - 12: Enh. #305: Key binding <del> added to Arranger index (removes diagram) <2>
 - 12: Enh. #267: New Analyser check against ambiguous CALLs (multiple matches) <2>
-- 12: Enh. #314: File I/O API introduced (Executor, Code export) [newboerg]<2>
+- 12: Enh. #314: File I/O API introduced (Executor, Code export) [newboerg]2
 - 12: Enh. #315: Better equivalence check on inserting diagrams to Arranger <2>
 - 12: Bugfix #317: Color of empty sequences (like empty FALSE branch) now saved <2>
 - 12: Issue #271: Comma between prompt string and input variable tolerated <2>
@@ -1142,7 +1149,7 @@ Version: 3.25 (2016-09-09)
 - 02: Bugfix #132: Stale Structorizer references in Arranger caused trouble <2>
 - 02: Enh. #133: Execution Call stack may now be inspected in paused state <2>
 - 02: Enh. KGU#89: Executor: Extended language localization support <2>
-- 03: Enh. #84/#135: For-In loops now consistently supported [R. Schmidt]<2>
+- 03: Enh. #84/#135: For-In loops now consistently supported [R. Schmidt]2
 - 03: Issue #79/#152: Requested Java version corrected (1.6 --> 1.8) <2>
 - 04: Bugfix #96/#135: On BASH export conditions now put into [[ ]] [Rolf Schmidt]2
 - 04: Bugfix #135/KGU#163: Detection of completely undefined variables <2>
@@ -1193,7 +1200,7 @@ Version: 3.25 (2016-09-09)
 - 13: Enh. #180: Initial editor focus dependent on switch text/comment mode [elemhsb]2
 - 13: Bugfix #191: Defective FOR loop export to PHP [Frank Schenk]2
 - 13: Enh. #192: File name proposals now involve parameter count <2>
-- 13: Enh. #160: Code export with reachable subroutines [Rolf Schmidt]<2>
+- 13: Enh. #160: Code export with reachable subroutines [Rolf Schmidt]2
 - 14: Issue #160: Subroutine export mode fixed for StrukTeX <2>
 - 14: Issue #197: Keyboard selection actions on subsequences mended <2>
 - 14: Issue #198: Flaw in key-controlled selection traversal <2>
@@ -1222,7 +1229,7 @@ Version: 3.25 (2016-09-09)
 - 16: Created and integrated translator [Bob Fisch]
 - 16: Bugfix #214: recoded translator [Bob Fisch]
 - 16: Issue #206: Table headers in Executor control now localizable <2>
-- 16: Issue #220: Usability improvements for Translator [Bob Fisch]<2>
+- 16: Issue #220: Usability improvements for Translator [Bob Fisch]2
 - 16: Issue #222: Structorizer localization from directly loadable file <2>
 - 16: Issue #224: Workaround for table grids on Look and Feel changes <2>
 - 16: Redesigned localization mechanism [Bob Fisch]
@@ -1263,7 +1270,7 @@ Version: 3.24 (2016-03-14)
 - 05: executor: Localisation attempts for Control panel <2>
 - 05: Enh. #51 - Handling of empty input/output instructions by executor and export <2>
 - 05: executor: Parameter splitting for function calls improved <2>
-- 05: Bugfix #61: Executor precautions against type specifiers [elemhsb]<2>
+- 05: Bugfix #61: Executor precautions against type specifiers [elemhsb]2
 - 05: Bugfix #63: Error messages on nsd loading failure no longer suppressed <2>
 - 05: generator: Enh. #23 - Export to Python, Perl, PHP, and Bash/Ksh now supports Jumps <2>
 - 05: generator: Enh. #23 + #66 - Export to Basic now supports Jumps and line numbers <2>

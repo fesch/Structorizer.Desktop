@@ -18,7 +18,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 package lu.fisch.structorizer.arranger;
 
 /******************************************************************************************************
@@ -305,6 +304,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 
 	private Vector<Diagram> diagrams = new Vector<Diagram>();
 	// START KGU#305 2016-12-16: Code revision
+	// FIXME Replace this by a central notification mechanism
 	private final Vector<IRoutinePoolListener> listeners = new Vector<IRoutinePoolListener>();
 	// END KGU#305 2016-12-16
 	// START KGU#624 2018-12-26: Enh. #655 We need more efficient searching
@@ -725,6 +725,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		}
 		// END KGU#278 2016-10-11
 		// START KGU#624 2018-12-27: Enh. #655 - Notify about the selection change
+		// FIXME Replace this by a central notification mechanism
 		notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED);
 		// END KGU#624 2018-12-27
 		return nLoaded;
@@ -1072,6 +1073,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		// START KGU#746 2019-10-05: The status change of the group wasn't shown in Arranger index
 		// START KGU#408 2021-03-01: This is a low-level change
 		//this.notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED);
+		// FIXME Replace this by a central notification mechanism
 		this.notifyChangeListeners(IRoutinePoolListener.RPC_STATUS_CHANGED);
 		// END KGU#408 2021-03-01
 		// END KGU#746 2019-10-05
@@ -1871,6 +1873,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		// START KGU#278 2016-10-11: Enh. #267
 		if (nLoaded > 0)
 		{
+			// FIXME Replace this by a central notification mechanism
 			notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED);
 		}
 		// END KGU#278 2016-10-11
@@ -2725,6 +2728,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		}
 		// END KGU#701 2019-03-30
 		// START KGU#624 2018-12-21: Enh. #655
+		// FIXME Replace this by a central notification mechanism
 		notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED | IRoutinePoolListener.RPC_SELECTION_CHANGED);
 		// END KGU#624 2018-12-21
 		repaint();
@@ -2918,6 +2922,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		adaptLayout();
 		repaint();
 		// START KGU#278 2016-10-11: Enh. #267
+		// FIXME Replace this by a central notification mechanism
 		notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED | IRoutinePoolListener.RPC_SELECTION_CHANGED);
 		Vector<Mainform> mainforms = activeMainforms();
 		if (form != null) {
@@ -3090,6 +3095,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			repaint();
 			// START KGU#318 2017-01-05: Enh. #319 Arranger index now reflects test coverage
 			// START KGU#408 2021-03-01: Enh. #410 - no need to rebuild the tree
+			// FIXME Replace this by a central notification mechanism
 			//this.notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED | IRoutinePoolListener.RPC_SELECTION_CHANGED);
 			this.notifyChangeListeners(IRoutinePoolListener.RPC_STATUS_CHANGED | IRoutinePoolListener.RPC_SELECTION_CHANGED);
 			// END KGU#408 2021-03-01
@@ -3405,6 +3411,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				// END KGU#626 2018-12-31
 				adaptLayout();
 				repaint();
+				// FIXME Replace this by a central notification mechanism
 				notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED | IRoutinePoolListener.RPC_SELECTION_CHANGED);
 			}
 			allDone = true;
@@ -3466,6 +3473,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		}
 		this.adaptLayout();
 		this.repaint();
+		// FIXME Replace this by a central notification mechanism
 		this.notifyChangeListeners(IRoutinePoolListener.RPC_POSITIONS_CHANGED);
 	}
 	// END KGU#630 2019-01-12
@@ -3598,6 +3606,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 						this.selectGroups(hitGroups);
 					}
 				}
+				// FIXME Replace this by a central notification mechanism
 				this.notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED);
 				repaint();			
 			}
@@ -3633,6 +3642,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	{
 		// We must reset the last drag information lest mouseDragged() should run havoc
 		if (dragPoint != null) {
+			// FIXME Replace this by a central notification mechanism
 			this.notifyChangeListeners(IRoutinePoolListener.RPC_POSITIONS_CHANGED);
 		}
 		// START KGU#896 2020-12-23: Enh. #896 Unambiguous indication of what will happen on dragging
@@ -3803,6 +3813,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 								if (diagrams.remove(diagr)) {
 									diagrams.add(diagr);
 								}
+								// FIXME Replace this by a central notification mechanism
 								notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED);
 							}});
 						Arranger.popupHitList.add(menuItem);
@@ -3833,6 +3844,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 										diagrams.add(diagr);
 									}
 								}
+								// FIXME Replace this by a central notification mechanism
 								notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED);
 							}});
 						Arranger.popupHitList.add(menuItem);
@@ -3970,6 +3982,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				diagr.root.setSelected(false, Element.DrawingContext.DC_ARRANGER);
 			}
 		}
+		// FIXME Replace this by a central notification mechanism
 		this.notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED); 
 		repaint();
 	}
@@ -3989,6 +4002,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				diagr.root.setSelected(true, Element.DrawingContext.DC_ARRANGER);
 			}
 		}
+		// FIXME Replace this by a central notification mechanism
 		notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED);
 		repaint();
 	}
@@ -4004,6 +4018,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				diagr.root.setSelected(true, Element.DrawingContext.DC_ARRANGER);
 			}
 		}
+		// FIXME Replace this by a central notification mechanism
 		this.notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED);
 		repaint();
 	}
@@ -4083,6 +4098,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 					}
 				}
 				// END KGU#626 2018-12-31
+				// FIXME Replace this by a central notification mechanism
 				this.notifyChangeListeners(changes);
 			}
 			// START KGU#650 2019-02-11: Issue #677 Keep track of changed archive members residing outside
@@ -4436,6 +4452,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			// END KGU#278 2016-10-11
 		}
 		// START KGU#305 2016-10-16: Enh. #305
+		// FIXME Replace this by a central notification mechanism
 		notifyChangeListeners(IRoutinePoolListener.RPC_POOL_CHANGED | IRoutinePoolListener.RPC_SELECTION_CHANGED);
 		// END KGU#305 2016-10-16
 	}
@@ -4864,6 +4881,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				// END KGU#624 2018-12-21
 				this.repaint();
 				// START KGU#624 2018-12-21: Enh. #655
+				// FIXME Replace this by a central notification mechanism
 				this.notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED);
 				// END KGU#624 2018-12-21
 			}
@@ -4971,10 +4989,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	// END KGU#624 2018-12-21
 	
 	// START KGU#624 2018-12-26: Enh. #655
-    protected int expandSelectionRecursively(StringList missingSignatures, StringList duplicateSignatures) {
-    	Set<Root> selectedRoots = getSelected();
+	protected int expandSelectionRecursively(StringList missingSignatures, StringList duplicateSignatures) {
+		Set<Root> selectedRoots = getSelected();
 		Set<Diagram> addedDiagrams = expandRootSet(selectedRoots, missingSignatures, duplicateSignatures);
 		diagramsSelected.addAll(addedDiagrams);
+		// FIXME Replace this by a central notification mechanism
 		notifyChangeListeners(IRoutinePoolListener.RPC_SELECTION_CHANGED);
 		repaint();
 		return addedDiagrams.size();
@@ -5062,6 +5081,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	// END KGU#624 2018-12-26
 
 	// START KGU#305 2016-12-16: Code revision
+	// FIXME Replace this by a central notification mechanism
 	@Override
 	public void addChangeListener(IRoutinePoolListener _listener) {
 		if (_listener instanceof Arranger) {
@@ -5072,6 +5092,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		}
 	}
 
+	// FIXME Replace this by a central notification mechanism
 	@Override
 	public void removeChangeListener(IRoutinePoolListener _listener) {
 		if (_listener instanceof Arranger) {

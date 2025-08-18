@@ -144,6 +144,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2025-07-02      Issue #270: Implementation of isDisabled(boolean) was defective.
  *      Kay Gürtzig     2025-08-01      Enh. #1197: Support/precaution for IFork branch colouring,
  *                                      Enh. #1198: Case editor choice option changed from boolean to enum
+ *      Kay Gürtzig     2025-08-13      Enh. #1198: Defective initial preference for useInputBoxCase mended
  *
  ******************************************************************************************************
  *
@@ -315,7 +316,7 @@ public abstract class Element {
 	public static final long E_HELP_FILE_SIZE = 12300000;
 	public static final String E_DOWNLOAD_PAGE = "https://www.fisch.lu/Php/download.php";
 	// END KGU#791 2020-01-20
-	public static final String E_VERSION = "3.32-30";
+	public static final String E_VERSION = "3.32-31";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -2799,11 +2800,13 @@ public abstract class Element {
 			// START KGU#916 2021-01-25: Enh. #915
 			// START KGU#997 2025-08-01: Enh. #1198
 			//useInputBoxCase = ini.getProperty("CaseEditor", "true").equals("true");
-			String caseEditorMode = ini.getProperty("CaseEditor", "NON-EMPTY");
+			String caseEditorMode = ini.getProperty("CaseEditor", "NON_EMPTY");	// corrected 2025-08-13
 			// Legacy identification
-			useInputBoxCase = CaseEditorChoice.NEVER;
 			if (caseEditorMode.equals("true")) {
 				useInputBoxCase = CaseEditorChoice.ALWAYS;
+			}
+			else if (caseEditorMode.equals("false")) {
+				useInputBoxCase = CaseEditorChoice.NEVER;
 			}
 			for (CaseEditorChoice ce: CaseEditorChoice.values()) {
 				if (caseEditorMode.equals(ce.name())) {

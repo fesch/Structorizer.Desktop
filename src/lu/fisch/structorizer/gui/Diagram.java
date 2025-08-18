@@ -253,7 +253,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2024-11-27      Bugfix #1181: Ensure clean exec highlighting in redraw(Element)
  *      Kay Gürtzig     2025-07-10      Enh. #1196: Some methods made static/public for new Analyser checks
  *      Kay Gürtzig     2025-08-01      Enh. #915/#1198: Adaptations for new Case editor choice option
- *      Kay Gürtzig     2025-08-04      Issue #1200: Mechanism #1114 extended to InputBoxCase
+ *      Kay Gürtzig     2025-08-04      Issue #1200: Mechanism #1114 extended to InputBoxCase.
+ *      Kay Gürtzig     2025-08-08      Issue #1204: Mechanism #1114 extended to Root elements.
  *
  ******************************************************************************************************
  *
@@ -10117,6 +10118,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// END KGU#1184 2025-08-04
 				inputbox.setCaretOnQuestionMark(txtComp);
 			}
+			// START KGU#1187 2025-08-08: Issue #1204
+			else if (isRoot && _data.text.getLongString().startsWith("?")) {
+				inputbox.setCaretOnQuestionMark(inputbox.txtText);
+			}
+			// END KGU#1187 2025-08-9
 			// END KGU#1104 2023-11-09
 			inputbox.setVisible(true);
 
@@ -10530,7 +10536,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 */
 	// START KGU#911 2021-01-10: Enh. #910 Result type changed
 	//protected ArrayList<DiagramController> getDiagramControllers() {
-	// START KGU#1181 2025-07-10: Enh. #???? made public and static
+	// START KGU#1181 2025-07-10: Enh. #1196 made public and static
 	//protected LinkedHashMap<DiagramController, Root> getDiagramControllers() {
 	public static LinkedHashMap<DiagramController, Root> getDiagramControllers() {
 	// END KGU#911 2021-01-10
@@ -10598,7 +10604,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		if (!errors.isEmpty()) {
 			errors = Menu.msgTitleLoadingError.getText() + errors;
-			// START KGU#1181 2025-07-10: Enh. ???? no parentComponent in a static routine
+			// START KGU#1181 2025-07-10: Enh. #1196 no parentComponent in a static routine
 			//JOptionPane.showMessageDialog(this.getFrame(), errors,
 			JOptionPane.showMessageDialog(null, errors,
 			// END KGU#1181 2025-07-10
@@ -10616,7 +10622,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * @param controller - a {@link DiagramController} implementor instance
 	 * @return a special immutable Includable
 	 */
-	// KGU#1181 2025-07-10: Enh. #???? Made static
+	// KGU#1181 2025-07-10: Enh. #1196 Made static
 	private static Root constructDiagrContrIncludable(DiagramController controller) {
 		Root incl = new Root(StringList.getNew("$" + controller.getName().replace(" ", "_")));
 		incl.setInclude(false);
@@ -10679,7 +10685,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * be added to
 	 * @return number of routines
 	 */
-	// KGU#1181 2025-07-10: Enh. #???? made static
+	// KGU#1181 2025-07-10: Enh. #1196 made static
 	public static int addRoutineSignatures(HashMap<String, Method> routines, StringList comment) {
 		int count = 0;
 		for (Map.Entry<String, Method> entry : routines.entrySet()) {

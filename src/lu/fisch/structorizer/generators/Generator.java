@@ -129,6 +129,7 @@ package lu.fisch.structorizer.generators;
  *                                      moved up to Generator in order to facilitate IF ELSE IF chains
  *      Kay Gürtzig     2025-02-06      Bugfix #1189: lvalue splitting returned wrong result with Java-style declarations
  *      Kay Gürtzig     2025-02-07      Bugfix #1190: wasDefHandled now fully recursive (not efficient but effective)
+ *      Kay Gürtzig     2025-08-17      Bugfix #1207: method unifyKeywords extracted from transform(...) to fix the bash bug
  *
  ******************************************************************************************************
  *
@@ -1803,26 +1804,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		// START KGU 2016-03-29: Unify all parser keywords
 		// This is somewhat redundant because most of the keywords have already been cut out
 		// but it's still needed for the meaningful ones.
-		String[] keywords = CodeParser.getAllProperties();
-		for (int kw = 0; kw < keywords.length; kw++)
-		{
-			if (keywords[kw].trim().length() > 0)
-			{
-				StringList keyTokens = this.splitKeywords.elementAt(kw);
-				int keyLength = keyTokens.count();
-				int pos = -1;
-				while ((pos = tokens.indexOf(keyTokens, pos + 1, !CodeParser.ignoreCase)) >= 0)
-				{
-					// Replace the first token of the keyword by the entire keyword
-					tokens.set(pos, keywords[kw]);
-					// Remove the remaining tokens of the split keyword
-					for (int j=1; j < keyLength; j++)
-					{
-						tokens.delete(pos+1);
-					}
-				}
-			}
-		}
+		unifyKeywords(tokens);
 		// END KGU 2016-03-29
 		// START KGU#162 2016-03-31: Enh. #144
 		//String transformed = transformTokens(tokens);
@@ -1857,6 +1839,41 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 
 		return transformed.trim();
 	}
+
+	// START KGU#1190 2025-08-17: Bugfix #1207 extracted from transform(String, boolean)
+	/**
+	 * Returns a new {@link StringList} where tokenized keywords found as sublist
+	 * of {@code _tokens} are replaced by single tokens exactly equal to the 
+	 * corresponding user's preferences. This method is to simplify keyword
+	 * detection in the resulting token list
+	 * @param _tokens - a lexically tokenized text
+	 * @return possibly modified copy of {@code _tokens}
+	 */
+	protected StringList unifyKeywords(StringList _tokens) {
+		StringList tokens = _tokens.copy();
+		String[] keywords = CodeParser.getAllProperties();
+		for (int kw = 0; kw < keywords.length; kw++)
+		{
+			if (keywords[kw].trim().length() > 0)
+			{
+				StringList keyTokens = this.splitKeywords.elementAt(kw);
+				int keyLength = keyTokens.count();
+				int pos = -1;
+				while ((pos = tokens.indexOf(keyTokens, pos + 1, !CodeParser.ignoreCase)) >= 0)
+				{
+					// Replace the first token of the keyword by the entire keyword
+					tokens.set(pos, keywords[kw]);
+					// Remove the remaining tokens of the split keyword
+					for (int j=1; j < keyLength; j++)
+					{
+						tokens.delete(pos+1);
+					}
+				}
+			}
+		}
+		return tokens;
+	}
+	// END KGU#1190 2025-08-17
 	
 	// START KGU#93 2015-12-21: Bugfix #41/#68/#69
 	/**

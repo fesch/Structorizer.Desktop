@@ -89,7 +89,6 @@ import java.awt.Rectangle;
 import javax.swing.ImageIcon;
 
 import lu.fisch.graphics.*;
-import lu.fisch.structorizer.elements.Element.DrawingContext;
 import lu.fisch.structorizer.gui.FindAndReplace;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.utils.*;
@@ -1439,23 +1438,6 @@ public class Case extends Element implements IFork
 		return this.branchHeadColors.get(_branchIndex);
 	}
 	
-	@Override
-	public String getHexBranchColorList()
-	{
-		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < this.getBranchCount(); i++) {
-			if (i > 0) {
-				sb.append(",");
-			}
-			// The method sensibly reacts to a shorter colour vector
-			Color brColor = this.getBranchHeadColor(i);
-			if (brColor != null) {
-				sb.append(getHexColor(brColor));
-			}
-		}
-		return sb.toString();
-	}
-
 	@Override
 	public boolean setBranchHeadColor(int _branchIndex, Color _branchColor) {
 		if (_branchIndex < 0 || _branchIndex >= this.getBranchCount()) {

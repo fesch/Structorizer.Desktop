@@ -59,6 +59,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-01-28      Bugfix #918: Missing Root type filter, unwanted checkbox for the #910 type
  *      Kay Gürtzig     2021-03-09      Issue #966: Tuning of highlight colours in case of dark luf themes
  *      Kay Gürtzig     2022-08-15      Bugfix #1062: Mode changes didn't reset the result tree
+ *      Kay Gürtzig     2025-08-08      Bugfix #1203: Analyser wasn't restarted after successful replacements
  *
  ******************************************************************************************************
  *
@@ -944,7 +945,12 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 			btnReplaceFind.addActionListener(new ActionListener(){
 				@Override
 				public void actionPerformed(ActionEvent evt) {
-					findActionPerformed(evt, true, true);
+					// START KGU#1186 2025-08-08: Bugfix #1203 analysis not updated
+					//findActionPerformed(evt, true, true);
+					if (findActionPerformed(evt, true, true)) {
+						diagram.analyse();
+					}
+					// END KGU#1186 2025-08-08
 				}
 			});
 			btnReplaceFind.addKeyListener(keyListener);
@@ -955,7 +961,12 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 			btnReplace.addActionListener(new ActionListener(){
 				@Override
 				public void actionPerformed(ActionEvent evt) {
-					findActionPerformed(evt, true, false);
+					// START KGU#1186 2025-08-08: Bugfix #1203 analysis not updated
+					//findActionPerformed(evt, true, false);
+					if (findActionPerformed(evt, true, false)) {
+						diagram.analyse();
+					}
+					// END KGU#1186 2025-08-08
 				}
 			});
 			btnReplace.addKeyListener(keyListener);
@@ -1571,13 +1582,14 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 						gotoNext = false;
 					}
 				}
+				// FIXME: Should be replaced by a central notification mechanism
 				// START KGU#705 2019-09-29: Enh. #738: Code preview is to updated as well
 				diagram.updateCodePreview();
 				// END KGU#705 2019-09-29
 			}
 		}
 		
-		// PHASE 3: traverse to next position (if stlll requested)
+		// PHASE 3: traverse to next position (if still requested)
 		// Is there another matching position within this element? (We might have come here in non-replacing mode!)
 		// Remember that "up" in the tree means backward in the text and "down" means forward in the text here
 		if (gotoNext && !elementwise && currentPosition >= 0 && (up && currentPosition > 0 || !up && currentPosition < nMatches-1)) {
@@ -1726,7 +1738,17 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 				findActionPerformed(evt, false, false);
 			}
 			// END KGU#684 2019-06-12
-			while (findActionPerformed(evt, true, true));
+			// START KGU#1186 2025-08-08: Bugfix #1203 analysis not updated
+			//while (findActionPerformed(evt, true, true));
+			boolean changed = false;
+			while (findActionPerformed(evt, true, true)) {
+				changed = true;
+			}
+			if (changed) {
+				diagram.analyse();
+			}
+			// END KGU#1186 2025-08-08
+
 		}
 		finally {
 			setCursor(origCursor);

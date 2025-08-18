@@ -62,7 +62,8 @@ package lu.fisch.structorizer.gui;
  *                                  SuggestionDropDownDecorator) and keyword inclusion
  *      Kay Gürtzig     2022-08-23  Enh. #1066: Auto-complete switched off on disabled JTextComponents
  *      Kay Gürtzig     2022-08-23  Enh. #1066: Context sensitivity for call proposals improved
- *      Kay Gürtzig     2025-08-05  Issue #1200 New method setCaretOnQuestionMark()
+ *      Kay Gürtzig     2025-08-05  Issue #1200 New method setCaretOnQuestionMark().
+ *      Kay Gürtzig     2025-08-08  Issue #1204 method setCaretOnQuestionMark() modified.
  *
  ******************************************************************************************************
  *
@@ -1104,11 +1105,22 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
      * @param txtComp - the text field or area to select the first '?' in
      */
     public void setCaretOnQuestionMark(JTextComponent txtComp) {
-        int posQM = txtComp.getText().indexOf('?');
-        if (posQM > 0) {
+        // START KGU#1187 2025-08-08: Issue #1204
+        //int posQM = txtComp.getText().indexOf('?');
+        //if (posQM > 0) {
+        //    txtComp.setCaretPosition(posQM);
+        //    txtComp.setSelectionEnd(posQM+1);
+        //}
+        String txt = txtComp.getText();
+        int posQM = txt.indexOf('?');
+        if (posQM >= 0) {
             txtComp.setCaretPosition(posQM);
+            while (posQM+1 < txt.length() && txt.charAt(posQM+1) == '?') {
+                posQM++;
+            }
             txtComp.setSelectionEnd(posQM+1);
         }
+        // END KGU#1187 2025-08-08
     }
     // END KGU#1184 2025-08-05
 

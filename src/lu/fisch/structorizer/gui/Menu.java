@@ -135,6 +135,7 @@ package lu.fisch.structorizer.gui;
  *                                      menuEditCopyDiagramPNG and menuEditCopyDiagramEMF moved to menuDiagram
  *      Kay Gürtzig     2024-11-22      Poll #1173: menuFileExportPictureSWF disabled (to be removed)
  *      Kay Gürtzig     2025-07-10      Enh. #1196: Messages for new Analyser checks 32 and 33
+ *      Kay Gürtzig     2025-08-03      Enh. #1198: msgVersionHint_3_30_15 replaced by ~_3_32_29.
  *
  ******************************************************************************************************
  *

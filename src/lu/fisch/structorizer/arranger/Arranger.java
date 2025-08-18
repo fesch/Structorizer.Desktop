@@ -2191,6 +2191,7 @@ implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, Lang
 			_root.addUndo(true);
 			_root.adoptAttributes(attrInsp.licenseInfo);
 			// START KGU#408 2021-02-28: Enh. #410 Can't be a big issue...
+			// FIXME Replace this by a central notification mechanism
 			//this.routinePoolChanged(surface, RPC_POOL_CHANGED);
 			this.routinePoolChanged(surface, RPC_STATUS_CHANGED);
 			// END KGU#408 2021-02-28

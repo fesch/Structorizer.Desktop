@@ -99,6 +99,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2024-03-19      Issue #1148 Auxiliary methods markElementStart() and markElementEnds()
  *                                              moved up to Generator, reaction to disabled state improved
  *      Kay Gürtzig             2025-07-03      Missing Override annotations added
+ *      Kay Gürtzig             2025-08-16      Bugfix #1206: Proper translation for exit instructions implemented
  *
  ******************************************************************************************************
  *
@@ -1407,8 +1408,12 @@ public class OberonGenerator extends Generator {
 			}
 			else if (line.matches(Matcher.quoteReplacement(preExit)+"([\\W].*|$)"))
 			{
-				appendComment("FIXME: Find a solution to exit the program here!", _indent);
-				appendComment(line, _indent);
+				// START KGU#1189 2025-08-16: Bugfix #1206
+				//appendComment("FIXME: Find a solution to exit the program here!", _indent);
+				//appendComment(line, _indent);
+				addCode("HALT(" + line.substring(preExit.length()).trim() + ");",
+						_indent, isDisabled);
+				// END KGU#1189 2025-08-16
 			}
 			else if (line.matches(Matcher.quoteReplacement(preLeave)+"([\\W].*|$)"))
 			{

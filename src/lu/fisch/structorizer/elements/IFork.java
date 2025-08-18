@@ -124,7 +124,21 @@ public interface IFork {
 	 * 
 	 * @see #getBranchHeadColor(int)
 	 */
-	public String getHexBranchColorList();
+	public default String getHexBranchColorList()
+	{
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < this.getBranchCount(); i++) {
+			if (i > 0) {
+				sb.append(",");
+			}
+			// The method sensibly reacts to a shorter colour vector
+			Color brColor = this.getBranchHeadColor(i);
+			if (brColor != null) {
+				sb.append(Element.getHexColor(brColor));
+			}
+		}
+		return sb.toString();
+	}
 	// END KGU#1182
 
 }

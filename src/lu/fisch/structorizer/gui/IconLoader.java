@@ -972,7 +972,7 @@ public class IconLoader {
 	 * and a thin black border. The circle radius will be reduced by
 	 * {@code _insets} pixels with respect to the icon size of
 	 * 16&nbsp;*&nbsp;{@link #scaleFactor}. If {@code _color} is {@code null}
-	 * then the icon will be transparent with an red cross withn the circle.
+	 * then the icon will be transparent with a red cross within the circle.
 	 * 
 	 * @param _color - the fill colour or {@code null}
 	 * @param _insets - the distance of the circle circumference from the icon
@@ -1007,7 +1007,7 @@ public class IconLoader {
 			int iMin = _insets + size/2 - offset;
 			int iMax = _insets + size/2 + offset;
 			graphics.drawLine(iMin, iMin, iMax, iMax);
-			graphics.drawLine(iMin, iMax, iMax, iMin);			
+			graphics.drawLine(iMin, iMax, iMax, iMin);
 		}
 		// END KGU#1182 2025-08-01
 		// START KGU 2018-09-17 free resources no longer needed
@@ -1026,20 +1026,20 @@ public class IconLoader {
 		
 		BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D graphics = (Graphics2D) image.getGraphics();
-        
-        graphics.setColor(Color.WHITE);
-        graphics.fillRect(1, 1, size-2, size-2);
-        
-        graphics.setColor(Color.BLACK);
-        graphics.drawRect(1, 1, size-2, size-2);
-        
-        graphics.setColor(Color.RED);
-        
-        graphics.setStroke(stroke);
-        graphics.drawLine(padding, padding, size - padding, size - padding);
-        graphics.drawLine(padding, size - padding, size - padding, padding);
-        
-        graphics.dispose(); // free resources no longer needed
+
+		graphics.setColor(Color.WHITE);
+		graphics.fillRect(1, 1, size-2, size-2);
+
+		graphics.setColor(Color.BLACK);
+		graphics.drawRect(1, 1, size-2, size-2);
+
+		graphics.setColor(Color.RED);
+
+		graphics.setStroke(stroke);
+		graphics.drawLine(padding, padding, size - padding, size - padding);
+		graphics.drawLine(padding, size - padding, size - padding, padding);
+
+		graphics.dispose(); // free resources no longer needed
 		return new ImageIcon(image);
 	}
 	
