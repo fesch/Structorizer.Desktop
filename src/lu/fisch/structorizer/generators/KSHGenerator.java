@@ -61,6 +61,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2020-03-19/29   Enh. #828: Modifications to support group export
  *      Kay Gürtzig             2021-10-03      Bugfix #990: returnsValue field of the handled root filled
  *      Kay Gürtzig             2025-07-03      Some missing Override annotations added
+ *      Kay Gürtzig             2025-08-19      Bugfix #1207: New parent method getAssignmentPrefixes overridden
  *
  ******************************************************************************************************
  *
@@ -77,6 +78,7 @@ import java.util.Map.Entry;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.TypeMapEntry;
+import lu.fisch.utils.StringList;
 
 
 public class KSHGenerator extends BASHGenerator {
@@ -165,6 +167,19 @@ public class KSHGenerator extends BASHGenerator {
 		}
 		return "typeset -n ";
 	}
+	
+	// START KGU#1190 2025-08-19: Bugfix #1207 Shell-specific configuration
+	/**
+	 * @return a StingLIst of shell-specific assignment prefixes like "local", "typeset"
+	 */
+	@Override
+	protected StringList getAssignmentPrefixes() {
+		return StringList.explode("typeset,typeset -n,typeset -i,typeset -E", ",");
+	}
+	// END KGU#1190 2025-08-19
+
+
+	
 	
 	@Override
 	protected String getLocalDeclarator(boolean isConst, TypeMapEntry type)

@@ -101,6 +101,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2023-11-08      Bugfix #1109: Code generation for throw suppressed
  *      Kay Gürtzig         2025-07-03      Bugfix #447: Potential bug for Case elements with broken lines fixed
  *      Kay Gürtzig         2025-08-17      Bugfix #1207: Wrong results on output instructions with expression list
+ *      Kay Gürtzig         2025-08-19      Bugfix #1207: output in case of arrays etc. contained temporary auxiliary stuff
+ *      Kay Gürtzig         2025-08-20      Bugfix #1210: Option suppressTransformation wasn't consequently respected
  *
  ******************************************************************************************************
  *
@@ -1081,9 +1083,18 @@ public class BASHGenerator extends Generator {
 			String dummyVar = "dummy" + Integer.toHexString(this.hashCode());
 			for (int i = 0; i < expressions.count(); i++) {
 				String expr = this.transform(dummyVar + " <- " + expressions.get(i), false);
-				if (expr.startsWith(dummyVar + "=")) {
-					expr = expr.substring(dummyVar.length()+1);
+				// START KGU#1190 2025-08-19: Bugfix #1207 in case of arrays etc. there may be a prefix
+				//if (expr.startsWith(dummyVar + "=")) {
+				//	expr = expr.substring(dummyVar.length()+1);
+				//}
+				int posDummy = expr.indexOf(dummyVar + "=");
+				if (posDummy >= 0) {
+					String prefix = expr.substring(0, posDummy).trim();
+					if (prefix.isEmpty() || this.getAssignmentPrefixes().contains(prefix)) {
+						expr = expr.substring(posDummy + dummyVar.length()+1);
+					}
 				}
+				// END KGU#1190 2025-08-19
 				expressions.set(i,  expr);
 			}
 			// END KGU#1190 2025-08-17
@@ -1101,6 +1112,15 @@ public class BASHGenerator extends Generator {
 	}
 	// END KGU#101 2015-12-22
 	
+	// START KGU#1190 2025-08-19: Bugfix #1207 Shell-specific configuration
+	/**
+	 * @return a StingLIst of shell-specific assignment prefixes like "local", "typeset"
+	 */
+	protected StringList getAssignmentPrefixes() {
+		return StringList.explode("local", ",");
+	}
+	// END KGU#1190 2025-08-19
+
 	// START KGU#18/KGU#23 2015-11-02: Most of the stuff became obsolete by subclassing
 	@Override
 	// START KGU#1190 2025-08-17: Bugfix #1207 More appropriate overriding
@@ -1189,63 +1209,69 @@ public class BASHGenerator extends Generator {
 				// START KGU#277/KGU#284 2016-10-13/16: Enh. #270 + Enh. #274
 				//code.add(_indent + transform(_inst.getText().get(i)));
 				String line = text.get(i);
-				// START KGU#653 2019-02-15: Enh. #680 - special treatment for multi-variable input instructions
-				StringList inputItems = Instruction.getInputItems(line);
-				// START KGU#803 2020-02-17: Issue #816 ensure local declaration where necessary
-				if (inputItems != null) {
-					for (int j = 1; j < inputItems.count(); j++) {
-						String target = inputItems.get(j);
-						int cutPos = Math.min((target+".").indexOf("."), (target+"[").indexOf("["));
-						if (Function.testIdentifier(target.substring(cutPos), false, null)
-								&& !this.wasDefHandled(root, target, !disabled)
-								&& root.isSubroutine()) {
-							addCode(getLocalDeclarator(false, typeMap.get(target)) + target, _indent, disabled);
+				// START KGU#1193 2025-08-20: Bugfix #1210 We must not transform if transformation is suppressed
+				if (!this.suppressTransformation) {
+				// END KGU#1193 2025-08-20
+					// START KGU#653 2019-02-15: Enh. #680 - special treatment for multi-variable input instructions
+					StringList inputItems = Instruction.getInputItems(line);
+					// START KGU#803 2020-02-17: Issue #816 ensure local declaration where necessary
+					if (inputItems != null) {
+						for (int j = 1; j < inputItems.count(); j++) {
+							String target = inputItems.get(j);
+							int cutPos = Math.min((target+".").indexOf("."), (target+"[").indexOf("["));
+							if (Function.testIdentifier(target.substring(cutPos), false, null)
+									&& !this.wasDefHandled(root, target, !disabled)
+									&& root.isSubroutine()) {
+								addCode(getLocalDeclarator(false, typeMap.get(target)) + target, _indent, disabled);
+							}
+						}
+						if (inputItems.count() > 2) {
+							String prompt = inputItems.get(0);
+							if (!prompt.isEmpty()) {
+								addCode(transform(CodeParser.getKeyword("output") + " " + prompt), _indent, disabled);
+							}
+							for (int j = 1; j < inputItems.count(); j++) {
+								String item = transform(inputItems.get(j) + " <-");
+								int posEq = item.lastIndexOf("=");
+								if (posEq > 0) {
+									item = item.substring(0, posEq);
+								}
+								inputItems.set(j, item);
+							}
+							addCode(this.getInputReplacer(false).replace("$1", inputItems.concatenate(" ", 1)), _indent, disabled);
+							continue;
 						}
 					}
-					if (inputItems.count() > 2) {
-						String prompt = inputItems.get(0);
-						if (!prompt.isEmpty()) {
-							addCode(transform(CodeParser.getKeyword("output") + " " + prompt), _indent, disabled);
-						}
-						for (int j = 1; j < inputItems.count(); j++) {
-							String item = transform(inputItems.get(j) + " <-");
-							int posEq = item.lastIndexOf("=");
-							if (posEq > 0) {
-								item = item.substring(0, posEq);
-							}
-							inputItems.set(j, item);
-						}
-						addCode(this.getInputReplacer(false).replace("$1", inputItems.concatenate(" ", 1)), _indent, disabled);
+					// END KGU#803 2020-02-17
+					// END KGU#653 2019-02-15
+					// START KGU#388/KGU#772 2017-10-24/2019-11-24: Enh. #423/bugfix #784 ignore type definitions and mere variable declarations
+					//if (Instruction.isTypeDefinition(line)) {
+					if (Instruction.isMereDeclaration(line)) {
+						// local declaration should have been handled by generateCode(Root)
 						continue;
 					}
-				}
-				// END KGU#803 2020-02-17
-				// END KGU#653 2019-02-15
-				// START KGU#388/KGU#772 2017-10-24/2019-11-24: Enh. #423/bugfix #784 ignore type definitions and mere variable declarations
-				//if (Instruction.isTypeDefinition(line)) {
-				if (Instruction.isMereDeclaration(line)) {
-					// local declaration should have been handled by generateCode(Root)
-					continue;
-				}
-				// START KGU#803 2020-02-16: Issue #816 A return has to be handled specifically
-				if (root.isSubroutine() && (line.matches("^" + Matcher.quoteReplacement(preReturn) + "(\\W.*|$)"))) {
-					String expr = line.substring(preReturn.length()).trim();
-					generateResultVariables(expr, _indent, disabled);
-					// In case of an endstanding return we don't need a formal return command
-					if (i < nLines-1 || root.children.getElement(root.children.getSize()-1) != _inst) {
-						addCode("return 0", _indent, disabled);
+					// START KGU#803 2020-02-16: Issue #816 A return has to be handled specifically
+					if (root.isSubroutine() && (line.matches("^" + Matcher.quoteReplacement(preReturn) + "(\\W.*|$)"))) {
+						String expr = line.substring(preReturn.length()).trim();
+						generateResultVariables(expr, _indent, disabled);
+						// In case of an endstanding return we don't need a formal return command
+						if (i < nLines-1 || root.children.getElement(root.children.getSize()-1) != _inst) {
+							addCode("return 0", _indent, disabled);
+						}
+						continue;
 					}
-					continue;
+					// END KGU#803 2020-02-16
+					// END KGU#388/KGU#772 2017-10-24/2019-11-24
+					// START KGU#1190 2025-08-17: Bugfix #1207: We must handle output explicitly
+					if (unifyKeywords(Element.splitLexically(line, true)).indexOf(preOutput) == 0) {
+						String transf = this.transformOutput(line);
+						addCode(transf, _indent, disabled);
+						continue;
+					}
+					// END KGU#1190 2025-08-17
+				// START KGU#1193 2025-08-20: Bugfix #1210
 				}
-				// END KGU#803 2020-02-16
-				// END KGU#388/KGU#772 2017-10-24/2019-11-24
-				// START KGU#1190 2025-08-17: Bugfix #1207: We must handle output explicitly
-				if (unifyKeywords(Element.splitLexically(line, true)).indexOf(preOutput) == 0) {
-					String transf = this.transformOutput(line);
-					addCode(transf, _indent, disabled);
-					continue;
-				}
-				// END KGU#1190 2025-08-17
+				// END KGU#1193 2025-08-20
 				String codeLine = transform(line);
 				/* FIXME KGU#803 2020-02-16: Issue #816 - we should mark local variables as local
 				 * This requires to check whether line is an assignment, that the target variable

@@ -130,6 +130,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2025-02-06      Bugfix #1189: lvalue splitting returned wrong result with Java-style declarations
  *      Kay Gürtzig     2025-02-07      Bugfix #1190: wasDefHandled now fully recursive (not efficient but effective)
  *      Kay Gürtzig     2025-08-17      Bugfix #1207: method unifyKeywords extracted from transform(...) to fix the bash bug
+ *      Kay Gürtzig     2025-08-20      Bugfix #1210: Input/output conversion avoided with option suppressTransformation
  *
  ******************************************************************************************************
  *
@@ -1801,11 +1802,6 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		}
 		// END KGU#162 2016-03-31
 		
-		// START KGU 2016-03-29: Unify all parser keywords
-		// This is somewhat redundant because most of the keywords have already been cut out
-		// but it's still needed for the meaningful ones.
-		unifyKeywords(tokens);
-		// END KGU 2016-03-29
 		// START KGU#162 2016-03-31: Enh. #144
 		//String transformed = transformTokens(tokens);
 		String transformed = "";
@@ -1814,12 +1810,20 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			transformed = tokens.concatenate();
 		}
 		else {
+			// START KGU 2016-03-29: Unify all parser keywords
+			// This is somewhat redundant because most of the keywords have already been cut out
+			// but it's still needed for the meaningful ones.
+			tokens = unifyKeywords(tokens);
+			// END KGU 2016-03-29
 			transformed = transformTokens(tokens);
 		}
 		// END KGU#162 2016-03-31
 		// END KGU#93 2015-12-21
 
-		if (_doInputOutput)
+		// START KGU#1193 2025-08-20: Bugfix #1210 with suppressed transformation this is also to be suppressed
+		//if (_doInputOutput)
+		if (_doInputOutput && !this.suppressTransformation)
+		// END KGU#1193 2025-09-20
 		{
 			// START KGU 2015-12-22: Avoid unnecessary transformation attempts
 			//// input instruction transformation
