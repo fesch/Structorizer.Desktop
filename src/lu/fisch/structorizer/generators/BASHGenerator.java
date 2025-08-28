@@ -102,7 +102,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2025-07-03      Bugfix #447: Potential bug for Case elements with broken lines fixed
  *      Kay Gürtzig         2025-08-17      Bugfix #1207: Wrong results on output instructions with expression list
  *      Kay Gürtzig         2025-08-19      Bugfix #1207: output in case of arrays etc. contained temporary auxiliary stuff
- *      Kay Gürtzig         2025-08-20      Bugfix #1210: Option suppressTransformation wasn't consequently respected
+ *      Kay Gürtzig         2025-08-20/28   Bugfix #1210: Option suppressTransformation wasn't consequently respected
  *
  ******************************************************************************************************
  *
@@ -1073,6 +1073,11 @@ public class BASHGenerator extends Generator {
 	@Override
 	protected String transformOutput(String _interm)
 	{
+		// START KGU#1193 2025-08-20: Bugfix #1210 We must not ignore this mode
+		if (this.suppressTransformation) {
+			return super.transformOutput(_interm);
+		}
+		// END KGU#1193 2025-08-20
 		String output = CodeParser.getKeyword("output").trim();
 		if (_interm.matches("^" + output + "[ ](.*?)"))
 		{
@@ -1140,33 +1145,37 @@ public class BASHGenerator extends Generator {
 			// START KGU 2014-11-16 Support for Pascal-style operators		
 			intermed = intermed.replace(" div ", " / ");
 			// END KGU 2014-11-06
-
-			// START KGU#78 2015-12-19: Enh. #23: We only have to ensure the correct keywords
-			// START KGU#288 2016-11-06: Issue #279 - some JREs don't know method getOrDefault()
-			//String preLeave = CodeParser.keywordMap.getOrDefault("preLeave","").trim();
-			//String preReturn = CodeParser.keywordMap.getOrDefault("preReturn","").trim();
-			//String preExit = CodeParser.keywordMap.getOrDefault("preExit","").trim();
-			String preLeave = CodeParser.getKeywordOrDefault("preLeave","leave").trim();
-			String preReturn = CodeParser.getKeywordOrDefault("preReturn","return").trim();
-			String preExit = CodeParser.getKeywordOrDefault("preExit","exit").trim();
-			// END KGU#288 2016-11-06
-			if (intermed.matches("^" + Matcher.quoteReplacement(preLeave) + "(\\W.*|$)"))
-			{
-				intermed = "break " + intermed.substring(preLeave.length());
-			}
-			else if (intermed.matches("^" + Matcher.quoteReplacement(preReturn) + "(\\W.*|$)"))
-			{
-				// FIXME KGU#803 2020-02-16: Issue #816 - should only be reached within a main or includable diagram now
-				intermed = "return " + intermed.substring(preReturn.length());
-			}
-			else if (intermed.matches("^" + Matcher.quoteReplacement(preExit) + "(\\W.*|$)"))
-			{
-				intermed = "exit " + intermed.substring(preExit.length());
-			} 
-			// END KGU#78 2015-12-19
 			
-		// START KGU#162 2016-03-31: Enh. #144
+		// START KGU#1193 2025-08-28: Issue #1210 More precise rules
 		}
+		// END KGU#1193 2025-08-28
+			
+		// START KGU#78 2015-12-19: Enh. #23: We only have to ensure the correct keywords
+		// START KGU#288 2016-11-06: Issue #279 - some JREs don't know method getOrDefault()
+		//String preLeave = CodeParser.keywordMap.getOrDefault("preLeave","").trim();
+		//String preReturn = CodeParser.keywordMap.getOrDefault("preReturn","").trim();
+		//String preExit = CodeParser.keywordMap.getOrDefault("preExit","").trim();
+		String preLeave = CodeParser.getKeywordOrDefault("preLeave","leave").trim();
+		String preReturn = CodeParser.getKeywordOrDefault("preReturn","return").trim();
+		String preExit = CodeParser.getKeywordOrDefault("preExit","exit").trim();
+		// END KGU#288 2016-11-06
+		if (intermed.matches("^" + Matcher.quoteReplacement(preLeave) + "(\\W.*|$)"))
+		{
+			intermed = "break " + intermed.substring(preLeave.length());
+		}
+		else if (intermed.matches("^" + Matcher.quoteReplacement(preReturn) + "(\\W.*|$)"))
+		{
+			// FIXME KGU#803 2020-02-16: Issue #816 - should only be reached within a main or includable diagram now
+			intermed = "return " + intermed.substring(preReturn.length());
+		}
+		else if (intermed.matches("^" + Matcher.quoteReplacement(preExit) + "(\\W.*|$)"))
+		{
+			intermed = "exit " + intermed.substring(preExit.length());
+		} 
+		// END KGU#78 2015-12-19
+			
+		// START KGU#162 2016-03-31: Enh. #144 | KGU#1193 2025-08-28: Issue #1210 reverted
+		//}
 		// END KGU#162 2016-03-31
 		
 
@@ -1478,7 +1487,7 @@ public class BASHGenerator extends Generator {
 		appendComment(_for, _indent);
 		// END KGU 2014-11-16
 		// START KGU#30 2015-10-18: This resulted in nonsense if the algorithm was a real counting loop
-		// We now use C-like syntax  for ((var = sval; var < eval; var=var+incr)) ...
+		// We now use C-like syntax: for ((var = sval; var < eval; var=var+incr)) ...
 		// START KGU#3 2015-11-02: And now we have a competent splitting mechanism...
 		String counterStr = _for.getCounterVar();
 		//START KGU#61 2016-03-21: Enh. #84/#135 - FOR-IN support
@@ -1519,14 +1528,23 @@ public class BASHGenerator extends Generator {
 			addCode("for " + counterStr + " in " + valueList, _indent, disabled);
 			// END KGU#277 2016-10-13
 		}
-		else // traditional COUNTER loop
+		// START KGU#1193 2025-08-28: Bugfix #1210: Too optimistic a conclusion
+		//else // traditional COUNTER loop
+		else if (_for.style == For.ForLoopStyle.COUNTER)
+		// END KGU#1193 2025-08-28
 		{
 		// END KGU#61 2016-03-21
+			String startValueStr = _for.getStartValue();
+			String endValueStr = _for.getEndValue();
 			// START KGU#129 2016-01-08: Bugfix #96: Expressions must be transformed
-			//String startValueStr = _for.getStartValue();
-			//String endValueStr = _for.getEndValue();
-			String startValueStr = transform(_for.getStartValue());
-			String endValueStr = transform(_for.getEndValue());
+			// START KGU#1193 2025-08-28: Issue #1210 Respect mode suppressTransformation
+			//startValueStr = transform(startValueStr);
+			//endValueStr = transform(endValueStr);
+			if (!suppressTransformation) {
+				startValueStr = transform(startValueStr);
+				endValueStr = transform(endValueStr);
+			}
+			// END KGU#1193 2025-08-28
 			// END KGU#129 2016-01-08
 			int stepValue = _for.getStepConst();
 			String incrStr = counterStr + "++";
@@ -1550,6 +1568,16 @@ public class BASHGenerator extends Generator {
 		// START KGU#61 2016-03-21: Enh. #84/#135 (continued)
 		}
 		// END KGU#61 2016-03-21
+		// START KGU#1193 2025-08-28: Bugfix #1210: Too optimistic a conclusion
+		else // unspecific FREETEXT loop
+		{
+			String loopText = _for.getUnbrokenText().getLongString().trim();
+			if (!suppressTransformation) {
+				loopText = transform(loopText);
+			}
+			addCode(loopText, _indent, disabled);
+		}
+		// END KGU#1193 2025-08-28
 		// START KGU#277 2016-10-14: Enh. #270
 		//code.add(_indent+"do");
 		//generateCode(_for.q,_indent+this.getIndent());
@@ -1925,6 +1953,7 @@ public class BASHGenerator extends Generator {
 		// END KGU#815 2020-03-26
 		
 		if (isSubroutine) {
+			// FIXME (KGU#1193) Is this structural info or should we just append the text as is?
 			// START KGU#53 2015-10-18: Shell functions get their arguments via $1, $2 etc.
 			//code.add(_root.getText().get(0)+" () {");
 			String header = _root.getMethodName() + "()";
@@ -1945,17 +1974,25 @@ public class BASHGenerator extends Generator {
 		appendComment("TODO: Check and revise the syntax of all expressions!", indent);
 		addSepaLine();
 		// END KGU#129 2016-01-08
-		// START KGU#542 2019-12-01: Enh. #739 - support for enumeration types
-		for (Entry<String, TypeMapEntry> typeEntry: typeMap.entrySet()) {
-			TypeMapEntry type = typeEntry.getValue();
-			if (typeEntry.getKey().startsWith(":") && type != null && type.isEnum()) {
-				appendEnumeratorDef(type, indent);
+		
+		// START KGU#1193 2025-08-28: Issue #1210 Mind suppressTransformation
+		if (!suppressTransformation) {
+		// END KGU#1193 2025-05-28
+			// START KGU#542 2019-12-01: Enh. #739 - support for enumeration types
+			for (Entry<String, TypeMapEntry> typeEntry: typeMap.entrySet()) {
+				TypeMapEntry type = typeEntry.getValue();
+				if (typeEntry.getKey().startsWith(":") && type != null && type.isEnum()) {
+					appendEnumeratorDef(type, indent);
+				}
 			}
+			// END KGU#542 2019-12-01
+			// START KGU#389 2017-10-23: Enh. #423 declare records as associative arrays
+			generateDeclarations(indent);
+			// END KGU#389 2017-10-23
+		// START KGU#1193 2025-08-28: Issue #1210 see above
 		}
-		// END KGU#542 2019-12-01
-		// START KGU#389 2017-10-23: Enh. #423 declare records as associative arrays
-		generateDeclarations(indent);
-		// END KGU#389 2017-10-23
+		// END KGU#1193 2025-08-28
+		
 		// START KGU#803 2020-02-18: Issue #816
 		if (isSubroutine) {
 			this.isResultSet = varNames.contains("result", false);
@@ -2194,7 +2231,10 @@ public class BASHGenerator extends Generator {
 	@Override
 	protected String generateResult(Root _root, String _indent, boolean alwaysReturns, StringList varNames)
 	{
-		if (_root.isSubroutine())
+		// START KGU#1193 2025-08-20: Bugfix #1210
+		//if (_root.isSubroutine())
+		if (_root.isSubroutine() && ! this.suppressTransformation)
+		// END KGU#1193 2025-08-20
 		{
 			if (!alwaysReturns)
 			{

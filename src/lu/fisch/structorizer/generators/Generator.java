@@ -1793,6 +1793,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		{
 			// Suppress all syntax changes, just split to tokens.
 			tokens = Element.splitLexically(_input, true);
+			// FIXME: Is this actually acceptable with suppressTransformation?
 			Element.cutOutRedundantMarkers(tokens);
 		}
 		else
@@ -1820,10 +1821,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		// END KGU#162 2016-03-31
 		// END KGU#93 2015-12-21
 
-		// START KGU#1193 2025-08-20: Bugfix #1210 with suppressed transformation this is also to be suppressed
-		//if (_doInputOutput)
-		if (_doInputOutput && !this.suppressTransformation)
-		// END KGU#1193 2025-09-20
+		if (_doInputOutput)
 		{
 			// START KGU 2015-12-22: Avoid unnecessary transformation attempts
 			//// input instruction transformation

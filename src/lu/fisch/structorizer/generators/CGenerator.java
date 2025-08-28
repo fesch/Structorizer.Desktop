@@ -1948,7 +1948,10 @@ public class CGenerator extends Generator {
 					+ transform(_for.getEndValue(), false) + "; "
 					+ increment + ")";
 		}
-		else {
+		// START KGU#1193 2025-08-25: Issue #1210 Avoid this in mode suppressTransformation
+		//else {
+		else if (!suppressTransformation) {
+		// END KGU#1193 2025-08-25
 			appendComment("TODO: No automatic FOR loop conversion found!", _indent);
 		}
 		appendBlockHeading(_for, header, _indent);
@@ -2207,8 +2210,18 @@ public class CGenerator extends Generator {
 		//	condition = "(" + condition + ")";
 		//}
 		//appendBlockTail(_repeat, "while (!" + condition + ")", _indent);
-		String condition = Element.negateCondition(_repeat.getUnbrokenText().getLongString().trim());
-		appendBlockTail(_repeat, "while (" + transform(condition) + ")", _indent);
+		// START KGU#1193 2025-08-25: Issue #1210 Respect suppressTransformation
+		//String condition = Element.negateCondition(_repeat.getUnbrokenText().getLongString().trim());
+		//appendBlockTail(_repeat, "while (" + transform(condition) + ")", _indent);
+		String condition = _repeat.getUnbrokenText().getLongString().trim();
+		if (suppressTransformation) {
+			condition = "!(" + condition + ")";
+		}
+		else {
+			condition = transform(Element.negateCondition(condition));
+		}
+		appendBlockTail(_repeat, "while (" + condition + ")", _indent);
+		// END KGU#1193 2025-08-25
 		// END KGU#811 2020-02-21
 		// END KGU#301 2016-12-01
 	}
