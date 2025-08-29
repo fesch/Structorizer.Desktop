@@ -2215,7 +2215,12 @@ public class CGenerator extends Generator {
 		//appendBlockTail(_repeat, "while (" + transform(condition) + ")", _indent);
 		String condition = _repeat.getUnbrokenText().getLongString().trim();
 		if (suppressTransformation) {
-			condition = "!(" + condition + ")";
+			if (Element.isParenthesized(condition)) {
+				condition = "!" + condition;
+			}
+			else {
+				condition = "!(" + condition + ")";
+			}
 		}
 		else {
 			condition = transform(Element.negateCondition(condition));
@@ -2420,13 +2425,25 @@ public class CGenerator extends Generator {
 				{
 					Integer ref = this.jumpTable.get(_jump);
 					String label = this.labelBaseName + ref;
-					if (ref.intValue() < 0)
-					{
-						appendComment("FIXME: Structorizer detected this illegal jump attempt:", _indent);
-						appendComment(line, _indent);
-						label = "__ERROR__";
+					// START KGU#1193 2025-08-29: Issue #1210 Respect suppressTransformation
+					if (suppressTransformation && !_jump.isLeave()) {
+						if (!line.endsWith(";")) {
+							line += ";";
+						}
+						addCode(line, _indent, isDisabled);
 					}
-					addCode(this.getMultiLevelLeaveInstr() + " " + label + ";", _indent, isDisabled);
+					else {
+					// END KGU#1193 2025-08-29
+						if (ref.intValue() < 0)
+						{
+							appendComment("FIXME: Structorizer detected this illegal jump attempt:", _indent);
+							appendComment(line, _indent);
+							label = "__ERROR__";
+						}
+						addCode(this.getMultiLevelLeaveInstr() + " " + label + ";", _indent, isDisabled);
+					// START KGU#1193 2025-08-29: Issue #1210 Respect suppressTransformation
+					}
+					// END KGU#1193 2025-08-29
 				}
 				//else if (line.matches(preLeaveMatch))
 				else if (_jump.isLeave())
@@ -2440,8 +2457,20 @@ public class CGenerator extends Generator {
 				}
 				else if (!isEmpty)
 				{
-					appendComment("FIXME: jump/exit instruction of unrecognised kind!", _indent);
-					appendComment(line, _indent);
+					// START KGU#1193 2025-08-29: Issue #1210 Respect suppressTransformation
+					if (suppressTransformation) {
+						if (!line.endsWith(";")) {
+							line += ";";
+						}
+						addCode(line, _indent, isDisabled);
+					}
+					else {
+					// END KGU#1193 2025-08-29
+						appendComment("FIXME: jump/exit instruction of unrecognised kind!", _indent);
+						appendComment(line, _indent);
+					// START KGU#1193 2025-08-29: Issue #1210 (see above)
+					}
+					// END KGU#1193 2025-08-29
 				}
 				// END KGU#74/KGU#78 2015-11-30
 			}

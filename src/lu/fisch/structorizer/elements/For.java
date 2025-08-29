@@ -72,6 +72,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2021-10-09      Bugfix #997: Inconsistent blank handling between forms and text
  *      Kay Gürtzig     2022-08-15      Bugfix #997: Collateral damage of previous bugfix version mended.
  *      Kay Gürtzig     2024-04-22      Inheritance modified (instead of implementing ILoop now extends Loop)
+ *      Kay Gürtzig     2025-08-29      Bugfix #1210: Precaution against dubious syntax in getStepConst()
  *
  ******************************************************************************************************
  *
@@ -568,8 +569,15 @@ public class For extends Loop {
 		}
 		else
 		{
-			String stepStr = this.splitForClause()[3]; 
-			step = Integer.valueOf(stepStr);
+			String stepStr = this.splitForClause()[3];
+			// START KGU#1193 2025-08-29: Bugfix #1210 Might crash with free text
+			try {
+				step = Integer.valueOf(stepStr);
+			}
+			catch (NumberFormatException ex) {
+				step = 0;	// The error should be detectable somehow
+			}
+			// END KGU#1193
 		}
 		return step;
 	}

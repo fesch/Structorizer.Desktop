@@ -1874,7 +1874,7 @@ public class BASHGenerator extends Generator {
 //	public void generateCode(Try _try, String _indent)
 //	{
 //		// TODO
-//		// That is what we might achieve
+//		// That is what we might achieve (possibly with () instead of {})
 //		{ # try
 //
 //		    command1 &&
