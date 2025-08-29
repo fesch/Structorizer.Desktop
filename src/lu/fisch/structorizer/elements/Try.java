@@ -37,6 +37,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2021-01-22      Enh. #714: Special visibility control for the FINALLY block
  *      Kay Gürtzig     2023-11-08      Bugfix #1109: Auxiliary method findEnclosingTry added.
  *      Kay Gürtzig     2024-03-14      Bugfix #1139: Precautions against missing exception variable
+ *      Kay Gürtzig     2025-08-29      Bugfix #1212: method showsFinally() introduced to support cursor key navigation
  *
  ******************************************************************************************************
  *
@@ -134,7 +135,7 @@ public class Try extends Element {
 		int fontHeight = getFontHeight(_canvas.getFontMetrics(Element.font));
 		
 		// START KGU#695 2021-01-22: Enh. #714 make the visibility of the FINALLY block optional
-		boolean showFinally = forceFinally || qFinally.hasEnabledElements();
+		boolean showFinally = this.showsFinally();
 		// END KGU#695 2021-01-22
 
 		Rect rTry = qTry.prepareDraw(_canvas).copy();
@@ -245,7 +246,7 @@ public class Try extends Element {
 		subRect = new Rect(_top_left.left + r0Catch.left, _top_left.top + r0Catch.top, _top_left.right - E_PADDING, _top_left.top + r0Catch.bottom);		
 		qCatch.draw(_canvas, subRect, _viewport, _inContention);
 		// START KGU#695 2021-01-22: Enh. #714 make the visibility of the FINALLY block optional
-		if (forceFinally || qFinally.hasEnabledElements()) {
+		if (showsFinally()) {
 		// END KGU#695 2021-01-22
 			if (!preFinally.trim().isEmpty()) {
 				writeOutVariables(_canvas, _top_left.left + E_PADDING/2, subRect.bottom + E_PADDING/2 + fontHeight,
@@ -619,7 +620,7 @@ public class Try extends Element {
 	}
 	
 	/**
-	 * Specifies whether the FINALLY clock is to be drawn even in case it
+	 * Specifies whether the FINALLY block is to be drawn even in case it
 	 * is empty. Will reset drawing information if the change has consequences.
 	 * @param visible - the new drawing mode for the FINALLY block
 	 */
@@ -631,6 +632,21 @@ public class Try extends Element {
 		forceFinally = visible;
 	}
 	// END KGU#695 2021-01-22
+	
+	// START KGU#1194 2025-08-29: Bugfix #1212 visibility of FINALLY section must be public
+	/**
+	 * Convenience method to find out whether this element currently shows
+	 * a FINALLY block.
+	 * 
+	 * @return {@code true} if the FINALLY section is actually drawn
+	 */
+	public boolean showsFinally()
+	{
+		return forceFinally || qFinally.hasEnabledElements();
+	}
+	// END KGU#1194 2025-05-29
+	
+
 
 	// START KGU#1102 2023-11-08: Bugfix #1109 Support for Rethrow
 	/**
