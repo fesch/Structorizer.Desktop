@@ -100,6 +100,7 @@ package lu.fisch.structorizer.generators;
  *                                              moved up to Generator, reaction to disabled state improved
  *      Kay Gürtzig             2025-07-03      Missing Override annotations added
  *      Kay Gürtzig             2025-08-16      Bugfix #1206: Proper translation for exit instructions implemented
+ *      Kay Gürtzig             2025-08-29      Bugfix #1210: Free-text FOR loops caused errors in suppressTransition mode
  *
  ******************************************************************************************************
  *
@@ -670,7 +671,7 @@ public class OberonGenerator extends Generator {
 					int asgnPos = transline.indexOf(":=");
 					boolean isComplexInit = false;
 					// START KGU#1089 2023-10-17: Issue #980 Suppress defective declarations
-					StringList tokens =Element.splitLexically(line, true);
+					StringList tokens = Element.splitLexically(line, true);
 					tokens.removeAll(" ");
 					if (asgnPos > 0 && Instruction.getAssignedVarname(tokens, false) == null) {
 						isDisabled = true;
@@ -723,7 +724,9 @@ public class OberonGenerator extends Generator {
 					{
 						// START KGU#277/KGU#284 2016-10-13/16: Enh. #270 + Enh. #274
 						//code.add(_indent + transline + ";");
-						transline += ";";
+						if (!transline.endsWith(";")) {
+							transline += ";";
+						}
 						if (Instruction.isTurtleizerMove(line)) {
 							transline += " " + this.commentSymbolLeft() + " color = " + _inst.getHexColor() + " " + this.commentSymbolRight();
 						}
@@ -1104,11 +1107,25 @@ public class OberonGenerator extends Generator {
 
 		// START KGU#3 2015-11-02: New reliable loop parameter mechanism
 		//code.add(_indent+"FOR "+BString.replace(transform(_for.getText().getText()),"\n","")+" DO");
-		int step = _for.getStepConst();
-		String incr = (step == 1) ? "" : " BY "+ step;
-		addCode("FOR " + _for.getCounterVar() + " := " + transform(_for.getStartValue(), false) +
-				" TO " + transform(_for.getEndValue(), false) + incr +" DO",
-				_indent, isDisabled);
+		// START KGU#1193 2025-08-29: Bugfix #1210 With suppressTransformation this may crash
+		if (_for.style == For.ForLoopStyle.COUNTER) {
+		// END KGU#1193 2025-08-29
+			int step = _for.getStepConst();
+			String incr = (step == 1) ? "" : " BY "+ step;
+			addCode("FOR " + _for.getCounterVar() + " := " + transform(_for.getStartValue(), false) +
+					" TO " + transform(_for.getEndValue(), false) + incr +" DO",
+					_indent, isDisabled);
+		// START KGU#1193 2025-08-29: Bugfix #1210 see above
+		}
+		else {
+			String text = _for.getUnbrokenText().getLongString();
+			this.appendComment("FIXME: Unrecognised loop header - requires manual translation.", _indent);
+			if (!suppressTransformation) {
+				text = transform(text);
+			}
+			addCode(text + " DO", _indent, isDisabled);
+		}
+		// END KGU#1193 2025-08-29
 		// END KGU#3 2015-11-02
 		generateCode(_for.getBody(),_indent+this.getIndent());
 		addCode("END;", _indent, isDisabled);
@@ -1427,8 +1444,17 @@ public class OberonGenerator extends Generator {
 			}
 			else if (!isEmpty)
 			{
-				appendComment("FIXME: jump/exit instruction of unrecognised kind!", _indent);
-				appendComment(line, _indent);
+				// START KGU#1193 2025-08-29: Issue #1210: Mind suppressTransformation
+				//appendComment("FIXME: jump/exit instruction of unrecognised kind!", _indent);
+				//appendComment(line, _indent);
+				if (suppressTransformation) {
+					addCode(line, _indent, isDisabled);
+				}
+				else {
+					appendComment("FIXME: jump/exit instruction of unrecognised kind!", _indent);
+					appendComment(line, _indent);
+				}
+				// END KGU#1193 2025-08-29
 			}
 		}
 		if (isEmpty) {
