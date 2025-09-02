@@ -129,6 +129,7 @@ package lu.fisch.structorizer.generators;
  *                                              correctly translated (pointer insertion failed)
  *      Kay Gürtzig             2025-02-05      Bugfix #1186: The initialisation part of C-Style declarations got lost
  *      Kay Gürtzig             2025-02-16      Bugfix #1192: Translation of tail return instruction keywords
+ *      Kay Gürtzig             2025-08-25/29   Bugfix #1210: suppressTransformation mode wasn't consistently observed
  *
  ******************************************************************************************************
  *
@@ -1948,11 +1949,8 @@ public class CGenerator extends Generator {
 					+ transform(_for.getEndValue(), false) + "; "
 					+ increment + ")";
 		}
-		// START KGU#1193 2025-08-25: Issue #1210 Avoid this in mode suppressTransformation
-		//else {
-		else if (!suppressTransformation) {
-		// END KGU#1193 2025-08-25
-			appendComment("TODO: No automatic FOR loop conversion found!", _indent);
+		else {
+			appendComment("FIXME: No automatic FOR loop conversion found!", _indent);
 		}
 		appendBlockHeading(_for, header, _indent);
 		// END KGU#934 2021-02-13

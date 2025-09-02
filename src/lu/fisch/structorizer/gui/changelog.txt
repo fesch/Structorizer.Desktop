@@ -309,6 +309,8 @@ Current development version 3.32-32 (2025-09-02)
       and even caused errors on code export and preview. <2>
 - 32: Bugfix #1212 Cursor key navigation through TRY elements was faulty <2>
 - 32: Bugfix #1213 Pascal export oddities with conditions and "until" <2>
+- 32: Bugfix #1214 ARM export: too radical code denial on bad conditions <2>
+- 32: Bugfix #1215 Defective loop exits on ARM, Perl, and PHP export <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>

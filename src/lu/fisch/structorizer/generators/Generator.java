@@ -1799,6 +1799,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		else
 		{
 			// convert to tokens into a common intermediate language
+			// FIXME (issue #1210): This may be too much 
 			tokens = Element.transformIntermediate(_input);
 		}
 		// END KGU#162 2016-03-31

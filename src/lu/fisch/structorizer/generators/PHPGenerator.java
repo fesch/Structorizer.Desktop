@@ -85,7 +85,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2025-02-06      Bugfix #1188: Export of C-style array initialisations was defective
  *      Kay Gürtzig             2025-02-16      Bugfix #1192: Translation of tail return instruction keywords
  *      Kay Gürtzig             2025-07-03      Some missing Override annotations added
- *      Kay Gürtzig             2025-09-02      Bugfix #1210: Free-text FOR loops caused errors in suppressTransition mode
+ *      Kay Gürtzig             2025-09-02      Bugfix #1210: Free-text FOR loops caused errors in suppressTransition mode,
+ *                                              bugfix #1215: The translation of loop exits was totally wrong 
  *
  ******************************************************************************************************
  *
@@ -829,8 +830,23 @@ public class PHPGenerator extends Generator
 				addCode("case " + constants.get(j).trim() + ":", _indent + this.getIndent(), isDisabled);
 			}
 			// END KGU#15 2015-11-02
-			generateCode((Subqueue) _case.qs.get(i),_indent+this.getIndent()+this.getIndent());
-			addCode("break;", _indent+this.getIndent()+this.getIndent(), isDisabled);
+			Subqueue branch = (Subqueue) _case.qs.get(i);
+			generateCode(branch, _indent+this.getIndent()+this.getIndent());
+			// START KGU#1196 2025-09-02: Issue #1215 On this occasion we avoid unnecessary breaks
+			//addCode("break;", _indent+this.getIndent()+this.getIndent(), isDisabled);
+			Element lastEl = null;
+			for (int j = branch.getSize() - 1; lastEl == null && j >= 0; j--) {
+				if ((lastEl = branch.getElement(j)).isDisabled(true)) {
+					lastEl = null;
+				}
+			}
+			// We will not check if in case of a forking last element all branches exit etc.
+			Integer label = null;
+			if (lastEl == null || !(lastEl instanceof Jump)
+					|| (label = this.jumpTable.get(lastEl)) != null && label == -1) {
+				addCode("break;", _indent+this.getIndent()+this.getIndent(), isDisabled);
+			}
+			// END KGU#1196 2025-09-02
 		}
 
 		// START KGU#453 2017-11-02: Issue #447
@@ -1050,7 +1066,6 @@ public class PHPGenerator extends Generator
 			// Has it already been matched with a loop? Then syntax must have been okay...
 			else if (this.jumpTable.containsKey(_jump))
 			{
-				// FIXME (KGU 2017-01-02: PHP allows break n - but switch constructs add to the level) 
 				Integer ref = this.jumpTable.get(_jump);
 				String label = this.labelBaseName + ref;
 				if (ref.intValue() < 0)
@@ -1059,7 +1074,18 @@ public class PHPGenerator extends Generator
 					appendComment(line, _indent);
 					label = "__ERROR__";
 				}
-				addCode("goto " + label + ";", _indent, isDisabled);
+				// START KGU#1196 2025-09-02 PHP allows break n - but switch constructs add to the level)
+				//addCode("goto " + label + ";", _indent, isDisabled);
+				// Ignore the argument - we must (re)calculate the number of levels
+				int nLevels = countExitLevels(_jump, ref);
+				if (nLevels > 0) {
+					addCode("break " + nLevels + ";", _indent, isDisabled);
+				}
+				else {
+					// Just as fallback - but who tells the loop to produce the label?
+					addCode("goto " + label + ";", _indent, isDisabled);
+				}
+				// END KGU#1196 2025-09-02
 			}
 			// START KGU#686 2019-03-21: Enh. #56
 			else if (Jump.isThrow(line)) {
@@ -1086,7 +1112,7 @@ public class PHPGenerator extends Generator
 			{
 				// Strange case: neither matched nor rejected - how can this happen?
 				// Try with an ordinary break instruction and a funny comment
-				addCode("last;\t" + this.commentSymbolLeft() + " FIXME: Dubious occurrence of 'last' instruction!",
+				addCode("break;\t" + this.commentSymbolLeft() + " FIXME: Dubious occurrence of 'last' instruction!",
 						_indent, isDisabled);
 			}
 			else if (!isEmpty)
@@ -1097,9 +1123,52 @@ public class PHPGenerator extends Generator
 			// END KGU#74/KGU#78 2015-11-30
 		}
 		if (isEmpty) {
-			addCode("last;", _indent, isDisabled);
+			// START KGU#1196 2025-09-02: Bugfix #1215 This was completely wrong
+			//addCode("last;", _indent, isDisabled);
+			int nLevels = countExitLevels(_jump, jumpTable.get(_jump));
+			if (nLevels == 1) {
+				addCode("break;", _indent, isDisabled);
+			}
+			else if (nLevels > 1) {
+				// This may happen if _jump sits within a Case structure
+				addCode("break " + nLevels +";", _indent, isDisabled);
+			}
+			else {
+				appendComment("FIXME: Structorizer detected an illegal break attempt here!", _indent);
+			}
+			// END KGU#1196 2025-09-02
 		}
 		// END KGU#78 2015-12-18
+	}
+
+	// START KGU#1196 2025-09-02: Bugfix #1215: Replace defective/awkward loop exit
+	/**
+	 * Counts the number of structures to exit in order to reach the
+	 * targeted loop to exit (we must count enclosing Case structures
+	 * as well!).
+	 * 
+	 * @param _jump - Jump element to be translated into code
+	 * @param ref - the {@link jumpTable} reference or possibly {@code null}
+	 * @return either a positive number of levels (if identified) or a
+	 *     negative number in case of mismatch.
+	 */
+	private int countExitLevels(Jump _jump, Integer ref) {
+		Element ancestor = _jump.parent;
+		int nLevels = 0;
+		Loop target = null;
+		while (ancestor != null && target == null) {
+			if (ancestor instanceof Loop) {
+				nLevels++;
+				if (ref == null || ref.equals(this.jumpTable.get(ancestor))) {
+					target = (Loop)ancestor;
+				}
+			}
+			else if (ancestor instanceof Case) {
+				nLevels++;
+			}
+			ancestor = ancestor.parent;
+		}
+		return ancestor != null ? nLevels : -1;
 	}
 	
 	// START KGU#686 2019-03-21: Enh. #56

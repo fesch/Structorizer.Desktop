@@ -91,6 +91,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2025-02-16  Bugfix #1192: Return statements in Instruction elements weren't transformed
  *      Kay Gürtzig         2025-07-03  Some missing Override annotations added
  *      Kay Gürtzig         2025-08-28  Bugfix #1210: suppressTransformation wasn't consistently considered
+ *      Kay Gürtzig         2025-09-02  Issue #1215: Coding of loop exits (leave) revised (goto eliminated)
  *
  ******************************************************************************************************
  *
@@ -534,14 +535,33 @@ public class PerlGenerator extends Generator {
 	// END KGU#108 2015-12-22
 	
 	// START KGU#78 2015-12-17: Enh. #23 (jump translation)
-	// Places a label with empty instruction into the code if elem is an exited loop
-	protected void appendLabel(Element elem, String _indent)
+	// START KGU#1196 2025-09-02: Issue #1215 Better strategy to export leave'
+	///** Places a label with empty instruction into the code if elem is an exited loop */
+	//protected void appendLabel(Element elem, String _indent)
+	//{
+	//	if (elem instanceof Loop && this.jumpTable.containsKey(elem)) {
+	//		addCode(this.labelBaseName + this.jumpTable.get(elem) + ": ;",
+	//				_indent, elem.isDisabled(false));
+	//	}
+	//}
+	/**
+	 * Checks whether this given {@link Loop} element {@code _loop} is
+	 * prematurely exited by some "leave" element and if so provides
+	 * a generic loop label to be inserted before the loop keyword,
+	 * otherwise the result willbe empty.
+	 * 
+	 * @param _loop - a {@link Loop element}
+	 * @return either a label (with colon an blank) or the empty string
+	 */
+	private String getStartLabel(Loop _loop)
 	{
-		if (elem instanceof Loop && this.jumpTable.containsKey(elem)) {
-			addCode(this.labelBaseName + this.jumpTable.get(elem) + ": ;",
-					_indent, elem.isDisabled(false));
+		String label = "";
+		if (this.jumpTable.containsKey(_loop)) {
+			label = this.labelBaseName + this.jumpTable.get(_loop) + ": ";
 		}
+		return label;
 	}
+	// END KGU#1196 2025-09-02
 	// END KGU#78 2015-12-17
 
 	// START KGU#388/KGU#542 2019-11-19: Enh. #423, #739
@@ -996,6 +1016,9 @@ public class PerlGenerator extends Generator {
 			var = "$" + var;
 		}
 		// END KGU#162 2016-04-01
+		// START KGU#1196 2025-09-02: Issue #1215 Prefer a start label with last
+		String startLabel = getStartLabel(_for);
+		// END KGU#1196 2025-09-02
 		// START KGU#61 2016-03-23: Enh. 84 - FOREACH support
 		if (_for.isForInLoop())
 		{
@@ -1017,7 +1040,10 @@ public class PerlGenerator extends Generator {
 			}
 			// START KGU#162 2016-04-01: Enh. #144 new restrictive export mode
 			//code.add(_indent + "foreach $"+ var + " (" + valueList + ") {");
-			addCode("foreach "+ var + " (" + valueList + ") {", _indent, isDisabled);
+			// START KGU#1196 2025-09-02: Issue #1215 Prefer a start label with last
+			//addCode("foreach "+ var + " (" + valueList + ") {", _indent, isDisabled);
+			addCode(startLabel + "foreach "+ var + " (" + valueList + ") {", _indent, isDisabled);
+			// END KGU#1196 2025-09-02
 			// END KGU#162
 		}
 		// START KGU#1193 2025-08-28: Bugfix #1210 Too rash a decision
@@ -1044,7 +1070,10 @@ public class PerlGenerator extends Generator {
 				endValue = transform(endValue, false);
 			}
 			// END KGU#1193 2025-08-28
-			addCode("for (" +
+			// START KGU#1196 2025-09-02: Issue #1215 Prefer a start label with last
+			//addCode("for (" +
+			addCode(startLabel + "for (" +
+			// END KGU#1196 2025-09-02
 					var + " = " + startValue + "; " +
 					var + compOp + endValue + "; " +
 					increment +
@@ -1060,15 +1089,20 @@ public class PerlGenerator extends Generator {
 			if (!suppressTransformation) {
 				loopText = transform(loopText, false);
 			}
-			addCode(loopText + "{", _indent, isDisabled);
+			// START KGU#1196 2025-09-02: Issue #1215 Prefer a start label with last
+			//addCode(loopText + "{", _indent, isDisabled);
+			addCode(startLabel + loopText + "{", _indent, isDisabled);
+			// END KGU#1196 2025-09-02
 		}
 		// END KGU#1193 2025-08-28
 		// END KGU#3 2015-11-02
 		generateCode(_for.getBody(), _indent+this.getIndent());
 		addCode("}", _indent, isDisabled);
-		// START KGU#78 2015-12-17: Enh. #23 Put a trailing label if this is a jump target
-		appendLabel(_for, _indent);
-		// END KGU#78 2015-12-17
+		// END KGU#1196 2025-09-02
+		//// START KGU#78 2015-12-17: Enh. #23 Put a trailing label if this is a jump target
+		//appendLabel(_for, _indent);
+		//// END KGU#78 2015-12-17
+		// END KGU#1196 2025-09-02
 		addCode("", "", isDisabled);
 	
 	}
@@ -1080,13 +1114,18 @@ public class PerlGenerator extends Generator {
 		addCode("", "", isDisabled);
 		appendComment(_while, _indent);
 		String condition = extractCondition(_while, _indent);
-		addCode("while " + condition + " {", _indent, isDisabled);
-		// END KGU#162 2016-04-01
+		// START KGU#1196 2025-09-02: Issue #1215 Prefer a start label with last
+		//addCode("while " + condition + " {", _indent, isDisabled);
+		String startLabel = getStartLabel(_while);
+		addCode(startLabel + "while " + condition + " {", _indent, isDisabled);
+		// END KGU#1196 2025-09-02
 		generateCode(_while.getBody(), _indent+this.getIndent());
 		addCode("}", _indent, isDisabled);
-		// START KGU#78 2015-12-17: Enh. #23 Put a trailing label if this is a jump target
-		appendLabel(_while, _indent);
-		// END KGU#78 2015-12-17
+		//// START KGU#1196 2025-09-02: Issue #1215 The following became obsolete
+		//// START KGU#78 2015-12-17: Enh. #23 Put a trailing label if this is a jump target
+		//appendLabel(_while, _indent);
+		//// END KGU#78 2015-12-17
+		// END KGU#1196 2025-09-02
 		addCode("", "", isDisabled);
 		
 	}
@@ -1100,14 +1139,20 @@ public class PerlGenerator extends Generator {
 
 		appendComment(_repeat, _indent);
 
-		addCode("do {", _indent, isDisabled);
+		// START KGU#1196 2025-09-02: Issue #1215 Prefer a start label with last
+		//addCode("do {", _indent, isDisabled);
+		String startLabel = getStartLabel(_repeat);
+		addCode(startLabel + "do {", _indent, isDisabled);
+		// END KGU#1196 2025-09-02
 		generateCode(_repeat.getBody(), _indent + this.getIndent());
 		String condition = extractCondition(_repeat, _indent + this.getIndent());
 		addCode("} while (!" + condition + ");", _indent, isDisabled);
 		// END KGU#162 2016-04-01
-		// START KGU#78 2015-12-17: Enh. #23 Put a trailing label if this is a jump target
-		appendLabel(_repeat, _indent);
-		// END KGU#78 2015-12-17
+		//// START KGU#1196 2025-09-02: Issue #1215 The following became obsolete
+		//// START KGU#78 2015-12-17: Enh. #23 Put a trailing label if this is a jump target
+		////appendLabel(_repeat, _indent);
+		//// END KGU#78 2015-12-17
+		// END KGU#1196 2025-09-02
 		addCode("", "", isDisabled);
 		
 	}
@@ -1120,12 +1165,18 @@ public class PerlGenerator extends Generator {
 
 		appendComment(_forever, _indent);
 
-		addCode("while (1) {", _indent, isDisabled);		
+		// START KGU#1196 2025-09-02: Issue #1215 Prefer a start label with last
+		//addCode("while (1) {", _indent, isDisabled);
+		String startLabel = getStartLabel(_forever);
+		addCode(startLabel + "while (1) {", _indent, isDisabled);
+		// END KGU#1196 2025-09-02
 		generateCode(_forever.getBody(), _indent+this.getIndent());
 		addCode("}", _indent, isDisabled);
+		// START KGU#1196 2025-09-02: Issue #1215 The following became obsolete
 		// START KGU#78 2015-12-17: Enh. #23 Put a trailing label if this is a jump target
-		appendLabel(_forever, _indent);
+		//appendLabel(_forever, _indent);
 		// END KGU#78 2015-12-17
+		// END KGU#1196 2025-09-02
 		addCode("", "", isDisabled);
 		
 	}
@@ -1230,7 +1281,10 @@ public class PerlGenerator extends Generator {
 						appendComment(line, _indent);
 						label = "__ERROR__";
 					}
-					addCode("goto " + label + ";", _indent, isDisabled);
+					// START KGU#1196 2025-09-02: Bugfix #1215 We may use "last" instead
+					//addCode("goto " + label + ";", _indent, isDisabled);
+					addCode("last " + label + ";", _indent, isDisabled);
+					// END KGU#1196 2025-09-02
 				}
 				else if (line.matches(Matcher.quoteReplacement(preLeave)+"([\\W].*|$)"))
 				{
