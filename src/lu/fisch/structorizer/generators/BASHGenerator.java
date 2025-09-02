@@ -1355,7 +1355,18 @@ public class BASHGenerator extends Generator {
 			}
 		}
 		String codeLine = transform(resultName + " <- " + expr);
-		addCode(resultName + codeLine.substring(codeLine.indexOf("=")), _indent, disabled);
+		// START KGU#1193 2025-09-02: Bugfix #1210 We may not always expect a translation...
+		//addCode(resultName + codeLine.substring(codeLine.indexOf("=")), _indent, disabled);
+		int posAsgn = codeLine.indexOf("=");
+		if (posAsgn > 0) {
+			expr = codeLine.substring(posAsgn);
+		}
+		else {
+			// Maybe mode suppressTransformation
+			expr = "=" + expr;
+		}
+		addCode(resultName + expr, _indent, disabled);
+		// END KGU#1193 2025-09-02
 	}
 
 	@Override

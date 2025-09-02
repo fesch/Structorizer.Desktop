@@ -131,6 +131,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2025-02-07      Bugfix #1190: wasDefHandled now fully recursive (not efficient but effective)
  *      Kay Gürtzig     2025-08-17      Bugfix #1207: method unifyKeywords extracted from transform(...) to fix the bash bug
  *      Kay Gürtzig     2025-08-20      Bugfix #1210: Input/output conversion avoided with option suppressTransformation
+ *                                      precautions against missing parameter types
  *
  ******************************************************************************************************
  *
@@ -1792,9 +1793,18 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		if (this.suppressTransformation)
 		{
 			// Suppress all syntax changes, just split to tokens.
-			tokens = Element.splitLexically(_input, true);
-			// FIXME: Is this actually acceptable with suppressTransformation?
-			Element.cutOutRedundantMarkers(tokens);
+			// START KGU#1193 2025-09-02: Bugfix #1210 Face a null argument
+			//tokens = Element.splitLexically(_input, true);
+			//Element.cutOutRedundantMarkers(tokens);
+			if (_input != null) {
+				tokens = Element.splitLexically(_input, true);
+				// FIXME: Is this actually acceptable with suppressTransformation?
+				Element.cutOutRedundantMarkers(tokens);
+			}
+			else {
+				tokens = new StringList();
+			}
+			// END KGU#1193 2025-09-02
 		}
 		else
 		{
