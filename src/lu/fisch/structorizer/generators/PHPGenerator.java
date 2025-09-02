@@ -85,6 +85,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2025-02-06      Bugfix #1188: Export of C-style array initialisations was defective
  *      Kay Gürtzig             2025-02-16      Bugfix #1192: Translation of tail return instruction keywords
  *      Kay Gürtzig             2025-07-03      Some missing Override annotations added
+ *      Kay Gürtzig             2025-09-02      Bugfix #1210: Free-text FOR loops caused errors in suppressTransition mode
  *
  ******************************************************************************************************
  *
@@ -597,7 +598,10 @@ public class PHPGenerator extends Generator
 					// START KGU#839 2020-04-06: Bugfix #843 (issues #389, #782)
 					// START KGU#1144 2024-04-02: Bugfix #1156 consider typed constants
 					//else if (Instruction.isDeclaration(line)) {
-					else if (Instruction.isDeclaration(line, true)) {
+					// START KGU#1193 2025-09-02: Issue #1210 observe suppressTransformation
+					//else if (Instruction.isDeclaration(line, true)) {
+					else if (Instruction.isDeclaration(line, true) && !suppressTransformation) {
+					// END KGU#1193 2025-09-02
 					// END KGU#1144 2024-04-02
 						StringList tokens = Element.splitLexically(transf, true);
 						// identify declared variable - the token will start with a dollar
@@ -876,7 +880,10 @@ public class PHPGenerator extends Generator
 			// END KGU#162 2016-04-01
 
 		}
-		else
+		// START KGU#1193 2025-09-02: Bugfix #1210 Make sure the structure is recognised
+		//else
+		else if (_for.style == For.ForLoopStyle.COUNTER)
+		// END KGU#1193 2025-09-02
 		{
 			int step = _for.getStepConst();
 			// START KGU#204 2016-07-19: Bugfix #191 - operators confused
@@ -897,6 +904,16 @@ public class PHPGenerator extends Generator
 					increment +
 					")", _indent, isDisabled);
 			// END KGU#162 2016-04-01
+		}
+		// START KGU#1193 2025-09-02: Bugfix #1210 Handle unrecognised structure
+		else
+		{
+			String text = _for.getUnbrokenText().getLongString().trim();
+			if (!suppressTransformation) {
+				text = transform(text, false);
+			}
+			appendComment("FIXME: Unrecognized FOR loop header - requires manual translation", _indent);
+			addCode(text, _indent, isDisabled);
 		}
 		// END KGU#61 2016-03-23
 		// END KGU#3 2015-11-02
