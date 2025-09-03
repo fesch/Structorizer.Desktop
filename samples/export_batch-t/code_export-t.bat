@@ -1,5 +1,5 @@
 @echo off
-rem Automated code export (test) script for Windows 2025-09-02 in mode -t
+rem Automated code export (test) script for Windows 2025-09-03 in mode -t
 rem 1. Set the path of the Structorizer.bat file in the environment variable STRUCTORIZER.
 rem 2. Make sure that diagrdir is correctly defined.
 rem 3. Specify the appropriate inifile (if the given ini files are not appropriate)
@@ -19,5 +19,5 @@ for %%f in (%diagrdir%\*.arrz) do (
 	)
 	rem Now export as modern Basic (in the above loop it was ancient BASIC)
 	echo Doing %STRUCTORIZER% -x Basic %%f ...
-	%STRUCTORIZER% -x Basic -s %inifile:0=1% %%f -o %%f1.bas
+	%STRUCTORIZER% -x Basic -t -s %inifile:0=1% %%f -o %%f1.bas
 )
