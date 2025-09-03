@@ -692,7 +692,10 @@ public class BasGenerator extends Generator
 					// END KGU#1177 2025-02-16
 					// START KGU#993 2021-10-04: Bugfix #993 We suppress unused declarations
 					//addCode(codeLine, _indent, disabled);
-					if (!Instruction.isMereDeclaration(line)) {
+					// START KGU#1193 2025-09-03: Issue #1210 In case suppressTransformation we need it
+					//if (!Instruction.isMereDeclaration(line)) {
+					if (suppressTransformation || !Instruction.isMereDeclaration(line)) {
+					// END KGU#1193 2025-09-03
 						addCode(codeLine, _indent, disabled);
 					}
 					// START KGU#1175 2025-02-07: Bugfix #1190 We should not suppress within Includables
@@ -1720,28 +1723,34 @@ public class BasGenerator extends Generator
 //			declareVariable(_varNames.get(v), _root, _indent);
 //			// END KGU#542 2019-12-01
 //		}
-		// First: generate the constants
-		for (Entry<String, String> entry: _root.constants.entrySet()) {
-			// Constant routine parameters will usually have value null
-			// KGU#542 2019-12-01: Enh. #739 Don't do this for enumeration constants here
-			if (entry.getValue() != null && !entry.getValue().startsWith(":")) {
-				declareVariable(entry.getKey(), _root, _indent);
+		// START KGU#1193 2025-09-03: Issue #1210 Observe suppressTransformation mode
+		if (!suppressTransformation) {
+		// END KGU#1193 2025-09-03
+			// First: generate the constants
+			for (Entry<String, String> entry: _root.constants.entrySet()) {
+				// Constant routine parameters will usually have value null
+				// KGU#542 2019-12-01: Enh. #739 Don't do this for enumeration constants here
+				if (entry.getValue() != null && !entry.getValue().startsWith(":")) {
+					declareVariable(entry.getKey(), _root, _indent);
+				}
 			}
-		}
-		// Second: generate the type definitions
-		for (Entry<String, TypeMapEntry> entry: _root.getTypeInfo(routinePool).entrySet()) {
-			String typeKey = entry.getKey();
-			if (typeKey.startsWith(":")) {
-				this.generateTypeDef(typeKey, entry.getValue(), _root, _indent, false);
+			// Second: generate the type definitions
+			for (Entry<String, TypeMapEntry> entry: _root.getTypeInfo(routinePool).entrySet()) {
+				String typeKey = entry.getKey();
+				if (typeKey.startsWith(":")) {
+					this.generateTypeDef(typeKey, entry.getValue(), _root, _indent, false);
+				}
 			}
-		}
-		// Third: generate the remaining variable declarations
-		for (int v = 0; v < _varNames.count(); v++) {
-			String varName = _varNames.get(v);
-			if (_root.constants.get(varName) == null) {
-				declareVariable(varName, _root, _indent);
+			// Third: generate the remaining variable declarations
+			for (int v = 0; v < _varNames.count(); v++) {
+				String varName = _varNames.get(v);
+				if (_root.constants.get(varName) == null) {
+					declareVariable(varName, _root, _indent);
+				}
 			}
+		// START KGU#1193 2025-09-03: Issue #1210 (see above)
 		}
+		// END KGU#1193 2025-09-03
 // END KGU#1173/KGU#1175 2025-02-07
 		appendComment("", _indent);
 		return _indent;

@@ -266,11 +266,6 @@ public class StringList {
 //		}
 //
 //		return sl;
-        // START DEBUG
-        if (_source == null) {
-            System.err.println("*** explodeWithDelimiter caight null");
-        }
-        // END DEBUG
         // TODO: performance should be measured and compared between these two solutions!
         // The following is the (optimized) alternative solution copied from BString  
         StringList sl = new StringList();
