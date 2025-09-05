@@ -74,7 +74,7 @@ package lu.fisch.structorizer.generators;
  *                                      for INPUT instructions
  *      Kay Gürtzig     2023-02-24      Bugfix #1074: Check for ARM INSTRUCTION syntax refined.
  *      Kay Gürtzig     2025-07-03      Bugfix #1195: All checks for disabled state extended to inherited
- *      Kay Gürtzig     2025-09-02      Bugfix #1210 (trouble with FOR loops and suppressTransformation),
+ *      Kay Gürtzig     2025-09-02/05   Bugfix #1210 (trouble with FOR loops and suppressTransformation),
  *                                      bugfix #1214 (too radical code denial on condition faults),
  *                                      bugfix #1215 (defective FOREVER and REPEAT loop exits)
  *
@@ -645,7 +645,10 @@ public class ArmGenerator extends Generator {
     protected void generateCode(Instruction _inst, String _indent) {
         appendComment(_inst, _indent + getIndent());
 
-        boolean isDisabled = _inst.isDisabled(false);
+        // START KGU#1070 2025-09-05: Issue #1214 Consider temporary disabling
+        //boolean isDisabled = _inst.isDisabled(false);
+        boolean isDisabled = isDisabled(_inst);
+        // END KGU#1070 2025-09-05
         Subqueue sq = (Subqueue)_inst.parent;
         boolean isLastRoutineElement = sq.parent instanceof Root
                 && _inst == sq.getElement(sq.getSize() - 1);
@@ -690,10 +693,10 @@ public class ArmGenerator extends Generator {
         String colon = syntaxDiffs[gnuEnabled ? 0 : 1][0];
         
         // the local caching of the COUNTER variable is essential
-        boolean isDisabled = _alt.isDisabled(false);
-        // START KGU#1070 2025-09-02: Bugfix #1214
-        boolean meDisabled = _alt.isDisabled(true);
-        // END KGU#1070 2025-09-02
+        // START KGU#1070 2025-09-05: Bugfix #1214 - Consider temporary disabling
+        //boolean isDisabled = _alt.isDisabled(false);
+        boolean isDisabled =  isDisabled(_alt);
+        // END KGU#1070 2025-09-05
         appendComment(_alt, _indent + getIndent());
         // START KGU#1012 2021-11-14: Issue #967 Syntax restrictions
         if (checker != null && !isDisabled) {
@@ -701,6 +704,7 @@ public class ArmGenerator extends Generator {
             if (problem != null) {
                 appendComment(problem.replace("error.syntax", "Syntax rejected")
                         .replace("error.lexical", "Unexpected symbol"), getIndent());
+                // FIXME: This should be handled similar to issue #1214
                 return;
             }
         }
@@ -723,7 +727,7 @@ public class ArmGenerator extends Generator {
             // START KGU#1070 2025-09-02: Issue #1214 We should at least generate the substructure (as disabled)
             //return;
             COUNTER++;
-            _alt.setDisabled(true);
+            disable(_alt);
             // END KGU#1070 2025-09-02
         }
         // START KGU#1070 2025-09-02: Issue #1214 We should at least generate the substructure (as disabled)
@@ -767,7 +771,7 @@ public class ArmGenerator extends Generator {
         }
         finally {
             // Restore original state
-            _alt.setDisabled(meDisabled);
+            reenable(_alt);
         }
         // END KGU#1070 2025-09-02
     }
@@ -778,7 +782,10 @@ public class ArmGenerator extends Generator {
 
         String colon = syntaxDiffs[gnuEnabled ? 0 : 1][0];
 
-        boolean isDisabled = _case.isDisabled(false);
+        // START KGU#1070 2025-09-05: Issue #1214 Consider temporary disabling
+        //boolean isDisabled = _case.isDisabled(false);
+        boolean isDisabled = isDisabled(_case);
+        // END KGU#1070 2025-09-05
 
         // Extract the text in the block
         StringList lines = _case.getUnbrokenText();
@@ -789,6 +796,7 @@ public class ArmGenerator extends Generator {
                 if (problem != null) {
                     appendComment(problem.replace("error.syntax", "Syntax rejected")
                             .replace("error.lexical", "Unexpected symbol"), getIndent());
+                    // FIXME This should be handled similar to issue #1214
                     return;
                 }
             }
@@ -889,7 +897,10 @@ public class ArmGenerator extends Generator {
 
         // START KGU 2021-04-14 Argument was wrong
         //boolean isDisabled = _for.isDisabled(true);
-        boolean isDisabled = _for.isDisabled(false);
+        // START KGU#1070 2025-09-05: Issue #1214 Consider temporary disabling
+        //boolean isDisabled = _for.isDisabled(false);
+        boolean isDisabled = isDisabled(_for);
+        // END KGU#1070 2025-09-05
         // END KGU 2021-04-14
 
         // START KGU#1012 2021-11-14: Issue #967 Syntax restrictions
@@ -898,6 +909,7 @@ public class ArmGenerator extends Generator {
             if (problem != null) {
                 appendComment(problem.replace("error.syntax", "Syntax rejected")
                         .replace("error.lexical", "Unexpected symbol"), getIndent());
+                // FIXME: This should be handled similar to issue #1214
                 return;
             }
         }
@@ -1111,10 +1123,10 @@ public class ArmGenerator extends Generator {
     protected void generateCode(While _while, String _indent) {
         String colon = syntaxDiffs[gnuEnabled ? 0 : 1][0];
 
-        boolean isDisabled = _while.isDisabled(false);
-        // START KGU#1070 2025-09-02: Bugfix #1214
-        boolean meDisabled = _while.isDisabled(true);
-        // END KGU#1070 2025-09-02
+        // START KGU#1070 2025-09-05: Issue #1214 Consider temporary disabling
+        //boolean isDisabled = _while.isDisabled(false);
+        boolean isDisabled = isDisabled(_while);
+        // END KGU#1070 2025-09-05
         appendComment(_while, _indent + getIndent());
         // START KGU#1012 2021-11-14: Issue #967 Syntax restrictions
         if (checker != null && !isDisabled) {
@@ -1122,6 +1134,7 @@ public class ArmGenerator extends Generator {
             if (problem != null) {
                 appendComment(problem.replace("error.syntax", "Syntax rejected")
                         .replace("error.lexical", "Unexpected symbol"), getIndent());
+                // FIXME: This should be handled similar to issue #1214
                 return;
             }
         }
@@ -1147,7 +1160,7 @@ public class ArmGenerator extends Generator {
         if (c == null) {
             // Comment about inappropriate condition was already given
             COUNTER++;
-            _while.setDisabled(true);
+            disable(_while);
         }
         else {
         // END KGU#1070 2025-09-02
@@ -1169,13 +1182,16 @@ public class ArmGenerator extends Generator {
             // Generate the code into the block
             generateCode(_while.getBody(), _indent);
             // Add the label and the branch instruction
-            addCode("B while_" + counter, getIndent(), isDisabled);
+            // START KGU#1070 2025-09-05: Issue #1214 Disable this if _while is defective
+            //addCode("B while_" + counter, getIndent(), isDisabled);
+            addCode("B while_" + counter, getIndent(), isDisabled || c == null);
+            // END KGU#1070 2025-09-05
             addCode("end_" + counter + colon, "", isDisabled);
         // START KGU#1070 2025-09-02: Issue #1214 (see above)
         }
         finally {
             // Restore original state
-            _while.setDisabled(meDisabled);
+            reenable(_while);
         }
         // END KGU1070 2025-09-21
     }
@@ -1184,10 +1200,10 @@ public class ArmGenerator extends Generator {
     protected void generateCode(Repeat _repeat, String _indent) {
         String colon = syntaxDiffs[gnuEnabled ? 0 : 1][0];
 
-        boolean isDisabled = _repeat.isDisabled(false);
-        // START KGU#1070 2025-09-02: Bugfix #1214
-        boolean meDisabled = _repeat.isDisabled(true);
-        // END KGU#1070 2025-09-02
+        // START KGU#1070 2025-09-05: Issue #1214 Consider temporary disabling
+        //boolean isDisabled = _repeat.isDisabled(false);
+        boolean isDisabled = isDisabled(_repeat);
+        // END KGU#1070 2025-09-05
 
         appendComment(_repeat, getIndent());
         // START KGU#1012 2021-11-14: Issue #967 Syntax restrictions
@@ -1226,8 +1242,8 @@ public class ArmGenerator extends Generator {
             //return;
             COUNTER++;
             // Export the substructure in disabled state
-            _repeat.setDisabled(true);
-            // END KGU#1070 2025-0902
+            disable(_repeat);
+            // END KGU#1070 2025-09-02
         }
         // START KGU#1070 2025-09-02: Issue #1214 (see above)
         try {
@@ -1262,7 +1278,7 @@ public class ArmGenerator extends Generator {
         }
         finally {
             // Restore original state
-            _repeat.setDisabled(meDisabled);
+            reenable(_repeat);
         }
         // END KGU#1070 2025-09-02
     }
@@ -1271,7 +1287,10 @@ public class ArmGenerator extends Generator {
     protected void generateCode(Forever _forever, String _indent) {
         String colon = syntaxDiffs[gnuEnabled? 0 : 1][0];
 
-        boolean isDisabled = _forever.isDisabled(false);
+        // START KGU#1070 2025-09-05: Issue #1214 Consider temporary disabling
+        //boolean isDisabled = _forever.isDisabled(false);
+        boolean isDisabled = isDisabled(_forever);
+        // END KGU#1070 2025-09-05
         appendComment(_forever, getIndent());
 
         int counter = COUNTER;
@@ -1311,7 +1330,10 @@ public class ArmGenerator extends Generator {
     @Override
     protected void generateCode(Call _call, String _indent) {
         if (!appendAsComment(_call, _indent)) {
-            boolean isDisabled = _call.isDisabled(true);
+            // START KGU#1070 2025-09-05: Issue #1214 Wrong argument; consider temporary disabling
+            //boolean isDisabled = _call.isDisabled(true);
+            boolean isDisabled = isDisabled(_call);
+            // END KGU#1070 2025-09-05
             appendComment(_call, getIndent());
             StringList lines = _call.getUnbrokenText();
             // START KGU#1012 2021-11-14: Issue #967 Syntax restrictions
@@ -1425,7 +1447,10 @@ public class ArmGenerator extends Generator {
     protected void generateCode(Jump _jump, String _indent) {
         String colon = syntaxDiffs[gnuEnabled? 0 : 1][0];
         if (!appendAsComment(_jump, _indent)) {
-            boolean isDisabled = _jump.isDisabled(false);
+            // START KGU#1070 2025-09-05: Issue #1214 Consider temporary disabling
+            //boolean isDisabled = _jump.isDisabled(false);
+            boolean isDisabled = isDisabled(_jump);
+            // END KGU#1070 2025-09-05
             appendComment(_jump, _indent);
             boolean isEmpty = true;
 
@@ -1531,7 +1556,10 @@ public class ArmGenerator extends Generator {
      * @param _valueExpr - the expression to compute the return value
      */
     private void generateCodeReturn(Instruction _jump, String _valueExpr) {
-        boolean isDisabled = _jump.isDisabled(false);
+        // START KGU#1070 2025-09-05: Issue #1214 Consider temporary disabling
+        //boolean isDisabled = _jump.isDisabled(false);
+        boolean isDisabled = isDisabled(_jump);
+        // END KGU#1070 2025-09-05
         if (!_valueExpr.isEmpty())
         {
             // FIXME The expression will have to be compiled!
@@ -1582,7 +1610,10 @@ public class ArmGenerator extends Generator {
      */
     @Override
     protected void generateCode(Try _try, String _indent) {
-        boolean isDisabled = _try.isDisabled(false);
+        // START KGU#1070 2025-09-05: Issue #1214 Consider temporary disabling
+        //boolean isDisabled = _try.isDisabled(false);
+        boolean isDisabled = isDisabled(_try);
+        // END KGU#1070 2025-09-05
         appendComment(_try, getIndent());
         addCode("LDMFD sp!,{R0-R12,pc}^", getIndent(), isDisabled);
         generateCode(_try.qTry, _indent);

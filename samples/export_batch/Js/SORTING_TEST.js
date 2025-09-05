@@ -166,7 +166,7 @@ function quickSort(values, start, stop) {
 	if (stop >= start + 2) {
 		// Select a pivot element, be p its index. 
 		// (here: randomly chosen element out of start ... stop-1) 
-		p = Math.floor(Math.random() * stop-start) + start;
+		p = Math.floor(Math.random() * (stop-start)) + start;
 		// Partition the array into smaller and greater elements 
 		// Get the resulting (and final) position of the pivot element 
 		p = partition(values, start, stop, p);

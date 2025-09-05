@@ -1,9 +1,10 @@
-; Generated with Structorizer 3.32-06 on Tue Feb 08 12:14:07 CET 2022 
+; Generated with Structorizer 3.32-32 on Fri Sep 05 11:07:36 CEST 2025 
 ;AREA data, DATA, READWRITE
 result	DCD -1,0
-V_3	DCD '.',',',';','!','?'
-V_2	DCD "  ","|"
-V_1	DCD " i "," i\'"
+V_4	DCD '.',',',';','!','?'
+V_3	DCD "  ","|"
+V_2	DCD " i "," i\'"
+; V_1	DCD 'Y','o','u',' ','w','i','l','l',' ','h','a','v','e',' ','t','o',' ','e','l','a','b','o','r','a','t','e',' ','m','o','r','e',' ','f','o','r',' ','m','e',' ','t','o',' ','h','e','l','p',' ','y','o','u','.' 
 V_0	DCD 'P','l','e','a','s','e',' ','d','o','n',0x27,'t',' ','r','e','p','e','a','t',' ','y','o','u','r','s','e','l','f','!'
 ;AREA text, CODE, READONLY
 
@@ -157,6 +158,26 @@ end_3
 		; varPart <- "" 
 		; ERROR: Unsupported condition syntax - Alternative skipped! 
 		; if (length(entry.keyword)>0) 
+then_4
+; 		STMFD SP!, {LR} 
+; 		STR R7, [SP,#-4]! 
+		; ERROR: Not implemented yet 
+		; R0 <- entry.keyword 
+; 		STR R0, [SP,#-4]! 
+		; The array R12 is not initialized 
+		; R0<-R12[1] 
+; 		STR R0, [SP,#-4]! 
+; 		STR R3, [SP,#-4]! 
+; 		STR R0, [SP,#-1,LSL #2] 
+; 		SUB SP, #4 
+; 		MOV R0, #0 
+; 		SWP R0, R0, [SP] 
+; 		BL conjugateStrings 
+		; Subroutine result: 
+; 		LDR R0, [SP] 
+; 		ADD SP, #20 
+; 		LDMFD SP!, {LR} 
+end_4
 		; ERROR: Not implemented yet 
 		; replyRing <- replies[entry.index] 
 		; ERROR: Not implemented yet 
@@ -165,12 +186,21 @@ end_3
 		; offsets[keyIndex] <- (offsets[keyIndex] + 1) mod length(replyRing) 
 		; ERROR: Not implemented yet 
 		; posAster <- pos("*", reply) 
-		CMP R0, #0
-		BLE end_4
-then_4
+		CMP R1, #0
+		BLE end_5
+then_5
 		; ERROR: Unsupported condition syntax - Alternative skipped! 
 		; if (varPart==" ") 
-end_4
+then_6
+; 		LDR R8, =V_1 
+		B end_5
+else_6
+		; ERROR: Not implemented yet 
+		; delete(reply, posAster, 1) 
+		; ERROR: Not implemented yet 
+		; insert(varPart, reply, posAster) 
+
+end_5
 		STMFD SP!, {LR}
 		STR R8, [SP,#-4]!
 		STR R0, [SP,#-1,LSL #2]
@@ -199,30 +229,42 @@ adjustSpelling
 		MOV R4, #1
 		; ERROR: Unsupported condition syntax - While skipped! 
 		; while (position<=length(sentence))&&(copy(sentence,position,1)==" ") 
+while_7
+; 		ADD R4, R4, #1 
+;		B while_7
+end_7
 		; ERROR: Unsupported condition syntax - Alternative skipped! 
 		; if (position<=length(sentence)) 
-		LDR R6, =V_1
+then_8
+		; ERROR: Not implemented yet 
+		; start <- copy(sentence, 1, position) 
+		; ERROR: Not implemented yet 
+		; delete(result, 1, position) 
+		; ERROR: Not implemented yet 
+		; insert(uppercase(start), result, 1) 
+end_8
+		LDR R6, =V_2
 		MOV R7, #0
-for_5
+for_9
 		CMP R7, #1
-		BGT end_5
+		BGT end_9
 		LDR R5, [R6, R7, LSL #2]
 		; ERROR: Not implemented yet 
 		; position <- pos(word, result) 
-while_6
+while_10
 		CMP R4, #0
-		BLE end_6
+		BLE end_10
 		; ERROR: Not implemented yet 
 		; delete(result, position+1, 1) 
 		; ERROR: Not implemented yet 
 		; insert("I", result, position+1) 
 		; ERROR: Not implemented yet 
 		; position <- pos(word, result) 
-		B while_6
-end_6
+		B while_10
+end_10
 		ADD R7, R7, #1
-		B for_5
-end_5
+		B for_9
+end_9
 		STR R3, [SP,#13,#2]
 		LDMFD SP!, {R0-R12}
 		MOVS PC, LR
@@ -232,17 +274,25 @@ checkGoodBye
 		LDR R2, [SP,#15,LSL #2]
 		LDR R3, [SP,#16,LSL #2]
 		MOV R5, #0
-for_7
+for_11
 		; WARNING: End value expression too complex 
 		CMP R5, 
-		BGT end_7
+		BGT end_11
 		; The array phrases is not initialized 
 		; R4<-phrases[R5] 
 		; ERROR: Unsupported condition syntax - Alternative skipped! 
 		; if (pos(pair[0],text)>0) 
+then_12
+		; ERROR: OUTPUT operation only supported with GNU code 
+		; OUTPUT pair[1] 
+; 		STR true, [SP,#13,#2] 
+; 		LDMFD SP!, {R0-R12} 
+; 		MOVS PC, LR 
+		
+end_12
 		ADD R5, R5, #1
-		B for_7
-end_7
+		B for_11
+end_11
 		STR false, [SP,#13,#2]
 		LDMFD SP!, {R0-R12}
 		MOVS PC, LR
@@ -256,10 +306,10 @@ conjugateStrings
 		; ERROR: Not implemented yet 
 		; result <- " " + copy(sentence, keyPos + length(key), length(sentence)) + " " 
 		MOV R7, #0
-for_8
+for_13
 		; WARNING: End value expression too complex 
 		CMP R7, 
-		BGT end_8
+		BGT end_13
 		; The array flexions is not initialized 
 		; R6<-flexions[R7] 
 		; ERROR: Not implemented yet 
@@ -269,16 +319,20 @@ for_8
 		; pos0 <- pos(pair[0], right) 
 		; ERROR: Not implemented yet 
 		; pos1 <- pos(pair[1], right) 
-while_9
+while_14
 		CMP R10, #0
-		BGT code_9
+		BGT code_14
 		CMP pos1, #0
-		BLE end_9
+		BLE end_14
 		; Detect which of the two words of the pair matches first (lest a substitution should be reverted) 
 		MOV R12, #0
 		MOV R11, R10
 		; ERROR: Unsupported condition syntax - Alternative skipped! 
 		; if (pos0==0)||((pos1>0)&&(pos1<pos0)) 
+then_15
+; 		MOV R12, #1 
+; 		MOV R11, R0 
+end_15
 		; ERROR: Not implemented yet 
 		; left <- left + copy(right, 1, position-1) + pair[1 - which] 
 		; ERROR: Not implemented yet 
@@ -287,35 +341,33 @@ while_9
 		; pos0 <- pos(pair[0], right) 
 		; ERROR: Not implemented yet 
 		; pos1 <- pos(pair[1], right) 
-		B while_9
-end_9
-		ADD R9, R0, R8
+		B while_14
+end_14
+		ADD R9, R1, R8
 		ADD R7, R7, #1
-		B for_8
-end_8
+		B for_13
+end_13
 		; Eliminate multiple spaces (replaced by single ones) and vertical bars 
-		LDR R7, =V_2
-		MOV R1, #0
-for_10
-		CMP R1, #1
-		BGT end_10
-		LDR R6, [R7, R1, LSL #2]
-		R11 <- (R6, R9)
-		; ERROR: INPUT operation only supported with GNU code 
+		LDR R7, =V_3
+		; No register available for auxiliary loop counter! 
+		MOV R6, #0
+for_16
+		CMP R6, #1
+		BGT end_16
+		; ERROR: Not implemented yet 
 		; position <- pos(str, result) 
-while_11
+while_17
 		CMP R11, #0
-		BLE end_11
+		BLE end_17
 		; ERROR: Not implemented yet 
 		; result <- copy(result, 1, position-1) + copy(result, position+1, length(result)) 
-		R11 <- (R6, R9)
-		; ERROR: INPUT operation only supported with GNU code 
+		; ERROR: Not implemented yet 
 		; position <- pos(str, result) 
-		B while_11
-end_11
-		ADD R1, R1, #1
-		B for_10
-end_10
+		B while_17
+end_17
+		ADD R6, R6, #1
+		B for_16
+end_16
 		STR R9, [SP,#13,#2]
 		LDMFD SP!, {R0-R12}
 		MOVS PC, LR
@@ -325,26 +377,26 @@ normalizeInput
 		LDR R2, [SP,#15,LSL #2]
 		; ERROR: Not implemented yet 
 		; sentence <- lowercase(sentence) 
-		LDR R4, =V_3
+		LDR R4, =V_4
 		MOV R5, #0
-for_12
+for_18
 		CMP R5, #4
-		BGT end_12
+		BGT end_18
 		LDR R3, [R4, R5, LSL #2]
 		; ERROR: Not implemented yet 
 		; position <- pos(symbol, sentence) 
-while_13
+while_19
 		CMP R6, #0
-		BLE end_13
+		BLE end_19
 		; ERROR: Not implemented yet 
 		; sentence <- copy(sentence, 1, position-1) + copy(sentence, position+1, length(sentence)) 
 		; ERROR: Not implemented yet 
 		; position <- pos(symbol, sentence) 
-		B while_13
-end_13
+		B while_19
+end_19
 		ADD R5, R5, #1
-		B for_12
-end_12
+		B for_18
+end_18
 		; ERROR: Not implemented yet 
 		; result <- " " + sentence + " " 
 		STR R3, [SP,#13,#2]
@@ -463,6 +515,27 @@ checkRepetition
 		MOV R4, #0
 		; ERROR: Unsupported condition syntax - Alternative skipped! 
 		; if (length(newInput)>4) 
+then_20
+		; ERROR: Not implemented yet 
+		; histDepth <- length(history.histArray) 
+; 		MOV R5, #0 
+; for_21 
+		; WARNING: End value expression too complex 
+; 		CMP R5, R6-1 
+; 		BGT end_21 
+		; ERROR: Unsupported condition syntax - Alternative skipped! 
+		; if (newInput==history.histArray[i]) 
+; then_22 
+; 		MOV R4, #1 
+; end_22 
+; 		ADD R5, R5, #1 
+; 		B for_21 
+; end_21 
+		; ERROR: Not implemented yet 
+		; history.histArray[history.histIndex] <- newInput 
+		; ERROR: Not implemented yet 
+		; history.histIndex <- (history.histIndex + 1) mod (histDepth) 
+end_20
 		STR R4, [SP,#13,#2]
 		LDMFD SP!, {R0-R12}
 		MOVS PC, LR
@@ -475,7 +548,22 @@ findKeyword
 		MOV R4, #0
 		; ERROR: Unsupported condition syntax - While skipped! 
 		; while (result[0]<0)&&(i<length(keyMap)) 
-		STR R5, [SP,#13,#2]
+while_23
+		; ERROR: Not implemented yet 
+		; var entry: KeyMapEntry <- keyMap[i] 
+		; ERROR: Not implemented yet 
+		; position <- pos(entry.keyword, sentence) 
+; 		CMP R5, #0 
+; 		BLE end_24 
+; then_24 
+; 		LDR R6, =result 
+; 		STR R4, [R6, #0] 
+; 		STR R5, [R6, #4] 
+; end_24 
+; 		ADD R4, R4, #1 
+;		B while_23
+end_23
+		STR R6, [SP,#13,#2]
 		LDMFD SP!, {R0-R12}
 		MOVS PC, LR
 

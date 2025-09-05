@@ -45,6 +45,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2023-12-26      Bugfix #1122: getInputReplacer() was defective for promptless input.
  *      Kay Gürtzig     2023-12-27      Issue #1123: Translation of built-in function random() added.
  *      Kay Gürtzig     2025-07-03      Some missing Override annotation added
+ *      Kay Gürtzig     2025-09-04      Bugfix #1216: Translation of random() function was deficient
+ *      Kay Gürtzig     2025-09-05      Bugfix #1217: Undue copying of FileAPI.h/FileAPI.h averted
  *
  ******************************************************************************************************
  *
@@ -249,7 +251,15 @@ public class JsGenerator extends CGenerator {
 			if (exprs.count() == 2 && exprs.get(1).startsWith(")")) {
 				tokens.remove(pos, tokens.count());
 				// The code "§RANDOM§" is to protect it from super. It will be replaced after super call.
-				tokens.add(Element.splitLexically("Math.floor(Math.random() * " + exprs.get(0) + exprs.get(1), true));
+				// START KGU#1198 2025-09-04: Bugfix #1216 the argument expr. may have need parentheses 
+				//tokens.add(Element.splitLexically("Math.floor(Math.random() * " + exprs.get(0) + exprs.get(1), true));
+				String expr0 = exprs.get(0).trim();
+				StringList expr0Tokens = Element.splitLexically(expr0, true);
+				if (expr0Tokens.count() > 1 && !Element.isParenthesized(expr0Tokens)) {
+					expr0 = "(" + expr0 + ")";
+				}
+				tokens.add(Element.splitLexically("Math.floor(Math.random() * " + expr0 + exprs.get(1), true));
+				// END KGU#1198 2025-09-04
 				pos += 9;
 			}
 		}
@@ -808,5 +818,13 @@ public class JsGenerator extends CGenerator {
 //		}
 	}
 
+	// START KGU#1190 2025-09-05: Bugfix #1217 Unduly copied C recources
+	@Override
+	protected boolean copyFileAPIResources(String _filePath)
+	{
+		// FIXME: We might have to provide files on behalf of issue #1218
+		return true;
+	}
+	// END KGU#1190 2025-09-05
 	
 }

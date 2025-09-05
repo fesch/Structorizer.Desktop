@@ -87,6 +87,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2023-12-25      Issue #1121: Scanner method should be type-specific where possible
  *      Kay Gürtzig             2023-12-27      Issue #1123: Translation of built-in function random() added.
  *      Kay Gürtzig             2025-07-03      Missing Override annotations added
+ *      Kay Gürtzig             2025-09-04      Issue #1123 slightly revised on occasion of bugfix #1216 (JsGenerator)
  *
  ******************************************************************************************************
  *
@@ -472,7 +473,12 @@ public class JavaGenerator extends CGenerator
 					",", true);
 			if (exprs.count() == 2 && exprs.get(1).startsWith(")")) {
 				tokens.remove(pos, tokens.count());
-				tokens.add(Element.splitLexically("(randGen.nextInt() % (" + exprs.get(0) + ")" + exprs.get(1), true));
+				String expr0 = exprs.get(0).trim();
+				StringList expr0Tokens = Element.splitLexically(expr0, true);
+				if (expr0Tokens.count() > 1 && !Element.isParenthesized(expr0Tokens)) {
+					expr0 = "(" + expr0 + ")";
+				}
+				tokens.add(Element.splitLexically("(randGen.nextInt() % " + expr0 + exprs.get(1), true));
 				pos += 7;
 			}
 		}

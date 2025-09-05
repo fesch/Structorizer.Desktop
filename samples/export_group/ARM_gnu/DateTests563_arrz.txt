@@ -1,0 +1,130 @@
+// Generated with Structorizer 3.32-32 on Thu Sep 04 00:57:57 CEST 2025 
+.global _start
+.data
+.align 2
+values:	.word	47,11
+.text
+.align 2
+_start:
+		// ERROR: Not implemented yet 
+		// Date someDay <- Date{day: 24, month: 2, year: 2017} 
+		STMFD SP!, {LR}
+		STR R2, [SP,#-4]!
+		STR R0, [SP,#-1,LSL #2]
+		SUB SP, #4
+		MOV R0, #0
+		SWP R0, R0, [SP]
+		BL daysInMonth423
+		// Subroutine result: 
+		LDR R3, [SP]
+		ADD SP, #8
+		LDMFD SP!, {LR}
+		// ERROR: Not implemented yet 
+		// today <- Date{2018, 7, 20} 
+		// ERROR: Not implemented yet 
+		// var me: Person <- Person{"roger", Date{1985, 3, 6}, {0, 8, 15}} 
+		// ERROR: Not implemented yet 
+		// var declArray: array of double <- {9.0, 7.5, -6.4, 1.7, 0.0} 
+		// ERROR: Not implemented yet 
+		// var explArray: double[3] <- {7.1, 0.5, -1.5} 
+		// ERROR: Not implemented yet 
+		// double doof[3] <- {0.4} 
+		// ERROR: Not implemented yet 
+		// double[2] dull <- {-12.7, 96.03} 
+
+		// Endless loop generated at the end of program 
+stopDateTests563:
+		B stopDateTests563
+isLeapYear:
+		STMFD SP!, {R0-R12}
+		LDR R2, [SP,#15,LSL #2]
+		// Most years aren't leap years... 
+		MOV R3, #0
+		// ERROR: Unsupported condition syntax - Alternative skipped! 
+		// if (year%4==0)&&(year%100!=0) 
+then_0:
+		// This is a standard leap year 
+// 		MOV R3, #1 
+		B end_0
+else_0:
+		// ERROR: Unsupported condition syntax - Alternative skipped! 
+		// if (year%400==0) 
+// then_1: 
+		// One of the rare leap years 
+		// occurring every 400 years 
+// 		MOV R3, #1 
+// end_1: 
+end_0:
+		STR R3, [SP,#13,#2]
+		LDMFD SP!, {R0-R12}
+		MOVS PC, LR
+
+daysInMonth423:
+		STMFD SP!, {R0-R12}
+		LDR R2, [SP,#15,LSL #2]
+		// select the case where illegal values are also considered 
+		CMP R2.R3, #1
+		BEQ block_2_0
+		CMP R2.R3, # 3
+		BEQ block_2_0
+		CMP R2.R3, # 5
+		BEQ block_2_0
+		CMP R2.R3, # 7
+		BEQ block_2_0
+		CMP R2.R3, # 8
+		BEQ block_2_0
+		CMP R2.R3, # 10
+		BEQ block_2_0
+		CMP R2.R3, # 12
+		BEQ block_2_0
+		CMP R2.R3, #4
+		BEQ block_2_1
+		CMP R2.R3, # 6
+		BEQ block_2_1
+		CMP R2.R3, # 9
+		BEQ block_2_1
+		CMP R2.R3, # 11
+		BEQ block_2_1
+		CMP R2.R3, #2
+		BEQ block_2_2
+		B default_2
+block_2_0:		
+		MOV R4, #31
+		B end_2
+block_2_1:		
+		MOV R4, #30
+		B end_2
+block_2_2:		
+		// Default value for February 
+		MOV R4, #28
+		// To make the call work it has to be done in 
+		// a separate element (cannot be performed 
+		// as part of the condition of an Alternative) 
+		STMFD SP!, {LR}
+		// ERROR: Not implemented yet 
+		// R5 <- aDate.year 
+		STR R5, [SP,#-4]!
+		STR R0, [SP,#-1,LSL #2]
+		SUB SP, #4
+		MOV R0, #0
+		SWP R0, R0, [SP]
+		BL isLeapYear
+		// Subroutine result: 
+		LDR R5, [SP]
+		ADD SP, #8
+		LDMFD SP!, {LR}
+		CMP R5, #0
+		BEQ end_3
+then_3:
+		MOV R4, #29
+end_3:
+		B end_2
+default_2:
+		// This is the return value for illegal months. 
+		// It is easy to check 
+		MOV R4, #0
+end_2:
+		STR R4, [SP,#13,#2]
+		LDMFD SP!, {R0-R12}
+		MOVS PC, LR
+		

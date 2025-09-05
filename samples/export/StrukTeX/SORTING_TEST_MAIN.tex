@@ -4,16 +4,17 @@
 \usepackage{ngerman}
 
 \title{Structorizer StrukTeX Export of SORTING\_TEST.arrz}
+% Structorizer version 3.32-32
 \author{Kay G"urtzig}
-\date{02.11.2021}
+\date{05.09.2025}
 
 \begin{document}
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(121,94)[bubbleSort]
+\begin{struktogramm}(116,89)[bubbleSort]
   \assign{%
     \begin{declaration}[Parameters:]
-      \description{\pVar{values}}{type: \(null\)}
+      \description{\pVar{values}}{}
     \end{declaration}
   }
   \assign{\(ende\ \gets\ length(values)\ -\ 2\)}
@@ -35,29 +36,29 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(178,109)[maxHeapify]
+\begin{struktogramm}(177,103)[maxHeapify]
   \assign{%
     \begin{declaration}[Parameters:]
-      \description{\pVar{heap}}{type: \(null\)}
-      \description{\pVar{i}}{type: \(null\)}
-      \description{\pVar{range}}{type: \(null\)}
+      \description{\pVar{heap}}{}
+      \description{\pVar{i}}{}
+      \description{\pVar{range}}{}
     \end{declaration}
   }
   \assign{\(right\ \gets\ (i+1)\ *\ 2\)}
   \assign{\(left\ \gets\ right\ -\ 1\)}
   \assign{\(max\ \gets\ i\)}
-  % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{10}{2}...
-  \ifthenelse{10}{2}{\(left\ <\ range\ \wedge\ heap[left]\ >\ heap[i]\)}{T}{F}
+  % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{11}{1}...
+  \ifthenelse{11}{1}{\(left\ <\ range\ \wedge\ heap[left]\ >\ heap[i]\)}{T}{F}
     \assign{\(max\ \gets\ left\)}
   \change
   \ifend
-  % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{10}{2}...
-  \ifthenelse{10}{2}{\(right\ <\ range\ \wedge\ heap[right]\ >\ heap[max]\)}{T}{F}
+  % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{11}{1}...
+  \ifthenelse{11}{1}{\(right\ <\ range\ \wedge\ heap[right]\ >\ heap[max]\)}{T}{F}
     \assign{\(max\ \gets\ right\)}
   \change
   \ifend
-  % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{10}{2}...
-  \ifthenelse{10}{2}{\(max\ \neq\ i\)}{T}{F}
+  % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{11}{1}...
+  \ifthenelse{11}{1}{\(max\ \neq\ i\)}{T}{F}
     \assign{\(temp\ \gets\ heap[i]\)}
     \assign{\(heap[i]\ \gets\ heap[max]\)}
     \assign{\(heap[max]\ \gets\ temp\)}
@@ -68,13 +69,13 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(218,149)[partition]
+\begin{struktogramm}(213,143)[partition]
   \assign{%
     \begin{declaration}[Parameters:]
-      \description{\pVar{values}}{type: \(null\)}
-      \description{\pVar{start}}{type: \(null\)}
-      \description{\pVar{stop}}{type: \(null\)}
-      \description{\pVar{p}}{type: \(null\)}
+      \description{\pVar{values}}{}
+      \description{\pVar{start}}{}
+      \description{\pVar{stop}}{}
+      \description{\pVar{p}}{}
     \end{declaration}
     \begin{declaration}[Result type:]
       \description{int}{}
@@ -99,15 +100,15 @@
       \assign{\(stop\ \gets\ stop\ -\ 1\)}
     \ifend
   \whileend
-  \assign{\(\)\pKey{return}\(\ p\)}
+  \exit{\(\)\pKey{return}\(\ p\)}
 \end{struktogramm}
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(130,69)[testSorted]
+\begin{struktogramm}(127,65)[testSorted]
   \assign{%
     \begin{declaration}[Parameters:]
-      \description{\pVar{numbers}}{type: \(null\)}
+      \description{\pVar{numbers}}{}
     \end{declaration}
     \begin{declaration}[Result type:]
       \description{bool}{}
@@ -122,15 +123,15 @@
       \assign{\(i\ \gets\ i\ +\ 1\)}
     \ifend
   \whileend
-  \assign{\(\)\pKey{return}\(\ isSorted\)}
+  \exit{\(\)\pKey{return}\(\ isSorted\)}
 \end{struktogramm}
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(90,45)[buildMaxHeap]
+\begin{struktogramm}(88,42)[buildMaxHeap]
   \assign{%
     \begin{declaration}[Parameters:]
-      \description{\pVar{heap}}{type: \(null\)}
+      \description{\pVar{heap}}{}
     \end{declaration}
   }
   \assign{\(lgth\ \gets\ length(heap)\)}
@@ -141,12 +142,12 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(177,82)[quickSort]
+\begin{struktogramm}(170,78)[quickSort]
   \assign{%
     \begin{declaration}[Parameters:]
-      \description{\pVar{values}}{type: \(null\)}
-      \description{\pVar{start}}{type: \(null\)}
-      \description{\pVar{stop}}{type: \(null\)}
+      \description{\pVar{values}}{}
+      \description{\pVar{start}}{}
+      \description{\pVar{stop}}{}
     \end{declaration}
   }
   % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{10}{2}...
@@ -162,10 +163,10 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(108,68)[heapSort]
+\begin{struktogramm}(103,65)[heapSort]
   \assign{%
     \begin{declaration}[Parameters:]
-      \description{\pVar{values}}{type: \(null\)}
+      \description{\pVar{values}}{}
     \end{declaration}
   }
   \sub{\(buildMaxHeap(values)\)}
@@ -181,7 +182,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(236,204)[SORTING\_TEST\_MAIN]
+\begin{struktogramm}(228,192)[SORTING\_TEST\_MAIN]
   \until{\(elementCount\ \geq\ 1\)}
     \assign{\(\)\pKey{INPUT}\(\ elementCount\)}
   \untilend

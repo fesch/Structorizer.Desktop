@@ -6,7 +6,7 @@
 \title{Structorizer StrukTeX Export of SORTING\_TEST.arrz}
 % Structorizer version 3.32-32
 \author{Kay G"urtzig}
-\date{02.09.2025}
+\date{03.09.2025}
 
 \begin{document}
 
@@ -14,7 +14,7 @@
 \begin{struktogramm}(-14,0)[bubbleSort]
   \assign{%
     \begin{declaration}[Parameters:]
-      \description{\pVar{values}}{type: \(null\)}
+      \description{\pVar{values}}{}
     \end{declaration}
   }
   \assign{\(ende\ \gets\ length(values)\ -\ 2\)}
@@ -38,9 +38,9 @@
 \begin{struktogramm}(-14,0)[maxHeapify]
   \assign{%
     \begin{declaration}[Parameters:]
-      \description{\pVar{heap}}{type: \(null\)}
-      \description{\pVar{i}}{type: \(null\)}
-      \description{\pVar{range}}{type: \(null\)}
+      \description{\pVar{heap}}{}
+      \description{\pVar{i}}{}
+      \description{\pVar{range}}{}
     \end{declaration}
   }
   \assign{\(right\ \gets\ (i+1)\ *\ 2\)}
@@ -68,10 +68,10 @@
 \begin{struktogramm}(-14,0)[partition]
   \assign{%
     \begin{declaration}[Parameters:]
-      \description{\pVar{values}}{type: \(null\)}
-      \description{\pVar{start}}{type: \(null\)}
-      \description{\pVar{stop}}{type: \(null\)}
-      \description{\pVar{p}}{type: \(null\)}
+      \description{\pVar{values}}{}
+      \description{\pVar{start}}{}
+      \description{\pVar{stop}}{}
+      \description{\pVar{p}}{}
     \end{declaration}
     \begin{declaration}[Result type:]
       \description{int}{}
@@ -104,7 +104,7 @@
 \begin{struktogramm}(-14,0)[testSorted]
   \assign{%
     \begin{declaration}[Parameters:]
-      \description{\pVar{numbers}}{type: \(null\)}
+      \description{\pVar{numbers}}{}
     \end{declaration}
     \begin{declaration}[Result type:]
       \description{bool}{}
@@ -127,7 +127,7 @@
 \begin{struktogramm}(-14,0)[buildMaxHeap]
   \assign{%
     \begin{declaration}[Parameters:]
-      \description{\pVar{heap}}{type: \(null\)}
+      \description{\pVar{heap}}{}
     \end{declaration}
   }
   \assign{\(lgth\ \gets\ length(heap)\)}
@@ -141,9 +141,9 @@
 \begin{struktogramm}(-14,0)[quickSort]
   \assign{%
     \begin{declaration}[Parameters:]
-      \description{\pVar{values}}{type: \(null\)}
-      \description{\pVar{start}}{type: \(null\)}
-      \description{\pVar{stop}}{type: \(null\)}
+      \description{\pVar{values}}{}
+      \description{\pVar{start}}{}
+      \description{\pVar{stop}}{}
     \end{declaration}
   }
   \ifthenelse{6}{6}{\(stop\ \geq\ start\ +\ 2\)}{T}{F}
@@ -161,7 +161,7 @@
 \begin{struktogramm}(-14,0)[heapSort]
   \assign{%
     \begin{declaration}[Parameters:]
-      \description{\pVar{values}}{type: \(null\)}
+      \description{\pVar{values}}{}
     \end{declaration}
   }
   \sub{\(buildMaxHeap(values)\)}

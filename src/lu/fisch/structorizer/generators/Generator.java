@@ -132,10 +132,17 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2025-08-17      Bugfix #1207: method unifyKeywords extracted from transform(...) to fix the bash bug
  *      Kay Gürtzig     2025-08-20      Bugfix #1210: Input/output conversion avoided with option suppressTransformation
  *                                      precautions against missing parameter types
+ *      Kay Gürtzig     2025-09-05      Issue #1214: Support for thread-safe temporary disabling of elements added
  *
  ******************************************************************************************************
  *
  *      Comment:
+ *      2025-09-05 - Issue #1214 (Kay Gürtzig)
+ *      - For the case that a generator ha the need temporarily to disable structured elements such that the
+ *        code for the entire substructure (or parts of it) may be outcommented, new methods
+ *        isDsabled(Element), disable(Element), and reenable(Element) were introduced.
+ *      - See ArmGenerator for
+ *        an application example.
  *      2019-03-21 - Issue #707 (elemhsb / Kay Gürtzig)
  *      - It was requested that the proposed export file name should primarily follow the nsd file name if
  *        that has already existed.
@@ -469,6 +476,16 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		return isLibModule;
 	}
 	// END KGU#815 2020-03-17
+	// START KGU#1070 2025-09-05: Issue #1214 Safe temporary disabling of elements
+	/**
+	 * Holds Elements that have to be disabled temporarily for code generation
+	 * purposes. To use this, the derived generator must use methods
+	 * {@link #isDisabled(Element)} instead of {@link Element#isDisabled(boolean)},
+	 * {@link #disable(Element)} and {@link #reenable(Element)} instead of
+	 * {@link Element#setDisabled(boolean)} consistently.
+	 */
+	private HashSet<Element> temporarilyDisabled = new HashSet<Element>();
+	// END KGU#1070 2025-09-05
 	
 	/*=========== Logger initializer ============*/
 	
@@ -994,12 +1011,15 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// KGU 2019-09-24: Renamed to appendAsComment
 	// START KGU 2015-11-18: Method parameter list reduced by a comment symbol configuration
 	/**
-	 * Appends the text of {@code _element} as comments to the code, using delimiters
-	 * {@link #commentSymbolLeft()} and {@link #commentSymbolRight()} (if given) to
-	 * enclose the comment lines, with indentation {@code _indent}.
+	 * Appends the text of {@code _element} as comments to the code if mode
+	 * {@link #exportAsComments} is active, using delimiters
+	 * {@link #commentSymbolLeft()} and {@link #commentSymbolRight()} (if given)
+	 * to enclose the comment lines, with indentation {@code _indent}.
 	 * 
 	 * @param _element current NSD element
 	 * @param _indent indentation string
+	 * @return {@code true} in case mode {@link #exportAsComments} is active
+	 *     and the comment was appended, {@code false} otherwise.
 	 * 
 	 * @see #appendComment(Element, String)
 	 * @see #appendComment(String, String)
@@ -1480,6 +1500,84 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		return _includeName;
 	}
 	// END KGU#815/KGU#826 2020-03-17
+	
+	// START KGU#1070 2025-09-05: Issue #1214 Provide thread-safe temporary disabling
+	/**
+	 * Checks whether the given {@link Element} {@code _element} is directly,
+	 * indirectly or temporarily disabled. This supports thread-safe temporary
+	 * disabling of elements (and their substructure) for code generation
+	 * purposes without meddling with the actual diagram status.<br/>
+	 * <b>Note</b>: To be consistent, this generator must only use methods
+	 * {@link #isDisabled(Element)} instead of {@link Element#isDisabled(boolean)},
+	 * {@link #disable(Element)} and {@link #reenable(Element)} instead of
+	 * {@link Element#setDisabled(boolean)} consequently.
+	 * 
+	 * @param _element - the {@link Element} to check for
+	 * @return {@code true} if {@code _element} is directly, indirectly (by its
+	 *     superstructure) or temporarily (i.e. within this Generator instance)
+	 *     disabled.
+	 * 
+	 * @see #disable(Element)
+	 * @see #reenable(Element)
+	 */
+	protected final boolean isDisabled(Element _element)
+	{
+		boolean isDisabled = false;
+		while (_element != null && !isDisabled) {
+			if (_element.isDisabled(true) || temporarilyDisabled.contains(_element)) {
+				return true;
+			}
+			_element = _element.parent;
+		}
+		return isDisabled;
+	}
+	
+	/**
+	 * Temporarily disables the given {@link Element} {@code _element} just
+	 * within this Generator instance in a thread-safe way, i.e. without
+	 * modifying the diagram. It has no impact on drawing, execution, other
+	 * code generators etc.<br/>
+	 * To be used instead of {@link Element#setDisabled(boolean)} during code
+	 * generation.<br/>
+	 * <b>Note</b>: To be consistent, this generator must only use methods
+	 * {@link #isDisabled(Element)} instead of {@link Element#isDisabled(boolean)},
+	 * {@link #disable(Element)} and {@link #reenable(Element)} instead of
+	 * {@link Element#setDisabled(boolean)} consequently.
+	 * 
+	 * @param _element - the {@link Element} temporarily to disable
+	 * 
+	 * @see #isDisabled(Element)
+	 * @see #reenable(Element)
+	 */
+	protected final void disable(Element _element)
+	{
+		temporarilyDisabled.add(_element);
+	}
+
+	/**
+	 * Lifts temporary disabling of the given {@link Element} {@code _element}
+	 * just within this Generator instance in a thread-safe way, i.e. without
+	 * modifying the diagram. It has no impact on drawing, execution, other
+	 * code generators etc. This method is safe against inadvertent enabling
+	 * elements that haven't been individually disabled by the generator
+	 * instance.<br/>
+	 * To be used instead of {@link Element#setDisabled(boolean)} during code
+	 * generation.<br/>
+	 * <b>Note</b>: To be consistent, this generator must only use methods
+	 * {@link #isDisabled(Element)} instead of {@link Element#isDisabled(boolean)},
+	 * {@link #disable(Element)} and {@link #reenable(Element)} instead of
+	 * {@link Element#setDisabled(boolean)} consequently.
+	 * 
+	 * @param _element - the {@link Element} temporarily to disable
+	 * 
+	 * @see #isDisabled(Element)
+	 * @see #disable(Element)
+	 */
+	protected final void reenable(Element _element)
+	{
+		temporarilyDisabled.remove(_element);
+	}
+	// END KGU#1070 2025-09-05
 
 	// START KGU#277 2016-10-13: Enh. #270
 	/**

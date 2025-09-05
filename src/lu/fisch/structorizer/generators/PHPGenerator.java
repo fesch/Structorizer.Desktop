@@ -86,7 +86,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2025-02-16      Bugfix #1192: Translation of tail return instruction keywords
  *      Kay Gürtzig             2025-07-03      Some missing Override annotations added
  *      Kay Gürtzig             2025-09-02      Bugfix #1210: Free-text FOR loops caused errors in suppressTransition mode,
- *                                              bugfix #1215: The translation of loop exits was totally wrong 
+ *                                              bugfix #1215: The translation of loop exits was totally wrong
+ *      Kay Gürtzig             2025-09-05      Issue #882 slightly revised on occasion of bugfix #1216
  *
  ******************************************************************************************************
  *
@@ -362,7 +363,12 @@ public class PHPGenerator extends Generator
 								tokens.add(",");		// ... the argument separator, and ...
 								tokens.add(" ");
 								// ... the argument of random, reduced by 1, ...
-								tokens.add(Element.splitLexically("(" + exprs.get(0) + ") - 1", true));
+								String expr0 = exprs.get(0).trim();
+								StringList expr0Tokens = Element.splitLexically(expr0, true);
+								if (expr0Tokens.count() > 1 && !Element.isParenthesized(expr0Tokens)) {
+									expr0 = "(" + expr0 + ")";
+								}
+								tokens.add(Element.splitLexically(expr0 + " - 1", true));
 								// ... and finally the re-tokenized tail
 								tokens.add(Element.splitLexically(exprs.get(1), true));
 							}
