@@ -63,6 +63,9 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2022-07-30      Result type of removeElement(Element) changed from void to boolean
  *      Kay Gürtzig     2024-04-17      Bugfix #1161: Reachability check revised (was defective for loops)
  *      Kay Gürtzig     2025-07-31      Enh. #1197: Branch selection precaution in setSelected()
+ *      Kay Gürtzig     2025-09-06      Bugfix #1222.2: Method isNoOp() contained a logical mistake: If the entire
+ *                                      Subqueue is disabled then its emptiness is of no interest anymore, only
+ *                                      if all elements are indiviually disabled or void.
  *
  ******************************************************************************************************
  *
@@ -701,7 +704,7 @@ public class Subqueue extends Element implements IElementSequence {
 	
 	// START KGU#383 2017-04-18: Bugfix #386
 	/**
-	 * Returns true if this contains only insructions with empty text (e.g. mere
+	 * Returns true if this contains only instructions with empty text (e.g. mere
 	 * comments without implementation). This may be important to know for code
 	 * export.
 	 * @return true if no substantial instruction is contained.
@@ -710,7 +713,10 @@ public class Subqueue extends Element implements IElementSequence {
 	{
 		for (int i = 0; i < this.getSize(); i++) {
 			Element ele = this.getElement(i);
-			if (!ele.isDisabled(false) && (
+			// START KGU#1207 2025-09-06: Bugfix #1222.2 Disabled state only individually interesting 
+			//if (!ele.isDisabled(false) && (
+			if (!ele.isDisabled(true) && (
+			// END KGU#1207 2025-09-06
 					!(ele instanceof Instruction)
 					|| (ele instanceof Jump)
 					|| !ele.getText().getLongString().trim().isEmpty())

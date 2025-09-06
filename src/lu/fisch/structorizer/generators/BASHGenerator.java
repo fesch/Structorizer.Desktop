@@ -105,7 +105,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2025-08-20/28   Bugfix #1210: Option suppressTransformation wasn't consequently respected
  *      Kay Gürtzig         2025-09-06      Issue #1148: opportunity to use elif in IF chains now implemented;
  *                                          bugfix #1210: any workaround for value return from functions and on
- *                                          CALLs disabled in case suppressTransformation
+ *                                          CALLs disabled in case suppressTransformation;
+ *                                          bugfix #1222.1: Wrong indentation of non-default CASE branches.
  *
  ******************************************************************************************************
  *
@@ -1513,18 +1514,20 @@ public class BASHGenerator extends Generator {
 			// START KGU#755 2019-11-08: Bugfix #769 - more precise splitting necessary
 			//addCode(this.getIndent() + unbrokenText.get(i+1).trim().replace(",", "|") + ")", _indent, disabled);
 			StringList items = Element.splitExpressionList(unbrokenText.get(i+1).trim(), ",");
-			addCode(this.getIndent() + items.concatenate("|") + ")", _indent, disabled);
+			addCode(items.concatenate("|") + ")", _indent+this.getIndent(), disabled);
 			// END KGU#755 2019-11-08
 			// END KGU#453 2017-11-02
 			// END KGU#277 2016-10-14
-			// START KGU#15 2015-11-02
-			generateCode((Subqueue) _case.qs.get(i),_indent+this.getIndent()+this.getIndent()+this.getIndent());
-			addCode(";;", _indent + this.getIndent(), disabled);
+			// START KGU#1207 2025-09-06: Bugfix #1222.1 Indentation was one level too deep
+			//generateCode((Subqueue) _case.qs.get(i), _indent+this.getIndent()+this.getIndent()+this.getIndent());
+			generateCode((Subqueue) _case.qs.get(i), _indent+this.getIndent()+this.getIndent());
+			// END KGU#1207 2025-09-06
+			addCode(";;", _indent+this.getIndent(), disabled);
 		}
 		
 		// START KGU#1178 2025-07-03: Bugfix #447 This might have gone wrong with broken lines...
 		//if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
-		if(!unbrokenText.get(_case.qs.size()).trim().equals("%"))
+		if (!unbrokenText.get(_case.qs.size()).trim().equals("%"))
 		// END KGU#1178 2025-07-03
 		{
 			addCode("", "", disabled);
