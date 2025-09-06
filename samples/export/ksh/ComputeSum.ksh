@@ -19,29 +19,29 @@ function readNumbers {
     typeset -i number
     typeset -i nNumbers
     typeset -i fileNo
-    nNumbers <- 0
-    fileNo <- fileOpen(fileName)
+    nNumbers=0
+    fileNo=$( fileOpen "${fileName}" )
 
-    if fileNo <= 0
+    if (( ${fileNo} <= 0 ))
     then
         # throw "File could not be opened!" (FIXME!) 
     fi
 
     # try (FIXME!) 
 
-        while not fileEOF(fileNo) and nNumbers < maxNumbers
+        while (( ! fileEOF(${fileNo}) && ${nNumbers} < ${maxNumbers} ))
         do
-            number <- fileReadInt(fileNo)
-            numbers[nNumbers] <- number
-            nNumbers <- nNumbers + 1
+            number=$( fileReadInt "${fileNo}" )
+            numbers[${nNumbers}]=${number}
+            nNumbers=$(( ${nNumbers} + 1 ))
         done
 
     # catch error (FIXME!) 
         # throw (FIXME!) 
     # finally (FIXME!) 
-        fileClose(fileNo)
+        fileClose "${fileNo}"
     # end try (FIXME!) 
-    result7f458949=nNumbers
+    resultae5199b=${nNumbers}
 }
 # Computes the sum and average of the numbers read from a user-specified 
 # text file (which might have been created via generateRandomNumberFile(4)). 
@@ -53,7 +53,7 @@ function readNumbers {
 # called subroutine directly requires FileAPI now). 
 # TODO: Check and revise the syntax of all expressions! 
 
-fileNo <- 1000
+fileNo=1000
 # Disable this if you enable the loop below! 
 echo -n "Name/path of the number file" ; read file_name
 #  
@@ -63,34 +63,34 @@ echo -n "Name/path of the number file" ; read file_name
 # while : 
 # do 
 #     echo -n "Name/path of the number file" ; read file_name 
-#     fileNo <- fileOpen(file_name) 
+#     fileNo=$( fileOpen "${file_name}" ) 
 #     : 
-#     not (fileNo > 0 or file_name = "") || break 
+#     (( ! (${fileNo} > 0 || ${file_name} == "") )) || break 
 # done 
 #  
 
-if fileNo > 0
+if (( ${fileNo} > 0 ))
 then
     # This should be enabled if the input check loop above gets enabled. 
-#     fileClose(fileNo) 
-    values <- {}
-    nValues <- 0
+#     fileClose "${fileNo}" 
+    set -A values
+    nValues=0
     # try (FIXME!) 
-        nValues <- readNumbers(file_name, values, 1000)
-        nValues<-${result7f458949}
+        readNumbers "${file_name}" values 1000
+        nValues=${resultae5199b}
     # catch failure (FIXME!) 
         echo failure
-        exit  -7
+        exit  (( -7 ))
     # finally (FIXME!) 
         :
     # end try (FIXME!) 
-    sum <- 0.0
+    sum=0.0
 
-    for (( k=0; k<=nValues-1; k++ ))
+    for (( k=0; k<=(( ${nValues}-1 )); k++ ))
     do
-        sum <- sum + values[k]
+        sum=$(( ${sum} + ${values[${k}]} ))
     done
 
-    echo "sum = ", sum
-    echo "average = ", sum / nValues
+    echo "sum = " ${sum}
+    echo "average = " $(( ${sum} / ${nValues} ))
 fi

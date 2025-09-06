@@ -12,46 +12,46 @@ function backward {
     typeset color=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    case color in
+    case ${color} in
 
         1)
-                backward(len) # color = ffffff
+                backward "${len}" # color = ffffff
         ;;
 
         2)
-                backward(len) # color = ff8080
+                backward "${len}" # color = ff8080
         ;;
 
         3)
-                backward(len) # color = ffff80
+                backward "${len}" # color = ffff80
         ;;
 
         4)
-                backward(len) # color = 80ff80
+                backward "${len}" # color = 80ff80
         ;;
 
         5)
-                backward(len) # color = 80ffff
+                backward "${len}" # color = 80ffff
         ;;
 
         6)
-                backward(len) # color = 0080ff
+                backward "${len}" # color = 0080ff
         ;;
 
         7)
-                backward(len) # color = ff80c0
+                backward "${len}" # color = ff80c0
         ;;
 
         8)
-                backward(len) # color = c0c0c0
+                backward "${len}" # color = c0c0c0
         ;;
 
         9)
-                backward(len) # color = ff8000
+                backward "${len}" # color = ff8000
         ;;
 
         10)
-                backward(len) # color = 8080ff
+                backward "${len}" # color = 8080ff
         ;;
     esac
 
@@ -64,11 +64,11 @@ function blank {
 # TODO: Check and revise the syntax of all expressions! 
 
     typeset width
-    width <- h/2.0
-    penUp()
-    right(90)
-    forward(width) # color = ffffff
-    left(90)
+    width=$(( ${h}/2.0 ))
+    penUp
+    right 90
+    forward "${width}" # color = ffffff
+    left 90
 }
 
 function forward {
@@ -76,46 +76,46 @@ function forward {
     typeset color=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    case color in
+    case ${color} in
 
         1)
-                forward(len) # color = ffffff
+                forward "${len}" # color = ffffff
         ;;
 
         2)
-                forward(len) # color = ff8080
+                forward "${len}" # color = ff8080
         ;;
 
         3)
-                forward(len) # color = ffff80
+                forward "${len}" # color = ffff80
         ;;
 
         4)
-                forward(len) # color = 80ff80
+                forward "${len}" # color = 80ff80
         ;;
 
         5)
-                forward(len) # color = 80ffff
+                forward "${len}" # color = 80ffff
         ;;
 
         6)
-                forward(len) # color = 0080ff
+                forward "${len}" # color = 0080ff
         ;;
 
         7)
-                forward(len) # color = ff80c0
+                forward "${len}" # color = ff80c0
         ;;
 
         8)
-                forward(len) # color = c0c0c0
+                forward "${len}" # color = c0c0c0
         ;;
 
         9)
-                forward(len) # color = ff8000
+                forward "${len}" # color = ff8000
         ;;
 
         10)
-                forward(len) # color = 8080ff
+                forward "${len}" # color = 8080ff
         ;;
     esac
 
@@ -128,13 +128,13 @@ function digit1 {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    penUp()
-    forward(h/2.0) # color = ffffff
-    penDown()
-    right(45)
-    forward(h/sqrt(2), colorNo)
-    left(45)
-    backward(h, colorNo)
+    penUp
+    forward $(( ${h}/2.0 )) # color = ffffff
+    penDown
+    right 45
+    forward $(( ${h}/sqrt(2) )) "${colorNo}"
+    left 45
+    backward "${h}" "${colorNo}"
 }
 
 # Draws digit 4 in the colour specified by colorNo with font height h 
@@ -148,25 +148,25 @@ function digit4 {
     typeset b
     typeset -E angle
     # Octagon edge length 
-    b <- h * 0.5 / (sqrt(2.0) + 1)
+    b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
     # Cathetus of the corner triangle outside the octagon 
-    c <- b / sqrt(2.0)
+    c=$(( ${b} / sqrt(2.0) ))
     # inner angle at top of the triangle 
-    angle <- toDegrees(atan(1 - 2.0*c/h))
-    right(90)
-    penUp()
-    forward(c + b) # color = ffffff
-    penDown()
-    left(90)
-    forward(h, colorNo)
-    left(180 - angle)
-    forward(sqrt(h*h/4.0 + sqr(h/2.0 - c)), colorNo)
-    left(90 + angle)
-    forward(h/2.0, colorNo)
-    penUp()
-    left(90)
-    backward(h/2.0) # color = ffffff
-    penDown()
+    angle=$( toDegrees $( atan $(( 1 - 2.0*${c}/${h} )) ) )
+    right 90
+    penUp
+    forward $(( ${c} + ${b} )) # color = ffffff
+    penDown
+    left 90
+    forward "${h}" "${colorNo}"
+    left $(( 180 - ${angle} ))
+    forward $( sqrt $(( ${h}*${h}/4.0 + sqr(${h}/2.0 - ${c}) )) ) "${colorNo}"
+    left $(( 90 + ${angle} ))
+    forward $(( ${h}/2.0 )) "${colorNo}"
+    penUp
+    left 90
+    backward $(( ${h}/2.0 )) # color = ffffff
+    penDown
 }
 
 # Draws digit 7 in the colour specified by colorNo with font height h 
@@ -177,19 +177,19 @@ function digit7 {
 # TODO: Check and revise the syntax of all expressions! 
 
     typeset angle
-    angle <- 90 + toDegrees(atan(0.5))
-    penUp()
-    forward(h) # color = ffffff
-    penDown()
-    right(90)
-    forward(h/2.0, colorNo)
-    right(angle)
-    forward(h * sqrt(1.25), colorNo)
-    left(angle)
-    penUp()
-    forward(h/2.0) # color = ffffff
-    left(90)
-    penDown()
+    angle=$(( 90 + toDegrees(atan(0.5)) ))
+    penUp
+    forward "${h}" # color = ffffff
+    penDown
+    right 90
+    forward $(( ${h}/2.0 )) "${colorNo}"
+    right "${angle}"
+    forward $(( ${h} * sqrt(1.25) )) "${colorNo}"
+    left "${angle}"
+    penUp
+    forward $(( ${h}/2.0 )) # color = ffffff
+    left 90
+    penDown
 }
 
 # Draws letter A in colour specified by colorNo with font height h 
@@ -202,21 +202,21 @@ function letterA {
     typeset width
     typeset -E rotAngle
     typeset -E hypo
-    width <- h/2.0
-    hypo <- sqrt(h*h + width*width/4.0)
-    rotAngle <- toDegrees(atan(width/2.0/h))
-    right(rotAngle)
-    forward(hypo/2.0, colorNo)
-    right(90 - rotAngle)
-    forward(width/2.0, colorNo)
-    penUp()
-    backward(width/2.0) # color = ffffff
-    penDown()
-    left(90 - rotAngle)
-    forward(hypo/2.0, colorNo)
-    left(2*rotAngle)
-    forward(-hypo, colorNo)
-    right(rotAngle)
+    width=$(( ${h}/2.0 ))
+    hypo=$( sqrt $(( ${h}*${h} + ${width}*${width}/4.0 )) )
+    rotAngle=$( toDegrees $( atan $(( ${width}/2.0/${h} )) ) )
+    right "${rotAngle}"
+    forward $(( ${hypo}/2.0 )) "${colorNo}"
+    right $(( 90 - ${rotAngle} ))
+    forward $(( ${width}/2.0 )) "${colorNo}"
+    penUp
+    backward $(( ${width}/2.0 )) # color = ffffff
+    penDown
+    left $(( 90 - ${rotAngle} ))
+    forward $(( ${hypo}/2.0 )) "${colorNo}"
+    left $(( 2*${rotAngle} ))
+    forward $(( -${hypo} )) "${colorNo}"
+    right "${rotAngle}"
 }
 
 # Draws letter E in colour specified by colorNo with font height h 
@@ -227,23 +227,23 @@ function letterE {
 # TODO: Check and revise the syntax of all expressions! 
 
     typeset width
-    width <- h/2.0
-    forward(h, colorNo)
-    right(90)
-    forward(width, colorNo)
-    right(90)
-    penUp()
-    forward(h/2.0) # color = ffffff
-    right(90)
-    penDown()
-    forward(width, colorNo)
-    left(90)
-    penUp()
-    forward(h/2.0) # color = ffffff
-    left(90)
-    penDown()
-    forward(width, colorNo)
-    left(90)
+    width=$(( ${h}/2.0 ))
+    forward "${h}" "${colorNo}"
+    right 90
+    forward "${width}" "${colorNo}"
+    right 90
+    penUp
+    forward $(( ${h}/2.0 )) # color = ffffff
+    right 90
+    penDown
+    forward "${width}" "${colorNo}"
+    left 90
+    penUp
+    forward $(( ${h}/2.0 )) # color = ffffff
+    left 90
+    penDown
+    forward "${width}" "${colorNo}"
+    left 90
 }
 
 # Draws letter F in colour specified by colorNo with font height h 
@@ -254,23 +254,23 @@ function letterF {
 # TODO: Check and revise the syntax of all expressions! 
 
     typeset width
-    width <- h/2.0
-    forward(h, colorNo)
-    right(90)
-    forward(width, colorNo)
-    right(90)
-    penUp()
-    forward(h/2.0) # color = ffffff
-    right(90)
-    penDown()
-    forward(width, colorNo)
-    left(90)
-    penUp()
-    forward(h/2.0) # color = ffffff
-    left(90)
-    forward(width) # color = ffffff
-    penDown()
-    left(90)
+    width=$(( ${h}/2.0 ))
+    forward "${h}" "${colorNo}"
+    right 90
+    forward "${width}" "${colorNo}"
+    right 90
+    penUp
+    forward $(( ${h}/2.0 )) # color = ffffff
+    right 90
+    penDown
+    forward "${width}" "${colorNo}"
+    left 90
+    penUp
+    forward $(( ${h}/2.0 )) # color = ffffff
+    left 90
+    forward "${width}" # color = ffffff
+    penDown
+    left 90
 }
 
 # Draws letter H in colour specified by colorNo with font height h 
@@ -281,22 +281,22 @@ function letterH {
 # TODO: Check and revise the syntax of all expressions! 
 
     typeset width
-    width <- h/2.0
-    forward(h, colorNo)
-    penUp()
-    right(90)
-    forward(width) # color = ffffff
-    right(90)
-    penDown()
-    forward(h/2.0, colorNo)
-    right(90)
-    forward(width, colorNo)
-    penUp()
-    backward(width) # color = ffffff
-    left(90)
-    penDown()
-    forward(h/2.0, colorNo)
-    left(180)
+    width=$(( ${h}/2.0 ))
+    forward "${h}" "${colorNo}"
+    penUp
+    right 90
+    forward "${width}" # color = ffffff
+    right 90
+    penDown
+    forward $(( ${h}/2.0 )) "${colorNo}"
+    right 90
+    forward "${width}" "${colorNo}"
+    penUp
+    backward "${width}" # color = ffffff
+    left 90
+    penDown
+    forward $(( ${h}/2.0 )) "${colorNo}"
+    left 180
 }
 
 # Draws letter I in colour specified by colorNo with font height h 
@@ -309,29 +309,29 @@ function letterI {
     typeset c
     typeset b
     # Octagon edge length 
-    b <- h * 0.5 / (sqrt(2.0) + 1)
+    b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
     # Cathetus of the corner triangle outside the octagon 
-    c <- b / sqrt(2.0)
-    penUp()
-    right(90)
-    forward(c) # color = ffffff
-    penDown()
-    forward(b, colorNo)
-    penUp()
-    backward(b/2.0) # color = ffffff
-    left(90)
-    penDown()
-    forward(h, colorNo)
-    penUp()
-    right(90)
-    backward(b/2.0) # color = ffffff
-    penDown()
-    forward(b, colorNo)
-    penUp()
-    forward(b/2 + c) # color = ffffff
-    left(90)
-    backward(h) # color = ffffff
-    penDown()
+    c=$(( ${b} / sqrt(2.0) ))
+    penUp
+    right 90
+    forward "${c}" # color = ffffff
+    penDown
+    forward "${b}" "${colorNo}"
+    penUp
+    backward $(( ${b}/2.0 )) # color = ffffff
+    left 90
+    penDown
+    forward "${h}" "${colorNo}"
+    penUp
+    right 90
+    backward $(( ${b}/2.0 )) # color = ffffff
+    penDown
+    forward "${b}" "${colorNo}"
+    penUp
+    forward $(( ${b}/2 + ${c} )) # color = ffffff
+    left 90
+    backward "${h}" # color = ffffff
+    penDown
 }
 
 # Draws letter K in colour specified by colorNo with font height h 
@@ -343,18 +343,18 @@ function letterK {
 
     typeset width
     typeset diag
-    width <- h/2.0
-    diag <- h/sqrt(2.0)
-    forward(h, colorNo)
-    penUp()
-    right(90)
-    forward(width) # color = ffffff
-    right(135)
-    penDown()
-    forward(diag, colorNo)
-    left(90)
-    forward(diag, colorNo)
-    left(135)
+    width=$(( ${h}/2.0 ))
+    diag=$(( ${h}/sqrt(2.0) ))
+    forward "${h}" "${colorNo}"
+    penUp
+    right 90
+    forward "${width}" # color = ffffff
+    right 135
+    penDown
+    forward "${diag}" "${colorNo}"
+    left 90
+    forward "${diag}" "${colorNo}"
+    left 135
 }
 
 # Draws letter L in colour specified by colorNo with font height h 
@@ -365,14 +365,14 @@ function letterL {
 # TODO: Check and revise the syntax of all expressions! 
 
     typeset width
-    width <- h/2.0
-    forward(h, colorNo)
-    penUp()
-    backward(h) # color = ffffff
-    right(90)
-    penDown()
-    forward(width, colorNo)
-    left(90)
+    width=$(( ${h}/2.0 ))
+    forward "${h}" "${colorNo}"
+    penUp
+    backward "${h}" # color = ffffff
+    right 90
+    penDown
+    forward "${width}" "${colorNo}"
+    left 90
 }
 
 # Draws letter M in colour specified by colorNo with font height h 
@@ -385,16 +385,16 @@ function letterM {
     typeset width
     typeset -E rotAngle
     typeset hypo
-    width <- h/2.0
-    hypo <- sqrt(width*width + h*h)/2.0
-    rotAngle <- toDegrees(atan(width/h))
-    forward(h, colorNo)
-    left(rotAngle)
-    forward(-hypo, colorNo)
-    right(2*rotAngle)
-    forward(hypo, colorNo)
-    left(rotAngle)
-    forward(-h, colorNo)
+    width=$(( ${h}/2.0 ))
+    hypo=$(( sqrt(${width}*${width} + ${h}*${h})/2.0 ))
+    rotAngle=$( toDegrees $( atan $(( ${width}/${h} )) ) )
+    forward "${h}" "${colorNo}"
+    left "${rotAngle}"
+    forward $(( -${hypo} )) "${colorNo}"
+    right $(( 2*${rotAngle} ))
+    forward "${hypo}" "${colorNo}"
+    left "${rotAngle}"
+    forward $(( -${h} )) "${colorNo}"
 }
 
 # Draws letter N in colour specified by colorNo with font height h 
@@ -407,17 +407,17 @@ function letterN {
     typeset width
     typeset -E rotAngle
     typeset -E hypo
-    width <- h/2.0
-    hypo <- sqrt(width*width + h*h)
-    rotAngle <- toDegrees(atan(width/h))
-    forward(h, colorNo)
-    left(rotAngle)
-    forward(-hypo, colorNo)
-    right(rotAngle)
-    forward(h, colorNo)
-    penUp()
-    backward(h) # color = ffffff
-    penDown()
+    width=$(( ${h}/2.0 ))
+    hypo=$( sqrt $(( ${width}*${width} + ${h}*${h} )) )
+    rotAngle=$( toDegrees $( atan $(( ${width}/${h} )) ) )
+    forward "${h}" "${colorNo}"
+    left "${rotAngle}"
+    forward $(( -${hypo} )) "${colorNo}"
+    right "${rotAngle}"
+    forward "${h}" "${colorNo}"
+    penUp
+    backward "${h}" # color = ffffff
+    penDown
 }
 
 # Draws letter T in colour specified by colorNo with font height h 
@@ -428,22 +428,22 @@ function letterT {
 # TODO: Check and revise the syntax of all expressions! 
 
     typeset width
-    width <- h/2.0
-    penUp()
-    forward(h) # color = ffffff
-    penDown()
-    right(90)
-    forward(width, colorNo)
-    penUp()
-    backward(width/2.0) # color = ffffff
-    penDown()
-    right(90)
-    forward(h, colorNo)
-    left(90)
-    penUp()
-    forward(width/2.0) # color = ffffff
-    penDown()
-    left(90)
+    width=$(( ${h}/2.0 ))
+    penUp
+    forward "${h}" # color = ffffff
+    penDown
+    right 90
+    forward "${width}" "${colorNo}"
+    penUp
+    backward $(( ${width}/2.0 )) # color = ffffff
+    penDown
+    right 90
+    forward "${h}" "${colorNo}"
+    left 90
+    penUp
+    forward $(( ${width}/2.0 )) # color = ffffff
+    penDown
+    left 90
 }
 
 # Draws letter V in colour specified by colorNo with font height h 
@@ -456,20 +456,20 @@ function letterV {
     typeset width
     typeset -E rotAngle
     typeset -E hypo
-    width <- h/2.0
-    hypo <- sqrt(h*h + width*width/4.0)
-    rotAngle <- toDegrees(atan(width/2.0/h))
-    penUp()
-    forward(h) # color = ffffff
-    left(rotAngle)
-    penDown()
-    forward(-hypo, colorNo)
-    right(2*rotAngle)
-    forward(hypo, colorNo)
-    penUp()
-    left(rotAngle)
-    backward(h) # color = ffffff
-    penDown()
+    width=$(( ${h}/2.0 ))
+    hypo=$( sqrt $(( ${h}*${h} + ${width}*${width}/4.0 )) )
+    rotAngle=$( toDegrees $( atan $(( ${width}/2.0/${h} )) ) )
+    penUp
+    forward "${h}" # color = ffffff
+    left "${rotAngle}"
+    penDown
+    forward $(( -${hypo} )) "${colorNo}"
+    right $(( 2*${rotAngle} ))
+    forward "${hypo}" "${colorNo}"
+    penUp
+    left "${rotAngle}"
+    backward "${h}" # color = ffffff
+    penDown
 }
 
 # Draws letter W in colour specified by colorNo with font height h 
@@ -483,29 +483,29 @@ function letterW {
     typeset width
     typeset -E rotAngle
     typeset -E hypo
-    width <- h/2.0
-    width_3 <- width/3.0
-    hypo <- sqrt(width_3*width_3 + h*h)
-    rotAngle <- toDegrees(atan(width_3/h))
-    penUp()
-    forward(h) # color = ffffff
-    left(rotAngle)
-    penDown()
-    forward(-hypo, colorNo)
-    right(2*rotAngle)
-    forward(hypo, colorNo)
-    penUp()
-    left(90+rotAngle)
-    forward(width_3) # color = ffffff
-    right(90-rotAngle)
-    penDown()
-    forward(-hypo, colorNo)
-    right(2*rotAngle)
-    forward(hypo, colorNo)
-    penUp()
-    left(rotAngle)
-    backward(h) # color = ffffff
-    penDown()
+    width=$(( ${h}/2.0 ))
+    width_3=$(( ${width}/3.0 ))
+    hypo=$( sqrt $(( ${width_3}*${width_3} + ${h}*${h} )) )
+    rotAngle=$( toDegrees $( atan $(( ${width_3}/${h} )) ) )
+    penUp
+    forward "${h}" # color = ffffff
+    left "${rotAngle}"
+    penDown
+    forward $(( -${hypo} )) "${colorNo}"
+    right $(( 2*${rotAngle} ))
+    forward "${hypo}" "${colorNo}"
+    penUp
+    left $(( 90+${rotAngle} ))
+    forward "${width_3}" # color = ffffff
+    right $(( 90-${rotAngle} ))
+    penDown
+    forward $(( -${hypo} )) "${colorNo}"
+    right $(( 2*${rotAngle} ))
+    forward "${hypo}" "${colorNo}"
+    penUp
+    left "${rotAngle}"
+    backward "${h}" # color = ffffff
+    penDown
 }
 
 # Draws letter X in colour specified by colorNo with font height h 
@@ -518,18 +518,18 @@ function letterX {
     typeset width
     typeset -E rotAngle
     typeset -E hypo
-    width <- h/2.0
-    hypo <- sqrt(width*width + h*h)
-    rotAngle <- toDegrees(atan(width/h))
-    right(rotAngle)
-    forward(hypo, colorNo)
-    penUp()
-    left(90+rotAngle)
-    forward(width) # color = ffffff
-    right(90-rotAngle)
-    penDown()
-    forward(-hypo, colorNo)
-    right(rotAngle)
+    width=$(( ${h}/2.0 ))
+    hypo=$( sqrt $(( ${width}*${width} + ${h}*${h} )) )
+    rotAngle=$( toDegrees $( atan $(( ${width}/${h} )) ) )
+    right "${rotAngle}"
+    forward "${hypo}" "${colorNo}"
+    penUp
+    left $(( 90+${rotAngle} ))
+    forward "${width}" # color = ffffff
+    right $(( 90-${rotAngle} ))
+    penDown
+    forward $(( -${hypo} )) "${colorNo}"
+    right "${rotAngle}"
 }
 
 # Draws letter Y in colour specified by colorNo with font height h 
@@ -542,25 +542,25 @@ function letterY {
     typeset width
     typeset -E rotAngle
     typeset hypo
-    width <- h/2.0
-    hypo <- sqrt(width*width + h*h)/2.0
-    rotAngle <- toDegrees(atan(width/h))
-    penUp()
-    forward(h) # color = ffffff
-    left(rotAngle)
-    penDown()
-    forward(-hypo, colorNo)
-    right(rotAngle)
-    penUp()
-    backward(h/2.0) # color = ffffff
-    penDown()
-    forward(h/2.0, colorNo)
-    right(rotAngle)
-    forward(hypo, colorNo)
-    left(rotAngle)
-    penUp()
-    backward(h) # color = ffffff
-    penDown()
+    width=$(( ${h}/2.0 ))
+    hypo=$(( sqrt(${width}*${width} + ${h}*${h})/2.0 ))
+    rotAngle=$( toDegrees $( atan $(( ${width}/${h} )) ) )
+    penUp
+    forward "${h}" # color = ffffff
+    left "${rotAngle}"
+    penDown
+    forward $(( -${hypo} )) "${colorNo}"
+    right "${rotAngle}"
+    penUp
+    backward $(( ${h}/2.0 )) # color = ffffff
+    penDown
+    forward $(( ${h}/2.0 )) "${colorNo}"
+    right "${rotAngle}"
+    forward "${hypo}" "${colorNo}"
+    left "${rotAngle}"
+    penUp
+    backward "${h}" # color = ffffff
+    penDown
 }
 
 # Draws letter Z in colour specified by colorNo with font height h 
@@ -573,19 +573,19 @@ function letterZ {
     typeset width
     typeset -E rotAngle
     typeset -E hypo
-    width <- h/2.0
-    hypo <- sqrt(width*width + h*h)
-    rotAngle <- toDegrees(atan(width/h))
-    penUp()
-    forward(h) # color = ffffff
-    right(90)
-    penDown()
-    forward(width, colorNo)
-    left(90-rotAngle)
-    forward(-hypo, colorNo)
-    right(90-rotAngle)
-    forward(width, colorNo)
-    left(90)
+    width=$(( ${h}/2.0 ))
+    hypo=$( sqrt $(( ${width}*${width} + ${h}*${h} )) )
+    rotAngle=$( toDegrees $( atan $(( ${width}/${h} )) ) )
+    penUp
+    forward "${h}" # color = ffffff
+    right 90
+    penDown
+    forward "${width}" "${colorNo}"
+    left $(( 90-${rotAngle} ))
+    forward $(( -${hypo} )) "${colorNo}"
+    right $(( 90-${rotAngle} ))
+    forward "${width}" "${colorNo}"
+    left 90
 }
 
 # Draws nEdges edges of a regular n-polygon with edge length a 
@@ -600,17 +600,17 @@ function polygonPart {
 
     typeset rotAngle
     typeset -i k
-    rotAngle <- 360.0/n
+    rotAngle=$(( 360.0/${n} ))
 
-    if ctrclkws
+    if [[ ${ctrclkws} ]]
     then
-        rotAngle <- -rotAngle
+        rotAngle=$(( -${rotAngle} ))
     fi
 
-    for (( k=1; k<=nEdges; k++ ))
+    for (( k=1; k<=${nEdges}; k++ ))
     do
-        right(rotAngle)
-        forward(a, color)
+        right "${rotAngle}"
+        forward "${a}" "${color}"
     done
 
 }
@@ -626,26 +626,26 @@ function charDummy {
     typeset d
     typeset c
     typeset b
-    width <- h / 2.0
+    width=$(( ${h} / 2.0 ))
     # Octagon edge length (here: edge lengzh of the square) 
-    b <- width / (sqrt(2.0) + 1)
+    b=$(( ${width} / (sqrt(2.0) + 1) ))
     # Cathetus of the corner triangle outside the octagon 
-    c <- (width - b) / 2.0
-    d <- b / sqrt(2.0)
-    penUp()
-    forward(h/2.0-b/2.0) # color = ffffff
-    right(90)
-    forward(c) # color = ffffff
-    right(90)
-    penDown()
+    c=$(( (${width} - ${b}) / 2.0 ))
+    d=$(( ${b} / sqrt(2.0) ))
+    penUp
+    forward $(( ${h}/2.0-${b}/2.0 )) # color = ffffff
+    right 90
+    forward "${c}" # color = ffffff
+    right 90
+    penDown
     # Draws the square with edge length b 
-    polygonPart(b, 4, true, 4, colorNo)
-    penUp()
-    left(90)
-    forward(b + c) # color = ffffff
-    left(90)
-    backward(h/2.0-b/2.0) # color = ffffff
-    penDown()
+    polygonPart "${b}" 4 1 4 "${colorNo}"
+    penUp
+    left 90
+    forward $(( ${b} + ${c} )) # color = ffffff
+    left 90
+    backward $(( ${h}/2.0-${b}/2.0 )) # color = ffffff
+    penDown
 }
 
 # Draws a comma in colour specified by colorNo with font height h 
@@ -660,29 +660,29 @@ function comma {
     typeset c
     typeset b
     # Octagon edge length 
-    b <- h * 0.5 / (sqrt(2.0) + 1)
+    b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
     # Cathetus of the outer corner triangle of the octagon 
-    c <- b / sqrt(2.0)
-    rotAngle <- toDegrees(atan(0.5))
-    hypo <- c * sqrt(1.25)
-    penUp()
-    right(90)
-    forward((c+b)/2.0 + c) # color = ffffff
-    penDown()
+    c=$(( ${b} / sqrt(2.0) ))
+    rotAngle=$( toDegrees $( atan 0.5 ) )
+    hypo=$(( ${c} * sqrt(1.25) ))
+    penUp
+    right 90
+    forward $(( (${c}+${b})/2.0 + ${c} )) # color = ffffff
+    penDown
     # Counterclockwise draw 3 edges of a square with edge length c 
     # in the colour endcoded by colorNo 
-    polygonPart(c, 4, true, 3, colorNo)
-    left(90)
-    forward(c/2.0, colorNo)
-    right(90)
-    forward(c, colorNo)
-    left(180 - rotAngle)
-    forward(hypo, colorNo)
-    penUp()
-    right(90 - rotAngle)
-    forward((c + b)/2.0) # color = ffffff
-    left(90)
-    penDown()
+    polygonPart "${c}" 4 1 3 "${colorNo}"
+    left 90
+    forward $(( ${c}/2.0 )) "${colorNo}"
+    right 90
+    forward "${c}" "${colorNo}"
+    left $(( 180 - ${rotAngle} ))
+    forward "${hypo}" "${colorNo}"
+    penUp
+    right $(( 90 - ${rotAngle} ))
+    forward $(( (${c} + ${b})/2.0 )) # color = ffffff
+    left 90
+    penDown
 }
 
 # Draws digit 2 in the colour specified by colorNo with font height h 
@@ -696,21 +696,21 @@ function digit2 {
     typeset b
     typeset -E angle
     # Octagon edge length 
-    b <- h * 0.5 / (sqrt(2.0) + 1)
+    b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
     # Cathetus of the corner triangle outside the octagon 
-    c <- b / sqrt(2.0)
-    angle <- toDegrees(atan(h/(h + 2*c)))
-    penUp()
-    forward(h - c) # color = ffffff
-    penDown()
+    c=$(( ${b} / sqrt(2.0) ))
+    angle=$( toDegrees $( atan $(( ${h}/(${h} + 2*${c}) )) ) )
+    penUp
+    forward $(( ${h} - ${c} )) # color = ffffff
+    penDown
     # Clockwise draw 4 edges of an octagon with edge length b 
     # in the colour endcoded by colorNo 
-    polygonPart(b, 8, false, 4, colorNo)
-    right(angle)
-    forward(h/2.0 * sqrt(1 + sqr(1+2*c/h)), colorNo)
-    left(90 + angle)
-    forward(h/2.0, colorNo)
-    left(90)
+    polygonPart "${b}" 8 0 4 "${colorNo}"
+    right "${angle}"
+    forward $(( ${h}/2.0 * sqrt(1 + sqr(1+2*${c}/${h})) )) "${colorNo}"
+    left $(( 90 + ${angle} ))
+    forward $(( ${h}/2.0 )) "${colorNo}"
+    left 90
 }
 
 # Draws digit 3 in the colour specified by colorNo with font height h 
@@ -723,30 +723,30 @@ function digit3 {
     typeset c
     typeset b
     # Octagon edge length 
-    b <- h * 0.5 / (sqrt(2.0) + 1)
+    b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
     # Cathetus of the corner triangle outside the octagon 
-    c <- b / sqrt(2.0)
-    penUp()
-    forward(c) # color = ffffff
-    penDown()
-    right(180)
+    c=$(( ${b} / sqrt(2.0) ))
+    penUp
+    forward "${c}" # color = ffffff
+    penDown
+    right 180
     # Counterclockwise draw 6 edges of an octagon with edge length b 
     # in the colour endcoded by colorNo 
-    polygonPart(b, 8, true, 6, colorNo)
-    penUp()
-    left(180)
-    forward(b) # color = ffffff
-    penDown()
+    polygonPart "${b}" 8 1 6 "${colorNo}"
+    penUp
+    left 180
+    forward "${b}" # color = ffffff
+    penDown
     # Counterclockwise draw 5 edges of an octagon with edge length b 
     # in the colour endcoded by colorNo 
-    polygonPart(b, 8, true, 5, colorNo)
-    penUp()
-    left(45)
-    forward(h-c) # color = ffffff
-    left(90)
-    forward(h/2.0) # color = ffffff
-    left(90)
-    penDown()
+    polygonPart "${b}" 8 1 5 "${colorNo}"
+    penUp
+    left 45
+    forward $(( ${h}-${c} )) # color = ffffff
+    left 90
+    forward $(( ${h}/2.0 )) # color = ffffff
+    left 90
+    penDown
 }
 
 # Draws digit 5 in the colour specified by colorNo with font height h 
@@ -759,24 +759,24 @@ function digit5 {
     typeset c
     typeset b
     # Octagon edge length 
-    b <- h * 0.5 / (sqrt(2.0) + 1)
+    b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
     # Cathetus of the corner triangle outside the octagon 
-    c <- b / sqrt(2.0)
-    penUp()
-    forward(c) # color = ffffff
-    penDown()
-    right(180)
+    c=$(( ${b} / sqrt(2.0) ))
+    penUp
+    forward "${c}" # color = ffffff
+    penDown
+    right 180
     # Counterclockwise draw 6 edges of an octagon with edge length b 
     # in the colour endcoded by colorNo 
-    polygonPart(b, 8, true, 6, colorNo)
-    forward(c, colorNo)
+    polygonPart "${b}" 8 1 6 "${colorNo}"
+    forward "${c}" "${colorNo}"
     # Clockwise draw 2 edges of an octagon with edge length b 
     # in the colour endcoded by colorNo 
-    polygonPart(h/2.0, 4, false, 2, colorNo)
-    penUp()
-    left(90)
-    backward(h) # color = ffffff
-    penDown()
+    polygonPart $(( ${h}/2.0 )) 4 0 2 "${colorNo}"
+    penUp
+    left 90
+    backward "${h}" # color = ffffff
+    penDown
 }
 
 # Draws digit 6 in the colour specified by colorNo with font height h 
@@ -789,28 +789,28 @@ function digit6 {
     typeset c
     typeset b
     # Octagon edge length 
-    b <- h * 0.5 / (sqrt(2.0) + 1)
+    b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
     # Cathetus of the corner triangle outside the octagon 
-    c <- b / sqrt(2.0)
-    penUp()
-    forward(c) # color = ffffff
-    penDown()
-    right(180)
+    c=$(( ${b} / sqrt(2.0) ))
+    penUp
+    forward "${c}" # color = ffffff
+    penDown
+    right 180
     # Counterclockwise draw all 8 edges of an octagon with edge length b 
     # in the colour endcoded by colorNo 
-    polygonPart(b, 8, true, 8, colorNo)
-    penUp()
-    left(180)
-    forward(b) # color = ffffff
-    penDown()
-    forward(2 * c + b, colorNo)
+    polygonPart "${b}" 8 1 8 "${colorNo}"
+    penUp
+    left 180
+    forward "${b}" # color = ffffff
+    penDown
+    forward $(( 2 * ${c} + ${b} )) "${colorNo}"
     # Clockwise draw 3 edges of an octagon with edge length b 
     # in the colour endcoded by colorNo 
-    polygonPart(b, 8, false, 3, colorNo)
-    penUp()
-    left(135)
-    backward(h-c) # color = ffffff
-    penDown()
+    polygonPart "${b}" 8 0 3 "${colorNo}"
+    penUp
+    left 135
+    backward $(( ${h}-${c} )) # color = ffffff
+    penDown
 }
 
 # Draws digit 8 in the colour specified by colorNo with font height h 
@@ -823,33 +823,33 @@ function digit8 {
     typeset c
     typeset b
     # Octagon edge length 
-    b <- h * 0.5 / (sqrt(2.0) + 1)
+    b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
     # Cathetus of the corner triangle outside the octagon 
-    c <- b / sqrt(2.0)
-    penUp()
-    forward(c) # color = ffffff
-    penDown()
-    right(180)
+    c=$(( ${b} / sqrt(2.0) ))
+    penUp
+    forward "${c}" # color = ffffff
+    penDown
+    right 180
     # Counterclockwise draw all 8 edges of an octagon with edge length b 
     # in the colour endcoded by colorNo 
-    polygonPart(b, 8, true, 8, colorNo)
-    penUp()
-    left(180)
-    forward(b) # color = ffffff
-    right(45)
-    forward(b) # color = ffffff
-    left(135)
-    penDown()
+    polygonPart "${b}" 8 1 8 "${colorNo}"
+    penUp
+    left 180
+    forward "${b}" # color = ffffff
+    right 45
+    forward "${b}" # color = ffffff
+    left 135
+    penDown
     # Clockwise draw 7 edges of an octagon with edge length b 
     # in the colour endcoded by colorNo 
-    polygonPart(b, 8, false, 7, colorNo)
-    penUp()
-    left(45)
-    forward(h/2.0) # color = ffffff
-    left(90)
-    forward(c) # color = ffffff
-    left(90)
-    penDown()
+    polygonPart "${b}" 8 0 7 "${colorNo}"
+    penUp
+    left 45
+    forward $(( ${h}/2.0 )) # color = ffffff
+    left 90
+    forward "${c}" # color = ffffff
+    left 90
+    penDown
 }
 
 # Draws digit 9 in the colour specified by colorNo with font height h 
@@ -862,24 +862,24 @@ function digit9 {
     typeset c
     typeset b
     # Octagon edge length 
-    b <- h * 0.5 / (sqrt(2.0) + 1)
+    b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
     # Cathetus of the corner triangle outside the octagon 
-    c <- b / sqrt(2.0)
-    penUp()
-    forward(c) # color = ffffff
-    penDown()
-    right(180)
+    c=$(( ${b} / sqrt(2.0) ))
+    penUp
+    forward "${c}" # color = ffffff
+    penDown
+    right 180
     # Counterclockwise draw 4 edges of an octagon with edge length b 
     # in the colour endcoded by colorNo 
-    polygonPart(b, 8, true, 4, colorNo)
-    forward(2 * c + b, colorNo)
+    polygonPart "${b}" 8 1 4 "${colorNo}"
+    forward $(( 2 * ${c} + ${b} )) "${colorNo}"
     # Counterclockwise draw 7 edges of an octagon with edge length b 
     # in the colour endcoded by colorNo 
-    polygonPart(b, 8, true, 7, colorNo)
-    penUp()
-    left(45)
-    backward(h/2.0 + c) # color = ffffff
-    penDown()
+    polygonPart "${b}" 8 1 7 "${colorNo}"
+    penUp
+    left 45
+    backward $(( ${h}/2.0 + ${c} )) # color = ffffff
+    penDown
 }
 
 # Draws an exclamation mark in the colour encoded by colorNo with font height h 
@@ -898,44 +898,44 @@ function exclMk {
     typeset c
     typeset b
     # Octagon edge length 
-    b <- h * 0.5 / (sqrt(2.0) + 1)
+    b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
     # Cathetus of the outer corner triangle of the octagon 
-    c <- b / sqrt(2.0)
-    width <- h/2.0
-    length1 <- h - (b+c)/2.0
-    length2 <- length1 - 2*c
-    hypo <- sqrt(width*width/16.0 + length2*length2)
+    c=$(( ${b} / sqrt(2.0) ))
+    width=$(( ${h}/2.0 ))
+    length1=$(( ${h} - (${b}+${c})/2.0 ))
+    length2=$(( ${length1} - 2*${c} ))
+    hypo=$( sqrt $(( ${width}*${width}/16.0 + ${length2}*${length2} )) )
     # 360°/8 
-    rotAngle <- 45
-    rotAngle2 <- toDegrees(atan(width/4.0/length2))
-    penUp()
-    forward(length1) # color = ffffff
-    right(90)
-    forward(width/2.0) # color = ffffff
-    left(90 + rotAngle)
-    penDown()
+    rotAngle=45
+    rotAngle2=$( toDegrees $( atan $(( ${width}/4.0/${length2} )) ) )
+    penUp
+    forward "${length1}" # color = ffffff
+    right 90
+    forward $(( ${width}/2.0 )) # color = ffffff
+    left $(( 90 + ${rotAngle} ))
+    penDown
     # Clockwise draw 5 edges of an octagon with edge length b/2 
     # in the colour endcoded by colorNo 
-    polygonPart(b/2.0, 8, false, 5, colorNo)
-    right(rotAngle2)
-    forward(hypo, colorNo)
-    left(2*rotAngle2)
-    forward(-hypo, colorNo)
-    penUp()
-    forward(hypo) # color = ffffff
-    right(rotAngle2)
-    forward(c) # color = ffffff
-    left(90)
-    forward(c/2.0) # color = ffffff
-    penDown()
+    polygonPart $(( ${b}/2.0 )) 8 0 5 "${colorNo}"
+    right "${rotAngle2}"
+    forward "${hypo}" "${colorNo}"
+    left $(( 2*${rotAngle2} ))
+    forward $(( -${hypo} )) "${colorNo}"
+    penUp
+    forward "${hypo}" # color = ffffff
+    right "${rotAngle2}"
+    forward "${c}" # color = ffffff
+    left 90
+    forward $(( ${c}/2.0 )) # color = ffffff
+    penDown
     # Counterclockwise draw all 4 edges of a squarfe with edge length c 
     # in the colour endcoded by colorNo 
-    polygonPart(c, 4, false, 4, colorNo)
-    penUp()
-    forward((c + b)/2.0) # color = ffffff
-    left(90)
-    backward(c) # color = ffffff
-    penDown()
+    polygonPart "${c}" 4 0 4 "${colorNo}"
+    penUp
+    forward $(( (${c} + ${b})/2.0 )) # color = ffffff
+    left 90
+    backward "${c}" # color = ffffff
+    penDown
 }
 
 # Draws a full stop in colour specified by colorNo with font height h 
@@ -948,20 +948,20 @@ function fullSt {
     typeset c
     typeset b
     # Octagon edge length 
-    b <- h * 0.5 / (sqrt(2.0) + 1)
+    b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
     # Cathetus of the outer corner triangle of the octagon 
-    c <- b / sqrt(2.0)
-    penUp()
-    right(90)
-    forward((c+b)/2.0 + c) # color = ffffff
-    penDown()
+    c=$(( ${b} / sqrt(2.0) ))
+    penUp
+    right 90
+    forward $(( (${c}+${b})/2.0 + ${c} )) # color = ffffff
+    penDown
     # Counterclockwise draw all 4 edges of a squarfe with edge length c 
     # in the colour endcoded by colorNo 
-    polygonPart(c, 4, true, 4, colorNo)
-    penUp()
-    forward((c + b)/2.0) # color = ffffff
-    left(90)
-    penDown()
+    polygonPart "${c}" 4 1 4 "${colorNo}"
+    penUp
+    forward $(( (${c} + ${b})/2.0 )) # color = ffffff
+    left 90
+    penDown
 }
 
 # Draws letter Ä in colour specified by colorNo with font height h 
@@ -971,27 +971,27 @@ function letterAe {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    penUp()
-    forward(h) # color = ffffff
-    penDown()
+    penUp
+    forward "${h}" # color = ffffff
+    penDown
     # Clockwise draw all 4 edges of a square with edge length h/16 
     # in the colour endcoded by colorNo 
-    polygonPart(max(h/16.0,1), 4, false, 4, colorNo)
-    right(90)
-    penUp()
-    forward(h/2.0) # color = ffffff
-    penDown()
+    polygonPart $( max $(( ${h}/16.0 )) 1 ) 4 0 4 "${colorNo}"
+    right 90
+    penUp
+    forward $(( ${h}/2.0 )) # color = ffffff
+    penDown
     # Clockwise draw all 4 edges of a square with edge length h/16 
     # in the colour endcoded by colorNo 
-    polygonPart(max(h/16.0,1), 4, false, 4, colorNo)
-    right(90)
-    penUp()
-    forward(h) # color = ffffff
-    right(90)
-    forward(h/2.0) # color = ffffff
-    penDown()
-    right(90)
-    letterA(h, colorNo)
+    polygonPart $( max $(( ${h}/16.0 )) 1 ) 4 0 4 "${colorNo}"
+    right 90
+    penUp
+    forward "${h}" # color = ffffff
+    right 90
+    forward $(( ${h}/2.0 )) # color = ffffff
+    penDown
+    right 90
+    letterA "${h}" "${colorNo}"
 }
 
 # Draws letter B in colour specified by colorNo with font height h 
@@ -1004,27 +1004,27 @@ function letterB {
     typeset c
     typeset b
     # Octagon edge length 
-    b <- h * 0.5 / (sqrt(2.0) + 1)
+    b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
     # Cathetus of the outer corner triangle of the octagon 
-    c <- b / sqrt(2.0)
-    forward(h, colorNo)
-    right(90)
-    forward(c+b, colorNo)
+    c=$(( ${b} / sqrt(2.0) ))
+    forward "${h}" "${colorNo}"
+    right 90
+    forward $(( ${c}+${b} )) "${colorNo}"
     # Clockwise draw 4 edges of an octagon with edge length b 
-    polygonPart(b, 8, false, 4, colorNo)
-    forward(c, colorNo)
-    penUp()
-    left(180)
-    forward(b + c) # color = ffffff
-    penDown()
+    polygonPart "${b}" 8 0 4 "${colorNo}"
+    forward "${c}" "${colorNo}"
+    penUp
+    left 180
+    forward $(( ${b} + ${c} )) # color = ffffff
+    penDown
     # Clockwise draw 4 edges of an octagon with edge length b 
-    polygonPart(b, 8, false, 4, colorNo)
-    forward(c, colorNo)
-    penUp()
-    left(180)
-    forward(b + 2*c) # color = ffffff
-    penDown()
-    left(90)
+    polygonPart "${b}" 8 0 4 "${colorNo}"
+    forward "${c}" "${colorNo}"
+    penUp
+    left 180
+    forward $(( ${b} + 2*${c} )) # color = ffffff
+    penDown
+    left 90
 }
 
 # Draws letter C in the colour encoded by colorNo with font height h 
@@ -1038,32 +1038,32 @@ function letterC {
     typeset c
     typeset b
     # Octagon edge length 
-    b <- h * 0.5 / (sqrt(2.0) + 1)
+    b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
     # Cathetus of the outer triangle at the octagon corner 
-    c <- b / sqrt(2.0)
+    c=$(( ${b} / sqrt(2.0) ))
     # 360°/8 
-    rotAngle <- 45
-    penUp()
-    forward(c) # color = ffffff
-    penDown()
-    right(180)
+    rotAngle=45
+    penUp
+    forward "${c}" # color = ffffff
+    penDown
+    right 180
     # Clockwise draws 3 edges of an octagon with edge length b in the colour 
     # encoded by colorNo 
-    polygonPart(b, 8, true, 3, colorNo)
-    left(rotAngle)
-    penUp()
-    forward(2*b + 2*c) # color = ffffff
-    penDown()
+    polygonPart "${b}" 8 1 3 "${colorNo}"
+    left "${rotAngle}"
+    penUp
+    forward $(( 2*${b} + 2*${c} )) # color = ffffff
+    penDown
     # Counterclockwise draws 4 edges of an octagon with edge length b 
     # iin the colour encoded by colorNo 
-    polygonPart(b, 8, true, 4, colorNo)
-    forward(b + 2*c, colorNo)
-    penUp()
-    forward(c) # color = ffffff
-    left(90)
-    forward(b + 2*c, colorNo)
-    penDown()
-    left(90)
+    polygonPart "${b}" 8 1 4 "${colorNo}"
+    forward $(( ${b} + 2*${c} )) "${colorNo}"
+    penUp
+    forward "${c}" # color = ffffff
+    left 90
+    forward $(( ${b} + 2*${c} )) "${colorNo}"
+    penDown
+    left 90
 }
 
 # Draws letter D in colour specified by colorNo with font height h 
@@ -1076,25 +1076,25 @@ function letterD {
     typeset c
     typeset b
     # Octagon edge length 
-    b <- h * 0.5 / (sqrt(2.0) + 1)
+    b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
     # Cathetus of the outer corner triangle of the octagon 
-    c <- b / sqrt(2.0)
-    forward(h, colorNo)
-    right(90)
-    forward(c+b, colorNo)
+    c=$(( ${b} / sqrt(2.0) ))
+    forward "${h}" "${colorNo}"
+    right 90
+    forward $(( ${c}+${b} )) "${colorNo}"
     # Clockwise draw 2 edges of an octagon with edge length b in the colour 
     # encoded by colorNo 
-    polygonPart(b, 8, false, 2, colorNo)
-    forward(b + 2*c, colorNo)
+    polygonPart "${b}" 8 0 2 "${colorNo}"
+    forward $(( ${b} + 2*${c} )) "${colorNo}"
     # Clockwise draw 2 edges of an octagon with edge length b in the colour 
     # encoded by colorNo 
-    polygonPart(b, 8, false, 2, colorNo)
-    forward(c, colorNo)
-    penUp()
-    left(180)
-    forward(b + 2*c) # color = ffffff
-    penDown()
-    left(90)
+    polygonPart "${b}" 8 0 2 "${colorNo}"
+    forward "${c}" "${colorNo}"
+    penUp
+    left 180
+    forward $(( ${b} + 2*${c} )) # color = ffffff
+    penDown
+    left 90
 }
 
 # Draws letter G in colour specified by colorNo with font height h 
@@ -1107,34 +1107,34 @@ function letterG {
     typeset c
     typeset b
     # Octagon edge length 
-    b <- h * 0.5 / (sqrt(2.0) + 1)
+    b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
     # Cathetus of the corner triangle outside the octagon. 
-    c <- b / sqrt(2.0)
-    penUp()
-    forward(c) # color = ffffff
-    penDown()
-    right(180)
+    c=$(( ${b} / sqrt(2.0) ))
+    penUp
+    forward "${c}" # color = ffffff
+    penDown
+    right 180
     # Counterclockwise draw 4 edges of an octagon with edge length b in 
     # the colour encoded by colorNo 
-    polygonPart(b, 8, true, 4, colorNo)
-    forward(c, colorNo)
-    left(90)
-    forward(b/2.0 + c, colorNo)
-    penUp()
-    backward(b/2.0 + c) # color = ffffff
-    right(90)
-    forward(b + c) # color = ffffff
-    penDown()
+    polygonPart "${b}" 8 1 4 "${colorNo}"
+    forward "${c}" "${colorNo}"
+    left 90
+    forward $(( ${b}/2.0 + ${c} )) "${colorNo}"
+    penUp
+    backward $(( ${b}/2.0 + ${c} )) # color = ffffff
+    right 90
+    forward $(( ${b} + ${c} )) # color = ffffff
+    penDown
     # Counterclockwise draw 4 edges of an octagon with edge length b in 
     # the colour encoded by colorNo 
-    polygonPart(b, 8, true, 4, colorNo)
-    forward(b + 2*c, colorNo)
-    penUp()
-    forward(c) # color = ffffff
-    left(90)
-    forward(b + 2*c, colorNo)
-    penDown()
-    left(90)
+    polygonPart "${b}" 8 1 4 "${colorNo}"
+    forward $(( ${b} + 2*${c} )) "${colorNo}"
+    penUp
+    forward "${c}" # color = ffffff
+    left 90
+    forward $(( ${b} + 2*${c} )) "${colorNo}"
+    penDown
+    left 90
 }
 
 # Draws letter J in colour encoded by colorNo with font height h 
@@ -1148,23 +1148,23 @@ function letterJ {
     typeset c
     typeset b
     # Octagon edge length 
-    b <- h * 0.5 / (sqrt(2.0) + 1)
+    b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
     # Cathetus of the outer corner triangle of the octagon 
-    c <- b / sqrt(2.0)
+    c=$(( ${b} / sqrt(2.0) ))
     # 360°/8 
-    rotAngle <- 45
-    penUp()
-    forward(c) # color = ffffff
-    penDown()
-    right(180)
+    rotAngle=45
+    penUp
+    forward "${c}" # color = ffffff
+    penDown
+    right 180
     # Counterclockwise draw 3 edges of an octagon with edge length b in 
     # the colour encoded by colorNo 
-    polygonPart(b, 8, true, 3, colorNo)
-    left(rotAngle)
-    forward(h - c, colorNo)
-    penUp()
-    backward(h) # color = ffffff
-    penDown()
+    polygonPart "${b}" 8 1 3 "${colorNo}"
+    left "${rotAngle}"
+    forward $(( ${h} - ${c} )) "${colorNo}"
+    penUp
+    backward "${h}" # color = ffffff
+    penDown
 }
 
 # Draws letter O in colour specified by colorNo with font height h 
@@ -1177,27 +1177,27 @@ function letterO {
     typeset c
     typeset b
     # Octagon edge length 
-    b <- h * 0.5 / (sqrt(2.0) + 1)
+    b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
     # Cathetus of the corner triangle outside the octagon 
-    c <- b / sqrt(2.0)
-    penUp()
-    forward(c) # color = ffffff
-    penDown()
-    right(180)
+    c=$(( ${b} / sqrt(2.0) ))
+    penUp
+    forward "${c}" # color = ffffff
+    penDown
+    right 180
     # Counterclockwise draw 4 edges of an octagon with edge length b 
     # in the colour endcoded by colorNo 
-    polygonPart(b, 8, true, 4, colorNo)
-    forward(b + 2*c, colorNo)
+    polygonPart "${b}" 8 1 4 "${colorNo}"
+    forward $(( ${b} + 2*${c} )) "${colorNo}"
     # Counterclockwise draw 4 edges of an octagon with edge length b 
     # in the colour endcoded by colorNo 
-    polygonPart(b, 8, true, 4, colorNo)
-    forward(b + 2*c, colorNo)
-    penUp()
-    forward(c) # color = ffffff
-    left(90)
-    forward(b + 2*c) # color = ffffff
-    penDown()
-    left(90)
+    polygonPart "${b}" 8 1 4 "${colorNo}"
+    forward $(( ${b} + 2*${c} )) "${colorNo}"
+    penUp
+    forward "${c}" # color = ffffff
+    left 90
+    forward $(( ${b} + 2*${c} )) # color = ffffff
+    penDown
+    left 90
 }
 
 # Draws letter P in colour specified by colorNo with font height h 
@@ -1210,22 +1210,22 @@ function letterP {
     typeset c
     typeset b
     # Octagon edge length 
-    b <- h * 0.5 / (sqrt(2.0) + 1)
+    b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
     # Cathetus of the corner triangle outside the octagon 
-    c <- b / sqrt(2.0)
-    forward(h, colorNo)
-    right(90)
-    forward(c+b, colorNo)
+    c=$(( ${b} / sqrt(2.0) ))
+    forward "${h}" "${colorNo}"
+    right 90
+    forward $(( ${c}+${b} )) "${colorNo}"
     # Clockwise draw 4 edges of an octagon with edge length b 
     # in the colour endcoded by colorNo 
-    polygonPart(b, 8, false, 4, colorNo)
-    forward(c, colorNo)
-    penUp()
-    backward(b + 2*c) # color = ffffff
-    left(90)
-    forward(b + 2*c) # color = ffffff
-    penDown()
-    left(180)
+    polygonPart "${b}" 8 0 4 "${colorNo}"
+    forward "${c}" "${colorNo}"
+    penUp
+    backward $(( ${b} + 2*${c} )) # color = ffffff
+    left 90
+    forward $(( ${b} + 2*${c} )) # color = ffffff
+    penDown
+    left 180
 }
 
 # Draws letter Q in colour specified by colorNo with font height h 
@@ -1239,32 +1239,32 @@ function letterQ {
     typeset c
     typeset b
     # Octagon edge length 
-    b <- h * 0.5 / (sqrt(2.0) + 1)
+    b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
     # Cathetus of the outer corner triangle of the octagon 
-    c <- b / sqrt(2.0)
+    c=$(( ${b} / sqrt(2.0) ))
     # 360°/8 
-    rotAngle <- 45
-    penUp()
-    forward(c) # color = ffffff
-    penDown()
-    right(180)
+    rotAngle=45
+    penUp
+    forward "${c}" # color = ffffff
+    penDown
+    right 180
     # Counterclockwise draw 4 edges of an octagon with edge length b 
     # in the colour endcoded by colorNo 
-    polygonPart(b, 8, true, 4, colorNo)
-    forward(b + 2*c, colorNo)
+    polygonPart "${b}" 8 1 4 "${colorNo}"
+    forward $(( ${b} + 2*${c} )) "${colorNo}"
     # Counterclockwise draw 4 edges of an octagon with edge length b 
     # in the colour endcoded by colorNo 
-    polygonPart(b, 8, true, 4, colorNo)
-    forward(b + 2*c, colorNo)
-    penUp()
-    forward(c) # color = ffffff
-    left(90)
-    forward(b + 2*c) # color = ffffff
-    right(rotAngle)
-    backward(b) # color = ffffff
-    penDown()
-    forward(b, colorNo)
-    left(90 + rotAngle)
+    polygonPart "${b}" 8 1 4 "${colorNo}"
+    forward $(( ${b} + 2*${c} )) "${colorNo}"
+    penUp
+    forward "${c}" # color = ffffff
+    left 90
+    forward $(( ${b} + 2*${c} )) # color = ffffff
+    right "${rotAngle}"
+    backward "${b}" # color = ffffff
+    penDown
+    forward "${b}" "${colorNo}"
+    left $(( 90 + ${rotAngle} ))
 }
 
 # Zeichnet den Buchstaben R von der Turtleposition aus 
@@ -1278,21 +1278,21 @@ function letterR {
     typeset c
     typeset b
     # Octagon edge length 
-    b <- h * 0.5 / (sqrt(2.0) + 1)
+    b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
     # Cathetus of the outer corner triangle of the octagon 
-    c <- b / sqrt(2.0)
+    c=$(( ${b} / sqrt(2.0) ))
     # 360°/8 
-    rotAngle <- 45
-    forward(h, colorNo)
-    right(90)
-    forward(c+b, colorNo)
+    rotAngle=45
+    forward "${h}" "${colorNo}"
+    right 90
+    forward $(( ${c}+${b} )) "${colorNo}"
     # Clockwise draw 4 edges of an octagon with edge length b 
     # in the colour endcoded by colorNo 
-    polygonPart(b, 8, false, 4, colorNo)
-    forward(c, colorNo)
-    left(90 + rotAngle)
-    forward(sqrt(2.0)*(b + 2*c), colorNo)
-    left(90 + rotAngle)
+    polygonPart "${b}" 8 0 4 "${colorNo}"
+    forward "${c}" "${colorNo}"
+    left $(( 90 + ${rotAngle} ))
+    forward $(( sqrt(2.0)*(${b} + 2*${c}) )) "${colorNo}"
+    left $(( 90 + ${rotAngle} ))
 }
 
 # Draws letter S in colour specified by colorNo with font height h 
@@ -1306,26 +1306,26 @@ function letterS {
     typeset c
     typeset b
     # Octagon edge length 
-    b <- h * 0.5 / (sqrt(2.0) + 1)
+    b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
     # Side length of the (outer) corner triangle of the octagon 
-    c <- b / sqrt(2.0)
+    c=$(( ${b} / sqrt(2.0) ))
     # 360°/8 
-    rotAngle <- 45
-    penUp()
-    forward(c) # color = ffffff
-    penDown()
-    right(180)
+    rotAngle=45
+    penUp
+    forward "${c}" # color = ffffff
+    penDown
+    right 180
     # Counterclockwise draw 6 edges of an octagon with edge length b 
     # in the colour encoded by colorNo 
-    polygonPart(b, 8, true, 6, colorNo)
+    polygonPart "${b}" 8 1 6 "${colorNo}"
     # Clockwise draw 5 edges of an octagon with edge length b 
     # in the colour encoded by colorNo 
-    polygonPart(b, 8, false, 5, colorNo)
-    right(rotAngle)
-    penUp()
-    forward(2*b + 3*c) # color = ffffff
-    penDown()
-    left(180)
+    polygonPart "${b}" 8 0 5 "${colorNo}"
+    right "${rotAngle}"
+    penUp
+    forward $(( 2*${b} + 3*${c} )) # color = ffffff
+    penDown
+    left 180
 }
 
 # Draws letter U in colour specified by colorNo with font height h 
@@ -1339,26 +1339,26 @@ function letterU {
     typeset c
     typeset b
     # edge length of a regular octagon 
-    b <- h * 0.5 / (sqrt(2.0) + 1)
+    b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
     # Cathetus of the outer corner triangle of the octagon 
-    c <- b / sqrt(2.0)
+    c=$(( ${b} / sqrt(2.0) ))
     # 360°/8 
-    rotAngle <- 45
-    penUp()
-    forward(c) # color = ffffff
-    penDown()
-    forward(h - c, colorNo)
-    penUp()
-    backward(h-c) # color = ffffff
-    penDown()
-    right(180)
+    rotAngle=45
+    penUp
+    forward "${c}" # color = ffffff
+    penDown
+    forward $(( ${h} - ${c} )) "${colorNo}"
+    penUp
+    backward $(( ${h}-${c} )) # color = ffffff
+    penDown
+    right 180
     # Counterclockwise draw 3 edges of an octagoin with edge length b in colour specified by colorNo 
-    polygonPart(b, 8, true, 3, colorNo)
-    left(rotAngle)
-    forward(h - c, colorNo)
-    penUp()
-    backward(h) # color = ffffff
-    penDown()
+    polygonPart "${b}" 8 1 3 "${colorNo}"
+    left "${rotAngle}"
+    forward $(( ${h} - ${c} )) "${colorNo}"
+    penUp
+    backward "${h}" # color = ffffff
+    penDown
 }
 
 # Draws a question mark in colour specified by colorNo with font height h 
@@ -1372,33 +1372,33 @@ function qstnMk {
     typeset c
     typeset b
     # Octagon edge length 
-    b <- h * 0.5 / (sqrt(2.0) + 1)
+    b=$(( ${h} * 0.5 / (sqrt(2.0) + 1) ))
     # Cathetus of the outer corner triangle of the octagon 
-    c <- b / sqrt(2.0)
+    c=$(( ${b} / sqrt(2.0) ))
     # 360°/8 
-    rotAngle <- 45
-    penUp()
-    forward(h-c) # color = ffffff
-    penDown()
+    rotAngle=45
+    penUp
+    forward $(( ${h}-${c} )) # color = ffffff
+    penDown
     # Counterclockwise draw 5 edges of an octagon with edge length b 
     # in the colour endcoded by colorNo 
-    polygonPart(b, 8, false, 5, colorNo)
-    forward(c, colorNo)
-    left(rotAngle)
-    forward(b/2.0, colorNo)
-    penUp()
-    forward(c) # color = ffffff
-    left(90)
-    forward(c/2.0) # color = ffffff
-    penDown()
+    polygonPart "${b}" 8 0 5 "${colorNo}"
+    forward "${c}" "${colorNo}"
+    left "${rotAngle}"
+    forward $(( ${b}/2.0 )) "${colorNo}"
+    penUp
+    forward "${c}" # color = ffffff
+    left 90
+    forward $(( ${c}/2.0 )) # color = ffffff
+    penDown
     # Counterclockwise draw all 4 edges of a squarfe with edge length c 
     # in the colour endcoded by colorNo 
-    polygonPart(c, 4, false, 4, colorNo)
-    penUp()
-    forward((c + b)/2.0) # color = ffffff
-    left(90)
-    backward(c) # color = ffffff
-    penDown()
+    polygonPart "${c}" 4 0 4 "${colorNo}"
+    penUp
+    forward $(( (${c} + ${b})/2.0 )) # color = ffffff
+    left 90
+    backward "${c}" # color = ffffff
+    penDown
 }
 
 # Draws digit 0 in the colour specified by colorNo with font height h 
@@ -1409,17 +1409,17 @@ function digit0 {
 # TODO: Check and revise the syntax of all expressions! 
 
     typeset len
-    penUp()
-    forward(h/4.0) # color = ffffff
-    penDown()
-    right(45)
-    len <- h/sqrt(2)
-    forward(len, colorNo)
-    penUp()
-    backward(len) # color = ffffff
-    left(45)
-    backward(h/4.0) # color = ffffff
-    letterO(h, colorNo)
+    penUp
+    forward $(( ${h}/4.0 )) # color = ffffff
+    penDown
+    right 45
+    len=$(( ${h}/sqrt(2) ))
+    forward "${len}" "${colorNo}"
+    penUp
+    backward "${len}" # color = ffffff
+    left 45
+    backward $(( ${h}/4.0 )) # color = ffffff
+    letterO "${h}" "${colorNo}"
 }
 
 # Draws letter Ö in colour specified by colorNo with font height h 
@@ -1429,29 +1429,29 @@ function letterOe {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    penUp()
-    forward(h) # color = ffffff
-    penDown()
-    right(90)
+    penUp
+    forward "${h}" # color = ffffff
+    penDown
+    right 90
     # Clockwise draw all 4 edges of a square with edge length h/8 
     # in the colour endcoded by colorNo 
-    polygonPart(h/8, 4, false, 4, colorNo)
-    penUp()
-    forward(h/2) # color = ffffff
-    penDown()
-    right(90)
+    polygonPart $(( ${h}/8 )) 4 0 4 "${colorNo}"
+    penUp
+    forward $(( ${h}/2 )) # color = ffffff
+    penDown
+    right 90
     # Clockwise draw all 4 edges of a square with edge length h/8 
     # in the colour endcoded by colorNo 
-    polygonPart(h/8, 4, false, 4, colorNo)
-    penUp()
-    forward(h) # color = ffffff
-    penDown()
-    right(90)
-    penUp()
-    forward(h/2) # color = ffffff
-    penDown()
-    right(90)
-    letterO(h, colorNo)
+    polygonPart $(( ${h}/8 )) 4 0 4 "${colorNo}"
+    penUp
+    forward "${h}" # color = ffffff
+    penDown
+    right 90
+    penUp
+    forward $(( ${h}/2 )) # color = ffffff
+    penDown
+    right 90
+    letterO "${h}" "${colorNo}"
 }
 
 # Draws letter Ü in colour specified by colorNo with font height h 
@@ -1461,31 +1461,31 @@ function letterUe {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    penUp()
-    forward(h) # color = ffffff
-    right(90)
-    forward(max(h/8,1)) # color = ffffff
-    penDown()
+    penUp
+    forward "${h}" # color = ffffff
+    right 90
+    forward $( max $(( ${h}/8 )) 1 ) # color = ffffff
+    penDown
     # Clockwise draw all 4 edges of a square with edge length h/16 
     # in the colour endcoded by colorNo 
-    polygonPart(max(h/16,1), 4, false, 4, colorNo)
-    penUp()
-    forward(h/2 - 2 * max(h/8,1) - max(h/16, 1)) # color = ffffff
-    penDown()
+    polygonPart $( max $(( ${h}/16 )) 1 ) 4 0 4 "${colorNo}"
+    penUp
+    forward $(( ${h}/2 - 2 * max(${h}/8,1) - max(${h}/16, 1) )) # color = ffffff
+    penDown
     # Clockwise draw all 4 edges of a square with edge length h/16 
     # in the colour endcoded by colorNo 
-    polygonPart(max(h/16,1), 4, false, 4, colorNo)
-    penUp()
-    forward(max(h/8,1)) # color = ffffff
-    penDown()
-    right(90)
-    penUp()
-    forward(h) # color = ffffff
-    right(90)
-    forward(h/2) # color = ffffff
-    penDown()
-    right(90)
-    letterU(h, colorNo)
+    polygonPart $( max $(( ${h}/16 )) 1 ) 4 0 4 "${colorNo}"
+    penUp
+    forward $( max $(( ${h}/8 )) 1 ) # color = ffffff
+    penDown
+    right 90
+    penUp
+    forward "${h}" # color = ffffff
+    right 90
+    forward $(( ${h}/2 )) # color = ffffff
+    penDown
+    right 90
+    letterU "${h}" "${colorNo}"
 }
 
 # Has the turtle draw the given string 'text´ with font height 'h´ (in 
@@ -1517,200 +1517,200 @@ function drawText {
     typeset letter
     typeset -i k
     typeset gap
-    gap <- h/10.0
+    gap=$(( ${h}/10.0 ))
 
-    for (( k=1; k<=length(text); k++ ))
+    for (( k=1; k<=length "${text}"; k++ ))
     do
-        letter <- uppercase(copy(text, k, 1))
+        letter=$( uppercase $( copy "${text}" "${k}" 1 ) )
 
-        case letter in
+        case ${letter} in
 
             "A")
-                    letterA(h,c)
+                    letterA "${h}" "${c}"
             ;;
 
             "B")
-                    letterB(h,c)
+                    letterB "${h}" "${c}"
             ;;
 
             "C")
-                    letterC(h,c)
+                    letterC "${h}" "${c}"
             ;;
 
             "D")
-                    letterD(h,c)
+                    letterD "${h}" "${c}"
             ;;
 
             "E")
-                    letterE(h,c)
+                    letterE "${h}" "${c}"
             ;;
 
             "F")
-                    letterF(h,c)
+                    letterF "${h}" "${c}"
             ;;
 
             "G")
-                    letterG(h,c)
+                    letterG "${h}" "${c}"
             ;;
 
             "H")
-                    letterH(h,c)
+                    letterH "${h}" "${c}"
             ;;
 
             "I")
-                    letterI(h,c)
+                    letterI "${h}" "${c}"
             ;;
 
             "J")
-                    letterJ(h,c)
+                    letterJ "${h}" "${c}"
             ;;
 
             "K")
-                    letterK(h,c)
+                    letterK "${h}" "${c}"
             ;;
 
             "L")
-                    letterL(h,c)
+                    letterL "${h}" "${c}"
             ;;
 
             "M")
-                    letterM(h,c)
+                    letterM "${h}" "${c}"
             ;;
 
             "N")
-                    letterN(h,c)
+                    letterN "${h}" "${c}"
             ;;
 
             "O")
-                    letterO(h,c)
+                    letterO "${h}" "${c}"
             ;;
 
             "P")
-                    letterP(h,c)
+                    letterP "${h}" "${c}"
             ;;
 
             "Q")
-                    letterQ(h,c)
+                    letterQ "${h}" "${c}"
             ;;
 
             "R")
-                    letterR(h,c)
+                    letterR "${h}" "${c}"
             ;;
 
             "S")
-                    letterS(h,c)
+                    letterS "${h}" "${c}"
             ;;
 
             "T")
-                    letterT(h,c)
+                    letterT "${h}" "${c}"
             ;;
 
             "U")
-                    letterU(h,c)
+                    letterU "${h}" "${c}"
             ;;
 
             "V")
-                    letterV(h,c)
+                    letterV "${h}" "${c}"
             ;;
 
             "W")
-                    letterW(h,c)
+                    letterW "${h}" "${c}"
             ;;
 
             "X")
-                    letterX(h,c)
+                    letterX "${h}" "${c}"
             ;;
 
             "Y")
-                    letterY(h,c)
+                    letterY "${h}" "${c}"
             ;;
 
             "Z")
-                    letterZ(h,c)
+                    letterZ "${h}" "${c}"
             ;;
 
             " ")
-                    blank(h,c)
+                    blank "${h}" "${c}"
             ;;
 
             "!")
-                    exclMk(h,c)
+                    exclMk "${h}" "${c}"
             ;;
 
             "?")
-                    qstnMk(h,c)
+                    qstnMk "${h}" "${c}"
             ;;
 
             ".")
-                    fullSt(h,c)
+                    fullSt "${h}" "${c}"
             ;;
 
             ",")
-                    comma(h,c)
+                    comma "${h}" "${c}"
             ;;
 
             "Ä")
-                    letterAe(h,c)
+                    letterAe "${h}" "${c}"
             ;;
 
             "Ö")
-                    letterOe(h,c)
+                    letterOe "${h}" "${c}"
             ;;
 
             "Ü")
-                    letterUe(h,c)
+                    letterUe "${h}" "${c}"
             ;;
 
             "0")
-                    digit0(h,c)
+                    digit0 "${h}" "${c}"
             ;;
 
             "1")
-                    digit1(h,c)
+                    digit1 "${h}" "${c}"
             ;;
 
             "2")
-                    digit2(h,c)
+                    digit2 "${h}" "${c}"
             ;;
 
             "3")
-                    digit3(h,c)
+                    digit3 "${h}" "${c}"
             ;;
 
             "4")
-                    digit4(h,c)
+                    digit4 "${h}" "${c}"
             ;;
 
             "5")
-                    digit5(h,c)
+                    digit5 "${h}" "${c}"
             ;;
 
             "6")
-                    digit6(h,c)
+                    digit6 "${h}" "${c}"
             ;;
 
             "7")
-                    digit7(h,c)
+                    digit7 "${h}" "${c}"
             ;;
 
             "8")
-                    digit8(h,c)
+                    digit8 "${h}" "${c}"
             ;;
 
             "9")
-                    digit9(h,c)
+                    digit9 "${h}" "${c}"
             ;;
 
             *)
-                charDummy(h,c)
+                charDummy "${h}" "${c}"
             ;;
         esac
 
-        right(90)
-        penUp()
-        forward(gap) # color = ffffff
-        penDown()
-        left(90)
+        right 90
+        penUp
+        forward "${gap}" # color = ffffff
+        penDown
+        left 90
     done
 
 }
@@ -1721,42 +1721,42 @@ function drawText {
 # TODO: Check and revise the syntax of all expressions! 
 
 echo "This is a demo program for text writing with Turleizer."
-showTurtle()
-penDown()
-y <- 0
+showTurtle
+penDown
+y=0
 
 # NOTE: Represents a REPEAT UNTIL loop, see conditional break at the end. 
 while :
 do
     echo -n "Enter some text (empty string to exit)" ; read text
     # Make sure the content is interpreted as string 
-    text <- "" + text
+    text=$(( "" + ${text} ))
 
-    if text <> ""
+    if [[ ${text} != "" ]]
     then
 
         # NOTE: Represents a REPEAT UNTIL loop, see conditional break at the end. 
         while :
         do
             echo -n "Height of the text (pixels)" ; read height
-            not (height >= 5) || break
+            (( ! (${height} >= 5) )) || break
         done
 
         # NOTE: Represents a REPEAT UNTIL loop, see conditional break at the end. 
         while :
         do
             echo -n "Colour (1=black, 2=red, 3=yellow, 4=green, 5=cyan, 6=blue, 7=pink, 8=gray, 9=orange, 10=violet)" ; read colour
-            not (colour >= 1 and colour <= 10) || break
+            (( ! (${colour} >= 1 && ${colour} <= 10) )) || break
         done
 
-        y <- y + height + 2
-        gotoXY(0, y - 2)
-        drawText(text, height, colour)
+        y=$(( ${y} + ${height} + 2 ))
+        gotoXY 0 $(( ${y} - 2 ))
+        drawText "${text}" "${height}" "${colour}"
     fi
 
-    not (text = "") || break
+    [[ ! (${text} == "") ]] || break
 done
 
-gotoXY(0, y + 15)
-drawText("Thank you, bye.", 10, 4)
-hideTurtle()
+gotoXY 0 $(( ${y} + 15 ))
+drawText "Thank you, bye." 10 4
+hideTurtle

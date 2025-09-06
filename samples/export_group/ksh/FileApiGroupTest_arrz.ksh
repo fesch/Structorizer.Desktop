@@ -46,84 +46,84 @@ function drawBarChart {
     typeset -i kMax
     typeset -i k
     # Used range of the Turtleizer screen 
-    const xSize <- 500
-    const ySize <- 500
-    kMin <- 0
-    kMax <- 0
+    typeset -ir xSize=500
+    typeset -ir ySize=500
+    kMin=0
+    kMax=0
 
-    for (( k=1; k<=nValues-1; k++ ))
+    for (( k=1; k<=(( ${nValues}-1 )); k++ ))
     do
 
-        if values[k] > values[kMax]
+        if [[ ${values[${k}]} > ${values[${kMax}]} ]]
         then
-            kMax <- k
-        elif values[k] < values[kMin]
+            kMax=${k}
+        elif [[ ${values[${k}]} < ${values[${kMin}]} ]]
         then
-            kMin <- k
+            kMin=${k}
         fi
 
     done
 
-    valMin <- values[kMin]
-    valMax <- values[kMax]
-    yScale <- valMax * 1.0 / (ySize - 1)
-    yAxis <- ySize - 1
+    valMin=${values[${kMin}]}
+    valMax=${values[${kMax}]}
+    yScale=$(( ${valMax} * 1.0 / (${ySize} - 1) ))
+    yAxis=$(( ${ySize} - 1 ))
 
-    if valMin < 0
+    if (( ${valMin} < 0 ))
     then
 
-        if valMax > 0
+        if (( ${valMax} > 0 ))
         then
-            yAxis <- valMax * ySize * 1.0 / (valMax - valMin)
-            yScale <- (valMax - valMin) * 1.0 / (ySize - 1)
+            yAxis=$(( ${valMax} * ${ySize} * 1.0 / (${valMax} - ${valMin}) ))
+            yScale=(${valMax} - ${valMin}) * 1.0 / (${ySize} - 1)
         else
-            yAxis <- 1
-            yScale <- valMin * 1.0 / (ySize - 1)
+            yAxis=1
+            yScale=$(( ${valMin} * 1.0 / (${ySize} - 1) ))
         fi
 
     fi
 
     # draw coordinate axes 
-    gotoXY(1, ySize - 1)
-    forward(ySize -1) # color = ffffff
-    penUp()
-    backward(yAxis) # color = ffffff
-    right(90)
-    penDown()
-    forward(xSize -1) # color = ffffff
-    penUp()
-    backward(xSize-1) # color = ffffff
-    stripeWidth <- xSize / nValues
+    gotoXY 1 $(( ${ySize} - 1 ))
+    forward $(( ${ySize} -1 )) # color = ffffff
+    penUp
+    backward "${yAxis}" # color = ffffff
+    right 90
+    penDown
+    forward $(( ${xSize} -1 )) # color = ffffff
+    penUp
+    backward $(( ${xSize}-1 )) # color = ffffff
+    stripeWidth=$(( ${xSize} / ${nValues} ))
 
-    for (( k=0; k<=nValues-1; k++ ))
+    for (( k=0; k<=(( ${nValues}-1 )); k++ ))
     do
-        stripeHeight <- values[k] * 1.0 / yScale
+        stripeHeight=$(( ${values[${k}]} * 1.0 / ${yScale} ))
 
-        case k mod 3 in
+        case (( ${k} % 3 )) in
 
             0)
-                    setPenColor(255,0,0)
+                    setPenColor 255 0 0
             ;;
 
             1)
-                    setPenColor(0, 255,0)
+                    setPenColor 0 255 0
             ;;
 
             2)
-                    setPenColor(0, 0, 255)
+                    setPenColor 0 0 255
             ;;
         esac
 
-        fd(1) # color = ffffff
-        left(90)
-        penDown()
-        fd(stripeHeight) # color = ffffff
-        right(90)
-        fd(stripeWidth - 1) # color = ffffff
-        right(90)
-        forward(stripeHeight) # color = ffffff
-        left(90)
-        penUp()
+        fd 1 # color = ffffff
+        left 90
+        penDown
+        fd "${stripeHeight}" # color = ffffff
+        right 90
+        fd $(( ${stripeWidth} - 1 )) # color = ffffff
+        right 90
+        forward "${stripeHeight}" # color = ffffff
+        left 90
+        penUp
     done
 
 }
@@ -143,32 +143,32 @@ function generateRandomNumberFile {
     typeset -i k
     typeset -i fileNo
     # TODO File API: Replace the "fileCreate" call by an appropriate shell construct 
-    fileNo <- fileCreate(fileName)
+    fileNo=$( fileCreate "${fileName}" )
 
-    if fileNo <= 0
+    if (( ${fileNo} <= 0 ))
     then
-        result4d79585b=fileNo
+        result137c2684=${fileNo}
         return 0
     fi
 
     # try (FIXME!) 
 
-        for (( k=1; k<=count; k++ ))
+        for (( k=1; k<=${count}; k++ ))
         do
-            number <- minVal + random(maxVal - minVal + 1)
+            number=$(( ${minVal} + random(${maxVal} - ${minVal} + 1) ))
             # TODO File API: Replace the "fileWriteLine" call by an appropriate shell construct 
-            fileWriteLine(fileNo, number)
+            fileWriteLine "${fileNo}" "${number}"
         done
 
     # catch error (FIXME!) 
         echo error
-        result4d79585b=-7
+        result137c2684=$(( -7 ))
         return 0
     # finally (FIXME!) 
         # TODO File API: Replace the "fileClose" call by an appropriate shell construct 
-        fileClose(fileNo)
+        fileClose "${fileNo}"
     # end try (FIXME!) 
-    result4d79585b=count
+    result137c2684=${count}
 }
 
 # Tries to read as many integer values as possible upto maxNumbers 
@@ -183,11 +183,11 @@ function readNumbers {
     typeset -i number
     typeset -i nNumbers
     typeset -i fileNo
-    nNumbers <- 0
+    nNumbers=0
     # TODO File API: Replace the "fileOpen" call by an appropriate shell construct 
-    fileNo <- fileOpen(fileName)
+    fileNo=$( fileOpen "${fileName}" )
 
-    if fileNo <= 0
+    if (( ${fileNo} <= 0 ))
     then
         # throw "File could not be opened!" (FIXME!) 
     fi
@@ -195,21 +195,21 @@ function readNumbers {
     # try (FIXME!) 
 
         # TODO File API: Replace the "fileEOF" call by an appropriate shell construct 
-        while not fileEOF(fileNo) and nNumbers < maxNumbers
+        while (( ! fileEOF(${fileNo}) && ${nNumbers} < ${maxNumbers} ))
         do
             # TODO File API: Replace the "fileReadInt" call by an appropriate shell construct 
-            number <- fileReadInt(fileNo)
-            numbers[nNumbers] <- number
-            nNumbers <- nNumbers + 1
+            number=$( fileReadInt "${fileNo}" )
+            numbers[${nNumbers}]=${number}
+            nNumbers=$(( ${nNumbers} + 1 ))
         done
 
     # catch error (FIXME!) 
         # throw (FIXME!) 
     # finally (FIXME!) 
         # TODO File API: Replace the "fileClose" call by an appropriate shell construct 
-        fileClose(fileNo)
+        fileClose "${fileNo}"
     # end try (FIXME!) 
-    result7f458949=nNumbers
+    resultae5199b=${nNumbers}
 }
 
 # ======= 8< =========================================================== 
@@ -235,7 +235,7 @@ function readNumbers {
 # called subroutine directly requires FileAPI now). 
 # TODO: Check and revise the syntax of all expressions! 
 
-fileNo <- 1000
+fileNo=1000
 # Disable this if you enable the loop below! 
 echo -n "Name/path of the number file" ; read file_name
 #  
@@ -245,36 +245,36 @@ echo -n "Name/path of the number file" ; read file_name
 # while : 
 # do 
 #     echo -n "Name/path of the number file" ; read file_name 
-#     fileNo <- fileOpen(file_name) 
+#     fileNo=$( fileOpen "${file_name}" ) 
 #     : 
-#     not (fileNo > 0 or file_name = "") || break 
+#     (( ! (${fileNo} > 0 || ${file_name} == "") )) || break 
 # done 
 #  
 
-if fileNo > 0
+if (( ${fileNo} > 0 ))
 then
     # This should be enabled if the input check loop above gets enabled. 
-#     fileClose(fileNo) 
-    values <- {}
-    nValues <- 0
+#     fileClose "${fileNo}" 
+    set -A values
+    nValues=0
     # try (FIXME!) 
-        nValues <- readNumbers(file_name, values, 1000)
-        nValues<-${result7f458949}
+        readNumbers "${file_name}" values 1000
+        nValues=${resultae5199b}
     # catch failure (FIXME!) 
         echo failure
-        exit  -7
+        exit  (( -7 ))
     # finally (FIXME!) 
         :
     # end try (FIXME!) 
-    sum <- 0.0
+    sum=0.0
 
-    for (( k=0; k<=nValues-1; k++ ))
+    for (( k=0; k<=(( ${nValues}-1 )); k++ ))
     do
-        sum <- sum + values[k]
+        sum=$(( ${sum} + ${values[${k}]} ))
     done
 
-    echo "sum = ", sum
-    echo "average = ", sum / nValues
+    echo "sum = " ${sum}
+    echo "average = " $(( ${sum} / ${nValues} ))
 fi
 
 # ======= 8< =========================================================== 
@@ -300,88 +300,88 @@ fi
 # user specifications 
 # TODO: Check and revise the syntax of all expressions! 
 
-fileNo <- -10
+fileNo=$(( -10 ))
 
 # NOTE: Represents a REPEAT UNTIL loop, see conditional break at the end. 
 while :
 do
     echo -n "Name/path of the number file" ; read file_name
     # TODO File API: Replace the "fileOpen" call by an appropriate shell construct 
-    fileNo <- fileOpen(file_name)
-    not (fileNo > 0 or file_name = "") || break
+    fileNo=$( fileOpen "${file_name}" )
+    (( ! (${fileNo} > 0 || ${file_name} == "") )) || break
 done
 
-if fileNo > 0
+if (( ${fileNo} > 0 ))
 then
     # TODO File API: Replace the "fileClose" call by an appropriate shell construct 
-    fileClose(fileNo)
+    fileClose "${fileNo}"
     echo -n "number of intervals" ; read nIntervals
 
     # Initialize the interval counters 
-    for (( k=0; k<=nIntervals-1; k++ ))
+    for (( k=0; k<=(( ${nIntervals}-1 )); k++ ))
     do
-        count[k] <- 0
+        count[${k}]=0
     done
 
     # Index of the most populated interval 
-    kMaxCount <- 0
-    numberArray <- {}
-    nObtained <- 0
+    kMaxCount=0
+    set -A numberArray
+    nObtained=0
     # try (FIXME!) 
-        nObtained <- readNumbers(file_name, numberArray, 10000)
-        nObtained<-${result7f458949}
+        readNumbers "${file_name}" numberArray 10000
+        nObtained=${resultae5199b}
     # catch failure (FIXME!) 
         echo failure
     # finally (FIXME!) 
         :
     # end try (FIXME!) 
 
-    if nObtained > 0
+    if (( ${nObtained} > 0 ))
     then
-        min <- numberArray[0]
-        max <- numberArray[0]
+        min=${numberArray[0]}
+        max=${numberArray[0]}
 
-        for (( i=1; i<=nObtained-1; i++ ))
+        for (( i=1; i<=(( ${nObtained}-1 )); i++ ))
         do
 
-            if numberArray[i] < min
+            if [[ ${numberArray[${i}]} < ${min} ]]
             then
-                min <- numberArray[i]
-            elif numberArray[i] > max
+                min=${numberArray[${i}]}
+            elif [[ ${numberArray[${i}]} > ${max} ]]
             then
-                max <- numberArray[i]
+                max=${numberArray[${i}]}
             fi
 
         done
 
         # Interval width 
-        width <- (max - min) * 1.0 / nIntervals
+        width=$(( (${max} - ${min}) * 1.0 / ${nIntervals} ))
 
-        for (( i=0; i<=nObtained - 1; i++ ))
+        for (( i=0; i<=(( ${nObtained} - 1 )); i++ ))
         do
-            value <- numberArray[i]
-            k <- 1
+            value=${numberArray[${i}]}
+            k=1
 
-            while k < nIntervals and value > min + k * width
+            while (( ${k} < ${nIntervals} && ${value} > ${min} + ${k} * ${width} ))
             do
-                k <- k + 1
+                k=$(( ${k} + 1 ))
             done
 
-            count[k-1] <- count[k-1] + 1
+            count[${k}-1]=$(( ${count[${k}-1]} + 1 ))
 
-            if count[k-1] > count[kMaxCount]
+            if (( ${count[${k}-1]} > ${count[${kMaxCount}]} ))
             then
-                kMaxCount <- k-1
+                kMaxCount=$(( ${k}-1 ))
             fi
 
         done
 
-        drawBarChart(count, nIntervals)
-        echo "Interval with max count: ", kMaxCount, " (", count[kMaxCount], ")"
+        drawBarChart count "${nIntervals}"
+        echo "Interval with max count: " ${kMaxCount} " (" ${count[${kMaxCount}]} ")"
 
-        for (( k=0; k<=nIntervals-1; k++ ))
+        for (( k=0; k<=(( ${nIntervals}-1 )); k++ ))
         do
-            echo count[k], " numbers in interval ", k, " (", min + k * width, " ... ", min + (k+1) * width, ")"
+            echo ${count[${k}]} " numbers in interval " ${k} " (" $(( ${min} + ${k} * ${width} )) " ... " $(( ${min} + (${k}+1) * ${width} )) ")"
         done
 
     else

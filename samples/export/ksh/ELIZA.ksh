@@ -16,34 +16,35 @@ function adjustSpelling {
     typeset start
     typeset result
     typeset -i position
-    result <- sentence
-    position <- 1
+    result=${sentence}
+    position=1
 
-    while (position <= length(sentence)) and (copy(sentence, position, 1) = " ")
+    while (( (${position} <= length(${sentence})) && (copy(${sentence}, ${position}, 1) == " ") ))
     do
-        position <- position + 1
+        position=$(( ${position} + 1 ))
     done
 
-    if position <= length(sentence)
+    if (( ${position} <= length(${sentence}) ))
     then
-        start <- copy(sentence, 1, position)
-        delete(result, 1, position)
-        insert(uppercase(start), result, 1)
+        start=$( copy "${sentence}" 1 "${position}" )
+        delete "${result}" 1 "${position}"
+        insert $( uppercase "${start}" ) "${result}" 1
     fi
 
-    for word in {" i ", " i\'"}
+    for word in " i " " i\'"
     do
-        position <- pos(word, result)
+        position=$( pos "${word}" "${result}" )
 
-        while position > 0
+        while (( ${position} > 0 ))
         do
-            delete(result, position+1, 1)
-            insert("I", result, position+1)
-            position <- pos(word, result)
+            delete "${result}" $(( ${position}+1 )) 1
+            insert "I" "${result}" $(( ${position}+1 ))
+            position=$( pos "${word}" "${result}" )
         done
 
     done
 
+    result7397afa9=${result}
 }
 
 # Checks whether the given text contains some kind of 
@@ -57,19 +58,19 @@ function checkGoodBye {
 
     typeset pair
 
-    for pair in phrases
+    for pair in "${phrases[@]}"
     do
 
-        if pos(pair[0], text) > 0
+        if [[ pos(${pair[0]}, ${text}) > 0 ]]
         then
-            echo pair[1]
-            result629a54d7=true
+            echo ${pair[1]}
+            result2efd2bc9=1
             return 0
         fi
 
     done
 
-    return  false
+    result2efd2bc9=0
 }
 
 # Checks whether newInput has occurred among the recently cached 
@@ -82,27 +83,27 @@ function checkRepetition {
     typeset -i i
     typeset -i histDepth
     typeset hasOccurred
-    hasOccurred <- false
+    hasOccurred=0
 
-    if length(newInput) > 4
+    if [[ length(${newInput}) > 4 ]]
     then
-        histDepth <- length(history.histArray)
+        histDepth=$( length ${history[histArray]} )
 
-        for (( i=0; i<=histDepth-1; i++ ))
+        for (( i=0; i<=(( ${histDepth}-1 )); i++ ))
         do
 
-            if newInput = history.histArray[i]
+            if [[ ${newInput} == ${history[histArray]}[${i}] ]]
             then
-                hasOccurred <- true
+                hasOccurred=1
             fi
 
         done
 
-        history.histArray[history.histIndex] <- newInput
-        history.histIndex <- (history.histIndex + 1) mod (histDepth)
+        history[histArray][history[histIndex]]=${newInput}
+        history[histIndex]=(${history[histIndex]} + 1) % (${histDepth})
     fi
 
-    return  hasOccurred
+    result16523e8c=${hasOccurred}
 }
 
 function conjugateStrings {
@@ -121,49 +122,50 @@ function conjugateStrings {
     typeset -i pos0
     typeset pair
     typeset left
-    result <- " " + copy(sentence, keyPos + length(key), length(sentence)) + " "
+    result=" " + copy(${sentence}, ${keyPos} + length(${key}), length(${sentence})) + " "
 
-    for pair in flexions
+    for pair in "${flexions[@]}"
     do
-        left <- ""
-        right <- result
-        pos0 <- pos(pair[0], right)
-        pos1 <- pos(pair[1], right)
+        left=""
+        right=${result}
+        pos0=$( pos ${pair[0]} "${right}" )
+        pos1=$( pos ${pair[1]} "${right}" )
 
-        while pos0 > 0 or pos1 > 0
+        while (( ${pos0} > 0 || ${pos1} > 0 ))
         do
             # Detect which of the two words of the pair matches first (lest a substitution should be reverted) 
-            which <- 0
-            position <- pos0
+            which=0
+            position=${pos0}
 
-            if (pos0 = 0) or ((pos1 > 0) and (pos1 < pos0))
+            if (( (${pos0} == 0) || ((${pos1} > 0) && (${pos1} < ${pos0})) ))
             then
-                which <- 1
-                position <- pos1
+                which=1
+                position=${pos1}
             fi
 
-            left <- left + copy(right, 1, position-1) + pair[1 - which]
-            right <- copy(right, position + length(pair[which]), length(right))
-            pos0 <- pos(pair[0], right)
-            pos1 <- pos(pair[1], right)
+            left=$(( ${left} + copy(${right}, 1, ${position}-1) + ${pair[1 - ${which}]} ))
+            right=$( copy "${right}" $(( ${position} + length(${pair[${which}]}) )) $( length "${right}" ) )
+            pos0=$( pos ${pair[0]} "${right}" )
+            pos1=$( pos ${pair[1]} "${right}" )
         done
 
-        result <- left + right
+        result=$(( ${left} + ${right} ))
     done
 
     # Eliminate multiple spaces (replaced by single ones) and vertical bars 
-    for str in {"  ", "|"}
+    for str in "  " "|"
     do
-        position <- pos(str, result)
+        position=$( pos "${str}" "${result}" )
 
-        while position > 0
+        while (( ${position} > 0 ))
         do
-            result <- copy(result, 1, position-1) + copy(result, position+1, length(result))
-            position <- pos(str, result)
+            result=$(( copy(${result}, 1, ${position}-1) + copy(${result}, ${position}+1, length(${result})) ))
+            position=$( pos "${str}" "${result}" )
         done
 
     done
 
+    result68eee349=${result}
 }
 
 # Looks for the occurrence of the first of the strings 
@@ -182,23 +184,24 @@ function findKeyword {
     typeset -i i
     typeset -A entry
     # Contains the index of the keyword and its position in sentence 
-    result <- {-1, 0}
-    i <- 0
+    set -A result $(( -1 )) 0
+    i=0
 
-    while (result[0] < 0) and (i < length(keyMap))
+    while (( (${result[0]} < 0) && (${i} < length(${keyMap})) ))
     do
-        var entry: KeyMapEntry <- keyMap[i]
-        position <- pos(entry.keyword, sentence)
+        entry=${keyMap[${i}]}
+        position=$( pos ${entry[keyword]} "${sentence}" )
 
-        if position > 0
+        if (( ${position} > 0 ))
         then
-            result[0] <- i
-            result[1] <- position
+            result[0]=${i}
+            result[1]=${position}
         fi
 
-        i <- i+1
+        i=$(( ${i}+1 ))
     done
 
+    set -A result6aa49957 "${result[@]}"; export result6aa49957
 }
 
 # Converts the sentence to lowercase, eliminates all 
@@ -211,30 +214,31 @@ function normalizeInput {
     typeset symbol
     typeset result
     typeset -i position
-    sentence <- lowercase(sentence)
+    sentence=$( lowercase "${sentence}" )
 
-    for symbol in {'.', ',', ';', '!', '?'}
+    for symbol in '.' ',' ';' '!' '?'
     do
-        position <- pos(symbol, sentence)
+        position=$( pos "${symbol}" "${sentence}" )
 
-        while position > 0
+        while (( ${position} > 0 ))
         do
-            sentence <- copy(sentence, 1, position-1) + copy(sentence, position+1, length(sentence))
-            position <- pos(symbol, sentence)
+            sentence=$(( copy(${sentence}, 1, ${position}-1) + copy(${sentence}, ${position}+1, length(${sentence})) ))
+            position=$( pos "${symbol}" "${sentence}" )
         done
 
     done
 
-    result <- " " + sentence + " "
+    result=" " + ${sentence} + " "
+    result3a6638cf=${result}
 }
 
 function setupGoodByePhrases {
 # TODO: Check and revise the syntax of all expressions! 
 
     set -A phrases
-    phrases[0] <- {" shut", "Okay. If you feel that way I\'ll shut up. ... Your choice."}
-    phrases[1] <- {"bye", "Well, let\'s end our talk for now. See you later. Bye."}
-    return  phrases
+    set -A phrases[0] " shut" "Okay. If you feel that way I\'ll shut up. ... Your choice."
+    set -A phrases[1] "bye" "Well, let\'s end our talk for now. See you later. Bye."
+    set -A result175a50ce "${phrases[@]}"; export result175a50ce
 }
 
 # The lower the index the higher the rank of the keyword (search is sequential). 
@@ -245,47 +249,47 @@ function setupKeywords {
 
     set -A keywords
     # The empty key string (last entry) is the default clause - will always be found 
-    keywords[39] <- KeyMapEntry{"", 29}
-    keywords[0] <- KeyMapEntry{"can you ", 0}
-    keywords[1] <- KeyMapEntry{"can i ", 1}
-    keywords[2] <- KeyMapEntry{"you are ", 2}
-    keywords[3] <- KeyMapEntry{"you\'re ", 2}
-    keywords[4] <- KeyMapEntry{"i don't ", 3}
-    keywords[5] <- KeyMapEntry{"i feel ", 4}
-    keywords[6] <- KeyMapEntry{"why don\'t you ", 5}
-    keywords[7] <- KeyMapEntry{"why can\'t i ", 6}
-    keywords[8] <- KeyMapEntry{"are you ", 7}
-    keywords[9] <- KeyMapEntry{"i can\'t ", 8}
-    keywords[10] <- KeyMapEntry{"i am ", 9}
-    keywords[11] <- KeyMapEntry{"i\'m ", 9}
-    keywords[12] <- KeyMapEntry{"you ", 10}
-    keywords[13] <- KeyMapEntry{"i want ", 11}
-    keywords[14] <- KeyMapEntry{"what ", 12}
-    keywords[15] <- KeyMapEntry{"how ", 12}
-    keywords[16] <- KeyMapEntry{"who ", 12}
-    keywords[17] <- KeyMapEntry{"where ", 12}
-    keywords[18] <- KeyMapEntry{"when ", 12}
-    keywords[19] <- KeyMapEntry{"why ", 12}
-    keywords[20] <- KeyMapEntry{"name ", 13}
-    keywords[21] <- KeyMapEntry{"cause ", 14}
-    keywords[22] <- KeyMapEntry{"sorry ", 15}
-    keywords[23] <- KeyMapEntry{"dream ", 16}
-    keywords[24] <- KeyMapEntry{"hello ", 17}
-    keywords[25] <- KeyMapEntry{"hi ", 17}
-    keywords[26] <- KeyMapEntry{"maybe ", 18}
-    keywords[27] <- KeyMapEntry{" no", 19}
-    keywords[28] <- KeyMapEntry{"your ", 20}
-    keywords[29] <- KeyMapEntry{"always ", 21}
-    keywords[30] <- KeyMapEntry{"think ", 22}
-    keywords[31] <- KeyMapEntry{"alike ", 23}
-    keywords[32] <- KeyMapEntry{"yes ", 24}
-    keywords[33] <- KeyMapEntry{"friend ", 25}
-    keywords[34] <- KeyMapEntry{"computer", 26}
-    keywords[35] <- KeyMapEntry{"bot ", 26}
-    keywords[36] <- KeyMapEntry{"smartphone", 27}
-    keywords[37] <- KeyMapEntry{"father ", 28}
-    keywords[38] <- KeyMapEntry{"mother ", 28}
-    return  keywords
+    typeset -A keywords[39]=([keyword]="" [index]=29)
+    typeset -A keywords[0]=([keyword]="can you " [index]=0)
+    typeset -A keywords[1]=([keyword]="can i " [index]=1)
+    typeset -A keywords[2]=([keyword]="you are " [index]=2)
+    typeset -A keywords[3]=([keyword]="you\'re " [index]=2)
+    typeset -A keywords[4]=([keyword]="i don't " [index]=3)
+    typeset -A keywords[5]=([keyword]="i feel " [index]=4)
+    typeset -A keywords[6]=([keyword]="why don\'t you " [index]=5)
+    typeset -A keywords[7]=([keyword]="why can\'t i " [index]=6)
+    typeset -A keywords[8]=([keyword]="are you " [index]=7)
+    typeset -A keywords[9]=([keyword]="i can\'t " [index]=8)
+    typeset -A keywords[10]=([keyword]="i am " [index]=9)
+    typeset -A keywords[11]=([keyword]="i\'m " [index]=9)
+    typeset -A keywords[12]=([keyword]="you " [index]=10)
+    typeset -A keywords[13]=([keyword]="i want " [index]=11)
+    typeset -A keywords[14]=([keyword]="what " [index]=12)
+    typeset -A keywords[15]=([keyword]="how " [index]=12)
+    typeset -A keywords[16]=([keyword]="who " [index]=12)
+    typeset -A keywords[17]=([keyword]="where " [index]=12)
+    typeset -A keywords[18]=([keyword]="when " [index]=12)
+    typeset -A keywords[19]=([keyword]="why " [index]=12)
+    typeset -A keywords[20]=([keyword]="name " [index]=13)
+    typeset -A keywords[21]=([keyword]="cause " [index]=14)
+    typeset -A keywords[22]=([keyword]="sorry " [index]=15)
+    typeset -A keywords[23]=([keyword]="dream " [index]=16)
+    typeset -A keywords[24]=([keyword]="hello " [index]=17)
+    typeset -A keywords[25]=([keyword]="hi " [index]=17)
+    typeset -A keywords[26]=([keyword]="maybe " [index]=18)
+    typeset -A keywords[27]=([keyword]=" no" [index]=19)
+    typeset -A keywords[28]=([keyword]="your " [index]=20)
+    typeset -A keywords[29]=([keyword]="always " [index]=21)
+    typeset -A keywords[30]=([keyword]="think " [index]=22)
+    typeset -A keywords[31]=([keyword]="alike " [index]=23)
+    typeset -A keywords[32]=([keyword]="yes " [index]=24)
+    typeset -A keywords[33]=([keyword]="friend " [index]=25)
+    typeset -A keywords[34]=([keyword]="computer" [index]=26)
+    typeset -A keywords[35]=([keyword]="bot " [index]=26)
+    typeset -A keywords[36]=([keyword]="smartphone" [index]=27)
+    typeset -A keywords[37]=([keyword]="father " [index]=28)
+    typeset -A keywords[38]=([keyword]="mother " [index]=28)
+    set -A result52e9ea3 "${keywords[@]}"; export result52e9ea3
 }
 
 # Returns an array of pairs of mutually substitutable words 
@@ -295,18 +299,18 @@ function setupReflexions {
 # TODO: Check and revise the syntax of all expressions! 
 
     set -A reflexions
-    reflexions[0] <- {" are ", " am "}
+    set -A reflexions[0] " are " " am "
     # This is not always helpful (e.g. if it relates to things or third persons) 
-    reflexions[1] <- {" were ", " was "}
-    reflexions[2] <- {" you ", " i "}
-    reflexions[3] <- {" yours ", " mine "}
-    reflexions[4] <- {" yourself ", " myself "}
-    reflexions[5] <- {" your ", " my "}
-    reflexions[6] <- {" i\'ve ", " you\'ve "}
-    reflexions[7] <- {" i\'m ", " you\'re "}
+    set -A reflexions[1] " were " " was "
+    set -A reflexions[2] " you " " i "
+    set -A reflexions[3] " yours " " mine "
+    set -A reflexions[4] " yourself " " myself "
+    set -A reflexions[5] " your " " my "
+    set -A reflexions[6] " i\'ve " " you\'ve "
+    set -A reflexions[7] " i\'m " " you\'re "
     # We must not replace "you" by "me", not in particular after "I" had been replaced by "you". 
-    reflexions[8] <- {" me ", " |you "}
-    return  reflexions
+    set -A reflexions[8] " me " " |you "
+    set -A result1decb5fd "${reflexions[@]}"; export result1decb5fd
 }
 
 # This routine sets up the reply rings addressed by the key words defined in 
@@ -317,41 +321,51 @@ function setupReplies {
 
     set -A setupReplies
     set -A replies
-    var replies: array of array of String
     # We start with the highest index for performance reasons 
     # (is to avoid frequent array resizing) 
-    replies[29] <- { "Say, do you have any psychological problems?", "What does that suggest to you?", "I see.", "I'm not sure I understand you fully.", "Come come elucidate your thoughts.", "Can you elaborate on that?", "That is quite interesting."}
-    replies[0] <- { "Don't you believe that I can*?", "Perhaps you would like to be like me?", "You want me to be able to*?"}
-    replies[1] <- { "Perhaps you don't want to*?", "Do you want to be able to*?"}
-    replies[2] <- { "What makes you think I am*?", "Does it please you to believe I am*?", "Perhaps you would like to be*?", "Do you sometimes wish you were*?"}
-    replies[3] <- { "Don't you really*?", "Why don't you*?", "Do you wish to be able to*?", "Does that trouble you*?"}
-    replies[4] <- { "Do you often feel*?", "Are you afraid of feeling*?", "Do you enjoy feeling*?"}
-    replies[5] <- { "Do you really believe I don't*?", "Perhaps in good time I will*.", "Do you want me to*?"}
-    replies[6] <- { "Do you think you should be able to*?", "Why can't you*?"}
-    replies[7] <- { "Why are you interested in whether or not I am*?", "Would you prefer if I were not*?", "Perhaps in your fantasies I am*?"}
-    replies[8] <- { "How do you know you can't*?", "Have you tried?","Perhaps you can now*."}
-    replies[9] <- { "Did you come to me because you are*?", "How long have you been*?", "Do you believe it is normal to be*?", "Do you enjoy being*?"}
-    replies[10] <- { "We were discussing you--not me.", "Oh, I*.", "You're not really talking about me, are you?"}
-    replies[11] <- { "What would it mean to you if you got*?", "Why do you want*?", "Suppose you soon got*...", "What if you never got*?", "I sometimes also want*."}
-    replies[12] <- { "Why do you ask?", "Does that question interest you?", "What answer would please you the most?", "What do you think?", "Are such questions on your mind often?", "What is it that you really want to know?", "Have you asked anyone else?", "Have you asked such questions before?", "What else comes to mind when you ask that?"}
-    replies[13] <- { "Names don't interest me.", "I don't care about names -- please go on."}
-    replies[14] <- { "Is that the real reason?", "Don't any other reasons come to mind?", "Does that reason explain anything else?", "What other reasons might there be?"}
-    replies[15] <- { "Please don't apologize!", "Apologies are not necessary.", "What feelings do you have when you apologize?", "Don't be so defensive!"}
-    replies[16] <- { "What does that dream suggest to you?", "Do you dream often?", "What persons appear in your dreams?", "Are you disturbed by your dreams?"}
-    replies[17] <- { "How do you do ...please state your problem."}
-    replies[18] <- { "You don't seem quite certain.", "Why the uncertain tone?", "Can't you be more positive?", "You aren't sure?", "Don't you know?"}
-    replies[19] <- { "Are you saying no just to be negative?", "You are being a bit negative.", "Why not?", "Are you sure?", "Why no?"}
-    replies[20] <- { "Why are you concerned about my*?", "What about your own*?"}
-    replies[21] <- { "Can you think of a specific example?", "When?", "What are you thinking of?", "Really, always?"}
-    replies[22] <- { "Do you really think so?", "But you are not sure you*?", "Do you doubt you*?"}
-    replies[23] <- { "In what way?", "What resemblance do you see?", "What does the similarity suggest to you?", "What other connections do you see?", "Could there really be some connection?", "How?", "You seem quite positive."}
-    replies[24] <- { "Are you sure?", "I see.", "I understand."}
-    replies[25] <- { "Why do you bring up the topic of friends?", "Do your friends worry you?", "Do your friends pick on you?", "Are you sure you have any friends?", "Do you impose on your friends?", "Perhaps your love for friends worries you."}
-    replies[26] <- { "Do computers worry you?", "Are you talking about me in particular?", "Are you frightened by machines?", "Why do you mention computers?", "What do you think machines have to do with your problem?", "Don't you think computers can help people?", "What is it about machines that worries you?"}
-    replies[27] <- { "Do you sometimes feel uneasy without a smartphone?", "Have you had these phantasies before?", "Does the world seem more real for you via apps?"}
-    replies[28] <- { "Tell me more about your family.", "Who else in your family*?", "What does family relations mean for you?", "Come on, How old are you?"}
-    setupReplies <- replies
+    set -A replies[29] "Say, do you have any psychological problems?" "What does that suggest to you?" "I see." "I'm not sure I understand you fully." "Come come elucidate your thoughts." "Can you elaborate on that?" "That is quite interesting."
+    set -A replies[0] "Don't you believe that I can*?" "Perhaps you would like to be like me?" "You want me to be able to*?"
+    set -A replies[1] "Perhaps you don't want to*?" "Do you want to be able to*?"
+    set -A replies[2] "What makes you think I am*?" "Does it please you to believe I am*?" "Perhaps you would like to be*?" "Do you sometimes wish you were*?"
+    set -A replies[3] "Don't you really*?" "Why don't you*?" "Do you wish to be able to*?" "Does that trouble you*?"
+    set -A replies[4] "Do you often feel*?" "Are you afraid of feeling*?" "Do you enjoy feeling*?"
+    set -A replies[5] "Do you really believe I don't*?" "Perhaps in good time I will*." "Do you want me to*?"
+    set -A replies[6] "Do you think you should be able to*?" "Why can't you*?"
+    set -A replies[7] "Why are you interested in whether or not I am*?" "Would you prefer if I were not*?" "Perhaps in your fantasies I am*?"
+    set -A replies[8] "How do you know you can't*?" "Have you tried?" "Perhaps you can now*."
+    set -A replies[9] "Did you come to me because you are*?" "How long have you been*?" "Do you believe it is normal to be*?" "Do you enjoy being*?"
+    set -A replies[10] "We were discussing you--not me." "Oh, I*." "You're not really talking about me, are you?"
+    set -A replies[11] "What would it mean to you if you got*?" "Why do you want*?" "Suppose you soon got*..." "What if you never got*?" "I sometimes also want*."
+    set -A replies[12] "Why do you ask?" "Does that question interest you?" "What answer would please you the most?" "What do you think?" "Are such questions on your mind often?" "What is it that you really want to know?" "Have you asked anyone else?" "Have you asked such questions before?" "What else comes to mind when you ask that?"
+    set -A replies[13] "Names don't interest me." "I don't care about names -- please go on."
+    set -A replies[14] "Is that the real reason?" "Don't any other reasons come to mind?" "Does that reason explain anything else?" "What other reasons might there be?"
+    set -A replies[15] "Please don't apologize!" "Apologies are not necessary." "What feelings do you have when you apologize?" "Don't be so defensive!"
+    set -A replies[16] "What does that dream suggest to you?" "Do you dream often?" "What persons appear in your dreams?" "Are you disturbed by your dreams?"
+    set -A replies[17] "How do you do ...please state your problem."
+    set -A replies[18] "You don't seem quite certain." "Why the uncertain tone?" "Can't you be more positive?" "You aren't sure?" "Don't you know?"
+    set -A replies[19] "Are you saying no just to be negative?" "You are being a bit negative." "Why not?" "Are you sure?" "Why no?"
+    set -A replies[20] "Why are you concerned about my*?" "What about your own*?"
+    set -A replies[21] "Can you think of a specific example?" "When?" "What are you thinking of?" "Really, always?"
+    set -A replies[22] "Do you really think so?" "But you are not sure you*?" "Do you doubt you*?"
+    set -A replies[23] "In what way?" "What resemblance do you see?" "What does the similarity suggest to you?" "What other connections do you see?" "Could there really be some connection?" "How?" "You seem quite positive."
+    set -A replies[24] "Are you sure?" "I see." "I understand."
+    set -A replies[25] "Why do you bring up the topic of friends?" "Do your friends worry you?" "Do your friends pick on you?" "Are you sure you have any friends?" "Do you impose on your friends?" "Perhaps your love for friends worries you."
+    set -A replies[26] "Do computers worry you?" "Are you talking about me in particular?" "Are you frightened by machines?" "Why do you mention computers?" "What do you think machines have to do with your problem?" "Don't you think computers can help people?" "What is it about machines that worries you?"
+    set -A replies[27] "Do you sometimes feel uneasy without a smartphone?" "Have you had these phantasies before?" "Does the world seem more real for you via apps?"
+    set -A replies[28] "Tell me more about your family." "Who else in your family*?" "What does family relations mean for you?" "Come on, How old are you?"
+    setupReplies="${replies[@]}"
+    set -A result448c28e6 "${setupReplies[@]}"; export result448c28e6
 }
+# auxCopyAssocArray() - copies an associative array via name references 
+auxCopyAssocArray() {
+    typeset -n target=$1
+    typeset -n source=$2
+    typeset key
+    for key in "${!source[@]}"; do
+        target[$key]="${source[$key]}"
+    done
+}
+
 # Concept and lisp implementation published by Joseph Weizenbaum (MIT): 
 # "ELIZA - A Computer Program For the Study of Natural Language Communication Between Man and Machine" - In: 
 # Computational Linguistis 1(1966)9, pp. 36-45 
@@ -383,17 +397,17 @@ echo "* (Requires at least Structorizer 3.30-03 to run)"
 echo "**********************************"
 # Stores the last five inputs of the user in a ring buffer, 
 # the second component is the rolling (over-)write index. 
-history <- History{{"", "", "", "", ""}, 0}
-const replies <- setupReplies()
-set -A replies "${result6fbbe5d9[@]}"
-const reflexions <- setupReflexions()
-set -A reflexions "${result4e168037[@]}"
-const byePhrases <- setupGoodByePhrases()
-set -A byePhrases "${result4e19c805[@]}"
-const keyMap <- setupKeywords()
-set -A keyMap "${result71afa3d3[@]}"
-offsets[length(keyMap)-1] <- 0
-isGone <- false
+typeset -A history=([histArray]={"", "", "", "", ""} [histIndex]=0)
+setupReplies
+set -A replies "${result448c28e6[@]}"
+setupReflexions
+set -A reflexions "${result1decb5fd[@]}"
+setupGoodByePhrases
+set -A byePhrases "${result175a50ce[@]}"
+setupKeywords
+set -A keyMap "${result52e9ea3[@]}"
+offsets[length(${keyMap})-1]=0
+isGone=0
 # Starter 
 echo "Hi! I\'m your new therapist. My name is Eliza. What\'s your problem?"
 
@@ -403,63 +417,63 @@ do
     read userInput
     # Converts the input to lowercase, cuts out interpunctation 
     # and pads the string 
-    userInput <- normalizeInput(userInput)
-    userInput<-${result77abb2de}
-    isGone <- checkGoodBye(userInput, byePhrases)
-    isGone<-${result629a54d7}
+    normalizeInput "${userInput}"
+    userInput=${result3a6638cf}
+    checkGoodBye "${userInput}" byePhrases
+    isGone=${result2efd2bc9}
 
-    if not isGone
+    if [[ ! ${isGone} ]]
     then
-        reply <- "Please don\'t repeat yourself!"
-        isRepeated <- checkRepetition(history, userInput)
-        isRepeated<-${result3f30656f}
+        reply="Please don\'t repeat yourself!"
+        checkRepetition history "${userInput}"
+        isRepeated=${result16523e8c}
 
-        if not isRepeated
+        if [[ ! ${isRepeated} ]]
         then
-            findInfo <- findKeyword(keyMap, userInput)
-            set -A findInfo "${result5d6e48cb[@]}"
-            keyIndex <- findInfo[0]
+            findKeyword keyMap "${userInput}"
+            set -A findInfo "${result6aa49957[@]}"
+            keyIndex=${findInfo[0]}
 
-            if keyIndex < 0
+            if (( ${keyIndex} < 0 ))
             then
                 # Should never happen... 
-                keyIndex <- length(keyMap)-1
+                keyIndex=$(( length(${keyMap})-1 ))
             fi
 
-            var entry: KeyMapEntry <- keyMap[keyIndex]
+            entry=${keyMap[${keyIndex}]}
             # Variable part of the reply 
-            varPart <- ""
+            varPart=""
 
-            if length(entry.keyword) > 0
+            if (( length(${entry[keyword]}) > 0 ))
             then
-                varPart <- conjugateStrings(userInput, entry.keyword, findInfo[1], reflexions)
-                varPart<-${resultc3267aa}
+                conjugateStrings "${userInput}" ${entry[keyword]} ${findInfo[1]} reflexions
+                varPart=${result68eee349}
             fi
 
-            replyRing <- replies[entry.index]
-            reply <- replyRing[offsets[keyIndex]]
-            offsets[keyIndex] <- (offsets[keyIndex] + 1) mod length(replyRing)
-            posAster <- pos("*", reply)
+            replyRing=${replies[${entry[index]}]}
+            reply=${replyRing[${offsets[${keyIndex}]}]}
+            offsets[${keyIndex}]=(${offsets[${keyIndex}]} + 1) % length(${replyRing})
+            posAster=$( pos "*" "${reply}" )
 
-            if posAster > 0
+            if (( ${posAster} > 0 ))
             then
 
-                if varPart = " "
+                if [[ ${varPart} == " " ]]
                 then
-                    reply <- "You will have to elaborate more for me to help you."
+                    reply="You will have to elaborate more for me to help you."
                 else
-                    delete(reply, posAster, 1)
-                    insert(varPart, reply, posAster)
+                    delete "${reply}" "${posAster}" 1
+                    insert "${varPart}" "${reply}" "${posAster}"
                 fi
 
             fi
 
-            reply <- adjustSpelling(reply)
-            reply<-${resultd63a69d}
+            adjustSpelling "${reply}"
+            reply=${result7397afa9}
         fi
 
-        echo reply
+        echo ${reply}
     fi
 
-    not (isGone) || break
+    [[ ! (${isGone}) ]] || break
 done

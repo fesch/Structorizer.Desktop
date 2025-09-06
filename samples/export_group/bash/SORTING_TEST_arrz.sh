@@ -23,29 +23,33 @@ function bubbleSort() {
 
     # TODO: Check and revise the syntax of all expressions! 
 
-    ende <- length(values) - 2
+    local temp
+    declare -i posSwapped
+    declare -i i
+    local ende
+    ende=$(( length(${values}) - 2 ))
 
     # NOTE: Represents a REPEAT UNTIL loop, see conditional break at the end. 
     while :
     do
         # The index of the most recent swapping (-1 means no swapping done). 
-        posSwapped <- -1
+        posSwapped=$(( -1 ))
 
-        for (( i=0; i<=ende; i++ ))
+        for (( i=0; i<=${ende}; i++ ))
         do
 
-            if values[i] > values[i+1]
+            if (( ${values[${i}]} > ${values[${i}+1]} ))
             then
-                temp <- values[i]
-                values[i] <- values[i+1]
-                values[i+1] <- temp
-                posSwapped <- i
+                temp=${values[${i}]}
+                values[${i}]=$(( ${values[${i}+1]} ))
+                values[${i}+1]=${temp}
+                posSwapped=${i}
             fi
 
         done
 
-        ende <- posSwapped - 1
-        not (posSwapped < 0) || break
+        ende=$(( ${posSwapped} - 1 ))
+        (( ! (${posSwapped} < 0) )) || break
     done
 
 }
@@ -61,28 +65,32 @@ function maxHeapify() {
 
     # TODO: Check and revise the syntax of all expressions! 
 
+    local temp
+    local right
+    local max
+    local left
     # Indices of left and right child of node i 
-    right <- (i+1) * 2
-    left <- right - 1
+    right=$(( (${i}+1) * 2 ))
+    left=$(( ${right} - 1 ))
     # Index of the (local) maximum 
-    max <- i
+    max=${i}
 
-    if left < range and heap[left] > heap[i]
+    if [[ ${left} < ${range} && ${heap[${left}]} > ${heap[${i}]} ]]
     then
-        max <- left
+        max=${left}
     fi
 
-    if right < range and heap[right] > heap[max]
+    if [[ ${right} < ${range} && ${heap[${right}]} > ${heap[${max}]} ]]
     then
-        max <- right
+        max=${right}
     fi
 
-    if max <> i
+    if [[ ${max} != ${i} ]]
     then
-        temp <- heap[i]
-        heap[i] <- heap[max]
-        heap[max] <- temp
-        maxHeapify(heap, max, range)
+        temp=${heap[${i}]}
+        heap[${i}]=${heap[${max}]}
+        heap[${max}]=${temp}
+        maxHeapify heap "${max}" "${range}"
     fi
 
 }
@@ -103,15 +111,17 @@ function partition() {
 
     # TODO: Check and revise the syntax of all expressions! 
 
+    local seen
+    local pivot
     # Cache the pivot element 
-    pivot <- values[p]
+    pivot=${values[${p}]}
     # Exchange the pivot element with the start element 
-    values[p] <- values[start]
-    values[start] <- pivot
-    p <- start
+    values[${p}]=${values[${start}]}
+    values[${start}]=${pivot}
+    p=${start}
     # Beginning and end of the remaining undiscovered range 
-    start <- start + 1
-    stop <- stop - 1
+    start=$(( ${start} + 1 ))
+    stop=$(( ${stop} - 1 ))
 
     # Still unseen elements? 
     # Loop invariants: 
@@ -119,32 +129,32 @@ function partition() {
     # 2. pivot = values[p] 
     # 3. i < start → values[i] ≤ pivot 
     # 4. stop < i → pivot < values[i] 
-    while start <= stop
+    while [[ ${start} <= ${stop} ]]
     do
         # Fetch the first element of the undiscovered area 
-        seen <- values[start]
+        seen=${values[${start}]}
 
         # Does the checked element belong to the smaller area? 
-        if seen <= pivot
+        if [[ ${seen} <= ${pivot} ]]
         then
             # Insert the seen element between smaller area and pivot element 
-            values[p] <- seen
-            values[start] <- pivot
+            values[${p}]=${seen}
+            values[${start}]=${pivot}
             # Shift the border between lower and undicovered area, 
             # update pivot position. 
-            p <- p + 1
-            start <- start + 1
+            p=$(( ${p} + 1 ))
+            start=$(( ${start} + 1 ))
         else
             # Insert the checked element between undiscovered and larger area 
-            values[start] <- values[stop]
-            values[stop] <- seen
+            values[${start}]=${values[${stop}]}
+            values[${stop}]=${seen}
             # Shift the border between undiscovered and larger area 
-            stop <- stop - 1
+            stop=$(( ${stop} - 1 ))
         fi
 
     done
 
-    return  p
+    result1373d4f2=${p}
 }
 
 # Checks whether or not the passed-in array is (ascendingly) sorted. 
@@ -153,24 +163,26 @@ function testSorted() {
 
     # TODO: Check and revise the syntax of all expressions! 
 
-    isSorted <- true
-    i <- 0
+    local isSorted
+    declare -i i
+    isSorted=1
+    i=0
 
     # As we compare with the following element, we must stop at the penultimate index 
-    while isSorted and (i <= length(numbers)-2)
+    while (( ${isSorted} && (${i} <= length(${numbers})-2) ))
     do
 
         # Is there an inversion? 
-        if numbers[i] > numbers[i+1]
+        if (( ${numbers[${i}]} > ${numbers[${i}+1]} ))
         then
-            isSorted <- false
+            isSorted=0
         else
-            i <- i + 1
+            i=$(( ${i} + 1 ))
         fi
 
     done
 
-    return  isSorted
+    result300f791=${isSorted}
 }
 
 # Runs through the array heap and converts it to a max-heap 
@@ -182,11 +194,13 @@ function buildMaxHeap() {
 
     # TODO: Check and revise the syntax of all expressions! 
 
-    lgth <- length(heap)
+    declare -i lgth
+    declare -i k
+    lgth=$( length "${heap}" )
 
-    for (( k=lgth div 2 - 1; k>=0; k-- ))
+    for (( k=(( ${lgth} / 2 - 1 )); k>=0; k-- ))
     do
-        maxHeapify(heap, k, lgth)
+        maxHeapify "${heap}" "${k}" "${lgth}"
     done
 
 }
@@ -201,32 +215,34 @@ function quickSort() {
 
     # TODO: Check and revise the syntax of all expressions! 
 
+    local p
+
     # At least 2 elements? (Less don't make sense.) 
-    if stop >= start + 2
+    if (( ${stop} >= ${start} + 2 ))
     then
         # Select a pivot element, be p its index. 
         # (here: randomly chosen element out of start ... stop-1) 
-        p <- random(stop-start) + start
+        p=$(( random(${stop}-${start}) + ${start} ))
         # Partition the array into smaller and greater elements 
         # Get the resulting (and final) position of the pivot element 
-        p <- partition(values, start, stop, p)
-        p<-${resultc40b34c}
+        partition "${values}" "${start}" "${stop}" "${p}"
+        p=${result1373d4f2}
         # Sort subsequances separately and independently ... 
         # ========================================================== 
         # ================= START PARALLEL SECTION ================= 
         # ========================================================== 
-        pids58351864=""
+        pids46199b09=""
         (
             # Sort left (lower) array part 
-            quickSort(values, start, p)
+            quickSort "${values}" "${start}" "${p}"
         ) &
-        pids58351864="${pids58351864} $!"
+        pids46199b09="${pids46199b09} $!"
         (
             # Sort right (higher) array part 
-            quickSort(values, p+1, stop)
+            quickSort "${values}" $(( ${p}+1 )) "${stop}"
         ) &
-        pids58351864="${pids58351864} $!"
-        wait ${pids58351864}
+        pids46199b09="${pids46199b09} $!"
+        wait ${pids46199b09}
         # ========================================================== 
         # ================== END PARALLEL SECTION ================== 
         # ========================================================== 
@@ -241,17 +257,20 @@ function heapSort() {
 
     # TODO: Check and revise the syntax of all expressions! 
 
-    buildMaxHeap(values)
-    heapRange <- length(values)
+    local maximum
+    declare -i k
+    declare -i heapRange
+    buildMaxHeap values
+    heapRange=$( length values )
 
-    for (( k=heapRange - 1; k>=1; k-- ))
+    for (( k=(( ${heapRange} - 1 )); k>=1; k-- ))
     do
-        heapRange <- heapRange - 1
+        heapRange=$(( ${heapRange} - 1 ))
         # Swap the maximum value (root of the heap) to the heap end 
-        maximum <- values[0]
-        values[0] <- values[heapRange]
-        values[heapRange] <- maximum
-        maxHeapify(values, 0, heapRange)
+        maximum=${values[0]}
+        values[0]=${values[${heapRange}]}
+        values[${heapRange}]=${maximum}
+        maxHeapify values 0 "${heapRange}"
     done
 
 }
@@ -261,79 +280,79 @@ function heapSort() {
 while :
 do
     read elementCount
-    not (elementCount >= 1) || break
+    (( ! (${elementCount} >= 1) )) || break
 done
 
 # NOTE: Represents a REPEAT UNTIL loop, see conditional break at the end. 
 while :
 do
     echo -n "Filling: 1 = random, 2 = increasing, 3 = decreasing" ; read modus
-    not (modus = 1 or modus = 2 or modus = 3) || break
+    [[ ! (${modus} == 1 || ${modus} == 2 || ${modus} == 3) ]] || break
 done
 
-for (( i=0; i<=elementCount-1; i++ ))
+for (( i=0; i<=(( ${elementCount}-1 )); i++ ))
 do
 
-    case modus in
+    case ${modus} in
 
         1)
-                values1[i] <- random(10000)
+                values1[${i}]=$( random 10000 )
         ;;
 
         2)
-                values1[i] <- i
+                values1[${i}]=${i}
         ;;
 
         3)
-                values1[i] <- -i
+                values1[${i}]=$(( -${i} ))
         ;;
     esac
 
 done
 
 # Copy the array for exact comparability 
-for (( i=0; i<=elementCount-1; i++ ))
+for (( i=0; i<=(( ${elementCount}-1 )); i++ ))
 do
-    values2[i] <- values1[i]
-    values3[i] <- values1[i]
+    values2[${i}]=${values1[${i}]}
+    values3[${i}]=${values1[${i}]}
 done
 
 # ========================================================== 
 # ================= START PARALLEL SECTION ================= 
 # ========================================================== 
-pids47c11300=""
+pids67fefa5c=""
 (
-    bubbleSort(values1)
+    bubbleSort values1
 ) &
-pids47c11300="${pids47c11300} $!"
+pids67fefa5c="${pids67fefa5c} $!"
 (
-    quickSort(values2, 0, elementCount)
+    quickSort values2 0 "${elementCount}"
 ) &
-pids47c11300="${pids47c11300} $!"
+pids67fefa5c="${pids67fefa5c} $!"
 (
-    heapSort(values3)
+    heapSort values3
 ) &
-pids47c11300="${pids47c11300} $!"
-wait ${pids47c11300}
+pids67fefa5c="${pids67fefa5c} $!"
+wait ${pids67fefa5c}
 # ========================================================== 
 # ================== END PARALLEL SECTION ================== 
 # ========================================================== 
-ok1 <- testSorted(values1)
-ok1<-${result603db7e5}
-ok2 <- testSorted(values2)
-ok2<-${result603db7e5}
-ok3 <- testSorted(values3)
-ok3<-${result603db7e5}
+testSorted values1
+ok1=${result300f791}
+testSorted values2
+ok2=${result300f791}
+testSorted values3
+ok3=${result300f791}
 
-if not ok1 or not ok2 or not ok3
+if [[ ! ${ok1} || ! ${ok2} || ! ${ok3} ]]
 then
 
-    for (( i=0; i<=elementCount-1; i++ ))
+    for (( i=0; i<=(( ${elementCount}-1 )); i++ ))
     do
 
-        if values1[i] <> values2[i] or values1[i] <> values3[i]
+        if [[ ${values1[${i}]} != ${values2[${i}]} || ${values1[${i}]} != ${values3[${i}]} ]]
         then
-            echo "Difference at [", i, "]: ", values1[i], " <-> ", values2[i], " <-> ", values3[i]
+            echo "Difference at [" ${i} "]: " ${values1[${i}]} " <-> " ${values2[${i}]} " <-> " ${values3[${i}]}
         fi
 
     done
@@ -344,15 +363,15 @@ fi
 while :
 do
     echo -n "Show arrays (yes/no)?" ; read show
-    not (show = "yes" or show = "no") || break
+    [[ ! (${show} == "yes" || ${show} == "no") ]] || break
 done
 
-if show = "yes"
+if [[ ${show} == "yes" ]]
 then
 
-    for (( i=0; i<=elementCount - 1; i++ ))
+    for (( i=0; i<=(( ${elementCount} - 1 )); i++ ))
     do
-        echo "[", i, "]:\t", values1[i], "\t", values2[i], "\t", values3[i]
+        echo "[" ${i} "]:\t" ${values1[${i}]} "\t" ${values2[${i}]} "\t" ${values3[${i}]}
     done
 
 fi
