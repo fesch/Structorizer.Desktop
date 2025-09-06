@@ -103,7 +103,9 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2025-08-17      Bugfix #1207: Wrong results on output instructions with expression list
  *      Kay Gürtzig         2025-08-19      Bugfix #1207: output in case of arrays etc. contained temporary auxiliary stuff
  *      Kay Gürtzig         2025-08-20/28   Bugfix #1210: Option suppressTransformation wasn't consequently respected
- *      Kay Gürtzig         2025-09-06      Issue #1148: opportunity to use elif in IF chains now implemented
+ *      Kay Gürtzig         2025-09-06      Issue #1148: opportunity to use elif in IF chains now implemented;
+ *                                          bugfix #1210: any workaround for value return from functions and on
+ *                                          CALLs disabled in case suppressTransformation
  *
  ******************************************************************************************************
  *
@@ -1267,6 +1269,14 @@ public class BASHGenerator extends Generator {
 					// START KGU#803 2020-02-16: Issue #816 A return has to be handled specifically
 					if (root.isSubroutine() && (line.matches("^" + Matcher.quoteReplacement(preReturn) + "(\\W.*|$)"))) {
 						String expr = line.substring(preReturn.length()).trim();
+						// START KGU#1205 2025-09-06: Issue #1210 no workaround with suppressTransformation!
+						if (suppressTransformation) {
+							addCode("return " + expr, _indent, disabled);
+							// Further lines are hardly interesting (not reachable)...
+							disabled = true;
+							continue;
+						}
+						// END KGU#1205 2025-09-05
 						generateResultVariables(expr, _indent, disabled);
 						// In case of an endstanding return we don't need a formal return command
 						if (i < nLines-1 || root.children.getElement(root.children.getSize()-1) != _inst) {
@@ -1783,6 +1793,12 @@ public class BASHGenerator extends Generator {
 				//code.add(_indent+transform(_call.getText().get(i)));
 				addCode(transform(line), _indent, disabled);
 				// END KGU#277 2016-10-14
+				// START KGU#1205 2025-09-06: Bugfix #1210 Avoid all workarounds on suppressTransformation
+				if (suppressTransformation) {
+					// We assume the user wrote shell-compatible code, so it's all done...
+					continue;
+				}
+				// END KGU#1205 2025-09-06
 				// START KGU#803 2020-02-16: Issue #816
 				Function fct = _call.getCalledRoutine();
 				if (fct != null && fct.isFunction() && Instruction.isAssignment(line)) {
@@ -1856,13 +1872,20 @@ public class BASHGenerator extends Generator {
 			String preReturn = CodeParser.getKeywordOrDefault("preReturn","return").trim();
 			// END KGU#803 2020-02-16
 			StringList jumpText = _jump.getUnbrokenText();
-			for (int i=0; i < jumpText.count(); i++)
+			for (int i = 0; i < jumpText.count(); i++)
 			{
 				String line = jumpText.get(i);
 				// FIXME (KGU 2016-03-25): Handle the kinds of exiting jumps!
 				// START KGU#803 2020-02-16: Issue #816
 				if (root.isSubroutine() && (line.matches("^" + Matcher.quoteReplacement(preReturn) + "(\\W.*|$)"))) {
 					String expr = line.substring(preReturn.length()).trim();
+					// START KGU#1205 2025-09-06: Issue #1210 no workaround with suppressTransformation!
+					if (suppressTransformation) {
+						addCode("return " + expr, _indent, disabled);
+						// Further lines are hardly interesting (not reachable)...
+						break;
+					}
+					// END KGU#1205 2025-09-05
 					generateResultVariables(expr, _indent, disabled);
 					// In case of an endstanding return we don't need a formal return command
 					if (i < jumpText.count()-1 || root.children.getElement(root.children.getSize()-1) != _jump) {

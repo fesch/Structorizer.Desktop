@@ -316,6 +316,8 @@ Current development version 3.32-33 (2025-09-06)
 - 32: Issue #1219 C export used inadvertently to turn an indirectly disabled
       TRY element into an individually disabled one (modified the diagram) <2>
 - 33: Issue #1148 Code export of if-elif chains for bash and ksh <2>
+- 33: Bugfix #1210 Bash/ksh export still produced unwelcome return workarounds
+      to be disabled in case of active "No conversion ..." export option. <2>
 - 33: Issue #1221 Comment lines were unduly trimmed and skipped if empty. <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
