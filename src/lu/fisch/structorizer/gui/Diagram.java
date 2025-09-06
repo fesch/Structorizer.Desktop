@@ -255,6 +255,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2025-08-01      Enh. #915/#1198: Adaptations for new Case editor choice option
  *      Kay Gürtzig     2025-08-04      Issue #1200: Mechanism #1114 extended to InputBoxCase.
  *      Kay Gürtzig     2025-08-08      Issue #1204: Mechanism #1114 extended to Root elements.
+ *      Kay Gürtzig     2025-08-29      Bugfix #1212: Cursor navigation through TRY elements was compromised
+ *                                      by hidden FNALLY sections (#714), cf.#751.
  *
  ******************************************************************************************************
  *
@@ -10908,14 +10910,28 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						} else if (selected == ((Try) newSel).qCatch || selected.isDescendantOf(((Try) newSel).qCatch)) {
 							sel = root.getElementByCoord(x, ((Try) newSel).qTry.getRectOffDrawPoint().bottom - 2, true);
 						} else if (!selected.isDescendantOf(newSel)) {
-							sel = root.getElementByCoord(x, ((Try) newSel).qFinally.getRectOffDrawPoint().bottom - 2, true);
+							// START KGU#1194 2025-08-29: Bugfix #1212: Finally may be invisibly
+							//sel = root.getElementByCoord(x, ((Try) newSel).qFinally.getRectOffDrawPoint().bottom - 2, true);
+							Subqueue section = ((Try) newSel).qFinally;
+							if (!((Try)newSel).showsFinally()) {
+								section = ((Try) newSel).qCatch;
+							}
+							sel = root.getElementByCoord(x, section.getRectOffDrawPoint().bottom - 2, true);
 						}
 					} else if (_direction == Editor.CursorMoveDirection.CMD_DOWN) {
 						// From try go to catch, from catch to finally, from finally to subsequent element
 						if (selected == ((Try) newSel).qTry || selected.isDescendantOf(((Try) newSel).qTry)) {
 							sel = root.getElementByCoord(x, ((Try) newSel).qCatch.getRectOffDrawPoint().top + 2, true);
 						} else if (selected == ((Try) newSel).qCatch || selected.isDescendantOf(((Try) newSel).qCatch)) {
-							sel = root.getElementByCoord(x, ((Try) newSel).qFinally.getRectOffDrawPoint().top + 2, true);
+							// START KGU#1194 2025-08-29: Bugfix #1212 consider suppressed FINALLY block
+							//sel = root.getElementByCoord(x, ((Try) newSel).qFinally.getRectOffDrawPoint().top + 2, true);
+							if (((Try) newSel).showsFinally()) {
+								sel = root.getElementByCoord(x, ((Try) newSel).qFinally.getRectOffDrawPoint().top + 2, true);
+							}
+							else {
+								sel = root.getElementByCoord(x, newSel.getRectOffDrawPoint().bottom + 2, true);
+							}
+							// END KGU#1194 2025-08-29
 						} else if (selected == ((Try) newSel).qFinally || selected.isDescendantOf(((Try) newSel).qFinally)) {
 							sel = root.getElementByCoord(x, newSel.getRectOffDrawPoint().bottom + 2, true);
 						}

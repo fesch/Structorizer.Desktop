@@ -1,4 +1,4 @@
-; Generated with Structorizer 3.32-05 on Mon Nov 15 16:27:06 CET 2021 
+; Generated with Structorizer 3.32-32 on Fri Sep 05 11:00:48 CEST 2025 
 ;AREA data, DATA, READWRITE
 ;AREA text, CODE, READONLY
 
@@ -28,15 +28,15 @@ for_2
 		CMP R3, #3
 		BEQ block_3_2
 		B end_3
-block_3_0:		
+block_3_0		
 		; ERROR: Not implemented yet 
 		; values1[i] <- random(10000) 
 		B end_3
-block_3_1:		
+block_3_1		
 		LDR R5, =values1
 		STR R4, [R5, R4]
 		B end_3
-block_3_2:		
+block_3_2		
 		; ERROR: Not implemented yet 
 		; values1[i] <- -i 
 		B end_3
@@ -134,10 +134,42 @@ end_4
 		LDMFD SP!, {LR}
 		; ERROR: Unsupported condition syntax - Alternative skipped! 
 		; if (!ok1||!ok2||!ok3) 
+then_5
+; 		MOV R10, #0 
+; for_6 
+		; WARNING: End value expression too complex 
+; 		CMP R10, R2-1 
+; 		BGT end_6 
+		; ERROR: Unsupported condition syntax - Alternative skipped! 
+		; if (values1[i]!=values2[i]||values1[i]!=values3[i]) 
+; then_7 
+		; ERROR: OUTPUT operation only supported with GNU code 
+		; OUTPUT "Difference at [", i, "]: ", values1[i], " <-> ", values2[i], " <-> ", values3[i] 
+; end_7 
+; 		ADD R10, R10, #1 
+; 		B for_6 
+; end_6 
+end_5
 		; ERROR: Unsupported condition syntax - Repeat skipped! 
 		; until (show=="yes"||show=="no") 
+do_8
+		; ERROR: INPUT operation only supported with GNU code 
+		; INPUT "Show arrays (yes/no)?", show 
+		; until show = "yes" or show = "no" 
 		; ERROR: Unsupported condition syntax - Alternative skipped! 
 		; if (show=="yes") 
+then_9
+; 		MOV R10, #0 
+; for_10 
+		; WARNING: End value expression too complex 
+; 		CMP R10, R2 - 1 
+; 		BGT end_10 
+		; ERROR: OUTPUT operation only supported with GNU code 
+		; OUTPUT "[", i, "]:\t", values1[i], "\t", values2[i], "\t", values3[i] 
+; 		ADD R10, R10, #1 
+; 		B for_10 
+; end_10 
+end_9
 
 		; Endless loop generated at the end of program 
 stopSORTING_TEST_MAIN
@@ -147,21 +179,30 @@ bubbleSort
 		LDR R2, [SP,#15,LSL #2]
 		; ERROR: Not implemented yet 
 		; ende <- length(values) - 2 
-do_5
+do_11
 		; The index of the most recent swapping (-1 means no swapping done). 
 		MVN R3, 0x0
 		MOV R4, #0
-for_6
+for_12
 		CMP R4, R5
-		BGT end_6
+		BGT end_12
 		; ERROR: Unsupported condition syntax - Alternative skipped! 
 		; if (values[i]>values[i+1]) 
+then_13
+		; The array R2 is not initialized 
+		; R6<-R2[R4] 
+		; ERROR: Not implemented yet 
+		; values[i] <- values[i+1] 
+; 		LDR R2, =values 
+; 		STR R6, [R2, R4+1] 
+; 		MOV R3, R4 
+end_13
 		ADD R4, R4, #1
-		B for_6
-end_6
+		B for_12
+end_12
 		SUB R5, R3, #1
 		CMP R3, #0
-		BGE do_5
+		BGE do_11
 		LDMFD SP!, {R0-R12}
 		MOVS PC, LR
 
@@ -178,12 +219,19 @@ maxHeapify
 		MOV R7, R3
 		; ERROR: Unsupported condition syntax - Alternative skipped! 
 		; if (left<range&&heap[left]>heap[i]) 
+then_14
+; 		MOV R7, R5 
+end_14
 		; ERROR: Unsupported condition syntax - Alternative skipped! 
 		; if (right<range&&heap[right]>heap[max]) 
+then_15
+; 		MOV R7, R6 
+end_15
 		CMP R7, R3
-		BEQ end_7
-then_7
-		; The array is not initialized 
+		BEQ end_16
+then_16
+		; The array R4 is not initialized 
+		; R8<-R4[R3] 
 		; ERROR: Not implemented yet 
 		; heap[i] <- heap[max] 
 		LDR R4, =heap
@@ -199,7 +247,7 @@ then_7
 		BL maxHeapify
 		ADD SP, #16
 		LDMFD SP!, {LR}
-end_7
+end_16
 		LDMFD SP!, {R0-R12}
 		MOVS PC, LR
 
@@ -210,7 +258,8 @@ partition
 		LDR R4, [SP,#17,LSL #2]
 		LDR R5, [SP,#18,LSL #2]
 		; Cache the pivot element 
-		; The array is not initialized 
+		; The array R5 is not initialized 
+		; R6<-R5[R2] 
 		; Exchange the pivot element with the start element 
 		; ERROR: Not implemented yet 
 		; values[p] <- values[start] 
@@ -226,39 +275,38 @@ partition
 		; 2. pivot = values[p] 
 		; 3. i < start → values[i] ≤ pivot 
 		; 4. stop < i → pivot < values[i] 
-while_8
+while_17
 		CMP R4, R3
-		BGT end_8
+		BGT end_17
 		; Fetch the first element of the undiscovered area 
-		; The array is not initialized 
+		; The array R5 is not initialized 
+		; R7<-R5[R4] 
 		; Does the checked element belong to the smaller area? 
 		CMP R7, R6
-		BGT else_9
-then_9
+		BGT else_18
+then_18
 		; Insert the seen element between smaller area and pivot element 
-		LDR R5, =values
 		STR R7, [R5, R2]
-		LDR R5, =values
 		STR R6, [R5, R4]
 		; Shift the border between lower and undicovered area, 
 		; update pivot position. 
 		ADD R2, R2, #1
 		ADD R4, R4, #1
-		B end_9
-else_9
+		B end_18
+else_18
 		; Insert the checked element between undiscovered and larger area 
 		; ERROR: Not implemented yet 
 		; values[start] <- values[stop] 
-		LDR R5, =values
 		STR R7, [R5, R3]
 		; Shift the border between undiscovered and larger area 
 		SUB R3, R3, #1
-end_9
-		B while_8
-end_8
-		; ERROR: Not implemented yet 
-		; return p 
-
+end_18
+		B while_17
+end_17
+		STR R2, [SP,#13,#2]
+		LDMFD SP!, {R0-R12}
+		MOVS PC, LR
+		
 testSorted
 		STMFD SP!, {R0-R12}
 		LDR R2, [SP,#15,LSL #2]
@@ -267,19 +315,32 @@ testSorted
 		; As we compare with the following element, we must stop at the penultimate index 
 		; ERROR: Unsupported condition syntax - While skipped! 
 		; while (isSorted&&(i<=length(numbers)-2)) 
-		; ERROR: Not implemented yet 
-		; return isSorted 
-
+while_19
+		; Is there an inversion? 
+		; ERROR: Unsupported condition syntax - Alternative skipped! 
+		; if (numbers[i]>numbers[i+1]) 
+; then_20 
+; 		MOV R3, #0 
+; 		B end_20 
+; else_20 
+; 		ADD R4, R4, #1 
+; end_20 
+;		B while_19
+end_19
+		STR R3, [SP,#13,#2]
+		LDMFD SP!, {R0-R12}
+		MOVS PC, LR
+		
 buildMaxHeap
 		STMFD SP!, {R0-R12}
 		LDR R2, [SP,#15,LSL #2]
 		; ERROR: Not implemented yet 
 		; lgth <- length(heap) 
 		; WARNING: Start value expression too complex 
-		MOV R3, R4 R5 2 - 1
-for_10
+		MOV R3, R4 div 2 - 1
+for_21
 		CMP R3, #0
-		BLT end_10
+		BLT end_21
 		STMFD SP!, {LR}
 		STR R2, [SP,#-4]!
 		STR R3, [SP,#-4]!
@@ -292,8 +353,8 @@ for_10
 		ADD SP, #16
 		LDMFD SP!, {LR}
 		SUB R3, R3, #1
-		B for_10
-end_10
+		B for_21
+end_21
 		LDMFD SP!, {R0-R12}
 		MOVS PC, LR
 
@@ -305,6 +366,64 @@ quickSort
 		; At least 2 elements? (Less don't make sense.) 
 		; ERROR: Unsupported condition syntax - Alternative skipped! 
 		; if (stop>=start+2) 
+then_22
+		; Select a pivot element, be p its index. 
+		; (here: randomly chosen element out of start ... stop-1) 
+		; ERROR: Not implemented yet 
+		; p <- random(stop-start) + start 
+		; Partition the array into smaller and greater elements 
+		; Get the resulting (and final) position of the pivot element 
+; 		STMFD SP!, {LR} 
+; 		STR R4, [SP,#-4]! 
+; 		STR R3, [SP,#-4]! 
+; 		STR R2, [SP,#-4]! 
+; 		STR R5, [SP,#-4]! 
+; 		STR R0, [SP,#-1,LSL #2] 
+; 		SUB SP, #4 
+; 		MOV R0, #0 
+; 		SWP R0, R0, [SP] 
+; 		BL partition 
+		; Subroutine result: 
+; 		LDR R5, [SP] 
+; 		ADD SP, #20 
+; 		LDMFD SP!, {LR} 
+; Sort subsequances separately and independently ... 
+		; ========================================================== 
+		; ========= START PARALLEL SECTION (NOT SUPPORTED) ========= 
+		; ========================================================== 
+		; ---------------- START THREAD 0 ----------------- 
+		; Sort left (lower) array part 
+; 		STMFD SP!, {LR} 
+; 		STR R4, [SP,#-4]! 
+; 		STR R3, [SP,#-4]! 
+; 		STR R5, [SP,#-4]! 
+; 		STR R0, [SP,#-1,LSL #2] 
+; 		SUB SP, #4 
+; 		MOV R0, #0 
+; 		SWP R0, R0, [SP] 
+; 		BL quickSort 
+; 		ADD SP, #16 
+; 		LDMFD SP!, {LR} 
+		; ----------------- END THREAD 0 ------------------ 
+		; ---------------- START THREAD 1 ----------------- 
+		; Sort right (higher) array part 
+; 		STMFD SP!, {LR} 
+; 		STR R4, [SP,#-4]! 
+; 		ADD R6, R5, #1 
+; 		STR R6, [SP,#-4]! 
+; 		STR R2, [SP,#-4]! 
+; 		STR R0, [SP,#-1,LSL #2] 
+; 		SUB SP, #4 
+; 		MOV R0, #0 
+; 		SWP R0, R0, [SP] 
+; 		BL quickSort 
+; 		ADD SP, #16 
+; 		LDMFD SP!, {LR} 
+		; ----------------- END THREAD 1 ------------------ 
+		; ========================================================== 
+		; ========== END PARALLEL SECTION (NOT SUPPORTED) ========== 
+		; ========================================================== 
+end_22
 		LDMFD SP!, {R0-R12}
 		MOVS PC, LR
 
@@ -324,12 +443,13 @@ heapSort
 		; heapRange <- length(values) 
 		; WARNING: Start value expression too complex 
 		MOV R3, R4 - 1
-for_11
+for_23
 		CMP R3, #1
-		BLT end_11
+		BLT end_23
 		SUB R4, R4, #1
 		; Swap the maximum value (root of the heap) to the heap end 
-		; The array is not initialized 
+		; The array R2 is not initialized 
+		; R5<-R2[0] 
 		; ERROR: Not implemented yet 
 		; values[0] <- values[heapRange] 
 		LDR R2, =values
@@ -347,7 +467,7 @@ for_11
 		ADD SP, #16
 		LDMFD SP!, {LR}
 		SUB R3, R3, #1
-		B for_11
-end_11
+		B for_23
+end_23
 		LDMFD SP!, {R0-R12}
 		MOVS PC, LR

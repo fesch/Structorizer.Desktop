@@ -79,6 +79,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2025-02-07/08   Bugfix #1190: Includables now fully involved. Declaration placement
  *                                          fundamentally revised, record and array inits now recursive.
  *      Kay Gürtzig         2025-02-16      Bugfix #1192: Return keywords in Instruction elements weren't transformed
+ *      Kay Gürtzig         2025-08-30      Bugfix #1210: Free-text FOR loops caused errors in suppressTransition mode
  *
  ******************************************************************************************************
  *
@@ -691,7 +692,10 @@ public class BasGenerator extends Generator
 					// END KGU#1177 2025-02-16
 					// START KGU#993 2021-10-04: Bugfix #993 We suppress unused declarations
 					//addCode(codeLine, _indent, disabled);
-					if (!Instruction.isMereDeclaration(line)) {
+					// START KGU#1193 2025-09-03: Issue #1210 In case suppressTransformation we need it
+					//if (!Instruction.isMereDeclaration(line)) {
+					if (suppressTransformation || !Instruction.isMereDeclaration(line)) {
+					// END KGU#1193 2025-09-03
 						addCode(codeLine, _indent, disabled);
 					}
 					// START KGU#1175 2025-02-07: Bugfix #1190 We should not suppress within Includables
@@ -1001,15 +1005,26 @@ public class BasGenerator extends Generator
     	//code.add(this.getLineNumber() + _indent + "FOR " +
     	//		parts[0] + " = " + transform(parts[1], false) +
     	//		" TO " + transform(parts[2], false) + increment);
-    	boolean disabled = _for.isDisabled(false);
-    	addCode(transformKeyword("FOR ") + parts[0] + " = " + transform(parts[1], false) +
-    			transformKeyword(" TO ") + transform(parts[2], false) + increment, _indent, disabled);
+    	boolean isDisabled = _for.isDisabled(false);
+    	// START KGU#1193 2025-08-30: Bugfix #1210 Consider suppressTransformation
+    	if (_for.style == For.ForLoopStyle.COUNTER) {
+    	// END KGU#1193 2025-08-30
+    		addCode(transformKeyword("FOR ") + parts[0] + " = " + transform(parts[1], false) +
+    				transformKeyword(" TO ") + transform(parts[2], false) + increment, _indent, isDisabled);
+    	// START KGU#1193 2025-08-30: Bugfix #1210 see above
+    	}
+    	else {
+    		// Unrecognised free-text header
+    		appendComment("FIXME: Unrecognized loop header - requires manual translation", _indent);
+    		addCode(transform(_for.getUnbrokenText().getLongString().trim()), _indent, isDisabled);
+    	}
+    	// END KGU#1193 2025-08-30
     	// END KGU#277 2016-10-13
     	// END KGU 2015-11-02
     	generateCode(_for.getBody(), _indent + this.getIndent());
     	// START KGU#277 2016-10-13: Enh. #270
     	//code.add(this.getLineNumber() + _indent + "NEXT " + parts[0]);
-    	addCode(transformKeyword("NEXT ") + parts[0], _indent, disabled);
+    	addCode(transformKeyword("NEXT ") + parts[0], _indent, isDisabled);
     	// END KGU#277 2016-10-13
     	
     	// START KGU#78 2015-12-18: Enh. #23
@@ -1278,7 +1293,7 @@ public class BasGenerator extends Generator
 	{
 		if(!appendAsComment(_jump, _indent)) {
 			// START #277 2016-10-13: Enh. #270
-			boolean disabled = _jump.isDisabled(false);
+			boolean isDisabled = _jump.isDisabled(false);
 			// END KGU#277 2016-10-13
 			// START KGU 2014-11-16
 			appendComment(_jump, _indent);
@@ -1296,6 +1311,7 @@ public class BasGenerator extends Generator
 			StringList lines = _jump.getUnbrokenText();
 			// END KGU#779 2019-12-01
 			String preReturn  = CodeParser.getKeywordOrDefault("preReturn", "return");
+			String preExit = CodeParser.getKeywordOrDefault("preExit", "exit");
 			String preThrow   = CodeParser.getKeywordOrDefault("preThrow", "throw");
 			for (int i = 0; isEmpty && i < lines.count(); i++) {
 				String line = transform(lines.get(i)).trim();
@@ -1313,15 +1329,19 @@ public class BasGenerator extends Generator
 						//code.add(_indent + this.getLineNumber() + this.procName + " = " + argument + " : END");
 						// START KGU#277 2016-10-13: Enh. #270
 						//code.add(this.getLineNumber() + _indent + "RETURN " + argument);
-						addCode(transformKeyword("RETURN ") + argument, _indent, disabled);
+						addCode(transformKeyword("RETURN ") + argument, _indent, isDisabled);
 						// END KGU#277 2016-10-13
 					}
 				}
 				else if (Jump.isExit(line))
 				{
+					String exitCode = line.substring(preExit.length()).trim();
+					if (!exitCode.isEmpty()) {
+						appendComment("FIXME: The following exit code was intended to pass: " + exitCode, _indent);
+					}
 					// START KGU#277 2016-10-13: Enh. #270
 					//code.add(this.getLineNumber() + _indent + "STOP");
-					addCode(transformKeyword("STOP"), _indent, disabled);
+					addCode(transformKeyword("STOP"), _indent, isDisabled);
 					// END KGU#277 2016-10-13
 				}
 				// START KGU#686 2019-03-18: Enh. #56
@@ -1333,7 +1353,7 @@ public class BasGenerator extends Generator
 						appendComment("FIXME: Only a number is allowed as parameter:", _indent);
 						// START KGU#1102 2023-11-08: Bugfix #1109 Rethrow not correctly handled
 						//addCode("ERROR " + line.substring(preThrow.length()).trim(), _indent, disabled);
-						addCode ("ERROR " + arg, _indent, disabled);
+						addCode ("ERROR " + arg, _indent, isDisabled);
 						// END KGU#1102 2023-11-08
 					}
 					else {
@@ -1348,7 +1368,7 @@ public class BasGenerator extends Generator
 						else {
 							arg = "New Exception(" + arg + ")";
 						}
-						addCode("Throw " + arg, _indent, disabled);
+						addCode("Throw " + arg, _indent, isDisabled);
 						// END KGU#1102 2023-11-08
 					}
 				}
@@ -1361,22 +1381,35 @@ public class BasGenerator extends Generator
 					if (ref.intValue() < 0)
 					{
 						appendComment("FIXME: Structorizer detected this illegal jump attempt:", _indent);
+						// START KGU#1193 2025-08-30: Issue #1210 consider supressTransaction
+						if (suppressTransformation) {
+							addCode(line, _indent, isDisabled);
+							continue;
+						}
 						appendComment(line, _indent);
 						label = "__ERROR__";
 					}
 					// START KGU#277 2016-10-13: Enh. #270
 					//code.add(this.getLineNumber() + _indent + "GOTO " + label);
-					addCode(transformKeyword("GOTO ") + label, _indent, disabled);
+					addCode(transformKeyword("GOTO ") + label, _indent, isDisabled);
 					// END KGU#277 2016-10-13
 					isEmpty = false;	// Leave the above loop now 
 				}
 				else if (!isEmpty)
 				{
 					appendComment("FIXME: Structorizer detected the following illegal jump attempt:", _indent);
-					appendComment(line, _indent);
+					// START KGU#1193 2025-08-30: Issue #1210 Consider suppressTrasformation
+					//appendComment(line, _indent);
+					if (suppressTransformation) {
+						addCode(line, _indent, isDisabled);
+					}
+					else {
+						appendComment(line, _indent);
+					}
+					// END KGU#1193 20255-08-30
 				}
 				// END KGU#74/KGU#78 2015-11-30
-			}
+			} // for (i = 0; isEmpty && i < lines.count(); i++)
 			if (isEmpty && this.jumpTable.containsKey(_jump))
 			{
 				Integer ref = this.jumpTable.get(_jump);
@@ -1388,7 +1421,15 @@ public class BasGenerator extends Generator
 				}
 				// START KGU#277 2016-10-13: Enh. #270
 				//code.add(this.getLineNumber() + _indent + "GOTO " + label);
-				addCode(transformKeyword("GOTO ") + label, _indent, disabled);
+				// START KGU#1193 2025-08-30: Issue #1210 mind suppressTrabsformation mode
+				//addCode(transformKeyword("GOTO ") + label, _indent, isDisabled);
+				if (suppressTransformation) {
+					addCode(transform(_jump.getUnbrokenText().getLongString(), false).trim(), _indent, isDisabled);
+				}
+				else {
+					addCode(transformKeyword("GOTO ") + label, _indent, isDisabled);
+				}
+				// END KGU#1193 2025-08-30
 				// END KGU#277 2016-10-13
 				isEmpty = false;	// Leave the above loop now 
 			}
@@ -1682,28 +1723,34 @@ public class BasGenerator extends Generator
 //			declareVariable(_varNames.get(v), _root, _indent);
 //			// END KGU#542 2019-12-01
 //		}
-		// First: generate the constants
-		for (Entry<String, String> entry: _root.constants.entrySet()) {
-			// Constant routine parameters will usually have value null
-			// KGU#542 2019-12-01: Enh. #739 Don't do this for enumeration constants here
-			if (entry.getValue() != null && !entry.getValue().startsWith(":")) {
-				declareVariable(entry.getKey(), _root, _indent);
+		// START KGU#1193 2025-09-03: Issue #1210 Observe suppressTransformation mode
+		if (!suppressTransformation) {
+		// END KGU#1193 2025-09-03
+			// First: generate the constants
+			for (Entry<String, String> entry: _root.constants.entrySet()) {
+				// Constant routine parameters will usually have value null
+				// KGU#542 2019-12-01: Enh. #739 Don't do this for enumeration constants here
+				if (entry.getValue() != null && !entry.getValue().startsWith(":")) {
+					declareVariable(entry.getKey(), _root, _indent);
+				}
 			}
-		}
-		// Second: generate the type definitions
-		for (Entry<String, TypeMapEntry> entry: _root.getTypeInfo(routinePool).entrySet()) {
-			String typeKey = entry.getKey();
-			if (typeKey.startsWith(":")) {
-				this.generateTypeDef(typeKey, entry.getValue(), _root, _indent, false);
+			// Second: generate the type definitions
+			for (Entry<String, TypeMapEntry> entry: _root.getTypeInfo(routinePool).entrySet()) {
+				String typeKey = entry.getKey();
+				if (typeKey.startsWith(":")) {
+					this.generateTypeDef(typeKey, entry.getValue(), _root, _indent, false);
+				}
 			}
-		}
-		// Third: generate the remaining variable declarations
-		for (int v = 0; v < _varNames.count(); v++) {
-			String varName = _varNames.get(v);
-			if (_root.constants.get(varName) == null) {
-				declareVariable(varName, _root, _indent);
+			// Third: generate the remaining variable declarations
+			for (int v = 0; v < _varNames.count(); v++) {
+				String varName = _varNames.get(v);
+				if (_root.constants.get(varName) == null) {
+					declareVariable(varName, _root, _indent);
+				}
 			}
+		// START KGU#1193 2025-09-03: Issue #1210 (see above)
 		}
+		// END KGU#1193 2025-09-03
 // END KGU#1173/KGU#1175 2025-02-07
 		appendComment("", _indent);
 		return _indent;

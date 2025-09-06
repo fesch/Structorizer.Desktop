@@ -72,6 +72,7 @@
  *      Kay Gürtzig     2024-11-22  Poll #1173: menuFileExportPictureSWF removed.
  *      Kay Gürtzig     2025-08-01  Enh. #1198 Messages for Preferences.lblCaseEditor, ~.cbCaseEditor
  *      Kay Gürtzig     2025-08-04  Enh. #1198: Menu.msgVersionHint_3_30_15 replaced by ~_3_32_29
+ *      Kay Gürtzig     2025-08-18  Issue #1138: Obsolete Surface conflict messages removed
  *
  ******************************************************************************************************
  *
@@ -1385,10 +1386,7 @@ Surface.msgNoArrFile.text=Nenhum arquivo do Organizador encontrado
 Surface.msgDefectiveArr.text=Arranjo defeituoso.
 Surface.msgDefectiveArrz.text=Arquivo de arranjo portátil com defeito.
 Surface.titleDiagramConflict.text=Conflito de diagrama
-Surface.msgInsertionConflict.0.text=Há outra versão do diagrama "%2",\ne pelo menos uma delas tem alterações não salvas.
-Surface.msgInsertionConflict.1.text=Há uma cópia equivalente do diagrama "%1"\ncom caminho diferente "%2".
-Surface.msgInsertionConflict.2.text=Há um diagrama diferente com assinatura "%1"\ne caminho "%2".
-Surface.msgInsertionConflict.text=Há diagramas diferentes com assinatura como "%":
+Surface.msgInsertionConflict.text=Há diagramas diferentes no Organisador com assinatura como "%":
 Surface.titleConflContentDiff.text=Conteúdo
 Surface.titleConflPathDiff.text=Rota
 Surface.titleConflSignature.text=Assinatura qualificada

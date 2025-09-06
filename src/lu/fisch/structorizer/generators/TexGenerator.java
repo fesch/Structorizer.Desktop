@@ -54,6 +54,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2025-02-16      Bugfix #1192: Export instructions with (tail) return statements as exit structure
  *      Kay Gürtzig     2025-07-03      Bugfix #1195: disabled check unified (--> isDisabled(true)),
  *                                      some missing Override annotations added
+ *      Kay Gürtzig     2025-09-02      Bugfix #1210: Precautions against unknown routine parameter types
  *
  ******************************************************************************************************
  *
@@ -828,8 +829,25 @@ public class TexGenerator extends Generator {
 				if (!params.isEmpty()) {
 					code.add(indent2 + "\\begin{declaration}[Parameters:]");
 					for (Param param: params) {
+						// START KGU#1197 2025-09-02: Bugfix #1210 Beware of null results
+						//code.add(indent3 + "\\description{\\pVar{"+transform(param.getName())+
+						//		"}}{type: \\("+ transform(param.getType(true)) +"\\)}");
+						String type = param.getType(true);
+						if (type != null) {
+							type = transform(type);
+						}
+						if (type != null && ((type = type.trim()).isEmpty() || type.equals("null") || type.equals("???"))) {
+							type = null;
+						}
+						if (type != null) {
+							type = "{type: \\(" + type + "\\)}";
+						}
+						else {
+							type = "{}";
+						}
 						code.add(indent3 + "\\description{\\pVar{"+transform(param.getName())+
-								"}}{type: \\("+ transform(param.getType(true)) +"\\)}");
+								"}}"+type);
+						// END KGU#1197 2025-09-2
 					}
 					code.add(indent2 + "\\end{declaration}");
 				}

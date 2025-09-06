@@ -1,0 +1,78 @@
+\documentclass[a4paper,10pt]{article}
+
+\usepackage{struktex}
+\usepackage{ngerman}
+
+\title{Structorizer StrukTeX Export of Test848A.arrz}
+\author{Structorizer 3.32-31}
+\date{02.09.2025}
+
+\begin{document}
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[testSub]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{c1}}{type: \(real\)}
+      \description{\pVar{param2}}{type: \(real\)}
+      \description{\pVar{b1}}{type: \(string\)}
+    \end{declaration}
+    \begin{declaration}[Result type:]
+      \description{int}{}
+    \end{declaration}
+    \begin{declaration}[Requires:]
+      \description{IncludeA}{}
+    \end{declaration}
+  }
+  \assign{\(d1\ <-\ a1\)}
+  \assign{\(d2\ <-\ a2\)}
+  \assign{\(a1\ <-\ 15\)}
+  \exit{\(return\ length(a2\ +\ b1)\ +\ floor(c1)\ *\ ceil(param2)\)}
+\end{struktogramm}
+
+
+% = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[TestMain]
+  \assign{%
+    \begin{declaration}[Requires:]
+      \description{IncludeB}{}
+    \end{declaration}
+  }
+  \assign{\(a1\ <-\ 7\)}
+  \assign{\(b1\ <-\ a2\ +\ "\ oder\ bl"od"\)}
+  \assign{\(c1\ <-\ a1\ *\ b2\)}
+  \sub{\(c2\ <-\ testSub(c1,\ a1\ +\ b2,\ b1)\)}
+  \assign{\(OUTPUT\ a1,\ "\ ",\ a2,\ "\ ",\ b1,\ "\ ",\ b2\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[IncludeA]
+  \assign{%
+    \begin{declaration}[variable:]
+      \description{a1}{var\ a1:\ int}
+    \end{declaration}
+  }
+  \assign{\(a2\ <-\ "doof"\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[IncludeB]
+  \assign{%
+    \begin{declaration}[Requires:]
+      \description{IncludeA}{}
+    \end{declaration}
+  }
+  \assign{%
+    \begin{declaration}[variable:]
+      \description{b1}{var\ b1:\ string}
+    \end{declaration}
+  }
+  \assign{\(b2\ <-\ 3.9\)}
+\end{struktogramm}
+
+\end{document}

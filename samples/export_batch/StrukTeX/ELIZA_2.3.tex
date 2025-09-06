@@ -4,9 +4,9 @@
 \usepackage{ngerman}
 
 \title{Structorizer StrukTeX Export of ELIZA\_2.3.arrz}
-% Structorizer version 3.32-13
+% Structorizer version 3.32-32
 \author{Kay G"urtzig}
-\date{17.10.2023}
+\date{02.09.2025}
 
 \begin{document}
 
@@ -60,7 +60,7 @@
     \change
     \ifend
   \whileend
-  \assign{\(\)\pKey{return}\(\ false\)}
+  \exit{\(\)\pKey{return}\(\ false\)}
 \end{struktogramm}
 
 
@@ -91,7 +91,7 @@
     \assign{\(history.histIndex\ \gets\ (history.histIndex\ +\ 1)\ \bmod\ (histDepth)\)}
   \change
   \ifend
-  \assign{\(\)\pKey{return}\(\ hasOccurred\)}
+  \exit{\(\)\pKey{return}\(\ hasOccurred\)}
 \end{struktogramm}
 
 
@@ -188,7 +188,7 @@
   }
   \assign{\(phrases[0]\ \gets\ \{\)"{}\ shut"{}\(,\ \)"{}Okay.\ If\ you\ feel\ that\ way\ I\textbackslash{}'{}ll\ shut\ up.\ ...\ Your\ choice."{}\(\}\)}
   \assign{\(phrases[1]\ \gets\ \{\)"{}bye"{}\(,\ \)"{}Well,\ let\textbackslash{}'{}s\ end\ our\ talk\ for\ now.\ See\ you\ later.\ Bye."{}\(\}\)}
-  \assign{\(\)\pKey{return}\(\ phrases\)}
+  \exit{\(\)\pKey{return}\(\ phrases\)}
 \end{struktogramm}
 
 
@@ -242,7 +242,7 @@
   \assign{\(keywords[36]\ \gets\ KeyMapEntry\{\)"{}smartphone"{}\(,\ 27\}\)}
   \assign{\(keywords[37]\ \gets\ KeyMapEntry\{\)"{}father\ "{}\(,\ 28\}\)}
   \assign{\(keywords[38]\ \gets\ KeyMapEntry\{\)"{}mother\ "{}\(,\ 28\}\)}
-  \assign{\(\)\pKey{return}\(\ keywords\)}
+  \exit{\(\)\pKey{return}\(\ keywords\)}
 \end{struktogramm}
 
 
@@ -263,7 +263,7 @@
   \assign{\(reflexions[7]\ \gets\ \{\)"{}\ my\ "{}\(,\ \)"{}\ your\ "{}\(\}\)}
   \assign{\(reflexions[8]\ \gets\ \{\)"{}\ i\ "{}\(,\ \)"{}\ you\ "{}\(\}\)}
   \assign{\(reflexions[9]\ \gets\ \{\)"{}\ am\ "{}\(,\ \)"{}\ are\ "{}\(\}\)}
-  \assign{\(\)\pKey{return}\(\ reflexions\)}
+  \exit{\(\)\pKey{return}\(\ reflexions\)}
 \end{struktogramm}
 
 

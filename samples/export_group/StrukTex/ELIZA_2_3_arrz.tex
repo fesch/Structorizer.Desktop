@@ -4,13 +4,14 @@
 \usepackage{ngerman}
 
 \title{Structorizer StrukTeX Export of ELIZA\_2.3.arrz}
+% Structorizer version 3.32-32
 \author{Kay G"urtzig}
-\date{04.10.2021}
+\date{04.09.2025}
 
 \begin{document}
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(153,107)[adjustSpelling]
+\begin{struktogramm}(170,107)[adjustSpelling]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{sentence}}{type: \(string\)}
@@ -43,7 +44,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(165,56)[checkGoodBye]
+\begin{struktogramm}(183,58)[checkGoodBye]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{text}}{type: \(string\)}
@@ -60,12 +61,12 @@
     \change
     \ifend
   \whileend
-  \assign{\(\)\pKey{return}\(\ false\)}
+  \exit{\(\)\pKey{return}\(\ false\)}
 \end{struktogramm}
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(238,96)[conjugateStrings]
+\begin{struktogramm}(266,96)[conjugateStrings]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{sentence}}{type: \(string\)}
@@ -98,7 +99,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(214,64)[normalizeInput]
+\begin{struktogramm}(237,65)[normalizeInput]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{sentence}}{type: \(string\)}
@@ -120,7 +121,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(170,29)[setupGoodByePhrases]
+\begin{struktogramm}(182,29)[setupGoodByePhrases]
   \assign{%
     \begin{declaration}[Result type:]
       \description{array of array[0..1] of string}{}
@@ -128,12 +129,12 @@
   }
   \assign{\(phrases[0]\ \gets\ \{\)"{}\ shut"{}\(,\ \)"{}Okay.\ If\ you\ feel\ that\ way\ I\textbackslash{}'{}ll\ shut\ up.\ ...\ Your\ choice."{}\(\}\)}
   \assign{\(phrases[1]\ \gets\ \{\)"{}bye"{}\(,\ \)"{}Well,\ let\textbackslash{}'{}s\ end\ our\ talk\ for\ now.\ See\ you\ later.\ Bye."{}\(\}\)}
-  \assign{\(\)\pKey{return}\(\ phrases\)}
+  \exit{\(\)\pKey{return}\(\ phrases\)}
 \end{struktogramm}
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(102,85)[setupReflexions]
+\begin{struktogramm}(114,85)[setupReflexions]
   \assign{%
     \begin{declaration}[Result type:]
       \description{array of array[0..1] of string}{}
@@ -149,12 +150,12 @@
   \assign{\(reflexions[7]\ \gets\ \{\)"{}\ my\ "{}\(,\ \)"{}\ your\ "{}\(\}\)}
   \assign{\(reflexions[8]\ \gets\ \{\)"{}\ i\ "{}\(,\ \)"{}\ you\ "{}\(\}\)}
   \assign{\(reflexions[9]\ \gets\ \{\)"{}\ am\ "{}\(,\ \)"{}\ are\ "{}\(\}\)}
-  \assign{\(\)\pKey{return}\(\ reflexions\)}
+  \exit{\(\)\pKey{return}\(\ reflexions\)}
 \end{struktogramm}
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(140,535)[setupReplies]
+\begin{struktogramm}(150,536)[setupReplies]
   \assign{%
     \begin{declaration}[Result type:]
       \description{array of array of string}{}
@@ -200,7 +201,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(146,87)[checkRepetition]
+\begin{struktogramm}(157,89)[checkRepetition]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{history}}{type: \(History\)}
@@ -228,12 +229,12 @@
     \assign{\(history.histIndex\ \gets\ (history.histIndex\ +\ 1)\ \bmod\ (histDepth)\)}
   \change
   \ifend
-  \assign{\(\)\pKey{return}\(\ hasOccurred\)}
+  \exit{\(\)\pKey{return}\(\ hasOccurred\)}
 \end{struktogramm}
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(199,90)[findKeyword]
+\begin{struktogramm}(220,94)[findKeyword]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{keyMap}}{type: \(array\ of\ KeyMapEntry\)}
@@ -262,7 +263,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(113,145)[setupKeywords]
+\begin{struktogramm}(122,148)[setupKeywords]
   \assign{%
     \begin{declaration}[Result type:]
       \description{array of KeyMapEntry}{}
@@ -311,12 +312,12 @@
   \assign{\(keywords[36]\ \gets\ KeyMapEntry\{\)"{}smartphone"{}\(,\ 27\}\)}
   \assign{\(keywords[37]\ \gets\ KeyMapEntry\{\)"{}father\ "{}\(,\ 28\}\)}
   \assign{\(keywords[38]\ \gets\ KeyMapEntry\{\)"{}mother\ "{}\(,\ 28\}\)}
-  \assign{\(\)\pKey{return}\(\ keywords\)}
+  \exit{\(\)\pKey{return}\(\ keywords\)}
 \end{struktogramm}
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(258,322)[ELIZA]
+\begin{struktogramm}(273,331)[ELIZA]
   \assign{%
     \begin{declaration}[Requires:]
       \description{History, KeyMapEntry}{}
@@ -391,7 +392,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(137,35)[History]
+\begin{struktogramm}(149,37)[History]
   \assign{%
     \begin{declaration}[type:]
       \description{History}{record\ \{\ histArray\ :\ array\ of\ string\ ;\ histIndex\ :\ int\ \}}
@@ -401,7 +402,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(129,26)[KeyMapEntry]
+\begin{struktogramm}(139,26)[KeyMapEntry]
   \assign{%
     \begin{declaration}[type:]
       \description{KeyMapEntry}{record\ \{\ keyword\ :\ string\ ;\ index\ :\ int\ \}}

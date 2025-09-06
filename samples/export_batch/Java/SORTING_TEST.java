@@ -87,7 +87,7 @@ public class SORTING_TEST_MAIN {
 		for (int i = 0; i <= elementCount-1; i += (1)) {
 			switch (modus) {
 			case 1:
-				values1[i] = (randGen.nextInt() % (10000));
+				values1[i] = (randGen.nextInt() % 10000);
 				break;
 			case 2:
 				values1[i] = i;

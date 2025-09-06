@@ -292,7 +292,7 @@ int main(void)
 	for (i = 0; i <= elementCount-1; i += (1)) {
 		switch (modus) {
 		case 1:
-			values1[i] = (rand() % (10000));
+			values1[i] = (rand() % 10000);
 			break;
 		case 2:
 			values1[i] = i;

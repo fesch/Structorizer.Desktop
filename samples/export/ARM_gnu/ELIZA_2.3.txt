@@ -1,42 +1,94 @@
-// Generated with Structorizer 3.32-05 on Mon Nov 15 15:22:30 CET 2021 
+// Generated with Structorizer 3.32-32 on Fri Sep 05 12:19:45 CEST 2025 
 .global _start
 .data
 .align 2
-v_2:	.word	'.',',',';','!','?'
+v_16:	.word	'.',',',';','!','?'
 .align 2
 result:	.word	-1,0
 .align 2
-v_1:	.word	" i "," i\'"
+v_15:	.word	" i "," i\'"
+// .align 2 
+// v_14:	.word	'Y','o','u',' ','w','i','l','l',' ','h','a','v','e',' ','t','o',' ','e','l','a','b','o','r','a','t','e',' ','m','o','r','e',' ','f','o','r',' ','m','e',' ','t','o',' ','h','e','l','p',' ','y','o','u','.' 
 .align 2
-v_0:	.word	'P','l','e','a','s','e',' ','d','o','n',0x27,'t',' ','r','e','p','e','a','t',' ','y','o','u','r','s','e','l','f','!'
+v_13:	.word	'P','l','e','a','s','e',' ','d','o','n',0x27,'t',' ','r','e','p','e','a','t',' ','y','o','u','r','s','e','l','f','!'
+.align 2
+v_12:	.word	'H','i','!',' ','I',0x27,'m',' ','y','o','u','r',' ','n','e','w',' ','t','h','e','r','a','p','i','s','t','.',' ','M','y',' ','n','a','m','e',' ','i','s',' ','E','l','i','z','a','.',' ','W','h','a','t',0x27,'s',' ','y','o','u','r',' ','p','r','o','b','l','e','m','?'
+.align 2
+v_11:	.word	'*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*'
+.align 2
+v_10:	.word	'*',' ','(','R','e','q','u','i','r','e','s',' ','a','t',' ','l','e','a','s','t',' ','S','t','r','u','c','t','o','r','i','z','e','r',' ','3','.','3','0','-','0','3',' ','t','o',' ','r','u','n',')'
+.align 2
+v_9:	.word	'*',' ','V','e','r','s','i','o','n',':',' ','2','.','3',' ','(','2','0','2','0','-','0','2','-','2','4',')'
+.align 2
+v_8:	.word	'*',' ','-',' ','K','a','y',' ','G',0xfc,'r','t','z','i','g',' ','/',' ','F','H',' ','E','r','f','u','r','t',' ','2','0','1','6'
+.align 2
+v_7:	.word	'*',' ','A','d','a','p','t','e','d',' ','f','o','r',' ','S','t','r','u','c','t','o','r','i','z','e','r',' ','b','y'
+.align 2
+v_6:	.word	'*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*'
+.align 2
+v_5:	.word	'*',' ','-',' ','P','a','u','l',' ','H','a','s','h','f','i','e','l','d'
+.align 2
+v_4:	.word	'*',' ','-',' ','P','a','t','r','i','c','i','a',' ','D','a','n','i','e','l','s','o','n'
+.align 2
+v_3:	.word	'*',' ','A','d','a','p','t','e','d',' ','f','o','r',' ','B','a','s','i','c',' ','o','n',' ','I','B','M',' ','P','C',' ','b','y'
+.align 2
+v_2:	.word	'*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*','*'
+.align 2
+v_1:	.word	'*',' ','O','r','i','g','i','n','a','l',' ','d','e','s','i','g','n',' ','b','y',' ','J','.',' ','W','e','i','z','e','n','b','a','u','m'
+.align 2
+v_0:	.word	'*','*','*','*','*','*','*','*','*','*','*','*','*',' ','E','L','I','Z','A',' ','*','*','*','*','*','*','*','*','*','*','*','*','*','*'
 .text
 .align 2
 _start:
 		// Title information 
-		// ERROR: Not implemented yet 
-		// OUTPUT "************* ELIZA **************" 
-		// ERROR: Not implemented yet 
-		// OUTPUT "* Original design by J. Weizenbaum" 
-		// ERROR: Not implemented yet 
-		// OUTPUT "**********************************" 
-		// ERROR: Not implemented yet 
-		// OUTPUT "* Adapted for Basic on IBM PC by" 
-		// ERROR: Not implemented yet 
-		// OUTPUT "* - Patricia Danielson" 
-		// ERROR: Not implemented yet 
-		// OUTPUT "* - Paul Hashfield" 
-		// ERROR: Not implemented yet 
-		// OUTPUT "**********************************" 
-		// ERROR: Not implemented yet 
-		// OUTPUT "* Adapted for Structorizer by" 
-		// ERROR: Not implemented yet 
-		// OUTPUT "* - Kay Gürtzig / FH Erfurt 2016" 
-		// ERROR: Not implemented yet 
-		// OUTPUT "* Version: 2.3 (2020-02-24)" 
-		// ERROR: Not implemented yet 
-		// OUTPUT "* (Requires at least Structorizer 3.30-03 to run)" 
-		// ERROR: Not implemented yet 
-		// OUTPUT "**********************************" 
+		LDR R2, =0xFF201000
+		// WARNING: No sensible solution for array output: 
+		ADR R3, v_0
+		STR R3, [R2]
+		LDR R2, =0xFF201000
+		// WARNING: No sensible solution for array output: 
+		ADR R3, v_1
+		STR R3, [R2]
+		LDR R2, =0xFF201000
+		// WARNING: No sensible solution for array output: 
+		ADR R3, v_2
+		STR R3, [R2]
+		LDR R2, =0xFF201000
+		// WARNING: No sensible solution for array output: 
+		ADR R3, v_3
+		STR R3, [R2]
+		LDR R2, =0xFF201000
+		// WARNING: No sensible solution for array output: 
+		ADR R3, v_4
+		STR R3, [R2]
+		LDR R2, =0xFF201000
+		// WARNING: No sensible solution for array output: 
+		ADR R3, v_5
+		STR R3, [R2]
+		LDR R2, =0xFF201000
+		// WARNING: No sensible solution for array output: 
+		ADR R3, v_6
+		STR R3, [R2]
+		LDR R2, =0xFF201000
+		// WARNING: No sensible solution for array output: 
+		ADR R3, v_7
+		STR R3, [R2]
+		LDR R2, =0xFF201000
+		// WARNING: No sensible solution for array output: 
+		ADR R3, v_8
+		STR R3, [R2]
+		LDR R2, =0xFF201000
+		// WARNING: No sensible solution for array output: 
+		ADR R3, v_9
+		STR R3, [R2]
+		LDR R2, =0xFF201000
+		// WARNING: No sensible solution for array output: 
+		ADR R3, v_10
+		STR R3, [R2]
+		LDR R2, =0xFF201000
+		// WARNING: No sensible solution for array output: 
+		ADR R3, v_11
+		STR R3, [R2]
 		// Stores the last five inputs of the user in a ring buffer, 
 		// the second component is the rolling (over-)write index. 
 		// ERROR: Not implemented yet 
@@ -85,8 +137,10 @@ _start:
 		// offsets[length(keyMap)-1] <- 0 
 		MOV R6, #0
 		// Starter 
-		// ERROR: Not implemented yet 
-		// OUTPUT "Hi! I\'m your new therapist. My name is Eliza. What\'s your problem?" 
+		LDR R7, =0xFF201000
+		// WARNING: No sensible solution for array output: 
+		ADR R8, v_12
+		STR R8, [R7]
 do_0:
 		LDR R7, =0xFF200050
 		LDR R7, [R7]
@@ -118,7 +172,7 @@ do_0:
 		CMP R6, #0
 		BNE end_1
 then_1:
-		ADR R8, v_0
+		ADR R8, v_13
 		STMFD SP!, {LR}
 		STR R9, [SP,#-4]!
 		STR R7, [SP,#-4]!
@@ -146,7 +200,8 @@ then_2:
 		LDR R12, [SP]
 		ADD SP, #12
 		LDMFD SP!, {LR}
-		// The array is not initialized 
+		// The array R12 is not initialized 
+		// R11<-R12[0] 
 		CMP R11, #0
 		BGE end_3
 then_3:
@@ -161,6 +216,26 @@ end_3:
 		// varPart <- "" 
 		// ERROR: Unsupported condition syntax - Alternative skipped! 
 		// if (length(entry.keyword)>0) 
+then_4:
+// 		STMFD SP!, {LR} 
+// 		STR R7, [SP,#-4]! 
+		// ERROR: Not implemented yet 
+		// R0 <- entry.keyword 
+// 		STR R0, [SP,#-4]! 
+		// The array R12 is not initialized 
+		// R0<-R12[1] 
+// 		STR R0, [SP,#-4]! 
+// 		STR R3, [SP,#-4]! 
+// 		STR R0, [SP,#-1,LSL #2] 
+// 		SUB SP, #4 
+// 		MOV R0, #0 
+// 		SWP R0, R0, [SP] 
+// 		BL conjugateStrings 
+		// Subroutine result: 
+// 		LDR R0, [SP] 
+// 		ADD SP, #20 
+// 		LDMFD SP!, {LR} 
+end_4:
 		// ERROR: Not implemented yet 
 		// replyRing <- replies[entry.index] 
 		// ERROR: Not implemented yet 
@@ -169,12 +244,21 @@ end_3:
 		// offsets[keyIndex] <- (offsets[keyIndex] + 1) mod length(replyRing) 
 		// ERROR: Not implemented yet 
 		// posAster <- pos("*", reply) 
-		CMP R0, #0
-		BLE end_4
-then_4:
+		CMP R1, #0
+		BLE end_5
+then_5:
 		// ERROR: Unsupported condition syntax - Alternative skipped! 
 		// if (varPart==" ") 
-end_4:
+then_6:
+// 		ADR R8, v_14 
+		B end_5
+else_6:
+		// ERROR: Not implemented yet 
+		// delete(reply, posAster, 1) 
+		// ERROR: Not implemented yet 
+		// insert(varPart, reply, posAster) 
+
+end_5:
 		STMFD SP!, {LR}
 		STR R8, [SP,#-4]!
 		STR R0, [SP,#-1,LSL #2]
@@ -187,8 +271,8 @@ end_4:
 		ADD SP, #8
 		LDMFD SP!, {LR}
 end_2:
-		LDR R1, =0xFF201000
-		STR R8, [R1]
+		LDR , =0xFF201000
+		STR R8, []
 end_1:
 		CMP R6, #0
 		BEQ do_0
@@ -203,30 +287,42 @@ adjustSpelling:
 		MOV R4, #1
 		// ERROR: Unsupported condition syntax - While skipped! 
 		// while (position<=length(sentence))&&(copy(sentence,position,1)==" ") 
+while_7:
+// 		ADD R4, R4, #1 
+// 		B while_7 
+end_7:
 		// ERROR: Unsupported condition syntax - Alternative skipped! 
 		// if (position<=length(sentence)) 
-		ADR R6, v_1
+then_8:
+		// ERROR: Not implemented yet 
+		// start <- copy(sentence, 1, position) 
+		// ERROR: Not implemented yet 
+		// delete(result, 1, position) 
+		// ERROR: Not implemented yet 
+		// insert(uppercase(start), result, 1) 
+end_8:
+		ADR R6, v_15
 		MOV R7, #0
-for_5:
+for_9:
 		CMP R7, #1
-		BGT end_5
+		BGT end_9
 		LDR R5, [R6, R7, LSL #2]
 		// ERROR: Not implemented yet 
 		// position <- pos(word, result) 
-while_6:
+while_10:
 		CMP R4, #0
-		BLE end_6
+		BLE end_10
 		// ERROR: Not implemented yet 
 		// delete(result, position+1, 1) 
 		// ERROR: Not implemented yet 
 		// insert("I", result, position+1) 
 		// ERROR: Not implemented yet 
 		// position <- pos(word, result) 
-		B while_6
-end_6:
+		B while_10
+end_10:
 		ADD R7, R7, #1
-		B for_5
-end_5:
+		B for_9
+end_9:
 		STR R3, [SP,#13,#2]
 		LDMFD SP!, {R0-R12}
 		MOVS PC, LR
@@ -236,19 +332,31 @@ checkGoodBye:
 		LDR R2, [SP,#15,LSL #2]
 		LDR R3, [SP,#16,LSL #2]
 		MOV R5, #0
-for_7:
+for_11:
 		// WARNING: End value expression too complex 
 		CMP R5, 
-		BGT end_7
-		// The array is not initialized 
+		BGT end_11
+		// The array phrases is not initialized 
+		// R4<-phrases[R5] 
 		// ERROR: Unsupported condition syntax - Alternative skipped! 
 		// if (pos(pair[0],text)>0) 
+then_12:
+// 		LDR R6, =0xFF201000 
+		// The array R4 is not initialized 
+		// R7<-R4[1] 
+// 		STR R7, [R6] 
+// 		STR true, [SP,#13,#2] 
+// 		LDMFD SP!, {R0-R12} 
+// 		MOVS PC, LR 
+		
+end_12:
 		ADD R5, R5, #1
-		B for_7
-end_7:
-		// ERROR: Not implemented yet 
-		// return false 
-
+		B for_11
+end_11:
+		STR false, [SP,#13,#2]
+		LDMFD SP!, {R0-R12}
+		MOVS PC, LR
+		
 checkRepetition:
 		STMFD SP!, {R0-R12}
 		LDR R2, [SP,#15,LSL #2]
@@ -256,9 +364,31 @@ checkRepetition:
 		MOV R4, #0
 		// ERROR: Unsupported condition syntax - Alternative skipped! 
 		// if (length(newInput)>4) 
+then_13:
 		// ERROR: Not implemented yet 
-		// return hasOccurred 
-
+		// histDepth <- length(history.histArray) 
+// 		MOV R5, #0 
+// for_14: 
+		// WARNING: End value expression too complex 
+// 		CMP R5, R6-1 
+// 		BGT end_14 
+		// ERROR: Unsupported condition syntax - Alternative skipped! 
+		// if (newInput==history.histArray[i]) 
+// then_15: 
+// 		MOV R4, #1 
+// end_15: 
+// 		ADD R5, R5, #1 
+// 		B for_14 
+// end_14: 
+		// ERROR: Not implemented yet 
+		// history.histArray[history.histIndex] <- newInput 
+		// ERROR: Not implemented yet 
+		// history.histIndex <- (history.histIndex + 1) mod (histDepth) 
+end_13:
+		STR R4, [SP,#13,#2]
+		LDMFD SP!, {R0-R12}
+		MOVS PC, LR
+		
 conjugateStrings:
 		STMFD SP!, {R0-R12}
 		LDR R2, [SP,#15,LSL #2]
@@ -268,43 +398,44 @@ conjugateStrings:
 		// ERROR: Not implemented yet 
 		// result <- " " + copy(sentence, keyPos + length(key), length(sentence)) + " " 
 		MOV R7, #0
-for_8:
+for_16:
 		// WARNING: End value expression too complex 
 		CMP R7, 
-		BGT end_8
-		// The array is not initialized 
+		BGT end_16
+		// The array flexions is not initialized 
+		// R6<-flexions[R7] 
 		// ERROR: Not implemented yet 
 		// left <- "" 
 		MOV R8, R9
 		// ERROR: Not implemented yet 
 		// position <- pos(pair[0], right) 
-while_9:
+while_17:
 		CMP R10, #0
-		BLE end_9
+		BLE end_17
 		// ERROR: Not implemented yet 
 		// left <- left + copy(right, 1, position-1) + pair[1] 
 		// ERROR: Not implemented yet 
 		// right <- copy(right, position + length(pair[0]), length(right)) 
 		// ERROR: Not implemented yet 
 		// position <- pos(pair[0], right) 
-		B while_9
-end_9:
+		B while_17
+end_17:
 		ADD R9, R12, R8
 		ADD R7, R7, #1
-		B for_8
-end_8:
+		B for_16
+end_16:
 		// Eliminate multiple spaces 
 		// ERROR: Not implemented yet 
 		// position <- pos("  ", result) 
-while_10:
+while_18:
 		CMP R10, #0
-		BLE end_10
+		BLE end_18
 		// ERROR: Not implemented yet 
 		// result <- copy(result, 1, position-1) + copy(result, position+1, length(result)) 
 		// ERROR: Not implemented yet 
 		// position <- pos("  ", result) 
-		B while_10
-end_10:
+		B while_18
+end_18:
 		STR R9, [SP,#13,#2]
 		LDMFD SP!, {R0-R12}
 		MOVS PC, LR
@@ -317,7 +448,22 @@ findKeyword:
 		MOV R4, #0
 		// ERROR: Unsupported condition syntax - While skipped! 
 		// while (result[0]<0)&&(i<length(keyMap)) 
-		STR R5, [SP,#13,#2]
+while_19:
+		// ERROR: Not implemented yet 
+		// var entry: KeyMapEntry <- keyMap[i] 
+		// ERROR: Not implemented yet 
+		// position <- pos(entry.keyword, sentence) 
+// 		CMP R5, #0 
+// 		BLE end_20 
+// then_20: 
+// 		ADR R6, result 
+// 		STR R4, [R6, #0] 
+// 		STR R5, [R6, #4] 
+// end_20: 
+// 		ADD R4, R4, #1 
+// 		B while_19 
+end_19:
+		STR R6, [SP,#13,#2]
 		LDMFD SP!, {R0-R12}
 		MOVS PC, LR
 
@@ -326,26 +472,26 @@ normalizeInput:
 		LDR R2, [SP,#15,LSL #2]
 		// ERROR: Not implemented yet 
 		// sentence <- lowercase(sentence) 
-		ADR R4, v_2
+		ADR R4, v_16
 		MOV R5, #0
-for_11:
+for_21:
 		CMP R5, #4
-		BGT end_11
+		BGT end_21
 		LDR R3, [R4, R5, LSL #2]
 		// ERROR: Not implemented yet 
 		// position <- pos(symbol, sentence) 
-while_12:
+while_22:
 		CMP R6, #0
-		BLE end_12
+		BLE end_22
 		// ERROR: Not implemented yet 
 		// sentence <- copy(sentence, 1, position-1) + copy(sentence, position+1, length(sentence)) 
 		// ERROR: Not implemented yet 
 		// position <- pos(symbol, sentence) 
-		B while_12
-end_12:
+		B while_22
+end_22:
 		ADD R5, R5, #1
-		B for_11
-end_11:
+		B for_21
+end_21:
 		// ERROR: Not implemented yet 
 		// result <- " " + sentence + " " 
 		STR R3, [SP,#13,#2]
@@ -358,9 +504,10 @@ setupGoodByePhrases:
 		// phrases[0] <- {" shut", "Okay. If you feel that way I\'ll shut up. ... Your choice."} 
 		// ERROR: Not implemented yet 
 		// phrases[1] <- {"bye", "Well, let\'s end our talk for now. See you later. Bye."} 
-		// ERROR: Not implemented yet 
-		// return phrases 
-
+		STR R2, [SP,#13,#2]
+		LDMFD SP!, {R0-R12}
+		MOVS PC, LR
+		
 setupKeywords:
 		STMFD SP!, {R0-R12}
 		// The empty key string (last entry) is the default clause - will always be found 
@@ -444,9 +591,10 @@ setupKeywords:
 		// keywords[37] <- KeyMapEntry{"father ", 28} 
 		// ERROR: Not implemented yet 
 		// keywords[38] <- KeyMapEntry{"mother ", 28} 
-		// ERROR: Not implemented yet 
-		// return keywords 
-
+		STR R2, [SP,#13,#2]
+		LDMFD SP!, {R0-R12}
+		MOVS PC, LR
+		
 setupReflexions:
 		STMFD SP!, {R0-R12}
 		// ERROR: Not implemented yet 
@@ -469,9 +617,10 @@ setupReflexions:
 		// reflexions[8] <- {" i ", " you "} 
 		// ERROR: Not implemented yet 
 		// reflexions[9] <- {" am ", " are "} 
-		// ERROR: Not implemented yet 
-		// return reflexions 
-
+		STR R2, [SP,#13,#2]
+		LDMFD SP!, {R0-R12}
+		MOVS PC, LR
+		
 setupReplies:
 		STMFD SP!, {R0-R12}
 		// We start with the highest index for performance reasons 

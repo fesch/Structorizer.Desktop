@@ -1,0 +1,105 @@
+\documentclass[a4paper,10pt]{article}
+
+\usepackage{struktex}
+\usepackage{ngerman}
+
+\title{Structorizer StrukTeX Export of DateTests563.arrz}
+% Structorizer version 3.32-32
+\author{Kay G"urtzig}
+\date{04.09.2025}
+
+\begin{document}
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(167,59)[isLeapYear]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{year}}{}
+    \end{declaration}
+    \begin{declaration}[Result type:]
+      \description{boolean}{}
+    \end{declaration}
+  }
+  \assign{\(isLeapYear\ \gets\ false\)}
+  % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{6}{6}...
+  \ifthenelse{6}{6}{\((year\ \bmod\ 4\ =\ 0)\ \wedge\ (year\ \bmod\ 100\ \neq\ 0)\)}{T}{F}
+    \assign{\(isLeapYear\ \gets\ true\)}
+  \change
+    \ifthenelse{4}{2}{\(year\ \bmod\ 400\ =\ 0\)}{T}{F}
+      \assign{\(isLeapYear\ \gets\ true\)}
+    \change
+    \ifend
+  \ifend
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(237,88)[daysInMonth423]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{aDate}}{type: \(Date\)}
+    \end{declaration}
+    \begin{declaration}[Result type:]
+      \description{int}{}
+    \end{declaration}
+    \begin{declaration}[Requires:]
+      \description{CommonTypes423}{}
+    \end{declaration}
+  }
+  \case[20]{5}{4}{\(aDate.month\)}{1,\ 3,\ 5,\ 7,\ 8,\ 10,\ 12}
+      \assign{\(days\ \gets\ 31\)}
+    \switch{4,\ 6,\ 9,\ 11}
+      \assign{\(days\ \gets\ 30\)}
+    \switch{2}
+      \assign{\(days\ \gets\ 28\)}
+      \sub{\(isLeap\ \gets\ isLeapYear(aDate.year)\)}
+      \ifthenelse{5}{1}{\(isLeap\)}{T}{F}
+        \assign{\(days\ \gets\ 29\)}
+      \change
+      \ifend
+    \switch[r]{default}
+      \assign{\(days\ \gets\ 0\)}
+   \caseend
+  \exit{\(\)\pKey{return}\(\ days\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(152,94)[DateTests563]
+  \assign{%
+    \begin{declaration}[Requires:]
+      \description{CommonTypes423}{}
+    \end{declaration}
+  }
+  \assign{\(Date\ someDay\ \gets\ Date\{day:\ 24,\ month:\ 2,\ year:\ 2017\}\)}
+  \sub{\(nDays\ \gets\ daysInMonth423(someDay)\)}
+  \assign{\(today\ \gets\ Date\{2018,\ 7,\ 20\}\)}
+  \assign{%
+    \begin{declaration}[type:]
+      \description{Person}{record\ \{\ name\ :\ string\ ;\ birth\ :\ Date\ ;\ test\ :\ array\ [\ 3\ ]\ of\ int\ ;\ \}}
+    \end{declaration}
+  }
+  \assign{\(var\ me:\ Person\ \gets\ Person\{\)"{}roger"{}\(,\ Date\{1985,\ 3,\ 6\},\ \{0,\ 8,\ 15\}\}\)}
+  \assign{\(var\ declArray:\ array\ of\ double\ \gets\ \{9.0,\ 7.5,\ -6.4,\ 1.7,\ 0.0\}\)}
+  \assign{\(var\ explArray:\ double[3]\ \gets\ \{7.1,\ 0.5,\ -1.5\}\)}
+  \assign{\(double\ doof[3]\ \gets\ \{0.4\}\)}
+  \assign{\(double[2]\ dull\ \gets\ \{-12.7,\ 96.03\}\)}
+  \assign{\(values\ \gets\ \{47,\ 11\}\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(119,29)[CommonTypes423]
+  \assign{%
+    \begin{declaration}[type:]
+      \description{Date}{record\ \{\ year\ :\ int\ ;\ month\ ,\ day\ :\ short\ \}}
+    \end{declaration}
+  }
+  \assign{%
+    \begin{declaration}[variable:]
+      \description{today}{var\ today:\ Date}
+    \end{declaration}
+  }
+\end{struktogramm}
+
+\end{document}
