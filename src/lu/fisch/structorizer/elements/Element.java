@@ -145,6 +145,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2025-08-01      Enh. #1197: Support/precaution for IFork branch colouring,
  *                                      Enh. #1198: Case editor choice option changed from boolean to enum
  *      Kay Gürtzig     2025-08-13      Enh. #1198: Defective initial preference for useInputBoxCase mended
+ *      Kay Gürtzig     2025-09-06      Issue #1221: Comment lines should neither be trimmed nor skipped
  *
  ******************************************************************************************************
  *
@@ -4785,19 +4786,30 @@ public abstract class Element {
 		Font backupFont = _canvas.getFont();
 		_canvas.setFont(smallFont);
 		_canvas.setColor(Color.DARK_GRAY);
-		int nLines = this.getComment().count();
+		StringList lines = this.getComment();
+		int nLines = lines.count();
+		// START KGU#1203 2025-09-06: Issue #1221: A trailing empty line should be suppressed.
+		if (nLines > 0 && lines.get(nLines-1).isBlank()) {
+			nLines--;
+		}
+		// END KGU#1203 2025-09-06
 		for (int i = 0; i < nLines; i++)
 		{
-			String line = this.getComment().get(i).trim();
-			if (!line.isEmpty())
+			// START KGU#1203 2025-09-06: Issue #1221 Lines should neither be trimmed nor skipped.
+			//String line = this.getComment().get(i).trim();
+			//if (!line.isEmpty())
+			//{
+			String line = lines.get(i);
+			// END KGU#1203 2025-09-06
+			height += fontHeight;
+			width = Math.max(width, _canvas.stringWidth(line));
+			if (_actuallyDraw)
 			{
-				height += fontHeight;
-				width = Math.max(width, _canvas.stringWidth(line));
-				if (_actuallyDraw)
-				{
-					_canvas.writeOut(_x, _y + height + extraHeight, line);
-				}
+				_canvas.writeOut(_x, _y + height + extraHeight, line);
 			}
+			// START KGU#1203 2025-09-06: Issue #1221 (see above)
+			//}
+			// END KGU#1203 2025-09-06
 		}
 		
 		_canvas.setFont(backupFont);
