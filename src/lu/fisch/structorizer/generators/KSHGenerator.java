@@ -62,6 +62,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2021-10-03      Bugfix #990: returnsValue field of the handled root filled
  *      Kay Gürtzig             2025-07-03      Some missing Override annotations added
  *      Kay Gürtzig             2025-08-19      Bugfix #1207: New parent method getAssignmentPrefixes overridden
+ *      Kay Gürtzig             2025-09-06      Issue #1148: Indentation now simply inherited from BASHGenerator
  *
  ******************************************************************************************************
  *
@@ -95,12 +96,14 @@ public class KSHGenerator extends BASHGenerator {
 	{
 		return "KSH Source Code";
 	}
-	
-	@Override
-	protected String getIndent()
-	{
-		return " ";
-	}
+
+	// START KGU#1204 2025-09-06: Issue #1148 We may simply adopt the enlarged bash indentation
+	//@Override
+	//protected String getIndent()
+	//{
+	//	return " ";
+	//}
+	// END KGU#1204 2025-09-06
 	
 	@Override
 	protected String[] getFileExtensions()

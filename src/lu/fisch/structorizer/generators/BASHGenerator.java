@@ -103,6 +103,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2025-08-17      Bugfix #1207: Wrong results on output instructions with expression list
  *      Kay Gürtzig         2025-08-19      Bugfix #1207: output in case of arrays etc. contained temporary auxiliary stuff
  *      Kay Gürtzig         2025-08-20/28   Bugfix #1210: Option suppressTransformation wasn't consequently respected
+ *      Kay Gürtzig         2025-09-06      Issue #1148: opportunity to use elif in IF chains now implemented
  *
  ******************************************************************************************************
  *
@@ -185,6 +186,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Stack;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -233,7 +235,10 @@ public class BASHGenerator extends Generator {
 	@Override
 	protected String getIndent()
 	{
-		return " ";
+		// START KGU#1204 2025-09-06: Issue #1148 A more noticeable indentation would be helpful
+		//return " ";
+		return "    ";
+		// END KGU#1204 2025-09-06
 	}
 	
 	@Override
@@ -1407,16 +1412,48 @@ public class BASHGenerator extends Generator {
 		//code.add(_indent+"then");
 		addCode("then", _indent, disabled);
 		// END KGU#277 2016-10-13
-		generateCode(_alt.qTrue,_indent+this.getIndent());
+		generateCode(_alt.qTrue, _indent+this.getIndent());
 		
-		if(_alt.qFalse.getSize()!=0) {
+		// START KGU#1204 2025-09-06: Issue #1148 We ought to make use of the ELSIF if possible
+		Element ele = null;
+		// We must cater for the code mapping of the chained sub-alternatives
+		Stack<Element> processedAlts = new Stack<Element>();
+		Stack<Integer> storedLineNos = new Stack<Integer>();
+		while (_alt.qFalse.getSize() == 1 
+				&& (ele = _alt.qFalse.getElement(0)) instanceof Alternative) {
+			_alt = (Alternative)ele;
+			// We must care for the code mapping explicitly here since we circumvent generateCode()
+			markElementStart(_alt, _indent, processedAlts, storedLineNos);
+			appendComment(_alt, _indent);
+			condition = transform(_alt.getUnbrokenText().getLongString()).trim();
+			// START KGU#311 2017-01-05: Enh. #314: We should at least put some File API remarks
+			if (this.usesFileAPI && !disabled) {
+				for (int j = 0; j < Executor.fileAPI_names.length; j++) {
+					if (condition.contains(Executor.fileAPI_names[j] + "(")) {
+						appendComment("TODO File API: Replace the \"" + Executor.fileAPI_names[j] + "\" call by an appropriate shell construct", _indent);
+						break;
+					}
+				}
+			}
+			// END KGU#311 2017-01-05
+			addCode("elif "+ finishCondition(condition),
+					_indent, ele.isDisabled(false));
+			addCode("then",
+					_indent, ele.isDisabled(false));
+			generateCode(_alt.qTrue, _indent+this.getIndent());
+		}
+		// END KGU#1204 2025-09-06
+		
+		if (_alt.qFalse.getSize() != 0) {
 			
 			// START KGU#277 2016-10-13: Enh. #270
 			//code.add(_indent+"");
-			//code.add(_indent+"else");			
-			if (!code.get(code.count()-1).trim().isEmpty()) {
-				addCode("", "", disabled);
-			}
+			//code.add(_indent+"else");
+			// START KGU#1204 2025-09-06: Issue #1148 Unnecessary blank line dropped
+			//if (!code.get(code.count()-1).trim().isEmpty()) {
+			//	addCode("", "", disabled);
+			//}
+			// END KGU#1204 2025-09-06
 			addCode("else", _indent, disabled);			
 			// END KGU#277 2016-10-13
 			generateCode(_alt.qFalse,_indent+this.getIndent());
@@ -1429,7 +1466,11 @@ public class BASHGenerator extends Generator {
 		addCode("fi", _indent, disabled);
 		addCode("", "", disabled);
 		// END KGU#277 2016-10-13
-		
+
+		// START KGU#1204 2025-09-06: Issue #1148 Accomplish the code map for the processed child alternatives
+		markElementEnds(processedAlts, storedLineNos);
+		// END KGU#1204 2025-09-06
+	
 	}
 	
 	@Override

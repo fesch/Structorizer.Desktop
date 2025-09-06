@@ -3587,7 +3587,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		}
 	}
 
-	// START KGU#1135 2024-03-19: Issue #1146 Refactored to regain clarity
+	// START KGU#1135 2024-03-19: Issue #1146, #1148 Refactored to regain clarity
 	/**
 	 * Marks the start of the instruction code for nested alternative {@code _alt}
 	 * within the IF ELSIF chain for the code preview.
