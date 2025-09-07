@@ -320,6 +320,7 @@ Current development version 3.32-33 (2025-09-07)
       to be disabled in case of active "No conversion ..." export option. <2>
 - 33: Issue #1221 Comment lines were unduly trimmed and skipped if empty. <2>
 - 33: Bugfix #1222 Two minor shell export flaws with CASE elements <2>
+- 33: Enh. #1223 First approach to export Try elements to bash/ksh <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>
