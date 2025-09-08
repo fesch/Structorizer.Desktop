@@ -26,7 +26,7 @@ Known issues (also see https://github.com/fesch/Structorizer.Desktop/issues):
 - ARM export is still experimental and relies on a specific and very restricted
   syntax for the element contents in order to produce meaningful results.
 
-Current development version 3.32-33 (2025-09-07)
+Current development version 3.32-33 (2025-09-08)
 - 01: Bugfix #987: Duplicate subroutine comment export by Pascal generator <2>
 - 01: Bugfix #988: Syntax error in Structorizer.bat and Arranger.bat fixed <2>
 - 01: Bugfix #989: Expressions in EXIT elements (e.g. return) were forgotten
@@ -320,7 +320,7 @@ Current development version 3.32-33 (2025-09-07)
       to be disabled in case of active "No conversion ..." export option. <2>
 - 33: Issue #1221 Comment lines were unduly trimmed and skipped if empty. <2>
 - 33: Bugfix #1222 Two minor shell export flaws with CASE elements <2>
-- 33: Enh. #1223 First approach to export Try elements to bash/ksh <2>
+- 33: Enh. #1223 Export of Try/Throw elements to bash/ksh implemented <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>
