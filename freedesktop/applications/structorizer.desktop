@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Version=1.4
+Name=Structorizer
+GenericName=Diagram creator
+Comment=Create Nassi-Shneiderman diagrams (NSD)
+Icon=structorizer
+Exec=structorizer
+Terminal=false
+MimeType=application/nsd
+Categories=Development;Graphics;VectorGraphics;RasterGraphics;ComputerScience
+Keywords=nsd;diagrams
