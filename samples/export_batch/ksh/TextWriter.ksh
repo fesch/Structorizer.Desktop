@@ -15,43 +15,43 @@ function backward {
     case ${color} in
 
         1)
-                backward "${len}" # color = ffffff
+            backward "${len}" # color = ffffff
         ;;
 
         2)
-                backward "${len}" # color = ff8080
+            backward "${len}" # color = ff8080
         ;;
 
         3)
-                backward "${len}" # color = ffff80
+            backward "${len}" # color = ffff80
         ;;
 
         4)
-                backward "${len}" # color = 80ff80
+            backward "${len}" # color = 80ff80
         ;;
 
         5)
-                backward "${len}" # color = 80ffff
+            backward "${len}" # color = 80ffff
         ;;
 
         6)
-                backward "${len}" # color = 0080ff
+            backward "${len}" # color = 0080ff
         ;;
 
         7)
-                backward "${len}" # color = ff80c0
+            backward "${len}" # color = ff80c0
         ;;
 
         8)
-                backward "${len}" # color = c0c0c0
+            backward "${len}" # color = c0c0c0
         ;;
 
         9)
-                backward "${len}" # color = ff8000
+            backward "${len}" # color = ff8000
         ;;
 
         10)
-                backward "${len}" # color = 8080ff
+            backward "${len}" # color = 8080ff
         ;;
     esac
 
@@ -79,43 +79,43 @@ function forward {
     case ${color} in
 
         1)
-                forward "${len}" # color = ffffff
+            forward "${len}" # color = ffffff
         ;;
 
         2)
-                forward "${len}" # color = ff8080
+            forward "${len}" # color = ff8080
         ;;
 
         3)
-                forward "${len}" # color = ffff80
+            forward "${len}" # color = ffff80
         ;;
 
         4)
-                forward "${len}" # color = 80ff80
+            forward "${len}" # color = 80ff80
         ;;
 
         5)
-                forward "${len}" # color = 80ffff
+            forward "${len}" # color = 80ffff
         ;;
 
         6)
-                forward "${len}" # color = 0080ff
+            forward "${len}" # color = 0080ff
         ;;
 
         7)
-                forward "${len}" # color = ff80c0
+            forward "${len}" # color = ff80c0
         ;;
 
         8)
-                forward "${len}" # color = c0c0c0
+            forward "${len}" # color = c0c0c0
         ;;
 
         9)
-                forward "${len}" # color = ff8000
+            forward "${len}" # color = ff8000
         ;;
 
         10)
-                forward "${len}" # color = 8080ff
+            forward "${len}" # color = 8080ff
         ;;
     esac
 
@@ -1526,179 +1526,179 @@ function drawText {
         case ${letter} in
 
             "A")
-                    letterA "${h}" "${c}"
+                letterA "${h}" "${c}"
             ;;
 
             "B")
-                    letterB "${h}" "${c}"
+                letterB "${h}" "${c}"
             ;;
 
             "C")
-                    letterC "${h}" "${c}"
+                letterC "${h}" "${c}"
             ;;
 
             "D")
-                    letterD "${h}" "${c}"
+                letterD "${h}" "${c}"
             ;;
 
             "E")
-                    letterE "${h}" "${c}"
+                letterE "${h}" "${c}"
             ;;
 
             "F")
-                    letterF "${h}" "${c}"
+                letterF "${h}" "${c}"
             ;;
 
             "G")
-                    letterG "${h}" "${c}"
+                letterG "${h}" "${c}"
             ;;
 
             "H")
-                    letterH "${h}" "${c}"
+                letterH "${h}" "${c}"
             ;;
 
             "I")
-                    letterI "${h}" "${c}"
+                letterI "${h}" "${c}"
             ;;
 
             "J")
-                    letterJ "${h}" "${c}"
+                letterJ "${h}" "${c}"
             ;;
 
             "K")
-                    letterK "${h}" "${c}"
+                letterK "${h}" "${c}"
             ;;
 
             "L")
-                    letterL "${h}" "${c}"
+                letterL "${h}" "${c}"
             ;;
 
             "M")
-                    letterM "${h}" "${c}"
+                letterM "${h}" "${c}"
             ;;
 
             "N")
-                    letterN "${h}" "${c}"
+                letterN "${h}" "${c}"
             ;;
 
             "O")
-                    letterO "${h}" "${c}"
+                letterO "${h}" "${c}"
             ;;
 
             "P")
-                    letterP "${h}" "${c}"
+                letterP "${h}" "${c}"
             ;;
 
             "Q")
-                    letterQ "${h}" "${c}"
+                letterQ "${h}" "${c}"
             ;;
 
             "R")
-                    letterR "${h}" "${c}"
+                letterR "${h}" "${c}"
             ;;
 
             "S")
-                    letterS "${h}" "${c}"
+                letterS "${h}" "${c}"
             ;;
 
             "T")
-                    letterT "${h}" "${c}"
+                letterT "${h}" "${c}"
             ;;
 
             "U")
-                    letterU "${h}" "${c}"
+                letterU "${h}" "${c}"
             ;;
 
             "V")
-                    letterV "${h}" "${c}"
+                letterV "${h}" "${c}"
             ;;
 
             "W")
-                    letterW "${h}" "${c}"
+                letterW "${h}" "${c}"
             ;;
 
             "X")
-                    letterX "${h}" "${c}"
+                letterX "${h}" "${c}"
             ;;
 
             "Y")
-                    letterY "${h}" "${c}"
+                letterY "${h}" "${c}"
             ;;
 
             "Z")
-                    letterZ "${h}" "${c}"
+                letterZ "${h}" "${c}"
             ;;
 
             " ")
-                    blank "${h}" "${c}"
+                blank "${h}" "${c}"
             ;;
 
             "!")
-                    exclMk "${h}" "${c}"
+                exclMk "${h}" "${c}"
             ;;
 
             "?")
-                    qstnMk "${h}" "${c}"
+                qstnMk "${h}" "${c}"
             ;;
 
             ".")
-                    fullSt "${h}" "${c}"
+                fullSt "${h}" "${c}"
             ;;
 
             ",")
-                    comma "${h}" "${c}"
+                comma "${h}" "${c}"
             ;;
 
             "Ä")
-                    letterAe "${h}" "${c}"
+                letterAe "${h}" "${c}"
             ;;
 
             "Ö")
-                    letterOe "${h}" "${c}"
+                letterOe "${h}" "${c}"
             ;;
 
             "Ü")
-                    letterUe "${h}" "${c}"
+                letterUe "${h}" "${c}"
             ;;
 
             "0")
-                    digit0 "${h}" "${c}"
+                digit0 "${h}" "${c}"
             ;;
 
             "1")
-                    digit1 "${h}" "${c}"
+                digit1 "${h}" "${c}"
             ;;
 
             "2")
-                    digit2 "${h}" "${c}"
+                digit2 "${h}" "${c}"
             ;;
 
             "3")
-                    digit3 "${h}" "${c}"
+                digit3 "${h}" "${c}"
             ;;
 
             "4")
-                    digit4 "${h}" "${c}"
+                digit4 "${h}" "${c}"
             ;;
 
             "5")
-                    digit5 "${h}" "${c}"
+                digit5 "${h}" "${c}"
             ;;
 
             "6")
-                    digit6 "${h}" "${c}"
+                digit6 "${h}" "${c}"
             ;;
 
             "7")
-                    digit7 "${h}" "${c}"
+                digit7 "${h}" "${c}"
             ;;
 
             "8")
-                    digit8 "${h}" "${c}"
+                digit8 "${h}" "${c}"
             ;;
 
             "9")
-                    digit9 "${h}" "${c}"
+                digit9 "${h}" "${c}"
             ;;
 
             *)

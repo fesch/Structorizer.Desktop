@@ -84,15 +84,15 @@ function drawBarChart {
         case (( ${k} % 3 )) in
 
             0)
-                    setPenColor 255 0 0
+                setPenColor 255 0 0
             ;;
 
             1)
-                    setPenColor 0 255 0
+                setPenColor 0 255 0
             ;;
 
             2)
-                    setPenColor 0 0 255
+                setPenColor 0 0 255
             ;;
         esac
 
@@ -117,6 +117,19 @@ function drawBarChart {
 #      The respective lines are marked with a TODO File API comment. 
 #      You might try something like "echo value >> filename" for output 
 #      or "while ... do ... read var ... done < filename" for input. 
+
+function finally612fc6eb()
+{
+    exitCode=$?
+    arg1=$1
+    # TODO File API: Replace the "fileClose" call by an appropriate shell construct 
+    fileClose fileNo
+    if [ "$arg1" = trapped ]
+    then
+        exit ${exitCode}
+    fi
+}
+
 # Tries to read as many integer values as possible upto maxNumbers 
 # from file fileName into the given array numbers. 
 # Returns the number of the actually read numbers. May cause an exception. 
@@ -135,26 +148,36 @@ function readNumbers {
 
     if (( ${fileNo} <= 0 ))
     then
-        # throw "File could not be opened!" (FIXME!) 
+        # throw "File could not be opened!" 
+        return 42
     fi
 
-    # try (FIXME!) 
+    trap612fc6eb=$( trap -p EXIT )
+    if [ -z "$trap612fc6eb" ] ; then trap612fc6eb="-"; else trap612fc6eb=${trap612fc6eb:8}; trap612fc6eb=${trap612fc6eb% *}; fi
+    if [ "${trap612fc6eb:0:1}" = "'" ] ; then trap612fc6eb=${trap612fc6eb:1} ; trap612fc6eb=${trap612fc6eb%\'*}; fi
+    trap "finally612fc6eb trapped" EXIT
+    { # try
 
         # TODO File API: Replace the "fileEOF" call by an appropriate shell construct 
         while (( ! fileEOF(${fileNo}) && ${nNumbers} < ${maxNumbers} ))
         do
             # TODO File API: Replace the "fileReadInt" call by an appropriate shell construct 
-            number=$( fileReadInt "${fileNo}" )
-            numbers[${nNumbers}]=${number}
-            nNumbers=$(( ${nNumbers} + 1 ))
-        done
+            number=$( fileReadInt "${fileNo}" ) &&
+            numbers[${nNumbers}]=${number} &&
+            nNumbers=$(( ${nNumbers} + 1 )) &&
+            true
+        done &&
 
-    # catch error (FIXME!) 
-        # throw (FIXME!) 
-    # finally (FIXME!) 
-        # TODO File API: Replace the "fileClose" call by an appropriate shell construct 
-        fileClose "${fileNo}"
-    # end try (FIXME!) 
+        true
+    } || { # catch error
+        error=$?
+        # throw 
+        return 42
+    }
+    trap "${trap612fc6eb}" EXIT
+    { # finally
+        finally612fc6eb okay
+    }
     result467aecef=${nNumbers}
 }
 
@@ -173,6 +196,17 @@ function readNumbers {
 
 # = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 
+
+function finally612fc6eb()
+{
+    exitCode=$?
+    arg1=$1
+    fileClose fileNo
+    if [ "$arg1" = trapped ]
+    then
+        exit ${exitCode}
+    fi
+}
 
 # Computes the sum and average of the numbers read from a user-specified 
 # text file (which might have been created via generateRandomNumberFile(4)). 
@@ -195,7 +229,6 @@ echo -n "Name/path of the number file" ; read file_name
 # do 
 #     echo -n "Name/path of the number file" ; read file_name 
 #     fileNo=$( fileOpen "${file_name}" ) 
-#     : 
 #     (( ! (${fileNo} > 0 || ${file_name} == "") )) || break 
 # done 
 #  
@@ -206,15 +239,15 @@ then
 #     fileClose "${fileNo}" 
     set -A values
     nValues=0
-    # try (FIXME!) 
-        readNumbers "${file_name}" values 1000
-        nValues=${result467aecef}
-    # catch failure (FIXME!) 
+    { # try
+        readNumbers "${file_name}" values 1000 &&
+        nValues=${result467aecef} &&
+        true
+    } || { # catch failure
+        failure=$?
         echo failure
         exit  (( -7 ))
-    # finally (FIXME!) 
-        :
-    # end try (FIXME!) 
+    }
     sum=0.0
 
     for (( k=0; k<=(( ${nValues}-1 )); k++ ))
@@ -305,15 +338,15 @@ function drawBarChart {
         case (( ${k} % 3 )) in
 
             0)
-                    setPenColor 255 0 0
+                setPenColor 255 0 0
             ;;
 
             1)
-                    setPenColor 0 255 0
+                setPenColor 0 255 0
             ;;
 
             2)
-                    setPenColor 0 0 255
+                setPenColor 0 0 255
             ;;
         esac
 
@@ -340,6 +373,19 @@ function drawBarChart {
 #      The respective lines are marked with a TODO File API comment. 
 #      You might try something like "echo value >> filename" for output 
 #      or "while ... do ... read var ... done < filename" for input. 
+
+function finally612fc6eb()
+{
+    exitCode=$?
+    arg1=$1
+    # TODO File API: Replace the "fileClose" call by an appropriate shell construct 
+    fileClose "${fileNo}"
+    if [ "$arg1" = trapped ]
+    then
+        exit ${exitCode}
+    fi
+}
+
 # Reads a random number file and draws a histogram accotrding to the 
 # user specifications 
 # TODO: Check and revise the syntax of all expressions! 
@@ -371,14 +417,14 @@ then
     kMaxCount=0
     set -A numberArray
     nObtained=0
-    # try (FIXME!) 
-        readNumbers "${file_name}" numberArray 10000
-        nObtained=${result467aecef}
-    # catch failure (FIXME!) 
+    { # try
+        readNumbers "${file_name}" numberArray 10000 &&
+        nObtained=${result467aecef} &&
+        true
+    } || { # catch failure
+        failure=$?
         echo failure
-    # finally (FIXME!) 
-        :
-    # end try (FIXME!) 
+    }
 
     if (( ${nObtained} > 0 ))
     then

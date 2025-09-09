@@ -63,6 +63,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2025-07-03      Some missing Override annotations added
  *      Kay Gürtzig             2025-08-19      Bugfix #1207: New parent method getAssignmentPrefixes overridden
  *      Kay Gürtzig             2025-09-06      Issue #1148: Indentation now simply inherited from BASHGenerator
+ *      Kay Gürtzig             2025-09-09      Issue #1210: Type definitions and declarations averted with
+ *                                              suppressTransformation mode
  *
  ******************************************************************************************************
  *
@@ -359,14 +361,20 @@ public class KSHGenerator extends BASHGenerator {
 			// END KGU#53 2015-11-02
 		}
 		
-		// START KGU#542 2019-12-01: Enh. #739 - support for enumeration types
-		for (Entry<String, TypeMapEntry> typeEntry: typeMap.entrySet()) {
-			TypeMapEntry type = typeEntry.getValue();
-			if (typeEntry.getKey().startsWith(":") && type != null && type.isEnum()) {
-				appendEnumeratorDef(type, _indent);
+		// START KGU#1193 2025-09-09: Issue #1210 Mind suppressTransformation
+		if (!suppressTransformation) {
+		// END KGU#1193 2025-09-09
+			// START KGU#542 2019-12-01: Enh. #739 - support for enumeration types
+			for (Entry<String, TypeMapEntry> typeEntry: typeMap.entrySet()) {
+				TypeMapEntry type = typeEntry.getValue();
+				if (typeEntry.getKey().startsWith(":") && type != null && type.isEnum()) {
+					appendEnumeratorDef(type, _indent);
+				}
 			}
+			// END KGU#542 2019-12-01
+		// START KGU#1193 2025-09-09: Issue #1210 see above
 		}
-		// END KGU#542 2019-12-01
+		// END KGU#1193 2025-09-09
 		// START KGU#129 2016-01-08: Bugfix #96 - Now fetch all variable names from the entire diagram
 		varNames = _root.retrieveVarNames();
 		appendComment("TODO: Check and revise the syntax of all expressions!", _indent);
@@ -374,9 +382,15 @@ public class KSHGenerator extends BASHGenerator {
 		addSepaLine();
 		//insertComment("TODO declare your variables here", _indent);
 		//addSepaLine();
-		// START KGU#389/KGU#803/KGU#806 2020-02-21: Enh. #423, #816, #821 declare records as associative arrays
-		generateDeclarations(indent);
-		// END KGU#389/KGU#803/KGU#806
+		// START KGU#1193 2025-09-09: Issue #1210 Mind suppressTransformation
+		if (!suppressTransformation) {
+		// END KGU#1193 2025-09-09
+			// START KGU#389/KGU#803/KGU#806 2020-02-21: Enh. #423, #816, #821 declare records as associative arrays
+			generateDeclarations(indent);
+			// END KGU#389/KGU#803/KGU#806
+		// START KGU#1193 2025-09-09: Issue #1210 see above
+		}
+		// END KGU#1193 2025-09-09
 		// START KGU#803 2020-02-24: Issue #816
 		if (_root.isSubroutine()) {
 			this.isResultSet = varNames.contains("result", false);

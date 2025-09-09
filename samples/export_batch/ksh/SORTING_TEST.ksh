@@ -290,15 +290,15 @@ do
     case ${modus} in
 
         1)
-                values1[${i}]=$( random 10000 )
+            values1[${i}]=$( random 10000 )
         ;;
 
         2)
-                values1[${i}]=${i}
+            values1[${i}]=${i}
         ;;
 
         3)
-                values1[${i}]=$(( -${i} ))
+            values1[${i}]=$(( -${i} ))
         ;;
     esac
 

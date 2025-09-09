@@ -18,15 +18,6 @@ function drawBarChart {
     typeset nValues=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset yScale
-    typeset yAxis
-    typeset -E valMin
-    typeset -E valMax
-    typeset stripeWidth
-    typeset stripeHeight
-    typeset -i kMin
-    typeset -i kMax
-    typeset -i k
     # Used range of the Turtleizer screen 
     const xSize <- 500
     const ySize <- 500
@@ -84,15 +75,15 @@ function drawBarChart {
         case k mod 3 in
 
             0)
-                    setPenColor(255,0,0)
+                setPenColor(255,0,0)
             ;;
 
             1)
-                    setPenColor(0, 255,0)
+                setPenColor(0, 255,0)
             ;;
 
             2)
-                    setPenColor(0, 0, 255)
+                setPenColor(0, 0, 255)
             ;;
         esac
 
@@ -117,6 +108,19 @@ function drawBarChart {
 #      The respective lines are marked with a TODO File API comment. 
 #      You might try something like "echo value >> filename" for output 
 #      or "while ... do ... read var ... done < filename" for input. 
+
+function finally757942a1()
+{
+    exitCode=$?
+    arg1=$1
+    # TODO File API: Replace the "fileClose" call by an appropriate shell construct 
+    fileClose(fileNo)
+    if [ "$arg1" = trapped ]
+    then
+        exit ${exitCode}
+    fi
+}
+
 # Tries to read as many integer values as possible upto maxNumbers 
 # from file fileName into the given array numbers. 
 # Returns the number of the actually read numbers. May cause an exception. 
@@ -126,36 +130,42 @@ function readNumbers {
     typeset -i maxNumbers=$3
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset -i number
-    typeset -i nNumbers
-    typeset -i fileNo
     nNumbers <- 0
     # TODO File API: Replace the "fileOpen" call by an appropriate shell construct 
     fileNo <- fileOpen(fileName)
 
     if fileNo <= 0
     then
-        # throw "File could not be opened!" (FIXME!) 
+        # throw "File could not be opened!" 
+        return 42
     fi
 
-    # try (FIXME!) 
+    trap757942a1=$( trap -p EXIT )
+    if [ -z "$trap757942a1" ] ; then trap757942a1="-"; else trap757942a1=${trap757942a1:8}; trap757942a1=${trap757942a1% *}; fi
+    if [ "${trap757942a1:0:1}" = "'" ] ; then trap757942a1=${trap757942a1:1} ; trap757942a1=${trap757942a1%\'*}; fi
+    trap "finally757942a1 trapped" EXIT
+    { # try
 
         # TODO File API: Replace the "fileEOF" call by an appropriate shell construct 
         while not fileEOF(fileNo) and nNumbers < maxNumbers
         do
             # TODO File API: Replace the "fileReadInt" call by an appropriate shell construct 
-            number <- fileReadInt(fileNo)
-            numbers[nNumbers] <- number
-            nNumbers <- nNumbers + 1
-        done
+            number <- fileReadInt(fileNo) &&
+            numbers[nNumbers] <- number &&
+            nNumbers <- nNumbers + 1 &&
+            true
+        done &&
 
-    # catch error (FIXME!) 
-        # throw (FIXME!) 
-    # finally (FIXME!) 
-        # TODO File API: Replace the "fileClose" call by an appropriate shell construct 
-        fileClose(fileNo)
-    # end try (FIXME!) 
-    result467aecef=nNumbers
+        true
+    } || { # catch error
+        # throw 
+        return 42
+    }
+    trap "${trap757942a1}" EXIT
+    { # finally
+        finally757942a1 okay
+    }
+    return nNumbers
 }
 
 # ======= 8< =========================================================== 
@@ -173,6 +183,17 @@ function readNumbers {
 
 # = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 
+
+function finally757942a1()
+{
+    exitCode=$?
+    arg1=$1
+    fileClose(fileNo)
+    if [ "$arg1" = trapped ]
+    then
+        exit ${exitCode}
+    fi
+}
 
 # Computes the sum and average of the numbers read from a user-specified 
 # text file (which might have been created via generateRandomNumberFile(4)). 
@@ -195,7 +216,6 @@ echo -n "Name/path of the number file" ; read file_name
 # do 
 #     echo -n "Name/path of the number file" ; read file_name 
 #     fileNo <- fileOpen(file_name) 
-#     : 
 #     not (fileNo > 0 or file_name = "") || break 
 # done 
 #  
@@ -206,15 +226,13 @@ then
 #     fileClose(fileNo) 
     values <- {}
     nValues <- 0
-    # try (FIXME!) 
-        nValues <- readNumbers(file_name, values, 1000)
-        nValues<-${result467aecef}
-    # catch failure (FIXME!) 
+    { # try
+        nValues <- readNumbers(file_name, values, 1000) &&
+        true
+    } || { # catch failure
         echo failure
         exit  -7
-    # finally (FIXME!) 
-        :
-    # end try (FIXME!) 
+    }
     sum <- 0.0
 
     for (( k=0; k<=nValues-1; k++ ))
@@ -305,15 +323,15 @@ function drawBarChart {
         case k mod 3 in
 
             0)
-                    setPenColor(255,0,0)
+                setPenColor(255,0,0)
             ;;
 
             1)
-                    setPenColor(0, 255,0)
+                setPenColor(0, 255,0)
             ;;
 
             2)
-                    setPenColor(0, 0, 255)
+                setPenColor(0, 0, 255)
             ;;
         esac
 
@@ -340,6 +358,19 @@ function drawBarChart {
 #      The respective lines are marked with a TODO File API comment. 
 #      You might try something like "echo value >> filename" for output 
 #      or "while ... do ... read var ... done < filename" for input. 
+
+function finally757942a1()
+{
+    exitCode=$?
+    arg1=$1
+    # TODO File API: Replace the "fileClose" call by an appropriate shell construct 
+    fileClose(fileNo)
+    if [ "$arg1" = trapped ]
+    then
+        exit ${exitCode}
+    fi
+}
+
 # Reads a random number file and draws a histogram accotrding to the 
 # user specifications 
 # TODO: Check and revise the syntax of all expressions! 
@@ -371,14 +402,12 @@ then
     kMaxCount <- 0
     numberArray <- {}
     nObtained <- 0
-    # try (FIXME!) 
-        nObtained <- readNumbers(file_name, numberArray, 10000)
-        nObtained<-${result467aecef}
-    # catch failure (FIXME!) 
+    { # try
+        nObtained <- readNumbers(file_name, numberArray, 10000) &&
+        true
+    } || { # catch failure
         echo failure
-    # finally (FIXME!) 
-        :
-    # end try (FIXME!) 
+    }
 
     if nObtained > 0
     then

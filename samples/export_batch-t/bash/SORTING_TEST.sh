@@ -210,23 +210,22 @@ function quickSort() {
         # Partition the array into smaller and greater elements 
         # Get the resulting (and final) position of the pivot element 
         p <- partition(values, start, stop, p)
-        p<-${resultcb51256}
         # Sort subsequances separately and independently ... 
         # ========================================================== 
         # ================= START PARALLEL SECTION ================= 
         # ========================================================== 
-        pids59906517=""
+        pids6043cd28=""
         (
             # Sort left (lower) array part 
             quickSort(values, start, p)
         ) &
-        pids59906517="${pids59906517} $!"
+        pids6043cd28="${pids6043cd28} $!"
         (
             # Sort right (higher) array part 
             quickSort(values, p+1, stop)
         ) &
-        pids59906517="${pids59906517} $!"
-        wait ${pids59906517}
+        pids6043cd28="${pids6043cd28} $!"
+        wait ${pids6043cd28}
         # ========================================================== 
         # ================== END PARALLEL SECTION ================== 
         # ========================================================== 
@@ -279,15 +278,15 @@ do
     case modus in
 
         1)
-                values1[i] <- random(10000)
+            values1[i] <- random(10000)
         ;;
 
         2)
-                values1[i] <- i
+            values1[i] <- i
         ;;
 
         3)
-                values1[i] <- -i
+            values1[i] <- -i
         ;;
     esac
 
@@ -321,11 +320,8 @@ wait ${pids58c1670b}
 # ================== END PARALLEL SECTION ================== 
 # ========================================================== 
 ok1 <- testSorted(values1)
-ok1<-${result6b57696f}
 ok2 <- testSorted(values2)
-ok2<-${result6b57696f}
 ok3 <- testSorted(values3)
-ok3<-${result6b57696f}
 
 if not ok1 or not ok2 or not ok3
 then

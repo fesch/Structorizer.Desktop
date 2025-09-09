@@ -15,43 +15,43 @@ function backward {
     case color in
 
         1)
-                backward(len) # color = ffffff
+            backward(len) # color = ffffff
         ;;
 
         2)
-                backward(len) # color = ff8080
+            backward(len) # color = ff8080
         ;;
 
         3)
-                backward(len) # color = ffff80
+            backward(len) # color = ffff80
         ;;
 
         4)
-                backward(len) # color = 80ff80
+            backward(len) # color = 80ff80
         ;;
 
         5)
-                backward(len) # color = 80ffff
+            backward(len) # color = 80ffff
         ;;
 
         6)
-                backward(len) # color = 0080ff
+            backward(len) # color = 0080ff
         ;;
 
         7)
-                backward(len) # color = ff80c0
+            backward(len) # color = ff80c0
         ;;
 
         8)
-                backward(len) # color = c0c0c0
+            backward(len) # color = c0c0c0
         ;;
 
         9)
-                backward(len) # color = ff8000
+            backward(len) # color = ff8000
         ;;
 
         10)
-                backward(len) # color = 8080ff
+            backward(len) # color = 8080ff
         ;;
     esac
 
@@ -63,7 +63,6 @@ function blank {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset width
     width <- h/2.0
     penUp()
     right(90)
@@ -79,43 +78,43 @@ function forward {
     case color in
 
         1)
-                forward(len) # color = ffffff
+            forward(len) # color = ffffff
         ;;
 
         2)
-                forward(len) # color = ff8080
+            forward(len) # color = ff8080
         ;;
 
         3)
-                forward(len) # color = ffff80
+            forward(len) # color = ffff80
         ;;
 
         4)
-                forward(len) # color = 80ff80
+            forward(len) # color = 80ff80
         ;;
 
         5)
-                forward(len) # color = 80ffff
+            forward(len) # color = 80ffff
         ;;
 
         6)
-                forward(len) # color = 0080ff
+            forward(len) # color = 0080ff
         ;;
 
         7)
-                forward(len) # color = ff80c0
+            forward(len) # color = ff80c0
         ;;
 
         8)
-                forward(len) # color = c0c0c0
+            forward(len) # color = c0c0c0
         ;;
 
         9)
-                forward(len) # color = ff8000
+            forward(len) # color = ff8000
         ;;
 
         10)
-                forward(len) # color = 8080ff
+            forward(len) # color = 8080ff
         ;;
     esac
 
@@ -144,9 +143,6 @@ function digit4 {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset c
-    typeset b
-    typeset -E angle
     # Octagon edge length 
     b <- h * 0.5 / (sqrt(2.0) + 1)
     # Cathetus of the corner triangle outside the octagon 
@@ -176,7 +172,6 @@ function digit7 {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset angle
     angle <- 90 + toDegrees(atan(0.5))
     penUp()
     forward(h) # color = ffffff
@@ -199,9 +194,6 @@ function letterA {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset width
-    typeset -E rotAngle
-    typeset -E hypo
     width <- h/2.0
     hypo <- sqrt(h*h + width*width/4.0)
     rotAngle <- toDegrees(atan(width/2.0/h))
@@ -226,7 +218,6 @@ function letterE {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset width
     width <- h/2.0
     forward(h, colorNo)
     right(90)
@@ -253,7 +244,6 @@ function letterF {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset width
     width <- h/2.0
     forward(h, colorNo)
     right(90)
@@ -280,7 +270,6 @@ function letterH {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset width
     width <- h/2.0
     forward(h, colorNo)
     penUp()
@@ -306,8 +295,6 @@ function letterI {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset c
-    typeset b
     # Octagon edge length 
     b <- h * 0.5 / (sqrt(2.0) + 1)
     # Cathetus of the corner triangle outside the octagon 
@@ -341,8 +328,6 @@ function letterK {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset width
-    typeset diag
     width <- h/2.0
     diag <- h/sqrt(2.0)
     forward(h, colorNo)
@@ -364,7 +349,6 @@ function letterL {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset width
     width <- h/2.0
     forward(h, colorNo)
     penUp()
@@ -382,9 +366,6 @@ function letterM {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset width
-    typeset -E rotAngle
-    typeset hypo
     width <- h/2.0
     hypo <- sqrt(width*width + h*h)/2.0
     rotAngle <- toDegrees(atan(width/h))
@@ -404,9 +385,6 @@ function letterN {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset width
-    typeset -E rotAngle
-    typeset -E hypo
     width <- h/2.0
     hypo <- sqrt(width*width + h*h)
     rotAngle <- toDegrees(atan(width/h))
@@ -427,7 +405,6 @@ function letterT {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset width
     width <- h/2.0
     penUp()
     forward(h) # color = ffffff
@@ -453,9 +430,6 @@ function letterV {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset width
-    typeset -E rotAngle
-    typeset -E hypo
     width <- h/2.0
     hypo <- sqrt(h*h + width*width/4.0)
     rotAngle <- toDegrees(atan(width/2.0/h))
@@ -479,10 +453,6 @@ function letterW {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset width_3
-    typeset width
-    typeset -E rotAngle
-    typeset -E hypo
     width <- h/2.0
     width_3 <- width/3.0
     hypo <- sqrt(width_3*width_3 + h*h)
@@ -515,9 +485,6 @@ function letterX {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset width
-    typeset -E rotAngle
-    typeset -E hypo
     width <- h/2.0
     hypo <- sqrt(width*width + h*h)
     rotAngle <- toDegrees(atan(width/h))
@@ -539,9 +506,6 @@ function letterY {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset width
-    typeset -E rotAngle
-    typeset hypo
     width <- h/2.0
     hypo <- sqrt(width*width + h*h)/2.0
     rotAngle <- toDegrees(atan(width/h))
@@ -570,9 +534,6 @@ function letterZ {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset width
-    typeset -E rotAngle
-    typeset -E hypo
     width <- h/2.0
     hypo <- sqrt(width*width + h*h)
     rotAngle <- toDegrees(atan(width/h))
@@ -598,8 +559,6 @@ function polygonPart {
     typeset -i color=$5
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset rotAngle
-    typeset -i k
     rotAngle <- 360.0/n
 
     if ctrclkws
@@ -622,10 +581,6 @@ function charDummy {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset width
-    typeset d
-    typeset c
-    typeset b
     width <- h / 2.0
     # Octagon edge length (here: edge lengzh of the square) 
     b <- width / (sqrt(2.0) + 1)
@@ -655,10 +610,6 @@ function comma {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset -E rotAngle
-    typeset hypo
-    typeset c
-    typeset b
     # Octagon edge length 
     b <- h * 0.5 / (sqrt(2.0) + 1)
     # Cathetus of the outer corner triangle of the octagon 
@@ -692,9 +643,6 @@ function digit2 {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset c
-    typeset b
-    typeset -E angle
     # Octagon edge length 
     b <- h * 0.5 / (sqrt(2.0) + 1)
     # Cathetus of the corner triangle outside the octagon 
@@ -720,8 +668,6 @@ function digit3 {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset c
-    typeset b
     # Octagon edge length 
     b <- h * 0.5 / (sqrt(2.0) + 1)
     # Cathetus of the corner triangle outside the octagon 
@@ -756,8 +702,6 @@ function digit5 {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset c
-    typeset b
     # Octagon edge length 
     b <- h * 0.5 / (sqrt(2.0) + 1)
     # Cathetus of the corner triangle outside the octagon 
@@ -786,8 +730,6 @@ function digit6 {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset c
-    typeset b
     # Octagon edge length 
     b <- h * 0.5 / (sqrt(2.0) + 1)
     # Cathetus of the corner triangle outside the octagon 
@@ -820,8 +762,6 @@ function digit8 {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset c
-    typeset b
     # Octagon edge length 
     b <- h * 0.5 / (sqrt(2.0) + 1)
     # Cathetus of the corner triangle outside the octagon 
@@ -859,8 +799,6 @@ function digit9 {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset c
-    typeset b
     # Octagon edge length 
     b <- h * 0.5 / (sqrt(2.0) + 1)
     # Cathetus of the corner triangle outside the octagon 
@@ -889,14 +827,6 @@ function exclMk {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset width
-    typeset -E rotAngle2
-    typeset -i rotAngle
-    typeset length2
-    typeset length1
-    typeset -E hypo
-    typeset c
-    typeset b
     # Octagon edge length 
     b <- h * 0.5 / (sqrt(2.0) + 1)
     # Cathetus of the outer corner triangle of the octagon 
@@ -945,8 +875,6 @@ function fullSt {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset c
-    typeset b
     # Octagon edge length 
     b <- h * 0.5 / (sqrt(2.0) + 1)
     # Cathetus of the outer corner triangle of the octagon 
@@ -1001,8 +929,6 @@ function letterB {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset c
-    typeset b
     # Octagon edge length 
     b <- h * 0.5 / (sqrt(2.0) + 1)
     # Cathetus of the outer corner triangle of the octagon 
@@ -1034,9 +960,6 @@ function letterC {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset -i rotAngle
-    typeset c
-    typeset b
     # Octagon edge length 
     b <- h * 0.5 / (sqrt(2.0) + 1)
     # Cathetus of the outer triangle at the octagon corner 
@@ -1073,8 +996,6 @@ function letterD {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset c
-    typeset b
     # Octagon edge length 
     b <- h * 0.5 / (sqrt(2.0) + 1)
     # Cathetus of the outer corner triangle of the octagon 
@@ -1104,8 +1025,6 @@ function letterG {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset c
-    typeset b
     # Octagon edge length 
     b <- h * 0.5 / (sqrt(2.0) + 1)
     # Cathetus of the corner triangle outside the octagon. 
@@ -1144,9 +1063,6 @@ function letterJ {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset -i rotAngle
-    typeset c
-    typeset b
     # Octagon edge length 
     b <- h * 0.5 / (sqrt(2.0) + 1)
     # Cathetus of the outer corner triangle of the octagon 
@@ -1174,8 +1090,6 @@ function letterO {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset c
-    typeset b
     # Octagon edge length 
     b <- h * 0.5 / (sqrt(2.0) + 1)
     # Cathetus of the corner triangle outside the octagon 
@@ -1207,8 +1121,6 @@ function letterP {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset c
-    typeset b
     # Octagon edge length 
     b <- h * 0.5 / (sqrt(2.0) + 1)
     # Cathetus of the corner triangle outside the octagon 
@@ -1235,9 +1147,6 @@ function letterQ {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset -i rotAngle
-    typeset c
-    typeset b
     # Octagon edge length 
     b <- h * 0.5 / (sqrt(2.0) + 1)
     # Cathetus of the outer corner triangle of the octagon 
@@ -1274,9 +1183,6 @@ function letterR {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset -i rotAngle
-    typeset c
-    typeset b
     # Octagon edge length 
     b <- h * 0.5 / (sqrt(2.0) + 1)
     # Cathetus of the outer corner triangle of the octagon 
@@ -1302,9 +1208,6 @@ function letterS {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset -i rotAngle
-    typeset c
-    typeset b
     # Octagon edge length 
     b <- h * 0.5 / (sqrt(2.0) + 1)
     # Side length of the (outer) corner triangle of the octagon 
@@ -1335,9 +1238,6 @@ function letterU {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset -i rotAngle
-    typeset c
-    typeset b
     # edge length of a regular octagon 
     b <- h * 0.5 / (sqrt(2.0) + 1)
     # Cathetus of the outer corner triangle of the octagon 
@@ -1368,9 +1268,6 @@ function qstnMk {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset -i rotAngle
-    typeset c
-    typeset b
     # Octagon edge length 
     b <- h * 0.5 / (sqrt(2.0) + 1)
     # Cathetus of the outer corner triangle of the octagon 
@@ -1408,7 +1305,6 @@ function digit0 {
     typeset colorNo=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset len
     penUp()
     forward(h/4.0) # color = ffffff
     penDown()
@@ -1514,9 +1410,6 @@ function drawText {
     typeset -i c=$3
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset letter
-    typeset -i k
-    typeset gap
     gap <- h/10.0
 
     for (( k=1; k<=length(text); k++ ))
@@ -1526,179 +1419,179 @@ function drawText {
         case letter in
 
             "A")
-                    letterA(h,c)
+                letterA(h,c)
             ;;
 
             "B")
-                    letterB(h,c)
+                letterB(h,c)
             ;;
 
             "C")
-                    letterC(h,c)
+                letterC(h,c)
             ;;
 
             "D")
-                    letterD(h,c)
+                letterD(h,c)
             ;;
 
             "E")
-                    letterE(h,c)
+                letterE(h,c)
             ;;
 
             "F")
-                    letterF(h,c)
+                letterF(h,c)
             ;;
 
             "G")
-                    letterG(h,c)
+                letterG(h,c)
             ;;
 
             "H")
-                    letterH(h,c)
+                letterH(h,c)
             ;;
 
             "I")
-                    letterI(h,c)
+                letterI(h,c)
             ;;
 
             "J")
-                    letterJ(h,c)
+                letterJ(h,c)
             ;;
 
             "K")
-                    letterK(h,c)
+                letterK(h,c)
             ;;
 
             "L")
-                    letterL(h,c)
+                letterL(h,c)
             ;;
 
             "M")
-                    letterM(h,c)
+                letterM(h,c)
             ;;
 
             "N")
-                    letterN(h,c)
+                letterN(h,c)
             ;;
 
             "O")
-                    letterO(h,c)
+                letterO(h,c)
             ;;
 
             "P")
-                    letterP(h,c)
+                letterP(h,c)
             ;;
 
             "Q")
-                    letterQ(h,c)
+                letterQ(h,c)
             ;;
 
             "R")
-                    letterR(h,c)
+                letterR(h,c)
             ;;
 
             "S")
-                    letterS(h,c)
+                letterS(h,c)
             ;;
 
             "T")
-                    letterT(h,c)
+                letterT(h,c)
             ;;
 
             "U")
-                    letterU(h,c)
+                letterU(h,c)
             ;;
 
             "V")
-                    letterV(h,c)
+                letterV(h,c)
             ;;
 
             "W")
-                    letterW(h,c)
+                letterW(h,c)
             ;;
 
             "X")
-                    letterX(h,c)
+                letterX(h,c)
             ;;
 
             "Y")
-                    letterY(h,c)
+                letterY(h,c)
             ;;
 
             "Z")
-                    letterZ(h,c)
+                letterZ(h,c)
             ;;
 
             " ")
-                    blank(h,c)
+                blank(h,c)
             ;;
 
             "!")
-                    exclMk(h,c)
+                exclMk(h,c)
             ;;
 
             "?")
-                    qstnMk(h,c)
+                qstnMk(h,c)
             ;;
 
             ".")
-                    fullSt(h,c)
+                fullSt(h,c)
             ;;
 
             ",")
-                    comma(h,c)
+                comma(h,c)
             ;;
 
             "Ä")
-                    letterAe(h,c)
+                letterAe(h,c)
             ;;
 
             "Ö")
-                    letterOe(h,c)
+                letterOe(h,c)
             ;;
 
             "Ü")
-                    letterUe(h,c)
+                letterUe(h,c)
             ;;
 
             "0")
-                    digit0(h,c)
+                digit0(h,c)
             ;;
 
             "1")
-                    digit1(h,c)
+                digit1(h,c)
             ;;
 
             "2")
-                    digit2(h,c)
+                digit2(h,c)
             ;;
 
             "3")
-                    digit3(h,c)
+                digit3(h,c)
             ;;
 
             "4")
-                    digit4(h,c)
+                digit4(h,c)
             ;;
 
             "5")
-                    digit5(h,c)
+                digit5(h,c)
             ;;
 
             "6")
-                    digit6(h,c)
+                digit6(h,c)
             ;;
 
             "7")
-                    digit7(h,c)
+                digit7(h,c)
             ;;
 
             "8")
-                    digit8(h,c)
+                digit8(h,c)
             ;;
 
             "9")
-                    digit9(h,c)
+                digit9(h,c)
             ;;
 
             *)

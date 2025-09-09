@@ -71,8 +71,7 @@ function checkGoodBye() {
         then
             saidBye <- true
             echo pair[1]
-            resultcb0ed20=true
-            return 0
+            return true
         fi
 
     done
@@ -345,13 +344,9 @@ echo "**********************************"
 # the first element is the current insertion index 
 history <- {0, "", "", "", "", ""}
 const replies <- setupReplies()
-declare -ar replies=("${result33723e30[@]}")
 const reflexions <- setupReflexions()
-declare -ar reflexions=("${result64f6106c[@]}")
 const byePhrases <- setupGoodByePhrases()
-declare -ar byePhrases=("${result553a3d88[@]}")
 const keyMap <- setupKeywords()
-declare -ar keyMap=("${result7a30d1e6[@]}")
 offsets[length(keyMap)-1] <- 0
 isGone <- false
 # Starter 
@@ -364,20 +359,16 @@ do
     # Converts the input to lowercase, cuts out interpunctation 
     # and pads the string 
     userInput <- normalizeInput(userInput)
-    userInput<-${result5891e32e}
     isGone <- checkGoodBye(userInput, byePhrases)
-    isGone<-${resultcb0ed20}
 
     if not isGone
     then
         reply <- "Please don\'t repeat yourself!"
         isRepeated <- checkRepetition(history, userInput)
-        isRepeated<-${result8e24743}
 
         if not isRepeated
         then
             findInfo <- findKeyword(keyMap, userInput)
-            declare -a findInfo=("${result74a10858[@]}")
             keyIndex <- findInfo[0]
 
             if keyIndex < 0
@@ -393,7 +384,6 @@ do
             if length(entry.keyword) > 0
             then
                 varPart <- conjugateStrings(userInput, entry.keyword, findInfo[1], reflexions)
-                varPart<-${result23fe1d71}
             fi
 
             replyRing <- replies[entry.index]
@@ -415,7 +405,6 @@ do
             fi
 
             reply <- adjustSpelling(reply)
-            reply<-${result28ac3dc3}
         fi
 
         echo reply

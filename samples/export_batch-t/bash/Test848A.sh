@@ -29,5 +29,4 @@ a1 <- 7
 b1 <- a2 + " oder blöd"
 c1 <- a1 * b2
 c2 <- testSub(c1, a1 + b2, b1)
-c2<-${result1a3869f4}
 echo a1, " ", a2, " ", b1, " ", b2

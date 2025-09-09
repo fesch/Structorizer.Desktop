@@ -17,10 +17,6 @@ function bubbleSort {
     typeset -n values=$1
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset temp
-    typeset -i posSwapped
-    typeset -i i
-    typeset ende
     ende <- length(values) - 2
 
     # NOTE: Represents a REPEAT UNTIL loop, see conditional break at the end. 
@@ -58,10 +54,6 @@ function maxHeapify {
     typeset range=$3
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset temp
-    typeset right
-    typeset max
-    typeset left
     # Indices of left and right child of node i 
     right <- (i+1) * 2
     left <- right - 1
@@ -103,8 +95,6 @@ function partition {
     typeset p=$4
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset seen
-    typeset pivot
     # Cache the pivot element 
     pivot <- values[p]
     # Exchange the pivot element with the start element 
@@ -154,8 +144,6 @@ function testSorted {
     typeset numbers=$1
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset isSorted
-    typeset -i i
     isSorted <- true
     i <- 0
 
@@ -184,8 +172,6 @@ function buildMaxHeap {
     typeset heap=$1
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset -i lgth
-    typeset -i k
     lgth <- length(heap)
 
     for (( k=lgth div 2 - 1; k>=0; k-- ))
@@ -204,8 +190,6 @@ function quickSort {
     typeset stop=$3
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset p
-
     # At least 2 elements? (Less don't make sense.) 
     if stop >= start + 2
     then
@@ -215,23 +199,22 @@ function quickSort {
         # Partition the array into smaller and greater elements 
         # Get the resulting (and final) position of the pivot element 
         p <- partition(values, start, stop, p)
-        p<-${result25af5db5}
         # Sort subsequances separately and independently ... 
         # ========================================================== 
         # ================= START PARALLEL SECTION ================= 
         # ========================================================== 
-        pids12cdcf4=""
+        pids12f41634=""
         (
             # Sort left (lower) array part 
             quickSort(values, start, p)
         ) &
-        pids12cdcf4="${pids12cdcf4} $!"
+        pids12f41634="${pids12f41634} $!"
         (
             # Sort right (higher) array part 
             quickSort(values, p+1, stop)
         ) &
-        pids12cdcf4="${pids12cdcf4} $!"
-        wait ${pids12cdcf4}
+        pids12f41634="${pids12f41634} $!"
+        wait ${pids12f41634}
         # ========================================================== 
         # ================== END PARALLEL SECTION ================== 
         # ========================================================== 
@@ -245,9 +228,6 @@ function heapSort {
     typeset -n values=$1
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset maximum
-    typeset -i k
-    typeset -i heapRange
     buildMaxHeap(values)
     heapRange <- length(values)
 
@@ -290,15 +270,15 @@ do
     case modus in
 
         1)
-                values1[i] <- random(10000)
+            values1[i] <- random(10000)
         ;;
 
         2)
-                values1[i] <- i
+            values1[i] <- i
         ;;
 
         3)
-                values1[i] <- -i
+            values1[i] <- -i
         ;;
     esac
 
@@ -314,29 +294,26 @@ done
 # ========================================================== 
 # ================= START PARALLEL SECTION ================= 
 # ========================================================== 
-pids6b9651f3=""
+pids60285225=""
 (
     bubbleSort(values1)
 ) &
-pids6b9651f3="${pids6b9651f3} $!"
+pids60285225="${pids60285225} $!"
 (
     quickSort(values2, 0, elementCount)
 ) &
-pids6b9651f3="${pids6b9651f3} $!"
+pids60285225="${pids60285225} $!"
 (
     heapSort(values3)
 ) &
-pids6b9651f3="${pids6b9651f3} $!"
-wait ${pids6b9651f3}
+pids60285225="${pids60285225} $!"
+wait ${pids60285225}
 # ========================================================== 
 # ================== END PARALLEL SECTION ================== 
 # ========================================================== 
 ok1 <- testSorted(values1)
-ok1<-${result38bc8ab5}
 ok2 <- testSorted(values2)
-ok2<-${result38bc8ab5}
 ok3 <- testSorted(values3)
-ok3<-${result38bc8ab5}
 
 if not ok1 or not ok2 or not ok3
 then

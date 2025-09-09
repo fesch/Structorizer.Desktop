@@ -44,26 +44,26 @@ function daysInMonth423 {
     case ${aDate[month]} in
 
         1|3|5|7|8|10|12)
-                days=31
+            days=31
         ;;
 
         4|6|9|11)
-                days=30
+            days=30
         ;;
 
         2)
-                # Default value for February 
-                days=28
-                # To make the call work it has to be done in 
-                # a separate element (cannot be performed 
-                # as part of the condition of an Alternative) 
-                isLeapYear ${aDate[year]}
-                isLeap=${result6121c9d6}
+            # Default value for February 
+            days=28
+            # To make the call work it has to be done in 
+            # a separate element (cannot be performed 
+            # as part of the condition of an Alternative) 
+            isLeapYear ${aDate[year]}
+            isLeap=${result6121c9d6}
 
-                if [[ ${isLeap} ]]
-                then
-                    days=29
-                fi
+            if [[ ${isLeap} ]]
+            then
+                days=29
+            fi
 
         ;;
 

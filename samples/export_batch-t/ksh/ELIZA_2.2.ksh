@@ -12,10 +12,6 @@ function adjustSpelling {
     typeset sentence=$1
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset word
-    typeset start
-    typeset result
-    typeset -i position
     result <- sentence
     position <- 1
 
@@ -55,9 +51,6 @@ function checkGoodBye {
     typeset -n phrases=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset saidBye
-    typeset pair
-
     for pair in phrases
     do
 
@@ -65,8 +58,7 @@ function checkGoodBye {
         then
             saidBye <- true
             echo pair[1]
-            result23fe1d71=true
-            return 0
+            return true
         fi
 
     done
@@ -81,9 +73,6 @@ function checkRepetition {
     typeset newInput=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset -i i
-    typeset hasOccurred
-    typeset currentIndex
     hasOccurred <- false
 
     if length(newInput) > 4
@@ -114,11 +103,6 @@ function conjugateStrings {
     typeset -n flexions=$4
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset right
-    typeset result
-    typeset -i position
-    typeset pair
-    typeset left
     result <- " " + copy(sentence, keyPos + length(key), length(sentence)) + " "
 
     for pair in flexions
@@ -159,10 +143,6 @@ function findKeyword {
     typeset sentence=$2
 # TODO: Check and revise the syntax of all expressions! 
 
-    set -A result
-    typeset -i position
-    typeset -i i
-    typeset -A entry
     # Contains the index of the keyword and its position in sentence 
     result <- {-1, 0}
     i <- 0
@@ -190,9 +170,6 @@ function normalizeInput {
     typeset sentence=$1
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset symbol
-    typeset result
-    typeset -i position
     sentence <- lowercase(sentence)
 
     for symbol in {'.', ',', ';', '!', '?'}
@@ -213,7 +190,6 @@ function normalizeInput {
 function setupGoodByePhrases {
 # TODO: Check and revise the syntax of all expressions! 
 
-    set -A phrases
     phrases[0] <- {" shut", "Okay. If you feel that way I\'ll shut up. ... Your choice."}
     phrases[1] <- {"bye", "Well, let\'s end our talk for now. See you later. Bye."}
     return  phrases
@@ -225,7 +201,6 @@ function setupGoodByePhrases {
 function setupKeywords {
 # TODO: Check and revise the syntax of all expressions! 
 
-    set -A keywords
     # The empty key string (last entry) is the default clause - will always be found 
     keywords[39] <- KeyMapEntry{"", 29}
     keywords[0] <- KeyMapEntry{"can you ", 0}
@@ -274,7 +249,6 @@ function setupKeywords {
 function setupReflexions {
 # TODO: Check and revise the syntax of all expressions! 
 
-    set -A reflexions
     reflexions[0] <- {" are ", " am "}
     reflexions[1] <- {" were ", " was "}
     reflexions[2] <- {" you ", " I "}
@@ -294,8 +268,6 @@ function setupReflexions {
 function setupReplies {
 # TODO: Check and revise the syntax of all expressions! 
 
-    set -A setupReplies
-    set -A replies
     var replies: array of array of String
     # We start with the highest index for performance reasons 
     # (is to avoid frequent array resizing) 
@@ -345,7 +317,6 @@ function setupReplies {
 # 2019-03-28 Keyword "bot" inserted (same reply ring as "computer") 
 # TODO: Check and revise the syntax of all expressions! 
 
-typeset -A entry
 # Title information 
 echo "************* ELIZA **************"
 echo "* Original design by J. Weizenbaum"
@@ -362,13 +333,9 @@ echo "**********************************"
 # the first element is the current insertion index 
 history <- {0, "", "", "", "", ""}
 const replies <- setupReplies()
-set -A replies "${result7a30d1e6[@]}"
 const reflexions <- setupReflexions()
-set -A reflexions "${result5891e32e[@]}"
 const byePhrases <- setupGoodByePhrases()
-set -A byePhrases "${resultcb0ed20[@]}"
 const keyMap <- setupKeywords()
-set -A keyMap "${result8e24743[@]}"
 offsets[length(keyMap)-1] <- 0
 isGone <- false
 # Starter 
@@ -381,20 +348,16 @@ do
     # Converts the input to lowercase, cuts out interpunctation 
     # and pads the string 
     userInput <- normalizeInput(userInput)
-    userInput<-${result74a10858}
     isGone <- checkGoodBye(userInput, byePhrases)
-    isGone<-${result23fe1d71}
 
     if not isGone
     then
         reply <- "Please don\'t repeat yourself!"
         isRepeated <- checkRepetition(history, userInput)
-        isRepeated<-${result28ac3dc3}
 
         if not isRepeated
         then
             findInfo <- findKeyword(keyMap, userInput)
-            set -A findInfo "${result32eebfca[@]}"
             keyIndex <- findInfo[0]
 
             if keyIndex < 0
@@ -410,7 +373,6 @@ do
             if length(entry.keyword) > 0
             then
                 varPart <- conjugateStrings(userInput, entry.keyword, findInfo[1], reflexions)
-                varPart<-${result4e718207}
             fi
 
             replyRing <- replies[entry.index]
@@ -432,7 +394,6 @@ do
             fi
 
             reply <- adjustSpelling(reply)
-            reply<-${result1d371b2d}
         fi
 
         echo reply

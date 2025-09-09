@@ -43,26 +43,25 @@ function daysInMonth423() {
     case aDate.month in
 
         1|3|5|7|8|10|12)
-                days <- 31
+            days <- 31
         ;;
 
         4|6|9|11)
-                days <- 30
+            days <- 30
         ;;
 
         2)
-                # Default value for February 
-                days <- 28
-                # To make the call work it has to be done in 
-                # a separate element (cannot be performed 
-                # as part of the condition of an Alternative) 
-                isLeap <- isLeapYear(aDate.year)
-                isLeap<-${result4d3167f4}
+            # Default value for February 
+            days <- 28
+            # To make the call work it has to be done in 
+            # a separate element (cannot be performed 
+            # as part of the condition of an Alternative) 
+            isLeap <- isLeapYear(aDate.year)
 
-                if isLeap
-                then
-                    days <- 29
-                fi
+            if isLeap
+            then
+                days <- 29
+            fi
 
         ;;
 
@@ -81,7 +80,6 @@ function daysInMonth423() {
 
 Date someDay <- Date{day: 24, month: 2, year: 2017}
 nDays <- daysInMonth423(someDay)
-nDays<-${result63440df3}
 today <- Date{2018, 7, 20}
 type Person = record { name: string; birth: Date; test: array[3] of int;}
 var me: Person <- Person{"roger", Date{1985, 3, 6}, {0, 8, 15}}

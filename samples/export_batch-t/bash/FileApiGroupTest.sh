@@ -20,6 +20,18 @@
 #      You might try something like "echo value >> filename" for output 
 #      or "while ... do ... read var ... done < filename" for input. 
 
+function finally87f383f()
+{
+    exitCode=$?
+    arg1=$1
+    # TODO File API: Replace the "fileClose" call by an appropriate shell construct 
+    fileClose(fileNo)
+    if [ "$arg1" = trapped ]
+    then
+        exit ${exitCode}
+    fi
+}
+
 # Draws a bar chart from the array "values" of size nValues. 
 # Turtleizer must be activated and will scale the chart into a square of 
 # 500 x 500 pixels 
@@ -87,15 +99,15 @@ function drawBarChart() {
         case k mod 3 in
 
             0)
-                    setPenColor(255,0,0)
+                setPenColor(255,0,0)
             ;;
 
             1)
-                    setPenColor(0, 255,0)
+                setPenColor(0, 255,0)
             ;;
 
             2)
-                    setPenColor(0, 0, 255)
+                setPenColor(0, 0, 255)
             ;;
         esac
 
@@ -112,7 +124,6 @@ function drawBarChart() {
     done
 
 }
-
 # = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 
 function readNumbers() {
@@ -128,27 +139,36 @@ function readNumbers() {
 
     if fileNo <= 0
     then
-        # throw "File could not be opened!" (FIXME!) 
+        # throw "File could not be opened!" 
+        return 42
     fi
 
-    # try (FIXME!) 
+    trap87f383f=$( trap -p EXIT )
+    if [ -z "$trap87f383f" ] ; then trap87f383f="-"; else trap87f383f=${trap87f383f:8}; trap87f383f=${trap87f383f% *}; fi
+    if [ "${trap87f383f:0:1}" = "'" ] ; then trap87f383f=${trap87f383f:1} ; trap87f383f=${trap87f383f%\'*}; fi
+    trap "finally87f383f trapped" EXIT
+    { # try
 
         # TODO File API: Replace the "fileEOF" call by an appropriate shell construct 
         while not fileEOF(fileNo) and nNumbers < maxNumbers
         do
             # TODO File API: Replace the "fileReadInt" call by an appropriate shell construct 
-            number <- fileReadInt(fileNo)
-            numbers[nNumbers] <- number
-            nNumbers <- nNumbers + 1
-        done
+            number <- fileReadInt(fileNo) &&
+            numbers[nNumbers] <- number &&
+            nNumbers <- nNumbers + 1 &&
+            true
+        done &&
 
-    # catch error (FIXME!) 
-        # throw (FIXME!) 
-    # finally (FIXME!) 
-        # TODO File API: Replace the "fileClose" call by an appropriate shell construct 
-        fileClose(fileNo)
-    # end try (FIXME!) 
-    result2a742aa2=nNumbers
+        true
+    } || { # catch error
+        # throw 
+        return 42
+    }
+    trap "${trap87f383f}" EXIT
+    { # finally
+        finally87f383f okay
+    }
+    return nNumbers
 }
 
 # ======= 8< =========================================================== 
@@ -172,6 +192,17 @@ function readNumbers() {
 # https://www.gnu.org/licenses/gpl.html 
 # http://www.gnu.de/documents/gpl.de.html 
 
+function finally87f383f()
+{
+    exitCode=$?
+    arg1=$1
+    fileClose(fileNo)
+    if [ "$arg1" = trapped ]
+    then
+        exit ${exitCode}
+    fi
+}
+
 # = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 
 # TODO: Check and revise the syntax of all expressions! 
@@ -187,7 +218,6 @@ echo -n "Name/path of the number file" ; read file_name
 # do 
 #     echo -n "Name/path of the number file" ; read file_name 
 #     fileNo <- fileOpen(file_name) 
-#     : 
 #     not (fileNo > 0 or file_name = "") || break 
 # done 
 #  
@@ -198,15 +228,13 @@ then
 #     fileClose(fileNo) 
     values <- {}
     nValues <- 0
-    # try (FIXME!) 
-        nValues <- readNumbers(file_name, values, 1000)
-        nValues<-${result2a742aa2}
-    # catch failure (FIXME!) 
+    { # try
+        nValues <- readNumbers(file_name, values, 1000) &&
+        true
+    } || { # catch failure
         echo failure
         exit  -7
-    # finally (FIXME!) 
-        :
-    # end try (FIXME!) 
+    }
     sum <- 0.0
 
     for (( k=0; k<=nValues-1; k++ ))
@@ -240,6 +268,18 @@ fi
 #      You might try something like "echo value >> filename" for output 
 #      or "while ... do ... read var ... done < filename" for input. 
 
+function finally87f383f()
+{
+    exitCode=$?
+    arg1=$1
+    # TODO File API: Replace the "fileClose" call by an appropriate shell construct 
+    fileClose(fileNo)
+    if [ "$arg1" = trapped ]
+    then
+        exit ${exitCode}
+    fi
+}
+
 # Draws a bar chart from the array "values" of size nValues. 
 # Turtleizer must be activated and will scale the chart into a square of 
 # 500 x 500 pixels 
@@ -307,15 +347,15 @@ function drawBarChart() {
         case k mod 3 in
 
             0)
-                    setPenColor(255,0,0)
+                setPenColor(255,0,0)
             ;;
 
             1)
-                    setPenColor(0, 255,0)
+                setPenColor(0, 255,0)
             ;;
 
             2)
-                    setPenColor(0, 0, 255)
+                setPenColor(0, 0, 255)
             ;;
         esac
 
@@ -332,9 +372,7 @@ function drawBarChart() {
     done
 
 }
-
 # = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
-
 
 # TODO: Check and revise the syntax of all expressions! 
 
@@ -365,14 +403,12 @@ then
     kMaxCount <- 0
     numberArray <- {}
     nObtained <- 0
-    # try (FIXME!) 
-        nObtained <- readNumbers(file_name, numberArray, 10000)
-        nObtained<-${result2a742aa2}
-    # catch failure (FIXME!) 
+    { # try
+        nObtained <- readNumbers(file_name, numberArray, 10000) &&
+        true
+    } || { # catch failure
         echo failure
-    # finally (FIXME!) 
-        :
-    # end try (FIXME!) 
+    }
 
     if nObtained > 0
     then

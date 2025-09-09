@@ -13,10 +13,6 @@ function testSub {
     typeset b1=$3
 # TODO: Check and revise the syntax of all expressions! 
 
-    typeset d2
-    typeset -i d1
-    typeset a2
-    typeset -i a1
     d1 <- a1
     d2 <- a2
     a1 <- 15
@@ -31,5 +27,4 @@ a1 <- 7
 b1 <- a2 + " oder blöd"
 c1 <- a1 * b2
 c2 <- testSub(c1, a1 + b2, b1)
-c2<-${result63440df3}
 echo a1, " ", a2, " ", b1, " ", b2
