@@ -6,4 +6,10 @@
     <comment xml:lang="de">Nassi-Shneiderman-Diagramm</comment>
     <glob pattern="*.nsd"/>
   </mime-type>
+  <mime-type type="application/arrz">
+    <sub-class-of type="application/zip"/>
+    <comment xml:lang="en">Nassi-Shneiderman diagram arrangement</comment>
+    <comment xml:lang="de">Nassi-Shneiderman-Diagramm-Anordnung</comment>
+    <glob pattern="*.arrz"/>
+  </mime-type>
 </mime-info>
