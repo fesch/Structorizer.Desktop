@@ -317,7 +317,7 @@ public abstract class Element {
 	public static final long E_HELP_FILE_SIZE = 12900000;
 	public static final String E_DOWNLOAD_PAGE = "https://www.fisch.lu/Php/download.php";
 	// END KGU#791 2020-01-20
-	public static final String E_VERSION = "3.32-34";
+	public static final String E_VERSION = "3.32-35";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
