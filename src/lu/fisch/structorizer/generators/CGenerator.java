@@ -1620,7 +1620,10 @@ public class CGenerator extends Generator {
 			}
 		} // if (!this.suppressTransformation && (isDecl || exprTokens != null))
 		// START KGU#388 2017-09-25: Enh. #423
-		else if (!this.suppressTransformation && Instruction.isTypeDefinition(_line, typeMap)) {
+		// START KGU#1208 2025-09-29: Issue #1210 Revision for case suppressTransformation
+		//else if (!this.suppressTransformation && Instruction.isTypeDefinition(_line, typeMap)) {
+		else if (Instruction.isTypeDefinition(_line, typeMap)) {
+		// END KGU#1208 2025-09-25
 			// Attention! The following condition must not be combined with the above one! 
 			if (this.isInternalDeclarationAllowed()) {
 				tokens.removeAll(" ");
@@ -1635,8 +1638,17 @@ public class CGenerator extends Generator {
 				TypeMapEntry type = this.typeMap.get(":" + typeName);
 				Root root = Element.getRoot(_inst);
 				if (type != null) {
-					this.generateTypeDef(root, typeName, type, _indent, isDisabled);
-					_commentInserted = true;
+					// START KGU#1208-2025-09-29: Issue #1210
+					//this.generateTypeDef(root, typeName, type, _indent, isDisabled);
+					//_commentInserted = true;
+					if (!suppressTransformation) {
+						this.generateTypeDef(root, typeName, type, _indent, isDisabled);
+						_commentInserted = true;
+					}
+					else if (!this.wasDefHandled(root, ":"+typeName, true)) {
+						codeLine = _line;
+					}
+					// END KGU#1208 2025-09-29
 					// CodeLine is not filled because the code has already been generated
 				}
 				else {

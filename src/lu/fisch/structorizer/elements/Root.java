@@ -195,6 +195,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2025-08-04      Partial indentation revision (blanks -> tabs)
  *      Kay Gürtzig     2025-08-08      Issue #1205: Refinement of check 2 (method analyse_2) to avoid false
  *                                      complaining endless loops on fileEOF or Turtleizer conditions
+ *      Kay Gürtzig     2025-10-17/18   Bugfix #1226: #1193 flaws mended, more thourough argument/result inference
  *
  ******************************************************************************************************
  *
@@ -3272,7 +3273,7 @@ public class Root extends Element {
     
     /**
      * Extracts the names of all variables assigned or introduced within passed-in element
-     * {@code _ele} and its possible substructure.
+     * {@code _ele} without its possible substructure.
      * @param _ele - the element to be scanned for introduced variables
      * @return list of variable names
      * @see #getVarNames(Element, boolean)
@@ -7774,11 +7775,15 @@ public class Root extends Element {
 			// Identify uninitialized variables before the outsourcing (for comparison)
 			StringList uninitializedVars0 = new StringList();
 			this.getUninitializedVars(this.children, new StringList(), uninitializedVars0);
-			if (Element.getRoot(elements.getSubqueue()) != this) {
+			Subqueue owningSq = elements.getSubqueue();
+			if (Element.getRoot(owningSq) != this) {
 				return null;
 			}
+			// START KGU#1209 2025-10-15: Bugfix #1226
+			int ixSub = owningSq.getIndexOf(elements.getElement(0));
+			// END KGU#1209 2025-10-15
 			// Create the new subroutine and move the elements to it
-			subroutine = new Root();
+			subroutine = new Root(); 
 			subroutine.setProgram(false);
 			for (int i = 0; i < nElements; i++) {
 				subroutine.children.addElement(elements.getElement(0));
@@ -7805,15 +7810,68 @@ public class Root extends Element {
 			for (int i = args.count() - 1; i >= 0; i--) {
 				String argName = args.get(i);
 				if (!vars.contains(argName)) {
+					// It is unlikely that the outer context is responsible to provide the value
 					args.remove(i);
 				}
 			}
+			// If a subroutine variable still occurs in the outer diagram it may be be needed as result
+			// START KGU#1209 2025-10-17: Bugfix #1226 This produced too many false results
+			//for (int i = 0; i < subVars.count(); i++) {
+			//	String varName = subVars.get(i);
+			//	if (vars.contains(varName) || uninitializedVars1.contains(varName)) {
+			//		results.addIfNew(varName);
+			//	}
+			//}
+			StringList uninitializedVars2 = new StringList();
+			// This is scanning up the tree 
+			StringList assignedVars = new StringList();
+			Element sqParent = owningSq.parent;
+			int ixDiff = 0;
+			do {
+				StringList assignedVars0 = assignedVars.copy();
+				if (ixSub+ixDiff < owningSq.getSize()) {
+					IElementSequence subsequentEls = new SelectedSequence(owningSq, ixSub+ixDiff, owningSq.getSize()-1);
+					this.getUninitializedVars(subsequentEls, assignedVars, uninitializedVars2);
+				}
+				if (sqParent instanceof Loop) {
+					if (!(sqParent instanceof Forever)) {
+						// get all set variables from loop header (no substructure)
+						StringList loopVars = getVarNames(sqParent);	// Should be empty for non-FOR loops
+						assignedVars0.addIfNew(loopVars);
+						// Find uninitialized variables in the condition
+						StringList loopUsedVars = getUsedVarNames(sqParent, true, true);
+						for (int i = 0; i < loopUsedVars.count(); i++) {
+							String varName = loopUsedVars.get(i);
+							if (!assignedVars0.contains(varName)) {
+								uninitializedVars2.addIfNew(varName);
+							}
+						}
+					}
+					if (ixSub > 0) {
+						IElementSequence precedingEls = new SelectedSequence(owningSq, 0, ixSub-1);
+						this.getUninitializedVars(precedingEls, assignedVars0, uninitializedVars2);
+					}
+				}
+				owningSq = null;
+				// Now get uninitialized variables from the subsequent parent elements
+				if (sqParent != this && sqParent.parent instanceof Subqueue) {
+					owningSq = (Subqueue)sqParent.parent;
+					ixSub = owningSq.getIndexOf(sqParent);
+					sqParent = owningSq.parent;
+				}
+				ixDiff = 1;
+			} while (owningSq != null);
+			// Modified subroutine variables should be returned if they are still used in outer without being overridden
 			for (int i = 0; i < subVars.count(); i++) {
 				String varName = subVars.get(i);
-				if (vars.contains(varName) || uninitializedVars1.contains(varName)) {
+				TypeMapEntry varType = types.get(varName);
+				if (uninitializedVars2.contains(varName) && 
+						// Passed-in array variables may usually be excluded (as their modification is transparent).
+						!(args.contains(varName) && varType != null && varType.isArray())) {
 					results.addIfNew(varName);
 				}
 			}
+			// END KGU#1209 2025-10-17
 			// END KGU#987 2025-02-27
 			if (results.isEmpty() && result != null) {
 				results.add(result);
@@ -7916,16 +7974,23 @@ public class Root extends Element {
 		return typeDecl;
 	}
 	/**
-	 * This is practically a very lean version of the {@link #analyse(StringList)} method. We simply don't create
-	 * Analyser warnings but collect variable names which are somewhere used without (unconditioned)
-	 * initialization. These are candidates for parameters.
+	 * This is practically a very lean version of the {@link #analyse(StringList)}
+	 * method. We simply don't create Analyser warnings but collect variable names
+	 * which are somewhere used without (unconditioned) initialization. These are
+	 * candidates for parameters.
 	 * @param _node - The Subqueue recursively to be scrutinized for variables
-	 * @param _vars - Names of variables, which had been introduced before (will be enhanced here)
-	 * @param _args - collects the names of not always initialized variables (potential arguments) 
+	 * @param _vars - Names of variables, which had been introduced before (will
+	 *    be enhanced here)
+	 * @param _args - collects the names of not always initialized variables
+	 *    (potential arguments)
 	 */
-	private void getUninitializedVars(Subqueue _node, StringList _vars, StringList _args) {
+	// START KGU#1209 2025-10-15 Bugfix #1226 We need to analyse partial subqueues
+	//private void getUninitializedVars(Subqueue _node, StringList _vars, StringList _args)
+	private void getUninitializedVars(IElementSequence _node, StringList _vars, StringList _args)
+	// END KGU#1209 2025-10-15	
+	{
 		
-		for (int i=0; i<_node.getSize(); i++)
+		for (int i = 0; i < _node.getSize(); i++)
 		{
 			Element ele = _node.getElement(i);
 			if (ele.isDisabled(true)) continue;
@@ -7935,11 +8000,11 @@ public class Root extends Element {
 			// get all set variables from actual instruction (just this level, no substructure)
 			StringList myVars = getVarNames(ele);
 			// Find uninitialized variables (except REPEAT)
-			StringList myUsedVars = getUsedVarNames(_node.getElement(i),true,true);
+			StringList myUsedVars = getUsedVarNames(ele, true, true);
 
 			if (!eleClassName.equals("Repeat"))
 			{
-				for (int j=0; j<myUsedVars.count(); j++)
+				for (int j = 0; j < myUsedVars.count(); j++)
 				{
 					String myUsed = myUsedVars.get(j);
 					// START KGU#343 2017-02-07: Ignore pseudo-variables (markers)
@@ -7961,6 +8026,19 @@ public class Root extends Element {
 			if (ele instanceof Loop)
 			{
 				getUninitializedVars(((Loop) ele).getBody(), _vars, _args);
+				// START KGU#1209 2025-10-18: Bugfix #1226 Defective subroutine result retrieval
+				if (eleClassName.equals("Repeat"))
+				{
+					for (int j = 0; j < myUsedVars.count(); j++)
+					{
+						String myUsed = myUsedVars.get(j);
+						if (!myUsed.startsWith("§ANALYSER§") && !_vars.contains(myUsed))
+						{
+							_args.addIfNew(myUsed);
+						}
+					}
+				}
+				// END KGU#1209 2025-10-18
 			}
 			else if (eleClassName.equals("Parallel"))
 			{
@@ -7989,7 +8067,7 @@ public class Root extends Element {
 					if (fVars.contains(varName)) { _vars.addIfNew(varName); }
 				}
 			}
-			else if(eleClassName.equals("Case"))
+			else if (eleClassName.equals("Case"))
 			{
 				Case caseEle = ((Case) ele);
 				int nBranches = caseEle.qs.size();	// Number of branches
