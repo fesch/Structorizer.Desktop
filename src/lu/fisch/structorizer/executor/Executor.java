@@ -228,6 +228,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2024-11-27      Bugfix #1181: Execution highlighting in the code preview was compromised
  *                                      after Calls and within multi-line Calls
  *      Kay Gürtzig     2025-01-21      Enh. #1184: Lazy multi-dimensional array creation on first element assignment
+ *      Kay Gürtzig     2026-02-17      Enh. #1228: More informative meta information (start/end/elapsed time)
  *
  ******************************************************************************************************
  *
@@ -985,6 +986,11 @@ public class Executor implements Runnable
 	//private Interpreter interpreter;
 	//private boolean returned = false;
 	// END KGU#384 2017-04-22
+	
+	// START KGU#1211 2026-02-17: Enh. #1228 Keep track of execution times
+	private long elapsedNs = 0L;
+	private int nanoCalls = 0;
+	// END KGU#1211 2026-02-17
 
 	private boolean paus = false;
 	private boolean running = false;
@@ -1628,7 +1634,12 @@ public class Executor implements Runnable
 			this.console = new OutputConsole();
 		}
 		// END KGU#569 2018-08-08
+		this.elapsedNs = 0L;
+		this.nanoCalls = 0;
 		SimpleDateFormat sdf = new SimpleDateFormat();
+		// START KGU#1211 2026-02-17: Enh. #1228 More precise time info
+		sdf.applyPattern("yyyy-MM-dd, HH:mm:ss.SSS");
+		// END KGU#1211 2026-02-17
 		if (this.console.logMeta()) {
 			this.console.writeln("*** STARTED \"" + root.getText().getLongString() +
 					"\" at " + sdf.format(System.currentTimeMillis()) + " ***", Color.GRAY);
@@ -1663,6 +1674,15 @@ public class Executor implements Runnable
 		if (this.console.logMeta()) {
 			this.console.writeln("*** TERMINATED \"" + root.getText().getLongString() +
 					"\" at " + sdf.format(System.currentTimeMillis()) + " ***", Color.GRAY);
+			// START KGU#1211 2026-02-17: Enh. #1228: Inform about elapsed ms
+			String unit = " ms";
+			long elapsed = this.elapsedNs / 1000000;
+			if (elapsed == 0L) {
+				elapsed = this.elapsedNs / 1000;
+				unit = " µs";
+			}
+			this.console.writeln("*** ESTIMATED mere execution time < " + elapsed + unit + " over " + this.nanoCalls + " evaluations ***", Color.GRAY);
+			// END KGU#1211 2026-02-17
 		}
 		if (this.isConsoleEnabled) this.console.setVisible(true);
 		// END KGU#160 2016-04-12
@@ -1827,9 +1847,16 @@ public class Executor implements Runnable
 						}
 						// END KGU#375 2017-03-30
 						// END KGU#69 2015-11-08
+						// START KGU#1211 2026-02-17: Enh. #1228: Keep track of execution times
+						long elapsed = System.nanoTime();
+						// END KGU#1211 2026-02-17
 						// START KGU#2 2015-11-24: We might need the values for a stacktrace
 						arguments[i] = context.interpreter.get(in);
 						// END KGU#2 2015-11-24
+						// START KGU#1211 2026-02-17: Enh. #1228: Keep track of execution times
+						this.elapsedNs += System.nanoTime() - elapsed;
+						this.nanoCalls++;
+						// END KGU#1211 2026-02-17
 						// START KGU#160 2016-04-26: Issue #137 - document the arguments
 						if (this.console.logMeta()) {
 							this.console.writeln("*** Argument <" + in + "> = "
@@ -2036,7 +2063,14 @@ public class Executor implements Runnable
 					int i = 0;
 					while ((i < posres.count()) && (!context.returned))
 					{
+						// START KGU#1211 2026-02-17: Enh. #1228: Keep track of execution times
+						long elapsed = System.nanoTime();
+						// END KGU#1211 2026-02-17
 						Object resObj = context.interpreter.get(posres.get(i));
+						// START KGU#1211 2026-02-17: Enh. #1228: Keep track of execution times
+						this.elapsedNs += System.nanoTime() - elapsed;
+						this.nanoCalls++;
+						// END KGU#1211 2026-02-17
 						if (resObj != null)
 						{
 							// START KGU#2 (#9) 2015-11-13: Only tell the user if this wasn't called
@@ -3045,8 +3079,15 @@ public class Executor implements Runnable
 	{
 		String trouble = "";
 		try {
+			// START KGU#1211 2026-02-17: Enh. #1228: Keep track of execution times
+			long elapsed = System.nanoTime();
+			// END KGU#1211 2026-02-17
 			// We don't expect results here
 			controller.execute(procName, arguments);
+			// START KGU#1211 2026-02-17: Enh. #1228: Keep track of execution times
+			this.elapsedNs += System.nanoTime() - elapsed;
+			this.nanoCalls++;
+			// END KGU#1211 2026-02-17
 		}
 		catch (FunctionException ex) {
 			trouble = ex.getMessage();
@@ -3323,6 +3364,9 @@ public class Executor implements Runnable
 		boolean somethingCopied = false;
 		for (int i = 0; i < _varNames.count(); i++) {
 			String varName = _varNames.get(i);
+			// START KGU#1211 2026-02-17: Enh. #1228: Keep track of execution times
+			long elapsed = System.nanoTime();
+			// END KGU#1211 2026-02-17
 			try {
 				if (!_constNames.contains(varName) && _overwrite || _target.get(varName) == null) {
 					Object val = _source.get(_varNames.get(i));
@@ -3359,6 +3403,10 @@ public class Executor implements Runnable
 				logger.log(Level.WARNING, "Execution context change for variable " + varName, e);
 				// END KGU#484 2018-04-05
 			}
+			// START KGU#1211 2026-02-17: Enh. #1228: Keep track of execution times
+			this.elapsedNs += System.nanoTime() - elapsed;
+			this.nanoCalls++;
+			// END KGU#1211 2026-02-17
 		}
 		return somethingCopied;
 	}
@@ -3414,8 +3462,7 @@ public class Executor implements Runnable
 	}
 
 	/**
-	 * @param delay
-	 *            the delay to set
+	 * @param aDelay - the delay to set (symbolic integral value)
 	 */
 	public void setDelay(int aDelay)
 	{
@@ -4375,8 +4422,15 @@ public class Executor implements Runnable
 //		// END KGU#388 2017-09-14
 		
 		if (accessPath != null && accessPath.count() > 1) {
+			// START KGU#1211 2026-02-17: Enh. #1228: Keep track of execution times
+			long elapsed = System.nanoTime();
+			// END KGU#1211 2026-02-17
 			// target should be identical to accessPath.get(0);
 			Object targetObject = context.interpreter.get(target);
+			// START KGU#1211 2026-02-17: Enh. #1228: Keep track of execution times
+			this.elapsedNs += System.nanoTime() - elapsed;
+			this.nanoCalls++;
+			// END KGU#1211 2026-02-17
 			
 			// Convenience object holders
 			ArrayList<Object> objectArray = null;
@@ -4566,7 +4620,14 @@ public class Executor implements Runnable
 	// <= = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 					objectRecord.put(access, content);
 				}
+				// START KGU#1211 2026-02-17: Enh. #1228: Keep track of execution times
+				elapsed = System.nanoTime();
+				// END KGU#1211 2026-02-17
 				context.interpreter.set(target, targetObject);
+				// START KGU#1211 2026-02-17: Enh. #1228: Keep track of execution times
+				this.elapsedNs += System.nanoTime() - elapsed;
+				this.nanoCalls++;
+				// END KGU#1211 2026-02-17
 				context.variables.addIfNew(target);
 				if (isConstant) {
 					context.constants.put(target, context.interpreter.get(target));
@@ -4607,7 +4668,14 @@ public class Executor implements Runnable
 			// START KGU#322 2017-01-06: Bugfix #324 - an array assigned on input hindered scalar re-assignment
 			//this.interpreter.set(name, content);
 			try {
+				// START KGU#1211 2026-02-17: Enh. #1228: Keep track of execution times
+				long elapsed = System.nanoTime();
+				// END KGU#1211 2026-02-17
 				context.interpreter.set(target, content);
+				// START KGU#1211 2026-02-17: Enh. #1228: Keep track of execution times
+				this.elapsedNs += System.nanoTime() - elapsed;
+				this.nanoCalls++;
+				// END KGU#1211 2026-02-17
 			}
 			catch (EvalError ex) {
 				// START KGU#1024 2022-01-05: Upgrade from bsh-2.0b6.jar to bsh-2.1.0.jar
@@ -4621,10 +4689,17 @@ public class Executor implements Runnable
 				// END KGU#1058 2022-08-19
 				if (MTCH_EVAL_ERROR_ARRAY.reset(msg).matches()) {
 				// END KGU#1024 2022-01-05
+					// START KGU#1211 2026-02-17: Enh. #1228: Keep track of execution times
+					long elapsed = System.nanoTime();
+					// END KGU#1211 2026-02-17
 					// Stored array type is an obstacle for re-assignment, so drop it
 					context.interpreter.unset(target);
 					// Now try again
 					context.interpreter.set(target, content);
+					// START KGU#1211 2026-02-17: Enh. #1228: Keep track of execution times
+					this.elapsedNs += System.nanoTime() - elapsed;
+					this.nanoCalls++;
+					// END KGU#1211 2026-02-17
 				}
 				else {
 					// Something different, so rethrow
@@ -5727,8 +5802,15 @@ public class Executor implements Runnable
 									break;
 								}
 								else {
+									// START KGU#1211 2026-02-17: Enh. #1228: Keep track of execution times
+									long elapsed = System.nanoTime();
+									// END KGU#1211 2026-02-17
 									// This is the pure value (ought to be an integral literal)
 									Object trueValue = context.interpreter.eval(context.root.getConstValueString(constName));
+									// START KGU#1211 2026-02-17: Enh. #1228: Keep track of execution times
+									this.elapsedNs += System.nanoTime() - elapsed;
+									this.nanoCalls++;
+									// END KGU#1211 2026-02-17
 									// Now establish the value in the interpreter and the variable display
 									// START KGU#910 2021-01-10: Bugfix #909 Postpone the display for performance reasons
 									//setVar("const " + constName, trueValue);
@@ -6187,7 +6269,14 @@ public class Executor implements Runnable
 							argVals[i] = this.evaluateExpression(args.get(i), false, false);
 						}
 						// Passed till here, we try to execute the function - this may throw a FunctionException
+						// START KGU#1211 2026-02-17: Enh. #1228: Keep track of execution times
+						long elapsed = System.nanoTime();
+						// END KGU#1211 2026-02-17
 						Object result = controller.execute(fName, argVals);
+						// START KGU#1211 2026-02-17: Enh. #1228: Keep track of execution times
+						this.elapsedNs += System.nanoTime() - elapsed;
+						this.nanoCalls++;
+						// END KGU#1211 2026-02-17
 						tokens.remove(pos, tokens.count());
 						//tokens.add(controller.castArgument(result, function.getReturnType()).toString());
 						// START KGU#898 2020-12-25: Bugfix #898 - we must put the results in parentheses
@@ -8455,7 +8544,14 @@ public class Executor implements Runnable
 			do {
 				error423 = false;
 				try {
+					// START KGU#1211 2026-02-17: Enh. #1228: Keep track of execution times
+					long elapsed = System.nanoTime();
+					// END KGU#1211 2026-02-17
 					value = context.interpreter.eval(expr);
+					// START KGU#1211 2026-02-17: Enh. #1228: Keep track of execution times
+					this.elapsedNs += System.nanoTime() - elapsed;
+					this.nanoCalls++;
+					// END KGU#1211 2026-02-17
 				}
 				catch (EvalError err) {
 					// START KGU#1024 2022-01-05: Upgrade from bsh-2.0b6.jar to bsh-2.1.0.jar
