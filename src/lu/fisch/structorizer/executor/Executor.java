@@ -1681,7 +1681,7 @@ public class Executor implements Runnable
 				elapsed = this.elapsedNs / 1000;
 				unit = " µs";
 			}
-			this.console.writeln("*** ESTIMATED mere execution time < " + elapsed + unit + " over " + this.nanoCalls + " evaluations ***", Color.GRAY);
+			this.console.writeln("*** ESTIMATED mere execution time < " + elapsed + unit + " over " + this.nanoCalls + " basic operations ***", Color.GRAY);
 			// END KGU#1211 2026-02-17
 		}
 		if (this.isConsoleEnabled) this.console.setVisible(true);
