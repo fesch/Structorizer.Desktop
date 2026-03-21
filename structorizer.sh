@@ -53,6 +53,21 @@ then
   exit 1
 fi
 
+# Optional Script Arguments
+while [ "$#" -gt 0 ]; do
+  arg=$1
+  shift
+  case "$arg" in
+    --non-reparenting|-nrp)
+      # Fix for some Linux Window Managers, e.g. sway
+      export _JAVA_AWT_WM_NONREPARENTING=1
+      ;;
+     *)
+      set -- "$@" "$arg"
+      ;;
+  esac
+done
+
 # actual start
 #echo "Your Java version is $VERSION, all fine."
 java -jar "$DIR/Structorizer.app/Contents/Java/Structorizer.jar" "$@"
