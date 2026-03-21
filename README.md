@@ -40,6 +40,10 @@ The preferable way to start contributing to this project is to create an [issue]
 
 Before you do this, however, please make sure that there hasn't already been a similar or equivalent issue, in which case it may usually be better to add a new comment to that issue or to reopen it if the problem has reoccurred or hasn't been fixed sufficiently.
 
-If you just have a question about the use of Structorizer, however, we would like you first to have a look into the [user guide](https://help.structorizer.fisch.lu/index.php). If you don't happen to find an answer there then you are free to add a new issue of course (which will be labelled as "question").
+In case you commit a developed solution or fix please always have the commit description (and the pull request) refer to the respective issue.
+
+If you just have a question about the use of Structorizer, however, we would like you first to have a look into the [user guide](https://help.structorizer.fisch.lu/index.php). If you don't happen to find an answer there then you are free to add a new issue as well of course (which will usually be labelled as "question").
 
 Note that there is also a [Discussions](https://github.com/fesch/Structorizer.Desktop/discussions) section for more general aspects like feedback or comprehensive ideas.
+
+Thanks in advance!
