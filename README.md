@@ -29,3 +29,17 @@ In fact, I was not satisfied by the result of other NSD-editors, so I started wr
 * I intended to publish Windows, Linux, and Mac OSX (intel) portings of the new "Structorizer (Lazarus)" project. This time, it would be completely open-source!
 * After the release of the Lazarus version, major problems were detected for the Windows port. This is why I came back to the Delphi code and continued developing "Structorizer (Delphi)", which would be published as freeware.
 * Due to too many problems with Lazarus, I decided to implement a Structorizer version in Java in December 2007. This version, which has also been released under the terms of the GPL, was given the major release number 3 and became the basis for all the versions 3.x until now.
+
+# Contributing
+
+The preferable way to start contributing to this project is to create an [issue](https://github.com/fesch/Structorizer.Desktop/issues/new/choose) whenever you
+- find some apparent bug or malfunction,
+- want to request a new feature,
+- have some useful proposal to improve e.g. user experience,
+- have already delevoped a promising code change to solve one of the prior aspects.
+
+Before you do this, however, please make sure that there hasn't already been a similar or equivalent issue, in which case it may usually be better to add a new comment to that issue or to reopen it if the problem has reoccurred or hasn't been fixed sufficiently.
+
+If you just have a question about the use of Structorizer, however, we would like you first to have a look into the [user guide](https://help.structorizer.fisch.lu/index.php). If you don't happen to find an answer there then you are free to add a new issue of course (which will be labelled as "question").
+
+Note that there is also a [Discussions](https://github.com/fesch/Structorizer.Desktop/discussions) section for more general aspects like feedback or comprehensive ideas.
