@@ -49,6 +49,8 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2021-02-23      Issue #901: WAIT_CURSOR now also set on group saving
  *      Kay Gürtzig     2022-08-17      Issue #1065: Right-click now overrides a previous single selection
  *      Kay Gürtzig     2024-11-25      Issue #1180: Test coverage display inconsistency fixed
+ *      Kay Gürtzig     2026-04-09      Issue #1133: Workaround for defective status indication of checkbox menu
+ *                                      items with icons in L&F "Windows"
  *
  ******************************************************************************************************
  *
@@ -182,7 +184,10 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 	protected final JMenuItem popupIndexDetach = new JMenuItem("Detach from group", IconLoader.getIcon(98));
 	protected final JMenuItem popupIndexAttach = new JMenuItem("Add/move to group ...", IconLoader.getIcon(116));
 	protected final JMenuItem popupIndexInfo = new JMenuItem("Diagram/group info ...", IconLoader.getIcon(118));
-	protected final JCheckBoxMenuItem popupIndexDrawGroup = new JCheckBoxMenuItem("Show group", IconLoader.getIcon(17));
+	// START KGU#1085 2026-04-04: Issue #1133 workaround - postpone the icon association to create()
+	//protected final JCheckBoxMenuItem popupIndexDrawGroup = new JCheckBoxMenuItem("Show group", IconLoader.getIcon(17));
+	protected final JCheckBoxMenuItem popupIndexDrawGroup = new JCheckBoxMenuItem("Show group");
+	// END KGU#1085 2026-04-04
 	// START KGU#669 2019-03-01: Enh. #691
 	protected final JMenuItem popupIndexRenameGroup = new JMenuItem("Rename group ...");
 	// END KGU#669 2019-03-01
@@ -751,6 +756,9 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 		popupIndexAttach.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, KeyEvent.CTRL_DOWN_MASK));
 
 		// START KGU#630 2019-01-13: Enh. #662/2  - Control group visibility
+		// START KGU#1085 2026-04-04: Issue #1133 workaround
+		IconLoader.associateMenuIcon(popupIndexDrawGroup, 17);
+		// END KGU#1085 2026-04-04
 		popupIndex.add(popupIndexDrawGroup);
 		popupIndexDrawGroup.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexSetGroupVis(((JCheckBoxMenuItem)event.getSource()).isSelected()); } });
 		popupIndexDrawGroup.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, KeyEvent.CTRL_DOWN_MASK | KeyEvent.ALT_DOWN_MASK));
@@ -841,8 +849,9 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 	}
 	
 	/**
-	 * Rebuilds the Arranger index from scratch according to the group information
-	 * given with {@code _groups}.
+	 * Rebuilds the Arranger index from scratch according to the group
+	 * information given with {@code _groups}.
+	 * 
 	 * @param _groups - sorted list of all currently held {@link Group} objects
 	 */
 	public void update(Vector<Group> _groups)
@@ -897,8 +906,9 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 	}
 
 	/**
-	 * Rebuilds the group node as a multi-level diagram tree, regarding namespace
-	 * hierarchy 
+	 * Rebuilds the group node as a multi-level diagram tree, regarding
+	 * namespace hierarchy
+	 * 
 	 * @param groupNode - the group node to attach the root node to
 	 * @param roots - the sorted vector of member diagrams
 	 */
@@ -962,14 +972,17 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 		}
 	}
 	/**
-	 * Checks if a prefix of the given path is among the lexicographically sorted
-	 * qualified names in index range from ixStart to ixEnd-1.
+	 * Checks if a prefix of the given path is among the lexicographically
+	 * sorted qualified names in index range from {@code ixStart} to
+	 * {@code ixEnd-1}.
+	 * 
 	 * @param path - a StringList representing the path
-	 * @param qualifiers - the vector of all occurring paths in this group, may contain
-	 *      {@code null} entries (if the respective node is already placed)
-	 * @param ixSubs
-	 * @param ixIncl
-	 * @return
+	 * @param qualifiers - the vector of all occurring paths in this group,
+	 *    may contain {@code null} entries (if the respective node is already
+	 *    placed)
+	 * @param ixStart - the first index of the name list span
+	 * @param ixEnd - the index beyond the name list span
+	 * @return {@code true} if the path is found within the index span.
 	 */
 	private boolean checkContainingNodes(StringList path, Vector<StringList> qualifiers, int ixStart, int ixEnd) {
 		String qualName = path.concatenate(".");
@@ -989,14 +1002,17 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 	}
 
 	/**
-	 * Finds diagrams the associated qualified name of which is a direct "child" of the given
-	 * {@code path}
-	 * @param rootNode - the already established node associated to decomposed qualified name {@code path}
-	 * @param path - the split qualified name a a StringList
-	 * @param qualifiers - the vector of split qualified names according to the order of {@code roots}.
-	 * @param roots - the sorted Roots of the currently processed Group
-	 * @param ranges - an array of index values where always two consecutive ones define an index
-	 *    range.
+	 * Finds diagrams the associated qualified name of which is a direct
+	 * "child" of the given {@code path}
+	 * 
+	 * @param rootNode - the already established node associated to decomposed
+	 *    qualified name {@code path}.
+	 * @param path - the split qualified name a a StringList.
+	 * @param qualifiers - the vector of split qualified names according to the
+	 *    order of {@code roots}.
+	 * @param roots - the sorted Roots of the currently processed Group.
+	 * @param ranges - an array of index values where always two consecutive
+	 *    ones define an index range.
 	 */
 	private void findAndAddChildren(DefaultMutableTreeNode rootNode, StringList path, Vector<StringList> qualifiers,
 			Vector<Root> roots, int[] ranges) {
@@ -1060,8 +1076,8 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 
 	// START KGU#626 2019-01-04: Enh. #657
 	/**
-	 * Checks and updates the visibility / usability of all Editor-specific buttons, menu items
-	 * and other controls
+	 * Checks and updates the visibility / usability of all Editor-specific
+	 * buttons, menu items, and other controls.
 	 */
 	public void doButtonsLocal()
 	{
@@ -1101,6 +1117,9 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 		// START KGU#630 2019-01-13: Enh. #662/2
 		popupIndexDrawGroup.setEnabled(selectedGroup != null);
 		popupIndexDrawGroup.setSelected(selectedGroup != null && selectedGroup.isVisible());
+		// START KGU#1085 2026-04-09: Issue #1133 workaround - ensure status indication on L&F "Windows"
+		IconLoader.updateMenuIcon(popupIndexDrawGroup);
+		// END KGU#1085 2026-04-09
 		// END KGU#630 2019-01-13
 		// START KGU#669 2019-03-01: Enh. #691
 		popupIndexRenameGroup.setEnabled(selectedGroup != null && isMutable);
@@ -1110,7 +1129,10 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 		//END KGU#815 2020-03-16
 	}
 
-	/** @return {@code true} on single selection of a {@link Root} that is not the currently edited diagram, false otherwise */
+	/**
+	 * @return {@code true} on single selection of a {@link Root} that is not
+	 *    the currently edited diagram, {@code false} otherwise
+	 */
 	private boolean arrangerIndexSelectsOtherRoot() {
 		TreePath[] selectedPaths = this.getSelectionPaths();
 		if (selectedPaths != null && selectedPaths.length == 1) {
@@ -1120,7 +1142,10 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 		return false;
 	}
 
-	/** @return {@code true} if any of the selected {@link Root}s or {@link Group}s has unsaved changes, false otherwise */
+	/**
+	 * @return {@code true} if any of the selected {@link Root}s or
+	 *    {@link Group}s has unsaved changes, {@code false} otherwise.
+	 */
 	private boolean arrangerIndexSelectsUnsavedChanges() {
 		TreePath[] selectedPaths = this.getSelectionPaths();
 		if (selectedPaths != null) {
@@ -1149,8 +1174,10 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 		return false;
 	}
 	
-	/** @return {@code true} if at least one {@link Root} or {@link Group} not representing
-	 * DiagramControllers is among the selection */
+	/**
+	 * @return {@code true} if at least one {@link Root} or {@link Group} not
+	 *    representing DiagramControllers is among the selection
+	 */
 	private boolean arrangerIndexSelectsMutable()
 	{
 		TreePath[] selectedPaths = this.getSelectionPaths();
@@ -1181,7 +1208,12 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 		}		
 	}
 
-	/** @return the selected {@link Root} if exactly one {@link Root} is selected, otherwise {@code null} */
+	/**
+	 * Retrieves a currently selected single diagram.
+	 * 
+	 * @return the selected {@link Root} if exactly one {@link Root} is
+	 *    selected, otherwise {@code null}.
+	 */
 	private Root arrangerIndexGetSelectedRoot() {
 		TreePath[] paths = this.getSelectionPaths();
 		if (paths != null && paths.length == 1) {
@@ -1193,7 +1225,12 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 		return null;
 	}
 
-	/** @return the selected {@link Group} if exactly one {@link Group} is selected, otherwise {@code null} */
+	/**
+	 * Retrieves a currently selected single arrangement group.
+	 * 
+	 * @return the selected {@link Group} if exactly one {@link Group} is
+	 *    selected, otherwise {@code null}
+	 */
 	private Group arrangerIndexGetSelectedGroup() {
 		TreePath[] paths = this.getSelectionPaths();
 		if (paths != null && paths.length == 1) {
@@ -1206,9 +1243,12 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 	}
 
 	/**
-	 * @param groupMembersToo - if true then members of selected groups add to the result, otherwise
-	 * selected groups will be ignored
-	 * @return the selected roots (either ignoring selected groups or adding the roots of selected groups)
+	 * Retrieves the set of currently selected diagrams.
+	 * 
+	 * @param groupMembersToo - if true then members of selected groups add
+	 *    to the result, otherwise selected groups will be ignored.
+	 * @return the selected roots (either ignoring selected groups or adding
+	 *    the roots of selected groups).
 	 */
 	private Collection<Root> arrangerIndexGetSelectedRoots(boolean groupMembersToo) {
 		HashSet<Root> roots = new HashSet<Root>();
@@ -1227,9 +1267,13 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 		return roots;
 	}
 
-	/** @return the set of selected (or touched) {@link Group}s (multiple selection)
-	 * @param partiallySelectedGroupsToo - if true then also yields groups when at least one of their
-	 * members is selected, otherwise not.
+	/**
+	 * Retrieves the set of currently selected arrangement groups.
+	 * 
+	 * @param partiallySelectedGroupsToo - if true then also yields groups
+	 *    when at least one of their members is selected, otherwise not.
+	 * @return the set of selected (or touched) {@link Group}s (multiple
+	 *    selection)
 	 */
 	private Collection<Group> arrangerIndexGetSelectedGroups(boolean partiallySelectedGroupsToo) {
 		HashSet<Group> groups = new HashSet<Group>();
@@ -1250,7 +1294,10 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 		return groups;
 	}
 
-	/** Action method for {@link #popupIndexSave}, saves all selected items with pending changes */
+	/**
+	 * Action method for {@link #popupIndexSave}, saves all selected items
+	 * with pending changes.
+	 */
 	protected void arrangerIndexSave()
 	{
 		// START KGU#626 2019-01-05: Enh. #657
@@ -1299,7 +1346,10 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 		// END KGU#626 2019-01-05
 	}
 
-	/** Action method for {@link #popupIndexRemove}, removes all selected {@link Root}s and {@link Group}s */
+	/**
+	 * Action method for {@link #popupIndexRemove}, removes all selected
+	 * {@link Root}s and {@link Group}s
+	 */
 	protected void arrangerIndexRemove()
 	{
 		// START KGU#626 2019-01-01: Enh. #657
@@ -1617,7 +1667,10 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 	// END KGU#626 2019-01-05
 
 	// START KGU#703 2019-03-30: Enh. #720
-	/** @return a sorted vector of diagrams calling the given subroutine (under group aspect) */
+	/**
+	 * @return a sorted vector of diagrams calling the given subroutine
+	 *    (under group aspect)
+	 */
 	private Vector<Root> retrieveCallers(Root subRoutine) {
 		Vector<Root> callers = new Vector<Root>();
 		for (Root candidate: Arranger.getSortedRoots()) {
@@ -1638,7 +1691,10 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 	}
 	// END KGU#703 2019-03-30
 
-	/** @return a new node for {@code root} with subnodes for every group {@code root} is member of except {@code selectedGroup} */
+	/**
+	 * @return a new node for {@code root} with subnodes for every group
+	 *    {@code root} is member of except {@code selectedGroup}
+	 */
 	private DefaultMutableTreeNode makeNodeWithGroups(Root root, Group selectedGroup) {
 		DefaultMutableTreeNode node = new DefaultMutableTreeNode(root);
 		Collection<Group> groups = Arranger.getInstance().getGroupsFromRoot(root, false);
@@ -1679,13 +1735,16 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 
 	}
 
-	/** Dissolves the selected group(s) i.e. detaches all contained diagrams. If a diagram gets
-	 * orphaned then it will be attached to the default group instead. The group may be deleted
-	 * if it hadn't been associated to a file.<br/>
-	 * In case {@code viaMenu} is {@code false} or more than one group is selected, a confirmation
-	 * request will pop up.
-	 * @param viaMenu - {@code true} if launched form a menu item, {@code false} otherwise
-	 * (via accelerator)
+	/**
+	 * Dissolves the selected group(s) i.e. detaches all contained diagrams.
+	 * If a diagram gets orphaned then it will be attached to the default group
+	 * instead. The group may be deleted if it hadn't been associated to a file.
+	 * <br/>
+	 * In case {@code viaMenu} is {@code false} or more than one group is
+	 * selected, a confirmation request will pop up.
+	 * 
+	 * @param viaMenu - {@code true} if launched form a menu item, {@code false}
+	 *    otherwise (via accelerator)
 	 */
 	private boolean arrangerIndexDissolveGroup(boolean viaMenu) {
 		Collection<Group> groups = this.arrangerIndexGetSelectedGroups(false);

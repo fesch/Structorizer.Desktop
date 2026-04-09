@@ -94,6 +94,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-03-03      Issue #954: Modified behaviour of "btnDropBrk" button
  *      Kay Gürtzig     2021-03-09      Issue #966: Precaution for dark look & feel themes
  *      Kay Gürtzig     2025-08-01      Enh. 1197: Paintbox toolbar enhanced by a colour detach button
+ *      Kay Gürtzig     2026-04-09      Issue #1133: Workaround for Windows 11 menu icon defect in code preview popup menu items
  *
  ******************************************************************************************************
  *
@@ -1255,6 +1256,11 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 			}
 			JCheckBoxMenuItem pluginItem = new JCheckBoxMenuItem(plugin.title, icon);
 			pluginItem.setName("code_" + plugin.title);
+			// START KGU#1085 2026-04-09: Issue #1133 Windows 11 L&F workaround
+			if (icon == defaultIcon) {
+				IconLoader.associateMenuIcon(pluginItem, 87);
+			}
+			// END KGU#1085 2026-04-09
 			popupCode.add(pluginItem);
 			pluginItem.setToolTipText(tooltip.replace("%", plugin.title));
 			pluginItem.addActionListener(listener);
@@ -1641,6 +1647,9 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		for (Component comp: popupCode.getComponents()) {
 			if (comp instanceof JCheckBoxMenuItem) {
 				((JCheckBoxMenuItem)comp).setSelected(comp.getName().equals("code_" + diagram.getPreferredGeneratorName()));
+				// START KGU#1085 2026-04-09: Issue #1133 Windows 11 L&F workaround
+				IconLoader.updateMenuIcon((JCheckBoxMenuItem)comp);
+				// END KGU#1085 2026-04-09
 			}
 		}
 		

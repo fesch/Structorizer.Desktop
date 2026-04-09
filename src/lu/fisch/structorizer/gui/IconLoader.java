@@ -83,6 +83,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-02-06      Enh. #915: 127_merge and 128_split added
  *      Kay Gürtzig     2021-03-18      Issue #966: Icon 081 (language) replaced
  *      Kay Gürtzig     2025-08-01      Enh. #1197: generateIcon() now also accepts null as argument
+ *      Kay Gürtzig     2026-04-04/09   Issue #1133: Support for Windows 11 L&F workaround on JCheckBoxMenuItem icons
  *
  ******************************************************************************************************
  *
@@ -261,7 +262,14 @@ public class IconLoader {
 	/** Array of available numbered icons with lazy initialization (replaces ico001, ico002 etc.) */
 	private static ImageIcon[] icons = null;
 	// END KGU#486 2018-01-24
-
+	
+	// START KGU#1085 2026-04-03: Issue #1133 Workaround for Windows 11 CheckboxMenuItems
+	/** Sparse array of available selected Items for JCheckBoxMenuItems for the case of Windows 11 */
+	private static ImageIcon[] selectedIcons = null;
+	/** Maps JCheckBoxMenuItems to icon numbers */
+	private static final HashMap<JCheckBoxMenuItem, Integer> menuIconMap = new HashMap<JCheckBoxMenuItem, Integer>();
+	// END KGU#1085 2026-04-03
+	
 	// Icons
 	/** A fixed-size product image for Mac or Translator */
 	// START KGU#577 2018-09-18: Issue #601
@@ -279,6 +287,12 @@ public class IconLoader {
 	// START KGU#577 2018-09-17: Issue #601 - we use lazy initialization
 	private static ImageIcon dummyIcon = null;
 	// END KGU#577 2018-09-17
+	
+	// START KGU#1085 2026-04-09: Issue #1133 (temporary) workaround for Windows11
+	private static boolean isWindows11 = "Windows 11".equalsIgnoreCase(System.getProperty("os.name"));
+	public static boolean lafWindows1133workaround = false;
+	// END KGU#1085 2026-04-09
+
 		
 //	public static ImageIcon ico001 = getIconImage(getURI(from+"icons/001_New.png"));
 //	public static ImageIcon ico002 = getIconImage(getURI(from+"icons/002_Open.png"));
@@ -456,6 +470,7 @@ public class IconLoader {
 	// END KGU 2020-04-02
 	
 	// START KGU#242 2016-09-05
+	// FIXME: Seems never to be filled!
 	/** Cached locale icons */
 	private static HashMap<String, ImageIcon> icoLocales = new HashMap<String, ImageIcon>();
 	// END KGU#242 2016-09-05
@@ -723,6 +738,7 @@ public class IconLoader {
 		// START KGU#242 2016-09-05
 		for (String key: icoLocales.keySet())
 		{
+			//System.out.println("icoLocales.put(" + key + ", getIconImage(getURI(\"icons/locale_" + key + ".png\")))");
 			icoLocales.put(key, getIconImage(getURI("icons/locale_" + key + ".png")));
 		}
 		// END KGU#242 2016-09-05
@@ -811,6 +827,7 @@ public class IconLoader {
 		//	Logger.getLogger(IconLoader.class.getName()).log(Level.SEVERE, "No resource " + fileName + " with size " + extraFactor);
 		//	return getMissingIcon();			
 		//}
+		//System.out.println("getIconImage(\"" + fileName + "\") -> * " + factor);
 		return scale(ii, factor);
 	}
 
@@ -884,6 +901,14 @@ public class IconLoader {
 	}
 
 	// START KGU 2016-09-06
+	/**
+	 * Retrieves the icon symbolising the locale specified by {@code localeName}.
+	 * Also ensures the cashing of an icon variant for selected CheckboxMenuItems
+	 * if available.
+	 * 
+	 * @param localeName - name of the locale
+	 * @return either the respective icon or {@code null}.
+	 */
 	public static ImageIcon getLocaleIconImage(String localeName)
 	{
 		ImageIcon ii = icoLocales.get(localeName);
@@ -898,6 +923,27 @@ public class IconLoader {
 		return ii;
 	}
 	// END KGU 2016-09-06
+
+	// START KGU#1085 2026-04-03: Issue #1133 workaround for Windows 11
+	/**
+	 * Retrieves the icon symbolising the locale specified by {@code localeName}
+	 * as to be used for selected CheckboxMenuItems under Windows 11.
+	 * 
+	 * @param localeName - name of the locale
+	 * @return either the respective icon or {@code null}.
+	 */
+	public static ImageIcon getSelectedLocaleIconImage(String localeName)
+	{
+		String modifiedName = localeName + "_on";
+		ImageIcon ii = icoLocales.get(modifiedName);
+		if (ii == null && Locales.isNamedLocale(localeName))
+		{
+			// Already comprises scaling...
+			ii = getIconImage("locale_" + modifiedName + ".png");
+		}
+		return ii;
+	}
+	// END KGU#1085 2026-04-03
 
 	/**
 	 * Returns an ImageIcon version of src, which is magnified by length factor
@@ -1079,6 +1125,88 @@ public class IconLoader {
 		
 	}
 	// END KGU#929 2021-02-11
+	
+	// START KGU#1085 2026-04-04: Issue #1133 workaround
+	/**
+	 * Maps the given JCheckBoxMenuItem {@code menuItem} to the given
+	 * {@code iconNo} (if existent) and (re-)sets the respective icon,
+	 * depending on the selection status and Look & Feel needs.
+	 * 
+	 * @param menuItem - a JCheckBoxMenuItem intended to have an icon
+	 * @param iconNo - the icon number to be associated.
+	 * 
+	 * @see #updateMenuIcon(JCheckBoxMenuItem)
+	 * @see #updateAssociatedMenuIcons()
+	 */
+	public static void associateMenuIcon(JCheckBoxMenuItem menuItem, int iconNo)
+	{
+		if (menuItem != null && iconNo >= 0 && iconNo < ICON_FILES.length) {
+			Integer oldAssocNo = menuIconMap.put(menuItem, iconNo);
+			if (oldAssocNo == null || oldAssocNo != iconNo) {
+				if (isWindows11) {
+					if (selectedIcons == null) {
+						selectedIcons = new ImageIcon[ICON_FILES.length];
+						for (int i = 0; i < selectedIcons.length; i++) {
+							selectedIcons[i] = null;
+						}
+					}
+					if (selectedIcons[iconNo] == null) {
+						String fileName = ICON_FILES[iconNo];
+						if (fileName != null) {
+							int posDot = fileName.lastIndexOf('.');
+							fileName = fileName.substring(0, posDot) + "_on" + fileName.substring(posDot);
+							selectedIcons[iconNo] = getIconImage(fileName);
+						}
+					}
+				}
+				if (!menuItem.isSelected()) {
+					menuItem.setIcon(getIcon(iconNo));
+				}
+			}
+			if (isWindows11) {
+				if (menuItem.isSelected()
+						&& "Windows".equalsIgnoreCase(UIManager.getLookAndFeel().getName())
+						&& lafWindows1133workaround
+						&& selectedIcons[iconNo] != null) {
+					menuItem.setIcon(selectedIcons[iconNo]);
+				}
+				else {
+					menuItem.setIcon(icons[iconNo]);
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Updates the icon for the given JCheckBoxMenuItem {@code menuItem} if
+	 * it had been associated to an icon number via before.
+	 * 
+	 * @param menuItem - the respective menu item
+	 * 
+	 * @see #associateMenuIcon(JCheckBoxMenuItem, int)
+	 * @see #updateAssociatedMenuIcons()
+	 */
+	public static void updateMenuIcon(JCheckBoxMenuItem menuItem)
+	{
+		Integer iconNo = menuIconMap.get(menuItem);
+		if (iconNo != null) {
+			associateMenuIcon(menuItem, iconNo);
+		}
+	}
+	
+	/**
+	 * This method should be called when the Look and Feel was changed under
+	 * Windows 11.
+	 * 
+	 * @see #associateMenuIcon(JCheckBoxMenuItem, int)
+	 */
+	public static void updateAssociatedMenuIcons()
+	{
+		for (JCheckBoxMenuItem menuItem: menuIconMap.keySet()) {
+			updateMenuIcon(menuItem);
+		}
+	}
+	// END KGU#1085 2026-04-04
 	
 // START KGU 2021-01-09: Finally disabled
 //	/**

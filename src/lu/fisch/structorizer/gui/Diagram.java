@@ -7674,7 +7674,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	// START KGU#705 2019-09-23: Enh. #738: Code preview support
 	/**
-	 * Place a code preview for the current diagram to the currrent favourite
+	 * Place a code preview for the current diagram to the current favourite
 	 * programming language. Also fills the {@link #codePreviewMap} with
 	 * associations between {@link Element}s and line intervals.
 	 *

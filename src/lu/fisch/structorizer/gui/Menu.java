@@ -136,6 +136,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2024-11-22      Poll #1173: menuFileExportPictureSWF disabled (to be removed)
  *      Kay Gürtzig     2025-07-10      Enh. #1196: Messages for new Analyser checks 32 and 33
  *      Kay Gürtzig     2025-08-03      Enh. #1198: msgVersionHint_3_30_15 replaced by ~_3_32_29.
+ *      Kay Gürtzig     2026-04-03/09   Issue #1133: Workaround for defective menu item status indication in "Windows" L&F
  *
  ******************************************************************************************************
  *
@@ -240,9 +241,9 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	protected final JMenuItem menuFileArrange = new JMenuItem("Arrange", IconLoader.getIcon(105));
 	// END KGU#2 2015-11-19
 	protected final JMenuItem menuFilePrint = new JMenuItem("Print ...",IconLoader.getIcon(41));
-    // START BOB 2016-08-02
+	// START BOB 2016-08-02
 	protected final JMenuItem menuFileTranslator = new JMenuItem("Translator", IconLoader.getIcon(113));
-    // END BOB 2016-08-02
+	// END BOB 2016-08-02
 	protected final JMenuItem menuFileQuit = new JMenuItem("Quit", IconLoader.getIcon(122));
 
 	// Menu "Edit"
@@ -271,26 +272,48 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 
 	protected final JMenu menuView = new JMenu("View");
 	// START KGU#310 2023-10-06: Issue #311 Moved to new menuView
-	protected final JCheckBoxMenuItem menuViewComment = new JCheckBoxMenuItem("Show comments?", IconLoader.getIcon(77));
-	protected final JCheckBoxMenuItem menuViewMarker = new JCheckBoxMenuItem("Highlight variables?", IconLoader.getIcon(79));
+	// START KGU#1085 2026-04-04: Issue #1133 workaround - postpone the icon association to create()
+//	protected final JCheckBoxMenuItem menuViewComment = new JCheckBoxMenuItem("Show comments?", IconLoader.getIcon(77));
+//	protected final JCheckBoxMenuItem menuViewMarker = new JCheckBoxMenuItem("Highlight variables?", IconLoader.getIcon(79));
+//	// START KGU#872 2020-10-17: Enh. #872 - New display mode or operators
+//	protected final JCheckBoxMenuItem menuViewOperatorsC = new JCheckBoxMenuItem("Show operators in C style?", IconLoader.getIcon(124));
+//	// END KGU#872 2020-10-17
+//	protected final JCheckBoxMenuItem menuViewDIN = new JCheckBoxMenuItem("DIN 66261?", IconLoader.getIcon(82));
+//	protected final JCheckBoxMenuItem menuViewAnalyser = new JCheckBoxMenuItem("Analyse structogram?", IconLoader.getIcon(83));
+//	protected final JCheckBoxMenuItem menuViewSwitchComments = new JCheckBoxMenuItem("Switch text/comments?", IconLoader.getIcon(102));
+//	// START KGU#227 2016-07-31: Enh. #128
+//	protected final JCheckBoxMenuItem menuViewCommentsPlusText = new JCheckBoxMenuItem("Comments plus texts?", IconLoader.getIcon(111));
+//	// END KGU#227 2016-07-31
+//	// START KGU#477 2017-12-06: Enh. #487
+//	protected final JCheckBoxMenuItem menuViewHideDeclarations = new JCheckBoxMenuItem("Hide declarations?", IconLoader.getIcon(85));
+//	// END KGU#477 2017-12-06
+//	// START KGU#305 2016-12-14: Enh. #305
+//	protected final JCheckBoxMenuItem menuViewIndex = new JCheckBoxMenuItem("Show Arranger index?", IconLoader.getIcon(29));
+//	// END KGU#305 2016-12-14
+//	// START KGU#705 2019-09-23: Enh. #738
+//	protected final JCheckBoxMenuItem menuViewPreview = new JCheckBoxMenuItem("Show Code preview?", IconLoader.getIcon(87));
+//	// END KGU#705 2019-09-23
+	protected final JCheckBoxMenuItem menuViewComment = new JCheckBoxMenuItem("Show comments?");
+	protected final JCheckBoxMenuItem menuViewMarker = new JCheckBoxMenuItem("Highlight variables?");
 	// START KGU#872 2020-10-17: Enh. #872 - New display mode or operators
-	protected final JCheckBoxMenuItem menuViewOperatorsC = new JCheckBoxMenuItem("Show operators in C style?", IconLoader.getIcon(124));
+	protected final JCheckBoxMenuItem menuViewOperatorsC = new JCheckBoxMenuItem("Show operators in C style?");
 	// END KGU#872 2020-10-17
-	protected final JCheckBoxMenuItem menuViewDIN = new JCheckBoxMenuItem("DIN 66261?", IconLoader.getIcon(82));
-	protected final JCheckBoxMenuItem menuViewAnalyser = new JCheckBoxMenuItem("Analyse structogram?", IconLoader.getIcon(83));
-	protected final JCheckBoxMenuItem menuViewSwitchComments = new JCheckBoxMenuItem("Switch text/comments?", IconLoader.getIcon(102));
+	protected final JCheckBoxMenuItem menuViewDIN = new JCheckBoxMenuItem("DIN 66261?");
+	protected final JCheckBoxMenuItem menuViewAnalyser = new JCheckBoxMenuItem("Analyse structogram?");
+	protected final JCheckBoxMenuItem menuViewSwitchComments = new JCheckBoxMenuItem("Switch text/comments?");
 	// START KGU#227 2016-07-31: Enh. #128
-	protected final JCheckBoxMenuItem menuViewCommentsPlusText = new JCheckBoxMenuItem("Comments plus texts?", IconLoader.getIcon(111));
+	protected final JCheckBoxMenuItem menuViewCommentsPlusText = new JCheckBoxMenuItem("Comments plus texts?");
 	// END KGU#227 2016-07-31
 	// START KGU#477 2017-12-06: Enh. #487
-	protected final JCheckBoxMenuItem menuViewHideDeclarations = new JCheckBoxMenuItem("Hide declarations?", IconLoader.getIcon(85));
+	protected final JCheckBoxMenuItem menuViewHideDeclarations = new JCheckBoxMenuItem("Hide declarations?");
 	// END KGU#477 2017-12-06
 	// START KGU#305 2016-12-14: Enh. #305
-	protected final JCheckBoxMenuItem menuViewIndex = new JCheckBoxMenuItem("Show Arranger index?", IconLoader.getIcon(29));
+	protected final JCheckBoxMenuItem menuViewIndex = new JCheckBoxMenuItem("Show Arranger index?");
 	// END KGU#305 2016-12-14
 	// START KGU#705 2019-09-23: Enh. #738
-	protected final JCheckBoxMenuItem menuViewPreview = new JCheckBoxMenuItem("Show Code preview?", IconLoader.getIcon(87));
+	protected final JCheckBoxMenuItem menuViewPreview = new JCheckBoxMenuItem("Show Code preview?");
 	// END KGU#705 2019-09-23
+	// END KGU#1085 2026-04-04
 	// END KGU#310 2023-10-06
 
 	// Menu "Diagram"
@@ -364,15 +387,26 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	// END KGU#310 2016-12-14
 
 	protected final JMenu menuDiagramType = new JMenu("Type");
-	protected final JCheckBoxMenuItem menuDiagramTypeProgram = new JCheckBoxMenuItem("Main", IconLoader.getIcon(22));
+	// START KGU#1085 2026-04-04: Issue #1133 workaround - postpone the icon association to create()
+//	protected final JCheckBoxMenuItem menuDiagramTypeProgram = new JCheckBoxMenuItem("Main", IconLoader.getIcon(22));
+//	// START AS 2021-03-25: Enh. #967 - KGU 2021-04-15 disabled in favour of a plugin-specific export option
+//	//protected final JCheckBoxMenuItem menuDiagramARM = new JCheckBoxMenuItem("GNU compiler for ARM", IconLoader.getIcon(129));
+//	// END AS 2021-03-25
+//	protected final JCheckBoxMenuItem menuDiagramTypeFunction = new JCheckBoxMenuItem("Sub", IconLoader.getIcon(21));
+//	//START KGU#376 2017-05-16: Enh. #389
+//	protected final JCheckBoxMenuItem menuDiagramTypeInclude = new JCheckBoxMenuItem("Includable", IconLoader.getIcon(71));
+//	//END KGU#376 2017-05-16
+//	protected final JCheckBoxMenuItem menuDiagramUnboxed = new JCheckBoxMenuItem("Unframed diagram?", IconLoader.getIcon(40));
+	protected final JCheckBoxMenuItem menuDiagramTypeProgram = new JCheckBoxMenuItem("Main");
 	// START AS 2021-03-25: Enh. #967 - KGU 2021-04-15 disabled in favour of a plugin-specific export option
 	//protected final JCheckBoxMenuItem menuDiagramARM = new JCheckBoxMenuItem("GNU compiler for ARM", IconLoader.getIcon(129));
 	// END AS 2021-03-25
-	protected final JCheckBoxMenuItem menuDiagramTypeFunction = new JCheckBoxMenuItem("Sub", IconLoader.getIcon(21));
+	protected final JCheckBoxMenuItem menuDiagramTypeFunction = new JCheckBoxMenuItem("Sub");
 	//START KGU#376 2017-05-16: Enh. #389
-	protected final JCheckBoxMenuItem menuDiagramTypeInclude = new JCheckBoxMenuItem("Includable", IconLoader.getIcon(71));
+	protected final JCheckBoxMenuItem menuDiagramTypeInclude = new JCheckBoxMenuItem("Includable");
 	//END KGU#376 2017-05-16
-	protected final JCheckBoxMenuItem menuDiagramUnboxed = new JCheckBoxMenuItem("Unframed diagram?", IconLoader.getIcon(40));
+	protected final JCheckBoxMenuItem menuDiagramUnboxed = new JCheckBoxMenuItem("Unframed diagram?");
+	// END KGU#1085 2026-04-04
 	// START KGU#310 2023-10-06: Issue #311 Moved to new menuView
 //	protected final JCheckBoxMenuItem menuDiagramComment = new JCheckBoxMenuItem("Show comments?", IconLoader.getIcon(77));
 //	protected final JCheckBoxMenuItem menuDiagramMarker = new JCheckBoxMenuItem("Highlight variables?", IconLoader.getIcon(79));
@@ -403,12 +437,21 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	
 	protected final JMenu menuPreferences = new JMenu("Preferences");
 	// Submenu of "Preferences"
+	
+	// START KGU#1085 2026-04-04: Issue #1133 workaround - postpone the icon association to create()
+//	// START KGU#300 2016-12-02: Enh. #300
+//	protected final JCheckBoxMenuItem menuPreferencesNotifyUpdate = new JCheckBoxMenuItem("Notify of new versions?",IconLoader.getIcon(52));
+//	// END KGU#2016-12-02
+//	// START KGU#456 2017-11-05: Enh. #452
+//	protected final JCheckBoxMenuItem menuPreferencesSimplified = new JCheckBoxMenuItem("Simplified toolbars?",IconLoader.getIcon(75));
+//	// END KGU#456 2017-11-05
 	// START KGU#300 2016-12-02: Enh. #300
-	protected final JCheckBoxMenuItem menuPreferencesNotifyUpdate = new JCheckBoxMenuItem("Notify of new versions?",IconLoader.getIcon(52));
+	protected final JCheckBoxMenuItem menuPreferencesNotifyUpdate = new JCheckBoxMenuItem("Notify of new versions?");
 	// END KGU#2016-12-02
 	// START KGU#456 2017-11-05: Enh. #452
-	protected final JCheckBoxMenuItem menuPreferencesSimplified = new JCheckBoxMenuItem("Simplified toolbars?",IconLoader.getIcon(75));
+	protected final JCheckBoxMenuItem menuPreferencesSimplified = new JCheckBoxMenuItem("Simplified toolbars?");
 	// END KGU#456 2017-11-05
+	// END KGU#1085 2026-04-04
 	protected final JMenuItem menuPreferencesFont = new JMenuItem("Font ...",IconLoader.getIcon(23));
 	protected final JMenuItem menuPreferencesColors = new JMenuItem("Colors ...",IconLoader.getIcon(31));
 	protected final JMenuItem menuPreferencesOptions = new JMenuItem("Structures ...",IconLoader.getIcon(40));
@@ -439,12 +482,21 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	// END KGU#486 2018-02-06
 	// END KGU#480 2018-01-18
 	protected final JMenu menuPreferencesLookAndFeel = new JMenu("Look & Feel");
+	// START KGU#1085 2026-04-08: Issue #1133 Windows L&F workaround
+	protected final JCheckBoxMenuItem menuPreferencesLaFWin11 = new JCheckBoxMenuItem("Use Windows 11 L&F workaround");
+	// END KGU#1085 2026-04-08
 	// START KGU#503 2018-03-14: Enh. #519
 	protected final JMenu menuPreferencesWheel = new JMenu("Mouse Wheel");
 	// START KGU#123 2016-01-04: Enh. #87
-	protected final JCheckBoxMenuItem menuPreferencesWheelCollapse = new JCheckBoxMenuItem("Mouse wheel for collapsing?", IconLoader.getIcon(108));
+	// START KGU#1085 2026-04-08: Issue #1133 Workaround - Postpone the icon association
+	//protected final JCheckBoxMenuItem menuPreferencesWheelCollapse = new JCheckBoxMenuItem("Mouse wheel for collapsing?", IconLoader.getIcon(108));
+	protected final JCheckBoxMenuItem menuPreferencesWheelCollapse = new JCheckBoxMenuItem("Mouse wheel for collapsing?");
+	// END KGU#1085 2026-04-08
 	// END KGU#123 2016-01-04
-	protected final JCheckBoxMenuItem menuPreferencesWheelZoom = new JCheckBoxMenuItem("Reverse zoom with ctr + wheel", IconLoader.getIcon(7));
+	// START KGU#1085 2026-04-08: Issue #1133 Workaround - Postpone the icon association
+	//protected final JCheckBoxMenuItem menuPreferencesWheelZoom = new JCheckBoxMenuItem("Reverse zoom with ctr + wheel", IconLoader.getIcon(7));
+	protected final JCheckBoxMenuItem menuPreferencesWheelZoom = new JCheckBoxMenuItem("Reverse zoom with ctr + wheel");
+	// END KGU#1085 2026-04-08
 	// END KGU#503 2018-03-14
 	// START KGU#699 2019-03-27: Issue #717
 	protected final JMenuItem menuPreferencesWheelUnit = new JMenuItem("Mouse wheel scrolling unit ...", IconLoader.getIcon(9));
@@ -476,7 +528,10 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	protected final JMenuItem menuDebugBreakTrigger = new JMenuItem("Specify break trigger ...", IconLoader.getIcon(112));
 	// START KGU#952 2021-03-03: Issue #954 - modified behaviour
 	//protected final JMenuItem menuDebugDropBrkpts = new JMenuItem("Clear breakpoints", IconLoader.getIcon(104));
-	protected final JCheckBoxMenuItem menuDebugDropBrkpts = new JCheckBoxMenuItem("Ignore breakpoints", IconLoader.getIcon(104));
+	// START KGU#1085 2026-04-08: Issue #1133 Workaround - Postpone the icon association
+	//protected final JCheckBoxMenuItem menuDebugDropBrkpts = new JCheckBoxMenuItem("Ignore breakpoints", IconLoader.getIcon(104));
+	protected final JCheckBoxMenuItem menuDebugDropBrkpts = new JCheckBoxMenuItem("Ignore breakpoints");
+	// END KGU#1085 2026-04-08
 	// END KGU#952 2021-03-03
 	protected final JMenuItem menuDebugDisable = new JMenuItem("Disable", IconLoader.getIcon(26));
 	// END KGU#310 2016-12-14
@@ -932,6 +987,10 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	private boolean noExportImport = false;	// supresses code export / import items
 	// END KGU#868 2020-06-03
 	// END BOB 2020-05-25
+	
+	// START KGU#1085 2026-04-03: Issue #1133 (temporary) workaround for Windows11
+	public static boolean isWindows11 = false;
+	// END KGU#1085 2026-04-03
 
 	/**
 	 * Constructs the GUI
@@ -940,7 +999,11 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	{
 		JMenuBar menubar = this;
 		
-		// FIXME: This method becomes deprecated with Java 10! Use getMenuShortcutKeyMaskEx() instead in future.
+		// START KGU#1085 2026-04-03: Issue #1133 (temporary) workaround for Windows11
+		String osName = System.getProperty("os.name");
+		isWindows11 = osName.equalsIgnoreCase("windows 11");
+		// END KGU#1085 2026-04-03
+
 		// OS-dependent key mask for menu shortcuts
 		int menuShortcutKeyMask = ((Toolkit) Toolkit.getDefaultToolkit()).getMenuShortcutKeyMaskEx();
 
@@ -1454,19 +1517,31 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 
 		menuDiagram.add(menuDiagramType);
 
+		// START KGU#1085 2026-04-04: Issue #1133 workaround
+		IconLoader.associateMenuIcon(menuDiagramTypeProgram, 22);
+		// END KGU#1085 2026-04-04
 		menuDiagramType.add(menuDiagramTypeProgram);
-		menuDiagramTypeProgram.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setProgram(); doButtons(); } } );
+		menuDiagramTypeProgram.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setProgram(); doButtons(); doMenuItem(event.getSource()); } } );
 
+		// START KGU#1085 2026-04-04: Issue #1133 workaround
+		IconLoader.associateMenuIcon(menuDiagramTypeFunction, 21);
+		// END KGU#1085 2026-04-04
 		menuDiagramType.add(menuDiagramTypeFunction);
-		menuDiagramTypeFunction.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setFunction(); doButtons(); } } );
+		menuDiagramTypeFunction.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setFunction(); doButtons(); doMenuItem(event.getSource()); } } );
 
 		//START KGU#376 2017-05-16: Enh. #389
+		// START KGU#1085 2026-04-04: Issue #1133 workaround
+		IconLoader.associateMenuIcon(menuDiagramTypeInclude, 71);
+		// END KGU#1085 2026-04-04
 		menuDiagramType.add(menuDiagramTypeInclude);
-		menuDiagramTypeInclude.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setInclude(); doButtons(); } } );
+		menuDiagramTypeInclude.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setInclude(); doButtons(); doMenuItem(event.getSource()); } } );
 		// END KGU#376 2017-05-16
 
+		// START KGU#1085 2026-04-04: Issue #1133 workaround
+		IconLoader.associateMenuIcon(menuDiagramUnboxed, 40);
+		// END KGU#1085 2026-04-04
 		menuDiagram.add(menuDiagramUnboxed);
-		menuDiagramUnboxed.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setUnboxed(menuDiagramUnboxed.isSelected()); doButtons(); } } );
+		menuDiagramUnboxed.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setUnboxed(menuDiagramUnboxed.isSelected()); doButtons(); doMenuItem(event.getSource()); } } );
 
 		// START KGU#310 2023-10-06: Issue #311 Menu reorganisation
 //		menuDiagram.addSeparator();
@@ -1547,58 +1622,89 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		// Setting up Menu "View" with all submenus and shortcuts and actions
 		menubar.add(menuView);
 
+		// START KGU#1085 2026-04-04: Issue #1133 workaround
+		IconLoader.associateMenuIcon(menuViewComment, 77);
+		// END KGU#1085 2026-04-04
 		menuView.add(menuViewComment);
-		menuViewComment.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setComments(menuViewComment.isSelected()); doButtons(); } } );
+		menuViewComment.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setComments(menuViewComment.isSelected()); doButtons(); doMenuItem(event.getSource()); } } );
 
 		// START KGU#227 2016-07-31: Enh. #128
+		// START KGU#1085 2026-04-04: Issue #1133 workaround
+		IconLoader.associateMenuIcon(menuViewCommentsPlusText, 111);
+		// END KGU#1085 2026-04-04
 		menuView.add(menuViewCommentsPlusText);
-		menuViewCommentsPlusText.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setCommentsPlusText(menuViewCommentsPlusText.isSelected()); doButtons(); } } );
+		menuViewCommentsPlusText.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setCommentsPlusText(menuViewCommentsPlusText.isSelected()); doButtons(); doMenuItem(event.getSource()); } } );
 		// END KGU#227 2016-07-31
 
+		// START KGU#1085 2026-04-04: Issue #1133 workaround
+		IconLoader.associateMenuIcon(menuViewSwitchComments, 102);
+		// END KGU#1085 2026-04-04
 		menuView.add(menuViewSwitchComments);
-		menuViewSwitchComments.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleTextComments(); doButtons(); } } );
+		menuViewSwitchComments.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleTextComments(); doButtons(); doMenuItem(event.getSource()); } } );
 		// START KGU#169 2016-04-01: Enh. #142 (accelerator key added)
 		menuViewSwitchComments.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, (java.awt.event.InputEvent.ALT_DOWN_MASK | menuShortcutKeyMask)));
 		// START KGU#169 2016-04-01
 
 		// START KGU#477 2017-12-06: Enh. #487
+		// START KGU#1085 2026-04-04: Issue #1133 workaround
+		IconLoader.associateMenuIcon(menuViewHideDeclarations, 85);
+		// END KGU#1085 2026-04-04
 		menuView.add(menuViewHideDeclarations);
-		menuViewHideDeclarations.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setHideDeclarations(menuViewHideDeclarations.isSelected()); doButtons(); } } );
+		menuViewHideDeclarations.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setHideDeclarations(menuViewHideDeclarations.isSelected()); doButtons(); doMenuItem(event.getSource()); } } );
 		// END KGU#477 2016-12-06
 
+		// START KGU#1085 2026-04-04: Issue #1133 workaround
+		IconLoader.associateMenuIcon(menuViewMarker, 79);
+		// END KGU#1085 2026-04-04
 		menuView.add(menuViewMarker);
-		menuViewMarker.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setHightlightVars(menuViewMarker.isSelected()); doButtons(); } } );
+		menuViewMarker.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setHightlightVars(menuViewMarker.isSelected()); doButtons(); doMenuItem(event.getSource()); } } );
 		menuViewMarker.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F4, 0));
 
 		// START KGU#872 2020-10-17>: Enh. #872
+		// START KGU#1085 2026-04-04: Issue #1133 workaround
+		IconLoader.associateMenuIcon(menuViewOperatorsC, 124);
+		// END KGU#1085 2026-04-04
 		menuView.add(menuViewOperatorsC);
-		menuViewOperatorsC.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setOperatorDisplayC(menuViewOperatorsC.isSelected()); doButtons(); } } );
+		menuViewOperatorsC.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setOperatorDisplayC(menuViewOperatorsC.isSelected()); doButtons(); doMenuItem(event.getSource()); } } );
 		// START KGU#872 2020-10-17
 
+		// START KGU#1085 2026-04-04: Issue #1133 workaround
+		IconLoader.associateMenuIcon(menuViewDIN, 82);
+		// END KGU#1085 2026-04-04
 		menuView.add(menuViewDIN);
-		menuViewDIN.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleDIN(); doButtons(); } } );
+		menuViewDIN.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleDIN(); doButtons(); doMenuItem(event.getSource()); } } );
 
 		menuView.addSeparator();
 
+		// START KGU#1085 2026-04-04: Issue #1133 workaround
+		IconLoader.associateMenuIcon(menuViewAnalyser, 83);
+		// END KGU#1085 2026-04-04
 		menuView.add(menuViewAnalyser);
-		menuViewAnalyser.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleAnalyser(); doButtons(); } } );
+		menuViewAnalyser.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleAnalyser(); doButtons(); doMenuItem(event.getSource()); } } );
 		menuViewAnalyser.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F3, 0));
 		
 		menuView.addSeparator();
 
 		// START KGU#305 2016-12-14: Enh. #305
+		// START KGU#1085 2026-04-04: Issue #1133 workaround
+		IconLoader.associateMenuIcon(menuViewIndex, 29);
+		// END KGU#1085 2026-04-04
 		menuView.add(menuViewIndex);
-		menuViewIndex.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setArrangerIndex(menuViewIndex.isSelected()); } } );
+		menuViewIndex.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setArrangerIndex(menuViewIndex.isSelected()); doMenuItem(event.getSource()); } } );
 		menuViewIndex.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F3, java.awt.event.InputEvent.SHIFT_DOWN_MASK));
 		// END KGU#305 2016-12-14
 
 		// START KGU#705 2019-09-23: Enh. #738
+		// START KGU#1085 2026-04-04: Issue #1133 workaround
+		IconLoader.associateMenuIcon(menuViewPreview, 87);
+		// END KGU#1085 2026-04-04
 		menuView.add(menuViewPreview);
 		// START KGU#868 2020-06-03: Bugfix #868 - consider reduced mode 
 		//menuViewPreview.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setCodePreview(menuViewPreview.isSelected()); } } );
 		menuViewPreview.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent event) {
 				diagram.setCodePreview(!noExportImport && menuViewPreview.isSelected());
+				doMenuItem(event.getSource());
 				}
 			} );
 		// END KGU#868 2020-06-03
@@ -1622,6 +1728,12 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 			{
 				String caption = locDescription;
 				ImageIcon icon = IconLoader.getLocaleIconImage(locName);
+				// START KGU#1085 2026-04-03: Issue #1133 (temporary) workaround for Windows11
+				if (isWindows11) {
+					// Just caches the icon for selected menu item
+					IconLoader.getSelectedLocaleIconImage(locName);
+				}
+				// END KGU#1085 2026-04-03
 				JCheckBoxMenuItem item = new JCheckBoxMenuItem(caption, icon);
 				item.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLang(locName); } } );
 				menuPreferencesLanguage.add(item);
@@ -1645,14 +1757,20 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		// END KGU#892 2020-12-21
 
 		// START KGU#300 2016-12-02: Enh. #300
+		// START KGU#1085 2026-04-04: Issue #1133 workaround
+		IconLoader.associateMenuIcon(menuPreferencesNotifyUpdate, 52);
+		// END KGU#1085 2026-04-04
 		menuPreferences.add(menuPreferencesNotifyUpdate);
-		menuPreferencesNotifyUpdate.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setRetrieveVersion(menuPreferencesNotifyUpdate.isSelected()); } } );
+		menuPreferencesNotifyUpdate.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setRetrieveVersion(menuPreferencesNotifyUpdate.isSelected()); doMenuItem(event.getSource()); } } );
 		menuPreferencesNotifyUpdate.setToolTipText("Allow Structorizer to retrieve version info from Structorizer homepage and to inform about new releases.");
 		// END KGU#2016-12-02
 		
 		// START KGU#456 2017-11-05. Issue #452
+		// START KGU#1085 2026-04-04: Issue #1133 workaround
+		IconLoader.associateMenuIcon(menuPreferencesSimplified, 75);
+		// END KGU#1085 2026-04-04
 		menuPreferences.add(menuPreferencesSimplified);
-		menuPreferencesSimplified.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setSimplifiedGUI(menuPreferencesSimplified.isSelected()); doButtons();} } );
+		menuPreferencesSimplified.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setSimplifiedGUI(menuPreferencesSimplified.isSelected()); doButtons(); doMenuItem(event.getSource()); } } );
 		// END KGU#456 2017-11-05
 
 		menuPreferences.add(menuPreferencesFont);
@@ -1713,16 +1831,35 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 				mi.setSelected(true);
 			}
 		}
+		// START KGU#1085 2026-04-09: Issue #1133 workaround
+		if (isWindows11) {
+			menuPreferencesLookAndFeel.addSeparator();
+			menuPreferencesLaFWin11.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent event) {
+					setWindowsLaF1133Enabled(menuPreferencesLaFWin11.isSelected());
+					IconLoader.updateAssociatedMenuIcons();
+				}});
+			menuPreferencesLaFWin11.setToolTipText("This option simulates status indication on checkbox menu items with icons in \"Windows\" L&F if otherwise not working.");
+			menuPreferencesLookAndFeel.add(menuPreferencesLaFWin11);
+		}
+		// END KGU#1085 2026-04-09
 		
 		// START KGU#503 2018-03-14: Enh. #519 (+ enh. #87)
 		menuPreferences.add(menuPreferencesWheel);
 		menuPreferencesWheel.setIcon(IconLoader.getIcon(9));
 		// START KGU#123 2016-01-04: Enh. #87 
+		// START KGU#1085 2026-04-04: Issue #1133 workaround
+		IconLoader.associateMenuIcon(menuPreferencesWheelCollapse, 108);
+		// END KGU#1085 2026-04-04
 		menuPreferencesWheel.add(menuPreferencesWheelCollapse);
-		menuPreferencesWheelCollapse.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleWheelMode(); doButtons(); } } );
+		menuPreferencesWheelCollapse.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleWheelMode(); doButtons(); doMenuItem(event.getSource()); } } );
 		// END KGU#123 2016-01-04
+		// START KGU#1085 2026-04-04: Issue #1133 workaround
+		IconLoader.associateMenuIcon(menuPreferencesWheelZoom, 7);
+		// END KGU#1085 2026-04-04
 		menuPreferencesWheel.add(menuPreferencesWheelZoom);
-		menuPreferencesWheelZoom.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleCtrlWheelMode(); doButtons(); } });
+		menuPreferencesWheelZoom.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleCtrlWheelMode(); doButtons(); doMenuItem(event.getSource()); } });
 		// END KGU#503 2018-03-14
 
 		// START KGU#699 2019-03-27: Issue #717
@@ -1788,7 +1925,10 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 				controllerKeys[i+1] = controllerPlugins.get(i).className + ".*";
 			}
 			preferenceKeys.put("menuPreferencesCtrlAliases", controllerKeys);
-			preferenceKeys.put("menuPreferencesLookAndFeel", new String[] {"laf"});
+			// START KGU#1085 2026-04-08: Issue #1133 Windows 11 L&F workaround
+			//preferenceKeys.put("menuPreferencesLookAndFeel", new String[] {"laf"});
+			preferenceKeys.put("menuPreferencesLookAndFeel", new String[] {"laf*"});
+			// END KGU#1085 2026-04-08
 			preferenceKeys.put("menuPreferencesWheel", Mainform.getPreferenceKeys("wheel"));
 			preferenceKeys.put("menuPreferencesScalePreset", new String[] {"scaleFactor"});
 			preferenceKeys.put("prefsArranger", new String[] {"arranger*"});
@@ -1948,12 +2088,16 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		}
 		// END KGU#911 2021-01-10
 		
+		// START KGU#1085 2026-04-04: Issue #1133 workaround
+		IconLoader.associateMenuIcon(menuDebugDropBrkpts, 104);
+		// END KGU#1085 2026-04-04
 		menuDebug.add(menuDebugDropBrkpts);
 		// START KGU#952 2021-03-03: Issue #954 Modified behaviour
 		//menuDebugDropBrkpts.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.clearBreakpoints(); } } );
 		menuDebugDropBrkpts.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent event) {
-				diagram.disableBreakpoints(menuDebugDropBrkpts.isSelected()); 
+				diagram.disableBreakpoints(menuDebugDropBrkpts.isSelected());
+				doMenuItem(event.getSource());
 			}
 		});
 		// END KGU#952 2021-03-03
@@ -2023,6 +2167,29 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		Locales.getInstance().addLangEventListener(this, "Menu.menuHelp.text");
 		// END KGU#892 2021-02-12
 	}
+
+	/**
+	 * Sets the workaround option for the Windows 11 L&F defect on showing
+	 * the status of JCheckBoxMenuItems with associated icons.
+	 * 
+	 * @param selected - whether to enable
+	 * 
+	 * @see #getWindowsLaF1133Enabled()
+	 */
+	protected void setWindowsLaF1133Enabled(boolean enable) {
+		IconLoader.lafWindows1133workaround = enable;
+	}
+	/**
+	 * @return the current value of the workaround option for the Windows 11
+	 * L&F defect on showing the status of JCheckBoxMenuItems with associated
+	 * icons.
+	 * 
+	 * @see #setWindowsLaF1133Enabled(boolean)
+	 */
+	protected boolean getWindowsLaF1133Enabled() {
+		return IconLoader.lafWindows1133workaround;
+	}
+	// END KGU#1085 2026-04-08
 
 	@Override
 	public void setLookAndFeel(String _laf) {}
@@ -2146,11 +2313,17 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 			// END KGU#770 2021-01-27
 			
 			// style / type
-			menuDiagramTypeFunction.setSelected(diagram.isSubroutine());
-			menuDiagramTypeProgram.setSelected(diagram.isProgram());
-			menuDiagramTypeInclude.setSelected(diagram.isInclude());
-			menuDiagramUnboxed.setSelected(!diagram.getRoot().isBoxed);
-			// START KGU#310 2023-10-06: Issue #311 menu reorgaisation
+			// START KGU#1085 2026-04-08: Issue #1133 Windows (11) L&F workaround
+//			menuDiagramTypeFunction.setSelected(diagram.isSubroutine());
+//			menuDiagramTypeProgram.setSelected(diagram.isProgram());
+//			menuDiagramTypeInclude.setSelected(diagram.isInclude());
+//			menuDiagramUnboxed.setSelected(!diagram.getRoot().isBoxed);
+			setCheckBoxMenuIconSelected(menuDiagramTypeFunction, diagram.isSubroutine());
+			setCheckBoxMenuIconSelected(menuDiagramTypeProgram, diagram.isProgram());
+			setCheckBoxMenuIconSelected(menuDiagramTypeInclude, diagram.isInclude());
+			setCheckBoxMenuIconSelected(menuDiagramUnboxed, !diagram.getRoot().isBoxed);
+			// END KGU#1085 2026-04-08
+			// START KGU#310 2023-10-06: Issue #311 menu reorganisation
 //			menuDiagramAnalyser.setSelected(Element.E_ANALYSER);
 //			// START KGU#305 2016-12-14: Enh. #305
 //			menuDiagramIndex.setSelected(diagram.showingArrangerIndex());
@@ -2158,13 +2331,18 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 //			// START KGU#705 2019-09-24: Enh. #738
 //			menuDiagramPreview.setSelected(diagram.showingCodePreview());
 //			// END KGU#705 2019-09-24
-			menuViewAnalyser.setSelected(Element.E_ANALYSER);
-			// START KGU#305 2016-12-14: Enh. #305
-			menuViewIndex.setSelected(diagram.showingArrangerIndex());
-			// END KGU#305 2016-12-14
-			// START KGU#705 2019-09-24: Enh. #738
-			menuViewPreview.setSelected(diagram.showingCodePreview());
-			// END KGU#705 2019-09-24
+			// START KGU#1085 2026-04-08: Issue #1133 Windows (11) L&F workaround
+//			menuViewAnalyser.setSelected(Element.E_ANALYSER);
+//			// START KGU#305 2016-12-14: Enh. #305
+//			menuViewIndex.setSelected(diagram.showingArrangerIndex());
+//			// END KGU#305 2016-12-14
+//			// START KGU#705 2019-09-24: Enh. #738
+//			menuViewPreview.setSelected(diagram.showingCodePreview());
+//			// END KGU#705 2019-09-24
+			setCheckBoxMenuIconSelected(menuViewAnalyser, Element.E_ANALYSER);
+			setCheckBoxMenuIconSelected(menuViewIndex, diagram.showingArrangerIndex());
+			setCheckBoxMenuIconSelected(menuViewPreview, diagram.showingCodePreview());
+			// END KGU#1085 2026-04-08
 			// END KGU#310 2023-10-06
 
 			// elements
@@ -2285,8 +2463,11 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 			menuDebugControllers.setVisible(!Element.E_REDUCED_TOOLBARS);
 			// END KGU#911 2021-01-10
 			// START KGU#952 2021-03-03: Issue #954 modified behaviour
-			menuDebugDropBrkpts.setSelected(!Element.E_BREAKPOINTS_ENABLED);
-			// END KGU#954 2021-03-03
+			// START KGU#1085 2026-04-08: Issue #1133 Windows (11) L&F workaround
+			//menuDebugDropBrkpts.setSelected(!Element.E_BREAKPOINTS_ENABLED);
+			setCheckBoxMenuIconSelected(menuDebugDropBrkpts, !Element.E_BREAKPOINTS_ENABLED);
+			// END KGU#1085 2026-04-08
+			// END KGU#952 2021-03-03
 
 			// copy & paste
 			// START KGU#143 2016-01-21: Bugfix #114 - we must differentiate among cut and copy
@@ -2298,7 +2479,10 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 			menuEditPaste.setEnabled(diagram.canPaste());
 
 			// nice
-			menuDiagramUnboxed.setSelected(diagram.isUnboxed());
+			// START KGU#1085 2026-04-08: Issue #1133 Windows (11) L&F workaround
+			//menuDiagramUnboxed.setSelected(diagram.isUnboxed());
+			setCheckBoxMenuIconSelected(menuDiagramUnboxed, diagram.isUnboxed());
+			// END KGU#1085 2026-04-08
 
 			// START KGU#310 2023-10-06: Issue #311 menu reorganisation
 //			// variable highlighting
@@ -2342,10 +2526,16 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 //			// DIN 66261
 //			menuDiagramDIN.setSelected(Element.E_DIN);
 			// variable highlighting
-			menuViewMarker.setSelected(Element.E_VARHIGHLIGHT);
+			// START KGU#1085 2026-04-08: Issue #1133 Windows (11) L&F workaround
+			//menuViewMarker.setSelected(Element.E_VARHIGHLIGHT);
+			setCheckBoxMenuIconSelected(menuViewMarker, Element.E_VARHIGHLIGHT);
+			// END KGU#1085 2026-04-08
 			
 			// START KGU#872 2020-10-17: Enh. #872
-			menuViewOperatorsC.setSelected(Element.E_SHOW_C_OPERATORS);
+			// START KGU#1085 2026-04-08: Issue #1133 Windows (11) L&F workaround
+			//menuViewOperatorsC.setSelected(Element.E_SHOW_C_OPERATORS);
+			setCheckBoxMenuIconSelected(menuViewOperatorsC, Element.E_SHOW_C_OPERATORS);
+			// END KGU#1085 2026-04-08
 			// START KGU#887 2020-12-15: Bugfix #885
 			//menuViewOperatorsC.setEnabled(Element.E_VARHIGHLIGHT && !Element.E_TOGGLETC);
 			// START KGU#902 2021-01-01: Enh. #903 May now also work in StichTextComment mode
@@ -2356,11 +2546,17 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 			// END KGU#872 2020-10-17
 
 			// show comments?
-			menuViewComment.setSelected(Element.E_SHOWCOMMENTS);
+			// START KGU#1085 2026-04-08: Issue #1133 Windows (11) L&F workaround
+			//menuViewComment.setSelected(Element.E_SHOWCOMMENTS);
+			setCheckBoxMenuIconSelected(menuViewComment, Element.E_SHOWCOMMENTS);
+			// END KGU#1085 2026-04-08
 
 			// START KGU#227 2016-07-31: Enh. #128
 			// draw elements with both comments and diagram?
-			menuViewCommentsPlusText.setSelected(Element.E_COMMENTSPLUSTEXT);
+			// START KGU#1085 2026-04-08: Issue #1133 Windows (11) L&F workaround
+			//menuViewCommentsPlusText.setSelected(Element.E_COMMENTSPLUSTEXT);
+			setCheckBoxMenuIconSelected(menuViewCommentsPlusText, Element.E_COMMENTSPLUSTEXT);
+			// END KGU#1085 2026-04-08
 			menuViewSwitchComments.setEnabled(!Element.E_COMMENTSPLUSTEXT);
 			if (Element.E_COMMENTSPLUSTEXT)
 			{
@@ -2380,7 +2576,10 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 			// END KGU#477 2017-12-11
 
 			// DIN 66261
-			menuViewDIN.setSelected(Element.E_DIN);
+			// START KGU#1085 2026-04-08: Issue #1133 Windows (11) L&F workaround
+			//menuViewDIN.setSelected(Element.E_DIN);
+			setCheckBoxMenuIconSelected(menuViewDIN, Element.E_DIN);
+			// END KGU#1085 2026-04-08
 			// END KGU#310 2023-10-06
 			
 			ImageIcon iconFor = IconLoader.getIcon(Element.E_DIN ? 74 : 53);
@@ -2389,15 +2588,24 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 			
 			// START KGU#123 2016-01-04: Enh. #87
 			// control the collapsing by mouse wheel?
-			menuPreferencesWheelCollapse.setSelected(Element.E_WHEELCOLLAPSE);
+			// START KGU#1085 2026-04-08: Issue #1133 Windows (11) L&F workaround
+			//menuPreferencesWheelCollapse.setSelected(Element.E_WHEELCOLLAPSE);
+			setCheckBoxMenuIconSelected(menuPreferencesWheelCollapse, Element.E_WHEELCOLLAPSE);
+			// END KGU#1085 2026-04-08
 			// END KGU#123 2016-01-04
 			
 			// START KGU#300 2016-12-02: Enh. #300
-			menuPreferencesNotifyUpdate.setSelected(Ini.getInstance().getProperty("retrieveVersion", "false").equals("true"));
+			// START KGU#1085 2026-04-08: Issue #1133 Windows (11) L&F workaround
+			//menuPreferencesNotifyUpdate.setSelected(Ini.getInstance().getProperty("retrieveVersion", "false").equals("true"));
+			setCheckBoxMenuIconSelected(menuPreferencesNotifyUpdate, Ini.getInstance().getProperty("retrieveVersion", "false").equals("true"));
+			// END KGU#1085 2026-04-08
 			// END KGU#300 2016-12-02
 			
 			// START KGU#456 2017-11-06. Enh. #452
-			this.menuPreferencesSimplified.setSelected(Element.E_REDUCED_TOOLBARS);
+			// START KGU#1085 2026-04-08: Issue #1133 Windows (11) L&F workaround
+			//this.menuPreferencesSimplified.setSelected(Element.E_REDUCED_TOOLBARS);
+			setCheckBoxMenuIconSelected(this.menuPreferencesSimplified, Element.E_REDUCED_TOOLBARS);
+			// END KGU#1085 2026-04-08
 			// END KGU#456 2017-11-06
 
 			// Look and Feel submenu
@@ -2405,7 +2613,15 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 			String lafName = NSDControl.getLookAndFeel();
 			for (i = 0; i < menuPreferencesLookAndFeel.getMenuComponentCount(); i++)
 			{
-				JCheckBoxMenuItem mi = (JCheckBoxMenuItem)menuPreferencesLookAndFeel.getMenuComponent(i);
+				// START KGU#1085 2026-04-09: Issue #1133 Windows 11 L&F workaround
+				//JCheckBoxMenuItem mi = (JCheckBoxMenuItem)menuPreferencesLookAndFeel.getMenuComponent(i);
+				Component comp = menuPreferencesLookAndFeel.getMenuComponent(i);
+				if (!(comp instanceof JCheckBoxMenuItem)) {
+					// Seems to be the separator
+					break;
+				}
+				JCheckBoxMenuItem mi = (JCheckBoxMenuItem)comp;
+				// END KGU#1085 2026-04-09
 
 				//System.out.println("Listing: "+mi.getText());
 				if (mi.getText().equals(lafName))
@@ -2418,17 +2634,52 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 					mi.setSelected(false);
 				}
 			}
+			// START KGU#1085 2026-04-09: Issue #1133 Windows 11 L&F workaround
+			if (isWindows11) {
+				this.menuPreferencesLaFWin11.setSelected(getWindowsLaF1133Enabled());
+			}
+			// END KGU#1085 2026-04-09
 
 			// Languages
 			String locName = Locales.getInstance().getLoadedLocaleName();
+			// START KGU#1085 2026-04-03: Issue #1133 workaround
+			LookAndFeel thisLaF = UIManager.getLookAndFeel();
+			boolean isWinLaF = "Windows".equals(thisLaF.getName());
+			boolean isLocaleSel = false;
+			// END KGU#1085 2026-04-03
 			// START KGU#242 2016-09-04: Structural redesign
 			for (String key: menuPreferencesLanguageItems.keySet())
 			{
-				menuPreferencesLanguageItems.get(key).setSelected(locName.equals(key));
+				// START KGU#1085 2026-04-03: Issue #1133 workaround
+				//menuPreferencesLanguageItems.get(key).setSelected(locName.equals(key));
+				JCheckBoxMenuItem lItem = menuPreferencesLanguageItems.get(key);
+				isLocaleSel = locName.equals(key);
+				lItem.setSelected(isLocaleSel);
+				if (isWindows11 && isWinLaF) {
+					if (isLocaleSel) {
+						lItem.setIcon(IconLoader.getSelectedLocaleIconImage(key));
+					}
+					else {
+						lItem.setIcon(IconLoader.getLocaleIconImage(key));
+					}
+				}
+				// END KGU#1085 2026-04-03
 			}
 			// END KGU#242 2016-09-04
 			// START KGU#232 2016-08-03: Enh. #222
-			menuPreferencesLanguageFromFile.setSelected(locName.equals("external"));
+			// START KGU#1085 2026-04-03: Issue #1133 workaround
+			//menuPreferencesLanguageFromFile.setSelected(locName.equals("external"));
+			isLocaleSel = locName.equals("external");
+			menuPreferencesLanguageFromFile.setSelected(isLocaleSel);
+			if (isWindows11 && isWinLaF) {
+				if (isLocaleSel) {
+					menuPreferencesLanguageFromFile.setIcon(IconLoader.getSelectedLocaleIconImage("empty"));
+				}
+				else {
+					menuPreferencesLanguageFromFile.setIcon(IconLoader.getLocaleIconImage("empty"));
+				}
+			}
+			// END KGU#1085 2026-04-03
 			// START KGU#232 2016-08-03
 			// START KGU#892 2020-12-21: Enh. #893
 			menuPreferencesLanguagePreview.setVisible(locName.equals("preview"));
@@ -2462,6 +2713,36 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 
 		}
 	}
+	
+	// START KGU#1085 2026-04-08: Issue #1133 Windows L&F Workaround
+	/**
+	 * Sets or unsets the selection status of the given {@link JCheckBoxMenuItem}
+	 * {@code mItem}, caring for visible difference of the icon in case of L&F
+	 * "Windows" on OS Windows 11 while the L&F does no longer ensure it itself.
+	 * 
+	 * @param mItem - the check box menu item with associated icon
+	 * @param select - whether the item is to be selected
+	 * 
+	 * @see IconLoader#associateMenuIcon(JCheckBoxMenuItem, int)
+	 * @see IconLoader#updateMenuIcon(JCheckBoxMenuItem)
+	 */
+	private static void setCheckBoxMenuIconSelected(JCheckBoxMenuItem mItem, boolean select)
+	{
+		boolean wasSelected = mItem.isSelected();
+		mItem.setSelected(select);
+		// FIXME
+		if (Menu.isWindows11 /* && laf_windows1133_workaround */ && wasSelected != select) {
+			IconLoader.updateMenuIcon(mItem);
+		}
+	}
+	
+	private void doMenuItem(Object comp)
+	{
+		if (Menu.isWindows11 && comp instanceof JCheckBoxMenuItem) {
+			IconLoader.updateMenuIcon((JCheckBoxMenuItem)comp);
+		}
+	}
+	// END KGU#1085 2026-04-08
 
 	@Override
 	public void updateColors() {}

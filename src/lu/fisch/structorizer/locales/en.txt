@@ -146,6 +146,7 @@
  *      Kay Gürtzig     2025-08-01      Enh. #1198: Structural update Preferences.chkCaseEditor ->
  *                                      Preferences.lblCaseEditor, ~.cbCaseEditor
  *      Kay Gürtzig     2025-08-04      Enh. #1198: Menu.msgVersionHint_3_30_15 replaced by ~_3_32_29
+ *      Kay Gürtzig     2026-04-09      Issue #1133: Messages for Menu.menuPreferencesLaFWin11 added
  *
  ******************************************************************************************************
  *
@@ -338,6 +339,8 @@ Menu.menuPreferencesLanguageItems.pl.text=Polish
 Menu.menuPreferencesLanguageFromFile.text=From file ...
 Menu.menuPreferencesLanguageFromFile.tooltip=You may create translation files with the 'Translator' tool in the File menu.
 Menu.menuPreferencesLookAndFeel.text=Look & Feel
+Menu.menuPreferencesLaFWin11.text=Use Windows 11 L&F workaround
+Menu.menuPreferencesLaFWin11.tooltip=This option simulates status indication on checkbox menu items with icons in "Windows" L&F if otherwise not working.
 Menu.menuPreferencesWheel.text=Mouse wheel
 Menu.menuPreferencesWheelCollapse.text=Mouse wheel for collapsing?
 Menu.menuPreferencesWheelZoom.text=Reverse zoom with ctrl + wheel?
