@@ -136,7 +136,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2024-11-22      Poll #1173: menuFileExportPictureSWF disabled (to be removed)
  *      Kay Gürtzig     2025-07-10      Enh. #1196: Messages for new Analyser checks 32 and 33
  *      Kay Gürtzig     2025-08-03      Enh. #1198: msgVersionHint_3_30_15 replaced by ~_3_32_29.
- *      Kay Gürtzig     2026-04-03/09   Issue #1133: Workaround for defective menu item status indication in "Windows" L&F
+ *      Kay Gürtzig     2026-04-03/10   Issue #1133: Workaround for defective menu item status indication in "Windows" L&F
  *
  ******************************************************************************************************
  *
@@ -2634,11 +2634,12 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 					mi.setSelected(false);
 				}
 			}
-			// START KGU#1085 2026-04-09: Issue #1133 Windows 11 L&F workaround
+			// START KGU#1085 2026-04-09/10: Issue #1133 Windows 11 L&F workaround
 			if (isWindows11) {
-				this.menuPreferencesLaFWin11.setSelected(getWindowsLaF1133Enabled());
+				menuPreferencesLaFWin11.setSelected(getWindowsLaF1133Enabled());
+				menuPreferencesLaFWin11.setEnabled(lafName.equals("Windows"));
 			}
-			// END KGU#1085 2026-04-09
+			// END KGU#1085 2026-04-09/10
 
 			// Languages
 			String locName = Locales.getInstance().getLoadedLocaleName();
