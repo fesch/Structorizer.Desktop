@@ -287,10 +287,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 
 		// set icon depending on OS ;-)
 		String os = System.getProperty("os.name").toLowerCase();
-		setIconImage(IconLoader.getIcon(0).getImage());
+		setIconImage(IconLoader.getMultiIcon(0).getImage());
 		if (os.contains("windows")) 
 		{
-			setIconImage(IconLoader.getIcon(0).getImage());
+			setIconImage(IconLoader.getMultiIcon(0).getImage());
 		} 
 		else if (os.contains("mac")) 
 		{
@@ -878,7 +878,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 				if (Element.controllerName2Alias.isEmpty()) {
 					// START KGU#911 2021-01-10: Enh. #910 data structure changed
 					//for (DiagramController controller: diagram.getDiagramControllers()) {
-					for (DiagramController controller: diagram.getDiagramControllers().keySet()) {
+					for (DiagramController controller: Diagram.getDiagramControllers().keySet()) {
 					// END KGU#911 2021-01-10
 						if (controller == null) {
 							controller = new TurtleBox();
@@ -1438,7 +1438,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 //					Menu.msgWelcomeMessage.getText().replace("%", AnalyserPreferences.getCheckTabAndDescription(26)[1]),
 //					Menu.lblHint.getText(),
 //					JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE,
-//					IconLoader.getIcon(24),
+//					IconLoader.getMultiIcon(24),
 //					new String[]{Menu.lblReduced.getText(), Menu.lblNormal.getText()}, Menu.lblNormal.getText());
 //			if (chosen == JOptionPane.OK_OPTION) {
 			Box outerBox = new Box(BoxLayout.Y_AXIS);
@@ -1456,7 +1456,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 				String locDescription = Locales.LOCALES_LIST[iLoc][1];
 				if (locDescription != null)
 				{
-					ImageIcon icon = IconLoader.getLocaleIconImage(locName);
+					ImageIcon icon = IconLoader.getLocaleImageIcon(locName);
 					btnLangs[iLoc] = new JToggleButton(icon);
 					btnLangs[iLoc].setToolTipText(locDescription);
 					if (locName.equals(currLocale)) {
@@ -1488,7 +1488,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			String[] options = new String[]{Menu.lblReduced.getText(), Menu.lblNormal.getText()};
 			panWelcome = new JOptionPane(outerBox,
 					JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE,
-					IconLoader.getIcon(24),
+					IconLoader.getMultiIcon(24),
 					options,
 					options[1]);
 			JDialog dialog = panWelcome.createDialog(this, Menu.lblHint.getText());
@@ -1518,7 +1518,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 						Menu.msgAnalyserHint_3_30_14.getText().replace("%", menuPath.concatenate(" \u25BA ")),
 						menuPath.get(1),
 						JOptionPane.INFORMATION_MESSAGE,
-						IconLoader.getIconImage(getClass().getResource("icons/AnalyserHint_3.30-14.png")));
+						IconLoader.getImageIcon(getClass().getResource("icons/AnalyserHint_3.30-14.png")));
 				this.suppressUpdateHint = "3.30-14";
 			}
 		}

@@ -2330,7 +2330,7 @@ public class Executor implements Runnable
 		JButton btnPause = null;
 		if (withPauseButton) {
 			btnPause = new JButton();
-			btnPause.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/executor/pause.png"))); // NOI18N
+			btnPause.setIcon(IconLoader.getImageIcon(getClass().getResource("/lu/fisch/structorizer/executor/pause.png"))); // NOI18N
 			btnPause.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent event) 
 				{
@@ -2893,7 +2893,7 @@ public class Executor implements Runnable
 			JDialog stackView = new JDialog();
 			stackView.setTitle("Stack trace");
 			//stackView.setIconImage(IconLoader.ico004.getImage());
-			stackView.setIconImage(IconLoader.getIcon(4).getImage());
+			stackView.setIconImage(IconLoader.getMultiIcon(4).getImage());
 			List stackContent = new List(10);
 			int depth = stackTrace.count();
 			for (int i = 0; i < depth; i++)

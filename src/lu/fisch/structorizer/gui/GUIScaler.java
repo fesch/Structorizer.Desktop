@@ -185,8 +185,8 @@ public class GUIScaler {
 				}
 			}
 			// START KGU#324/KGU#642 2019-02-06: Issues #415, #670/2
-			else if (cont instanceof JTree && IconLoader.getIcon(0) != null) {
-				((JTree)cont).setRowHeight(IconLoader.getIcon(0).getIconHeight());
+			else if (cont instanceof JTree && IconLoader.getMultiIcon(0) != null) {
+				((JTree)cont).setRowHeight(IconLoader.getMultiIcon(0).getIconHeight());
 			}
 			// END KGU#324/KGU#642 2019-02-06
 		}

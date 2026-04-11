@@ -127,20 +127,20 @@ public class AttributeInspector extends LangDialog implements WindowListener {
 	// END KGU#363 2017-05-22
 
 	// Statistics / metrics
-	protected final JLabel lblElements = new JLabel(IconLoader.getIcon(55));
+	protected final JLabel lblElements = new JLabel(IconLoader.getMultiIcon(55));
 	//protected final JLabel lblPaths = new JLabel();
-	protected final JLabel lblInstrs = new JLabel(IconLoader.getIcon(57));
-	protected final JLabel lblAlts = new JLabel(IconLoader.getIcon(60));
-	protected final JLabel lblCases = new JLabel(IconLoader.getIcon(64));
-	protected final JLabel lblFors = new JLabel(IconLoader.getIcon(Element.E_DIN ? 74 : 53));
-	protected final JLabel lblWhiles = new JLabel(IconLoader.getIcon(62));
-	protected final JLabel lblRepeats = new JLabel(IconLoader.getIcon(63));
-	protected final JLabel lblForevers = new JLabel(IconLoader.getIcon(61));
-	protected final JLabel lblCalls = new JLabel(IconLoader.getIcon(58));
-	protected final JLabel lblJumps = new JLabel(IconLoader.getIcon(59));
-	protected final JLabel lblPars = new JLabel(IconLoader.getIcon(91));
+	protected final JLabel lblInstrs = new JLabel(IconLoader.getMultiIcon(57));
+	protected final JLabel lblAlts = new JLabel(IconLoader.getMultiIcon(60));
+	protected final JLabel lblCases = new JLabel(IconLoader.getMultiIcon(64));
+	protected final JLabel lblFors = new JLabel(IconLoader.getMultiIcon(Element.E_DIN ? 74 : 53));
+	protected final JLabel lblWhiles = new JLabel(IconLoader.getMultiIcon(62));
+	protected final JLabel lblRepeats = new JLabel(IconLoader.getMultiIcon(63));
+	protected final JLabel lblForevers = new JLabel(IconLoader.getMultiIcon(61));
+	protected final JLabel lblCalls = new JLabel(IconLoader.getMultiIcon(58));
+	protected final JLabel lblJumps = new JLabel(IconLoader.getMultiIcon(59));
+	protected final JLabel lblPars = new JLabel(IconLoader.getMultiIcon(91));
 	// START KGU#686 2019-03-24: Enh. #56
-	protected final JLabel lblTries = new JLabel(IconLoader.getIcon(120));
+	protected final JLabel lblTries = new JLabel(IconLoader.getMultiIcon(120));
 	// END KGU#686 2019-03-24
 	protected final JLabel lblNoOfElements = new JLabel();
 	//protected final JLabel lblNoOfPaths = new JLabel();

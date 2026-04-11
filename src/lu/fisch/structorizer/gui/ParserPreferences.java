@@ -636,7 +636,7 @@ public class ParserPreferences extends LangDialog {
 						if (caption == null || caption.isEmpty()) {
 							caption = locDescription;
 						}
-						ImageIcon icon = IconLoader.getLocaleIconImage(locName);
+						ImageIcon icon = IconLoader.getLocaleImageIcon(locName);
 						JMenuItem item = new JMenuItem(caption, icon);
 						item.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { fetchFromLang(locName); } } );
 						popupLocales.add(item);

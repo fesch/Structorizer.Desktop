@@ -236,10 +236,10 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         // START KGU 2016-08-04: Issue #220
         // set icon depending on OS ;-)
         String os = System.getProperty("os.name").toLowerCase();
-        setIconImage(IconLoader.getIcon(0).getImage());
+        setIconImage(IconLoader.getMultiIcon(0).getImage());
         /*if (os.indexOf("windows") != -1) 
         {
-            setIconImage(IconLoader.getIcon(0).getImage());
+            setIconImage(IconLoader.getMultiIcon(0).getImage());
         } 
         else*/
         if (os.indexOf("mac") != -1) 
@@ -265,7 +265,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         // END KGU 2016-08-04
 
         // START KGU#709 219-06-06: Issue #726 - Improved editing of long messages
-        ImageIcon pulldownIcon = IconLoader.getIcon(80);
+        ImageIcon pulldownIcon = IconLoader.getMultiIcon(80);
         ActionListener pulldownListener = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent event) {
@@ -1020,9 +1020,9 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         // START KGU#929 2021-02-08: Enh. #929
         // Common context menu for all locale buttons
         buttonPopup = new JPopupMenu();
-        buttonPopupGet = new JMenuItem("Get locale", IconLoader.getLocaleIconImage("en"));
-        buttonPopupLoad = new JMenuItem("Load from file ...", IconLoader.getIcon(2));
-        buttonPopupSave = new JMenuItem("Save to file ...", IconLoader.getIcon(3));
+        buttonPopupGet = new JMenuItem("Get locale", IconLoader.getLocaleImageIcon("en"));
+        buttonPopupLoad = new JMenuItem("Load from file ...", IconLoader.getMultiIcon(2));
+        buttonPopupSave = new JMenuItem("Save to file ...", IconLoader.getMultiIcon(3));
         buttonPopup.add(buttonPopupGet);
         buttonPopupGet.addActionListener(new ActionListener() {
             @Override
@@ -1167,7 +1167,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                 javax.swing.JButton button = new javax.swing.JButton();
                 // START KGU#287 2016-11-02:Issue #81 (DPI awareness workaround)
                 //button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/locale_"+localeName+".png"))); // NOI18N
-                ImageIcon localeIcon = IconLoader.getLocaleIconImage(localeName);
+                ImageIcon localeIcon = IconLoader.getLocaleImageIcon(localeName);
                 button.setIcon(localeIcon); // NOI18N
                 // END KGU#287 2016-11-02
                 button.setToolTipText(localeToolTip);
@@ -1202,7 +1202,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         //button_save.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/003_Save.png"))); // NOI18N
         // START KGU#486 2018-02-06: Issue #4
         //button_save.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons/003_Save.png"))); // NOI18N
-        button_save.setIcon(IconLoader.getIcon(3)); // NOI18N
+        button_save.setIcon(IconLoader.getMultiIcon(3)); // NOI18N
         // END KGU#486 2018-02-06
         // END KGU#287 2016-11-02
         button_save.setToolTipText("Save changes");
@@ -1219,7 +1219,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         //button_empty.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/locale_empty.png"))); // NOI18N
         // START KGU#929 2021-02-11: Enh. #929 Same procedure as for specific locales
         //button_empty.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons/locale_empty.png"))); // NOI18N
-        button_empty.setIcon(IconLoader.getLocaleIconImage("empty"));
+        button_empty.setIcon(IconLoader.getLocaleImageIcon("empty"));
         // END KGU#929 2021-02-11
         // END KGU#287 2016-11-02
         // START KGU#929 2021-02-11: Enh. #929 Name is no longer set in loadLocale()
@@ -1245,7 +1245,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         //button_preview.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/017_Eye.png"))); // NOI18N
         // START KGU#486 2018-02-06: Issue #4 Eye icon as preview here
         //button_preview.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons/017_Eye.png"))); // NOI18N
-        button_preview.setIcon(IconLoader.getIcon(17)); // NOI18N
+        button_preview.setIcon(IconLoader.getMultiIcon(17)); // NOI18N
         // END KGU#486 2018-02-06
         // END KGU#287 2016-11-02
         button_preview.setToolTipText("Preview in Structorizer");
@@ -1390,13 +1390,13 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
      */
     private void replaceButtonIcons(boolean forLoad) {
         if (forLoad) {
-            button_empty.setIcon(IconLoader.getIcon(2));
+            button_empty.setIcon(IconLoader.getMultiIcon(2));
             for (int i = 0; i < loadIcons.size(); i++) {
                 localeButtons.get(i).setIcon(loadIcons.get(i));
             }
         }
         else {
-            button_empty.setIcon(IconLoader.getLocaleIconImage("empty"));
+            button_empty.setIcon(IconLoader.getLocaleImageIcon("empty"));
             for (int i = 0; i < localeIcons.size(); i++) {
                 localeButtons.get(i).setIcon(localeIcons.get(i));
             }

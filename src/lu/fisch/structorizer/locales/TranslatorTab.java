@@ -91,7 +91,7 @@ public class TranslatorTab extends javax.swing.JPanel {
         model.setColumnCount(4);
         TableColumn col3 = table.getColumnModel().getColumn(3);
         col3.setHeaderValue(" ");
-        int pulldownWidth = IconLoader.getIcon(80).getIconWidth();
+        int pulldownWidth = IconLoader.getMultiIcon(80).getIconWidth();
         col3.setCellEditor(new BoardButtonEditorTT());
         table.getColumnModel().getColumn(3).setMaxWidth(pulldownWidth);
         table.getColumnModel().getColumn(3).setPreferredWidth(pulldownWidth);

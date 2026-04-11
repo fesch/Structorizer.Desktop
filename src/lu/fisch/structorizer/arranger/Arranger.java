@@ -84,6 +84,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2021-03-01  Enh. #410: Temporary pool notification suppression introduced
  *      Kay Gürtzig     2022-05-31  Enh. #1035: New public method addToPool(ArchiveIndex, String)
  *      Kay Gürtzig     2024-10-10  Bugfix #1175: loadArrangement() must make sure Arranger is visible
+ *      Kay Gürtzig     2026-04-11  Issue #81: DPI awareness improved by providing multi-resolution icons
  *
  ******************************************************************************************************
  *
@@ -118,6 +119,7 @@ import java.util.logging.Logger;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
@@ -502,7 +504,9 @@ implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, Lang
         {
             // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
             //setIconImage(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/arranger48.png")).getImage());
-            setIconImage(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons_48/105_arranger.png")).getImage()); // NOI18N
+            // START KGU#287 2026-04-11: Issue #81 (DPI awareness, new approach)
+            //setIconImage(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons_48/105_arranger.png")).getImage()); // NOI18N
+            setIconImages(IconLoader.getIconImages("105_arranger.png", 3.0)); // NOI18N
             // END KGU#287 2016-11-01
         }
         catch (Error error)
@@ -518,7 +522,10 @@ implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, Lang
 
         // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
         //btnExportPNG.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/032_make_bmp.png"))); // NOI18N
-        btnExportPNG.setIcon(IconLoader.getIconImage("093_picture_export.png", ICON_FACTOR)); // NOI18N
+        // START KGU#287 2026-04-11: Issue #81 fundamentally revised 
+        //btnExportPNG.setIcon(IconLoader.getImageIcon("093_picture_export.png", ICON_FACTOR)); // NOI18N
+        btnExportPNG.setIcon(IconLoader.getMultiIcon("093_picture_export.png", ICON_FACTOR)); // NOI18N
+        // END KGU#287 2026-04-11
         // END KGU#287 2016-11-01
         btnExportPNG.setText("PNG Export");
         btnExportPNG.setFocusable(false);
@@ -535,7 +542,10 @@ implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, Lang
         // START KGU#110 2015-12-20: Enh. #62
         // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
         //btnSaveArr.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/SaveFile20x20.png"))); // NOI18N
-        btnSaveArr.setIcon(IconLoader.getIconImage("003_Save.png", ICON_FACTOR)); // NOI18N
+        // START KGU#287 2026-04-11: Issue #81 fundamentally revised 
+        //btnSaveArr.setIcon(IconLoader.getImageIcon("003_Save.png", ICON_FACTOR)); // NOI18N
+        btnSaveArr.setIcon(IconLoader.getMultiIcon("003_Save.png", ICON_FACTOR)); // NOI18N
+        // END KGU#287 2026-04-11
         // END KGU#287 2016-11-01
         btnSaveArr.setText("Save Arr.");
         btnSaveArr.setFocusable(false);
@@ -551,7 +561,10 @@ implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, Lang
 
         // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
         //btnLoadArr.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/OpenFile20x20.png"))); // NOI18N
-        btnLoadArr.setIcon(IconLoader.getIconImage("002_Open.png", ICON_FACTOR)); // NOI18N
+        // START KGU#287 2026-04-11: Issue #81 fundamentally revised 
+        //btnLoadArr.setIcon(IconLoader.getImageIcon("002_Open.png", ICON_FACTOR)); // NOI18N
+        btnLoadArr.setIcon(IconLoader.getMultiIcon("002_Open.png", ICON_FACTOR)); // NOI18N
+        // END KGU#287 2026-04-11
         // END KGU#287 2016-11-01
         btnLoadArr.setText("Load Arr.");
         btnLoadArr.setFocusable(false);
@@ -568,7 +581,10 @@ implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, Lang
 
         // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
         //btnAddDiagram.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/101_diagram_new.png"))); // NOI18N
-        btnAddDiagram.setIcon(IconLoader.getIconImage("101_diagram_new.png", ICON_FACTOR)); // NOI18N
+        // START KGU#287 2026-04-11: Issue #81 fundamentally revised 
+        //btnAddDiagram.setIcon(IconLoader.getImageIcon("101_diagram_new.png", ICON_FACTOR)); // NOI18N
+        btnAddDiagram.setIcon(IconLoader.getMultiIcon("101_diagram_new.png", ICON_FACTOR)); // NOI18N
+        // END KGU#287 2026-04-11
         // END KGU#287 2016-11-01
         btnAddDiagram.setText("New Diagram");
         btnAddDiagram.setFocusable(false);
@@ -585,7 +601,10 @@ implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, Lang
         // START KGU#88 2015-11-24: Protect a diagram against replacement
         // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
         //btnPinDiagram.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/pin_blue_14x20.png"))); // NOI18N
-        btnPinDiagram.setIcon(IconLoader.getIconImage("099_pin_blue.png", ICON_FACTOR)); // NOI18N
+        // START KGU#287 2026-04-11: Issue #81 fundamentally revised 
+        //btnPinDiagram.setIcon(IconLoader.getImageIcon("099_pin_blue.png", ICON_FACTOR)); // NOI18N
+        btnPinDiagram.setIcon(IconLoader.getMultiIcon("099_pin_blue.png", ICON_FACTOR)); // NOI18N
+        // END KGU#287 2026-04-11
         // END KGU#287 2016-11-01
         btnPinDiagram.setText("Pin Diagram");
         btnPinDiagram.setToolTipText("Pin the selected diagrams to make them immune against replacement.");
@@ -604,7 +623,10 @@ implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, Lang
         // START KGU#117 2016-03-09: Enh. #77 - Mark a subroutine as test-covered
         // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
         //btnSetCovered.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/setCovered20x20.png"))); // NOI18N
-        btnSetCovered.setIcon(IconLoader.getIconImage("046_covered.png", ICON_FACTOR)); // NOI18N
+        // START KGU#287 2026-04-11: Issue #81 fundamentally revised 
+        //btnSetCovered.setIcon(IconLoader.getImageIcon("046_covered.png", ICON_FACTOR)); // NOI18N
+        btnSetCovered.setIcon(IconLoader.getMultiIcon("046_covered.png", ICON_FACTOR)); // NOI18N
+        // END KGU#287 2026-04-11
         // END KGU#287 2016-11-01
         btnSetCovered.setText("Set Covered");
         btnSetCovered.setToolTipText("Mark the selected routine diagrams as test-covered for subroutine calls to them.");
@@ -623,7 +645,10 @@ implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, Lang
         // START KGU#85 2015-11-17: New opportunity to drop the selected diagram 
         // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
         //btnRemoveDiagram.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/100_diagram_drop.png"))); // NOI18N
-        btnRemoveDiagram.setIcon(IconLoader.getIconImage("100_diagram_drop.png", ICON_FACTOR)); // NOI18N
+        // START KGU#287 2026-04-11: Issue #81 fundamentally revised 
+        //btnRemoveDiagram.setIcon(IconLoader.getImageIcon("100_diagram_drop.png", ICON_FACTOR)); // NOI18N
+        btnRemoveDiagram.setIcon(IconLoader.getMultiIcon("100_diagram_drop.png", ICON_FACTOR)); // NOI18N
+        // END KGU#287 2026-04-11
         // END KGU#287 2016-11-01
         btnRemoveDiagram.setText("Drop Diagram");
         btnRemoveDiagram.setFocusable(false);
@@ -639,7 +664,10 @@ implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, Lang
         // END KGU#85 2015-11-17
 
         // START KGU#497 2018-02-17: Enh. #512 - zoom function
-        btnZoom.setIcon(IconLoader.getIconImage("007_zoom_out.png", ICON_FACTOR)); // NOI18N
+        // START KGU#287 2026-04-11: Issue #81 fundamentally revised 
+        //btnZoom.setIcon(IconLoader.getImageIcon("007_zoom_out.png", ICON_FACTOR)); // NOI18N
+        btnZoom.setIcon(IconLoader.getMultiIcon("007_zoom_out.png", ICON_FACTOR)); // NOI18N
+        // END KGU#287 2026-04-11
         // END KGU#287 2016-11-01
         btnZoom.setText("Zoom out/in");
         btnZoom.setFocusable(false);
@@ -691,9 +719,9 @@ implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, Lang
         //        new javax.swing.border.EmptyBorder(0, 4, 0, 4)));
         statusSize = new javax.swing.JLabel();
         statusViewport = new javax.swing.JLabel();
-        statusZoom = new javax.swing.JLabel(IconLoader.getIcon(83));
+        statusZoom = new javax.swing.JLabel(IconLoader.getMultiIcon(83));
         statusSelection = new javax.swing.JLabel(msgDiagramsSelected.getText().replace("%1", "0").replace("%2", "0"));
-        statusSelection.setIcon(IconLoader.getIcon(0));
+        statusSelection.setIcon(IconLoader.getMultiIcon(0));
         statusSize.setBorder(javax.swing.BorderFactory.createCompoundBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED),
         		javax.swing.BorderFactory.createEmptyBorder(0, 4, 0, 4)));
         statusViewport.setBorder(javax.swing.BorderFactory.createCompoundBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED),
@@ -770,10 +798,10 @@ implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, Lang
         popupMenu = new javax.swing.JPopupMenu();
         
         popupHitList = new javax.swing.JMenu("Hit diagrams / groups");
-        popupHitList.setIcon(IconLoader.getIcon(90));
+        popupHitList.setIcon(IconLoader.getMultiIcon(90));
         popupMenu.add(popupHitList);
         
-        popupExpandSelection = new javax.swing.JMenuItem("Expand selection", IconLoader.getIcon(79));
+        popupExpandSelection = new javax.swing.JMenuItem("Expand selection", IconLoader.getMultiIcon(79));
         popupMenu.add(popupExpandSelection);
         popupExpandSelection.addActionListener(new ActionListener() {
         	@Override
@@ -784,7 +812,7 @@ implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, Lang
         popupExpandSelection.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F11, 0));
         
         // START KGU#626 2019-01-03: Enh. #657
-        popupGroup = new javax.swing.JMenuItem("Group selected diagrams ...", IconLoader.getIcon(94));
+        popupGroup = new javax.swing.JMenuItem("Group selected diagrams ...", IconLoader.getMultiIcon(94));
         popupMenu.add(popupGroup);
         popupGroup.addActionListener(new ActionListener() {
         	@Override
@@ -794,7 +822,7 @@ implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, Lang
         // This doesn't work directly but shows the key binding handled via keyPressed()
         popupGroup.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, java.awt.event.InputEvent.CTRL_DOWN_MASK));
         
-        popupExpandGroup = new javax.swing.JMenuItem("Expand and group ...", IconLoader.getIcon(117));
+        popupExpandGroup = new javax.swing.JMenuItem("Expand and group ...", IconLoader.getMultiIcon(117));
         popupMenu.add(popupExpandGroup);
         popupExpandGroup.addActionListener(new ActionListener() {
         	@Override
@@ -806,7 +834,7 @@ implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, Lang
         popupExpandGroup.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, java.awt.event.InputEvent.CTRL_DOWN_MASK | java.awt.event.InputEvent.SHIFT_DOWN_MASK));
         // END KGU#626 201-01-03
         
-        popupAttributes = new javax.swing.JMenuItem("Inspect attributes ...", IconLoader.getIcon(86));
+        popupAttributes = new javax.swing.JMenuItem("Inspect attributes ...", IconLoader.getMultiIcon(86));
         popupMenu.add(popupAttributes);
         popupAttributes.addActionListener(new ActionListener() {
         	@Override
@@ -819,7 +847,7 @@ implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, Lang
         // This doesn't work directly but shows the key binding handled via keyPressed()
         popupAttributes.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, java.awt.event.InputEvent.ALT_DOWN_MASK));
 
-        popupRemove = new javax.swing.JMenuItem("Remove selected diagrams", IconLoader.getIcon(100));
+        popupRemove = new javax.swing.JMenuItem("Remove selected diagrams", IconLoader.getMultiIcon(100));
         popupMenu.add(popupRemove);
         popupRemove.addActionListener(new ActionListener() {
         	@Override
@@ -832,7 +860,7 @@ implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, Lang
         popupMenu.addSeparator();
 
         // START KGU#630 2019-01-12: Enh. #662/3
-        popupRearrange = new javax.swing.JMenuItem("Rearrange by groups", IconLoader.getIcon(119));
+        popupRearrange = new javax.swing.JMenuItem("Rearrange by groups", IconLoader.getMultiIcon(119));
         popupMenu.add(popupRearrange);
         popupRearrange.addActionListener(new ActionListener() {
         	@Override
@@ -846,7 +874,7 @@ implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, Lang
         popupMenu.addSeparator();
         // END KGU#630 2019-01-12
 
-        popupRemoveAll = new javax.swing.JMenuItem("Remove all diagrams", IconLoader.getIcon(45));
+        popupRemoveAll = new javax.swing.JMenuItem("Remove all diagrams", IconLoader.getMultiIcon(45));
         popupMenu.add(popupRemoveAll);
         popupRemoveAll.addActionListener(new ActionListener() {
         	@Override
@@ -857,7 +885,7 @@ implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, Lang
         
         popupMenu.addSeparator();
         
-        popupHelp = new javax.swing.JMenuItem("Arranger help page ...", IconLoader.getIcon(110));
+        popupHelp = new javax.swing.JMenuItem("Arranger help page ...", IconLoader.getMultiIcon(110));
         popupMenu.add(popupHelp);
         popupHelp.addActionListener(new ActionListener() {
         	@Override
@@ -867,7 +895,7 @@ implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, Lang
         // This doesn't work directly but shows the key binding handled via keyPressed()
         popupHelp.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0));
         
-        popupKeyBindings = new javax.swing.JMenuItem("Show key bindings ...", IconLoader.getIcon(89));
+        popupKeyBindings = new javax.swing.JMenuItem("Show key bindings ...", IconLoader.getMultiIcon(89));
         popupMenu.add(popupKeyBindings);
         popupKeyBindings.addActionListener(new ActionListener() {
         	@Override
@@ -1585,7 +1613,7 @@ implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, Lang
 						msgActionGroup.getText(),
 						JOptionPane.DEFAULT_OPTION,
 						JOptionPane.QUESTION_MESSAGE,
-						IconLoader.getIcon(94),
+						IconLoader.getMultiIcon(94),
 						options, options[option]);
 			}
 		} while (option == 2);	// try with different name
@@ -1692,9 +1720,15 @@ implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, Lang
      */
     private void setShiftPressed(boolean isPressed) {
         if (isPressed) {
-            this.btnZoom.setIcon(IconLoader.getIconImage("008_zoom_in.png", ICON_FACTOR));
+            // START KGU#287 2026-04-11: Issue #81 DPI awareness, new approach
+            //this.btnZoom.setIcon(IconLoader.getImageIcon("008_zoom_in.png", ICON_FACTOR));
+            this.btnZoom.setIcon(IconLoader.getMultiIcon("008_zoom_in.png", ICON_FACTOR));
+            // END KGU#287 2026-04-11
             // START KGU#534 2018-06-27: Enh. #552
-            this.btnRemoveDiagram.setIcon(IconLoader.getIconImage("045_remove.png", ICON_FACTOR));
+            // START KGU#287 2026-04-11: Issue #81 DPI awareness, new approach
+            //this.btnRemoveDiagram.setIcon(IconLoader.getImageIcon("045_remove.png", ICON_FACTOR));
+            this.btnRemoveDiagram.setIcon(IconLoader.getMultiIcon("045_remove.png", ICON_FACTOR));
+            // END KGU#287 2026-04-11
             this.btnRemoveDiagram.setText(btnRemoveAllDiagrams.getText());
             // END KGU#534 2018-06-27
             this.isShiftPressed = true;
@@ -1705,9 +1739,15 @@ implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener, Lang
         else {
             this.isShiftPressed = false;
             this.btnZoom.setEnabled(true);
-            this.btnZoom.setIcon(IconLoader.getIconImage("007_zoom_out.png", ICON_FACTOR));
+            // START KGU#287 2026-04-11: Issue #81 DPI awareness, new approach
+            //this.btnZoom.setIcon(IconLoader.getImageIcon("007_zoom_out.png", ICON_FACTOR));
+            this.btnZoom.setIcon(IconLoader.getMultiIcon("007_zoom_out.png", ICON_FACTOR));
+            // END KGU#287 2026-04-11
             // START KGU#534 2018-06-27: Enh. #552
-            this.btnRemoveDiagram.setIcon(IconLoader.getIconImage("100_diagram_drop.png", ICON_FACTOR));
+            // START KGU#287 2026-04-11: Issue #81 DPI awareness, new approach
+            //this.btnRemoveDiagram.setIcon(IconLoader.getImageIcon("100_diagram_drop.png", ICON_FACTOR));
+            this.btnRemoveDiagram.setIcon(IconLoader.getMultiIcon("100_diagram_drop.png", ICON_FACTOR));
+            // END KGU#287 2026-04-11
             this.btnRemoveDiagram.setText(btnRemoveDiagrams.getText());
             // END KGU#534 2018-06-27			
         }

@@ -4900,7 +4900,7 @@ public abstract class Element {
      */
     public ImageIcon getIcon()
     {
-    	return IconLoader.getIcon(57);
+    	return IconLoader.getMultiIcon(57);
     }
     // END KGU#122 2016-01-03
     
@@ -4912,7 +4912,7 @@ public abstract class Element {
      */
     public ImageIcon getMiniIcon()
     {
-    	return IconLoader.getIcon(10);
+    	return IconLoader.getMultiIcon(10);
     }
     // END KGU#535 2018-06-28
 

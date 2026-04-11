@@ -157,17 +157,17 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 
 	// START KGU#318 2017-01-05: Enh. #319 - context menu for the Arranger index
 	protected final JPopupMenu popupIndex = new JPopupMenu();
-	protected final JMenuItem popupIndexGet = new JMenuItem("Get diagram", IconLoader.getIcon(0));
-	protected final JMenuItem popupIndexSave = new JMenuItem("Save changes", IconLoader.getIcon(3));
+	protected final JMenuItem popupIndexGet = new JMenuItem("Get diagram", IconLoader.getMultiIcon(0));
+	protected final JMenuItem popupIndexSave = new JMenuItem("Save changes", IconLoader.getMultiIcon(3));
 	// START KGU#534 2018-06-27: Enh. #552
 	//protected final JMenuItem popupIndexRemove = new JMenuItem("Remove", IconLoader.getIcon(45));
-	protected final JMenuItem popupIndexRemove = new JMenuItem("Remove", IconLoader.getIcon(100));
-	protected final JMenuItem popupIndexRemoveAll = new JMenuItem("Remove all", IconLoader.getIcon(45));    
+	protected final JMenuItem popupIndexRemove = new JMenuItem("Remove", IconLoader.getMultiIcon(100));
+	protected final JMenuItem popupIndexRemoveAll = new JMenuItem("Remove all", IconLoader.getMultiIcon(45));    
 	// END KGU#534 2018-06-27
-	protected final JMenuItem popupIndexCovered = new JMenuItem("Test-covered on/off", IconLoader.getIcon(46));
+	protected final JMenuItem popupIndexCovered = new JMenuItem("Test-covered on/off", IconLoader.getMultiIcon(46));
 	// END KGU#318 2017-01-05
 	// START KGU#573 2018-09-13: Enh. #590 - allow to open attribute inspector
-	protected final JMenuItem popupIndexAttributes = new JMenuItem("Inspect attributes ...", IconLoader.getIcon(86));
+	protected final JMenuItem popupIndexAttributes = new JMenuItem("Inspect attributes ...", IconLoader.getMultiIcon(86));
 	// END KGU#573 2018-09-13
 	// START KGU#815 2020-03-16: Enh. #828 group export
 	protected final JMenu popupIndexExport = new JMenu("Export diagram/group");
@@ -178,12 +178,12 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 	protected final JMenuItem popupIndexExportPap1982 = new JMenuItem("DIN 66001 / 1982 ...");
 	// END KGU#396/KGU#815 2020-04-01
 	// START KGU#626 2019-01-03: Enh. #657
-	protected final JMenuItem popupIndexGroup = new JMenuItem("Create group ...", IconLoader.getIcon(94));
-	protected final JMenuItem popupIndexExpandGroup = new JMenuItem("Expand group ...", IconLoader.getIcon(117));
-	protected final JMenuItem popupIndexDissolve = new JMenuItem("Dissolve group", IconLoader.getIcon(97));
-	protected final JMenuItem popupIndexDetach = new JMenuItem("Detach from group", IconLoader.getIcon(98));
-	protected final JMenuItem popupIndexAttach = new JMenuItem("Add/move to group ...", IconLoader.getIcon(116));
-	protected final JMenuItem popupIndexInfo = new JMenuItem("Diagram/group info ...", IconLoader.getIcon(118));
+	protected final JMenuItem popupIndexGroup = new JMenuItem("Create group ...", IconLoader.getMultiIcon(94));
+	protected final JMenuItem popupIndexExpandGroup = new JMenuItem("Expand group ...", IconLoader.getMultiIcon(117));
+	protected final JMenuItem popupIndexDissolve = new JMenuItem("Dissolve group", IconLoader.getMultiIcon(97));
+	protected final JMenuItem popupIndexDetach = new JMenuItem("Detach from group", IconLoader.getMultiIcon(98));
+	protected final JMenuItem popupIndexAttach = new JMenuItem("Add/move to group ...", IconLoader.getMultiIcon(116));
+	protected final JMenuItem popupIndexInfo = new JMenuItem("Diagram/group info ...", IconLoader.getMultiIcon(118));
 	// START KGU#1085 2026-04-04: Issue #1133 workaround - postpone the icon association to create()
 	//protected final JCheckBoxMenuItem popupIndexDrawGroup = new JCheckBoxMenuItem("Show group", IconLoader.getIcon(17));
 	protected final JCheckBoxMenuItem popupIndexDrawGroup = new JCheckBoxMenuItem("Show group");
@@ -237,7 +237,7 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 	protected final JLabel lblExternSubroutines = new JLabel("Referenced external subroutines");
 	protected final JLabel lblExternIncludables = new JLabel("Referenced external includables");
 	protected final JButton[] btnGroupColors = new JButton[Group.groupColors.length];
-	protected final JToggleButton btnShowGroup = new JToggleButton(IconLoader.getIcon(17));
+	protected final JToggleButton btnShowGroup = new JToggleButton(IconLoader.getMultiIcon(17));
 	protected final JPanel pnlGroupInfo = new JPanel();
 	protected final DefaultMutableTreeNode nodeArrangementPath = new DefaultMutableTreeNode(lblArrangementPath);
 	protected final DefaultMutableTreeNode nodeElementNumbers = new DefaultMutableTreeNode();
@@ -285,12 +285,12 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 	// END KGU#900 2020-12-31
 	
 	public static class ArrangerIndexCellRenderer extends DefaultTreeCellRenderer {
-		private final static ImageIcon mainIcon = IconLoader.getIcon(22);
-		private final static ImageIcon subIcon = IconLoader.getIcon(21);
-		private final static ImageIcon subIconCovered = IconLoader.getIcon(30);
-		private final static ImageIcon mainIconCovered = IconLoader.getIcon(70);
-		private final static ImageIcon inclIcon = IconLoader.getIcon(71);
-		private final static ImageIcon inclIconCovered = IconLoader.getIcon(72);
+		private final static ImageIcon mainIcon = IconLoader.getMultiIcon(22);
+		private final static ImageIcon subIcon = IconLoader.getMultiIcon(21);
+		private final static ImageIcon subIconCovered = IconLoader.getMultiIcon(30);
+		private final static ImageIcon mainIconCovered = IconLoader.getMultiIcon(70);
+		private final static ImageIcon inclIcon = IconLoader.getMultiIcon(71);
+		private final static ImageIcon inclIconCovered = IconLoader.getMultiIcon(72);
 		//private final static Color selectedBackgroundNimbus = new Color(57,105,138);
 
 		@Override
@@ -654,7 +654,7 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 
 		// START KGU#815 2020-03-16: Enh. #828 Code export for diagrams or groups
 		popupIndex.add(popupIndexExport);
-		popupIndexExport.setIcon(IconLoader.getIcon(32));
+		popupIndexExport.setIcon(IconLoader.getMultiIcon(32));
 		{
 			Vector<GENPlugin> plugins = Menu.generatorPlugins;
 			if (plugins.isEmpty()) {
@@ -665,7 +665,7 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 				plugins = genp.parse(buff);
 				try { buff.close();	} catch (IOException e) {}
 			}
-			ImageIcon defaultIcon = IconLoader.getIcon(87);
+			ImageIcon defaultIcon = IconLoader.getMultiIcon(87);
 			ActionListener exportListener = new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
@@ -682,7 +682,7 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 					try {
 						URL iconFile = IconLoader.class.getResource(plugin.icon);
 						if (iconFile != null) {
-							icon = IconLoader.getIconImage(plugin.icon);
+							icon = IconLoader.getImageIcon(plugin.icon);
 						}
 					}
 					catch (Exception ex) {}
@@ -705,7 +705,7 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 			ImageIcon icon = defaultIcon;	// The default icon
 			URL iconFile = IconLoader.class.getResource("icons/editor_pap.png");
 			if (iconFile != null) {
-				icon = IconLoader.getIconImage("editor_pap.png");
+				icon = IconLoader.getImageIcon("editor_pap.png");
 			}
 			// FIXME: This should be based on a plugin definition like for Menu.importPluginItems
 			popupIndexExportPap.setIcon(icon);
@@ -816,11 +816,11 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 		// END KGU#626 2019-01-04
 		
 		// Configure the skeleton for the info tree for diagrams to be popped up with a JOptionPane
-		lblGroups.setIcon(IconLoader.getIcon(94));
-		lblSubroutines.setIcon(IconLoader.getIcon(21));
-		lblIncludables.setIcon(IconLoader.getIcon(71));
-		lblDependingDiagrams.setIcon(IconLoader.getIcon(22));
-		lblStaleReferences.setIcon(IconLoader.getIcon(5));
+		lblGroups.setIcon(IconLoader.getMultiIcon(94));
+		lblSubroutines.setIcon(IconLoader.getMultiIcon(21));
+		lblIncludables.setIcon(IconLoader.getMultiIcon(71));
+		lblDependingDiagrams.setIcon(IconLoader.getMultiIcon(22));
+		lblStaleReferences.setIcon(IconLoader.getMultiIcon(5));
 		
 		indexInfoTree.setCellRenderer(new ArrangerIndexCellRenderer());
 		// Permanent tree nodes for diagram info
@@ -833,9 +833,9 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 		// END KGU#703 2019-03-30
 
 		// START KGU#630 2019-01-07: Enh. #662 - now the equivalents for group info
-		lblExternSubroutines.setIcon(IconLoader.getIcon(21));
-		lblExternIncludables.setIcon(IconLoader.getIcon(71));
-		lblArrangementPath.setIcon(IconLoader.getIcon(3));
+		lblExternSubroutines.setIcon(IconLoader.getMultiIcon(21));
+		lblExternIncludables.setIcon(IconLoader.getMultiIcon(71));
+		lblArrangementPath.setIcon(IconLoader.getMultiIcon(3));
 		indexGroupInfoTree.setCellRenderer(new ArrangerIndexCellRenderer());
 		nodeIndexGroupInfoTop.add(nodeArrangementPath);
 		nodeIndexGroupInfoTop.add(nodeElementNumbers);
@@ -1855,7 +1855,7 @@ public class ArrangerIndex extends LangTree implements MouseListener, LangEventL
 					popupIndexAttach.getText(),
 					JOptionPane.DEFAULT_OPTION,
 					JOptionPane.QUESTION_MESSAGE,
-					IconLoader.getIcon(117),
+					IconLoader.getMultiIcon(117),
 					options, options[0]);
 			// START KGU#900 2020-12-31: Issue #902 Closing the pane was mis-interpreted as move acted
 			//if (option < options.length-1) {

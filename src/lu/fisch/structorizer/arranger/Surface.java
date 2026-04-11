@@ -606,7 +606,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 						//pinIcon = new ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/pin_blue_14x20.png")).getImage();
 						// START KGU#486 2018-02-10: Issue #4 - scalable icon, will now be somewhat smller but grow with the scale factor
 						//pinIcon = IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons/pin_blue_14x20.png")).getImage(); // NOI18N
-						pinIcon = IconLoader.getIcon(99).getImage();
+						pinIcon = IconLoader.getMultiIcon(99).getImage();
 						// END KGU#486 2018-02-10
 						// END KGU#287 2016-11-01
 					}

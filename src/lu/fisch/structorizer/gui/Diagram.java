@@ -9831,7 +9831,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				Menu.ttlMouseScrollUnit.getText(),
 				JOptionPane.OK_CANCEL_OPTION,
 				JOptionPane.QUESTION_MESSAGE,
-				IconLoader.getIcon(9)) == JOptionPane.OK_OPTION) {
+				IconLoader.getMultiIcon(9)) == JOptionPane.OK_OPTION) {
 			Element.E_WHEEL_SCROLL_UNIT = (Integer) spnUnit.getModel().getValue();
 			this.adaptScrollUnits();
 			if (Arranger.hasInstance()) {
@@ -11337,7 +11337,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				Menu.msgGuidedTours.getText(),
 				Menu.ttlGuidedTours.getText(),
 				JOptionPane.INFORMATION_MESSAGE,
-				IconLoader.getIconImage(getClass().getResource("icons/AnalyserHint.png")));
+				IconLoader.getImageIcon(getClass().getResource("icons/AnalyserHint.png")));
 		analyse();
 		repaint();
 	}

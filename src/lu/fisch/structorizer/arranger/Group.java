@@ -41,6 +41,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2019-03-19      Issues #518, #544, #557: Drawing depends on visible rect now.
  *      Kay Gürtzig     2019-10-15      Issue #763: Method getArrzFile parameterized to address stale .arrz files
  *      Kay Gürtzig     2021-01-12      Enh. #910: New method isDiagramControllerRepresentative() added
+ *      Kay Gürtzig     2026-04-11      Issue #81: Multi-scale icon production for DPI awareness
  *
  ******************************************************************************************************
  *
@@ -54,14 +55,19 @@ import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.Rectangle;
+import java.awt.image.AbstractMultiResolutionImage;
+import java.awt.image.BaseMultiResolutionImage;
 import java.awt.image.BufferedImage;
+import java.awt.image.ImageObserver;
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.Vector;
 
@@ -704,37 +710,88 @@ public class Group {
 	 */
 	public ImageIcon getIcon(boolean withColor)
 	{
-		int iconNo = 94;
+		int iconNo = 94;	// General group
 		if (getArrzFile(false) != null) {
-			iconNo = 96;
+			iconNo = 96;	// Group residing in compressed Arrangement archive
 		}
 		else if (getFile() != null) {
-			iconNo = 95;
+			iconNo = 95;	// Group held by an Arrangement list file
 		}
-		ImageIcon icon = IconLoader.getIcon(iconNo);
+		// START KGU#287 2026-04-10: Issue #81 Cope with DPI awareness
+		//ImageIcon icon = IconLoader.getIcon(iconNo);
+		ImageIcon icon = IconLoader.getMultiIcon(iconNo);
+		// END KGU#287 2026-04-10
 		if (withColor && visible) {
 			if (iconColor == null) {
 				int size = icon.getIconHeight();
-				BufferedImage image = new BufferedImage(2 * size, size, BufferedImage.TYPE_INT_ARGB);
-				Graphics2D graphics = (Graphics2D) image.getGraphics();
-				graphics.drawImage(icon.getImage(), 0, 0, size, size, null);
-				int margin = 1 * size / 16;
-				int offset = 4 * size / 16;
-				graphics.setColor(color);
-				graphics.fillRect(size + offset + margin , margin, size - offset - 2*margin, size - 2*margin);
-				graphics.setColor(Color.WHITE);
-				graphics.fillRect(size + offset + 1 + margin, 1 + margin, size - offset - 2 - 2*margin, size - 2 - 2*margin);
-				graphics.setColor(color);
-				graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.0625f));
-				graphics.fillRect(size + offset + 1 + margin, 1 + margin, size - offset - 2 - 2*margin, size - 2 - 2*margin);
-				graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
-				graphics.drawRect(size + offset + 2 + margin, 2 + margin, size - offset - 5 - 2*margin, size - 5 - 2*margin);
-				graphics.dispose();
-				iconColor = new ImageIcon(image);
+				// START KGU#287 2026-04-11: Issue #81
+				//BufferedImage image = new BufferedImage(2 * size, size, BufferedImage.TYPE_INT_ARGB);
+				//Graphics2D graphics = (Graphics2D) image.getGraphics();
+				//graphics.drawImage(icon.getImage(), 0, 0, size, size, null);
+				//int margin = 1 * size / 16;
+				//int offset = 4 * size / 16;
+				//graphics.setColor(color);
+				//graphics.fillRect(size + offset + margin , margin, size - offset - 2*margin, size - 2*margin);
+				//graphics.setColor(Color.WHITE);
+				//graphics.fillRect(size + offset + 1 + margin, 1 + margin, size - offset - 2 - 2*margin, size - 2 - 2*margin);
+				//graphics.setColor(color);
+				//graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.0625f));
+				//graphics.fillRect(size + offset + 1 + margin, 1 + margin, size - offset - 2 - 2*margin, size - 2 - 2*margin);
+				//graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+				//graphics.drawRect(size + offset + 2 + margin, 2 + margin, size - offset - 5 - 2*margin, size - 5 - 2*margin);
+				//graphics.dispose();
+				//iconColor = new ImageIcon(image);
+				ImageObserver observer = icon.getImageObserver();
+				Image iconImage = icon.getImage();
+				if (iconImage instanceof AbstractMultiResolutionImage) {
+					List<Image> variants = ((AbstractMultiResolutionImage)iconImage).getResolutionVariants();
+					Image[] composedImages = new Image[variants.size()];
+					int ix = 0;
+					for (Image variant: variants) {
+						size = variant.getHeight(observer);
+						composedImages[ix++] = composeGroupPlusColorImage(variant, size);
+					}
+					AbstractMultiResolutionImage image = new BaseMultiResolutionImage(composedImages);
+					iconColor = new ImageIcon(image);
+				}
+				else {
+					BufferedImage image = composeGroupPlusColorImage(iconImage, size);
+					iconColor = new ImageIcon(image);
+				}
 			}
+			// END KGU#287 2026-04-11
 			icon = iconColor;
 		}
 		return icon;
+	}
+
+	// START KGU#287 2026-04-11: Issue #81 New auxiliary method for scaled icons extracted
+	/**
+	 * Enhances a scaled group icon image variant with a colour group symbol for the
+	 * same scale.
+	 * 
+	 * @param iconImage - a single (group) icon image variant for some resolution
+	 * @param size - the icon size for the specific scale.
+	 * @return an enhanced image
+	 */
+	private BufferedImage composeGroupPlusColorImage(Image iconImage, int size)
+	{
+		BufferedImage image = new BufferedImage(2 * size, size, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D graphics = (Graphics2D) image.getGraphics();
+		graphics.drawImage(iconImage, 0, 0, size, size, null);
+		int margin = 1 * size / 16;
+		int offset = 4 * size / 16;
+		graphics.setColor(color);
+		graphics.fillRect(size + offset + margin , margin, size - offset - 2*margin, size - 2*margin);
+		graphics.setColor(Color.WHITE);
+		graphics.fillRect(size + offset + 1 + margin, 1 + margin, size - offset - 2 - 2*margin, size - 2 - 2*margin);
+		graphics.setColor(color);
+		graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.0625f));
+		graphics.fillRect(size + offset + 1 + margin, 1 + margin, size - offset - 2 - 2*margin, size - 2 - 2*margin);
+		graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+		graphics.drawRect(size + offset + 2 + margin, 2 + margin, size - offset - 5 - 2*margin, size - 5 - 2*margin);
+		graphics.dispose();
+		return image;
 	}
 	
 	/* (non-Javadoc)

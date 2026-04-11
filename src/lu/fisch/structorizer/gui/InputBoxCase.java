@@ -295,15 +295,15 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 		txtDefaultLabel = new JTextField();
 		chkMoveBranches = new JCheckBox("Move associated branches");
 		chkDefaultBranch = new JCheckBox("Default branch:");
-		btnAddRow = new JButton(IconLoader.getIcon(18));
-		btnDelRows = new JButton(IconLoader.getIcon(5));
-		btnUpRow = new JButton(IconLoader.getIcon(19));
-		btnDnRow = new JButton(IconLoader.getIcon(20));
+		btnAddRow = new JButton(IconLoader.getMultiIcon(18));
+		btnDelRows = new JButton(IconLoader.getMultiIcon(5));
+		btnUpRow = new JButton(IconLoader.getMultiIcon(19));
+		btnDnRow = new JButton(IconLoader.getMultiIcon(20));
 		// START KGU#927 2021-02-06: Enh. #915
-		btnMergeRows = new JButton(IconLoader.getIcon(127));
-		btnSplitRow = new JButton(IconLoader.getIcon(128));
-		btnCheckRows = new JButton(IconLoader.getIcon(83));
-		btnEnumAssist = new JButton(IconLoader.getIcon(109));
+		btnMergeRows = new JButton(IconLoader.getMultiIcon(127));
+		btnSplitRow = new JButton(IconLoader.getMultiIcon(128));
+		btnCheckRows = new JButton(IconLoader.getMultiIcon(83));
+		btnEnumAssist = new JButton(IconLoader.getMultiIcon(109));
 		standardButtonBackground = btnCheckRows.getBackground();
 		// END KGU#927 2021-02-06
 		tblSelectors = new JTable();
@@ -1299,7 +1299,7 @@ public class InputBoxCase extends InputBox implements ItemListener, PropertyChan
 			JOptionPane.showMessageDialog(this.getOwner(),
 					message, this.getClass().getSimpleName(),
 					JOptionPane.INFORMATION_MESSAGE,
-					IconLoader.getIconImage(getClass().getResource("icons/EditorHint_3.32-29.png")));
+					IconLoader.getImageIcon(getClass().getResource("icons/EditorHint_3.32-29.png")));
 				
 			Ini.getInstance().setProperty("versionHint", "3.32-29");
 			// START KGU#997 2025-08-03: Enh. #1198 Code preview reloads Ini, so ensure it's saved before

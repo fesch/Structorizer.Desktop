@@ -267,7 +267,7 @@ public class Repeat extends Loop {
 	@Override
 	public ImageIcon getIcon()
 	{
-		return IconLoader.getIcon(63);
+		return IconLoader.getMultiIcon(63);
 	}
 	// END KGU#122 2016-01-03
 
@@ -280,7 +280,7 @@ public class Repeat extends Loop {
 	@Override
 	public ImageIcon getMiniIcon()
 	{
-		return IconLoader.getIcon(16);
+		return IconLoader.getMultiIcon(16);
 	}
 	// END KGU#535 2018-06-28
 

@@ -209,7 +209,7 @@ public class Forever extends Loop {
 	@Override
 	public ImageIcon getIcon()
 	{
-		return IconLoader.getIcon(61);
+		return IconLoader.getMultiIcon(61);
 	}
 	// END KGU#122 2016-01-03
 	
@@ -222,7 +222,7 @@ public class Forever extends Loop {
 	@Override
 	public ImageIcon getMiniIcon()
 	{
-		return IconLoader.getIcon(14);
+		return IconLoader.getMultiIcon(14);
 	}
 	// END KGU#535 2018-06-28
 
