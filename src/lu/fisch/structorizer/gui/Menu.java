@@ -136,7 +136,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2024-11-22      Poll #1173: menuFileExportPictureSWF disabled (to be removed)
  *      Kay Gürtzig     2025-07-10      Enh. #1196: Messages for new Analyser checks 32 and 33
  *      Kay Gürtzig     2025-08-03      Enh. #1198: msgVersionHint_3_30_15 replaced by ~_3_32_29.
- *      Kay Gürtzig     2026-04-03/10   Issue #1133: Workaround for defective menu item status indication in "Windows" L&F
+ *      Kay Gürtzig     2026-04-03/11   Issue #1133: Workaround for defective menu item status indication in "Windows" L&F
  *
  ******************************************************************************************************
  *
@@ -1728,12 +1728,6 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 			{
 				String caption = locDescription;
 				ImageIcon icon = IconLoader.getLocaleImageIcon(locName);
-				// START KGU#1085 2026-04-03: Issue #1133 (temporary) workaround for Windows11
-				if (isWindows11) {
-					// Just caches the icon for selected menu item
-					IconLoader.getSelectedLocaleImageIcon(locName);
-				}
-				// END KGU#1085 2026-04-03
 				JCheckBoxMenuItem item = new JCheckBoxMenuItem(caption, icon);
 				item.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLang(locName); } } );
 				menuPreferencesLanguage.add(item);
@@ -1819,7 +1813,13 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		for(int j = 0; j < plafs.length; ++j)
 		{
 			JCheckBoxMenuItem mi = new JCheckBoxMenuItem(plafs[j].getName());
-			mi.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { NSDControl.setLookAndFeel((((JCheckBoxMenuItem) event.getSource()).getText())); doButtons(); } } );
+			mi.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) {
+				NSDControl.setLookAndFeel((((JCheckBoxMenuItem) event.getSource()).getText()));
+				doButtons();
+				// START KGU#1085 2026-04-11: Issue #1133 Windows 11 L&F workaround
+				doLocaleMenuItems(true);
+				// END KGU#1085 2026-04-11
+				} } );
 			menuPreferencesLookAndFeel.add(mi);
 
 			// START KGU#661 2019-02-20 - The name comparison will not always work, particularly not with "GTK+"
@@ -1839,6 +1839,7 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 				public void actionPerformed(ActionEvent event) {
 					setWindowsLaF1133Enabled(menuPreferencesLaFWin11.isSelected());
 					IconLoader.updateAssociatedMenuIcons();
+					doLocaleMenuItems(true);
 				}});
 			menuPreferencesLaFWin11.setToolTipText("This option simulates status indication on checkbox menu items with icons in \"Windows\" L&F if otherwise not working.");
 			menuPreferencesLookAndFeel.add(menuPreferencesLaFWin11);
@@ -2168,6 +2169,7 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		// END KGU#892 2021-02-12
 	}
 
+	// START KGU#1085 2026-04-09: Issue #1133 Windows 11 L&F workaround
 	/**
 	 * Sets the workaround option for the Windows 11 L&F defect on showing
 	 * the status of JCheckBoxMenuItems with associated icons.
@@ -2643,44 +2645,17 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 
 			// Languages
 			String locName = Locales.getInstance().getLoadedLocaleName();
-			// START KGU#1085 2026-04-03: Issue #1133 workaround
-			LookAndFeel thisLaF = UIManager.getLookAndFeel();
-			boolean isWinLaF = "Windows".equals(thisLaF.getName());
-			boolean isLocaleSel = false;
-			// END KGU#1085 2026-04-03
+			// START KGU#1085 2026-04-11: Issue #1133 Windows L&F workaround
 			// START KGU#242 2016-09-04: Structural redesign
-			for (String key: menuPreferencesLanguageItems.keySet())
-			{
-				// START KGU#1085 2026-04-03: Issue #1133 workaround
-				//menuPreferencesLanguageItems.get(key).setSelected(locName.equals(key));
-				JCheckBoxMenuItem lItem = menuPreferencesLanguageItems.get(key);
-				isLocaleSel = locName.equals(key);
-				lItem.setSelected(isLocaleSel);
-				if (isWindows11 && isWinLaF) {
-					if (isLocaleSel) {
-						lItem.setIcon(IconLoader.getSelectedLocaleImageIcon(key));
-					}
-					else {
-						lItem.setIcon(IconLoader.getLocaleImageIcon(key));
-					}
-				}
-				// END KGU#1085 2026-04-03
-			}
+			//for (String key: menuPreferencesLanguageItems.keySet())
+			//{
+			//	menuPreferencesLanguageItems.get(key).setSelected(locName.equals(key));
+			//}
 			// END KGU#242 2016-09-04
 			// START KGU#232 2016-08-03: Enh. #222
-			// START KGU#1085 2026-04-03: Issue #1133 workaround
 			//menuPreferencesLanguageFromFile.setSelected(locName.equals("external"));
-			isLocaleSel = locName.equals("external");
-			menuPreferencesLanguageFromFile.setSelected(isLocaleSel);
-			if (isWindows11 && isWinLaF) {
-				if (isLocaleSel) {
-					menuPreferencesLanguageFromFile.setIcon(IconLoader.getSelectedLocaleImageIcon("empty"));
-				}
-				else {
-					menuPreferencesLanguageFromFile.setIcon(IconLoader.getLocaleImageIcon("empty"));
-				}
-			}
-			// END KGU#1085 2026-04-03
+			doLocaleMenuItems(false);
+			// END KGU#1085 2026-04-11
 			// START KGU#232 2016-08-03
 			// START KGU#892 2020-12-21: Enh. #893
 			menuPreferencesLanguagePreview.setVisible(locName.equals("preview"));
@@ -2720,6 +2695,7 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	 * Sets or unsets the selection status of the given {@link JCheckBoxMenuItem}
 	 * {@code mItem}, caring for visible difference of the icon in case of L&F
 	 * "Windows" on OS Windows 11 while the L&F does no longer ensure it itself.
+	 * Not to be used for locale buttons!
 	 * 
 	 * @param mItem - the check box menu item with associated icon
 	 * @param select - whether the item is to be selected
@@ -2737,6 +2713,13 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		}
 	}
 	
+	/**
+	 * Auxiliary method for action listeners of registered JCheckBoxMenuItems with
+	 * icons, that might be subject to the Windows L&F workaround with respect to
+	 * the selection status indication.
+	 * 
+	 * @param comp - the menu item component that is to be updated properly.
+	 */
 	private void doMenuItem(Object comp)
 	{
 		if (Menu.isWindows11 && comp instanceof JCheckBoxMenuItem) {
@@ -2744,6 +2727,55 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		}
 	}
 	// END KGU#1085 2026-04-08
+	
+	// START KGU#1085 2026-04-11: Issue #1133 Windows 11 L&F workaround
+	/**
+	 * Helper method for L&F change or #1133 workaround option modification.
+	 * Is to ensure that specific locale menu items use the correct icon set
+	 */
+	private void doLocaleMenuItems(boolean forceAll)
+	{
+		String locName = Locales.getInstance().getLoadedLocaleName();
+		// START KGU#1085 2026-04-03: Issue #1133 workaround
+		LookAndFeel thisLaF = UIManager.getLookAndFeel();
+		boolean isWinLaF = "Windows".equals(thisLaF.getName());
+		boolean isLocaleSel = false;
+		// END KGU#1085 2026-04-03
+		// START KGU#242 2016-09-04: Structural redesign
+		for (String key: menuPreferencesLanguageItems.keySet())
+		{
+			// START KGU#1085 2026-04-03: Issue #1133 workaround
+			//menuPreferencesLanguageItems.get(key).setSelected(locName.equals(key));
+			JCheckBoxMenuItem lItem = menuPreferencesLanguageItems.get(key);
+			isLocaleSel = locName.equals(key);
+			lItem.setSelected(isLocaleSel);
+			if (forceAll || isWindows11 && isWinLaF) {
+				if (isLocaleSel&& isWindows11 && isWinLaF) {
+					lItem.setIcon(IconLoader.getSelectedLocaleImageIcon(key));
+				}
+				else {
+					lItem.setIcon(IconLoader.getLocaleImageIcon(key));
+				}
+			}
+			// END KGU#1085 2026-04-03
+		}
+		// END KGU#242 2016-09-04
+		// START KGU#232 2016-08-03: Enh. #222
+		// START KGU#1085 2026-04-03: Issue #1133 workaround
+		//menuPreferencesLanguageFromFile.setSelected(locName.equals("external"));
+		isLocaleSel = locName.equals("external");
+		menuPreferencesLanguageFromFile.setSelected(isLocaleSel);
+		if (forceAll || isWindows11 && isWinLaF) {
+			if (isLocaleSel && isWindows11 && isWinLaF) {
+				menuPreferencesLanguageFromFile.setIcon(IconLoader.getSelectedLocaleImageIcon("empty"));
+			}
+			else {
+				menuPreferencesLanguageFromFile.setIcon(IconLoader.getLocaleImageIcon("empty"));
+			}
+		}
+		// END KGU#1085 2026-04-03
+	}
+	// END KGU#1085 2026-04-11
 
 	@Override
 	public void updateColors() {}

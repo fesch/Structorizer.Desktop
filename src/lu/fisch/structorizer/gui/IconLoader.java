@@ -83,9 +83,11 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-02-06      Enh. #915: 127_merge and 128_split added
  *      Kay Gürtzig     2021-03-18      Issue #966: Icon 081 (language) replaced
  *      Kay Gürtzig     2025-08-01      Enh. #1197: generateIcon() now also accepts null as argument
- *      Kay Gürtzig     2026-04-04/09   Issue #1133: Support for Windows 11 L&F workaround on JCheckBoxMenuItem icons
- *      Kay Gürtzig     2026-04-10      Issue #81: All methods "get...IconImage..." providing ImageIcons renamed
- *                                      to "get...ImageIcon..." for logical consistency.
+ *      Kay Gürtzig     2026-04-04/11   Issue #1133: Support for Windows 11 L&F workaround on JCheckBoxMenuItem icons
+ *      Kay Gürtzig     2026-04-10/11   Issue #81: All methods "get...IconImage..." providing ImageIcons renamed
+ *                                      to "get...ImageIcon..." for logical consistency, New methods and
+ *                                      modified behaviour of methods to ensure MultiResolutionImages where
+ *                                      needed.
  *
  ******************************************************************************************************
  *
@@ -97,6 +99,8 @@ import java.awt.*;
 import java.awt.image.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -270,7 +274,7 @@ public class IconLoader {
 	// END KGU#486 2018-01-24
 	
 	// START KGU#1085 2026-04-03: Issue #1133 Workaround for Windows 11 CheckboxMenuItems
-	/** Sparse array of available selected Items for JCheckBoxMenuItems for the case of Windows 11 */
+	/** Sparse array of available selected icons for JCheckBoxMenuItems for the case of Windows 11 */
 	private static ImageIcon[] selectedIcons = null;
 	/** Maps JCheckBoxMenuItems to icon numbers */
 	private static final HashMap<JCheckBoxMenuItem, Integer> menuIconMap = new HashMap<JCheckBoxMenuItem, Integer>();
@@ -475,10 +479,15 @@ public class IconLoader {
 //	public static ImageIcon turtle = getIconImage(getURI(from+"icons/turtle.png"));
 	// END KGU 2020-04-02
 	
-	// START KGU#242 2016-09-05
-	// FIXME: Seems never to be filled!
-	/** Cached locale icons */
-	private static HashMap<String, ImageIcon> icoLocales = new HashMap<String, ImageIcon>();
+	// START KGU#242 2016-09-05: Introduced, but never actually used
+	/**
+	 * Cache for multi-resolution locale icons (by locale name), may also hold specific variants for selected
+	 * items (if so then the selected icons will reside at index 1).
+	 */
+	// START KGU#287/KGU#1085 2026-04-11: Issues #81, #1133 cache multi-resolution icons for locales
+	//private static HashMap<String, ImageIcon> icoLocales = new HashMap<String, ImageIcon>();
+	private static HashMap<String, ImageIcon[]> icoLocales = new HashMap<String, ImageIcon[]>();
+	// END KGU#287/KGU#1085 2026-04-11
 	// END KGU#242 2016-09-05
 	
 	// START KGU#287 2026-04-10: Issue #81 New approach to provide scalable icons
@@ -809,20 +818,29 @@ public class IconLoader {
 		//turtle = getIconImage(getURI(from + "icons/turtle.png"));
 		// END KGU 2020-04-02
 
-		// START KGU#242 2016-09-05
-		for (String key: icoLocales.keySet())
+		// START KGU#242 2016-09-05: Replace the cached locale icons
+		// START KGU#287/KGU#1085 2026-04-11: Issues #81, #1133 New structure, actual caching
+		//for (String key: locales.keySet())
+		Set<String> localeKeys = new HashSet(icoLocales.keySet());
+		icoLocales.clear();
+		for (String key: localeKeys)
+		// END KGU#287/KGU#1085 2026-04-11
 		{
 			//System.out.println("icoLocales.put(" + key + ", getIconImage(getURI(\"icons/locale_" + key + ".png\")))");
-			icoLocales.put(key, getImageIcon(getURI("icons/locale_" + key + ".png")));
+			// START KGU#287/KGU#1085 2026-04-11: Issues #81, #1133 New structure
+			//icoLocales.put(key, getImageIcon(getURI("icons/locale_" + key + ".png")));
+			getLocaleImageIcon(key);	// This will replace the former entry
+			// END KGU#287/KGU#1085 2026-04-11
 		}
 		// END KGU#242 2016-09-05
 	}
 
 	/**
-	 * Produces a new, scaled {@link IconImage} from icon file at the given {@code url}
-	 * for the currently specified scale.
+	 * Produces a new, scaled {@link IconImage} from icon file with the given
+	 * {@code fileName} for the currently specified scale factor.
 	 * 
-	 * @param fileName - the file name of the icon file(s) in the cascaded icon folders.
+	 * @param fileName - the file name of the icon file(s) in the cascaded icon
+	 *    folders.
 	 * @return the retrieved or scaled ImageIco
 	 * 
 	 * @see #getIcon(int)
@@ -921,7 +939,7 @@ public class IconLoader {
 	 * @see #getIconImages(String, double)
 	 */
 	//@SuppressWarnings("unused")
-	public static Image getIconImage(String fileName, int size, double extraFactor)
+	private static Image getIconImage(String fileName, int size, double extraFactor)
 	// END KGU#486 2018-02-06
 	{
 		//System.out.println("getIconImage(\"" + fileName + "\", " + size + ", " + extraFactor + ")");
@@ -1121,25 +1139,34 @@ public class IconLoader {
 
 	// START KGU 2016-09-06
 	/**
-	 * Retrieves the icon symbolising the locale specified by {@code localeName}.
+	 * Retrieves the multi-resolution icon symbolising the locale specified by
+	 * {@code localeName}.
 	 * Also ensures the cashing of an icon variant for selected CheckboxMenuItems
-	 * if available.
+	 * if appropriate.
 	 * 
 	 * @param localeName - name of the locale
 	 * @return either the respective icon or {@code null}.
 	 */
 	public static ImageIcon getLocaleImageIcon(String localeName)
 	{
-		ImageIcon ii = icoLocales.get(localeName);
-		if (ii == null && Locales.isNamedLocale(localeName))
-		{
+		if (!Locales.isNamedLocale(localeName)) {
+			return null;
+		}
+		ImageIcon[] iconPair = icoLocales.get(localeName);
+		if (iconPair == null) {
 			// Already comprises scaling...
 			// START KGU#286 2018-02-13: Issues #4, #81
 			//ii = getIconImage(getURI(from + "icons/locale_"+localeName+".png"));
-			ii = getImageIcon("locale_" + localeName + ".png");
+			// START KGU#287 2026-04-11: Issue #81 provide multi-resolution icons
+			//ii = getImageIcon("locale_" + localeName + ".png");
+			iconPair = new ImageIcon[2];
+			iconPair[0] = getMultiImageIcon("locale_" + localeName + ".png");
+			iconPair[1] = null;
+			icoLocales.put(localeName, iconPair);
+			// END KGU#287 2026-04-11
 			// END KGU#286 2018-02-13
 		}
-		return ii;
+		return iconPair[0];
 	}
 	// END KGU 2016-09-06
 
@@ -1153,14 +1180,63 @@ public class IconLoader {
 	 */
 	public static ImageIcon getSelectedLocaleImageIcon(String localeName)
 	{
-		String modifiedName = localeName + "_on";
-		ImageIcon ii = icoLocales.get(modifiedName);
-		if (ii == null && Locales.isNamedLocale(localeName))
-		{
-			// Already comprises scaling...
-			ii = getImageIcon("locale_" + modifiedName + ".png");
+		// START KGU#287/KGU#1085 2026-04-11: Issues #81, #1133 New approach
+		//String modifiedName = localeName + "_on";
+		//ImageIcon ii = icoLocales.get(modifiedName);
+		//if (ii == null && Locales.isNamedLocale(localeName))
+		//{
+		//	// Already comprises scaling...
+		//	ii = getImageIcon("locale_" + modifiedName + ".png");
+		//}
+		//return ii;
+		if (!Locales.isNamedLocale(localeName)) {
+			return null;
 		}
-		return ii;
+		ImageIcon[] iconPair = icoLocales.get(localeName);
+		if (iconPair == null && Locales.isNamedLocale(localeName))
+		{
+			/* This creates the entry and provides the standard multi-resolution
+			 * icons for the locale */
+			getLocaleImageIcon(localeName);
+		}
+		if (!lafWindows1133workaround) {
+			return iconPair[0];
+		}
+		if (iconPair[1] == null) {
+			// The selection variant haven't been created yet, so do it now
+			Image iconImage = iconPair[0].getImage();
+			ImageObserver observer = iconPair[0].getImageObserver();
+			ArrayList<Image> variants = new ArrayList<Image>();
+			if (iconImage instanceof AbstractMultiResolutionImage) {
+				variants.addAll(((AbstractMultiResolutionImage)iconImage).getResolutionVariants());
+			}
+			else {
+				variants.add(iconImage);
+			}
+			Image[] selImages = new Image[variants.size()];
+			for (int ix = 0; ix < selImages.length; ix++) {
+				// WE draw a little dark grey arrowhead to the left of the flag directing to the flag
+				Image resImage = variants.get(ix);
+				int height = resImage.getHeight(observer);
+				int width = resImage.getWidth(observer);
+				int offset = height/2;
+				int arrow = 3 * offset / 4;
+				BufferedImage image = new BufferedImage(width + offset, height, BufferedImage.TYPE_INT_ARGB);
+				Graphics2D graphics = (Graphics2D) image.getGraphics();
+				graphics.drawImage(resImage, offset, 0, width, height, observer);
+				graphics.setColor(Color.DARK_GRAY);
+				int[] xCoords = {0, arrow, 0};
+				int[] yCoords = {offset - arrow, offset, offset + arrow};
+				graphics.fillPolygon(xCoords, yCoords, xCoords.length);
+				//graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+				graphics.dispose();
+				selImages[ix] = image;
+			}
+			AbstractMultiResolutionImage mrImage = new BaseMultiResolutionImage(selImages);
+			iconPair[1] = new ImageIcon(mrImage);
+		}
+		return iconPair[1];
+		// END KGU#287/KGU#1085 2026-04-11
 	}
 	// END KGU#1085 2026-04-03
 
