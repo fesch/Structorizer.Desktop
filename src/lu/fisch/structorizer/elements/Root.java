@@ -955,7 +955,7 @@ public class Root extends Element {
 					message, 
 					Menu.ttlGuidedTours.getText(), 
 					JOptionPane.INFORMATION_MESSAGE,
-					IconLoader.getIcon(24));
+					IconLoader.getMultiIcon(24));
 		}
 		return checkNo;
 	}
@@ -1653,11 +1653,11 @@ public class Root extends Element {
     	// START KGU#911 2021-01-10: Enh. #910
     	case DT_INCL_DIAGRCTRL:
     	// END KGU#911 2021-01-10
-    		return IconLoader.getIcon(71);
+    		return IconLoader.getMultiIcon(71);
     	case DT_SUB:
-    		return IconLoader.getIcon(21);
+    		return IconLoader.getMultiIcon(21);
     	case DT_MAIN:
-    		return IconLoader.getIcon(22);
+    		return IconLoader.getMultiIcon(22);
     	}
     	return super.getIcon();
     }

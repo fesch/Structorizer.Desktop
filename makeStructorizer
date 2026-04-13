@@ -35,6 +35,7 @@ set -e
 #                                                  default to detached start
 #      Kay Gürtzig                    2020-04-20   Copy command for logging.properties added
 #      Kay Gürtzig                    2022-01-05   bsh-2.0b6.jar replaced with bsh-0.2b6.jar
+#      Kay Gürtzig                    2026-04-11   New icon dir "icon_20" for issue #81 added
 #
 ################################################################################
 
@@ -132,7 +133,7 @@ fi
 
 # copying some other files to binary tree
 echo; echo "Copying resources..."
-for icondir in icons icons_24 icons_32 icons_48 icons_64
+for icondir in icons icons_20 icons_24 icons_32 icons_48 icons_64
 do
   [ -d ../bin/lu/fisch/structorizer/gui/$icondir ] && rm -R ../bin/lu/fisch/structorizer/gui/$icondir
   mkdir ../bin/lu/fisch/structorizer/gui/$icondir 

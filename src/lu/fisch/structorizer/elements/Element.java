@@ -317,7 +317,7 @@ public abstract class Element {
 	public static final long E_HELP_FILE_SIZE = 12900000;
 	public static final String E_DOWNLOAD_PAGE = "https://www.fisch.lu/Php/download.php";
 	// END KGU#791 2020-01-20
-	public static final String E_VERSION = "3.32-34";
+	public static final String E_VERSION = "3.32-35";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -4900,7 +4900,7 @@ public abstract class Element {
      */
     public ImageIcon getIcon()
     {
-    	return IconLoader.getIcon(57);
+    	return IconLoader.getMultiIcon(57);
     }
     // END KGU#122 2016-01-03
     
@@ -4912,7 +4912,7 @@ public abstract class Element {
      */
     public ImageIcon getMiniIcon()
     {
-    	return IconLoader.getIcon(10);
+    	return IconLoader.getMultiIcon(10);
     }
     // END KGU#535 2018-06-28
 

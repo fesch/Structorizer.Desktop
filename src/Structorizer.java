@@ -101,6 +101,7 @@ import java.awt.EventQueue;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -455,6 +456,12 @@ public class Structorizer
 		// START KGU#521 2018-06-12: Workaround for #536 (corrupted rendering on certain machines) 
 		System.setProperty("sun.java2d.noddraw", "true");
 		// END KGU#521 2018-06-12
+		
+		// START KGU#287 2026-04-10: Issues #81, #330 mere test
+		//System.out.println(Toolkit.getDefaultToolkit().getScreenResolution());
+		//System.setProperty("sun.java2d.uiScale", "2.0");
+		//System.out.println(Toolkit.getDefaultToolkit().getScreenResolution());
+		// END KGU#287 2026-04-10
 
 		// try to load the system Look & Feel
 		try
@@ -567,7 +574,7 @@ public class Structorizer
 		// END KGU#440 2017-11-06
 		mainform.diagram.redraw();
 
-		if(System.getProperty("os.name").toLowerCase().startsWith("mac os x"))
+		if (System.getProperty("os.name").toLowerCase().startsWith("mac os x"))
 		{
 			System.setProperty("apple.laf.useScreenMenuBar", "true");
 			System.setProperty("apple.awt.graphics.UseQuartz", "true");

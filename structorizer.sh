@@ -19,6 +19,7 @@ set -e
 #      Bob Fisch                     2018-09-05    get correct dir if symlinked
 #      Kay Gürtzig                   2018-09-19    Bugfix #604: Condition in jar test (line 31) corrected (#586)
 #      Kay Gürtzig                   2021-06-13    Issue #944: Now requires Java 11 at least
+#      JoshiCodes                    2026-03-20    Fix #1229 for non-reparenting window managers
 #
 ################################################################################
 

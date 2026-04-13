@@ -7674,7 +7674,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	// START KGU#705 2019-09-23: Enh. #738: Code preview support
 	/**
-	 * Place a code preview for the current diagram to the currrent favourite
+	 * Place a code preview for the current diagram to the current favourite
 	 * programming language. Also fills the {@link #codePreviewMap} with
 	 * associations between {@link Element}s and line intervals.
 	 *
@@ -9831,7 +9831,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				Menu.ttlMouseScrollUnit.getText(),
 				JOptionPane.OK_CANCEL_OPTION,
 				JOptionPane.QUESTION_MESSAGE,
-				IconLoader.getIcon(9)) == JOptionPane.OK_OPTION) {
+				IconLoader.getMultiIcon(9)) == JOptionPane.OK_OPTION) {
 			Element.E_WHEEL_SCROLL_UNIT = (Integer) spnUnit.getModel().getValue();
 			this.adaptScrollUnits();
 			if (Arranger.hasInstance()) {
@@ -11337,7 +11337,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				Menu.msgGuidedTours.getText(),
 				Menu.ttlGuidedTours.getText(),
 				JOptionPane.INFORMATION_MESSAGE,
-				IconLoader.getIconImage(getClass().getResource("icons/AnalyserHint.png")));
+				IconLoader.getImageIcon(getClass().getResource("icons/AnalyserHint.png")));
 		analyse();
 		repaint();
 	}

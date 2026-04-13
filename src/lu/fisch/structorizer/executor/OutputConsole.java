@@ -142,16 +142,16 @@ public class OutputConsole extends LangFrame implements ActionListener, MouseWhe
 
 		setDefaultCloseOperation(javax.swing.WindowConstants.HIDE_ON_CLOSE);
 		setTitle("Structorizer Output Console");
-		this.setIconImage(IconLoader.getIcon(4).getImage());
+		this.setIconImage(IconLoader.getMultiIcon(4).getImage());
 
 		// START KGU#279 2016-10-11: Enh. #268: Font selection opportunity
 		menuProp = new JMenu("Properties");
-		menuPropFont = new JMenuItem("Font ...",IconLoader.getIcon(23));
+		menuPropFont = new JMenuItem("Font ...",IconLoader.getMultiIcon(23));
 		menuPropFont.addActionListener(this);
-		menuPropFontUp = new JMenuItem("Enlarge font", IconLoader.getIcon(33));
+		menuPropFontUp = new JMenuItem("Enlarge font", IconLoader.getMultiIcon(33));
 		menuPropFontUp.addActionListener(this);
 		menuPropFontUp.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ADD, InputEvent.CTRL_DOWN_MASK));
-		menuPropFontDown = new JMenuItem("Diminish font", IconLoader.getIcon(34));
+		menuPropFontDown = new JMenuItem("Diminish font", IconLoader.getMultiIcon(34));
 		menuPropFontDown.addActionListener(this);
 		menuPropFontDown.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, InputEvent.CTRL_DOWN_MASK));
 
@@ -160,7 +160,7 @@ public class OutputConsole extends LangFrame implements ActionListener, MouseWhe
 		menuContentLogMeta = new JCheckBoxMenuItem("Log meta-info");
 		menuContentLogMeta.setSelected(true);
 		menuContentLogCalls = new JCheckBoxMenuItem("Log calls");
-		menuContentSave = new JMenuItem("Save log ...", IconLoader.getIcon(3));
+		menuContentSave = new JMenuItem("Save log ...", IconLoader.getMultiIcon(3));
 		menuContentSave.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {

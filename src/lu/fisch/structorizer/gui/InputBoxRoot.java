@@ -456,7 +456,7 @@ public class InputBoxRoot extends InputBox implements LangEventListener {
 					// END KGU#838 2020-04-13
 					JOptionPane.OK_CANCEL_OPTION,
 					JOptionPane.PLAIN_MESSAGE,
-					IconLoader.getIcon(71)	// Symbol for includables
+					IconLoader.getMultiIcon(71)	// Symbol for includables
 					);
 			if (answer != JOptionPane.OK_OPTION) {
 				txtIncludeList.setText(oldList);

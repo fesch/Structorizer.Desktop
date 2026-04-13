@@ -135,7 +135,7 @@ public class TranslatorRowEditor extends JDialog implements ActionListener, Item
 	 */
 	public TranslatorRowEditor(Translator owner, JButton button, String localeName, String text) {
 		super(owner, true);
-		setIconImage(IconLoader.getIcon(0).getImage());
+		setIconImage(IconLoader.getMultiIcon(0).getImage());
 		String[] details = button.getName().split(":", 2);
 		this.translator = owner;
 		this.section = details[0];
@@ -215,8 +215,8 @@ public class TranslatorRowEditor extends JDialog implements ActionListener, Item
 		pnlText.setLayout(lytText);
 		pnlText.setBorder(new EmptyBorder(border, border, border, border));
 		
-		lblDefault = new JLabel(IconLoader.getLocaleIconImage(Locales.DEFAULT_LOCALE));
-		lblTarget = new JLabel(IconLoader.getLocaleIconImage(this.lang));
+		lblDefault = new JLabel(IconLoader.getLocaleImageIcon(Locales.DEFAULT_LOCALE));
+		lblTarget = new JLabel(IconLoader.getLocaleImageIcon(this.lang));
 		JTextArea txtDefault = txtAreas[0] = new JTextArea();
 		JTextArea txtTarget = txtAreas[1] = new JTextArea(this.text);
 		cmbLanguage = new JComboBox<ImageIcon>();
@@ -224,7 +224,7 @@ public class TranslatorRowEditor extends JDialog implements ActionListener, Item
 		Locale loc0 = Locales.getInstance().getLocale(Locales.DEFAULT_LOCALE);
 		txtDefault.setText(loc0.getValue(this.section, this.key));
 		ImageIcon lastCompIcon = null;
-		ImageIcon icon = IconLoader.getLocaleIconImage("empty");
+		ImageIcon icon = IconLoader.getLocaleImageIcon("empty");
 		locales.put(icon, "empty");
 		cmbLanguage.addItem(icon);
 		for (String[] localePair : Locales.LOCALES_LIST) {
@@ -233,7 +233,7 @@ public class TranslatorRowEditor extends JDialog implements ActionListener, Item
 				break;
 			}
 			else if (!localeName.equals(Locales.DEFAULT_LOCALE)) {
-				icon = IconLoader.getLocaleIconImage(localeName);
+				icon = IconLoader.getLocaleImageIcon(localeName);
 				locales.put(icon, localeName);
 				cmbLanguage.addItem(icon);
 				if (localeName.equals(lastCompLang)) {

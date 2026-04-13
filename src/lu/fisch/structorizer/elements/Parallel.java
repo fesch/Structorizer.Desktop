@@ -530,7 +530,7 @@ public class Parallel extends Element
 	@Override
 	public ImageIcon getIcon()
 	{
-		return IconLoader.getIcon(91);
+		return IconLoader.getMultiIcon(91);
 	}
 	// END KGU#122 2016-01-03
 
@@ -543,7 +543,7 @@ public class Parallel extends Element
 	@Override
 	public ImageIcon getMiniIcon()
 	{
-		return IconLoader.getIcon(48);
+		return IconLoader.getMultiIcon(48);
 	}
 	// END KGU 2018-06-28
 

@@ -301,7 +301,7 @@ public class Try extends Element {
 	@Override
 	public ImageIcon getIcon()
 	{
-		return IconLoader.getIcon(120);
+		return IconLoader.getMultiIcon(120);
 	}
 	
 	/**
@@ -312,7 +312,7 @@ public class Try extends Element {
 	@Override
 	public ImageIcon getMiniIcon()
 	{
-		return IconLoader.getIcon(121);
+		return IconLoader.getMultiIcon(121);
 	}
 
 	/* (non-Javadoc)

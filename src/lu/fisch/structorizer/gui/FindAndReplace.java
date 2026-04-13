@@ -350,7 +350,7 @@ public class FindAndReplace extends LangFrame implements IRoutinePoolListener /*
 	{
 		// FIXME: There should rather be buttons FindAll, FindNext, FindPrev, ReplaceNext, ReplaceAll
 
-		this.setIconImage(IconLoader.getIcon(73).getImage());
+		this.setIconImage(IconLoader.getMultiIcon(73).getImage());
 		Ini ini = Ini.getInstance();
 		try {
 			ini.load();

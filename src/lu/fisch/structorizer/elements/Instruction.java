@@ -1934,7 +1934,7 @@ public class Instruction extends Element {
 	public ImageIcon getIcon()
 	{
 		if (E_HIDE_DECL && this.isMereDeclaratory() && this == this.getDrawingSurrogate(false)) {
-			return IconLoader.getIcon(85);
+			return IconLoader.getMultiIcon(85);
 		}
 		return super.getIcon();
 	}

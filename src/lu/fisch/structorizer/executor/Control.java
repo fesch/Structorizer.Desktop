@@ -194,7 +194,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     private void initComponents() {
 
         // START KGU#89 2015-11-25
-        this.setIconImage(IconLoader.getIcon(4).getImage());
+        this.setIconImage(IconLoader.getMultiIcon(4).getImage());
         // END KGU#89 2015-11-25
         // START KGU 2017-10-08
         this.setTitle("Executor Control");
@@ -300,7 +300,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
 
         // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
         //btnStop.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/executor/stop.png"))); // NOI18N
-        btnStop.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/executor/stop.png"))); // NOI18N
+        btnStop.setIcon(IconLoader.getImageIcon(getClass().getResource("/lu/fisch/structorizer/executor/stop.png"))); // NOI18N
         // END KGU#287 2016-11-01
         btnStop.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -310,7 +310,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
 
         // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
         //btnPlay.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/executor/play.png"))); // NOI18N
-        btnPlay.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/executor/play.png"))); // NOI18N
+        btnPlay.setIcon(IconLoader.getImageIcon(getClass().getResource("/lu/fisch/structorizer/executor/play.png"))); // NOI18N
         // END KGU#287 2016-11-01
         btnPlay.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -322,8 +322,8 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         //btnPause.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/executor/pause.png"))); // NOI18N
         // START KGU#907 2021-01-04: Enh. #906
         //btnPause.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/executor/pause.png"))); // NOI18N
-        pauseIcon = IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/executor/pause.png")); // NOI18N
-        diveIcon = IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/executor/dive.png")); // NOI18N
+        pauseIcon = IconLoader.getImageIcon(getClass().getResource("/lu/fisch/structorizer/executor/pause.png")); // NOI18N
+        diveIcon = IconLoader.getImageIcon(getClass().getResource("/lu/fisch/structorizer/executor/dive.png")); // NOI18N
         btnPause.setIcon(pauseIcon);
         // END KGU#907 2021-01-04
         // END KGU#287 2016-11-01
@@ -336,7 +336,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
 
         // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
         //btnStep.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/executor/next.png"))); // NOI18N
-        btnStep.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/executor/next.png"))); // NOI18N
+        btnStep.setIcon(IconLoader.getImageIcon(getClass().getResource("/lu/fisch/structorizer/executor/next.png"))); // NOI18N
         // END KGU#287 2016-11-01
         btnStep.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -391,7 +391,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
             // END KGU#269 2016-10-05
         });
         // START KGU#443 2017-10-16: Enh. #439
-        int pulldownWidth = IconLoader.getIcon(80).getIconWidth();
+        int pulldownWidth = IconLoader.getMultiIcon(80).getIconWidth();
         tblVar.getColumnModel().getColumn(1).setCellEditor(new PulldownButtonCellEditor());
         tblVar.getColumnModel().getColumn(1).setMaxWidth(pulldownWidth);
         tblVar.getColumnModel().getColumn(1).setPreferredWidth(pulldownWidth);
@@ -908,7 +908,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         varUpdates.clear();
         // END KGU#68 2016-10-07
         // START KGU#443 2017-10-16: Enh. #439 - new pulldown buttons near compound values
-        ImageIcon pulldownIcon = IconLoader.getIcon(80);
+        ImageIcon pulldownIcon = IconLoader.getMultiIcon(80);
         // END KGU#443 2016-10-16
         // START KGU#274 2016-10-08: Issue #264 Reduce the ArrayIndexOutOfBoundsException rate
         //while(tm.getRowCount()>0) tm.removeRow(0);

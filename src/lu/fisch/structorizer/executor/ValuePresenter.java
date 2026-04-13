@@ -166,11 +166,11 @@ public class ValuePresenter extends JDialog implements ActionListener, WindowLis
 		tblFields.setShowGrid(true);
 		if (this.editable) {
 			// Use pencil symbol if editable
-			this.setIconImage(IconLoader.getIcon(84).getImage());
+			this.setIconImage(IconLoader.getMultiIcon(84).getImage());
 		}
 		else {
 			// Use a magnifying glass if not editable
-			this.setIconImage(IconLoader.getIcon(83).getImage());
+			this.setIconImage(IconLoader.getMultiIcon(83).getImage());
 		}
 		this.getContentPane().setLayout(new BorderLayout());
 		pnlButtons.setLayout(new java.awt.GridLayout(0, 2));
@@ -276,7 +276,7 @@ public class ValuePresenter extends JDialog implements ActionListener, WindowLis
 			}
 		}
 		// START KGU#443 2017-10-16: Enh. #439 - pulldown buttons near compound values
-		ImageIcon pulldownIcon = IconLoader.getIcon(80);
+		ImageIcon pulldownIcon = IconLoader.getMultiIcon(80);
 		for (int i = 0; i < tm.getRowCount(); i++) {
 			Object value = tm.getValueAt(i, 2);
 			String name = (String)tm.getValueAt(i, 0);
@@ -290,7 +290,7 @@ public class ValuePresenter extends JDialog implements ActionListener, WindowLis
 		}
 		// END KGU#443 2017-10-16
 		// START KGU#443 2017-10-16: Enh. #439
-		int pulldownWidth = IconLoader.getIcon(80).getIconWidth();
+		int pulldownWidth = IconLoader.getMultiIcon(80).getIconWidth();
 		tblFields.getColumnModel().getColumn(1).setCellEditor(new PulldownButtonCellEditor());
 		tblFields.getColumnModel().getColumn(1).setMaxWidth(pulldownWidth);
 		tblFields.getColumnModel().getColumn(1).setPreferredWidth(pulldownWidth);

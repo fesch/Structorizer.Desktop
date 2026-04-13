@@ -83,6 +83,11 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-02-06      Enh. #915: 127_merge and 128_split added
  *      Kay Gürtzig     2021-03-18      Issue #966: Icon 081 (language) replaced
  *      Kay Gürtzig     2025-08-01      Enh. #1197: generateIcon() now also accepts null as argument
+ *      Kay Gürtzig     2026-04-04/11   Issue #1133: Support for Windows 11 L&F workaround on JCheckBoxMenuItem icons
+ *      Kay Gürtzig     2026-04-10/11   Issue #81: All methods "get...IconImage..." providing ImageIcons renamed
+ *                                      to "get...ImageIcon..." for logical consistency, New methods and
+ *                                      modified behaviour of methods to ensure MultiResolutionImages where
+ *                                      needed.
  *
  ******************************************************************************************************
  *
@@ -92,7 +97,10 @@ package lu.fisch.structorizer.gui;
 
 import java.awt.*;
 import java.awt.image.*;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -111,7 +119,7 @@ public class IconLoader {
 //	@Deprecated
 //	private static String from = new String("");
 // END KGU 2021-01-09
-
+	
 	protected static double scaleFactor = 1;
 	
 	// START KGU#486 2018-01-24: Issue #4 - new icon file retrieval mechanism
@@ -251,6 +259,9 @@ public class IconLoader {
 	/** Array of supported icon sizes (in pixel) */
 	private static final int[] ICON_SIZES = {
 			16,
+			// START KGU#287 2026-04-11: Issue #81 (for 125% DPI)
+			20,
+			// END KGU#287 2026-04-11
 			24,
 			32,
 			48,
@@ -261,24 +272,37 @@ public class IconLoader {
 	/** Array of available numbered icons with lazy initialization (replaces ico001, ico002 etc.) */
 	private static ImageIcon[] icons = null;
 	// END KGU#486 2018-01-24
-
+	
+	// START KGU#1085 2026-04-03: Issue #1133 Workaround for Windows 11 CheckboxMenuItems
+	/** Sparse array of available selected icons for JCheckBoxMenuItems for the case of Windows 11 */
+	private static ImageIcon[] selectedIcons = null;
+	/** Maps JCheckBoxMenuItems to icon numbers */
+	private static final HashMap<JCheckBoxMenuItem, Integer> menuIconMap = new HashMap<JCheckBoxMenuItem, Integer>();
+	// END KGU#1085 2026-04-03
+	
 	// Icons
 	/** A fixed-size product image for Mac or Translator */
 	// START KGU#577 2018-09-18: Issue #601
 	//public static ImageIcon icoNSD = new ImageIcon(getURI(from+"icons/structorizer.png"));
-	public static ImageIcon icoNSD = getIconImage(getURI("icons/structorizer.png"), true);
+	public static ImageIcon icoNSD = getImageIcon(getURI("icons/structorizer.png"), true);
 	// END KGU#577 2018-09-18
 	// START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround)
 	//public static ImageIcon icoNSD48 = new ImageIcon(getURI(from+"icons/structorizer48.png"));
 	// START KGU#486 2018-02-06: Issue #4 (Icon redesign)
 	//public static ImageIcon icoNSD48 = getIconImage(getURI(from+"icons/structorizer48.png"));
 	/** A scaled product image with basic size of 48 pixels */
-	public static ImageIcon icoNSD48 = getIconImage(getURI("icons_48/000_structorizer.png"));
+	public static ImageIcon icoNSD48 = getImageIcon(getURI("icons_48/000_structorizer.png"));
 	// END KGU#486 2018-02-06
 	// END KGU#287 2016-11-02
 	// START KGU#577 2018-09-17: Issue #601 - we use lazy initialization
 	private static ImageIcon dummyIcon = null;
 	// END KGU#577 2018-09-17
+	
+	// START KGU#1085 2026-04-09: Issue #1133 (temporary) workaround for Windows11
+	private static boolean isWindows11 = "Windows 11".equalsIgnoreCase(System.getProperty("os.name"));
+	public static boolean lafWindows1133workaround = false;
+	// END KGU#1085 2026-04-09
+
 		
 //	public static ImageIcon ico001 = getIconImage(getURI(from+"icons/001_New.png"));
 //	public static ImageIcon ico002 = getIconImage(getURI(from+"icons/002_Open.png"));
@@ -455,26 +479,100 @@ public class IconLoader {
 //	public static ImageIcon turtle = getIconImage(getURI(from+"icons/turtle.png"));
 	// END KGU 2020-04-02
 	
-	// START KGU#242 2016-09-05
-	/** Cached locale icons */
-	private static HashMap<String, ImageIcon> icoLocales = new HashMap<String, ImageIcon>();
+	// START KGU#242 2016-09-05: Introduced, but never actually used
+	/**
+	 * Cache for multi-resolution locale icons (by locale name), may also hold specific variants for selected
+	 * items (if so then the selected icons will reside at index 1).
+	 */
+	// START KGU#287/KGU#1085 2026-04-11: Issues #81, #1133 cache multi-resolution icons for locales
+	//private static HashMap<String, ImageIcon> icoLocales = new HashMap<String, ImageIcon>();
+	private static HashMap<String, ImageIcon[]> icoLocales = new HashMap<String, ImageIcon[]>();
+	// END KGU#287/KGU#1085 2026-04-11
 	// END KGU#242 2016-09-05
 	
-	// START KGU#486 2018-01-25: Issues #4, #81
+	// START KGU#287 2026-04-10: Issue #81 New approach to provide scalable icons
 	/**
-	 * New preferred icon retrieval mechanism to support qualitatively acceptable icon scaling
-	 * results and to facilitate the introduction of new icons (though it's going to get harder
-	 * to identify unused icons.)<br/>
+	 * Recommended multi-resolution icon retrieval mechanism to support
+	 * qualitatively acceptable icon scaling results and to facilitate the
+	 * introduction of new icons (though it's going to get harder to identify
+	 * unused icons.)<br/>
 	 * The first call will cause the initialization of the icon cache.
 	 * 
 	 * @param iconNo - the index of he requested icon
-	 * @return the {@linkImageIcon} object for the requested icon if available, {@code null}
-	 *    otherwise
-	 * 
-	 * @see #getIconImage(java.net.URL)
-	 * @see #getIconImage(String, double)
-	 * @see #setScaleFactor(double)
+	 * @return the {@link ImageIcon} object for the requested icon if
+	 *    available, {@code null} otherwise
 	 */
+	public static ImageIcon getMultiIcon(int iconNo)
+	{
+		ImageIcon icon = null;
+		if (iconNo >= 0 && iconNo < ICON_FILES.length) {
+		// END KGU#577 2018-09-17
+			if (icons == null) {
+				// Lazy initialization of the icon cache
+				icons = new ImageIcon[ICON_FILES.length];
+				for (int i = 0; i < ICON_FILES.length; i++) {
+					String fileName = ICON_FILES[i];
+					if (fileName != null) {
+						icons[i] = getMultiImageIcon(fileName);
+					}
+					else {
+						icons[i] = null;
+					}
+				}
+			}
+			icon = icons[iconNo];
+		// START KGU#577 2018-09-17: Issue #601
+		}
+		else {
+			try {
+				// Force a stacktrace into the log file
+				throw new Exception("Invalid icon number " + iconNo);
+			}
+			catch (Exception ex) {
+				Logger.getLogger(IconLoader.class.getName()).log(Level.SEVERE, "Resources inconsistent", ex);
+			}
+		}
+		if (icon == null) {
+			icon = getMissingMultiIcon();
+		}
+		return icon;
+	}
+	/**
+	 * Builds a multi-resolution ImageIcon from all supported basic icon
+	 * sizes (plus scaleFactor).
+	 * 
+	 * @param fileName - An image resource file name
+	 * @return a multi-resolution ImageIcon
+	 */
+	private static ImageIcon getMultiImageIcon(String fileName) {
+		Image[] variants = new Image[ICON_SIZES.length];
+		for (int i = 0; i < ICON_SIZES.length; i++) {
+			variants[i] = getIconImage(fileName, ICON_SIZES[i], 1.0);
+		}
+		AbstractMultiResolutionImage mrImage = new BaseMultiResolutionImage(variants);
+		return new ImageIcon(mrImage);
+	}
+	// END KGU#287 2026-04-10
+	
+	// START KGU#486 2018-01-25: Issues #4, #81
+	/**
+	 * New preferred icon retrieval mechanism to support qualitatively
+	 * acceptable icon scaling results and to facilitate the introduction
+	 * of new icons (though it's going to get harder to identify unused
+	 * icons.)<br/>
+	 * The first call will cause the initialization of the icon cache.
+	 * 
+	 * @param iconNo - the index of he requested icon
+	 * @return the {@link ImageIcon} object for the requested icon if available,
+	 *    {@code null} otherwise
+	 * 
+	 * @see #getImageIcon(java.net.URL)
+	 * @see #getImageIcon(String, double)
+	 * @see #setScaleFactor(double)
+	 * 
+	 * @deprecated Consider using {@link #getMultiIcon(int)} instead
+	 */
+	@Deprecated
 	public static ImageIcon getIcon(int iconNo)
 	{
 		// START KGU#577 2018-09-17: Issue #601
@@ -490,7 +588,7 @@ public class IconLoader {
 				for (int i = 0; i < ICON_FILES.length; i++) {
 					String fileName = ICON_FILES[i];
 					if (fileName != null) {
-						icons[i] = getIconImage(fileName);
+						icons[i] = getImageIcon(fileName);
 					}
 					else {
 						icons[i] = null;
@@ -536,7 +634,7 @@ public class IconLoader {
 		// START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround)
 		// START KGU#486 2018-02-06: Issue #4 (icon redesign)
 		//icoNSD48 = getIconImage(getURI(from+"icons/structorizer48.png"));
-		icoNSD48 = getIconImage(getURI("icons_48/000_structorizer.png"));
+		icoNSD48 = getImageIcon(getURI("icons_48/000_structorizer.png"));
 		// END KGU#486 2018-02-06
 		// END KGU#287 2016-11-02
 
@@ -720,28 +818,38 @@ public class IconLoader {
 		//turtle = getIconImage(getURI(from + "icons/turtle.png"));
 		// END KGU 2020-04-02
 
-		// START KGU#242 2016-09-05
-		for (String key: icoLocales.keySet())
+		// START KGU#242 2016-09-05: Replace the cached locale icons
+		// START KGU#287/KGU#1085 2026-04-11: Issues #81, #1133 New structure, actual caching
+		//for (String key: locales.keySet())
+		Set<String> localeKeys = new HashSet(icoLocales.keySet());
+		icoLocales.clear();
+		for (String key: localeKeys)
+		// END KGU#287/KGU#1085 2026-04-11
 		{
-			icoLocales.put(key, getIconImage(getURI("icons/locale_" + key + ".png")));
+			//System.out.println("icoLocales.put(" + key + ", getIconImage(getURI(\"icons/locale_" + key + ".png\")))");
+			// START KGU#287/KGU#1085 2026-04-11: Issues #81, #1133 New structure
+			//icoLocales.put(key, getImageIcon(getURI("icons/locale_" + key + ".png")));
+			getLocaleImageIcon(key);	// This will replace the former entry
+			// END KGU#287/KGU#1085 2026-04-11
 		}
 		// END KGU#242 2016-09-05
 	}
 
 	/**
-	 * Produces a new, scaled {@link IconImage} from icon file at the given {@code url}
-	 * for the currently specified scale.
+	 * Produces a new, scaled {@link IconImage} from icon file with the given
+	 * {@code fileName} for the currently specified scale factor.
 	 * 
-	 * @param fileName - the file name of the icon file(s) in the cascaded icon folders.
+	 * @param fileName - the file name of the icon file(s) in the cascaded icon
+	 *    folders.
 	 * @return the retrieved or scaled ImageIco
 	 * 
 	 * @see #getIcon(int)
 	 * @see #setScaleFactor(double)
 	 */
-	public static ImageIcon getIconImage(String fileName)
+	public static ImageIcon getImageIcon(String fileName)
 	// START KGU#486 2018-02-06: Issue #4 new opportunity to specify an extra factor
 	{
-		return getIconImage(fileName, 1.0);
+		return getImageIcon(fileName, 1.0);
 	}
 	/**
 	 * Produces a new, scaled {@link IconImage} from icon file at the given {@code url}
@@ -755,7 +863,7 @@ public class IconLoader {
 	 * @see #setScaleFactor(double)
 	 */
 	//@SuppressWarnings("unused")
-	public static ImageIcon getIconImage(String fileName, double extraFactor)
+	public static ImageIcon getImageIcon(String fileName, double extraFactor)
 	// END KGU#486 2018-02-06
 	{
 		//System.out.println("getIconImage(\"" + fileName + "\")");
@@ -811,8 +919,154 @@ public class IconLoader {
 		//	Logger.getLogger(IconLoader.class.getName()).log(Level.SEVERE, "No resource " + fileName + " with size " + extraFactor);
 		//	return getMissingIcon();			
 		//}
+		//System.out.println("getIconImage(\"" + fileName + "\") -> * " + factor);
 		return scale(ii, factor);
 	}
+
+	// START KGU#287 2026-04-10: Issue #81 New approach for HiDPI multi-resolution Icons
+	/**
+	 * Produces a new, scaled {@link IconImage} from icon file with the given
+	 * {@code fileName} for the currently specified scale, also considering the
+	 * additionally given scaling factor {@code extraFactor}
+	 * 
+	 * @param fileName - the file name of the icon file(s) in the cascaded icon folders;
+	 * @param size - the basic size category (in pixels) of the wanted image
+	 * @param extraFactor - additional (product-internal) scaling factor
+	 * @return the retrieved or scaled {@link ImageIcon}
+	 * 
+	 * @see #getIcon(int)
+	 * @see #setScaleFactor(double)
+	 * @see #getIconImages(String, double)
+	 */
+	//@SuppressWarnings("unused")
+	private static Image getIconImage(String fileName, int size, double extraFactor)
+	// END KGU#486 2018-02-06
+	{
+		//System.out.println("getIconImage(\"" + fileName + "\", " + size + ", " + extraFactor + ")");
+		// We coerce the scale factor to multiples of 0.5 and compute the wanted size
+		long pixels = size/2 * Math.round(scaleFactor * extraFactor * 2);
+		// START KGU#577 2018-09-17: Issue #601 - precautions against inconsistent resources or code
+		// First we fetch the base icon (size 16 pixels = scalefactor 1)
+		ImageIcon ii = null;
+		try {
+			ii = new ImageIcon(getURI("icons/" + fileName));
+		}
+		catch (Exception ex) {
+			Logger.getLogger(IconLoader.class.getName()).log(Level.SEVERE, "Resources inconsistent - no icon file \"" + fileName + "\"!", ex);
+			return generateMissingIconImage((int)pixels);
+		}
+		// END KGU#577 2018-09-17
+		// We coerce the scale factor to multiples of 0.5 and compute the wanted size
+		double factor = 1.0 * pixels / size;
+		java.net.URL roundURL = null;
+		java.net.URL largestURL = null;
+		double minFactor = factor;
+		for (int i = 1; i < ICON_SIZES.length && ICON_SIZES[i] <= pixels; i++) {
+			size = ICON_SIZES[i];
+			java.net.URL url = getURI("icons_" + size + "/" + fileName);
+			if (url != null) {
+				largestURL = url;
+				minFactor = 1.0 * pixels / size;
+				// If the file can be scaled with an integral factor, we'll cache it
+				if (pixels % size == 0) { 
+					roundURL = url;
+					factor = pixels / size;
+				}
+			}
+		}
+		if (largestURL != null && minFactor < 1.25) {
+			roundURL = largestURL;
+			factor = 1.0;
+		}
+		if (roundURL != null && factor <= 3) {
+			largestURL = roundURL;
+		}
+		else if (largestURL != null) {
+			factor = minFactor;
+		}
+		else {
+			factor = scaleFactor * extraFactor;
+		}
+		if (largestURL != null) {
+			ii = new ImageIcon(largestURL);
+		}
+		// FIXME: Why is this signaled as dead code? (without being commented out, of course)
+		//if (ii == null) {
+		//	Logger.getLogger(IconLoader.class.getName()).log(Level.SEVERE, "No resource " + fileName + " with size " + extraFactor);
+		//	return getMissingIcon();			
+		//}
+		//System.out.println("getIconImage(\"" + fileName + "\") -> * " + factor);
+		return scaleToImage(ii, factor);
+	}
+
+	/**
+	 * Produces an array of {@link BufferedImage}s from icon files with the given
+	 * {@code fileName} with all available resolutions, extra scaled by
+	 * {@code extraFactor}.
+	 * 
+	 * @param fileName - the file name of the icon file(s) in the cascaded icon folders;
+	 * @param extraFactor - additional (product-internal) scaling factor
+	 * @return an array of retrieved or scaled Images in increasing resolution order
+	 * 
+	 * @see #getIcon(int)
+	 * @see #setScaleFactor(double)
+	 * @see #getIconImage(String, int, double)
+	 */
+	//@SuppressWarnings("unused")
+	public static ArrayList<Image> getIconImages(String fileName, double extraFactor)
+	// END KGU#486 2018-02-06
+	{
+		// We coerce the scale factor to multiples of 0.5 and compute the wanted size
+		long wantedPixels = ICON_SIZES[0]/2 * Math.round(scaleFactor * extraFactor * 2);
+		//System.out.println("getIconImages(\"" + fileName + "\", " + extraFactor + ")");
+		ArrayList<Image> images = new ArrayList<Image>();
+		// START KGU#577 2018-09-17: Issue #601 - precautions against inconsistent resources or code
+		// First we fetch the initial image for the base icon (size 16 pixels = scalefactor 1)
+		ImageIcon ii = null;
+		try {
+			ii = new ImageIcon(getURI("icons/" + fileName));
+		}
+		catch (Exception ex) {
+			Logger.getLogger(IconLoader.class.getName()).log(Level.SEVERE, "Resources inconsistent - no icon file \"" + fileName + "\"!", ex);
+			images.add(generateMissingIconImage((int)wantedPixels));
+			return images;
+		}
+		for (int i = 1; i < ICON_SIZES.length; i++) {
+			int size = ICON_SIZES[i];
+			// We coerce the scale factor to multiples of 0.5 and compute the wanted size
+			long pixels = size/2 * Math.round(scaleFactor * extraFactor * 2);
+			if (pixels >= wantedPixels) {
+				java.net.URL url = getURI("icons_" + size + "/" + fileName);
+				if (url != null) {
+					try {
+						ImageIcon icon = new ImageIcon(url);	// This will raise an exception if url = null or the file is unsuited
+						images.add(scaleToImage(icon, scaleFactor));
+					}
+					catch (Exception ex) {
+					}
+				}
+			}
+		}
+		if (images.isEmpty()) {
+			images.add(scaleToImage(ii, wantedPixels / ICON_SIZES[0]));
+		}
+		return images;
+	}
+	
+	/**
+	 * 
+	 * @param fileName - name of the icon file(s).
+	 * @param extraFactor - requires the list of icon resolutions to start with at
+	 *     least the given multiple of the standard icon size (16 pixels).
+	 * @return multi-resolution ImageIcon 
+	 */
+	public static ImageIcon getMultiIcon(String fileName, double extraFactor)
+	{
+		ArrayList<Image> images = getIconImages(fileName, extraFactor);
+		AbstractMultiResolutionImage mrImage = new BaseMultiResolutionImage(images.toArray(new Image[images.size()]));
+		return new ImageIcon(mrImage);
+	}
+	// END KGU#287 2026-04-10
 
 	/**
 	 * Produces a new, scaled {@link ImageIcon} from icon file at the given {@code url}
@@ -822,13 +1076,13 @@ public class IconLoader {
 	 * @return A scaled {@link ImageIcon}, maybe a dummy item if the URL is null or illegal
 	 * 
 	 * @see #getIcon(int)
-	 * @see #getIconImage(java.net.URL,boolean)
-	 * @see #getIconImage(String)
+	 * @see #getImageIcon(java.net.URL,boolean)
+	 * @see #getImageIcon(String)
 	 * @see #setScaleFactor(double)
 	 */
-	public static ImageIcon getIconImage(java.net.URL url)
+	public static ImageIcon getImageIcon(java.net.URL url)
 	{
-		return getIconImage(url, false);
+		return getImageIcon(url, false);
 	}
 
 	/**
@@ -837,15 +1091,15 @@ public class IconLoader {
 	 * currently set {@link #scaleFactor}.
 	 * 
 	 * @param url - the source URL for the icon file.
-	 * @param fixed - if the icon is to be scaled with the current factor
+	 * @param fixed - whether the icon is not to be scaled with the current factor
 	 * @return An {@link ImageIcon}, maybe a dummy item if the URL is null or illegal
 	 * 
 	 * @see #getIcon(int)
-	 * @see #getIconImage(java.net.URL)
-	 * @see #getIconImage(String)
+	 * @see #getImageIcon(java.net.URL)
+	 * @see #getImageIcon(String)
 	 * @see #setScaleFactor(double)
 	 */
-	public static ImageIcon getIconImage(java.net.URL url, boolean fixed)
+	public static ImageIcon getImageIcon(java.net.URL url, boolean fixed)
 	{
 		// START KGU#577 2018-09-18: Issue #601 
 		//ImageIcon ii = new ImageIcon(url);
@@ -867,8 +1121,8 @@ public class IconLoader {
 
 	// STRT KGU#577 2018-09-18: Issue #601
 	/**
-	 * Produces a new, scaled {@link IconImage} from icon file at the given {@code url}
-	 * for the currently specified scale.
+	 * Produces a new, scaled {@link IconImage} from icon file at the given
+	 * {@code url} for the currently specified scale.
 	 * 
 	 * @param url - the source URL for the icon file.
 	 * @return the scaled {@link ImageIcon}
@@ -876,7 +1130,7 @@ public class IconLoader {
 	 * @see #getIcon(int)
 	 * @see #setScaleFactor(double)
 	 */
-	public static ImageIcon getIconImageSafely(java.net.URL url)
+	public static ImageIcon getImageIconSafely(java.net.URL url)
 	{
 		ImageIcon ii = new ImageIcon(url);
 		ii = scale(ii, scaleFactor);
@@ -884,20 +1138,107 @@ public class IconLoader {
 	}
 
 	// START KGU 2016-09-06
-	public static ImageIcon getLocaleIconImage(String localeName)
+	/**
+	 * Retrieves the multi-resolution icon symbolising the locale specified by
+	 * {@code localeName}.
+	 * Also ensures the cashing of an icon variant for selected CheckboxMenuItems
+	 * if appropriate.
+	 * 
+	 * @param localeName - name of the locale
+	 * @return either the respective icon or {@code null}.
+	 */
+	public static ImageIcon getLocaleImageIcon(String localeName)
 	{
-		ImageIcon ii = icoLocales.get(localeName);
-		if (ii == null && Locales.isNamedLocale(localeName))
-		{
+		if (!Locales.isNamedLocale(localeName)) {
+			return null;
+		}
+		ImageIcon[] iconPair = icoLocales.get(localeName);
+		if (iconPair == null) {
 			// Already comprises scaling...
 			// START KGU#286 2018-02-13: Issues #4, #81
 			//ii = getIconImage(getURI(from + "icons/locale_"+localeName+".png"));
-			ii = getIconImage("locale_" + localeName + ".png");
+			// START KGU#287 2026-04-11: Issue #81 provide multi-resolution icons
+			//ii = getImageIcon("locale_" + localeName + ".png");
+			iconPair = new ImageIcon[2];
+			iconPair[0] = getMultiImageIcon("locale_" + localeName + ".png");
+			iconPair[1] = null;
+			icoLocales.put(localeName, iconPair);
+			// END KGU#287 2026-04-11
 			// END KGU#286 2018-02-13
 		}
-		return ii;
+		return iconPair[0];
 	}
 	// END KGU 2016-09-06
+
+	// START KGU#1085 2026-04-03: Issue #1133 workaround for Windows 11
+	/**
+	 * Retrieves the icon symbolising the locale specified by {@code localeName}
+	 * as to be used for selected CheckboxMenuItems under Windows 11.
+	 * 
+	 * @param localeName - name of the locale
+	 * @return either the respective icon or {@code null}.
+	 */
+	public static ImageIcon getSelectedLocaleImageIcon(String localeName)
+	{
+		// START KGU#287/KGU#1085 2026-04-11: Issues #81, #1133 New approach
+		//String modifiedName = localeName + "_on";
+		//ImageIcon ii = icoLocales.get(modifiedName);
+		//if (ii == null && Locales.isNamedLocale(localeName))
+		//{
+		//	// Already comprises scaling...
+		//	ii = getImageIcon("locale_" + modifiedName + ".png");
+		//}
+		//return ii;
+		if (!Locales.isNamedLocale(localeName)) {
+			return null;
+		}
+		ImageIcon[] iconPair = icoLocales.get(localeName);
+		if (iconPair == null && Locales.isNamedLocale(localeName))
+		{
+			/* This creates the entry and provides the standard multi-resolution
+			 * icons for the locale */
+			getLocaleImageIcon(localeName);
+		}
+		if (!lafWindows1133workaround) {
+			return iconPair[0];
+		}
+		if (iconPair[1] == null) {
+			// The selection variant haven't been created yet, so do it now
+			Image iconImage = iconPair[0].getImage();
+			ImageObserver observer = iconPair[0].getImageObserver();
+			ArrayList<Image> variants = new ArrayList<Image>();
+			if (iconImage instanceof AbstractMultiResolutionImage) {
+				variants.addAll(((AbstractMultiResolutionImage)iconImage).getResolutionVariants());
+			}
+			else {
+				variants.add(iconImage);
+			}
+			Image[] selImages = new Image[variants.size()];
+			for (int ix = 0; ix < selImages.length; ix++) {
+				// WE draw a little dark grey arrowhead to the left of the flag directing to the flag
+				Image resImage = variants.get(ix);
+				int height = resImage.getHeight(observer);
+				int width = resImage.getWidth(observer);
+				int offset = height/2;
+				int arrow = 3 * offset / 4;
+				BufferedImage image = new BufferedImage(width + offset, height, BufferedImage.TYPE_INT_ARGB);
+				Graphics2D graphics = (Graphics2D) image.getGraphics();
+				graphics.drawImage(resImage, offset, 0, width, height, observer);
+				graphics.setColor(Color.DARK_GRAY);
+				int[] xCoords = {0, arrow, 0};
+				int[] yCoords = {offset - arrow, offset, offset + arrow};
+				graphics.fillPolygon(xCoords, yCoords, xCoords.length);
+				//graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+				graphics.dispose();
+				selImages[ix] = image;
+			}
+			AbstractMultiResolutionImage mrImage = new BaseMultiResolutionImage(selImages);
+			iconPair[1] = new ImageIcon(mrImage);
+		}
+		return iconPair[1];
+		// END KGU#287/KGU#1085 2026-04-11
+	}
+	// END KGU#1085 2026-04-03
 
 	/**
 	 * Returns an ImageIcon version of src, which is magnified by length factor
@@ -921,7 +1262,6 @@ public class IconLoader {
 		else return src;
 	}
 
-
 	/**
 	 * Returns an ImageIcon version of src, which is magnified (or diminished) to the
 	 * given width and height.
@@ -935,6 +1275,55 @@ public class IconLoader {
 	 */
 	public static final ImageIcon scaleTo(ImageIcon src, int width, int height)
 	{
+		// START KGU#287 2026-04-10: Issue #81 New approach for HiDPI environments
+		//System.out.println(scaleFactor);
+		//int type = BufferedImage.TYPE_INT_ARGB;
+		//BufferedImage dst = new BufferedImage(width, height, type);
+		//Graphics2D g2 = dst.createGraphics();
+		//g2.drawImage(src.getImage(), 0, 0, width, height, null);
+		// FIXME: This may be somewhat rash as we cannot be sure drawImage was ready
+		//g2.dispose();
+		//return new ImageIcon(dst);
+		// END KGU#287 2026-04-10
+		return new ImageIcon(scaleToImage(src, width, height));
+	}
+	
+	// START KGU#287 2026-04-10: Issue #81 new approach for HiDPI awareness
+	/**
+	 * Returns an ImageIcon version of src, which is magnified by length factor
+	 * {@code factor}. Uses method {@link #scaleTo(ImageIcon, int, int)}.
+	 * 
+	 * @param src - the source icon
+	 * @param factor - the magnification factor (values < 1 ignored)
+	 * @return the image from the magnified icon
+	 * 
+	 * @see #scaleToImage(ImageIcon, int, int)
+	 */
+	public static final Image scaleToImage(ImageIcon src, double factor)
+	{
+		//System.out.println(scaleFactor);
+		if (factor > 1)
+		{
+			int w = (int)(factor * src.getIconWidth());
+			int h = (int)(factor * src.getIconHeight());
+			return scaleToImage(src, w, h);
+		}
+		else return src.getImage();
+	}
+
+	/**
+	 * Returns an Image version of ImageIcon src, which is magnified (or diminished)
+	 * to the given width and height.
+	 * 
+	 * @param src - the source icon
+	 * @param width - the target icon width
+	 * @param height - the target icon height
+	 * @return the image from the magnified (or diminished) icon
+	 * 
+	 * @see #scale(ImageIcon, double)
+	 */
+	public static final Image scaleToImage(ImageIcon src, int width, int height)
+	{
 		//System.out.println(scaleFactor);
 		int type = BufferedImage.TYPE_INT_ARGB;
 		BufferedImage dst = new BufferedImage(width, height, type);
@@ -942,8 +1331,9 @@ public class IconLoader {
 		g2.drawImage(src.getImage(), 0, 0, width, height, null);
 		// FIXME: This may be somewhat rash as we cannot be sure drawImage was ready
 		g2.dispose();
-		return new ImageIcon(dst);
+		return dst;
 	}
+	// END KGU#287 2026-04-10
 
 	/** May return null if the resource is not found or not usable; otherwise an {@link java.net.URL} */
 	public static java.net.URL getURI(String _filename)
@@ -953,9 +1343,11 @@ public class IconLoader {
 	}
 	
 	/**
-	 * Generates a circular icon filled with the given colour {@code _color}
-	 * and a thin black border. The circle fill be as large as possible within
-	 * the current standard icon square of 16&nbsp;*&nbsp;{@link #scaleFactor} size.
+	 * Generates a circular multi-resolution icon filled with the given
+	 * colour {@code _color} and a thin black border. The circle fill be as
+	 * large as possible within the respective icon size where the base
+	 * resolution is a current standard icon square of size
+	 * 16&nbsp;*&nbsp;{@link #scaleFactor}.
 	 * 
 	 * @param _color - the fill colour
 	 * @return the created circular icon
@@ -968,22 +1360,52 @@ public class IconLoader {
 	}
 	
 	/**
-	 * Generates a circular icon filled with the given colour {@code _color}
-	 * and a thin black border. The circle radius will be reduced by
-	 * {@code _insets} pixels with respect to the icon size of
-	 * 16&nbsp;*&nbsp;{@link #scaleFactor}. If {@code _color} is {@code null}
-	 * then the icon will be transparent with a red cross within the circle.
+	 * Generates a circular multi-resolution icon filled with the given
+	 * colour {@code _color} and a thin black border. The circle radius will
+	 * be reduced by {@code _insets} pixels with respect to the standard base
+	 * icon size of 16&nbsp;*&nbsp;{@link #scaleFactor}. If {@code _color} is
+	 * {@code null} then the icon will be transparent with a red cross within
+	 * the circle.
 	 * 
 	 * @param _color - the fill colour or {@code null}
 	 * @param _insets - the distance of the circle circumference from the icon
 	 *    border
-	 * @return the created circular icon
+	 * @return the created multi-resolution circular icon
 	 * 
 	 * @see #generateIcon(Color)
 	 */
 	public static ImageIcon generateIcon(Color _color, int _insets)
 	{
-		int size = (int) (16*scaleFactor);
+// START KGU#287 2026-04-11: Issue #81 produce a MultiResolutionImage-based icon
+		//int size = (int) (16*scaleFactor);
+		Image[] variants = new Image[ICON_SIZES.length];
+		for (int i = 0; i < ICON_SIZES.length; i++) {
+			variants[i] = generateColorIconImage(_color, _insets, ICON_SIZES[i]);
+		}
+		AbstractMultiResolutionImage mrImage = new BaseMultiResolutionImage(variants);
+		return (new ImageIcon(mrImage));
+	}
+	/**
+	 * Generates a BufferedImage for a circular icon filled with the given
+	 * colour {@code _color} and a thin black border. The circle radius will
+	 * be reduced by {@code _insets} pixels with respect to the given icon size
+	 * of {@code _size}&nbsp;*&nbsp;{@link #scaleFactor}. If {@code _color} is
+	 * {@code null} then the icon will be transparent with a red cross within
+	 * the circle.
+	 * 
+	 * @param _color - the fill colour or {@code null}
+	 * @param _insets - the distance of the circle circumference from the icon
+	 *    border
+	 * @param _size - the expected nominal icon size in pixels (yet subject to
+	 *    scaling by {@link #scaleFactor})
+	 * @return the created multi-resolution circular icon as image
+	 * 
+	 * @see #generateIcon(Color)
+	 */
+	private static Image generateColorIconImage(Color _color, int _insets, int _size)
+	{
+		int size = (int) (_size * scaleFactor);
+// END KGU#287 2026-04-11		
 		BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D graphics = (Graphics2D) image.getGraphics();
 		graphics.setColor(Color.BLACK);
@@ -1013,7 +1435,10 @@ public class IconLoader {
 		// START KGU 2018-09-17 free resources no longer needed
 		graphics.dispose();
 		// END KGU 2018-09-17
-		return new ImageIcon(image);
+// START KGU#287 2026-04-11: Issue #81 produce a MultiResolutionImage-based icon
+		//return new ImageIcon(image);
+		return image;
+		// END KGU#287 2026-04-11		
 	}
 	
 	// START KGU#577 2018-09-17: Issue #601
@@ -1043,6 +1468,35 @@ public class IconLoader {
 		return new ImageIcon(image);
 	}
 	
+	// START KGU#287 2026-04-10: Issue #81 Support multi-resolution images
+	/** Produces an image of certain size for multi-resolution dummy icon */
+	private static BufferedImage generateMissingIconImage(int size)
+	{
+		BasicStroke stroke = new BasicStroke(Math.max(1, size/8));
+		int padding = (int) (5 * size/16);
+		
+		BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D graphics = (Graphics2D) image.getGraphics();
+
+		graphics.setColor(Color.WHITE);
+		graphics.fillRect(1, 1, size-2, size-2);
+
+		graphics.setColor(Color.BLACK);
+		graphics.drawRect(1, 1, size-2, size-2);
+
+		graphics.setColor(Color.RED);
+
+		graphics.setStroke(stroke);
+		graphics.drawLine(padding, padding, size - padding, size - padding);
+		graphics.drawLine(padding, size - padding, size - padding, padding);
+
+		graphics.dispose(); // free resources no longer needed
+		
+		return image;
+	}
+	// END KGU#287 2026-04-10
+	
+	@Deprecated
 	private static ImageIcon getMissingIcon()
 	{
 		if (dummyIcon == null) {
@@ -1052,9 +1506,24 @@ public class IconLoader {
 	}
 	// END KGU#577 2018-09-17
 	
+	// START KGU#287 2026-04-10: Issue #287 New HiDPI approach with multi-resolution images
+	private static ImageIcon getMissingMultiIcon()
+	{
+		if (dummyIcon == null) {
+			Image[] variants = new Image[ICON_SIZES.length];
+			for (int i = 0; i < ICON_SIZES.length; i++) {
+				variants[i] = generateMissingIconImage(ICON_SIZES[i]);
+			}
+			AbstractMultiResolutionImage mrImage = new BaseMultiResolutionImage(variants);
+			dummyIcon = new ImageIcon(mrImage);
+		}
+		return dummyIcon;
+	}
+	// END KGU#287 2026-04-10
+	
 	// START KGU#929 2021-02-11: Enh. #929 Added for Translator support
 	/**
-	 * Places a diminished version of standarc icon {@code iconNoDecor} into the
+	 * Places a diminished version of standard icon {@code iconNoDecor} into the
 	 * upper left corner of the given icon {@code baseIcon}.
 	 * 
 	 * @param baseIcon - the base icon to be decorated
@@ -1070,7 +1539,7 @@ public class IconLoader {
 		BufferedImage dst = new BufferedImage(width, height, type);
 		Graphics2D g2 = dst.createGraphics();
 		g2.drawImage(baseIcon.getImage(), 0, 0, width, height, null);
-		ImageIcon decor = getIcon(iconNoDecor);
+		ImageIcon decor = getMultiIcon(iconNoDecor);
 		int size = Math.min(width, height);
 		g2.drawImage(decor.getImage(), 0, 0, size, size, null);
 		// FIXME: This may be somewhat rash as we cannot be sure drawImage was ready
@@ -1079,6 +1548,90 @@ public class IconLoader {
 		
 	}
 	// END KGU#929 2021-02-11
+	
+	// START KGU#1085 2026-04-04: Issue #1133 workaround
+	/**
+	 * Maps the given JCheckBoxMenuItem {@code menuItem} to the given
+	 * {@code iconNo} (if existent) and (re-)sets the respective icon,
+	 * depending on the selection status and Look & Feel needs.
+	 * 
+	 * @param menuItem - a JCheckBoxMenuItem intended to have an icon
+	 * @param iconNo - the icon number to be associated.
+	 * 
+	 * @see #updateMenuIcon(JCheckBoxMenuItem)
+	 * @see #updateAssociatedMenuIcons()
+	 */
+	public static void associateMenuIcon(JCheckBoxMenuItem menuItem, int iconNo)
+	{
+		if (menuItem != null && iconNo >= 0 && iconNo < ICON_FILES.length) {
+			Integer oldAssocNo = menuIconMap.put(menuItem, iconNo);
+			if (oldAssocNo == null || oldAssocNo != iconNo) {
+				if (isWindows11) {
+					if (selectedIcons == null) {
+						selectedIcons = new ImageIcon[ICON_FILES.length];
+						for (int i = 0; i < selectedIcons.length; i++) {
+							selectedIcons[i] = null;
+						}
+					}
+					if (selectedIcons[iconNo] == null) {
+						String fileName = ICON_FILES[iconNo];
+						if (fileName != null) {
+							int posDot = fileName.lastIndexOf('.');
+							fileName = fileName.substring(0, posDot) + "_on" + fileName.substring(posDot);
+							// START KGU#287 2026-04-10: Issue #81 new approach for HiDPI awareness
+							selectedIcons[iconNo] = getMultiImageIcon(fileName);
+							// END KGU#287 2026-04-10
+						}
+					}
+				}
+				if (!menuItem.isSelected()) {
+					menuItem.setIcon(getMultiIcon(iconNo));
+				}
+			}
+			if (isWindows11) {
+				if (menuItem.isSelected()
+						&& "Windows".equalsIgnoreCase(UIManager.getLookAndFeel().getName())
+						&& lafWindows1133workaround
+						&& selectedIcons[iconNo] != null) {
+					menuItem.setIcon(selectedIcons[iconNo]);
+				}
+				else {
+					menuItem.setIcon(icons[iconNo]);
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Updates the icon for the given JCheckBoxMenuItem {@code menuItem} if
+	 * it had been associated to an icon number via before.
+	 * 
+	 * @param menuItem - the respective menu item
+	 * 
+	 * @see #associateMenuIcon(JCheckBoxMenuItem, int)
+	 * @see #updateAssociatedMenuIcons()
+	 */
+	public static void updateMenuIcon(JCheckBoxMenuItem menuItem)
+	{
+		Integer iconNo = menuIconMap.get(menuItem);
+		if (iconNo != null) {
+			associateMenuIcon(menuItem, iconNo);
+		}
+	}
+	
+	/**
+	 * This method should be called when the Look and Feel was changed under
+	 * Windows 11.
+	 * 
+	 * @see #associateMenuIcon(JCheckBoxMenuItem, int)
+	 */
+	public static void updateAssociatedMenuIcons()
+	{
+		for (JCheckBoxMenuItem menuItem: menuIconMap.keySet()) {
+			updateMenuIcon(menuItem);
+		}
+	}
+	// END KGU#1085 2026-04-04
 	
 // START KGU 2021-01-09: Finally disabled
 //	/**

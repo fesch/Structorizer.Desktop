@@ -275,56 +275,56 @@ public class LicenseEditor extends LangDialog implements ActionListener, Undoabl
 //		this.setTitle(titleString.getText().replace("%", licName));
 
 		setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-		this.setIconImage(IconLoader.getIcon(65).getImage());	// Paragraph sign
+		this.setIconImage(IconLoader.getMultiIcon(65).getImage());	// Paragraph sign
 
 		menuFile = new JMenu("File");
 		menuEdit = new JMenu("Edit");
 		menuProp = new JMenu("Properties");
 
-		menuFileCommit = new JMenuItem("Commit", IconLoader.getIcon(3));
+		menuFileCommit = new JMenuItem("Commit", IconLoader.getMultiIcon(3));
 		menuFileCommit.addActionListener(this);
 		menuFileCommit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_U, menuShortcutKeyMask));
-		menuFileSave = new JMenuItem("Save to pool", IconLoader.getIcon(3));
+		menuFileSave = new JMenuItem("Save to pool", IconLoader.getMultiIcon(3));
 		menuFileSave.addActionListener(this);
 		menuFileSave.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, menuShortcutKeyMask));
-		menuFileSaveAs = new JMenuItem("Save as ...", IconLoader.getIcon(92));
+		menuFileSaveAs = new JMenuItem("Save as ...", IconLoader.getMultiIcon(92));
 		menuFileSaveAs.addActionListener(this);
 		menuFileSaveAs.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, (java.awt.event.InputEvent.ALT_DOWN_MASK | menuShortcutKeyMask)));
 		menuFileRename = new JMenuItem("Rename ...");
 		menuFileRename.addActionListener(this);
 		menuFileRename.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, menuShortcutKeyMask));
-		menuFileReload = new JMenuItem("Reload/Revert", IconLoader.getIcon(25));
+		menuFileReload = new JMenuItem("Reload/Revert", IconLoader.getMultiIcon(25));
 		menuFileReload.addActionListener(this);
 		menuFileReload.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0));
-		menuFileDelete = new JMenuItem("Delete", IconLoader.getIcon(66));
+		menuFileDelete = new JMenuItem("Delete", IconLoader.getMultiIcon(66));
 		menuFileDelete.addActionListener(this);
 		menuFileDelete.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, menuShortcutKeyMask));
 		menuFileQuit = new JMenuItem("Quit");
 		menuFileQuit.addActionListener(this);
 		menuFileQuit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, menuShortcutKeyMask));
 
-		menuEditUndo = new JMenuItem("Undo",IconLoader.getIcon(39));
+		menuEditUndo = new JMenuItem("Undo",IconLoader.getMultiIcon(39));
 		menuEditUndo.addActionListener(this);
 		menuEditUndo.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, menuShortcutKeyMask));
-		menuEditRedo = new JMenuItem("Redo",IconLoader.getIcon(38));
+		menuEditRedo = new JMenuItem("Redo",IconLoader.getMultiIcon(38));
 		menuEditRedo.addActionListener(this);
 		menuEditRedo.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Y, menuShortcutKeyMask));
-//    	menuEditCut = new JMenuItem("Cut",IconLoader.getIcon(44));
+//    	menuEditCut = new JMenuItem("Cut",IconLoader.getMultiIcon(44));
 //    	menuEditCut.addActionListener(this);
-//    	menuEditCopy = new JMenuItem("Copy",IconLoader.getIcon(42));
+//    	menuEditCopy = new JMenuItem("Copy",IconLoader.getMultiIcon(42));
 //    	menuEditCopy.addActionListener(this);
-//    	menuEditPaste = new JMenuItem("Paste",IconLoader.getIcon(43));
+//    	menuEditPaste = new JMenuItem("Paste",IconLoader.getMultiIcon(43));
 //    	menuEditPaste.addActionListener(this);
-		menuEditClear = new JMenuItem("Clear",IconLoader.getIcon(45));
+		menuEditClear = new JMenuItem("Clear",IconLoader.getMultiIcon(45));
 		menuEditClear.addActionListener(this);
 		menuEditClear.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, menuShortcutKeyMask));
 
-		menuPropFont = new JMenuItem("Font ...",IconLoader.getIcon(23));
+		menuPropFont = new JMenuItem("Font ...",IconLoader.getMultiIcon(23));
 		menuPropFont.addActionListener(this);
-		menuPropFontUp = new JMenuItem("Enlarge font", IconLoader.getIcon(33));
+		menuPropFontUp = new JMenuItem("Enlarge font", IconLoader.getMultiIcon(33));
 		menuPropFontUp.addActionListener(this);
 		menuPropFontUp.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ADD, InputEvent.CTRL_DOWN_MASK));
-		menuPropFontDown = new JMenuItem("Diminish font", IconLoader.getIcon(34));
+		menuPropFontDown = new JMenuItem("Diminish font", IconLoader.getMultiIcon(34));
 		menuPropFontDown.addActionListener(this);
 		menuPropFontDown.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, InputEvent.CTRL_DOWN_MASK));
 

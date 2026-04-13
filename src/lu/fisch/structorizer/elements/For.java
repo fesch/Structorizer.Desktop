@@ -333,12 +333,12 @@ public class For extends Loop {
 		{
 			// START KGU#493 2018-02-12: Issue # - separate icons now
 			//return IconLoader.getIcon(62);
-			return IconLoader.getIcon(74);
+			return IconLoader.getMultiIcon(74);
 			// END KGU#493 2018-02-12
 		}
 		// START KGU#493 2018-02-12: Issue # - separate icons now
 		//return IconLoader.getIcon(61);
-		return IconLoader.getIcon(53);
+		return IconLoader.getMultiIcon(53);
 		// END KGU#493 2018-02-12
 	}
 	// END KGU#122 2016-01-03
@@ -353,9 +353,9 @@ public class For extends Loop {
 	public ImageIcon getMiniIcon()
 	{
 		if (Element.E_DIN) {
-			return IconLoader.getIcon(49);
+			return IconLoader.getMultiIcon(49);
 		}
-		return IconLoader.getIcon(50);
+		return IconLoader.getMultiIcon(50);
 	}
 	// END KGU#535 2018-06-28
 

@@ -151,6 +151,7 @@
  *      Kay Gürtzig     2025-07-10  Enh. #1196: Messages for new Analyser checks 32, 33
  *      Kay Gürtzig     2025-08-01  Enh. #1197, #1198 New/different messages for Editor, Preferences
  *      Kay Gürtzig     2025-08-04  Enh. #1198: Menu.msgVersionHint_3_30_15 replaced by ~_3_32_29
+ *      Kay Gürtzig     2026-04-09  Issue #1133: Messages for Menu.menuPreferencesLaFWin11 added
  * 
  ******************************************************************************************************
  *
@@ -327,6 +328,8 @@ Menu.menuPreferencesLanguageItems.pl.text=Polaco
 Menu.menuPreferencesLanguageFromFile.text=De un archivo ...
 Menu.menuPreferencesLanguageFromFile.tooltip=Archivos de traducción se pueden crear con el 'Traductor' en el menú 'Archivo'.
 Menu.menuPreferencesLookAndFeel.text=Aspecto & Ambiente
+Menu.menuPreferencesLaFWin11.text=Utiliza Windows 11 A&A circunvalación
+Menu.menuPreferencesLaFWin11.tooltip=Esta opción simula la indicación del estado de elementos de menú con iconos en "Windows" A&A si no funciona de otra manera.
 Menu.menuPreferencesWheel.text=Rueda
 Menu.menuPreferencesWheelCollapse.text=¿Usar rueda para reducir?
 Menu.menuPreferencesWheelZoom.text=¿Invertar zoom usando ctrl + rueda?
