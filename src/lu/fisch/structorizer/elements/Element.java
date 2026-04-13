@@ -146,6 +146,7 @@ package lu.fisch.structorizer.elements;
  *                                      Enh. #1198: Case editor choice option changed from boolean to enum
  *      Kay Gürtzig     2025-08-13      Enh. #1198: Defective initial preference for useInputBoxCase mended
  *      Kay Gürtzig     2025-09-06      Issue #1221: Comment lines should neither be trimmed nor skipped
+ *      Kay Gürtzig     2026-04-10      Issue #81: Element-specific icons realised as multi-resolution icons
  *
  ******************************************************************************************************
  *
@@ -317,7 +318,7 @@ public abstract class Element {
 	public static final long E_HELP_FILE_SIZE = 12900000;
 	public static final String E_DOWNLOAD_PAGE = "https://www.fisch.lu/Php/download.php";
 	// END KGU#791 2020-01-20
-	public static final String E_VERSION = "3.32-35";
+	public static final String E_VERSION = "3.32-36";
 	public static final String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
