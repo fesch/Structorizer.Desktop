@@ -1,4 +1,4 @@
-.TH Structorizer 1 "03 September 2025" "version 3.32-32" "User's Manual"
+.TH Structorizer 1 "13 April 2026" "version 3.32-35" "User's Manual"
 .SH NAME
 Structorizer \- Editor for Nassi-Shneiderman diagrams (NSD)
 and tool for algorithm design and analysis based on them.
@@ -79,6 +79,10 @@ This option must be the first argument.
 Same as \-i \fIformat\fP
 This option must be the first argument.
 .TP
+.BI \-\-non\-reparenting
+Same as \-nrp
+This option is only accepted on Linux (on bash level) and only useful for interactive mode.
+.TP
 \fB\-\-parse\fP [ \fIparser\fP ]
 Same as \-p [ \fIparser\fP ]
 This option must be the first argument.
@@ -126,6 +130,9 @@ Accepted graphics (or document) file formats are:
 .TP
 .B \-l
 Generate line numbers for BASIC or COBOL export. (For export mode only.)
+.TP
+.B \-nrp
+Enables Structorizer (i.e. the underlying Java engine, more precisely the AWT module) to cope with non-reparenting window managers. (For interactive mode on Linux only.)
 .TP
 .BI \-o " output\-file
 Use the given name / path for the output file instead of the default.
