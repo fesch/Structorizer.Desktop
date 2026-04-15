@@ -1484,9 +1484,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * Method converts some generic module name into a generator-specific
 	 * include file name or module name for the import / use clause.<br/>
 	 * To be used before adding a generic name to {@link #generatorIncludes}.
-	 * TODO: To be be overridden by subclasses on demand.
+	 * <br/>TODO: To be be overridden by subclasses on demand.
 	 * 
-	 * @param _includeName a generic (language-independent) string for the
+	 * @param _includeName - a generic (language-independent) string for the
 	 *     generator include configuration
 	 * @return the converted string as to be actually added to 
 	 *     {@link #generatorIncludes}

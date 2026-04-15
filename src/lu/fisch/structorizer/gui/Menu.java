@@ -137,6 +137,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2025-07-10      Enh. #1196: Messages for new Analyser checks 32 and 33
  *      Kay Gürtzig     2025-08-03      Enh. #1198: msgVersionHint_3_30_15 replaced by ~_3_32_29.
  *      Kay Gürtzig     2026-04-03/11   Issue #1133: Workaround for defective menu item status indication in "Windows" L&F
+ *      Kay Gürtzig     2026-04-15      Bugfix #1133: forgotten menuPreferencesLanguagePreview icon handled
  *
  ******************************************************************************************************
  *
@@ -467,7 +468,7 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	protected final Hashtable<String, JCheckBoxMenuItem> menuPreferencesLanguageItems = new Hashtable<String, JCheckBoxMenuItem>(Locales.LOCALES_LIST.length);
 	// END KGU#242 2016-09-04
 	// START KGU#232 2016-08-03/2016-09-06: Enh. #222
-	protected final JMenuItem menuPreferencesLanguageFromFile = new JCheckBoxMenuItem("From file ...",IconLoader.getLocaleImageIcon("empty"));
+	protected final JMenuItem menuPreferencesLanguageFromFile = new JCheckBoxMenuItem("From file ...", IconLoader.getLocaleImageIcon("empty"));
 	// END KGU#232 2016-08-03/2016-09-06
 	// START KGU#892 2020-12-21: Enh. #893 - better visibility of preview locale
 	protected final JMenuItem menuPreferencesLanguagePreview = new JCheckBoxMenuItem("Translator preview", IconLoader.getMultiIcon(113));
@@ -761,7 +762,7 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	public static final LangTextHolder msgErrorFileRename = new LangTextHolder("Error(s) on renaming the saved file:\n%1Look for file \"%2\" and move/rename it yourself."); 
 	// END KGU#509 2018-03-20
 	// START KGU#747 2019-10-07: Try to avoid empty error boxes on start
-	public static final LangTextHolder msgErrorSettingLaF = new LangTextHolder("Problem on changing Look & Feel to %1: %2");
+	public static final LangTextHolder msgErrorSettingLaF = new LangTextHolder("Problem on changing Look & Feel to \"%1\":\n%2");
 	// END KGU#747 2019-10-07
 	// START KGU#232 2016-08-02: Enh. #222
 	public static final LangTextHolder msgOpenLangFile = new LangTextHolder("Open language file");
@@ -1748,6 +1749,12 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		menuPreferencesLanguagePreview.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { menuPreferencesLanguagePreview.setSelected(true); } } );
 		menuPreferencesLanguagePreview.setSelected(true);
 		menuPreferencesLanguagePreview.setVisible(false);
+		// START KGU#1085 2026-04-04: Issue #1133 workaround
+		if (isWindows11 && this.getWindowsLaF1133Enabled()
+				 && "Windows".equalsIgnoreCase(UIManager.getLookAndFeel().getName())) {
+			menuPreferencesLanguagePreview.setIcon(IconLoader.deriveSelectedLocaleIcon1133(IconLoader.getMultiIcon(133)));
+		}
+		// END KGU#1085 2026-04-04
 		// END KGU#892 2020-12-21
 
 		// START KGU#300 2016-12-02: Enh. #300
@@ -2645,7 +2652,7 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 
 			// Languages
 			String locName = Locales.getInstance().getLoadedLocaleName();
-			// START KGU#1085 2026-04-11: Issue #1133 Windows L&F workaround
+			// START KGU#1085 2026-04-11/15: Issue #1133 Windows L&F workaround
 			// START KGU#242 2016-09-04: Structural redesign
 			//for (String key: menuPreferencesLanguageItems.keySet())
 			//{
@@ -2656,10 +2663,10 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 			//menuPreferencesLanguageFromFile.setSelected(locName.equals("external"));
 			doLocaleMenuItems(false);
 			// END KGU#1085 2026-04-11
-			// START KGU#232 2016-08-03
 			// START KGU#892 2020-12-21: Enh. #893
 			menuPreferencesLanguagePreview.setVisible(locName.equals("preview"));
-			// START KGU#892 2020-12-21
+			// END KGU#892 2020-12-21
+			// END KGU#232 2016-08-03
 
 			// START KGU#721 2019-08-06: Enh. #740
 			menuPreferencesSaveRestore.setEnabled(Ini.getInstance().hasBackup());
@@ -2763,6 +2770,9 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 		// START KGU#232 2016-08-03: Enh. #222
 		// START KGU#1085 2026-04-03: Issue #1133 workaround
 		//menuPreferencesLanguageFromFile.setSelected(locName.equals("external"));
+		// START KGU#892 2020-12-21: Enh. #893
+		//menuPreferencesLanguagePreview.setVisible(locName.equals("preview"));
+		// END KGU#892 2020-12-21
 		isLocaleSel = locName.equals("external");
 		menuPreferencesLanguageFromFile.setSelected(isLocaleSel);
 		if (forceAll || isWindows11 && isWinLaF) {
@@ -2773,7 +2783,15 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 				menuPreferencesLanguageFromFile.setIcon(IconLoader.getLocaleImageIcon("empty"));
 			}
 		}
+		if (forceAll && isWindows11) {
+			ImageIcon iconPreview = IconLoader.getMultiIcon(113);
+			if (isWinLaF && this.getWindowsLaF1133Enabled()) {
+				iconPreview = IconLoader.deriveSelectedLocaleIcon1133(iconPreview);
+			}
+			menuPreferencesLanguagePreview.setIcon(iconPreview);
+		}
 		// END KGU#1085 2026-04-03
+		// END KGU#232 2016-08-03
 	}
 	// END KGU#1085 2026-04-11
 

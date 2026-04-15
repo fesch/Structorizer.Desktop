@@ -88,6 +88,10 @@ package lu.fisch.structorizer.gui;
  *                                      to "get...ImageIcon..." for logical consistency, New methods and
  *                                      modified behaviour of methods to ensure MultiResolutionImages where
  *                                      needed.
+ *      Kay Gürtzig     2026-04-15/16   Issue #1133: method getSelectedLocaleImageIcon decomposed, propagating
+ *                                      deriveSelectedLocaleIcon1133() for translator preview purpose;
+ *                                      Measures against a concurrency vulnerability with field 'icons' on
+ *                                      L&F change.
  *
  ******************************************************************************************************
  *
@@ -821,7 +825,7 @@ public class IconLoader {
 		// START KGU#242 2016-09-05: Replace the cached locale icons
 		// START KGU#287/KGU#1085 2026-04-11: Issues #81, #1133 New structure, actual caching
 		//for (String key: locales.keySet())
-		Set<String> localeKeys = new HashSet(icoLocales.keySet());
+		Set<String> localeKeys = new HashSet<String>(icoLocales.keySet());
 		icoLocales.clear();
 		for (String key: localeKeys)
 		// END KGU#287/KGU#1085 2026-04-11
@@ -1054,6 +1058,8 @@ public class IconLoader {
 	}
 	
 	/**
+	 * Produces a multi-resolution icon from the given {@code fileName}, scaled
+	 * by the {@code extraFactor} in addition to {@link #scaleFactor}.
 	 * 
 	 * @param fileName - name of the icon file(s).
 	 * @param extraFactor - requires the list of icon resolutions to start with at
@@ -1170,7 +1176,7 @@ public class IconLoader {
 	}
 	// END KGU 2016-09-06
 
-	// START KGU#1085 2026-04-03: Issue #1133 workaround for Windows 11
+	// START KGU#1085 2026-04-03/15: Issue #1133 workaround for Windows 11
 	/**
 	 * Retrieves the icon symbolising the locale specified by {@code localeName}
 	 * as to be used for selected CheckboxMenuItems under Windows 11.
@@ -1204,41 +1210,58 @@ public class IconLoader {
 		}
 		if (iconPair[1] == null) {
 			// The selection variant haven't been created yet, so do it now
-			Image iconImage = iconPair[0].getImage();
-			ImageObserver observer = iconPair[0].getImageObserver();
-			ArrayList<Image> variants = new ArrayList<Image>();
-			if (iconImage instanceof AbstractMultiResolutionImage) {
-				variants.addAll(((AbstractMultiResolutionImage)iconImage).getResolutionVariants());
-			}
-			else {
-				variants.add(iconImage);
-			}
-			Image[] selImages = new Image[variants.size()];
-			for (int ix = 0; ix < selImages.length; ix++) {
-				// WE draw a little dark grey arrowhead to the left of the flag directing to the flag
-				Image resImage = variants.get(ix);
-				int height = resImage.getHeight(observer);
-				int width = resImage.getWidth(observer);
-				int offset = height/2;
-				int arrow = 3 * offset / 4;
-				BufferedImage image = new BufferedImage(width + offset, height, BufferedImage.TYPE_INT_ARGB);
-				Graphics2D graphics = (Graphics2D) image.getGraphics();
-				graphics.drawImage(resImage, offset, 0, width, height, observer);
-				graphics.setColor(Color.DARK_GRAY);
-				int[] xCoords = {0, arrow, 0};
-				int[] yCoords = {offset - arrow, offset, offset + arrow};
-				graphics.fillPolygon(xCoords, yCoords, xCoords.length);
-				//graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
-				graphics.dispose();
-				selImages[ix] = image;
-			}
-			AbstractMultiResolutionImage mrImage = new BaseMultiResolutionImage(selImages);
-			iconPair[1] = new ImageIcon(mrImage);
+			ImageIcon unselIcon = iconPair[0];
+			iconPair[1] = deriveSelectedLocaleIcon1133(unselIcon);;
 		}
 		return iconPair[1];
 		// END KGU#287/KGU#1085 2026-04-11
 	}
-	// END KGU#1085 2026-04-03
+	
+	/**
+	 * Auxiliary method to enhance a menu item icon indicating a selected status
+	 * for the language preference from the given unselected (normal) icon
+	 * {@code unselIcon}. Addresses all resolution variants provided by the
+	 * given icon.
+	 * 
+	 * @param unselIcon - unselected icon
+	 * @return the corresponding selected icon
+	 * 
+	 * @deprecated only for temporary workaround #1133
+	 */
+	@Deprecated
+	public static ImageIcon deriveSelectedLocaleIcon1133(ImageIcon unselIcon) {
+		Image iconImage = unselIcon.getImage();
+		ImageObserver observer = unselIcon.getImageObserver();
+		ArrayList<Image> variants = new ArrayList<Image>();
+		if (iconImage instanceof AbstractMultiResolutionImage) {
+			variants.addAll(((AbstractMultiResolutionImage)iconImage).getResolutionVariants());
+		}
+		else {
+			variants.add(iconImage);
+		}
+		Image[] selImages = new Image[variants.size()];
+		for (int ix = 0; ix < selImages.length; ix++) {
+			// WE draw a little dark grey arrowhead to the left of the flag directing to the flag
+			Image resImage = variants.get(ix);
+			int height = resImage.getHeight(observer);
+			int width = resImage.getWidth(observer);
+			int offset = height/2;
+			int arrow = 3 * offset / 4;
+			BufferedImage image = new BufferedImage(width + offset, height, BufferedImage.TYPE_INT_ARGB);
+			Graphics2D graphics = (Graphics2D) image.getGraphics();
+			graphics.drawImage(resImage, offset, 0, width, height, observer);
+			graphics.setColor(Color.DARK_GRAY);
+			int[] xCoords = {0, arrow, 0};
+			int[] yCoords = {offset - arrow, offset, offset + arrow};
+			graphics.fillPolygon(xCoords, yCoords, xCoords.length);
+			//graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+			graphics.dispose();
+			selImages[ix] = image;
+		}
+		AbstractMultiResolutionImage mrImage = new BaseMultiResolutionImage(selImages);
+		return new ImageIcon(mrImage);
+	}
+	// END KGU#1085 2026-04-03/15
 
 	/**
 	 * Returns an ImageIcon version of src, which is magnified by length factor
@@ -1584,9 +1607,12 @@ public class IconLoader {
 						}
 					}
 				}
-				if (!menuItem.isSelected()) {
-					menuItem.setIcon(getMultiIcon(iconNo));
-				}
+				// START KGU#1085 2026-04-15: Bugfix #1133 ensure icons[iconNo] be set
+				//if (!menuItem.isSelected()) {
+				//	menuItem.setIcon(getMultiIcon(iconNo));
+				//}
+				menuItem.setIcon(getMultiIcon(iconNo));
+				// END KGU#1085 2026-04-15
 			}
 			if (isWindows11) {
 				if (menuItem.isSelected()
@@ -1596,7 +1622,10 @@ public class IconLoader {
 					menuItem.setIcon(selectedIcons[iconNo]);
 				}
 				else {
-					menuItem.setIcon(icons[iconNo]);
+					// START KGU#1085 2026-04-15: Bugfix #1133 icons maybe unset after scaling
+					//menuItem.setIcon(icons[iconNo]);
+					menuItem.setIcon(getMultiIcon(iconNo));
+					// END KGU#1085 2026-04-15
 				}
 			}
 		}

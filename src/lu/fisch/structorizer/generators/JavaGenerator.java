@@ -386,15 +386,19 @@ public class JavaGenerator extends CGenerator
 	// END KGU#351 2017-02-26
 	// START KGU#815/KGU#826 2020-03-17: Enh. #828, bugfix #836
 	/**
-	 * Method converts some generic module name into a generator-specific include file name or
-	 * module name for the import / use clause.<br/>
+	 * Method converts some generic module name into a generator-specific
+	 * include file name or module name for the import / use clause.<br/>
 	 * To be used before adding a generic name to {@link #generatorIncludes}.
-	 * This version does not do anything. 
+	 * This version does not do anything.
+	 * 
+	 * @param _includeName - a generic (language-independent) string for the
+	 *    generator include configuration
+	 * @return the converted string as to be actually added to
+	 *    {@link #generatorIncludes}
+	 * 
 	 * @see #getIncludePattern()
 	 * @see #appendGeneratorIncludes(String)
 	 * @see #prepareUserIncludeItem(String)
-	 * @param _includeName a generic (language-independent) string for the generator include configuration
-	 * @return the converted string as to be actually added to {@link #generatorIncludes}
 	 */
 	@Override
 	protected String prepareGeneratorIncludeItem(String _includeName)
@@ -404,14 +408,10 @@ public class JavaGenerator extends CGenerator
 	// END KGU#815/KGU#826 2020-03-17
 
 	// START KGU#16/#47 2015-11-30
-	/**
-	 * Instruction to create a language-specific exit instruction (subclassable)
-	 * The exit code will be passed to the generated code.
-	 */
 	@Override
-	protected void appendExitInstr(String _exitCode, String _indent, boolean isDisabled)
+	protected void appendExitInstr(String _exitCode, String _indent, boolean _isDisabled)
 	{
-		addCode("System.exit(" + _exitCode + ")", _indent, isDisabled);
+		addCode("System.exit(" + _exitCode + ")", _indent, _isDisabled);
 	}
 	// END KGU#16/#47 2015-11-30
 

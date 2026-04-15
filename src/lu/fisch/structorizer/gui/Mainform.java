@@ -107,6 +107,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2024-10-08      Loading and saving view settings in loadFromIni() and saveToIni() bundled into
  *                                      a static Element method on occasion of issue #1157
  *      Kay Gürtzig     2026-04-08      Issue #1133: Workaround for Windows L&F with checkbox menu icons
+ *      Kay Gürtzig     2026-04-16      Issue #1133: Clumsy error handling in setLookAndFeel(String) revised
  *
  ******************************************************************************************************
  *
@@ -1237,12 +1238,18 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 						// show error
 						String message = e.getMessage();
 						if (message == null || message.isEmpty()) message = e.toString();
-						JOptionPane.showOptionDialog(null,
+						// START KGU#1085 2026-04-16: Issue #1133 Time vulnerability revealed clumsy implementation
+//						JOptionPane.showConfirmDialog(null,
+//								Menu.msgErrorSettingLaF.getText().replace("%1", _laf).replace("%2", message),
+//								Menu.msgTitleError.getText(),
+//								JOptionPane.OK_CANCEL_OPTION, 
+//								JOptionPane.ERROR_MESSAGE);
+						JOptionPane.showMessageDialog(null,
 								Menu.msgErrorSettingLaF.getText().replace("%1", _laf).replace("%2", message),
 								Menu.msgTitleError.getText(),
-								JOptionPane.OK_OPTION, 
-								JOptionPane.ERROR_MESSAGE,
-								null,null,null);
+								JOptionPane.ERROR_MESSAGE);
+						logger.log(Level.WARNING, "setLookAndFeel", e);
+						// END KGU#1085 2026-04-16
 					}
 				}
 				// START KGU#661 2019-02-20: Issue #686

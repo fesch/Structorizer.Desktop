@@ -526,16 +526,22 @@ public class CGenerator extends Generator {
 	// END KGU#351 2017-02-26
 	// START KGU#815/KGU#826 2020-03-17: Enh. #828, bugfix #836
 	/**
-	 * Method converts some generic module name into a generator-specific include file name or
-	 * module name for the import / use clause.<br/>
+	 * Method converts some generic module name into a generator-specific
+	 * include file name or module name for the import / use clause.<br/>
 	 * To be used before adding a generic name to {@link #generatorIncludes}.
-	 * This version adds a ".h" suffix if there was neither {@code <...>} nor {@code "..."} around
-	 * it and it it didn't end with ".h". Will then call {@link #prepareUserIncludeItem(String)}. 
+	 * <br/>
+	 * This version adds a ".h" suffix if there was neither {@code <...>}
+	 * nor {@code "..."} around it and it it didn't end with ".h". Will then
+	 * call {@link #prepareUserIncludeItem(String)}.
+	 * 
+	 * @param _includeName - a generic (language-independent) string for the
+	 *    generator include configuration
+	 * @return the converted string as to be actually added to
+	 *    {@link #generatorIncludes}
+	 * 
 	 * @see #getIncludePattern()
 	 * @see #appendGeneratorIncludes(String)
 	 * @see #prepareUserIncludeItem(String)
-	 * @param _includeName a generic (language-independent) string for the generator include configuration
-	 * @return the converted string as to be actually added to {@link #generatorIncludes}
 	 */
 	protected String prepareGeneratorIncludeItem(String _includeName)
 	{
@@ -551,14 +557,19 @@ public class CGenerator extends Generator {
 
 	// START KGU#16/#47 2015-11-30
 	/**
-	 * Instruction to create a language-specific exit instruction (subclassable)
-	 * The exit code will be passed to the generated code.
+	 * Instruction to create a language-specific exit instruction (subclassable).
+	 * The exit code (represented by {@code _exitCode)} will be passed to the
+	 * generated code.
+	 * 
+	 * @param _exitCode - the expression specifying the exit code
+	 * @param _indent - current indentation string
+	 * @param _isDisabled - whether the exit instruction element is disabled.
 	 */
-	protected void appendExitInstr(String _exitCode, String _indent, boolean isDisabled)
+	protected void appendExitInstr(String _exitCode, String _indent, boolean _isDisabled)
 	{
 		// START KGU 2016-01-15: Bugfix #64 (reformulated) semicolon was missing
 		//code.add(_indent + "exit(" + _exitCode + ")");
-		addCode("exit(" + _exitCode + ");", _indent, isDisabled);
+		addCode("exit(" + _exitCode + ");", _indent, _isDisabled);
 		// END KGU 2016-01-15
 	}
 	// END KGU#16/#47 2015-11-30
@@ -2580,7 +2591,6 @@ public class CGenerator extends Generator {
 
 		// START KGU#1201 2025-09-24: Bugfix #1219 Thread-safe temporary disabling
 		//boolean isDisabled = _try.isDisabled(false);
-		boolean isDisabled = isDisabled(_try);
 		// END KGU#1201 2025-09-24
 		appendComment(_try, _indent);
 	
@@ -3232,7 +3242,7 @@ public class CGenerator extends Generator {
 	 * @param _lValue - the left side of the assignment (without modifiers!)
 	 * @param _recordValue - the record initializer according to Structorizer syntax
 	 * @param _indent - current indentation level (as String)
-	 * @param _isDisabled - indicates whether the code is o be commented out
+	 * @param _isDisabled - indicates whether the code is to be commented out
 	 * @param _typeEntry - used to interpret a simplified record initializer (may be null)
 	 */
 	// START KGU#559 2018-07-20: Enh. #563
@@ -3278,7 +3288,7 @@ public class CGenerator extends Generator {
 	 * @param _lValue - the left side of the assignment (without modifiers!)
 	 * @param _expr - the expression in Structorizer syntax
 	 * @param _indent - current indentation level (as String)
-	 * @param _isDisabled - indicates whether the code is o be commented out
+	 * @param _isDisabled - indicates whether the code is to be commented out
 	 * 
 	 * @see #transformOrGenerateArrayInit(String, StringList, String, boolean, String, boolean)
 	 */
@@ -3315,9 +3325,9 @@ public class CGenerator extends Generator {
 	
 	/**
 	 * Either composes and returns a syntax-conform array initializer expression
-	 * (if possible and allowed) or directly generates code that decomposes an array
-	 * initializer into a series of element assignments if there is no compact
-	 * translation. In the latter case {@code null} will be returned.
+	 * (if possible and allowed) or directly generates code that decomposes an
+	 * array initializer into a series of element assignments if there is no
+	 * compact translation. In the latter case {@code null} will be returned.
 	 * 
 	 * @param _lValue - the left side of the assignment (without modifiers!), i.e.
 	 *    the array name

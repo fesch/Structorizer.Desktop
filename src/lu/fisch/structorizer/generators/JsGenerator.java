@@ -204,8 +204,22 @@ public class JsGenerator extends CGenerator {
 		return 0;
 	}
 
-	/* (non-Javadoc)
-	 * @see lu.fisch.structorizer.generators.CGenerator#prepareGeneratorIncludeItem(java.lang.String)
+	/**
+	 * Method converts some generic module name into a generator-specific
+	 * include file name or module name for the import / use clause.<br/>
+	 * To be used before adding a generic name to {@link #generatorIncludes}.
+	 * <br/>
+	 * This version adds a ".js" suffix and marks the file path as resident
+	 * in the current/same directory by a prefix "./".
+	 * 
+	 * @param _includeName - a generic (language-independent) string for the
+	 *    generator include configuration
+	 * @return the converted string as to be actually added to
+	 *    {@link #generatorIncludes}
+	 * 
+	 * @see #getIncludePattern()
+	 * @see #appendGeneratorIncludes(String)
+	 * @see #prepareUserIncludeItem(String)
 	 */
 	@Override
 	protected String prepareGeneratorIncludeItem(String _includeName)
