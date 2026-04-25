@@ -197,6 +197,7 @@ package lu.fisch.structorizer.elements;
  *                                      complaining endless loops on fileEOF or Turtleizer conditions
  *      Kay Gürtzig     2025-10-17/18   Bugfix #1226: #1193 flaws mended, more thourough argument/result inference
  *      Kay Gürtzig     2026-04-24      Issue #1081: New Analyser check 34 implemented
+ *      Kay Gürtzig     2026-04-25      Bugfix #1232: getResultType() must suppress "void"
  *
  ******************************************************************************************************
  *
@@ -4444,6 +4445,7 @@ public class Root extends Element {
 	 * CHECK  #5: non-uppercase var<br/>
 	 * CHECK  #7: correct identifiers<br/>
 	 * CHECK #13: Competitive return mechanisms
+	 * 
 	 * @param ele - the element to be checked
 	 * @param _errors - the global error list
 	 * @param _myVars - the variables detected so far
@@ -4529,6 +4531,7 @@ public class Root extends Element {
 
 	/**
 	 * CHECK #8: assignment in condition
+	 * 
 	 * @param ele - the element to be checked
 	 */
 	private void analyse_8(Element ele, Vector<DetectedError> _errors)
@@ -4545,6 +4548,7 @@ public class Root extends Element {
 	 * Two checks:<br/>
 	 * CHECK #10: wrong multi-line instruction<br/>
 	 * CHECK #11: wrong assignment (comparison operator in assignment)
+	 * 
 	 * @param ele - Element to be analysed
 	 * @param _errors - global error list
 	 */
@@ -4675,6 +4679,7 @@ public class Root extends Element {
 
 	/**
 	 * CHECK #15: Correct syntax of Call elements
+	 * 
 	 * @param ele - CALL Element to be analysed
 	 * @param _errors - global error list
 	 */
@@ -4922,6 +4927,7 @@ public class Root extends Element {
 	/**
 	 * CHECK #16: Correct usage of return (suspecting hidden Jump)<br/>
 	 * CHECK #13: Competitive return mechanisms
+	 * 
 	 * @param ele - Instruction to be analysed
 	 * @param _errors - global error list
 	 * @param _index - position of this element within the owning Subqueue
@@ -6914,9 +6920,10 @@ public class Root extends Element {
     
     // START KGU#78 2015-11-25: Extracted from analyse() and rewritten
     /**
-     * Returns a string representing a detected result type if this is a subroutine diagram.
+     * Returns a string representing a detected result type if this is a
+     * subroutine diagram.
      * 
-     * @return null or a string possibly representing some data type
+     * @return {@code null} or a string possibly representing some data type
      * 
      * @see #getParameterNames()
      * @see #getParameterTypes()
@@ -6969,18 +6976,27 @@ public class Root extends Element {
     			// Third attempt: In case of an omitted parenthesis, the part behind the colon may be the type 
     			resultType = tokens.concatenate(null, posColon+1).trim();
     		}
+    		// START KGU#1213 2026-04-25: Bugfix #1232 suppress "void"
+    		if (resultType != null && resultType.equals("void")) {
+    			resultType = null;
+    		}
+    		// END KGU#1213 2026-04-25
     	}
     	
     	return resultType;
     }
 
     /**
-     * Extracts parameter names and types from the parenthesis content of the Root text
-     * and adds them synchronously to {@code paramNames} and {@code paramTypes} (if not null).
+     * Extracts parameter names and types from the parenthesis content of the
+     * Root text and adds them synchronously to {@code paramNames} and
+     * {@code paramTypes} (if not {@code null}).
      * 
-     * @param paramNames - {@link StringList} to be expanded by the found parameter names
-     * @param paramTypes - {@link StringList} to be expanded by the found parameter types, or null
-     * @param paramDefaults - {@link StringList} to be expanded by possible default literals, or null
+     * @param paramNames - {@link StringList} to be expanded by the found
+     *     parameter names
+     * @param paramTypes - {@link StringList} to be expanded by the found
+     *     parameter types, or null
+     * @param paramDefaults - {@link StringList} to be expanded by possible
+     *     default literals, or null
      * @return {@code true} iff the text contains a parameter list at all
      * 
      * @see #getParameterNames()
@@ -7064,17 +7080,18 @@ public class Root extends Element {
 
 	// START KGU#408 2021-02-26: Enh. #410 Facilitate the task for Calls representing method declarations
 	/**
-	 * Extracts the parameter declarations from the given routine declaration text
-	 * {@code rootText} and puts them to the passed {@link StringList}s as fa as not
-	 * being {@code null}.
+	 * Extracts the parameter declarations from the given routine declaration
+	 * text {@code rootText} and puts them to the passed {@link StringList}s as
+	 * far as not being {@code null}.
 	 * 
 	 * @param rootText - the unbroken text of the method declaration
-	 * @param paramNames - list to add the names of the parameters (in order of occurrence),
-	 *        or {@code null}
-	 * @param paramTypes - list to add the types of the parameters (in order of occurrence),
-	 *        or {@code null}
-	 * @param paramDefaults - list to add the literals of the parameter defaults (in oder of
-	 *        occurrence where some elements may be {@code null}), or {@code null}
+	 * @param paramNames - list to add the names of the parameters (in order of
+	 *     occurrence), or {@code null}
+	 * @param paramTypes - list to add the types of the parameters (in order of
+	 *     occurrence), or {@code null}
+	 * @param paramDefaults - list to add the literals of the parameter defaults
+	 *     (in oder of occurrence where some elements may be {@code null}), or
+	 *     {@code null}
 	 * @return {@code true} iff the text contains a parameter list at all
 	 * 
 	 * @see #getMethodName(String, DiagramType, boolean)
@@ -7112,13 +7129,17 @@ public class Root extends Element {
     
     // START KGU#305 2016-12-12: Enh. #305 - representaton fo a Root list
     /**
-     * Returns a string of the form &lt;method_name&gt;[(&lt;n_args&gt;)][: &lt;file_path&gt;].
-     * The parenthesized argument number (&lt;n_args&gt;) is only included if this is not a program,
-     * the file path appendix is only added if _addPath is true
+     * Returns a string of the form
+     * &lt;method_name&gt;[(&lt;n_args&gt;)][: &lt;file_path&gt;].
+     * The parenthesized argument number (&lt;n_args&gt;) is only included if
+     * this is not a program, the file path appendix is only added if
+     * {@code _addPath} is {@code true}.
      * 
-     * @param _addPath - whether or not the file path is to be aded t the signature string
-     * @param _qualified - if {@code true} and the {@link #namespace} attribute is set then
-     * the qualified name ({@code <namespace>.<name>}) is used in the result.
+     * @param _addPath - whether or not the file path is to be added to the
+     *     signature string
+     * @param _qualified - if {@code true} and the {@link #namespace} attribute
+     *     is set then the qualified name ({@code <namespace>.<name>}) is used
+     *     in the result.
      * @return the composed string
      * 
      * @see #getMethodName()
@@ -7158,13 +7179,14 @@ public class Root extends Element {
     // START KGU#205 2016-07-19: Enh. #192 The proposed file name of subroutines should contain the argument number
     /**
      * Returns a String composed of the diagram name (actually the routine name)
-     * and (if the diagram is a function diagram) the number of arguments, separated
-     * by a hyphen, e.g. if the diagram header is DEMO and the type is program then
-     * the result will also be "DEMO". If the diagram is a function diagram, however,
-     * and the text contains "func(x, name)" or "int func(double x, String name)" or
-     * "func(x: REAL; name: STRING): INTEGER" then the result would be "func-2".
+     * and (if the diagram is a function diagram) the number of arguments,
+     * separated by a hyphen, e.g. if the diagram header is DEMO and the type is
+     * program then the result will also be "DEMO". If the diagram is a function
+     * diagram, however, and the text contains "func(x, name)" or
+     * "int func(double x, String name)" or "func(x: REAL; name: STRING): INTEGER"
+     * then the result would be "func-2".
      * 
-     * @return a file base name (i.e. without path and extension)
+     * @return a file base name (i.e. without path and extension) as described
      * 
      * @see #getSignatureString(boolean, boolean)
      * @see #getMethodName()
@@ -7198,7 +7220,8 @@ public class Root extends Element {
     // END KGU#205 2016-07-19
     
     /**
-     * Main Analyser method - controls and performs all static analysis for this diagram.
+     * Main Analyser method - controls and performs all static analysis for
+     * this diagram.
      * 
      * @return a vector of detected errors
      * 
