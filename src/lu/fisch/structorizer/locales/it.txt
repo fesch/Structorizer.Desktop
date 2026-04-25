@@ -78,6 +78,8 @@
  *      Kay Gürtzig     2024-11-22      Poll #1173: menuFileExportPictureSWF removed.
  *      Kay Gürtzig     2025-08-01/18   Enh. #1198: New messages Preferences.lblCaseEditor, ~.cbCaseEditor
  *                                      instead of ~.chkCaseEditor
+ *      Kay Gürtzig     2026-04-24      Issue #1081: New messages Menu.error34, AnalyserPreferences.checkboxes.34,
+ *                                      Control.msgInvalidExpr modified
  *
  ******************************************************************************************************
  *
@@ -524,6 +526,10 @@ Menu.error31_3.text=Questi oggetti di dichiarazione non sono identificatori adat
 Menu.error31_4.text=No debe dichiarare nuovamente le variabili già esistenti «%»!
 Menu.error31_5.text=Per un'inizializzazione, la dichiarazione deve contenere esattamente UNA variabile, non % !
 Menu.error31_6.text=Una costruzione di tipo anonimo «%» non è consentita a questo punto!
+Menu.error32_1.text=
+Menu.error32_2.text=
+Menu.error33.text=
+Menu.error34.text=L'operatore «%1» non è supportato per Structorizer%2.
 Menu.errorLineReference.text=(riga %)
 
 -----[ AnalyserPreferences ]-----
@@ -562,6 +568,10 @@ AnalyserPreferences.checkboxes.27.text=
 AnalyserPreferences.checkboxes.28.text=
 AnalyserPreferences.checkboxes.29.text=
 AnalyserPreferences.checkboxes.30.text=
+AnalyserPreferences.checkboxes.31.text=
+AnalyserPreferences.checkboxes.32.text=
+AnalyserPreferences.checkboxes.33.text=
+AnalyserPreferences.checkboxes.34.text=Controlla se operatori non supportati come ++, --, +=, -=, *= sono utilizzati.
 AnalyserPreferences.lblDrawWarningSign.text=
 AnalyserPreferences.okButton.text=OK
 
@@ -1462,10 +1472,10 @@ Control.msgTitleQuestion.text=Domande
 Control.msgTitleParallel.text=Problema di esecuzione parallela
 Control.msgNoSubroutine.text=
 Control.msgNoInclDiagram.text=
-Control.msgAmbiguousCall.text=
-Control.msgInvalidExpr.text=
-Control.msgInvalidBool.text=
-Control.msgIllFunction.text=
+Control.msgAmbiguousCall.text=@j plurivoca: Diversi diagrammi subroutine "%1" (%2 parametri) trovati!
+Control.msgInvalidExpr.text=«%1» è nessuna espressione corretta o interpretabile!
+Control.msgInvalidBool.text=«%1» è nessuna valida espressiona booleana!
+Control.msgIllFunction.text=«%1» è nessuna funziona coretta!
 Control.msgManualBreak.text=
 Control.msgIllegalLeave.text=
 Control.msgWrongExit.text=

@@ -71,6 +71,8 @@
  *      Kay Gürtzig     2025-08-01      Enh. #1197, #1198 New/different messages for Editor, Preferences
  *      Kay Gürtzig     2025-08-03      Enh. #1196: Messages for Analyser checks 32, 33 added
  *      Kay Gürtzig     2025-08-04      Enh. #1198: Menu.msgVersionHint_3_30_15 replaced by ~_3_32_29
+ *      Kay Gürtzig     2026-04-24      Issue #1081: New messages Menu.error34, AnalyserPreferences.checkboxes.34,
+ *                                      Control.msgInvalidExpr modified
  *
  ******************************************************************************************************
  *
@@ -522,6 +524,7 @@ Menu.error31_6.text=Une construction de type anonyme «%» n'est pas autorisée 
 Menu.error32_1.text=La variable «%1» peut entrer en conflit avec les noms de routines des modules tels que %2!
 Menu.error32_2.text=La routine «%1» avec %2 paramètre(s) pourrait entrer en conflit avec des routines des modules tels que %3.
 Menu.error33.text=La routine «%1» de Turtleizer va arrondir des coordonnées, de sorte que des dessins pourraient dégénérer. Considérez l'usage de «%2» en lieu de ceta.
+Menu.error34.text=Il y a un opérateur «%1» qui n'est pas supporté par Structorizer%2.
 Menu.errorLineReference.text=(ligne %)
 
 -----[ AnalyserPreferences ]-----
@@ -563,6 +566,7 @@ AnalyserPreferences.checkboxes.30.text=Vérifier si les parenthèses sont équil
 AnalyserPreferences.checkboxes.31.text=Vérifier la syntaxe des déclarations et des initialisations des variables.
 AnalyserPreferences.checkboxes.32.text=Chercher des conflits entre les identificateurs et des nombres de routines accessoires.
 AnalyserPreferences.checkboxes.33.text=Déconceiller l'usage des procédures «fd», «bk» de Turtleizer, qui arrondissent pixels.
+AnalyserPreferences.checkboxes.34.text=Alerter de la usage de opérateurs non-supportés comment ++, --, +=, -=, *= etc.
 AnalyserPreferences.lblDrawWarningSign.text=Tracer un signe d'alerte dans les éléments affectés
 AnalyserPreferences.okButton.text=OK
 
@@ -1494,7 +1498,7 @@ Control.msgTitleParallel.text=Problème d'exécution parallèle
 Control.msgNoSubroutine.text=Un diagramme @o "%1" ( %2 paramètres) n'a pas pu être trouvé!\nEnvisagez de démarrer l'Arrangeur et placez-y d'abord les diagrammes @o nécessaires.
 Control.msgNoInclDiagram.text=Un diagramme @p "%" n'a pas pu être trouvé!\nEnvisagez de démarrer l'Arrangeur et placez-y d'abord le diagramme nécessaire.
 Control.msgAmbiguousCall.text=@j ambigu: différents diagrammes de sous-routine "%1" ( %2 paramètres) trouvés!
-Control.msgInvalidExpr.text=«%1» n'est pas une expression correcte ou existante.
+Control.msgInvalidExpr.text=«%1» n'est pas une expression correcte ou utilisable.
 Control.msgInvalidBool.text=«%1» n'est pas une expression Booléenne correcte.
 Control.msgIllFunction.text=«%1» n'est pas une efonction correct!
 Control.msgManualBreak.text=Interruption manuelle!

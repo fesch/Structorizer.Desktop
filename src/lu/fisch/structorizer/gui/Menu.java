@@ -138,6 +138,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2025-08-03      Enh. #1198: msgVersionHint_3_30_15 replaced by ~_3_32_29.
  *      Kay Gürtzig     2026-04-03/11   Issue #1133: Workaround for defective menu item status indication in "Windows" L&F
  *      Kay Gürtzig     2026-04-15      Bugfix #1133: forgotten menuPreferencesLanguagePreview icon handled
+ *      Kay Gürtzig     2026-04-26      Issue #1081: New syntax error message error34.
  *
  ******************************************************************************************************
  *
@@ -725,6 +726,9 @@ public class Menu extends LangMenuBar implements NSDController, LangEventListene
 	public static final LangTextHolder error32_2 = new LangTextHolder("Routine «%1» with %2 arguments might collide with a routine in controller(s) %3.");
 	public static final LangTextHolder error33 = new LangTextHolder("Turtleizer routine «%1» uses a simplified coordinate model, drawings may degrade. Consider «%2» instead.");
 	// END KGU#1181 2025-07-10
+	// START KGU#1212 2026-04-24: Issue #1081
+	public static final LangTextHolder error34 = new LangTextHolder("Operator symbol «%1» is not supported by Structorizer%2.");
+	// END KGU#1212 2026-04-24
 	// START KGU#459 2017-11-14: Enh. #459
 	public static final LangTextHolder msgGuidedTours = new LangTextHolder("You activated guided tours.\n\nWatch out for recommendations\nor instructions\nin the bottom text pane\n(Analyser report list)."
 			+ "\nLittle blue or red triangles in\nthe elements will remind you.");

@@ -967,8 +967,9 @@ public class StringList {
      * them.<br/>
      * NEW: If {@code _separator} is {@code null} then an empty separator is
      * used unless a preceding string ending with an identifier character would
-     * meet a beginning identifier character of the current string in which case
-     * a single space would be inserted, thus preserving a lexical gap.
+     * meet an identifier character at the beginning of the current string in
+     * which case a single space would be inserted, thus preserving a lexical
+     * gap.
      *
      * @param _separator - a string placed between the elements of this
      * @return the concatenated string
@@ -982,8 +983,9 @@ public class StringList {
      * them.<br/>
      * NEW: If {@code _separator} is {@code null} then an empty separator is
      * used unless a preceding string ending with an identifier character would
-     * meet a beginning identifier character of the current string in which case
-     * a single space would be inserted, thus preserving a lexical gap.
+     * meet an identifier character at the beginning of the current string in
+     * which case a single space would be inserted, thus preserving a lexical
+     * gap.
      *
      * @param _separator - a string placed between the elements of this
      * @param _start - index of the first element to be included

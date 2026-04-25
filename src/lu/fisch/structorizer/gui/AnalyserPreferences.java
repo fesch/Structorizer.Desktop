@@ -59,6 +59,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2021-11-14      Enh. #967: Mechanism for new plugin-specific analyser checks added
  *      Kay Gürtzig     2023-10-13      Issue #980 New syntax check for variable declarations added
  *      Kay Gürtzig     2025-07-10      Enh. #1196: New controller-related name checks (32, 33).
+ *      Kay Gürtzig     2026-04-24      Issue #1081: New syntax check 34 (operators ++, --, += etc.) added.
  *
  ******************************************************************************************************
  *
@@ -126,7 +127,8 @@ public class AnalyserPreferences extends LangDialog {
 		/*30*/"Check that brackets are balanced and correctly nested.",
 		/*31*/"Check variable declaration and initialisation syntax.",
 		/*32*/"Check if an identifier might collide with diagram controller routines.",
-		/*33*/"Warn on usage of pixel-rounding Turtleizer procedures «fd», «bk»."
+		/*33*/"Warn on usage of pixel-rounding Turtleizer procedures «fd», «bk».",
+		/*34*/"Check for unsupported C operators like ++, --, +=, -=, *= etc."
 		// Just append the descriptions for new check types here and insert their
 		// numbers at the appropriate place in array checkboxOrder below.
 		// DON'T FORGET to add a new entry to Root.analyserChecks for every
@@ -153,6 +155,9 @@ public class AnalyserPreferences extends LangDialog {
 		checkboxTabs.put("General Syntax", new int[]{
 				30,
 				31,
+				// START KGU#1212 2026-04-24: Issue #1081 warn on C operators
+				34,
+				// END KGU#1212 2026-04-24
 				// START KGU#1012 2021-11-14: Enh. #967: New plugin-specific syntax checks
 				0,// plugin-specific syntax checks
 				-2

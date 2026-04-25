@@ -257,6 +257,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2025-08-08      Issue #1204: Mechanism #1114 extended to Root elements.
  *      Kay Gürtzig     2025-08-29      Bugfix #1212: Cursor navigation through TRY elements was compromised
  *                                      by hidden FNALLY sections (#714), cf.#751.
+ *      Kay Gürtzig     2026-04-25      Deprecation warnings on 'new URL(String)' mended by constructing URIs first
  *
  ******************************************************************************************************
  *
@@ -7812,29 +7813,28 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		String help = Element.E_HELP_PAGE;
 		// END KGU#563 2018-07-26
 		boolean isLaunched = false;
-		try {
-			isLaunched = lu.fisch.utils.Desktop.browse(new URI(help));
-		} catch (URISyntaxException ex) {
-			// START KGU#484 2018-04-05: Issue #463
-			//ex.printStackTrace();
-			logger.log(Level.WARNING, "Can't browse help URL.", ex);
-			// END KGU#484 2018-04-05
-		}
-		// START KGU 2018-12-24
-		// The isLaunched mechanism above does not signal an unavailable help page.
-		// With the following code we can find out whether the help page was available...
-		// TODO In this case we might offer to download the PDF for offline use,
-		// otherwise we could try to open a possibly previously downloaded PDF ...
-		URL url;
 		HttpsURLConnection con = null;
 		try {
+			URI helpURI = new URI(help);
+			isLaunched = lu.fisch.utils.Desktop.browse(helpURI);
+			/* The isLaunched mechanism above does not signal an unavailable
+			 * help page. With the following code we can find out whether the
+			 * help page was available...
+			 * TODO In this case we might offer to download the PDF for offline use,
+			 * otherwise we could try to open a possibly previously downloaded PDF ...
+			 */
 			isLaunched = false;
-			url = new URL(help);
+			URL url = helpURI.toURL();
 			con = (HttpsURLConnection) url.openConnection();
 			if (con != null) {
 				con.connect();
 			}
 			isLaunched = true;
+		} catch (URISyntaxException ex) {
+			// START KGU#484 2018-04-05: Issue #463
+			//ex.printStackTrace();
+			logger.log(Level.WARNING, "Can't browse help URL.", ex);
+			// END KGU#484 2018-04-05
 		} catch (SocketTimeoutException ex) {
 			logger.log(Level.WARNING, "Timeout connecting to " + help, ex);
 		} catch (MalformedURLException e1) {
@@ -7846,7 +7846,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				con.disconnect();
 			}
 		}
-		// END KGU 2018-12-24
 		if (!isLaunched) {
 			String message = Menu.msgBrowseFailed.getText().replace("%", help);
 			boolean offlineShown = this.showHelpPDF();
@@ -7921,7 +7920,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		long copiedTotal = 0;
 		long chunk = (worker == null) ? Integer.MAX_VALUE : 1 << 16;
 		try {
-			URL website = new URL(helpFileURI);
+			//URL website = new URL(helpFileURI);
+			URI websiteURI = new URI(helpFileURI);
+			URL website = websiteURI.toURL();
 			if (!helpFile.exists() || overrideExisting) {
 				try (InputStream inputStream = website.openStream();
 						ReadableByteChannel readableByteChannel = Channels.newChannel(inputStream);
@@ -7952,7 +7953,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					}
 				}
 			}
-		} catch (MalformedURLException ex) {
+		} catch (MalformedURLException | URISyntaxException ex) {
 			logger.log(Level.CONFIG, helpFileURI, ex);
 		}
 		if (helpDownloadCancelled && overwritten && helpFile.exists()) {
@@ -8111,8 +8112,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		String version = null;
 		if (retrieveVersion) {
 			try {
-
-				URL url = new URL(http_url);
+				//URL url = new URL(http_url);
+				URI uri = new URI(http_url);
+				URL url = uri.toURL();
 				HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
 
 				if (con != null) {
@@ -8131,6 +8133,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 				}
 
+			} catch (URISyntaxException e) {
+				logger.severe(e.toString());
 			} catch (MalformedURLException e) {
 				logger.severe(e.toString());
 			} catch (IOException e) {

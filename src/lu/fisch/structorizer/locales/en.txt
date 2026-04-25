@@ -147,6 +147,8 @@
  *                                      Preferences.lblCaseEditor, ~.cbCaseEditor
  *      Kay Gürtzig     2025-08-04      Enh. #1198: Menu.msgVersionHint_3_30_15 replaced by ~_3_32_29
  *      Kay Gürtzig     2026-04-09      Issue #1133: Messages for Menu.menuPreferencesLaFWin11 added
+ *      Kay Gürtzig     2026-04-24      Issue #1081: New messages Menu.error34, AnalyserPreferences.checkboxes.34,
+ *                                      Control.msgInvalidExpr modified
  *
  ******************************************************************************************************
  *
@@ -598,6 +600,7 @@ Menu.error31_6.text=Anonymous type construction «%» is illegal here!
 Menu.error32_1.text=Variable name «%1» may collide with a routine name in controller(s) %2 on code generation.
 Menu.error32_2.text=Routine «%1» with %2 arguments might collide with a routine in controller(s) %3.
 Menu.error33.text=Turtleizer routine «%1» uses a simplified coordinate model, drawings may degrade. Consider «%2» instead.
+Menu.error34.text=Operator «%1» is not supported by Structorizer%2.
 Menu.errorLineReference.text= (line %)
 
 -----[ AnalyserPreferences ]-----
@@ -639,6 +642,7 @@ AnalyserPreferences.checkboxes.30.text=Check that brackets are balanced and corr
 AnalyserPreferences.checkboxes.31.text=Check variable declaration and initialisation syntax.
 AnalyserPreferences.checkboxes.32.text=Check if an identifier might collide with diagram controller routines.
 AnalyserPreferences.checkboxes.33.text=Warn on usage of pixel-rounding Turtleizer procedures «fd», «bk».
+AnalyserPreferences.checkboxes.34.text=Check for unsupported C operators like ++, --, +=, -=, *= etc.
 AnalyserPreferences.lblDrawWarningSign.text=Draw warning sign in affected elements
 AnalyserPreferences.okButton.text=OK
 
@@ -1583,7 +1587,7 @@ Control.msgTitleParallel.text=Parallel Execution Problem
 Control.msgNoSubroutine.text=A @o diagram "%1" (%2 parameters) could not be found!\nConsider starting the Arranger and place needed @o diagrams there first.
 Control.msgNoInclDiagram.text=An @p diagram "%" could not be found!\nConsider starting the Arranger and place the needed diagram there first.
 Control.msgAmbiguousCall.text=Ambiguous @j: Different subroutine diagrams "%1" (%2 parameters) found!
-Control.msgInvalidExpr.text=«%1» is not a correct or existing expression.
+Control.msgInvalidExpr.text=«%1» is not a correct or evaluable expression.
 Control.msgInvalidBool.text=«%1» is not a valid Boolean expression.
 Control.msgIllFunction.text=«%1» is not a correct function!
 Control.msgManualBreak.text=Manual Break!

@@ -229,6 +229,7 @@ package lu.fisch.structorizer.executor;
  *                                      after Calls and within multi-line Calls
  *      Kay Gürtzig     2025-01-21      Enh. #1184: Lazy multi-dimensional array creation on first element assignment
  *      Kay Gürtzig     2026-02-17      Enh. #1228: More informative meta information (start/end/elapsed time)
+ *      Kay Gürtzig     2026-04-24      Issue #1081: Consistent handling (rejection) of C incr./decr. and combined operators
  *
  ******************************************************************************************************
  *
@@ -1099,6 +1100,12 @@ public class Executor implements Runnable
 	// END KGU#677 2019-03-09
 	// END KGU#510 2018-03-20
 	private static final int MAX_STACK_INDENT = 40;
+
+	// START KGU#664/KGU#1212 2026-04-24: Issue #1081
+	private static final String[] UNSUPPORTED_C_OPERATORS = {
+			"++", "--", "+=", "-=", "*=", "/=", "%=", "&=", "|=", "^="
+	};
+	// END KGU#664/KGU#1212 2026-04-24
 	
 	// START KGU#448 2017-10-28: Enh. #443 - second argument will be initialized in getInstance() anyway
 	//private Executor(Diagram diagram, DiagramController diagramController)
@@ -6350,6 +6357,17 @@ public class Executor implements Runnable
 		// START KGU#388 2017-09-13: Enh. #423 support records
 		tokens.removeAll(" ");
 		// END KGU#388 2017-09-13
+		// START KGU#1212 2026-04-24: Issue #1081 special care for "++" and "--"
+		int posPP = -1;
+		StringList pp = StringList.explode("+,+", ",");
+		StringList mm = StringList.explode("-,-", ",");
+		while ((posPP = tokens.indexOf(pp, posPP+1, true)) >= 0) {
+			tokens.insert(" ", posPP+1);
+		}
+		while ((posPP = tokens.indexOf(mm, posPP+1, true)) >= 0) {
+			tokens.insert(" ", posPP+1);
+		}
+		// END KGU#1212 2026-04-24
 		// Watch out for constant arrays or records
 		for (int i = 0; i < tokens.count(); i++) {
 			String token = tokens.get(i);
@@ -7174,7 +7192,15 @@ public class Executor implements Runnable
 		else {
 			// START KGU#197 2017-06-06: Now localizable
 			//trouble = "<" + cmd + "> is not a correct function!";
-			trouble = control.msgIllFunction.getText().replace("%1", cmd);
+			// START KGU#1212 2026-04-24: Issue #1081 More context-sensible error message
+			//trouble = control.msgIllFunction.getText().replace("%1", cmd);
+			if (element instanceof Call) {
+				trouble = control.msgIllFunction.getText().replace("%1", cmd);
+			}
+			else {
+				trouble = control.msgInvalidExpr.getText().replace("%1", cmd);
+			}
+			// END KGU#1212 2026-04-24
 			// END KGU#197 2017-06-06
 		}
 		return trouble;
@@ -8442,9 +8468,27 @@ public class Executor implements Runnable
 	{
 		Object value = null;
 		StringList tokens = Element.splitLexically(_expr, true);
+		// START KGU#664/KGU#1212 2026-04-24: Issue #1081 Reject C compound operators
+		for (String opr: UNSUPPORTED_C_OPERATORS) {
+			if (tokens.contains(opr)) {
+				throw new EvalError("Unsupported C operator «" + opr + "» in expression «" + _expr + "».", null, null);
+			}
+		}
+		// END KGU#664/KGU#1212 2026-04-24
 		// START KGU#773 2019-11-28: Bugfix #786 Blanks are not tolerated by the susequent mechanisms like index evaluation
 		tokens.removeAll(" ");
 		// END KGU#773 2019-11-28
+		// START KGU#1212 2026-04-24: Issue #1081 special care for "++" and "--"
+		int posPP = -1;
+		StringList pp = StringList.explode("+,+", ",");
+		StringList mm = StringList.explode("-,-", ",");
+		while ((posPP = tokens.indexOf(pp, posPP+1, true)) >= 0) {
+			tokens.insert(" ", posPP+1);
+		}
+		while ((posPP = tokens.indexOf(mm, posPP+1, true)) >= 0) {
+			tokens.insert(" ", posPP+1);
+		}
+		// END KGU#1212 2026-04-24
 		// START KGU#439 2017-10-13: Enh. #436 Arrays now represented by ArrayLists
 		if (!_preserveBrackets) {
 			if (tokens.indexOf(OBJECT_ARRAY, 0, true) == 0) {

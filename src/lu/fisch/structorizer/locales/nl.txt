@@ -66,6 +66,8 @@
  *      Kay Gürtzig     2024-04-21      ExportOptionDialoge renamed to ExportOptionDialog
  *      Kay Gürtzig     2024-11-22      Poll #1173: menuFileExportPictureSWF removed.
  *      Kay Gürtzig     2025-08-01      Enh. #1198: Messages for Preferences.lblCaseEditor, ~.cbCaseEditor
+ *      Kay Gürtzig     2026-04-24      Issue #1081: New messages Menu.error34, AnalyserPreferences.checkboxes.34,
+ *                                      Control.msgInvalidExpr modified
  *
  ******************************************************************************************************
  *
@@ -494,7 +496,7 @@ Menu.hint25_1.text=Selecteer het midden van het diagram en plaats er een eerste 
 Menu.hint25_2.text=Misschien wilt u gegevens invoeren, bijv. met een instructie zoals «%1 %2». → Menu "%3"
 Menu.hint25_3.text=Misschien wilt u resultaten afdrukken, bijv. met een instructie zoals «%1 %2». → Menu "%3"
 Menu.hint25_4.text=Selecteer het midden van het diagram, en plaats daar het eerste element, bijv. een Instructie.
-Menu.hint25_5.text=Selecteer het midden van het diagram, en plaats daar bijv. een Instructie-element met de definitie van een type of constante.
+Menu.hint25_5.text=Selecteer het midden van het diagram, en plaats daar bijv. een @a-element met de definitie van een type of constante.
 Menu.hint25_6.text=Misschien wilt u er een verwerkingselement plaatsen, zoals «%1» tussen invoer en uitvoer. → Menu "%2"
 Menu.hint26.0.text=Selecteer het midden van het diagram, dubbelklik, druk op Enter of F5, en plaats er de insstructietekst «% "Hallo wereld!"».
 Menu.hint26.1.text=U kunt nu bijv. uw diagram uitproberen: → Menu "%1 ► %2"
@@ -513,6 +515,10 @@ Menu.error31_3.text=Deze declaratieobjecten zijn geen geschikte identificatiegeg
 Menu.error31_4.text=Dit is een poging om de reeds bestaande variabele(n) «%» opnieuw te declareren!
 Menu.error31_5.text=Voor een initialisatie moet de declaratie precies EEN variabele bevatten, niet % !
 Menu.error31_6.text=Een anonieme typeconstructie «%» is in deze positie niet toegestaan!!
+Menu.error32_1.text=Variabelenaam «%1» kunt botsen met een routine-naam in controller(s) %2 bij het genereren van de code.
+Menu.error32_2.text=Routine «%1» met %2 argumenten kunt botsen met een routine in controller(s) %3.
+Menu.error33=
+Menu.error34=Operator «%1» wordt niet ondersteunt van Structorizer%2.
 Menu.errorLineReference.text=(regel %)
 
 -----[ AnalyserPreferences ]-----
@@ -551,6 +557,10 @@ AnalyserPreferences.checkboxes.27.text=Controle of @c-keuzewaarden constante geh
 AnalyserPreferences.checkboxes.28.text=Controle of @c-keuzelijsten gemeenschappelijke elementen hebben.
 AnalyserPreferences.checkboxes.29.text=
 AnalyserPreferences.checkboxes.30.text=
+AnalyserPreferences.checkboxes.31.text=
+AnalyserPreferences.checkboxes.32.text=
+AnalyserPreferences.checkboxes.33.text=
+AnalyserPreferences.checkboxes.34.text=Controle op er is een niet ondersteunte operator als ++, --, +=, -=, *= enz.
 AnalyserPreferences.lblDrawWarningSign.text=Plaats waarschuwingsdriehoekje in foutieve elementen
 AnalyserPreferences.okButton.text=OK
 
@@ -1428,7 +1438,7 @@ Control.msgTitleParallel.text=Probleem bij parallelle uitvoering
 Control.msgNoSubroutine.text=Kan geen @o-diagram "%1" (%2 parameters) vinden!\nProbeer Arranger te starten en plaats de nodige @o-diagrammen er het eerst in.
 Control.msgNoInclDiagram.text=Kan geen @p-diagram "%" vinden!\nProbeer Arranger te starten en plaats het nodige diagram er het eerst in.
 Control.msgAmbiguousCall.text=@j dubbelzinnig: Verschillende diagrammen gevonden voor subroutines: "%1" (%2 parameters).
-Control.msgInvalidExpr.text=«%1» is geen correcte of bestaande expressie.
+Control.msgInvalidExpr.text=«%1» is geen correcte of berekenbaare expressie.
 Control.msgInvalidBool.text=«%1» is geen geldige Booleaanse expressie.
 Control.msgIllFunction.text=«%1» is geen correcte functie!
 Control.msgManualBreak.text=Handmatig afgebroken!

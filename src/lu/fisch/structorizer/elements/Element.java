@@ -147,6 +147,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2025-08-13      Enh. #1198: Defective initial preference for useInputBoxCase mended
  *      Kay Gürtzig     2025-09-06      Issue #1221: Comment lines should neither be trimmed nor skipped
  *      Kay Gürtzig     2026-04-10      Issue #81: Element-specific icons realised as multi-resolution icons
+ *      Kay Gürtzig     2026-04-24      Issue #1081: syntactic splitting now preserves non-supported C operators
  *
  ******************************************************************************************************
  *
@@ -3201,6 +3202,15 @@ public abstract class Element {
 					parts.delete(i+1);
 				}
 				// END KGU#24 2014-10-18
+				// START KGU#1212 2026-04-24: Issue #1081 We should detect combined C operators
+				else if (
+						thisPart.equals("+") && (nextPart.equals("+") || nextPart.equals("="))
+						|| thisPart.equals("-") && (nextPart.equals("-") || nextPart.equals("="))
+						|| thisPart.length() == 1 && "*/%&|^".contains(thisPart) && nextPart.equals("=")) {
+					parts.set(i, thisPart + nextPart);
+					parts.delete(i+1);
+				}
+				// END KGU#1212 2026-04-24
 				// START KGU#26 2015-11-04: Find escaped quotes
 				else if (thisPart.equals("\\"))
 				{

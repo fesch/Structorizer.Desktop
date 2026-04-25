@@ -152,6 +152,8 @@
  *      Kay Gürtzig     2025-08-01  Enh. #1197, #1198 New/different messages for Editor, Preferences
  *      Kay Gürtzig     2025-08-04  Enh. #1198: Menu.msgVersionHint_3_30_15 replaced by ~_3_32_29
  *      Kay Gürtzig     2026-04-09  Issue #1133: Messages for Menu.menuPreferencesLaFWin11 added
+ *      Kay Gürtzig     2026-04-24  Issue #1081: New messages Menu.error34, AnalyserPreferences.checkboxes.34,
+ *                                  Control.msgInvalidExpr modified
  * 
  ******************************************************************************************************
  *
@@ -604,6 +606,7 @@ Menu.error31_6.text=¡Construcción de un tipo anónimo «%» no es permitido en
 Menu.error32_1.text=¡Variable «%1» puede colisionar con el nombre de rutinas de modulos como %2!
 Menu.error32_2.text=Rutina «%1» con %2 parámetros podría colisionar con rutinas de modulos como %3.
 Menu.error33.text=Rutina «%1» de Turtleizer va a redondear coordinates, así como dibujos podrían degenerar. Pondera el uso de «%2» en su vez.
+Menu.error34.text=Operador «%1» no es apoyado por Structorizer%2.
 Menu.errorLineReference.text= (línea %)
 
 -----[ AnalyserPreferences ]-----
@@ -645,6 +648,7 @@ AnalyserPreferences.checkboxes.30.text=Comprobar el equilibrio de los paréntesi
 AnalyserPreferences.checkboxes.31.text=Combrobar la sintaxis de declaraciones y inicializaciones de variables.
 AnalyserPreferences.checkboxes.32.text=Comprobar si habrá colisiones entre identificadores y nombres de rutinas de módulos adicionales.
 AnalyserPreferences.checkboxes.33.text=Advertir del uso de las proceduras «fd», «bk» de Turtleizer, que redondean pixeles.
+AnalyserPreferences.checkboxes.34.text=Comprobar que operadores no apoyados como ++, --, +=, -=, *= etc. no sean usados.
 AnalyserPreferences.lblDrawWarningSign.text=Dibuja señal de advertencia en elementos afectados
 AnalyserPreferences.okButton.text=Aceptar
 
@@ -1589,7 +1593,7 @@ Control.msgTitleParallel.text=Problema en ejecución paralela
 Control.msgNoSubroutine.text=¡No diagrama con subprograma "%1" (%2 parámetros) encontrado!\n¿Has olvidado a abrir el Arranger y colocar necesarias subrutinas allí?
 Control.msgNoInclDiagram.text=¡No diagrama incluíble con nombre "%" encontrado!\n¿Has olvidado a abrir el Arranger y colocar diagramas referidos ahí?
 Control.msgAmbiguousCall.text=¡@k ambigua! Diferentes diagramas (subroutinas) "%1" con %2 parámetros encontrados.
-Control.msgInvalidExpr.text=¡«%1» no es una expresión correcta o existente!
+Control.msgInvalidExpr.text=¡«%1» no es una expresión correcta o evaluable!
 Control.msgInvalidBool.text=¡«%1» no es una válida expresión lógica!
 Control.msgIllFunction.text=¡«%1» no es una función correcta!
 Control.msgManualBreak.text=¡Abortado manuálmente!

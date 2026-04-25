@@ -196,6 +196,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2025-08-08      Issue #1205: Refinement of check 2 (method analyse_2) to avoid false
  *                                      complaining endless loops on fileEOF or Turtleizer conditions
  *      Kay Gürtzig     2025-10-17/18   Bugfix #1226: #1193 flaws mended, more thourough argument/result inference
+ *      Kay Gürtzig     2026-04-24      Issue #1081: New Analyser check 34 implemented
  *
  ******************************************************************************************************
  *
@@ -801,7 +802,7 @@ public class Root extends Element {
 		true,	true,	true,	true,	true,	// 16 .. 20
 		true,	true,	true,	true,	false,	// 21 .. 25
 		false,	true,	true,	true,	true,	// 26 .. 30
-		true,	false,	false					// 31 .. 33
+		true,	false,	false,	true			// 31 .. 34
 		// Add another element for every new check...
 		// and DON'T FORGET to append its description to
 		// AnalyserPreferences.checkCaptions
@@ -993,6 +994,11 @@ public class Root extends Element {
 	private static final StringList CHECK33_NAMES_1 = StringList.explode("fd,bk", ",");
 	private static final String[] CHECK33_NAMES_2 = new String[] {"forward", "backward"};
 	// END KGU#1181 2025-07-08
+	// START KGU#1212 2026-04-24: Issue #1081 New analyser check 34
+	private static final String[] UNSUPPORTED_C_OPERATORS = {
+			"++", "--", "+=", "-=", "*=", "/=", "%=", "&=", "|=", "^="
+	};
+	// END KGU#1212 2026-04-24
 
 	private Vector<Updater> updaters = new Vector<Updater>();
 
@@ -3815,7 +3821,11 @@ public class Root extends Element {
 
 			// START KGU#992 2021-10-05: Enh. #992
 			// CHECK #30: Bracket balancing
-			analyse_30(ele, _errors);
+			// START KGU#664/KGU#1212 2026-04-24: Issue #1081
+			// CHECK #34: C autoincr./-decr. and combined assignment operators
+			//analyse_30(ele, _errors);
+			analyse_30_34(ele, _errors);
+			// END KGU#664/KGU#1212 2026-04-24
 			// END KGU#992 2021-10-05
 
 			// START KGU#1151 2024-04-17: Issues #161, #1161 Check reachability
@@ -6045,46 +6055,74 @@ public class Root extends Element {
 	// START KGU#992 2021-10-05: Enh. #992
 	/**
 	 * CHECK 30: Unbalanced or badly nested parentheses, brackets etc.
+	 * CHECK 34: Autoincr./autodecr. and combined assignment operators
 	 * @param _ele - element to be analysed
 	 * @param _errors - global error list
 	 */
-	private void analyse_30(Element _ele, Vector<DetectedError> _errors) {
-		if (!check(30)) {
+	// START KGU#1212 2026-04-24: Issue #1081
+	//private void analyse_30(Element _ele, Vector<DetectedError> _errors)
+	private void analyse_30_34(Element _ele, Vector<DetectedError> _errors)
+	// END KGU#1212 2026-04-24
+	{
+		// START KGU#1212 2026-04-24: Issue #1081
+		//if (!check(30)) {
+		boolean check30 = check(30);
+		boolean check34 = check(34);
+		if (!check30 && !check34) {
+		// END KGU#1212 2026-04-24
 			return;
 		}
 		StringList unbrokenLines = _ele.getUnbrokenText();
+		String lineRef = "";
+		if (unbrokenLines.count() > 1) {
+			lineRef = Menu.errorLineReference.getText();
+		}
 		for (int i = 0; i < unbrokenLines.count(); i++) {
 			StringList tokens = Element.splitLexically(unbrokenLines.get(i), true);
-			Stack<Character> brackets = new Stack<Character>();
-			for (int j = 0; j < tokens.count(); j++) {
-				String token = tokens.get(j);
-				if (token.equals("(")) {
-					brackets.push(')');
-				}
-				else if (token.equals("[")) {
-					brackets.push(']');
-				}
-				else if (token.equals("{")) {
-					brackets.push('}');
-				}
-				else if (token.equals(")") || token.equals("]") || token.equals("}")) {
-					try {
-						char top = brackets.pop();
-						if (top != token.charAt(0)) {
-							//error  = new DetectedError("There is a closing '%1' where '%3' is expected in line %2!", _case);
-							addError(_errors, new DetectedError(errorMsg(Menu.error30_3, new String[] {token, Integer.toString(i+1), Character.toString(top)}), _ele), 30);
+			// START KGU#1212 2026-04-24: Issue #1081
+			if (check30) {
+			// END KGU#1212 2026-04-24
+				Stack<Character> brackets = new Stack<Character>();
+				for (int j = 0; j < tokens.count(); j++) {
+					String token = tokens.get(j);
+					if (token.equals("(")) {
+						brackets.push(')');
+					}
+					else if (token.equals("[")) {
+						brackets.push(']');
+					}
+					else if (token.equals("{")) {
+						brackets.push('}');
+					}
+					else if (token.equals(")") || token.equals("]") || token.equals("}")) {
+						try {
+							char top = brackets.pop();
+							if (top != token.charAt(0)) {
+								//error  = new DetectedError("There is a closing '%1' where '%3' is expected in line %2!", _case);
+								addError(_errors, new DetectedError(errorMsg(Menu.error30_3, new String[] {token, Integer.toString(i+1), Character.toString(top)}), _ele), 30);
+							}
+						}
+						catch (EmptyStackException ex) {
+							//error  = new DetectedError("There is at least one more closing '%1' than opening brackets in line %2!", _case);
+							addError(_errors, new DetectedError(errorMsg(Menu.error30_2, new String[] {token, Integer.toString(i+1)}), _ele), 30);
 						}
 					}
-					catch (EmptyStackException ex) {
-						//error  = new DetectedError("There is at least one more closing '%1' than opening brackets in line %2!", _case);
-						addError(_errors, new DetectedError(errorMsg(Menu.error30_2, new String[] {token, Integer.toString(i+1)}), _ele), 30);
+				}
+				if (!brackets.isEmpty()) {
+					//error  = new DetectedError("There are %1 more opening than closing brackets in line %2, '%3' was expected next!", _ele);
+					addError(_errors, new DetectedError(errorMsg(Menu.error30_1, new String[] {Integer.toString(brackets.size()), Integer.toString(i+1), Character.toString(brackets.pop())}), _ele), 30);
+				}
+			// START KGU#1212 2026-04-24: Issue #1081 (continued)
+			}
+			if (check34) {
+				for (String opr: UNSUPPORTED_C_OPERATORS) {
+					if (tokens.contains(opr)) {
+						addError(_errors, new DetectedError(errorMsg(Menu.error34, new String[] {opr, lineRef.replace("%2%", Integer.toString(i+1))}), _ele), 34);
+						break;
 					}
 				}
 			}
-			if (!brackets.isEmpty()) {
-				//error  = new DetectedError("There are %1 more opening than closing brackets in line %2, '%3' was expected next!", _ele);
-				addError(_errors, new DetectedError(errorMsg(Menu.error30_1, new String[] {Integer.toString(brackets.size()), Integer.toString(i+1), Character.toString(brackets.pop())}), _ele), 30);
-			}
+			// END KGU#1212 2026-04-24
 		}
 	}
 	// END KGU#992 2021-10-05

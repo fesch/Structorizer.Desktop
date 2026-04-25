@@ -73,6 +73,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2020-04-28      Issue #822: New message for empty lines in CALL elements
  *      Kay Gürtzig     2021-01-04      Enh. #906: Allow to run through a routine Call with pause afterwards
  *      Kay Gürtzig     2023-10-16      Issue #980: New error message for ambiguous initialisations
+ *      Kay Gürtzig     2026-04-24      Issue #1081: Message msgInvalidExpr modified.
  *
  ******************************************************************************************************
  *
@@ -1061,7 +1062,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     		new LangTextHolder("Ambiguous CALL: Different callable diagrams \"%1\" (%2 parameters) found!");
     // END KGU#317 2016-12-29
     public final LangTextHolder msgInvalidExpr =
-    		new LangTextHolder("«%1» is not a correct or existing expression.");
+    		new LangTextHolder("«%1» is not a correct or evaluable expression.");
     // START KGU#249 2016-09-17: Bugfix #246 + Issue #243
     public final LangTextHolder msgInvalidBool =
     		new LangTextHolder("«%1» is not a valid Boolean expression.");

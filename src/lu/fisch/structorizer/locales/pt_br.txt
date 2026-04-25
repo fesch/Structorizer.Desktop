@@ -73,6 +73,8 @@
  *      Kay Gürtzig     2025-08-01  Enh. #1198 Messages for Preferences.lblCaseEditor, ~.cbCaseEditor
  *      Kay Gürtzig     2025-08-04  Enh. #1198: Menu.msgVersionHint_3_30_15 replaced by ~_3_32_29
  *      Kay Gürtzig     2025-08-18  Issue #1138: Obsolete Surface conflict messages removed
+ *      Kay Gürtzig     2026-04-24  Issue #1081: New messages Menu.error34, AnalyserPreferences.checkboxes.34,
+ *                                  Control.msgInvalidExpr modified
  *
  ******************************************************************************************************
  *
@@ -520,6 +522,10 @@ Menu.error31_3.text=Estes objetos de declaração não são identificadores adeq
 Menu.error31_4.text=Esta é uma tentativa de declarar novamente as variáveis ​​já existentes «%»!
 Menu.error31_5.text=Para uma inicialização, a declaração deve conter exatamente UMA variável, e não %!
 Menu.error31_6.text=Uma construção anônima do tipo «%» não é permitida nesta posição!Menu.errorLineReference.text= (linha %)
+Menu.error32_1.text=
+Menu.error32_2.text=
+Menu.error33.text=
+Menu.error34.text=O operador «%1» não é apoiado por Structorizer%2.
 Menu.errorLineReference.text=(linha %)
 
 -----[ AnalyserPreferences ]-----
@@ -559,6 +565,9 @@ AnalyserPreferences.checkboxes.28.text=Verificar se as listas do seletor @c est�
 AnalyserPreferences.checkboxes.29.text=Verificar se o valor de escolha @c não é de um tipo estruturado.
 AnalyserPreferences.checkboxes.30.text=Verificar se os colchetes estão balanceados e aninhados corretamente.
 AnalyserPreferences.checkboxes.31.text=Verificar sintaxe de declaração e inicialização de variável
+AnalyserPreferences.checkboxes.32.text=
+AnalyserPreferences.checkboxes.33.text=
+AnalyserPreferences.checkboxes.34.text=Alertar do uso de operadores não apoiados como ++, --, +=, -=, *= etc.
 AnalyserPreferences.lblDrawWarningSign.text=Desenhar um sinal de aviso nos elementos afetados
 AnalyserPreferences.okButton.text=OK
 
@@ -1500,7 +1509,7 @@ Control.msgTitleParallel.text=Problema com execução em paralelo
 Control.msgNoSubroutine.text=Um diagrama @o "%1" (%2 parâmetros) não foi encontrado!\nConsiderar reiniciar o Organizador e colocar os diagramas @o necessários lá primeiro.
 Control.msgNoInclDiagram.text=Um diagrama @p "%" não foi encontrado!\nConsiderar reiniciar o Organizador e colocar o diagrama necessário lá primeiro.
 Control.msgAmbiguousCall.text=Ambíguo @j: Diferentes diagramas de sub-rotina
-Control.msgInvalidExpr.text=«%1» não é uma expressão correta ou existente.
+Control.msgInvalidExpr.text=«%1» não é uma expressão correta ou avaliável.
 Control.msgInvalidBool.text=«%1» não é uma expressão lógica correta.
 Control.msgIllFunction.text=«%1» não é uma função correta!
 Control.msgManualBreak.text=Pausa manual!

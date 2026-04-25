@@ -152,6 +152,8 @@
  *      Kay Gürtzig         2025-08-01  Enh. #1197, #1198: New/different messages for Editor, Preferences
  *      Kay Gürtzig         2025-08-04  Enh. #1198: Menu.msgVersionHint_3_30_15 replaced by ~_3_32_29
  *      Kay Gürtzig         2026-04-09  Issue #1133: Messages for Menu.menuPreferencesLaFWin11 added
+ *      Kay Gürtzig         2026-04-24  Issue #1081: New messages Menu.error34, AnalyserPreferences.checkboxes.34,
+ *                                      Control.msgInvalidExpr modified
  *
  ******************************************************************************************************
  *
@@ -601,6 +603,7 @@ Menu.error31_6.text=Eine anonyme Typkonstruction «%» ist an dieser Stelle unzu
 Menu.error32_1.text=Variablenname «%1» kann (beim Code-Export) mit einem Unterprogrammnamen in Modul(en) %2 in Konflikt geraten.
 Menu.error32_2.text=Unterprogramm «%1» mit %2 Parametern könnte mit einer Routine in Modul(en) %3 kollidieren.
 Menu.error33.text=Die Turtleizer-Routine «%1» nutzt ein reduziertes Koordinatenmodell, Zeichnungen könnten entarten. «%2» wäre zu erwägen.
+Menu.error34.text=Operator «%1» wird von Structorizer nicht unterstützt%2.
 Menu.errorLineReference.text= (Zeile %)
 
 -----[ AnalyserPreferences ]-----
@@ -642,6 +645,7 @@ AnalyserPreferences.checkboxes.30.text=Prüfen, dass Klammern ausgeglichen und r
 AnalyserPreferences.checkboxes.31.text=Syntax von Variablendeklarationen mit und ohne Initialisierung prüfen.
 AnalyserPreferences.checkboxes.32.text=Auf Namenskollisionen mit Zusatzmodul-Routinen prüfen.
 AnalyserPreferences.checkboxes.33.text=Bei Verwendung der Turtleizer-Routinen «fd», «bk» vor Pixelrundung warnen.
+AnalyserPreferences.checkboxes.34.text=Prüfen auf nicht unterstützte C-Operatoren wie ++, --, +=, -=, *= usw.
 AnalyserPreferences.lblDrawWarningSign.text=Zeichne Warndreieck in betroffenen Elementen
 AnalyserPreferences.okButton.text=OK
 
@@ -1586,7 +1590,7 @@ Control.msgTitleParallel.text=Problem bei Parallelausführung
 Control.msgNoSubroutine.text=Ein Diagramm mit Unterprogramm "%1" (%2 Parameter) wurde nicht gefunden!\nPlatzieren Sie benötigte Unterprogramm-Diagramme zunächst im Arranger.
 Control.msgNoInclDiagram.text=Ein einbeziehbares Diagramm "%" wurde nicht gefunden!\nPlatzieren Sie einzubeziehende Diagramme zunächst im Arranger.
 Control.msgAmbiguousCall.text=Mehrdeutiger @j: Verschiedene @o-Diagramme "%1" (%2 Parameter) gefunden!
-Control.msgInvalidExpr.text=«%1» ist kein korrekter oder existierender Ausdruck.
+Control.msgInvalidExpr.text=«%1» ist kein korrekter oder auswertbarer Ausdruck.
 Control.msgInvalidBool.text=«%1» ist kein gültiger logischer Ausdruck.
 Control.msgIllFunction.text=«%1» ist keine korrekte Funktion!
 Control.msgManualBreak.text=Nutzer-Abbruch!
