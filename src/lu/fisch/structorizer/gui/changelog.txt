@@ -336,6 +336,8 @@ Current development version 3.32-36 (2026-04-25)
 - 36: Issue #1133 Sporadic error message "Problem on changing Look & Feel ..."
       on Structorizer start (though not severe) and further flaw fixed <2>
 - 36: Bugfix #1232 Diagram result type "void" was not detected as such. <2>
+- 36: Bugfix #1233 Defective name and type extraction from parameter lists
+      and struct definitions with arrays in C style <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>

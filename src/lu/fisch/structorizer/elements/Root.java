@@ -7422,8 +7422,10 @@ public class Root extends Element {
         // END KGU#388 2017-09-17
 
         // START KGU#239 2016-08-12: Enh. #231: Test for name collisions
-        // If check 23 is enabled then the below check will already have produced check 19 results for
-        // imported variables, otherwise these will have been suppressed, so we check all imported variables, too
+        /* If check 23 is enabled then the below check will already have
+         * produced check 19 results for imported variables, otherwise these
+         * will have been suppressed, so we check all imported variables, too
+         */
         analyse_18_19_21(this, errors, vars, new StringList(), (check(23) ? rootVars : vars));
         // END KGU#239 2016-08-12
 

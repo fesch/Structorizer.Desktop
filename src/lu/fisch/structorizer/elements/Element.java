@@ -148,6 +148,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2025-09-06      Issue #1221: Comment lines should neither be trimmed nor skipped
  *      Kay Gürtzig     2026-04-10      Issue #81: Element-specific icons realised as multi-resolution icons
  *      Kay Gürtzig     2026-04-24      Issue #1081: syntactic splitting now preserves non-supported C operators
+ *      Kay Gürtzig     2026-04-25      Bugfix #1233: Name and type detection in C-style declaration lists
+ *                                      (parameter lists, record definitions) was defective.
  *
  ******************************************************************************************************
  *
@@ -3605,14 +3607,23 @@ public abstract class Element {
 
 	// START KGU#388 2017-09-13: Enh. #423; KGU#371 2019-03-07: Enh. #385 - parameter declDefaults added
 	/**
-	 * Extracts the parameter or component declarations from the parameter list (or
-	 * record type definition, respectively) given by {@code declText} and adds their names
-	 * and type descriptions to the respective StringList {@code declNames} and {@code declTypes}.<br/>
-	 * CAUTION: Some elements of {@code declTypes} may be {@code null} on return!
-	 * @param declText - the text of the declaration inside the parentheses or braces
-	 * @param declNames - the names of the declared parameters or record components (in order of occurrence), or {@code null}
-	 * @param declTypes - the types of the declared parameters or record components (in order of occurrence), or {@code null}
-	 * @param declDefaults - the literals of the declared parameter/component defaults (in order of occurrence), or {@code null}
+	 * Extracts the parameter or component declarations from the parameter list
+	 * (or record type definition, respectively) given by {@code declText} and
+	 * adds their names and type descriptions to the respective StringList
+	 * {@code declNames} and {@code declTypes}.<br/>
+	 * CAUTION: Some elements of {@code declTypes} may be {@code null} on return!<br/>
+	 * NOTE: In case {@code declDefaults != null} this method will assume that
+	 * {@code declText} is a parameter list, otherwise a record definition is
+	 * supposed (this has some consequences for the syntax analysis).
+	 * 
+	 * @param declText - the text of the declaration inside the parentheses or
+	 *     braces
+	 * @param declNames - the names of the declared parameters or record
+	 *     components (in order of occurrence), or {@code null}
+	 * @param declTypes - the types of the declared parameters or record
+	 *     components (in order of occurrence), or {@code null}
+	 * @param declDefaults - the literals of the declared parameter/component
+	 *     defaults (in order of occurrence), or {@code null}
 	 */
 	protected static void extractDeclarationsFromList(String declText, StringList declNames, StringList declTypes, StringList declDefaults) {
 		// START KGU#371 2019-03-07: Enh. #385 - We have to face e.g. string literals in the argument list now!
@@ -3651,7 +3662,7 @@ public abstract class Element {
 			//StringList vars = StringList.explode(group,",");
 			StringList vars = splitExpressionList(group, ",");
 			// END KGU#371 2019-03-07
-			for (int j=0; j < vars.count(); j++)
+			for (int j = 0; j < vars.count(); j++)
 			{
 				String decl = vars.get(j).trim();
 				if (!decl.isEmpty())
@@ -3683,11 +3694,17 @@ public abstract class Element {
 						}						
 						// END KGU#371 2019-03-07
 					}
+					// START KGU#1214 2026-04-25: Bugfix #1233 Indices are unduly copied
+					String indices = "";	// Only post-identifier index list
+					// END KGU#1214 2026-04-25
 					//StringList tokens = splitLexically(decl, true);
 					tokens.removeAll(" ");
 					if (tokens.count() > 1) {
-						// Is a C or Java array type involved? 
-						if (declGroups.count() == 1 && posColon < 0 || type == null) {
+						// Is a C or Java array type involved?
+						// START KGU#1214 2026-04-25: Bugfix #1233 inappropriate restriction
+						//if (declGroups.count() == 1 && posColon < 0 || type == null) {
+						if (posColon < 0 || type == null) {
+						// END KGU#1214 2026-04-25
 							// START KGU#371 2019-03-07: Enh. #385 Scan for default / initial values
 							int posEq = tokens.indexOf("=");
 							if (posEq >= 0) {
@@ -3700,21 +3717,31 @@ public abstract class Element {
 							int posBrack1 = tokens.indexOf("[");
 							int posBrack2 = tokens.lastIndexOf("]");
 							if (posBrack1 > 0 && posBrack2 > posBrack1) {
-								String indices = tokens.concatenate(null, posBrack1, posBrack2+1);
+								indices = tokens.concatenate(null, posBrack1, posBrack2+1);
+								// FIXME: In rare cases both type and var name might have brackets
 								if (posBrack2 == tokens.count()-1) {
 									// C-style: brackets right of the variable id
 									decl = tokens.get(posBrack1-1);
-									if (posBrack1 > 1 && type == null) {
+									// START KGU#1214 2026-04-25: Bugfix #1233 simply copied the previous type
+									//if (posBrack1 > 1 && type == null) {
+									//	type = tokens.concatenate(null, 0, posBrack1-1);
+									//	type += indices;
+									//}
+									if (posBrack1 > 1) {
 										type = tokens.concatenate(null, 0, posBrack1-1);
-										type += indices;
 									}
+									// END KGU#1214 2026-04-25
 								}
 								else {
 									// Java style: brackets between element type and variable id
 									decl = tokens.concatenate(null, posBrack2+1, tokens.count());
-									if (type == null) {
-										type = tokens.concatenate(null, 0, posBrack2+1);
-									}
+									// START KGU#1214 2026-04-25: Bugfix # 1233 simply copied the previous type
+									//if (type == null) {
+									//	type = tokens.concatenate(null, 0, posBrack2+1);
+									//}
+									type = tokens.concatenate(null, 0, posBrack1) + indices;
+									indices = "";
+									// END KGU#1214 2026-04-25
 								}
 							}
 							else {
@@ -3749,8 +3776,12 @@ public abstract class Element {
 					//if (declTypes != null)	declTypes.add(type);
 					if (declTypes != null){
 						if (!prefix.isEmpty() || type != null) {
-							declTypes.add(prefix + type);
+							// START KGU#1214 2026-04-25: Bugfix #1233
+							//declTypes.add(prefix + type);
+							declTypes.add(prefix + type + indices);
+							// END KGU#1214 2026-04-25
 						}
+						// START KGU#1214 2026-04-25: Bugfix #1233
 						else {
 							declTypes.add(type);
 						}
