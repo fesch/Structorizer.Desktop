@@ -133,6 +133,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2025-08-20      Bugfix #1210: Input/output conversion avoided with option suppressTransformation
  *                                      precautions against missing parameter types
  *      Kay Gürtzig     2025-09-05      Issue #1214: Support for thread-safe temporary disabling of elements added
+ *      Kay Gürtzig     2026-04-26      Bugfix #1234: Indirect FileAPI usage check (i.e. via involved subroutine diagrams)
+ *                                      had not worked.
  *
  ******************************************************************************************************
  *
@@ -4078,13 +4080,18 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 
 	
 	/**
-	 * Entry point for interactively commanded code export. Retrieves export options,
-	 * opens a file selection dialog, and effectuates the actual code export.
+	 * Entry point for interactively commanded code export. Retrieves export
+	 * options, opens a file selection dialog, and effectuates the actual code
+	 * export.
+	 * 
 	 * @param _root - program or top-level routine diagram (call hierarchy root)
-	 * @param _proposedDirectory - last export or current Structorizer directory (as managed by Diagram)
+	 * @param _proposedDirectory - last export or current Structorizer directory
+	 *     (as managed by Diagram)
 	 * @param _frame - the GUI Frame object responsible for this action
-	 * @param _routinePool - {@link Arranger} or some other routine pool if subroutines are to be involved
+	 * @param _routinePool - {@link Arranger} or some other routine pool if
+	 *     subroutines are to be involved
 	 * @return the chosen target directory if the export hadn't been cancelled, otherwise null
+	 * 
 	 * @see #exportCode(Vector, String, String, String, boolean, IRoutinePool)
 	 * @see #exportCode(Vector, String, File, Frame, IRoutinePool)
 	 */
@@ -4101,7 +4108,8 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		//============== Adjust directory =========================
 		// START KGU#816 2020-03-17: Enh. #837
 		//if (_root.getFile() != null)
-		if ((_proposedDirectory == null || this.proposeDirectoryFromNsd) && _root.getFile() != null)
+		if ((_proposedDirectory == null || this.proposeDirectoryFromNsd)
+				&& _root.getFile() != null)
 		// END KGU#816 2020-03-17
 		{
 			_proposedDirectory = _root.getFile();
@@ -4125,7 +4133,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				nsdName = nsdName.substring(0, dotPos);
 			}
 		}
-		// Now the subclass gets a chance to modify the proposal if there are some  - according to #707 - hyphens in python file names are nasty
+		/* 
+		 * Now the subclass gets a chance to modify the proposal if there
+		 * are some  - according to #707 - hyphens in python file names are nasty
+		 */
 		nsdName = this.ensureFilenameConformity(nsdName);
 		// END KGU#690 2019-03-21
 
@@ -5556,7 +5567,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	
 	/**
 	 * Generates the code for a module headed by the given {@link Root}s {@code _roots}.
-	 * Depending on whether this is for a _batch export or not, certain scissor lines
+	 * Depending on whether this is for a batch export or not, certain scissor lines
 	 * may be inserted among the produced routines or not.<br/>
 	 * The module always provides a common topologically sorted subroutine bundle
 	 * (if subroutine involvement is intended).<br/>
@@ -5652,6 +5663,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 					else if (!_roots.contains(sub)) {	// Is this check redundant?
 						// FIXME to exclude library routines from analysis might break Jump relations
 						gatherElementInformationRoot(sub);
+						// START KGU#1202 2026-04-26: Bugfix #1234 indirect use had not been registered
+						if (this.usesFileAPI) {
+							someRootUsesFileAPI = true;
+						}
+						// END KGU#1202 2026-04-26
 					}
 				}
 				else {
@@ -5682,6 +5698,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 					if (!_roots.contains(incl)) {
 						// This call might re-add dependencies to includedMap
 						gatherElementInformationRoot(incl);
+						// FIXME KGU#1202 2026-04-27: Should we check usesFileAPI here like above?
 					}
 				}
 				else {

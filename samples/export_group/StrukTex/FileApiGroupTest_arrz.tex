@@ -4,13 +4,14 @@
 \usepackage{ngerman}
 
 \title{Structorizer StrukTeX Export of FileApiGroupTest.arrz}
+% Structorizer version 3.32-36
 \author{Kay G"urtzig}
-\date{04.10.2021}
+\date{27.04.2026}
 
 \begin{document}
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(151,155)[ComputeSum]
+\begin{struktogramm}(140,149)[ComputeSum]
   \assign{\(fileNo\ \gets\ 1000\)}
   \assign{\(\)\pKey{INPUT}\(\ \)"{}Name/path\ of\ the\ number\ file"{}\(\ file\_name\)}
   % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{10}{2}...
@@ -36,7 +37,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(298,266)[DrawRandomHistogram]
+\begin{struktogramm}(268,252)[DrawRandomHistogram]
   \assign{\(fileNo\ \gets\ -10\)}
   \until{\(fileNo\ >\ 0\ \vee\ file\_name\ =\ \)"{}"{}\(\)}
     \assign{\(\)\pKey{INPUT}\(\ \)"{}Name/path\ of\ the\ number\ file"{}\(\ file\_name\)}
@@ -101,11 +102,11 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(208,220)[drawBarChart]
+\begin{struktogramm}(182,205)[drawBarChart]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{values}}{type: \(array\ of\ double\)}
-      \description{\pVar{nValues}}{type: \(null\)}
+      \description{\pVar{nValues}}{}
     \end{declaration}
   }
   \assign{\(const\ xSize\ \gets\ 500\)}
@@ -113,7 +114,7 @@
   \assign{\(kMin\ \gets\ 0\)}
   \assign{\(kMax\ \gets\ 0\)}
   \while{\pKey{for}\(k\ \gets\ 1\)\pKey{to}\(nValues-1\)}
-    \ifthenelse{2}{4}{\(values[k]\ >\ values[kMax]\)}{T}{F}
+    \ifthenelse{3}{3}{\(values[k]\ >\ values[kMax]\)}{T}{F}
       \assign{\(kMax\ \gets\ k\)}
     \change
       % Reduce the ratio arguments or insert an optional height argument if the head got too flat, e.g.: \ifthenelse{3}{3}... or \ifthenelse[10]{3}{1}...
@@ -172,7 +173,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(204,110)[generateRandomNumberFile]
+\begin{struktogramm}(177,104)[generateRandomNumberFile]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{fileName}}{type: \(string\)}
@@ -206,7 +207,7 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(198,114)[readNumbers]
+\begin{struktogramm}(176,108)[readNumbers]
   \assign{%
     \begin{declaration}[Parameters:]
       \description{\pVar{fileName}}{type: \(string\)}

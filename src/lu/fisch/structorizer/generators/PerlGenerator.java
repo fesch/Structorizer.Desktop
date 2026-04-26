@@ -100,7 +100,7 @@ package lu.fisch.structorizer.generators;
  *      2024-04-02 Issue #1156 (KGU#1143)
  *      - A somewhat more sophisticated approach for the handling of constants via pragma use constant (see
  *        comment below) was used and bound to a new Perl-specific export option. We distinguish between
- *        constants define in a CALL (which will never be involved in the use constant approach - as they
+ *        constants defined in a CALL (which will never be involved in the use constant approach - as they
  *        cannot be evaluated at compile time) and those defined in an instruction where we dare to apply
  *        the use constant pragma only if the user had set the respective option. For the expression trans-
  *        formation we use the wasDefHandled mechanism of Generator, which hasn't been used for other stuff
@@ -1467,7 +1467,7 @@ public class PerlGenerator extends Generator {
 			if (this.usesFileAPI) {
 				addSepaLine();
 				this.appendComment("TODO: This algorithm made use of the Structorizer File API,", _indent);
-				this.appendComment("      which cannot not be translated completely.", _indent);
+				this.appendComment("      which cannot be translated completely.", _indent);
 				this.appendComment("      Watch out for \"TODO FileAPI\" comments and try to adapt", _indent);
 				this.appendComment("      the code according to the recommendations.", _indent);
 				this.appendComment("      See e.g. http://perldoc.perl.org/perlopentut.html", _indent);
