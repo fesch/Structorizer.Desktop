@@ -133,6 +133,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2025-09-04      Issue #1123 slightly revised on occasion of bugfix #1216 (JsGenerator)
  *      Kay Gürtzig             2025-09-05      Bugfix #1219: generateCode(Try, String) must avoid sticky Try element disabling
  *      Kay Gürtzig             2025-09-24      Bugfix #1219: Thread-safe version
+ *      Kay Gürtzig             2026-04-26      Bugfix #1210: Revision to unify the C behaviour on type definitions to that for
+ *                                              the derivates C++, C#, Java as well as Pascal and Oberon.
  *
  ******************************************************************************************************
  *
@@ -1636,7 +1638,10 @@ public class CGenerator extends Generator {
 		else if (Instruction.isTypeDefinition(_line, typeMap)) {
 		// END KGU#1208 2025-09-25
 			// Attention! The following condition must not be combined with the above one! 
-			if (this.isInternalDeclarationAllowed()) {
+			// START KGU#1208 2026-04-26: Bugfix #1210 Still some inconsistency for C
+			//if (this.isInternalDeclarationAllowed()) {
+			if (this.isInternalDeclarationAllowed() || this.suppressTransformation) {
+			// END KGU#1208 2026-04-26
 				tokens.removeAll(" ");
 				// START KGU#878 2020-10-16: Bugfix #873 - collateral damage of bugfix #808 mended
 				//int posEqu = tokens.indexOf("=");
@@ -1662,7 +1667,10 @@ public class CGenerator extends Generator {
 					// END KGU#1208 2025-09-29
 					// CodeLine is not filled because the code has already been generated
 				}
-				else {
+				// START KGU#1208 2026-04-26: Bugfix #1210 Still some inconsistency for C
+				//else {
+				else if (!this.suppressTransformation) {
+				// END KGU#1208 2026-04-26
 					// Hardly a recognizable type definition, just put it as is...
 					codeLine = "typedef " + transform(tokens.concatenate(" ", posEqu + 1)) + " " + typeName;
 				}
