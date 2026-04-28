@@ -501,8 +501,8 @@ public class JavaGenerator extends CGenerator
 	{
 		// START KGU#815 2020-04-03: Enh. #828 group export
 		if (generatorIncludes.contains("lu.fisch.structorizer.generators." + FILE_API_CLASS_NAME)) {
-			for (int i = 0; i < Executor.fileAPI_names.length; i++) {
-				tokens.replaceAll(Executor.fileAPI_names[i], FILE_API_CLASS_NAME + "." + Executor.fileAPI_names[i]);
+			for (int i = 0; i < Executor.FILE_API_NAMES.length; i++) {
+				tokens.replaceAll(Executor.FILE_API_NAMES[i], FILE_API_CLASS_NAME + "." + Executor.FILE_API_NAMES[i]);
 			}
 		}
 		// END KGU#815 2020-04-03

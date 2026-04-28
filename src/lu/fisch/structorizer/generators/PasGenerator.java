@@ -1729,7 +1729,7 @@ public class PasGenerator extends Generator
 			else {
 				// START KGU#194 2016-07-20: Bugfix #185 - Though the UNIT name is to be the same as the file name
 				// (or vice versa),
-				// we must not allow non-identifier characters. so convert all characters that are neither letters
+				// we must not allow non-identifier characters. So convert all characters that are neither letters
 				// nor digits into underscores.
 				//code.add(_indent + "UNIT " + pureFilename + ";");
 				String unitName = this.getModuleName();
@@ -1971,20 +1971,24 @@ public class PasGenerator extends Generator
 	}
 
 	/**
-	 * Appends the const, type, and var declarations for the referred includable roots
-	 * and - possibly - {@code _root} itself to the code, as far as they haven't been
-	 * generated already.<br/>
+	 * Appends the const, type, and var declarations for the referred
+	 * includable roots and - possibly - {@code _root} itself to the code, as
+	 * far as they have not been generated already.<br/>
 	 * Note:<br/>
-	 * The declarations of referred includables are only appended if we are at top level.<br/>
-	 * The declarations of {@code _root} itself are suppressed if {@code _varNames} is
-	 * null - in this case it is assumed that we are in the IMPLEMENTATION part of a UNIT
-	 * outside of any function.
+	 * The declarations of referred includables are only appended if we are at
+	 * top level.<br/>
+	 * The declarations of {@code _root} itself are suppressed if
+	 * {@code _varNames} is {@code null} - in this case it is assumed that we
+	 * are in the IMPLEMENTATION part of a UNIT outside of any function.
+	 * 
 	 * @param _root - the currently processed diagram (usually at top level)
 	 * @param _indent - the indentation string of the current nesting level
-	 * @param _varNames - list of variable names if this is within preamble, otherwise null
-	 * @param _complexConsts - a StringList being filled with the names of those structured
-	 * constants that cannot be converted to structured Pascal constants but are to
-	 * be deconstructed as mere variables in the body (shouldn't be used anymore).
+	 * @param _varNames - list of variable names if this is within preamble,
+	 *     otherwise {@code null}
+	 * @param _complexConsts - a StringList being filled with the names of
+	 *     those structured constants that cannot be converted to structured
+	 *     Pascal constants but are to be deconstructed as mere variables in
+	 *     the body (shouldn't be used anymore).
 	 * @return array of the included {@link Root}s
 	 */
 	// START KGU#815/KGU#824 2020-03-19: Enh. #828, bugfix #836 last argument not needed externally

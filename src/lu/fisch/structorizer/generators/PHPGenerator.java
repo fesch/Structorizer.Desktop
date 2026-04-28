@@ -413,8 +413,8 @@ public class PHPGenerator extends Generator
 		tokens.replaceAll("<-", "=");
 		// START KGU#311 2017-01-03: Enh. #314 File API
 		//if (this.usesFileAPI) {	// KGU#832 2020-03-23: Issue #840 We should even transform disabled code
-		for (int i = 0; i < Executor.fileAPI_names.length; i++) {
-			tokens.replaceAll(Executor.fileAPI_names[i], "StructorizerFileAPI::" + Executor.fileAPI_names[i]);
+		for (int i = 0; i < Executor.FILE_API_NAMES.length; i++) {
+			tokens.replaceAll(Executor.FILE_API_NAMES[i], "StructorizerFileAPI::" + Executor.FILE_API_NAMES[i]);
 		}
 		//}
 		// END KGU#311 2017-01-03

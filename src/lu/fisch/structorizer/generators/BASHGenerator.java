@@ -1356,9 +1356,9 @@ public class BASHGenerator extends Generator {
 				 */
 				// START KGU#311 2017-01-05: Enh. #314: We should at least put some File API remarks
 				if (this.usesFileAPI && !disabled) {
-					for (int j = 0; j < Executor.fileAPI_names.length; j++) {
-						if (line.contains(Executor.fileAPI_names[j] + "(")) {
-							appendComment("TODO File API: Replace the \"" + Executor.fileAPI_names[j] + "\" call by an appropriate shell construct", _indent);
+					for (int j = 0; j < Executor.FILE_API_NAMES.length; j++) {
+						if (line.contains(Executor.FILE_API_NAMES[j] + "(")) {
+							appendComment("TODO File API: Replace the \"" + Executor.FILE_API_NAMES[j] + "\" call by an appropriate shell construct", _indent);
 							break;
 						}
 					}
@@ -1454,9 +1454,9 @@ public class BASHGenerator extends Generator {
 		// END KGU#453 2017-11-02
 		// START KGU#311 2017-01-05: Enh. #314: We should at least put some File API remarks
 		if (this.usesFileAPI && !disabled) {
-			for (int j = 0; j < Executor.fileAPI_names.length; j++) {
-				if (condition.contains(Executor.fileAPI_names[j] + "(")) {
-					appendComment("TODO File API: Replace the \"" + Executor.fileAPI_names[j] + "\" call by an appropriate shell construct", _indent);
+			for (int j = 0; j < Executor.FILE_API_NAMES.length; j++) {
+				if (condition.contains(Executor.FILE_API_NAMES[j] + "(")) {
+					appendComment("TODO File API: Replace the \"" + Executor.FILE_API_NAMES[j] + "\" call by an appropriate shell construct", _indent);
 					break;
 				}
 			}
@@ -1488,9 +1488,9 @@ public class BASHGenerator extends Generator {
 			condition = transform(_alt.getUnbrokenText().getLongString()).trim();
 			// START KGU#311 2017-01-05: Enh. #314: We should at least put some File API remarks
 			if (this.usesFileAPI && !disabled) {
-				for (int j = 0; j < Executor.fileAPI_names.length; j++) {
-					if (condition.contains(Executor.fileAPI_names[j] + "(")) {
-						appendComment("TODO File API: Replace the \"" + Executor.fileAPI_names[j] + "\" call by an appropriate shell construct", _indent);
+				for (int j = 0; j < Executor.FILE_API_NAMES.length; j++) {
+					if (condition.contains(Executor.FILE_API_NAMES[j] + "(")) {
+						appendComment("TODO File API: Replace the \"" + Executor.FILE_API_NAMES[j] + "\" call by an appropriate shell construct", _indent);
 						break;
 					}
 				}
@@ -1733,9 +1733,9 @@ public class BASHGenerator extends Generator {
 		String condition = transform(_while.getUnbrokenText().getLongString()).trim();
 		// START KGU#311 2017-01-05: Enh. #314: We should at least put some File API remarks
 		if (this.usesFileAPI && !disabled) {
-			for (int j = 0; j < Executor.fileAPI_names.length; j++) {
-				if (condition.contains(Executor.fileAPI_names[j] + "(")) {
-					appendComment("TODO File API: Replace the \"" + Executor.fileAPI_names[j] + "\" call by an appropriate shell construct", _indent);
+			for (int j = 0; j < Executor.FILE_API_NAMES.length; j++) {
+				if (condition.contains(Executor.FILE_API_NAMES[j] + "(")) {
+					appendComment("TODO File API: Replace the \"" + Executor.FILE_API_NAMES[j] + "\" call by an appropriate shell construct", _indent);
 					break;
 				}
 			}
@@ -1794,9 +1794,9 @@ public class BASHGenerator extends Generator {
 		generateCode(_repeat.getBody(), _indent + this.getIndent());
 		// START KGU#311 2017-01-05: Enh. #314: We should at least put some File API remarks
 		if (this.usesFileAPI && !disabled) {
-			for (int j = 0; j < Executor.fileAPI_names.length; j++) {
-				if (condition.contains(Executor.fileAPI_names[j] + "(")) {
-					appendComment("TODO File API: Replace the \"" + Executor.fileAPI_names[j] + "\" call by an appropriate shell construct", _indent);
+			for (int j = 0; j < Executor.FILE_API_NAMES.length; j++) {
+				if (condition.contains(Executor.FILE_API_NAMES[j] + "(")) {
+					appendComment("TODO File API: Replace the \"" + Executor.FILE_API_NAMES[j] + "\" call by an appropriate shell construct", _indent);
 					break;
 				}
 			}

@@ -101,6 +101,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2025-07-03      Missing Override annotations added
  *      Kay Gürtzig             2025-08-16      Bugfix #1206: Proper translation for exit instructions implemented
  *      Kay Gürtzig             2025-08-29      Bugfix #1210: Free-text FOR loops caused errors in suppressTransition mode
+ *      Kay Gürtzig             2026-04-28      Enh. #314, bugfixes #828, #1235: Handling of FileAPI refernces
+ *                                              and proper qualification of imported object names
  *
  ******************************************************************************************************
  *
@@ -126,17 +128,21 @@ package lu.fisch.structorizer.generators;
  ******************************************************************************************************///
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Stack;
+import java.util.TreeMap;
+import java.util.Vector;
 import java.util.regex.Matcher;
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.executor.Executor;
 import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.generators.Generator.TryCatchSupportLevel;
 
@@ -262,6 +268,18 @@ public class OberonGenerator extends Generator {
 	// START KGU#332 2017-01-30: Enh. #335
 	private Map<String,TypeMapEntry> typeMap;
 	// END KGU#332 2017-01-30
+	
+	// START KGU#829 2026-04-28: Bugfix #1235 Qualified Module name import
+	/** Possibly the name of a common library module, {@code null} otherwise */
+	private String libModuleName = null;
+	/** Set of type, constant, and variable names globally declared in the library module */
+	// Routine names are handled in a different way by generateCode(Call, String)
+	private HashSet<String> globalLibNames = new HashSet<String>();
+	// END KGU#829 2026-04-28
+
+	// START KGU#311/KGU#828 2026-04-28: Enh. #314, #828
+	private static final String FILE_API_MODULE_NAME = "StructorizerFileAPI";
+	// END KGU#311/KGU#828 2026-04-28
 
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
 	/* (non-Javadoc)
@@ -468,7 +486,31 @@ public class OberonGenerator extends Generator {
 			}
 		}
 		tokens.replaceAll("UPPERCASE", "CAP");
-		// END KGU#15ß 2016-04-03
+		// END KGU#150 2016-04-03
+		// START KGU#829 2026-04-28: Bugfix #1235 Ensure qualification of imported names
+		if (!this.isLibraryModule() && this.libModuleName != null) {
+			for (String libRef: this.globalLibNames) {
+				tokens.replaceAll(libRef, libModuleName + "." + libRef);
+			}
+		}
+		// END KGU#829 2026-04-28
+		// START KGU#311/KGU829 2026-04-28: Enh. #314, bugfix #1235: Qualify FileAPI references
+		/* For performance reasons, we avoid this test if there is no active
+		 * use of FileAPI in the current context. The obvious drawback is that
+		 * FileAPI references in disabled instructions will not get qualified.
+		 */
+		if (usesFileAPI) {
+			for (String fileAPIName: Executor.FILE_API_NAMES) {
+				int pos = -1;
+				while ((pos = tokens.indexOf(fileAPIName, pos+1)) >= 0 &&
+						pos+1 < tokens.count() &&
+						tokens.get(pos+1).equals("("))
+				{
+					tokens.set(pos, "SFAPI."+fileAPIName);
+				}
+			}
+		}
+		// END KGU#311/KGU#829 2026-04-28
 		String result = tokens.concatenate();
 		// We now shrink superfluous padding - this may affect string literals, though!
 		result = result.replace("  ", " ");
@@ -1363,6 +1405,13 @@ public class OberonGenerator extends Generator {
 					if (!callCandidates.isEmpty()) {
 						// FIXME We'll just fetch the very first one for now...
 						Root called = callCandidates.get(0);
+						// START KGU#829 2026-04-28: Bugfix #1235 imported names must be qualified
+						if (this.importedLibRoots != null && this.libModuleName != null
+								&& importedLibRoots.contains(called)
+								&& !importedLibRoots.contains(owningRoot)) {
+							line = line.replace(call.getName()+"(", this.libModuleName + "." + call.getName() + "(");
+						}
+						// END KGU#829 2026-04-28
 						StringList defaults = new StringList();
 						called.collectParameters(null, null, defaults);
 						if (defaults.count() > call.paramCount()) {
@@ -1551,13 +1600,18 @@ public class OberonGenerator extends Generator {
 		if (topLevel) {
 			if (this.hasInput()) generatorIncludes.add("In");
 			if (this.hasOutput()) generatorIncludes.add("Out");
+			// START KGU#311/KGU#815/KGU#836 2026-04-28: Enh. #314, #828, bugfix #836
+			if (this.usesFileAPI) {
+				this.generatorIncludes.addIfNew("SFAPI := " + FILE_API_MODULE_NAME);
+			}
+			// END KGU#311/KGU#815/KGU#836 2026-04-28
 		}
 		// END KGU#765 2019-11-14
 		if (!_root.isProgram())
 		{
 			// FIXME: How to handle includable diagrams?
 			// START KGU#236 2016-08-10: Issue #227 - create a MODULE context
-			if (topLevel /*&& this.optionExportSubroutines()*/)	// FIXME: Why this restriction to subroutine mode here?
+			if (topLevel /*&& this.optionExportSubroutines()*/)
 			{
 				// Though the MODULE name is to be the same as the file name
 				// (or vice versa),
@@ -1862,25 +1916,28 @@ public class OberonGenerator extends Generator {
 	
 	// START KGU#376/KGU#388 2017-10-24: nh. #389, #423 (copied from PasGenerator)
 	/**
-	 * Appends the const, type, and var declarations for the referred includable roots
-	 * and - possibly - {@code _root} itself to the code, as far as they haven't been
-	 * generated already.<br/>
-	 * Note:<br/>
-	 * The declarations of referred includables are only appended if we are at top level.<br/>
-	 * The declarations of {@code _root} itself are suppressed if {@code _varNames} is
-	 * null - in this case it is assumed that we are in the IMPLEMENTATION part of a UNIT
-	 * outside of any function.
+	 * Appends the const, type, and var declarations for the referred
+	 * includable roots and - possibly - {@code _root} itself to the code, as
+	 * far as they have not been generated already.<br/>
+	 * <b>Note:</b><br/>
+	 * The declarations of referred includables are only appended if we are at
+	 * top level.<br/>
+	 * The declarations of {@code _root} itself are suppressed if
+	 * {@code _varNames} is {@code null} - in this case it is assumed that we
+	 * are in non-public part of a MODULE outside of any function.
+	 * 
 	 * @param _root - the currently processed diagram (usually at top level)
 	 * @param _indent - the indentation string of the current nesting level
-	 * @param _varNames - list of variable names if this is within preamble, otherwise null
+	 * @param _varNames - list of variable names if this is within preamble,
+	 *     otherwise {@code null}
 	 * @return topologically sorted array of included Roots.
 	 */
 	// START KGU#815/KGU#824 2020-03-19: Enh. #828, bugfix #836 last argument not needed externally
 	//protected Root[] generateDeclarations(Root _root, String _indent, StringList _varNames, StringList complexConsts) {
 	protected Root[] generateDeclarations(Root _root, String _indent, StringList _varNames) {
 		/* A StringList being filled with the names of those structured
-		 * constants that cannot be converted to structured Oberon constants but are to
-		 * be deconstructed as mere variables in the body. */
+		 * constants that cannot be converted to structured Oberon constants
+		 * but are to be deconstructed as mere variables in the body. */
 		StringList complexConsts = new StringList();
 	// END KGU#815/KGU#824 2020-03-19
 		Root[] includes = new Root[]{};
@@ -1925,7 +1982,7 @@ public class OberonGenerator extends Generator {
 		// END KGU#388 2017-09-19
 		
 		if (!this.structuredInitialisations.isEmpty()) {
-			// Was there a type definition inbetween?
+			// Had there been a type definition meanwhile?
 			if (introPlaced) {
 				code.add(_indent + "const");
 			}
@@ -1999,12 +2056,17 @@ public class OberonGenerator extends Generator {
 	}
 
 	/**
-	 * Adds constant definitions for all non-complex constants in {@code _root.constants}.
+	 * Adds constant definitions for all non-complex constants in
+	 * {@code _root.constants}.
+	 * 
 	 * @param _root - originating Root
 	 * @param _indent - current indentation level (as String)
-	 * @param _complexConsts - a list of constants of array or record structure to be postponed
-	 * @param _sectionBegun - whether the CONST section had already been introduced by keyword CONST
-	 * @return true if CONST section has been introduced (no matter whether before or here)
+	 * @param _complexConsts - a list of constants of array or record structure
+	 *     to be postponed
+	 * @param _sectionBegun - whether the CONST section had already been
+	 *     introduced by keyword CONST
+	 * @return true if CONST section has been introduced (no matter whether
+	 *     before or here)
 	 */
 	protected boolean generateConstDefs(Root _root, String _indent, StringList _complexConsts, boolean _sectionBegun) {
 		if (!_root.constants.isEmpty()) {
@@ -2059,6 +2121,11 @@ public class OberonGenerator extends Generator {
 				else {
 					_complexConsts.add(constName);
 				}
+				// START KGU#829 2026-04-28: Bugfix #1235 Cater for name qualification
+				if (!glob.isEmpty() && this.isLibraryModule()) {
+					this.globalLibNames.add(constName);
+				}
+				// END KGU#829 2026-04-28
 			}
 			addSepaLine();
 		}
@@ -2067,6 +2134,7 @@ public class OberonGenerator extends Generator {
 
 	/**
 	 * Adds type definitions for all types in {@code _root.getTypeInfo()}.
+	 * 
 	 * @param _root - originating Root
 	 * @param _indent - current indentation level (as String)
 	 * @param _sectionBegun - whether the TYPE section had already been introduced by keyword CONST
@@ -2152,19 +2220,26 @@ public class OberonGenerator extends Generator {
 					+ this.transformTypeFromEntry(_type, null, !_typeName.equals(_type.typeName)) + ";");					
 			// END KGU#1082 2023-09-28
 		}
+		// START KGU#829 2026-04-28: Bugfix #1235 Cater for name qualification
+		if (!postfix.isEmpty() && this.isLibraryModule()) {
+			this.globalLibNames.add(_typeName);
+		}
+		// END KGU#829 2026-04-28
 		addSepaLine();
 		return _sectionBegun;
 	}
 	
 	
 	/**
-	 * Adds declarations for the variables and complex constants in {@code _varNames} from
-	 * the given {@link Root} {@code _root}.  
+	 * Adds declarations for the variables and complex constants in
+	 * {@code _varNames} from the given {@link Root} {@code _root}.
+	 * 
 	 * @param _root - the owning {@link Root}
 	 * @param _indent - the current indentation (as string)
 	 * @param _varNames - list of occurring variable names
 	 * @param _complexConsts - list of constants with non-scalar type
-	 * @param _sectionBegun - whether the introducing keyword for this declaration section has already been placed
+	 * @param _sectionBegun - whether the introducing keyword for this
+	 *     declaration section has already been placed
 	 * @return whether the type section has been opened.
 	 */
 	protected boolean generateVarDecls(Root _root, String _indent, StringList _varNames, StringList _complexConsts, boolean _sectionBegun) {
@@ -2215,6 +2290,11 @@ public class OberonGenerator extends Generator {
 			if (typeInfo != null) {
 				types = getTransformedTypes(typeInfo, true);
 			}
+			// START KGU#829 2026-04-28: Bugfix #1235 Cater for name qualification
+			if (!glob.isEmpty() && this.isLibraryModule()) {
+				this.globalLibNames.add(varName);
+			}
+			// END KGU#829 2026-04-28
 			if (types != null && types.count() == 1) {
 				String type = this.resolveArrayType(typeInfo, types.get(0));
 				String comment = "";
@@ -2262,8 +2342,9 @@ public class OberonGenerator extends Generator {
 	// END KGU#375/KGU#376/KGU#388 2017-09-20
 
 	/**
-	 * With help of the respective {@code typeInfo}, resolves array markers in the
-	 * transformed type description {@code typeStr}.
+	 * With help of the respective {@code typeInfo}, resolves array markers in
+	 * the transformed type description {@code typeStr}.
+	 * 
 	 * @param typeInfo - the {@link TypeMapEntry} corresponding with {@code typeStr}
 	 * @param typeStr - a pre-transformed canonical type description or name
 	 * @return the Pascal-conform type description with resolved array levels.
@@ -2414,5 +2495,30 @@ public class OberonGenerator extends Generator {
 		}
 		return unitName;
 	}
+
+	// START KGU#829 2026-04-28: Bugfix #1235 Qualified module import
+	@Override
+	protected boolean generateModule(Vector<Root> _roots, TreeMap<Root, SubTopoSortEntry> _dependencyTree, boolean _batchMode, Vector<Root> _entryPoints, String _libName)
+	{
+		libModuleName = _libName;
+		return super.generateModule(_roots, _dependencyTree, _batchMode, _entryPoints, _libName);
+	}
+	// END KGU#829 2026-04-28
+	
+	// START KGU#311/KGU#815 2026-04-28: Enh. #314 + enh. #828
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#copyFileAPIResources(java.lang.String)
+	 */
+	@Override
+	protected boolean copyFileAPIResources(String _filePath)
+	{
+		/* If importedLibRoots is not null then we had a multi-module export,
+		 * this function will only be called if at least one of the modules required
+		 * the file API, so all requiring modules will have put "StructorizerFileAPI"
+		 * to their USES list. Now we have to make sure it gets provided.
+		 */
+		return this.importedLibRoots == null || copyFileAPIResource("Mod", FILE_API_MODULE_NAME+".Mod", _filePath);
+	}
+	// END KGU#311/KGU#815 2026-04-28
 
 }

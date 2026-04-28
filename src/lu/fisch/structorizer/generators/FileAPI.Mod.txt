@@ -230,8 +230,8 @@ PROCEDURE fileRead*(handle: LONGINT): POINTER TO Object;
  * This Structorizer API function cannot be supported sensibly with Oberon module
  * Files. (We might have to make use of the more complex modules Oberon and Texts.)
  * So we just try to read a line from the file and return a pointer to a record
- * containing this line or just NIL if the fileId was stale or the file was exhausted
- * the reading attempt failed.
+ * containing this line or just NIL if the fileId was stale, the file was exhausted
+ * or the reading attempt failed.
  *)
 
 VAR

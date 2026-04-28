@@ -315,8 +315,8 @@ public class CPlusPlusGenerator extends CGenerator {
 	@Override
 	protected void transformFileAPITokens(StringList tokens)
 	{
-		for (int i = 0; i < Executor.fileAPI_names.length; i++) {
-			tokens.replaceAll(Executor.fileAPI_names[i], FILE_API_CLASS_NAME + "::" + Executor.fileAPI_names[i]);
+		for (int i = 0; i < Executor.FILE_API_NAMES.length; i++) {
+			tokens.replaceAll(Executor.FILE_API_NAMES[i], FILE_API_CLASS_NAME + "::" + Executor.FILE_API_NAMES[i]);
 		}
 	}
 	// END KGU#311 2016-12-25/2017-01-05

@@ -457,7 +457,7 @@ public class Executor implements Runnable
 
 	private static Executor mySelf = null;
 	// START KGU#311 2016-12-22: Enh. #314 - fileAPI index
-	public static final String[] fileAPI_names = {
+	public static final String[] FILE_API_NAMES = {
 		"fileOpen", "fileCreate", "fileAppend",
 		"fileClose",
 		"fileRead", "fileReadChar", "fileReadInt", "fileReadDouble", "fileReadLine",
@@ -466,7 +466,7 @@ public class Executor implements Runnable
 	};
 	// END KGU#311 2016-12-22
 
-	private static final String[] builtInFunctions = new String[] {
+	private static final String[] BUILT_IN_FUNCTIONS = new String[] {
 			"public int random(int max) { return (int) (Math.random()*max); }",
 			"public void randomize() {  }",
 			// START KGU#391 2017-05-07: Enh. #398 - we need a sign function to ease the rounding support for COBOL import
@@ -3160,8 +3160,8 @@ public class Executor implements Runnable
 			// END KGU#969 2021-04-14
 			// END KGU 2016-12-18
 
-			for (int i = 0; i < builtInFunctions.length; i++) {
-				interpreter.eval(builtInFunctions[i]);
+			for (int i = 0; i < BUILT_IN_FUNCTIONS.length; i++) {
+				interpreter.eval(BUILT_IN_FUNCTIONS[i]);
 			}
 			
 		} catch (EvalError ex)

@@ -26,7 +26,7 @@ Known issues (also see https://github.com/fesch/Structorizer.Desktop/issues):
 - ARM export is still experimental and relies on a specific and very restricted
   syntax for the element contents in order to produce meaningful results.
 
-Current development version 3.32-36 (2026-04-27)
+Current development version 3.32-36 (2026-04-28)
 - 01: Bugfix #987: Duplicate subroutine comment export by Pascal generator <2>
 - 01: Bugfix #988: Syntax error in Structorizer.bat and Arranger.bat fixed <2>
 - 01: Bugfix #989: Expressions in EXIT elements (e.g. return) were forgotten
@@ -331,6 +331,7 @@ Current development version 3.32-36 (2026-04-27)
 - 35: Enh. #1228 Executor is to provide more sensible time information <2>
 - 35: Fix #1229 Shell script mod. for non-reparenting window managers
       <JoshiCodes>
+- 36: Enh. #314 Oberon export had not addressed Structorizer File API <2>
 - 36: Issue #1081 Executor new strictly rejects operators ++, --, +=, -=,
       etc., new Analyser warning when these operators are found <2>
 - 36: Issue #1133 Sporadic error message "Problem on changing Look & Feel ..."
@@ -341,6 +342,8 @@ Current development version 3.32-36 (2026-04-27)
       and struct definitions with arrays in C style <2>
 - 36: Bugfix #1234 FileAPI code had been missing on code generation if only
       involved subroutine diagrams but no entry point diagram used it. <2>
+- 36: Bugfix #1235 On Oberon export, references to objects imported from
+      a library module (or the FileAPI module) hadn't been qualified. <2>
 
 Version 3.32 (2021-09-19) requiring Java 11 or newer
 - 01: Bugfix #851/2: SPECIAL-NAMES sections caused COBOL parser abort <2>

@@ -466,14 +466,14 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// START KGU#815 2020-03-17: Enh. #828 Preparation for group export
 	/** List of {@link Root}s to be declared at topLevel in the module interface */
 	protected Vector<Root> moduleRoots = null;
-	/** Set of possibly required Roots being imported from another module or null */
+	/** Set of possibly required Roots being imported from another module, or {@code null} */
 	protected HashSet<Root> importedLibRoots = null;
 	/** Internal Flag for library module creation
 	 * @see #isLibraryModule() */
 	private boolean isLibModule = false;
 	/** Internal flag registering the placement of scissor lines */
 	private boolean isFilePartitioned = false;
-	/** @return true if the generator is generating a library module, false otherwise */
+	/** @return {@code true} if the generator is generating a library module, false otherwise */
 	protected boolean isLibraryModule() {
 		return isLibModule;
 	}
@@ -827,13 +827,14 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		return rootsWithInput.contains(_root);
 	}
 	/**
-	 * Returns true if in the diagram referenced by {@code _root} there are empty
-	 * input instructions, i.e., instructions merely waiting for user acknowledge
-	 * (this is automatically detected before the actual export begins).<br/>
+	 * Returns {@code true} if in the diagram referenced by {@code _root} there
+	 * are empty input instructions, i.e., instructions merely waiting for user
+	 * acknowledge (this is automatically detected before the actual export
+	 * begins).<br/>
 	 * This can e.g. be used to insert special include directives if needed.
 	 * 
 	 * @param _root - the interesting diagram
-	 * @return true iff empty input instructions are contained
+	 * @return {@code true} iff empty input instructions are contained
 	 * 
 	 * @see #hasEmptyInput()
 	 * @see #getInputReplacer()
@@ -845,12 +846,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		return rootsWithEmptyInput.contains(_root);
 	}
 	/**
-	 * Returns true if in any of the diagrams to be exported there are output
-	 * instructions (this is automatically detected before the actual export
-	 * begins).<br/>
+	 * Returns {@code true} if in any of the diagrams to be exported there are
+	 * output instructions (this is automatically detected before the actual
+	 * export begins).<br/>
 	 * This can e.g. be used to insert special include directives if needed.
 	 * 
-	 * @return true iff output instructions are contained
+	 * @return {@code true} iff output instructions are contained
 	 * 
 	 * @see #hasOutput(Root)
 	 * @see #getOutputReplacer()
@@ -877,7 +878,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * actual export begins).<br/>
 	 * This can e.g. be used to insert special include directives if needed.
 	 * 
-	 * @return true iff input instructions are contained
+	 * @return {@code true} iff input instructions are contained
 	 * 
 	 * @see #hasInput(Root)
 	 * @see #getInputReplacer()
@@ -899,13 +900,13 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		return !rootsWithInput.isEmpty();
 	}
 	/**
-	 * Returns true if in any of the diagrams to be exported there are empty
-	 * instructions, i.e. those without variable, just intended to wait for
-	 * the user's attention (this is automatically detected before the actual
-	 * export begins).<br/>
+	 * Returns {@code true} if in any of the diagrams to be exported there are
+	 * empty instructions, i.e. those without variable, just intended to wait
+	 * for the user's attention (this is automatically detected before the
+	 * actual export begins).<br/>
 	 * This can e.g. be used to insert special include directives if needed.
 	 * 
-	 * @return true iff input instructions are contained
+	 * @return {@code true} iff input instructions are contained
 	 * 
 	 * @see #hasEmptyInput(Root)
 	 * @see #getInputReplacer()
@@ -922,13 +923,15 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	/**
 	 * Checks whether the given {@code _id} has already been defined by one
 	 * of the diagrams included by {@code _root} or this diagram itself.<br/>
-	 * If not and {@code _setDefinedIfNot} is true then registers the {@code _id}
-	 * with {@code _root} in {@link #declaredStuff}.
+	 * If not and {@code _setDefinedIfNot} is true then registers the
+	 * {@code _id} with {@code _root} in {@link #declaredStuff}.
 	 * 
 	 * @param _root - the currently exported Root
-	 * @param _id - the name of a constant, variable, or type (in the latter case prefixed with ':')
-	 * @param _setDefinedIfNot - whether the name is to be registered for {@code _root} now if not
-	 * @return {@code true} if there had already been a definition before
+	 * @param _id - the name of a constant, variable, or type (in the latter
+	 *     case prefixed with ':')
+	 * @param _setDefinedIfNot - whether the name is to be registered for
+	 *     {@code _root} now if not
+	 * @return {@code true} if there had already been a definition before.
 	 * 
 	 * @see #wasDefHandled(Root, String, boolean, boolean)
 	 * @see #setDefHandled(String, String)
@@ -950,10 +953,13 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * the {@code _id} with {@code _root} in {@link #declaredStuff}.
 	 * 
 	 * @param _root - the currently exported {@link Root}
-	 * @param _id - the name of a constant, variable, or type (in the latter case prefixed with ':')
-	 * @param _setDefinedIfNot - whether the name is to be registered for {@code _root} now if not
-	 * @param _involveIncludables - whether the included diagrams are also to be consulted
-	 * @return true if there had already been a definition before
+	 * @param _id - the name of a constant, variable, or type (in the latter
+	 *     case prefixed with ':')
+	 * @param _setDefinedIfNot - whether the name is to be registered for
+	 *     {@code _root} now if not
+	 * @param _involveIncludables - whether the included diagrams are also
+	 *     to be consulted
+	 * @return {@code true} if there had already been a definition before
 	 * 
 	 * @see #setDefHandled(String, String)
 	 */
@@ -990,11 +996,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// END KGU#376 2017-09-26
 
 	/**
-	 * Registers the declaration of entity {@code _id} as handled in the code for
-	 * the {@link Root} with signature {@code _signature}.
+	 * Registers the declaration of entity {@code _id} as handled in the code
+	 * for the {@link Root} with signature {@code _signature}.
 	 * 
 	 * @param _signature - signature of the responsible {@link Root}
-	 * @param _id - the identifier (or ':'-prefixed type key) of the declared entity
+	 * @param _id - the identifier (or ':'-prefixed type key) of the declared
+	 *     entity
 	 * 
 	 * @see #wasDefHandled(Root, String, boolean)
 	 * @see #wasDefHandled(Root, String, boolean, boolean)
@@ -1112,18 +1119,20 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 	
 	/**
-	 * Appends a multi-line comment with configurable comment delimiters for the
-	 * starting line, the continuation lines, and the trailing line.
+	 * Appends a multi-line comment with configurable comment delimiters for
+	 * the starting line, the continuation lines, and the trailing line.
 	 *  
-	 * @param _sl - the StringList to be written as commment. Even if {@code _sl}
-	 *     is empty, a comment will be generated if {@code _start} or {@code _stop}
-	 *     are not {@code null}!
+	 * @param _sl - the StringList to be written as commment. Even if
+	 *     {@code _sl} is empty, a comment will be generated if {@code _start}
+	 *     or {@code _stop} are not {@code null}!
 	 * @param _indent - the basic indentation 
-	 * @param _start - comment symbol for the leading comment line (e.g. "/**"; 
+	 * @param _start - comment symbol for the leading comment line (e.g.
+	 *     "&sol;&ast;&ast;"); 
 	 *     omitted if being {@code null})
-	 * @param _cont - comment symbol for the continuation lines (e.g. " *")
-	 * @param _end - comment symbol for trailing line (e.g. " *"+"/"; if null then
-	 *     no trailing line is generated)
+	 * @param _cont - comment symbol for the continuation lines (e.g. 
+	 *     "&nbsp;&ast;")
+	 * @param _end - comment symbol for trailing line (e.g. "&nbsp;&ast;&sol;");
+	 *     if {@code null} then no trailing line is generated)
 	 * 
 	 * @see #appendComment(Element, String)
 	 * @see #appendAsComment(Element, String)
@@ -1169,11 +1178,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 
 	// START KGU#815 2020-03-16: Enh. #828 Needed for group export as code module.
 	/**
-	 * Inserts the comment part of _element into the code from line {@code _atLine} on, using delimiters
-	 * this.commentSymbolLeft and this.commentSymbolRight (if given) to enclose the comment lines, with
-	 * indentation {@code _indent}.<br/>
-	 * Increments other known cached insertion line numbers greater than or equal to
-	 * {@code _atLine} accordingly.
+	 * Inserts the comment part of _element into the code from line
+	 * {@code _atLine} on, using delimiters {@link #commentSymbolLeft()} and
+	 * {@link #commentSymbolRight()} (if given) to enclose the comment lines,
+	 * with indentation {@code _indent}.<br/>
+	 * Increments other known cached insertion line numbers greater than or
+	 * equal to {@code _atLine} accordingly.
 	 * 
 	 * @param _element current NSD element
 	 * @param _indent indentation string
@@ -1195,8 +1205,8 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	/**
 	 * Inserts the given String as single comment line into the exported code
 	 * before line {@code _atLine}.<br/>
-	 * Increments other known cached insertion line numbers greater than or equal to
-	 * {@code _atLine} accordingly.
+	 * Increments other known cached insertion line numbers greater than or
+	 * equal to {@code _atLine} accordingly.
 	 * 
 	 * @param _text - the text to be added as comment
 	 * @param _indent - indentation string
@@ -1237,10 +1247,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 
 	/**
-	 * Inserts all lines of the given StringList as a series of single comment lines into the
-	 * exported code from line {@code _atLine} on.<br/>
-	 * Increments other known cached insertion line numbers greater than or equal to
-	 * {@code _atLine} accordingly.
+	 * Inserts all lines of the given StringList as a series of single comment
+	 * lines into the exported code from line {@code _atLine} on.<br/>
+	 * Increments other known cached insertion line numbers greater than or
+	 * equal to {@code _atLine} accordingly.
 	 * 
 	 * @param _sl - the text to be added as comment
 	 * @param _indent - indentation string
@@ -1271,18 +1281,18 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 
 	/**
-	 * Appends a multi-line comment with configurable comment delimiters for the
-	 * starting line, the continuation lines, and the trailing line. 
+	 * Appends a multi-line comment with configurable comment delimiters for
+	 * the starting line, the continuation lines, and the trailing line.
 	 * 
-	 * @param _sl - the StringList to be written as commment. Even if {@code _sl}
+	 * @param _sl - the StringList to be written as comment. Even if {@code _sl}
 	 *     is empty, a comment will be generated if {@code _start} or {@code _stop}
 	 *     are not {@code null}!
 	 * @param _indent - the basic indentation 
 	 * @param _start - comment symbol for the leading comment line (e.g. "/**";
 	 *     omitted if being null)
 	 * @param _cont - comment symbol for the continuation lines (e.g. " *")
-	 * @param _end - comment symbol for trailing line (e.g. " *"+"/"; if null then
-	 *     no trailing line is generated)
+	 * @param _end - comment symbol for trailing line (e.g. " *"+"/"; if
+	 *     {@code null} then no trailing line is generated)
 	 * @param _atLine - line number where to insert
 	 * @return number of inserted lines
 	 * 
@@ -1331,21 +1341,23 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	
 	// START KGU#607 2018-10-30: (Issue #346)
 	/**
-	 * This is a service method inheriting generators may call at the appropriate
-	 * position in order to add include (or import or uses etc.) directives
-	 * the generator regards as necessary and had enqueued in {@link #generatorIncludes}.<br/>
-	 * If user-configured include items have already been added to the code then
-	 * argument {@code skipUserIncludes} should be set true in oder to skip them here.
-	 * Otherwise the argument should be set false lest items of the intersection of both
-	 * sets should be omitted by both this method and {@link #appendUserIncludes(String)}.<br/>
+	 * This is a service method inheriting generators may call at the
+	 * appropriate position in order to add include (or import or uses etc.)
+	 * directives the generator regards as necessary and had enqueued in
+	 * {@link #generatorIncludes}.<br/>
+	 * If user-configured include items have already been added to the code
+	 * then argument {@code skipUserIncludes} should be set true in order to
+	 * skip them here. Otherwise the argument should be set false lest items of
+	 * the intersection of both sets should be omitted by both this method and
+	 * {@link #appendUserIncludes(String)}.<br/>
 	 * The method calls a subclassable method {@link #prepareUserIncludeItem(String)}
 	 * (empty at {@link Generator} level) for every configured item before the
 	 * insertion takes place - if some pre-processing of the items is necessary
 	 * then the generator subclass ought to override the preparation method.
 	 * 
 	 * @param _indent - current indentation string
-	 * @param skipUserIncludes - if user includes have already been added to the code
-	 * and are not to be repeated inadvertently here.
+	 * @param skipUserIncludes - if user includes have already been added to
+	 *     the code and are not to be repeated inadvertently here.
 	 * @return number of inserted lines
 	 * 
 	 * @see #getIncludePattern()
@@ -1583,13 +1595,13 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 
 	// START KGU#277 2016-10-13: Enh. #270
 	/**
-	 * Depending on {@code asComment}, adds the given text either as comment or as active
-	 * source code to the code lines.<br/>
+	 * Depending on {@code asComment}, adds the given text either as comment or
+	 * as active source code to the code lines.<br/>
 	 * This is a convenient wrapper for {@code this.code.add(String)}.
 	 * 
-	 * @param text - the prepared (transformed and composed) line of code
+	 * @param _text - the prepared (transformed and composed) line of code
 	 * @param _indent - current indentation
-	 * @param asComment - whether or not the code is to be commented out.
+	 * @param _asComment - whether or not the code is to be commented out.
 	 * 
 	 * @see #appendComment(Element, String)
 	 * @see #appendAsComment(Element, String)
@@ -1597,24 +1609,24 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #appendComment(StringList, String)
 	 * @see #appendBlockComment(StringList, String, String, String, String)
 	 */
-	protected void addCode(String text, String _indent, boolean asComment)
+	protected void addCode(String _text, String _indent, boolean _asComment)
 	{
-		if (asComment)
+		if (_asComment)
 		{
 			// Indentation is intentionally put inside the comment (comment encloses entire line)
-			appendComment(_indent + text, "");
+			appendComment(_indent + _text, "");
 		}
 		else
 		{
-			code.add(_indent + text);
+			code.add(_indent + _text);
 		}
 	}
 	// END KGU#277 2016-10-13
 	
 	// START KGU#830 2020-03-19 New mechanism to avoid accumulation of empty lines
 	/**
-	 * Controlled addition of a single empty separator line only in case the previous
-	 * line was not also a blank line.
+	 * Controlled addition of a single empty separator line only in case the
+	 * previous line was not also a blank line.
 	 * 
 	 * @see #addSepaLine(String)
 	 */
@@ -1625,10 +1637,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		}
 	}
 	/**
-	 * Controlled addition of a single indented separator line only in case the previous
-	 * line was not also a blank line. This version of {@link #addSepaLine()} should be
-	 * preferred for languages (like Python) where indentation matters for structure
-	 * detection.
+	 * Controlled addition of a single indented separator line only in case the
+	 * previous line was not also a blank line. This version of
+	 * {@link #addSepaLine()} should be preferred for languages (like Python)
+	 * where indentation matters for structure detection.
 	 * 
 	 * @param _indent - current indentation string
 	 * 
@@ -1641,9 +1653,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		}
 	}
 	/**
-	 * Controlled insertion of a single indented separator line only in case the previous
-	 * line is not also a blank line. The argument {@code _indent} is intended for languages
-	 * (like Python) where indentation matters for structure detection.<br/>
+	 * Controlled insertion of a single indented separator line only in case
+	 * the previous line is not also a blank line. The argument {@code _indent}
+	 * is intended for languages (like Python) where indentation matters for
+	 * structure detection.<br/>
 	 * Affected line markers will be updated appropriately.
 	 * 
 	 * @param _indent - current indentation string
@@ -1665,13 +1678,15 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	
 	// START KGU#815/KGU#824 2020-03-20: Enh. #828, bugfix #836
 	/**
-	 * Appends a full or dashed scissor line (with a preceding and following empty line)
-	 * to mark the cut points in batch or group export, where a file name proposal may
-	 * be inserted.<br/>
+	 * Appends a full or dashed scissor line (with a preceding and following
+	 * empty line) to mark the cut points in batch or group export, where a
+	 * file name proposal may be inserted.<br/>
 	 * Modifies {@link #isFilePartitioned}!
 	 * 
-	 * @param full - if true then a solid line will be added otherwise a dashed line
-	 * @param fileName - a proposed file name to be inserted into the line or null
+	 * @param full - if {@code true} then a solid line will be added otherwise
+	 *     a dashed line
+	 * @param fileName - a proposed file name to be inserted into the line, or
+	 *     {@code null}
 	 */
 	protected void appendScissorLine(boolean full, String fileName)
 	{
@@ -1681,14 +1696,16 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		this.isFilePartitioned = true;
 	}
 	/**
-	 * Inserts a full or dashed scissor line at line indes {@code atLine} to mark a
-	 * cut point in the file on batch or group export, where a file name proposal may
-	 * be inserted.<br/>
+	 * Inserts a full or dashed scissor line at line indes {@code atLine} to
+	 * mark a cut point in the file on batch or group export, where a file name
+	 * proposal may be inserted.<br/>
 	 * Will update all line markers greater than or equal to {@code atLine}<br/>
 	 * Modifies {@link #isFilePartitioned}!
 	 * 
-	 * @param full - if true then a solid line will be added otherwise a dashed line
-	 * @param fileName - a proposed file name to be inserted into the line or null
+	 * @param full - if {@code true} then a solid line will be added otherwise
+	 *     a dashed line
+	 * @param fileName - a proposed file name to be inserted into the line, or
+	 *     {@code null}
 	 * @param atLine - line index of the insertion position
 	 * @return number of actually inserted lines.
 	 */
@@ -1706,8 +1723,8 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * (for e.g. {@link #appendScissorLine(boolean, String)}
 	 * and {@link #insertScissorLine(boolean, String, int)}).
 	 * 
-	 * @param full - if {@code true} then a solid (contiguous) line will be returned,
-	 *     otherwise a dashed line.
+	 * @param full - if {@code true} then a solid (contiguous) line will be
+	 *     returned, otherwise a dashed line.
 	 * @param fileName - a label to be inserted, might e.g. be a file name,
 	 *     or {@code null}, which means no inserted label.
 	 */
@@ -1726,13 +1743,14 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	
 	// START KGU#705 2019-09-24: Enh. #738
 	/**
-	 * Does a {@link #codeMap}-aware insertion of the given {@code text} (which is
-	 * supposed to be a single line, otherwise counting trouble is likely to occur)
-	 * into the {@link #code} before line number {@code atLine}, i.e., updates all
-	 * lines references within {@link #codeMap} if existent.
+	 * Does a {@link #codeMap}-aware insertion of the given {@code text} (which
+	 * is supposed to be a single line, otherwise counting trouble is likely to
+	 * occur) into the {@link #code} before line number {@code atLine}, i.e.,
+	 * updates all lines references within {@link #codeMap} if existent.
 	 * 
 	 * @param text - the line to be inserted at {@code atLine}
-	 * @param atLine - the number of the line (code entry) before which {@code text} is to be inserted
+	 * @param atLine - the number of the line (code entry) before which
+	 *     {@code text} is to be inserted
 	 */
 	protected void insertCode(String text, int atLine)
 	{
@@ -1758,18 +1776,21 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// START KGU#815/KGU#824 2020-03-19: Enh. #828, bugfix #836
 	/**
 	 * Auxiliary routine for the insertion of subroutines in languages where a
-	 * routine prototype (signature) is expected in a specific interface section
-	 * apart from the implementation. The insertion takes place at line {@code _atLine}.<br/>
+	 * routine prototype (signature) is expected in a specific interface
+	 * section apart from the implementation. The insertion takes place at line
+	 * {@code _atLine}.<br/>
 	 * Increments {@link #subroutineInsertionLine}, {@link #interfaceInsertionLine},
-	 * and {@link #includeInsertionLine} accordingly if these are greater than or
-	 * equal to {@code _atLine}.<br/>
+	 * and {@link #includeInsertionLine} accordingly if these are greater than
+	 * or equal to {@code _atLine}.<br/>
 	 * TODO: The basic version does not do anything, subclasses are to override
 	 * this if their target language supports interface sections or header files
 	 * or the like.
 	 * 
-	 * @param _root - the diagram the routine prototype for which is to be inserted
+	 * @param _root - the diagram the routine prototype for which is to be
+	 *     inserted
 	 * @param _indent - the indentation string for the current element level
-	 * @param _withComment - whether the routine comment is to be placed before it
+	 * @param _withComment - whether the routine comment is to be placed before
+	 *     it
 	 * @param _atLine - line number for insertion
 	 * @return the number of inserted lines.
 	 */
@@ -1783,7 +1804,8 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	/**
 	 * Tries to find the defining instruction for identifier {@code _id} within
 	 * the given Root {@code _root} or one of the identified includables and
-	 * appends the element comment at the current position in this case.
+	 * appends the element comment at the current position in this case.<br/>
+	 * Side effect: sets {@link #lastDeclSource} to the originating Instruction.
 	 * 
 	 * @param _root - the currently generated Root
 	 * @param _indent - the current indentation as String
@@ -1816,24 +1838,27 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// END KGU#376/KGU#388 2017-09-25
 
 	/**
-	 * Overridable general text transformation routine, performing the following steps:<ol>
-	 * <li> Eliminates parser preference keywords listed below and unifies all operators
+	 * Overridable general text transformation routine, performing the
+	 * following steps:<ol>
+	 * <li> Eliminates parser preference keywords listed below and unifies all
+	 *      operators
 	 *      (see {@link lu.fisch.Structorizer.elements.Element#unifyOperators(java.lang.String)}).<ul>
 	 *      <li>"preAlt", "preCase", "preWhile", "preRepeat",</li>
 	 *      <li>"postAlt", "postCase", "postWhile", "postRepeat";</li>
 	 *      </ul></li>
 	 * <li> Tokenizes the result, processes the tokens by an overridable method
-	 *      {@link #transformTokens(StringList)}, and re-concatenates the result;</li>
+	 *      {@link #transformTokens(StringList)}, and re-concatenates the
+	 *      result;</li>
 	 * <li> Transforms Input and Output lines according to regular replacement
 	 *      expressions defined
 	 *      by {@link #getInputReplacer(boolean)} and {@link #getOutputReplacer()},
-	 *      respectively. This is done by overridable methods {@link #transformInput(String)}
-	 *      and {@link #transformOutput(String)}, respectively.
-	 *      This is only done if {@code _input} starts with one of the configured Input 
-	 *      and Output keywords</li>
+	 *      respectively. This is done by overridable methods
+	 *      {@link #transformInput(String)} and {@link #transformOutput(String)},
+	 *      respectively. This is only done if {@code _input} starts with one
+	 *      of the configured Input and Output keywords</li>
 	 * </ol>
-	 * <b>Note:</b> Of course steps 1 through 3 will only be done if the overriding method
-	 * calls this parent method at some suited point.
+	 * <b>Note:</b> Of course steps 1 through 3 will only be done if the
+	 * overriding method calls this parent method at some suited point.
 	 * 
 	 * @param _input a line or the concatenated lines of an Element's text
 	 * @return the transformed line (target language line)
@@ -1851,22 +1876,26 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 
 	/**
-	 * Overridable general text transformation routine, performing the following steps:
+	 * Overridable general text transformation routine, performing the following
+	 * steps:
 	 * <ol>
-	 * <li> Eliminates parser preference keywords listed below and unifies all operators.
-	 *      <ul>
-	 *      <li>"preAlt", "preCase", "preWhile", "preRepeat",</li>
-	 *      <li>"postAlt", "postCase", "postWhile", "postRepeat";</li>
-	 *      </ul></li>
+	 * <li> Eliminates parser preference keywords listed below and unifies all
+	 *     operators.
+	 *     <ul>
+	 *     <li>"preAlt", "preCase", "preWhile", "preRepeat",</li>
+	 *     <li>"postAlt", "postCase", "postWhile", "postRepeat";</li>
+	 *     </ul></li>
 	 * <li> Tokenizes the result, processes the tokens by an overridable method
 	 *    {@link #transformTokens(StringList)}, and re-concatenates the result;</li>
-	 * <li> Transforms Input and Output lines if {@code _doInputOutput} is {@code true}.
-	 *    This is only done if {@code _input} starts with one of the configured Input
-	 *    and Output keywords.</i>
+	 * <li> Transforms Input and Output lines if {@code _doInputOutput} is
+	 *     {@code true}.
+	 *     This is only done if {@code _input} starts with one of the configured
+	 *     Input and Output keywords.</i>
 	 * </ol>
 	 * 
 	 * @param _input - a line or the concatenated lines of an Element's text
-	 * @param _doInputOutput - whether the third transformations are to be performed
+	 * @param _doInputOutput - whether the third transformations are to be
+	 *     performed
 	 * @return the transformed line (target language line)
 	 * 
 	 * @see #transform(String)
@@ -1955,10 +1984,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 
 	// START KGU#1190 2025-08-17: Bugfix #1207 extracted from transform(String, boolean)
 	/**
-	 * Returns a new {@link StringList} where tokenized keywords found as sublist
-	 * of {@code _tokens} are replaced by single tokens exactly equal to the 
-	 * corresponding user's preferences. This method is to simplify keyword
-	 * detection in the resulting token list
+	 * Returns a new {@link StringList} where tokenized keywords found as
+	 * sublist of {@code _tokens} are replaced by single tokens exactly equal
+	 * to the corresponding user's preferences. This method is to simplify
+	 * keyword detection in the resulting token list
 	 * @param _tokens - a lexically tokenized text
 	 * @return possibly modified copy of {@code _tokens}
 	 */
@@ -1997,7 +2026,8 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * This method is called by {@link #transform(String, boolean)} but may
 	 * also be used elsewhere for a specific token list.
 	 * 
-	 * @param tokens - Sequence of tokens representing the unified line (intermediate syntax)
+	 * @param tokens - Sequence of tokens representing the unified line
+	 *     (intermediate syntax)
 	 * @return transformed string
 	 * 
 	 * @see #transform(String, boolean)
@@ -2016,13 +2046,15 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	/**
 	 * Transforms type identifier into the target language (as far as possible).
 	 * Is to be overridden by the Generator subclasses if typing is an issue.
-	 * Method is called e.g. by {@link #getTransformedTypes(TypeMapEntry, boolean)} and
-	 * in other contexts.<br/>
+	 * Method is called e.g. by {@link #getTransformedTypes(TypeMapEntry, boolean)}
+	 * and in other contexts.<br/>
 	 * <b>Note:</b> This method does not perform a type map retrieval!
 	 * 
-	 * @param _type - a string potentially meaning a datatype (or null)
-	 * @param _default - a default string returned if _type happens to be null
-	 * @return a type identifier (or the unchanged _type value if matching failed)
+	 * @param _type - a string potentially meaning a datatype (or {@code null})
+	 * @param _default - a default string returned if _type happens to be
+	 *     {@code null}
+	 * @return a type identifier (or the unchanged {@code _type} value if
+	 *     matching failed)
 	 * 
 	 * @see #getTransformedTypes(TypeMapEntry, boolean)
 	 * @see #transform(String, boolean)
@@ -2046,8 +2078,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * definition, the enclosing TypeInfo may be given as {@code definingType}.
 	 * 
 	 * @param typeInfo - the defining or derived TypeMapInfo of the type 
-	 * @param definingType - the enclosing type just being defined or {@code null}
-	 * @param preferName - whether the type name is to be preferred over the structure
+	 * @param definingType - the enclosing type just being defined or
+	 *     {@code null}
+	 * @param preferName - whether the type name is to be preferred over the
+	 *     structure
 	 * @return a String suited as type description in declarations etc. of the
 	 *      target language 
 	 */
@@ -2102,7 +2136,8 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * Subclasses the target language of which allows multi-variable
 	 * input instructions should override this.
 	 * 
-	 * @param _inputVarItems - {@link StringList} of variable descriptions for input
+	 * @param _inputVarItems - {@link StringList} of variable descriptions for
+	 *     input
 	 * @return either a syntactically converted combined string with suited
 	 *     operator or separator symbols, or {@code null}.
 	 */
@@ -2154,9 +2189,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// END KGU#653 2019-02-14
 	
 	/**
-	 * Detects whether the given code line starts with the configured input keystring
-	 * and if so replaces it according to the regex pattern provided by
-	 * {@link #getInputReplacer(boolean)}.
+	 * Detects whether the given code line starts with the configured input
+	 * keystring and if so replaces it according to the regex pattern provided
+	 * by {@link #getInputReplacer(boolean)}.
 	 * 
 	 * @param _interm - a code line in intermediate syntax
 	 * @return transformed input instruction or _interm unchanged
@@ -2237,9 +2272,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 
 	/**
-	 * Detects whether the given code line starts with the configured output keystring
-	 * and if so replaces it according to the regex pattern provided by
-	 * {@link #getOutputReplacer()}.
+	 * Detects whether the given code line starts with the configured output
+	 * keystring and if so replaces it according to the regex pattern provided
+	 * by {@link #getOutputReplacer()}.
 	 * 
 	 * @param _interm - a code line in intermediate syntax
 	 * @return transformed output instruction, or {@code _interm} unchanged
@@ -2294,8 +2329,8 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	
 	// START KGU#165 2016-04-03: Support keyword case sensitivity
 	/**
-	 * Returns an appropriate match string for the given parser preference string
-	 * (where {@link CodeParser#ignoreCase} is paid attention to)
+	 * Returns an appropriate match string for the given parser preference
+	 * string (where {@link CodeParser#ignoreCase} is paid attention to)
 	 * 
 	 * @param keyword - parser preference string
 	 * @return match pattern
@@ -2322,10 +2357,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * numbers used for the creation of unambiguous goto or break labels.<br/>
 	 * 
 	 * The mapping is gathered in {@link #jumpTable}.<br/>
-	 * If a return instruction with value is encountered, {@link #returns} will be set true
+	 * If a return instruction with value is encountered, {@link #returns} will
+	 * be set {@code true}
 	 * 
 	 * @param _squeue - instruction sequence to be analysed 
-	 * @return true iff there is no execution path without a value returned.
+	 * @return {@code true} iff there is no execution path without a value
+	 *     returned.
 	 * 
 	 * @see #breakMatchesCase()
 	 * @see #generateCode(Jump, String)
@@ -2541,8 +2578,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * [3] - component path (if {@code _lval} is a record component of an
 	 *    indexed variable, else empty).
 	 * 
-	 * @param _lval - a string found on the left-hand side of an assignment operator
-	 * @return String array of [0] type, [1] name, [2] index, [3] component path; all but [1] may be empty
+	 * @param _lval - a string found on the left-hand side of an assignment
+	 *     operator
+	 * @return String array of [0] type, [1] name, [2] index, [3] component
+	 *     path; all but [1] may be empty
 	 */
 	protected String[] lValueToTypeNameIndexComp(String _lval)
 	{
@@ -2704,7 +2743,8 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * Utility routine that may be used in {@link #generateCode(For, String)}.
 	 * 
 	 * @param _for - the For loop of FOR-IN style to be analysed
-	 * @return a StringList where every element contains one item (as string), or {@code null}
+	 * @return a StringList where every element contains one item (as string),
+	 *     or {@code null}
 	 */
 	protected StringList extractForInListItems(For _for)
 	{
@@ -2734,7 +2774,8 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * 
 	 * @param _call - a CALL element found in Root {@code _caller}
 	 * @param _caller - the Root containing {@code _call}
-	 * @return the called Root if being available and not having been mapped before 
+	 * @return the called Root if being available and not having been mapped
+	 *     before 
 	 */
 	protected Root registerCalled(Call _call, Root _caller)
 	{
@@ -2781,13 +2822,14 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 
 	/**
-	 * Establishes a mapping between Roots {@code _referred} and {@code _caller} in the given
-	 * {@code _referenceMap} for later topological sorting.
+	 * Establishes a mapping between Roots {@code _referred} and {@code _caller}
+	 * in the given {@code _referenceMap} for later topological sorting.
 	 * 
 	 * @param _referred - the Root being referred to by {@code _caller}
 	 * @param _caller - the Root referring to {@code _referred}
 	 * @param _referenceMap - the map from referred Roots to referring Roots
-	 * @return the {@code _referred} Root if it hadn't been in {@code _referenceMap} before 
+	 * @return the {@code _referred} Root if it hadn't been in
+	 *     {@code _referenceMap} before 
 	 */
 	// START KGU#754 2019-11-11: Issue #766 - we want deterministic routine orders
 	//private Root putRootsToMap(Root _referred, Root _caller, Hashtable<Root, SubTopoSortEntry> _referenceMap)
@@ -2848,7 +2890,8 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * {@code fct}.
 	 * 
 	 * @param fct - object holding a parsed subroutine call
-	 * @return a matching {@link Root} object if available, otherwise {@code null}
+	 * @return a matching {@link Root} object if available, otherwise
+	 *     {@code null}
 	 */
 	private Root getAmongSubroutines(Function fct)
 	{
@@ -2919,9 +2962,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 
 	// START KGU#236/KGU#311 2016-12-22: Issue #227, enh. #314 - we may need this more root-specificly
 	/**
-	 * Retrieves important structure information for the given {@link Root} {@code _root},
-	 * its elements, its called subroutines and its included Includables. Uses methods
-	 * {@link #checkElementInformation(Element)} and {@link #registerIncludedRoots(Root, SortedMap)}<br>
+	 * Retrieves important structure information for the given {@link Root}
+	 * {@code _root}, its elements, its called subroutines and its included
+	 * Includables. Uses methods {@link #checkElementInformation(Element)} and
+	 * {@link #registerIncludedRoots(Root, SortedMap)}<br>
 	 * Overwrites the following (internal!) fields:
 	 * <ul>
 	 * <li>{@link #hasEmptyInput}, use {@link #hasEmptyInput(Root)} for test</li>
@@ -3040,8 +3084,8 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		{
 			// Now we check more precisely
 			String text = _ele.getText().getText();
-			for (int i = 0; !usesFileAPI && i < Executor.fileAPI_names.length; i++) {
-				if (text.contains(Executor.fileAPI_names[i]))
+			for (int i = 0; !usesFileAPI && i < Executor.FILE_API_NAMES.length; i++) {
+				if (text.contains(Executor.FILE_API_NAMES[i]))
 					usesFileAPI = true;
 			}
 		}
@@ -3056,8 +3100,8 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * "lvalue"). If {@code _mayBeQualified} is {@code true} then a list of all
 	 * sorts of access qualifiers to the right are allowed (i.e. index access 
 	 * {@code [...]}, component access {@code .<name>}).<br/>
-	 * This is a mere syntactic check, i.e. whether the occurring qualifiers meet
-	 * the structure of the variable is not verified!
+	 * This is a mere syntactic check, i.e. whether the occurring qualifiers
+	 * meet the structure of the variable is not verified!
 	 * 
 	 * @param _tokens - the tokenized expression (without blanks!)
 	 * @param _mayBeQualified - whether qualifiers are allowed (see above)
@@ -3104,10 +3148,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// END KGU#395 2020-04-19
 	
 	/**
-	 * This method is responsible for generating the code of an {@code Instruction} element.<br/>
-	 * This dummy version is to be overridden by each inheriting generator class.<br/>
-	 * It should make use of available helper methods {@link #transform(String)} etc. and
-	 * be aware of the several export options.
+	 * This method is responsible for generating the code of an
+	 * {@code Instruction} element.<br/>
+	 * This dummy version is to be overridden by each inheriting generator
+	 * class.<br/>
+	 * It should make use of available helper methods {@link #transform(String)}
+	 * etc. and be aware of the several export options.
 	 * 
 	 * @param _inst - the {@link Instruction} element to be exported
 	 * @param _indent - the indentation string valid for the given element level
@@ -3134,12 +3180,13 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 	
 	/**
-	 * This method is responsible for generating the code of an {@code Alternative}
-	 * element i.e. an IF construction.<br/>
-	 * This dummy version is to be overridden by each inheriting generator class
-	 * (you may have a look at its code to see how the recursive descending is done).<br/>
-	 * It should make use of available helper methods {@link #transform(String)} etc. and
-	 * be aware of the several export options.
+	 * This method is responsible for generating the code of an
+	 * {@code Alternative} element i.e. an IF construction.<br/>
+	 * This dummy version is to be overridden by each inheriting generator
+	 * class (you may have a look at its code to see how the recursive
+	 * descending is done).<br/>
+	 * It should make use of available helper methods {@link #transform(String)}
+	 * etc. and be aware of the several export options.
 	 * 
 	 * @param _alt - the {@link Alternative} element to be exported
 	 * @param _indent - the indentation string valid for the given element level
@@ -3171,9 +3218,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * This method is responsible for generating the code of a {@code Case}
 	 * element i.e. a multiple selection.<br/>
 	 * This dummy version is to be overridden by each inheriting generator class
-	 * (you may have a look at its code to see how the recursive descending is done).<br/>
-	 * It should make use of available helper methods {@link #transform(String)} etc. and
-	 * be aware of the several export options.
+	 * (you may have a look at its code to see how the recursive descending is
+	 * done).<br/>
+	 * It should make use of available helper methods {@link #transform(String)}
+	 * etc. and be aware of the several export options.
 	 * 
 	 * @param _case - the {@link Case} element to be exported
 	 * @param _indent - the indentation string valid for the given element level
@@ -3208,11 +3256,13 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * This method is responsible for generating the code of a {@code For} loop
 	 * element, either of counting or enumerating style.<br/>
 	 * This dummy version is to be overridden by each inheriting generator class
-	 * (you may have a look at its code to see how the recursive descending is done).<br/>
-	 * It should make use of available helper methods {@link #transform(String)} etc. and
-	 * be aware of the several export options.
+	 * (you may have a look at its code to see how the recursive descending is
+	 * done).<br/>
+	 * It should make use of available helper methods {@link #transform(String)}
+	 * etc. and be aware of the several export options.
 	 * 
-	 * @param _for - the {@link lu.fisch.structorizer.elements.For} element to be exported
+	 * @param _for - the {@link lu.fisch.structorizer.elements.For} element to
+	 *     be exported
 	 * @param _indent - the indentation string valid for the given element level
 	 * 
 	 * @see #generateCode(Instruction, String)
@@ -3237,14 +3287,16 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 
 	/**
-	 * This method is responsible for generating the code of a {@code While} loop
-	 * element.<br/>
-	 * This dummy version is to be overridden by each inheriting generator class
-	 * (you may have a look at its code to see how the recursive descending is done).<br/>
-	 * It should make use of available helper methods {@link #transform(String)} etc. and
-	 * be aware of the several export options.
+	 * This method is responsible for generating the code of a {@code While}
+	 * loop element.<br/>
+	 * This dummy version is to be overridden by each inheriting generator
+	 * class (you may have a look at its code to see how the recursive
+	 * descending is done).<br/>
+	 * It should make use of available helper methods {@link #transform(String)}
+	 * etc. and be aware of the several export options.
 	 * 
-	 * @param _while - the {@link lu.fisch.structorizer.elements.While} element to be exported
+	 * @param _while - the {@link lu.fisch.structorizer.elements.While} element
+	 *     to be exported
 	 * @param _indent - the indentation string valid for the given element level
 	 * 
 	 * @see #generateCode(Instruction, String)
@@ -3269,12 +3321,13 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 
 	/**
-	 * This method is responsible for generating the code of a {@code Repeat} loop
-	 * element.<br/>
-	 * This dummy version is to be overridden by each inheriting generator class
-	 * (you may have a look at its code to see how the recursive descending is done).
-	 * It should make use of available helper methods {@link #transform(String)} etc. and
-	 * be aware of the several export options.
+	 * This method is responsible for generating the code of a {@code Repeat}
+	 * loop element.<br/>
+	 * This dummy version is to be overridden by each inheriting generator
+	 * class (you may have a look at its code to see how the recursive
+	 * descending is done).
+	 * It should make use of available helper methods {@link #transform(String)}
+	 * etc. and be aware of the several export options.
 	 * 
 	 * @param _repeat - the {@link Repeat} element to be exported
 	 * @param _indent - the indentation string valid for the given element level
@@ -3301,12 +3354,13 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 
 	/**
-	 * This method is responsible for generating the code of a {@code Forever} loop
-	 * element.<br/>
-	 * This dummy version is to be overridden by each inheriting generator class
-	 * (you may have a look at its code to see how the recursive descending is done).<br/>
-	 * It should make use of available helper methods {@link #transform(String)} etc. and
-	 * be aware of the several export options.
+	 * This method is responsible for generating the code of a {@code Forever}
+	 * loop element.<br/>
+	 * This dummy version is to be overridden by each inheriting generator
+	 * class (you may have a look at its code to see how the recursive
+	 * descending is done).<br/>
+	 * It should make use of available helper methods {@link #transform(String)}
+	 * etc. and be aware of the several export options.
 	 * 
 	 * @param _forever - the {@link Forever} element to be exported
 	 * @param _indent - the indentation string valid for the given element level
@@ -3333,10 +3387,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 	
 	/**
-	 * This method is responsible for generating the code of a {@code Call} element.<br/>
-	 * This dummy version is to be overridden by each inheriting generator class.<br/>
-	 * It should make use of available helper methods {@link #transform(String)} etc. and
-	 * be aware of the several export options.
+	 * This method is responsible for generating the code of a {@code Call}
+	 * element.<br/>
+	 * This dummy version is to be overridden by each inheriting generator
+	 * class.<br/>
+	 * It should make use of available helper methods {@link #transform(String)}
+	 * etc. and be aware of the several export options.
 	 * 
 	 * @param _call - the {@link Call} element to be exported
 	 * @param _indent - the indentation string valid for the given element level
@@ -3360,10 +3416,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 
 	/**
-	 * This method is responsible for generating the code of an {@code Instruction} element.<br/>
-	 * This dummy version is to be overridden by each inheriting generator class.<br/>
-	 * It should make use of available helper methods {@link #transform(String)} etc. and
-	 * be aware of the several export options.
+	 * This method is responsible for generating the code of an
+	 * {@code Instruction} element.<br/>
+	 * This dummy version is to be overridden by each inheriting generator
+	 * class.<br/>
+	 * It should make use of available helper methods {@link #transform(String)}
+	 * etc. and be aware of the several export options.
 	 * 
 	 * @param _jump - the {@link Jump} element to be exported
 	 * @param _indent - the indentation string valid for the given element level
@@ -3387,14 +3445,14 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 
 	/**
-	 * This method is responsible for generating the code of a {@code Parallel} section
-	 * element.<br/>
-	 * This dummy version just concatenates the threads sequentially and should therefore
-	 * be overridden by each inheriting generator class that knows to orchestrate
-	 * parallelism
-	 * (you may have a look at its code to see how the recursive descending is done).<br/>
-	 * It should make use of available helper methods {@link #transform(String)} etc. and
-	 * be aware of the several export options.
+	 * This method is responsible for generating the code of a {@code Parallel}
+	 * section element.<br/>
+	 * This dummy version just concatenates the threads sequentially and should
+	 * therefore be overridden by each inheriting generator class that knows to
+	 * orchestrate parallelism (you may have a look at its code to see how the
+	 * recursive descending is done).<br/>
+	 * It should make use of available helper methods {@link #transform(String)}
+	 * etc. and be aware of the several export options.
 	 * 
 	 * @param _para - the {@link Parallel} element to be exported
 	 * @param _indent - the indentation string valid for the given element level
@@ -3427,10 +3485,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	
 	// START KGU#686 2019-03-17: Enh. #56 try Element introduced
 	/**
-	 * This method is responsible for generating the code of an {@code Instruction} element.
-	 * This dummy version is to be overridden by each inheriting generator class.<br/>
-	 * It should make use of available helper methods {@link #transform(String)} etc. and
-	 * be aware of the several export options.
+	 * This method is responsible for generating the code of an
+	 * {@code Instruction} element.
+	 * This dummy version is to be overridden by each inheriting generator
+	 * class.<br/>
+	 * It should make use of available helper methods {@link #transform(String)}
+	 * etc. and be aware of the several export options.
 	 * 
 	 * @param _try - the {@link Try} element to be exported
 	 * @param _indent - the indentation string valid for the given element level
@@ -3557,13 +3617,16 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 	
 	/**
-	 * This method does not generate anything itself, it just delegates
-	 * the job to the methods for the contained elements.<br/>
-	 * Should <b>NOT</b> be overridden by subclasses except if inevitable. (Then
-	 * {@code super} ought to be called before or after the specific enhancements.)
+	 * This method does not generate anything itself, it just delegates the job
+	 * to the methods for the contained elements.<br/>
+	 * Should <b>NOT</b> be overridden by subclasses except if inevitable.
+	 * (Then {@code super} ought to be called before or after the specific
+	 * enhancements.)
 	 * 
-	 * @param _subqueue - the {@link Subqueue} holding the elements to be exported
-	 * @param _indent - the indentation string valid for the given element level
+	 * @param _subqueue - the {@link Subqueue} holding the elements to be
+	 *     exported
+	 * @param _indent - the indentation string valid for the given element
+	 *     level
 	 * 
 	 * @see #generateCode(Instruction, String)
 	 * @see #generateCode(Alternative, String)
@@ -3591,13 +3654,15 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 
 	// START KGU#1135 2024-03-19: Issue #1146, #1148 Refactored to regain clarity
 	/**
-	 * Marks the start of the instruction code for nested alternative {@code _alt}
-	 * within the IF ELSIF chain for the code preview.
+	 * Marks the start of the instruction code for nested alternative
+	 * {@code _alt} within the IF ELSIF chain for the code preview.
 	 * 
 	 * @param _alt - nested alternative in the IF ELSIF sequence
 	 * @param _indent - current indentation
-	 * @param _processedAlts - stack of the marked nested Alternatives (to be modified)
-	 * @param _storedLineNos - stack of the associated start line numbers (to be modified)
+	 * @param _processedAlts - stack of the marked nested Alternatives (to be
+	 *     modified)
+	 * @param _storedLineNos - stack of the associated start line numbers (to
+	 *     be modified)
 	 */
 	protected void markElementStart(Alternative _alt, String _indent, Stack<Element> _processedAlts,
 			Stack<Integer> _storedLineNos) {
@@ -3614,8 +3679,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * between the start line numbers held in the {@link codeMap} and in the
 	 * stack {@code _storedLineNos}.
 	 * 
-	 * @param _processedAlts - stack of the marked nested Alternatives (to be emptied)
-	 * @param _storedLineNos - stack of the associated start line numbers (to be emptied)
+	 * @param _processedAlts - stack of the marked nested Alternatives (to be
+	 *     emptied)
+	 * @param _storedLineNos - stack of the associated start line numbers (to
+	 *     be emptied)
 	 */
 	protected void markElementEnds(Stack<Element> _processedAlts, Stack<Integer> _storedLineNos) {
 		Element ele;
@@ -3638,19 +3705,19 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	/******** Public Methods *************/
 	
 	/**
-	 * This method builds the outer code framework for the algorithm
-	 * (i.e. the program, procedure or function definition), usually
-	 * consisting of the header, a "preamble" (containing e.g. variable
-	 * declarations), the implementation part, the result compilation,
-	 * and a footer. See {@link Generator#generateCode(Root, String, boolean)} for the
-	 * general template. Now you have two options:
+	 * This method builds the outer code framework for the algorithm (i.e. the
+	 * program, procedure or function definition), usually consisting of the
+	 * header, a "preamble" (containing e.g. variable declarations), the
+	 * implementation part, the result compilation, and a footer. See
+	 * {@link Generator#generateCode(Root, String, boolean)} for the general
+	 * template. Now you have two options:
 	 * <ol>
-	 * <li>	Either you may override {@link #generateCode(Root, String, boolean)} as a
-	 * 		whole if the substructure template doesn't suit your
-	 * 		target language needs,</li>
-	 * <li>	or you may leave the base method as is and override the
-	 * 		submethods (see their Java doc and the examples you may
-	 * 		find in various Generator subclasses):<ul>
+	 * <li>	Either you may override {@link #generateCode(Root, String, boolean)}
+	 *      as a whole if the substructure template doesn't suit your target
+	 *      language needs,</li>
+	 * <li>	or you may leave the base method as is and override the submethods
+	 *      (see their Java doc and the examples you may find in various
+	 *      Generator subclasses):<ul>
 	 * 		<li>{@link #generateHeader(Root, String, String, StringList, StringList, String, boolean)}</li>
 	 * 		<li>{@link #generatePreamble(Root, String, StringList)}</li>
 	 * 		<li>{@link #generateBody(Root, String)}</li>
@@ -3760,8 +3827,8 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		return _indent + this.getIndent();
 	}
 	/**
-	 * Generates some preamble (i.e. comments, language declaration section etc.)
-	 * and adds it to this.code.
+	 * Generates some preamble (i.e. comments, language declaration section
+	 * etc.) and adds it to this.code.
 	 * 
 	 * @param _root - the diagram root element
 	 * @param _indent - the current indentation string
@@ -3780,13 +3847,15 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 	// START KGU#815/KGU#824 2020-03-18: Enh. #828, bugfix #826
 	/**
-	 * Creates the appropriate code for the diagram body but allows subclasses e.g. to suppress
-	 * the export of the body depending on some context-sensitive properties of {@code _root}.<br/>
+	 * Creates the appropriate code for the diagram body but allows subclasses
+	 * e.g. to suppress the export of the body depending on some
+	 * context-sensitive properties of {@code _root}.<br/>
 	 * TODO: Base version exports the children as Subqueue in the ordinary way.
 	 * 
 	 * @param _root - the diagram currently being exported
 	 * @param _indent - current indentation level
-	 * @return true if something was written to {@link #code}, otherwise false
+	 * @return {@code true} if something was written to {@link #code},
+	 *      otherwise {@code false}
 	 * 
 	 * @see #generateCode(Root, String, boolean)
 	 * @see #generatePreamble(Root, String, StringList)
@@ -3804,7 +3873,8 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * 
 	 * @param _root - the diagram root element
 	 * @param _indent - the current indentation string
-	 * @param _alwaysReturns - whether all paths of the body already force a return
+	 * @param _alwaysReturns - whether all paths of the body already force a
+	 *     return
 	 * @param _varNames - names of all assigned variables
 	 * @return the default indentation string for the following footer
 	 * 
@@ -3819,7 +3889,8 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		return _indent;
 	}
 	/**
-	 * Method is to finish up after the text insertions of the diagram, i.e. to close an open block. 
+	 * Method is to finish up after the text insertions of the diagram, i.e. to
+	 * close an open block. 
 	 *
 	 * @param _root - the diagram root element 
 	 * @param _indent - the current indentation string
@@ -3838,8 +3909,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	
 	// START KGU#376 2017-09-28: Enh. #389 - insert the initialization code of the includables
 	/**
-	 * Appends the definitions and declarations of all includable diagrams recursively required by
-	 * the roots to be exported in topological order
+	 * Appends the definitions and declarations of all includable diagrams
+	 * recursively required by the roots to be exported in topological order
+	 * 
 	 * @param _root - the currently exported Root (supposed to be the hierarchy top)
 	 * @param _indent - the current indentation
 	 * @param _force - Whether the insertion is to be forced no regard of declaration policy
@@ -3873,12 +3945,16 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 
 	/**
-	 * Appends constant, type, and variable definitions for the passed-in {@link Root} {@code _root}.
+	 * Appends constant, type, and variable definitions for the passed-in
+	 * {@link Root} {@code _root}.
 	 * 
-	 * @param _root - the diagram the declarations and definitions of which are to be inserted
+	 * @param _root - the diagram the declarations and definitions of which are
+	 *     to be inserted
 	 * @param _indent - the proper indentation as String
-	 * @param _varNames - optionally the StringList of the variable names to be declared (my be null)
-	 * @param _force - true means that the insertion is forced even if some adversary option like e.g.
+	 * @param _varNames - optionally the StringList of the variable names to be
+	 *     declared (my be {@code null})
+	 * @param _force - true means that the insertion is forced even if some
+	 *     adversary option like e.g.
 	 *    {@link CGenerator#isInternalDeclarationAllowed()} is set
 	 */
 	protected void appendDefinitions(Root _root, String _indent, StringList _varNames, boolean _force) {
@@ -3886,9 +3962,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 
 	/**
-	 * Generates the (initialization) code of all includable diagrams recursively required by
-	 * the roots to be exported in topological order 
-	 * @param _root TODO
+	 * Generates the (initialization) code of all includable diagrams
+	 * recursively required by the roots to be exported in topological order
+	 * 
+	 * @param _root - the anchor {@link Root} (if not at top level or
+	 *     {@code _root} has no direct Includable references then nothing
+	 *     will happen her)
 	 * @param _indent - current indentation string
 	 */
 	protected void appendGlobalInitialisations(Root _root, String _indent) {
@@ -3950,17 +4029,20 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	
 	// START KGU#834 2020-03-26: Mechanism to ensure one-time initialisation
 	/**
-	 * Subclasses may return an initialized declaration of a status flag for the
-	 * corresponding one-time initialization (for the given Includable {@code inlc}).<br/>
+	 * Subclasses may return an initialized declaration of a status flag for
+	 * the corresponding one-time initialization (for the given Includable
+	 * {@code incl}).<br/>
 	 * The flag variable name should be obtained from {@link #getInitFlagName(Root)}.
-	 * A non-null declaration string should be returned at most for one value of
-	 * {@code inGlobalDecl}, not for both. 
-	 * @param incl - the includable diagram the initialization code of which is to be
-	 * controlled here.
-	 * @param inGlobalDecl - true if the method is called within the insertion of global
-	 * declarations, false otherwise (within initializer routine definition).
+	 * A non-null declaration string should be returned at most for one value
+	 * of {@code inGlobalDecl}, not for both.
+	 *  
+	 * @param incl - the includable diagram the initialization code of which is
+	 *     to be controlled here.
+	 * @param inGlobalDecl - {@code true} if the method is called within the
+	 *     insertion of global declarations, false otherwise (within initializer
+	 *     routine definition).
 	 * @return a ready-to-insert declaration initialized to false or null<br/>
-	 * This base version just returns null.
+	 *     This base version just returns {@code null}.
 	 */
 	protected String makeStaticInitFlagDeclaration(Root incl, boolean inGlobalDecl) {
 		return null;
@@ -3969,11 +4051,13 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 
 	// START KGU#363 2017-05-16: Enh. #372 - more ease for subclasses to place the license information
 	/**
-	 * Appends the copyright information (author name, license name and text) if the respective option
-	 * is enabled. 
+	 * Appends the copyright information (author name, license name and text)
+	 * if the respective option is enabled.
+	 *  
 	 * @param _root - the Root object holding the relevant attributes
 	 * @param _indent - the current indentation string
-	 * @param _fullText - whether the full license text is to be inserted, too (may be lengthy!)
+	 * @param _fullText - whether the full license text is to be inserted, too
+	 *     (may be lengthy!)
 	 */
 	protected void appendCopyright(Root _root, String _indent, boolean _fullText) {
 		if (this.optionExportLicenseInfo()) {
@@ -4002,15 +4086,18 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	
 	// START KGU#834 2020-03-26: Support for ensuring initializations won't get done twice
 	/**
-	 * Generates an initialization routine for Includable {@code incl} trying to ensure
-	 * its one-time effect. In order to work, there must be a static variable with name
-	 * {@link #getInitFlagName(Root)} initialized to {@code false}. In order to be able
-	 * to detect its existence here, it must either have been declared via
-	 * {@link #wasDefHandled(Root, String, boolean, boolean)} or {@link #setDefHandled(String, String)}
-	 * or method {@link #makeStaticInitFlagDeclaration(Root, boolean)} must return a non-null
-	 * result for argument {@code inGlobalDecl = false}.
-	 * @param incl - the {@link Root} of type Includable (other kinds of {@link Root}
-	 * are ignored
+	 * Generates an initialization routine for Includable {@code incl} trying
+	 * to ensure its one-time effect. In order to work, there must be a static
+	 * variable with name {@link #getInitFlagName(Root)} initialized to
+	 * {@code false}. In order to be able to detect its existence here, it must
+	 * either have been declared via
+	 * {@link #wasDefHandled(Root, String, boolean, boolean)} or
+	 * {@link #setDefHandled(String, String)}, or method 
+	 * {@link #makeStaticInitFlagDeclaration(Root, boolean)} must return a
+	 * non-null result for argument {@code inGlobalDecl = false}.
+	 * 
+	 * @param incl - the {@link Root} of type Includable (other kinds of
+	 *     {@link Root} are ignored
 	 * @param _indent - relevant indentation
 	 * @return true if an initialization routine was generated.
 	 */
@@ -4090,7 +4177,8 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @param _frame - the GUI Frame object responsible for this action
 	 * @param _routinePool - {@link Arranger} or some other routine pool if
 	 *     subroutines are to be involved
-	 * @return the chosen target directory if the export hadn't been cancelled, otherwise null
+	 * @return the chosen target directory if the export hadn't been cancelled,
+	 *     otherwise {@code null}
 	 * 
 	 * @see #exportCode(Vector, String, String, String, boolean, IRoutinePool)
 	 * @see #exportCode(Vector, String, File, Frame, IRoutinePool)
@@ -4350,14 +4438,18 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	
 	// START KGU#705 2019-09-23: Enh. #738
 	/**
-	 * This is a very reduced version of {@link #exportCode(Root, File, Frame, IRoutinePool)}
-	 * for live code preview as there is no file selection etc.<br/>
-	 * Plugin-specific options should already have been assigned, general export options
-	 * will be fetched from {@link Ini} here.
+	 * This is a very reduced version of 
+	 * {@link #exportCode(Root, File, Frame, IRoutinePool)} for live code
+	 * preview as there is no file selection etc.<br/>
+	 * Plugin-specific options should already have been assigned, general
+	 * export options will be fetched from {@link Ini} here.
+	 * 
 	 * @param _root - program or top-level routine diagram (call hierarchy root)
 	 * @param _frame - the GUI Frame object responsible for this action
-	 * @param _routinePool - {@link Arranger} or some other routine pool for subroutine analysis
-	 * @param _codeMap TODO
+	 * @param _routinePool - {@link Arranger} or some other routine pool for
+	 *     subroutine analysis
+	 * @param _codeMap - an associated mapping from processed elements to the
+	 *     corresponding code line interval and indentation depth
 	 * @return the produced code as a (multi-line) string.
 	 */
 	public String deriveCode(Root _root, Frame _frame, IRoutinePool _routinePool, HashMap<Element, int[]> _codeMap)
@@ -4408,10 +4500,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 	
 	/**
-	 * Retrieves all general export preferences from the INI file and caches them in
-	 * appropriate fields. 
-	 * @param considerSubroutineOption - If false then subroutines won't be exported, otherwise
-	 * it depends on the respective export option
+	 * Retrieves all general export preferences from the INI file and caches
+	 * them in appropriate fields.
+	 *  
+	 * @param considerSubroutineOption - If false then subroutines won't be
+	 *    exported, otherwise it depends on the respective export option
 	 */
 	private void getExportOptions(boolean considerSubroutineOption) {
 		try
@@ -4450,7 +4543,8 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 	
 	/**
-	 * @return the mapping of processed elements to corresponding code line number intervals after, may be null
+	 * @return the mapping of processed elements to corresponding code line
+	 * number intervals after, may be {@code null}
 	 */
 	public HashMap<Element, int[]> getCodeMap()
 	{
@@ -4460,12 +4554,15 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	
 	// START KGU#690 2019-03-121: Enh. #707
 	/**
-	 * This method allows the subclass to modify the automatically generated file name proposal
-	 * to ensure conformity with file name conventions of the target language.
-	 * This should concentrate on the base name rather than the extension (which will typically
-	 * not be included in the argument string).<br/>
+	 * This method allows the subclass to modify the automatically generated
+	 * file name proposal to ensure conformity with file name conventions of
+	 * the target language. This should concentrate on the base name rather
+	 * than the extension (which will typically not be included in the argument
+	 * string).<br/>
 	 * The base method just passes the argument through.
-	 * @param proposedFilename - a base fle name according to the proposal rules for NSD file names.
+	 * 
+	 * @param proposedFilename - a base fle name according to the proposal
+	 *     rules for NSD file names.
 	 * @return the possibly modified name
 	 */
 	protected String ensureFilenameConformity(String proposedFilename) {
@@ -4475,15 +4572,18 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	
 	// START KGU#178 2016-07-20: Enh. #160 - Specific code for subroutine export
 	/**
-	 * Routine is called from {@link #exportCode(Root, File, Frame, IRoutinePool)} after
-	 * the top-level diagram code has been created and generates and adds the code
-	 * sequences of the called subroutines in topologically sorted order.<br/>
+	 * Routine is called from {@link #exportCode(Root, File, Frame, IRoutinePool)}
+	 * after the top-level diagram code has been created and generates and adds
+	 * the code sequences of the called subroutines in topologically sorted
+	 * order.<br/>
 	 * Subroutines contained in {@code _suppressedRoots} are skipped.<br/>
 	 * Side effects: {@link #subroutines} will be cleared.
-	 * @param _suppressedRoots - Roots not to be generated among the subroutines or null
+	 * 
+	 * @param _suppressedRoots - Roots not to be generated among the subroutines
+	 *    or {@code null}
 	 * @param _publicRoots - Roots to be marked as public if possible
-	 * @return the entire code for this {@code Root} including the subroutine diagrams
-	 * as one string (with newlines)
+	 * @return the entire code for this {@code Root} including the subroutine
+	 *    diagrams as one string (with newlines)
 	 * @see #sortTopologically(Hashtable)
 	 */
 	protected final String generateSubroutineCode(Set<Root> _suppressedRoots, Vector<Root> _publicRoots)
@@ -4528,11 +4628,13 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		return code.getText();
 	}
 	/**
-	 * Inserts the generated code sequence for subroutine diagram {@code _root} at the appropriate
-	 * line in {@link #code}
+	 * Inserts the generated code sequence for subroutine diagram {@code _root}
+	 * at the appropriate line in {@link #code}
+	 * 
 	 * @param _root - the library routine diagram to be inserted
 	 * @param _indent - the indentation string
-	 * @param _public - if true then the routine shall be accessible outside the library
+	 * @param _public - if true then the routine shall be accessible outside
+	 *     the library
 	 */
 	protected int insertLibraryRoutine(Root _root, String _indent, boolean _public)
 	{
@@ -4568,8 +4670,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 
 	/**
-	 * Increments cached line indices greater than or equal to line index {@code atLine}
-	 * by the number {@code nLines} of inserted lines.
+	 * Increments cached line indices greater than or equal to line index
+	 * {@code atLine} by the number {@code nLines} of inserted lines.
+	 * 
 	 * @param atLine - line index of the insertion
 	 * @param nLines - number of inserted lines
 	 */
@@ -4591,9 +4694,13 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	/**
 	 * Performs a topological sorting of the Roots in the {@code _dependencyMap}
 	 * and returns the result as queue.<br/>
-	 * ATTENTION: This routine consumes (i.e. destroys) the passed-in {@code _dependencyMap}!
-	 * @param _dependencyMap - the dependency graph of the routines as map - will be emptied!
-	 * @return queue of the sorted diagrams (independent first, dependent ones following)
+	 * ATTENTION: This routine consumes (i.e. destroys) the passed-in
+	 * {@code _dependencyMap}!
+	 * 
+	 * @param _dependencyMap - the dependency graph of the routines as map -
+	 *     will be emptied!
+	 * @return queue of the sorted diagrams (independent first, dependent ones
+	 *     following)
 	 */
 	// START KGU#754 2019-11-11: Issue #766 - we want to achieve deterministic routine order
 	//protected Queue<Root> sortTopologically(Hashtable<Root, SubTopoSortEntry> _dependencyMap)
@@ -4655,12 +4762,14 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * Inserts all marked sections of resource file "FileAPI.&lt;_language&gt;.txt"
 	 * at line {@link #subroutineInsertionLine} into the resulting code.
 	 * Increases {@link #subroutineInsertionLine} by the number of lines copied
-	 * such that subroutines (which are inserted later) will be inserted after the
-	 * FileAPI stuff, because they might rely on some FileAPI routines.
+	 * such that subroutines (which are inserted later) will be inserted after
+	 * the FileAPI stuff, because they might rely on some FileAPI routines.
+	 * 
+	 * @param _language - name or file name extension of an export language
+	 * 
 	 * @see #insertFileAPI(String, int)
 	 * @see #insertFileAPI(String, int, String)
 	 * @see #insertFileAPI(String, int, String, int)
-	 * @param _language - name or file name extension of an export language
 	 */
 	protected void insertFileAPI(String _language)
 	{
@@ -4668,17 +4777,20 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 	
 	/**
-	 * Inserts marked section {@code _sectionCount} (1, 2, ...) or all sections (_sectionCount = 0) of
-	 * resource file "FileAPI.&lt;_language&gt;.txt" at line {@link #subroutineInsertionLine} into
-	 * the resulting code.
+	 * Inserts marked section {@code _sectionCount} (1, 2, ...) or all sections
+	 * ({@code _sectionCount = 0}) of resource file "FileAPI.&lt;_language&gt;.txt"
+	 * at line {@link #subroutineInsertionLine} into the resulting code.
 	 * Increases {@link #subroutineInsertionLine} by the number of lines copied
-	 * such that subroutines (which are inserted later) will be inserted after the
-	 * FileAPI stuff, because they might rely on some FileAPI routines.
+	 * such that subroutines (which are inserted later) will be inserted after
+	 * the FileAPI stuff, because they might rely on some FileAPI routines.
+	 * 
+	 * @param _language - name or file name extension of an export language
+	 * @param _sectionCount - number of the marked section to be copied (0 for
+	 *     all)
+	 * 
 	 * @see #insertFileAPI(String)
 	 * @see #insertFileAPI(String, int, String)
 	 * @see #insertFileAPI(String, int, String, int)
-	 * @param _language - name or file name extension of an export language
-	 * @param _sectionCount - number of the marked section to be copied (0 for all)
 	 */
 	protected void insertFileAPI(String _language, int _sectionCount)
 	{
@@ -4687,17 +4799,22 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 	
 	/**
-	 * Inserts marked section _sectionCount (1, 2, ...) or all sections ({@code _sectionCount = 0}) of
-	 * resource file "FileAPI.&lt;_language&gt;.txt" at line {@code _atLine} with given {@_indentation} into
-	 * the resulting code 
+	 * Inserts marked section _sectionCount (1, 2, ...) or all sections
+	 * ({@code _sectionCount = 0}) of resource file "FileAPI.&lt;_language&gt;.txt"
+	 * at line {@code _atLine} with given {@_indentation} into the resulting
+	 * code
+	 *
+	 * @param _language - name or file name extension of an export language
+	 * @param _atLine - target line where the file section is to be copied to
+	 * @param _indentation - indentation string (to precede every line of the
+	 *     copied section)
+	 * @param _sectionCount - number of the marked section to be copied (0 for
+	 *     all)
+	 * @return line number at the end of the inserted code lines
+	 *  
 	 * @see #insertFileAPI(String)
 	 * @see #insertFileAPI(String, int)
 	 * @see #insertFileAPI(String, int, String)
-	 * @param _language - name or file name extension of an export language
-	 * @param _atLine - target line where the file section is to be copied to
-	 * @param _indentation - indentation string (to precede every line of the copied section) 
-	 * @param _sectionCount - number of the marked section to be copied (0 for all)
-	 * @return line number at the end of the inserted code lines
 	 */
 	protected int insertFileAPI(String _language, int _atLine, String _indentation, int _sectionCount)
 	{
@@ -4742,16 +4859,19 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 	
 	/**
-	 * Routine stub that may be overridden by subclasses to command the creation of (modified) copies
-	 * of some resource files for the used FileAPI. Typically, this method is called just once after
-	 * the (recursive) code export has been mostly done.
+	 * Routine stub that may be overridden by subclasses to command the
+	 * creation of (modified) copies of some resource files for the used
+	 * FileAPI. Typically, this method is called just once after the
+	 * (recursive) code export has been mostly done.
+	 * 
+	 * @param _filePath - path of the target directory or of some file within it  
+	 * @return flag whether the copy has worked
+	 * 
 	 * @see #copyFileAPIResource(String, String, String)
 	 * @see #insertFileAPI(String)
 	 * @see #insertFileAPI(String, int)
 	 * @see #insertFileAPI(String, int, String)
 	 * @see #insertFileAPI(String, int, String, int)
-	 * @param _filePath - path of the target directory or of some file within it  
-	 * @return flag whether the copy has worked
 	 */
 	protected boolean copyFileAPIResources(String _filePath)
 	{
@@ -4759,18 +4879,22 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 	
 	/**
-	 * Creates a (modified) copy of resource file "FileAPI.&lt;_language&gt;.txt" in the _targetPath
-	 * directory with the given _targetFilename. If _targetFilename is null then the file name will
-	 * be "FileAPI"&lt;_language&gt;.
+	 * Creates a (modified) copy of resource file "FileAPI.&lt;_language&gt;.txt"
+	 * in the _targetPath directory with the given _targetFilename. If
+	 * {@code _targetFilename} is {@code null} then the file name will be
+	 * "FileAPI"&lt;_language&gt;.
+	 * 
+	 * @param _language - a language-specific filename extension
+	 * @param _targetFilename - the proposed filename for the copy (should not
+	 *     contain path elements!)
+	 * @param _targetPath - path of the target directory or of a file within it 
+	 * @return {@code true} iff the requested copy was done.
+	 * 
 	 * @see #copyFileAPIResources(String)
 	 * @see #insertFileAPI(String)
 	 * @see #insertFileAPI(String, int)
 	 * @see #insertFileAPI(String, int, String)
 	 * @see #insertFileAPI(String, int, String, int)
-	 * @param _language - a language-specific filename extension
-	 * @param _targetFilename - the proposed filename for the copy (should not contain path elements!)
-	 * @param _targetPath - path of the target directory or of a file within it 
-	 * @return
 	 */
 	protected boolean copyFileAPIResource(String _language, String _targetFilename, String _targetPath)
 	{
@@ -4834,13 +4958,15 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	
 	// START KGU#301 2016-12-01: Bugfix #301
 	/**
-	 * Helper method to detect exactly whether the given {@code expression} is enclosed in parentheses.
-	 * Simply check whether it starts with "(" and ends with ")" is NOT sufficient because the expression
-	 * might look like this: {@code (4 + 8) * sqrt(3.5)}, which starts and ends with a parenthesis without
-	 * being parenthesized.  
+	 * Helper method to detect exactly whether the given {@code expression} is
+	 * enclosed in parentheses. Simply check whether it starts with "(" and
+	 * ends with ")" is NOT sufficient because the expression might look like
+	 * this: {@code (4 + 8) * sqrt(3.5)}, which starts and ends with a
+	 * parenthesis without being parenthesized.
+	 * 
 	 * @param expression - the expression to be analysed as string
-	 * @return true if the expression is properly parenthesized. (Which is to be ensured e.g for conditions
-	 * in C and derived languages.
+	 * @return true if the expression is properly parenthesized. (Which is to
+	 *     be ensured e.g for conditions in C and derived languages.
 	 */
 	protected static boolean isParenthesized(String expression)
 	{
@@ -4848,14 +4974,16 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 	// END KGU#301 2017-09-19
 	/**
-	 * Helper method to detect exactly whether the expression represented by {@code tokens} is enclosed in
-	 * parentheses.<br/>
-	 * Simply check whether it starts with "(" and ends with ")" is NOT sufficient because the expression
-	 * might look like this: {@code (4 + 8) * sqrt(3.5)}, which starts and ends with a parenthesis without
-	 * being parenthesized.  
+	 * Helper method to detect exactly whether the expression represented by
+	 * {@code tokens} is enclosed in parentheses.<br/>
+	 * Simply check whether it starts with "(" and ends with ")" is NOT
+	 * sufficient because the expression might look like this:
+	 * {@code (4 + 8) * sqrt(3.5)}, which starts and ends with a parenthesis
+	 * without being parenthesized.
+	 *   
 	 * @param tokens - the tokenized expression to be analysed as StringList
-	 * @return true if the expression is properly parenthesized. (Which is to be ensured e.g for conditions
-	 * in C and derived languages.
+	 * @return true if the expression is properly parenthesized. (Which is to
+	 *     be ensured e.g for conditions in C and derived languages.
 	 */
 	protected static boolean isParenthesized(StringList tokens)
 	{
@@ -4869,17 +4997,21 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 *****************************************/
 
 	/**
-	 * Exports the diagrams given by {@code _roots} into a text file with path {@code _targetFile}.<br/>
+	 * Exports the diagrams given by {@code _roots} into a text file with path
+	 * {@code _targetFile}.<br/>
 	 * <b>Note:</b> This method is intended for batch export.
 	 * 
-	 * @param _roots - vector of diagram {@link Root}s to be exported (in this order).
-	 * @param _targetFile - path of the target text file for the code export (the method cares itself
-	 *     for an appropriate file name extension).
-	 * @param _switches - String containing code letters for export options ('b','c','f','l','t','-') 
+	 * @param _roots - vector of diagram {@link Root}s to be exported (in this
+	 *     order).
+	 * @param _targetFile - path of the target text file for the code export
+	 *     (the method cares itself for an appropriate file name extension).
+	 * @param _switches - String containing code letters for export options
+	 *     ('b','c','f','l','t','-') 
 	 * @param _charSet - name of the character set to be used.
-	 * @param _settingsFromFile - whether a (partial) ini file for alternative option retrieval was given
-	 * @param _routinePool - the routine pool to be used if referenced subroutines are to be exported
-	 *     (may be {@code null} if none is used)
+	 * @param _settingsFromFile - whether a (partial) ini file for alternative
+	 *     option retrieval was given
+	 * @param _routinePool - the routine pool to be used if referenced
+	 *     subroutines are to be exported (may be {@code null} if none is used)
 	 *     
 	 * @see #exportCode(Root, File, Frame, IRoutinePool)
 	 * @see #exportCode(Vector, String, File, Frame, IRoutinePool)
@@ -5074,21 +5206,22 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 
 	// START KGU#815 2020-03-13: Enh. #828 New entry point
 	/**
-	 * Entry point for <b>interactively</b> commanded code export from an arrangement group.
-	 * Retrieves export options, opens a file selection dialog, and performs the actual
-	 * code export.
+	 * Entry point for <b>interactively</b> commanded code export from an
+	 * arrangement group.<br/>
+	 * Retrieves export options, opens a file selection dialog, and performs
+	 * the actual code export.
 	 * 
-	 * @param _roots - The list of diagrams to be exported together, more diagrams might
-	 *     be involved if the respective option is set.
+	 * @param _roots - The list of diagrams to be exported together, more
+	 *     diagrams might be involved if the respective option is set.
 	 * @param _fileName - an proposed export file name (without path)
-	 * @param _proposedDirectory - last export or current Structorizer directory (as managed
-	 *     by Diagram)
+	 * @param _proposedDirectory - last export or current Structorizer
+	 *     directory (as managed by Diagram)
 	 * @param _frame - the GUI Frame object responsible for this action
-	 * @param _routinePool - {@link Arranger} or some other routine pool if subroutines are
-	 *     to be involved
-	 * @return the chosen target directory if the export hadn't been cancelled, otherwise
-	 *     {@code null}
-	 *     
+	 * @param _routinePool - {@link Arranger} or some other routine pool if
+	 *     subroutines are to be involved
+	 * @return the chosen target directory if the export hadn't been cancelled,
+	 *     otherwise {@code null}
+	 * 
 	 * @see #exportCode(Root, File, Frame, IRoutinePool)
 	 * @see #exportCode(Vector, String, String, String, String, IRoutinePool)
 	 */
@@ -5252,33 +5385,37 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 	
 	/**
-	 * Depending on {@link #optionExportSubroutines()} and {@code _batchMode} first analyses
-	 * the dependency trees rooted by the given {@code _entryPoints}, splits the set of involved
-	 * diagrams into modules if necessary and then exports the found diagrams module by module
-	 * in topological order.<br/>
+	 * Depending on {@link #optionExportSubroutines()} and {@code _batchMode}
+	 * first analyses the dependency trees rooted by the given
+	 * {@code _entryPoints}, splits the set of involved diagrams into modules if
+	 * necessary and then exports the found diagrams module by module in
+	 * topological order.<br/>
 	 * These are the rules:
 	 * <ul>
 	 * <li>
-	 * If {@link #optionExportSubroutines()} is false or {@link #routinePool} is {@code null}
-	 * then just the given {@code _entryPoints} will be exported in topological order if they
-	 * are depending on one another.
+	 * If {@link #optionExportSubroutines()} is false or {@link #routinePool}
+	 * is {@code null} then just the given {@code _entryPoints} will be exported
+	 * in topological order if they are depending on one another.
 	 * </li>
 	 * <li>
-	 * Otherwise the complete dependency trees are extracted from {@link #routinePool} and
-	 * compared. The union of all pairwise intersection sets will be exported as a library/unit
-	 * module named by {@code _libraryName} if given or by the routine pool otherwise.
+	 * Otherwise the complete dependency trees are extracted from
+	 * {@link #routinePool} and compared. The union of all pairwise
+	 * intersection sets will be exported as a library/unit module named by
+	 * {@code _libraryName} if given or by the routine pool otherwise.
 	 * </li>
 	 * <li>
-	 * Afterwards, the remaining entry points (not being member of the common library) will be
-	 * exported as applications or libraries (according to the root type) named by their root
-	 * together with their unshared dependency tree members and a library reference if necessary.
+	 * Afterwards, the remaining entry points (not being member of the common
+	 * library) will be exported as applications or libraries (according to the
+	 * root type) named by their root together with their unshared dependency
+	 * tree members and a library reference if necessary.
 	 * </li>
 	 * </ul>
-	 * The splitting into several modules may break Jump (EXIT) dependencies, though.
+	 * The splitting into several modules may break Jump (EXIT) dependencies,
+	 * though.
 	 * 
 	 * @param _entryPoints - The {@link Root}s to be exported in any case
-	 * @param _batchMode - {@code true} if this routine is used in batch mode, {@code false}
-	 *      otherwise
+	 * @param _batchMode - {@code true} if this routine is used in batch mode,
+	 *      {@code false} otherwise
 	 * @return {@code true} if some exported {@link Root}s requires the File API
 	 */
 	protected boolean generatePartitionedCode(Vector<Root> _entryPoints, boolean _batchMode) {
@@ -5566,22 +5703,26 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 	
 	/**
-	 * Generates the code for a module headed by the given {@link Root}s {@code _roots}.
-	 * Depending on whether this is for a batch export or not, certain scissor lines
-	 * may be inserted among the produced routines or not.<br/>
-	 * The module always provides a common topologically sorted subroutine bundle
-	 * (if subroutine involvement is intended).<br/>
-	 * Side effects: Fields {@link #includedRoots}, {@link #includeMap}, {@link #rootsWithEmptyInput},
-	 * {@link #rootsWithInput}, {@link #rootsWithOutput} will be modified.
+	 * Generates the code for a module headed by the given {@link Root}s
+	 * {@code _roots}. Depending on whether this is for a batch export or not,
+	 * certain scissor lines may be inserted among the produced routines or
+	 * not.<br/>
+	 * The module always provides a common topologically sorted subroutine
+	 * bundle (if subroutine involvement is intended).<br/>
+	 * Side effects: Fields {@link #includedRoots}, {@link #includeMap},
+	 * {@link #rootsWithEmptyInput}, {@link #rootsWithInput},
+	 * {@link #rootsWithOutput} will be modified.
 	 * 
 	 * @param _roots - the top diagrams of the module
-	 * @param _dependencyTree - diagrams required by the given entry point(s); <b>NOTE:</b>
-	 *     this tree map is likely to be modified (even cleared) by this method!
-	 * @param _batchMode - {@code true} if the module export is done in batch mode, {@code false}
-	 *     otherwise
-	 * @param _entryPoints - list of diagrams meant to be public (exported) or {@code null}
-	 *     (if all {@code _roots} be public)
-	 * @param _libName - name of the module the {@code _libMembers} are to be found in
+	 * @param _dependencyTree - diagrams required by the given entry point(s);
+	 *     <b>NOTE:</b> this tree map is likely to be modified (even cleared)
+	 *     by this method!
+	 * @param _batchMode - {@code true} if the module export is done in batch
+	 *     mode, {@code false} otherwise
+	 * @param _entryPoints - list of diagrams meant to be public (exported) or
+	 *     {@code null} (if all {@code _roots} be public)
+	 * @param _libName - name of the module the {@code _libMembers} are to be
+	 *     found in
 	 * @return {@code true} if the module requires the File API
 	 */
 	protected boolean generateModule(Vector<Root> _roots, TreeMap<Root, SubTopoSortEntry> _dependencyTree, boolean _batchMode, Vector<Root> _entryPoints, String _libName) {
@@ -5816,8 +5957,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	
 	// START KGU#763 2019-11-13: Fixes #778 (Missing license text on code export of "fresh" diagrams
 	/**
-	 * Retrieves the license text associated to license name {@code licName} from
-	 * the license pool directory
+	 * Retrieves the license text associated to license name {@code licName}
+	 * from the license pool directory
+	 * 
 	 * @param licName - name of the license (file name will be drived from it)
 	 * @return the text content of the license file (if existent), may be null
 	 */
@@ -5875,9 +6017,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// END KGU#763 2019-11-13
 
 	/**
-	 * Overridable method to derive a module (unit, library) name in subclass-specific syntax
-	 * from  the stored {@link #pureFilename}.
-	 * @return A suited name for a module (unit, library) related to the file or group name.
+	 * Overridable method to derive a module (unit, library) name in 
+	 * subclass-specific syntax from  the stored {@link #pureFilename}.
+	 * @return A suited name for a module (unit, library) related to the file
+	 *     or group name.
 	 */
 	protected String getModuleName()
 	{
@@ -5934,11 +6077,13 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		return ext;
 	}
 	
+	@Override
 	public String getDescription() 
 	{
 		return getFileDescription();
 	}
 
+	@Override
 	public boolean accept(File f) 
 	{
 		if (f.isDirectory()) 
@@ -5956,13 +6101,14 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 
 	/**
-	 * From the given {@code _filePath} derives a file name or path suited for the
-	 * produced code file, i.e. adopts basename (and possibly path) and appends the
-	 * target file name extension.
+	 * From the given {@code _filePath} derives a file name or path suited for
+	 * the produced code file, i.e. adopts basename (and possibly path) and
+	 * appends the target file name extension.
 	 * 
-	 * @param _filePath - the file name or path to start with (e.g. an nsd file name)
-	 * @param _keepPath - whether the path (if contained in {@code _filePath}) is to
-	 *     be maintained.
+	 * @param _filePath - the file name or path to start with (e.g. an nsd file
+	 *     name)
+	 * @param _keepPath - whether the path (if contained in {@code _filePath})
+	 *     is to be maintained.
 	 * @return the adapted file name or path
 	 */
 	public String deriveCodeFileName(String _filePath, boolean _keepPath) {
