@@ -135,6 +135,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2025-09-05      Issue #1214: Support for thread-safe temporary disabling of elements added
  *      Kay Gürtzig     2026-04-26      Bugfix #1234: Indirect FileAPI usage check (i.e. via involved subroutine diagrams)
  *                                      had not worked.
+ *      Kay Gürtzig     2026-04-29/30   Bugfix #1236: Duplicate subroutine export because of undue inclusion in 
+ *                                      library module (second instance lost its declarations)
  *
  ******************************************************************************************************
  *
@@ -198,6 +200,7 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
 import java.util.SortedMap;
@@ -2843,9 +2846,17 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		if (entry == null)
 		{
 			// No - create a new entry
-			_referenceMap.put(_referred, new SubTopoSortEntry(_caller));
+			entry = _referenceMap.put(_referred, new SubTopoSortEntry(_caller));
 			newSub = _referred;
 			toBeCounted = true;
+			// START KGU#1215 2026-04-29: Bugfix #1236 a new entry might already be a registered dependent
+			// Correct the reference counts which haven't reflected the dependency by now
+			for (SubTopoSortEntry topoEntry: _referenceMap.values()) {
+				if (topoEntry.callers.contains(_referred)) {
+					entry.nReferingTo++;
+				}
+			}
+			// END KGU#1215 2026-04-29
 		}
 		else
 		{
@@ -2856,6 +2867,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		// Now count the call at the callers entry (if there is one)
 		if (toBeCounted && (entry = _referenceMap.get(_caller)) != null)
 		{
+			/* Note: Because this works only for already existing caller entries, dependencies
+			 * might slip if a caller entry is added later, so on new entries (see above) we
+			 * must check all already existing entries for dependencies -> bugfix #1236 above
+			 */
 			entry.nReferingTo++;
 		}
 		return newSub;
@@ -2934,6 +2949,15 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 					newIncl = null;	// ...and it's not a new subroutine, of course
 				}
 				if (newIncl != null) {
+					// START KGU#1215 2026-04-30: Bugfix #1236 Correct references for existing entries
+					for (Entry<Root,SubTopoSortEntry> topoEntry: _includedRoots.entrySet()) {
+						Root key = topoEntry.getKey();
+						if (! key.isInclude() && key.includeList != null && key.includeList.contains(includeName)) {
+							topoEntry.getValue().nReferingTo++;
+							_includedRoots.get(newIncl).callers.add(key);
+						}
+					}
+					// END KGU1215 2026-04-30
 					// Now do the recursion (the Includable itself may include others)
 					registerIncludedRoots(newIncl, _includedRoots);
 				}
@@ -2942,18 +2966,32 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	}
 
 	// START KGU#754 2019-11-11: Issue #766 - aimed at deterministic order
+	/**
+	 * Tries to find an entry keyed by an Includable with name
+	 * {@code includeName} in {@code _includeMap} and (if not found there)
+	 * also in {@link #subroutines}. If found returns the Includable itself.
+	 * 
+	 * @param includeName - name of an Includable
+	 * @param _includeMap - a map over {@link SubTopoSortEntry}s reflecting Root dependencies
+	 * @return the includable Root (if found in one of the maps), {@code null} otherwise
+	 */
 	//private Root getAmongExportedRoots(String includeName, Hashtable<Root, SubTopoSortEntry> _includeMap)
 	private Root getAmongExportedRoots(String includeName, SortedMap<Root, SubTopoSortEntry> _includeMap)
 	// END KGU#754 2019-11-11
 	{
 		for (Root included: _includeMap.keySet()) {
-			if (includeName.equals(included.getMethodName())) {
+			// START KGU#1215 2026-04-29: Bugfix #1236 Be cautious, _includeMap might also contain subroutines
+			//if (includeName.equals(included.getMethodName())) {
+			if (included.isInclude() && includeName.equals(included.getMethodName())) {
+			// END KGU1215 2026-04-29
 				return included;
 			}
 		}
-		for (Root included: subroutines.keySet()) {
-			if (included.isInclude() && includeName.equals(included.getMethodName())) {
-				return included;
+		if (subroutines != _includeMap) {
+			for (Root included: subroutines.keySet()) {
+				if (included.isInclude() && includeName.equals(included.getMethodName())) {
+					return included;
+				}
 			}
 		}
 		return null;
@@ -5444,10 +5482,17 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		HashSet<Root> commonSubs = new HashSet<Root>();
 		Vector<Integer> mainIndices = new Vector<Integer>();	// Collect the mains
 		int nRedundant = 0;
-		for (Root root: _entryPoints)
-		{
+		// START KGU#1215 2026-04-29: Bugfix #1236 Wrong handling of loop
+		//for (Root root: _entryPoints)
+		//{
+		for (int i = 0; i < _entryPoints.size(); i++) {
+			Root root = _entryPoints.get(i);
+		// END KGU#1215 2026-04-29
 			if (root.isProgram()) {
-				mainIndices.add(subTrees.size());
+				// START KGU#1215 2026-04-29: Bugfix #1236 subTrees is always empty here
+				//mainIndices.add(subTrees.size());
+				mainIndices.add(i);
+				// END KGU#1215 2026-04-29
 			}
 			// START KGU#824 2020-03-15: Bugfix #836
 			/* For the export of archives we must consider subroutines and includes here too.
@@ -5483,7 +5528,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				wasAdded = true;
 			}
 			registerCalledSubroutines(root);
-			this.registerIncludedRoots(root, includes);
+			registerIncludedRoots(root, includes);
 			if (wasAdded && subroutines.get(root).nReferingTo == 0)
 			{
 				subroutines.remove(root);
@@ -5659,7 +5704,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			if (!commonSubs.isEmpty()) {
 				// Now we produce the library module from all shared stuff (if there is any).
 				this.isLibModule = true;
-				// Note: this.subroutines is likely to be consumed by method generateModule()!
+				// START KGU#1215 2026-04-30: Bugfix #1236 We must not mix in unnecessary diagrams
+				// The reference counts had been flattened by sortTopologically(), anyway.
+				this.subroutines.clear();
+				// END KGU#1215 2026-04-30
 				_someRootUsesFileAPI = generateModule(sortedLibMembers, this.subroutines, _batchMode, null, null);
 				firstExport = false;
 			}
