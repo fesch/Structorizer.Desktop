@@ -198,71 +198,6 @@ def fileReadLine(fileNo):
     
 #===== STRUCTORIZER FILE API END =====
 
-# Draws a bar chart from the array "values" of size nValues. 
-# Turtleizer must be activated and will scale the chart into a square of 
-# 500 x 500 pixels 
-# Note: The function is not robust against empty array or totally equal values. 
-def drawBarChart(values, nValues) :
-    # Used range of the Turtleizer screen 
-    xSize = 500
-    ySize = 500
-    kMin = 0
-    kMax = 0
-    for k in range(1, nValues-1+1, 1):
-        if (values[k] > values[kMax]):
-            kMax = k
-        elif (values[k] < values[kMin]):
-            kMin = k
-
-    valMin = values[kMin]
-    valMax = values[kMax]
-    yScale = valMax * 1.0 / (ySize - 1)
-    yAxis = ySize - 1
-    if (valMin < 0):
-        if (valMax > 0):
-            yAxis = valMax * ySize * 1.0 / (valMax - valMin)
-            yScale = (valMax - valMin) * 1.0 / (ySize - 1)
-        else:
-            yAxis = 1
-            yScale = valMin * 1.0 / (ySize - 1)
-
-    # draw coordinate axes 
-    turtle.goto(1, ySize - 1)
-    col25af5db5 = turtle.pencolor(); turtle.pencolor("#000000")
-    turtle.forward(ySize -1)
-    turtle.penup()
-    turtle.backward(yAxis)
-    turtle.right(90)
-    turtle.pendown()
-    turtle.forward(xSize -1)
-    turtle.penup()
-    turtle.backward(xSize-1)
-    turtle.pencolor(col25af5db5)
-    stripeWidth = xSize / nValues
-    for k in range(0, nValues-1+1, 1):
-        stripeHeight = values[k] * 1.0 / yScale
-        if ((k % 3) == 0) :
-            turtle.pencolor(255,0,0)
-        elif ((k % 3) == 1) :
-            turtle.pencolor(0, 255,0)
-        elif ((k % 3) == 2) :
-            turtle.pencolor(0, 0, 255)
-
-        col12cdcf4 = turtle.pencolor(); turtle.pencolor("#000000")
-        turtle.fd(1)
-        turtle.left(90)
-        turtle.pendown()
-        turtle.fd(stripeHeight)
-        turtle.right(90)
-        turtle.fd(stripeWidth - 1)
-        turtle.right(90)
-        turtle.forward(stripeHeight)
-        turtle.left(90)
-        turtle.penup()
-        turtle.pencolor(col12cdcf4)
-
-# = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
-
 # Tries to read as many integer values as possible upto maxNumbers 
 # from file fileName into the given array numbers. 
 # Returns the number of the actually read numbers. May cause an exception. 
@@ -301,9 +236,6 @@ def readNumbers(fileName, numbers, maxNumbers) :
 from enum import Enum
 import FileApiGroupTest
 import math
-import turtle
-turtle.colormode(255)
-turtle.mode("logo")
 
 # = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 
@@ -345,8 +277,6 @@ if (fileNo > 0):
     print("sum = ", sum, sep='')
     print("average = ", sum / nValues, sep='')
 
-# turtle.bye()	# TODO: re-enable this if you want to close the turtle window. 
-
 # ======= 8< =========================================================== 
 
 #!/usr/bin/python3
@@ -363,9 +293,6 @@ if (fileNo > 0):
 from enum import Enum
 import FileApiGroupTest
 import math
-import turtle
-turtle.colormode(255)
-turtle.mode("logo")
 
 #===== STRUCTORIZER FILE API START =====
 
@@ -581,7 +508,7 @@ def drawBarChart(values, nValues) :
 
     # draw coordinate axes 
     turtle.goto(1, ySize - 1)
-    col25af5db5 = turtle.pencolor(); turtle.pencolor("#000000")
+    coled9d034 = turtle.pencolor(); turtle.pencolor("#000000")
     turtle.forward(ySize -1)
     turtle.penup()
     turtle.backward(yAxis)
@@ -590,7 +517,7 @@ def drawBarChart(values, nValues) :
     turtle.forward(xSize -1)
     turtle.penup()
     turtle.backward(xSize-1)
-    turtle.pencolor(col25af5db5)
+    turtle.pencolor(coled9d034)
     stripeWidth = xSize / nValues
     for k in range(0, nValues-1+1, 1):
         stripeHeight = values[k] * 1.0 / yScale
@@ -601,7 +528,7 @@ def drawBarChart(values, nValues) :
         elif ((k % 3) == 2) :
             turtle.pencolor(0, 0, 255)
 
-        col12cdcf4 = turtle.pencolor(); turtle.pencolor("#000000")
+        col6121c9d6 = turtle.pencolor(); turtle.pencolor("#000000")
         turtle.fd(1)
         turtle.left(90)
         turtle.pendown()
@@ -612,7 +539,7 @@ def drawBarChart(values, nValues) :
         turtle.forward(stripeHeight)
         turtle.left(90)
         turtle.penup()
-        turtle.pencolor(col12cdcf4)
+        turtle.pencolor(col6121c9d6)
 
 # = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 
@@ -670,4 +597,3 @@ if (fileNo > 0):
     else:
         print("No numbers read.", sep='')
 
-# turtle.bye()	# TODO: re-enable this if you want to close the turtle window. 

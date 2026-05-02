@@ -20,7 +20,7 @@
 #      You might try something like "echo value >> filename" for output 
 #      or "while ... do ... read var ... done < filename" for input. 
 
-function finally18eed359()
+function finally6f1fba17()
 {
     exitCode=$?
     arg1=$1
@@ -31,109 +31,6 @@ function finally18eed359()
         exit ${exitCode}
     fi
 }
-
-# Draws a bar chart from the array "values" of size nValues. 
-# Turtleizer must be activated and will scale the chart into a square of 
-# 500 x 500 pixels 
-# Note: The function is not robust against empty array or totally equal values. 
-function drawBarChart() {
-    declare -n values=$1
-    local nValues=$2
-
-    # TODO: Check and revise the syntax of all expressions! 
-
-    local yScale
-    local yAxis
-    local valMin
-    local valMax
-    local stripeWidth
-    local stripeHeight
-    declare -i kMin
-    declare -i kMax
-    declare -i k
-    # Used range of the Turtleizer screen 
-    declare -ir xSize=500
-    declare -ir ySize=500
-    kMin=0
-    kMax=0
-
-    for (( k=1; k<=(( ${nValues}-1 )); k++ ))
-    do
-
-        if [[ ${values[${k}]} > ${values[${kMax}]} ]]
-        then
-            kMax=${k}
-        elif [[ ${values[${k}]} < ${values[${kMin}]} ]]
-        then
-            kMin=${k}
-        fi
-
-    done
-
-    valMin=${values[${kMin}]}
-    valMax=${values[${kMax}]}
-    yScale=$(( ${valMax} * 1.0 / (${ySize} - 1) ))
-    yAxis=$(( ${ySize} - 1 ))
-
-    if (( ${valMin} < 0 ))
-    then
-
-        if (( ${valMax} > 0 ))
-        then
-            yAxis=$(( ${valMax} * ${ySize} * 1.0 / (${valMax} - ${valMin}) ))
-            yScale=(${valMax} - ${valMin}) * 1.0 / (${ySize} - 1)
-        else
-            yAxis=1
-            yScale=$(( ${valMin} * 1.0 / (${ySize} - 1) ))
-        fi
-
-    fi
-
-    # draw coordinate axes 
-    gotoXY 1 $(( ${ySize} - 1 ))
-    forward $(( ${ySize} -1 )) # color = ffffff
-    penUp
-    backward "${yAxis}" # color = ffffff
-    right 90
-    penDown
-    forward $(( ${xSize} -1 )) # color = ffffff
-    penUp
-    backward $(( ${xSize}-1 )) # color = ffffff
-    stripeWidth=$(( ${xSize} / ${nValues} ))
-
-    for (( k=0; k<=(( ${nValues}-1 )); k++ ))
-    do
-        stripeHeight=$(( ${values[${k}]} * 1.0 / ${yScale} ))
-
-        case (( ${k} % 3 )) in
-
-            0)
-                setPenColor 255 0 0
-            ;;
-
-            1)
-                setPenColor 0 255 0
-            ;;
-
-            2)
-                setPenColor 0 0 255
-            ;;
-        esac
-
-        fd 1 # color = ffffff
-        left 90
-        penDown
-        fd "${stripeHeight}" # color = ffffff
-        right 90
-        fd $(( ${stripeWidth} - 1 )) # color = ffffff
-        right 90
-        forward "${stripeHeight}" # color = ffffff
-        left 90
-        penUp
-    done
-
-}
-# = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 
 function readNumbers() {
     local fileName=$1
@@ -155,10 +52,10 @@ function readNumbers() {
         return 42
     fi
 
-    trap18eed359=$( trap -p EXIT )
-    if [ -z "$trap18eed359" ] ; then trap18eed359="-"; else trap18eed359=${trap18eed359:8}; trap18eed359=${trap18eed359% *}; fi
-    if [ "${trap18eed359:0:1}" = "'" ] ; then trap18eed359=${trap18eed359:1} ; trap18eed359=${trap18eed359%\'*}; fi
-    trap "finally18eed359 trapped" EXIT
+    trap6f1fba17=$( trap -p EXIT )
+    if [ -z "$trap6f1fba17" ] ; then trap6f1fba17="-"; else trap6f1fba17=${trap6f1fba17:8}; trap6f1fba17=${trap6f1fba17% *}; fi
+    if [ "${trap6f1fba17:0:1}" = "'" ] ; then trap6f1fba17=${trap6f1fba17:1} ; trap6f1fba17=${trap6f1fba17%\'*}; fi
+    trap "finally6f1fba17 trapped" EXIT
     { # try
 
         # TODO File API: Replace the "fileEOF" call by an appropriate shell construct 
@@ -177,11 +74,11 @@ function readNumbers() {
         # throw 
         return 42
     }
-    trap "${trap18eed359}" EXIT
+    trap "${trap6f1fba17}" EXIT
     { # finally
-        finally18eed359 okay
+        finally6f1fba17 okay
     }
-    result31a5c39e=${nNumbers}
+    result490ab905=${nNumbers}
 }
 
 # ======= 8< =========================================================== 
@@ -205,11 +102,11 @@ function readNumbers() {
 # https://www.gnu.org/licenses/gpl.html 
 # https://www.gnu.de/documents/gpl-3.0.de.html 
 
-function finally18eed359()
+function finally6f1fba17()
 {
     exitCode=$?
     arg1=$1
-    fileClose fileNo
+    fileClose "${fileNo}"
     if [ "$arg1" = trapped ]
     then
         exit ${exitCode}
@@ -243,7 +140,7 @@ then
     nValues=0
     { # try
         readNumbers "${file_name}" values 1000 &&
-        nValues=${result31a5c39e} &&
+        nValues=${result490ab905} &&
         true
     } || { # catch failure
         failure=$?
@@ -283,7 +180,7 @@ fi
 #      You might try something like "echo value >> filename" for output 
 #      or "while ... do ... read var ... done < filename" for input. 
 
-function finally18eed359()
+function finally6f1fba17()
 {
     exitCode=$?
     arg1=$1
@@ -305,9 +202,18 @@ function drawBarChart() {
 
     # TODO: Check and revise the syntax of all expressions! 
 
+    local yScale
+    local yAxis
+    local valMin
+    local valMax
+    local stripeWidth
+    local stripeHeight
+    declare -i kMin
+    declare -i kMax
+    declare -i k
     # Used range of the Turtleizer screen 
-    declare -r xSize=500
-    declare -r ySize=500
+    declare -ir xSize=500
+    declare -ir ySize=500
     kMin=0
     kMax=0
 
@@ -420,7 +326,7 @@ then
     nObtained=0
     { # try
         readNumbers "${file_name}" numberArray 10000 &&
-        nObtained=${result31a5c39e} &&
+        nObtained=${result490ab905} &&
         true
     } || { # catch failure
         failure=$?

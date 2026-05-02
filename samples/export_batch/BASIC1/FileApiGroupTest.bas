@@ -28,95 +28,14 @@ Public Function readNumbers(fileName As String, numbers As integer(50), maxNumbe
       numbers(nNumbers) = number
       nNumbers = nNumbers + 1
     Loop
-  Catch ex1d16f93d As Exception
-    Dim error As String = ex1d16f93d.ToString()
+  Catch ex65e2dbf3 As Exception
+    Dim error As String = ex65e2dbf3.ToString()
     Throw 
   Finally
     fileClose(fileNo)
   End Try
   Return nNumbers
 End Function
-Rem  
-Rem Draws a bar chart from the array "values" of size nValues. 
-Rem Turtleizer must be activated and will scale the chart into a square of 
-Rem 500 x 500 pixels 
-Rem Note: The function is not robust against empty array or totally equal values. 
-Rem TODO: Check (and specify if needed) the argument and result types! 
-Sub drawBarChart(values As double(50), nValues)
-  Rem TODO: Check and accomplish your variable declarations here: 
-  Rem  
-  Dim xSize As Integer
-  Dim ySize As Integer
-  Dim yScale As ???
-  Dim yAxis As ???
-  Dim valMin As double
-  Dim valMax As double
-  Dim stripeWidth As ???
-  Dim stripeHeight As ???
-  Dim kMin As Integer
-  Dim kMax As Integer
-  Dim k As Integer
-  Rem  
-  Rem Used range of the Turtleizer screen 
-  xSize = 500
-  ySize = 500
-  kMin = 0
-  kMax = 0
-  For k = 1 To nValues-1
-    If values(k) > values(kMax) Then
-      kMax = k
-    Elseif values(k) < values(kMin) Then
-      kMin = k
-    End If
-  Next k
-  valMin = values(kMin)
-  valMax = values(kMax)
-  yScale = valMax * 1.0 / (ySize - 1)
-  yAxis = ySize - 1
-  If valMin < 0 Then
-    If valMax > 0 Then
-      yAxis = valMax * ySize * 1.0 / (valMax - valMin)
-      yScale = (valMax - valMin) * 1.0 / (ySize - 1)
-    Else
-      yAxis = 1
-      yScale = valMin * 1.0 / (ySize - 1)
-    End If
-  End If
-  Rem draw coordinate axes 
-  gotoXY(1, ySize - 1)
-  forward(ySize -1) : Rem color = ffffff
-  penUp()
-  backward(yAxis) : Rem color = ffffff
-  right(90)
-  penDown()
-  forward(xSize -1) : Rem color = ffffff
-  penUp()
-  backward(xSize-1) : Rem color = ffffff
-  stripeWidth = xSize / nValues
-  For k = 0 To nValues-1
-    stripeHeight = values(k) * 1.0 / yScale
-    Select Case k % 3
-      Case 0
-        setPenColor(255,0,0)
-      Case 1
-        setPenColor(0, 255,0)
-      Case 2
-        setPenColor(0, 0, 255)
-    End Select
-    fd(1) : Rem color = ffffff
-    left(90)
-    penDown()
-    fd(stripeHeight) : Rem color = ffffff
-    right(90)
-    fd(stripeWidth - 1) : Rem color = ffffff
-    right(90)
-    forward(stripeHeight) : Rem color = ffffff
-    left(90)
-    penUp()
-  Next k
-End Sub
-
-Rem = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 
 Rem ======= 8< =========================================================== 
 
@@ -162,8 +81,8 @@ Rem   fileClose(fileNo)
   nValues = 0
   Try
     nValues = readNumbers(file_name, values, 1000)
-  Catch ex610694f1 As Exception
-    Dim failure As String = ex610694f1.ToString()
+  Catch ex5b87ed94 As Exception
+    Dim failure As String = ex5b87ed94.ToString()
     PRINT failure
     Rem FIXME: The following exit code was intended to pass: -7 
     Stop
@@ -226,8 +145,8 @@ If fileNo > 0 Then
   nObtained = 0
   Try
     nObtained = readNumbers(file_name, numberArray, 10000)
-  Catch ex3cef309d As Exception
-    Dim failure As String = ex3cef309d.ToString()
+  Catch ex1dfe2924 As Exception
+    Dim failure As String = ex1dfe2924.ToString()
     PRINT failure
   End Try
   If nObtained > 0 Then
@@ -272,6 +191,17 @@ Rem TODO: Check (and specify if needed) the argument and result types!
 Sub drawBarChart(values As double(50), nValues)
   Rem TODO: Check and accomplish your variable declarations here: 
   Rem  
+  Dim xSize As Integer
+  Dim ySize As Integer
+  Dim yScale As ???
+  Dim yAxis As ???
+  Dim valMin As double
+  Dim valMax As double
+  Dim stripeWidth As ???
+  Dim stripeHeight As ???
+  Dim kMin As Integer
+  Dim kMax As Integer
+  Dim k As Integer
   Rem  
   Rem Used range of the Turtleizer screen 
   xSize = 500

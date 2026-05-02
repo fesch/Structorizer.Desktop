@@ -8,9 +8,9 @@
 \DeclareMathOperator{\oprshl}{shl}
 \DeclareMathOperator{\oprshr}{shr}
 \title{Structorizer LaTeX pseudocode Export of ELIZA\_2.3.arrz}
-% Structorizer version 3.32-13
+% Structorizer version 3.32-36
 \author{Kay G"urtzig}
-\date{17.10.2023}
+\date{30.04.2026}
 
 \begin{document}
 
@@ -60,26 +60,6 @@
 \end{pseudocode}
 
 
-\begin{pseudocode}{checkRepetition}{history, newInput }
-\label{checkRepetition}
-\COMMENT{ Checks whether newInput has occurred among the recently cached }\\
-\COMMENT{ input strings in the histArray component of history and updates the history. }\\
-\PROCEDURE{checkRepetition}{history, newInput}
-  hasOccurred\gets\FALSE\\
-  \IF length(newInput)>4 \THEN
-  \BEGIN
-    histDepth\gets\ length(history.histArray)\\
-    \FOR i \gets 0 \TO histDepth-1  \DO
-      \IF newInput=history.histArray[i] \THEN
-        hasOccurred\gets\TRUE\\
-    history.histArray[history.histIndex]\gets\ newInput\\
-    history.histIndex\gets(history.histIndex+1)\bmod(histDepth)\\
-  \END\\
-  \RETURN{hasOccurred}\\
-\ENDPROCEDURE
-\end{pseudocode}
-
-
 \begin{pseudocode}{conjugateStrings}{sentence, key, keyPos, flexions }
 \label{conjugateStrings}
 \PROCEDURE{conjugateStrings}{sentence, key, keyPos, flexions}
@@ -103,33 +83,6 @@
   \BEGIN
     result\gets\ copy(result,1,position-1)+copy(result,position+1,length(result))\\
     position\gets\ pos(\)"{}\ \ "{}\(,result)\\
-  \END\\
-\ENDPROCEDURE
-\end{pseudocode}
-
-
-\begin{pseudocode}{findKeyword}{keyMap, sentence }
-\label{findKeyword}
-\COMMENT{ Looks for the occurrence of the first of the strings }\\
-\COMMENT{ contained in keywords within the given sentence (in }\\
-\COMMENT{ array order). }\\
-\COMMENT{ Returns an array of }\\
-\COMMENT{ 0: the index of the first identified keyword (if any, otherwise -1), }\\
-\COMMENT{ 1: the position inside sentence (0 if not found) }\\
-\PROCEDURE{findKeyword}{keyMap, sentence}
-  \COMMENT{ Contains the index of the keyword and its position in sentence }\\
-  result\gets\{-1,0\}\\
-  i\gets\ 0\\
-  \WHILE (result[0]<0)\ \AND(i<length(keyMap)) \DO
-  \BEGIN
-    var\ entry:KeyMapEntry\gets\ keyMap[i]\\
-    position\gets\ pos(entry.keyword,sentence)\\
-    \IF position>0 \THEN
-    \BEGIN
-      result[0]\gets\ i\\
-      result[1]\gets\ position\\
-    \END\\
-    i\gets\ i+1\\
   \END\\
 \ENDPROCEDURE
 \end{pseudocode}
@@ -162,58 +115,6 @@
   phrases[0]\gets\{\)"{}\ shut"{}\(,\)"{}Okay.\ If\ you\ feel\ that\ way\ I\textbackslash{}'{}ll\ shut\ up.\ ...\ Your\ choice."{}\(\}\\
   phrases[1]\gets\{\)"{}bye"{}\(,\)"{}Well,\ let\textbackslash{}'{}s\ end\ our\ talk\ for\ now.\ See\ you\ later.\ Bye."{}\(\}\\
   \RETURN{phrases}\\
-\ENDPROCEDURE
-\end{pseudocode}
-
-
-\begin{pseudocode}{setupKeywords}{ }
-\label{setupKeywords}
-\COMMENT{ The lower the index the higher the rank of the keyword (search is sequential). }\\
-\COMMENT{ The index of the first keyword found in a user sentence maps to a respective }\\
-\COMMENT{ reply ring as defined in \textasciigrave{}setupReplies()\textasciiacute{}. }\\
-\PROCEDURE{setupKeywords}{}
-  \COMMENT{ The empty key string (last entry) is the default clause - will always be found }\\
-  keywords[39]\gets\ KeyMapEntry\{\)"{}"{}\(,29\}\\
-  keywords[0]\gets\ KeyMapEntry\{\)"{}can\ you\ "{}\(,0\}\\
-  keywords[1]\gets\ KeyMapEntry\{\)"{}can\ i\ "{}\(,1\}\\
-  keywords[2]\gets\ KeyMapEntry\{\)"{}you\ are\ "{}\(,2\}\\
-  keywords[3]\gets\ KeyMapEntry\{\)"{}you\textbackslash{}'{}re\ "{}\(,2\}\\
-  keywords[4]\gets\ KeyMapEntry\{\)"{}i\ don'{}t\ "{}\(,3\}\\
-  keywords[5]\gets\ KeyMapEntry\{\)"{}i\ feel\ "{}\(,4\}\\
-  keywords[6]\gets\ KeyMapEntry\{\)"{}why\ don\textbackslash{}'{}t\ you\ "{}\(,5\}\\
-  keywords[7]\gets\ KeyMapEntry\{\)"{}why\ can\textbackslash{}'{}t\ i\ "{}\(,6\}\\
-  keywords[8]\gets\ KeyMapEntry\{\)"{}are\ you\ "{}\(,7\}\\
-  keywords[9]\gets\ KeyMapEntry\{\)"{}i\ can\textbackslash{}'{}t\ "{}\(,8\}\\
-  keywords[10]\gets\ KeyMapEntry\{\)"{}i\ am\ "{}\(,9\}\\
-  keywords[11]\gets\ KeyMapEntry\{\)"{}i\textbackslash{}'{}m\ "{}\(,9\}\\
-  keywords[12]\gets\ KeyMapEntry\{\)"{}you\ "{}\(,10\}\\
-  keywords[13]\gets\ KeyMapEntry\{\)"{}i\ want\ "{}\(,11\}\\
-  keywords[14]\gets\ KeyMapEntry\{\)"{}what\ "{}\(,12\}\\
-  keywords[15]\gets\ KeyMapEntry\{\)"{}how\ "{}\(,12\}\\
-  keywords[16]\gets\ KeyMapEntry\{\)"{}who\ "{}\(,12\}\\
-  keywords[17]\gets\ KeyMapEntry\{\)"{}where\ "{}\(,12\}\\
-  keywords[18]\gets\ KeyMapEntry\{\)"{}when\ "{}\(,12\}\\
-  keywords[19]\gets\ KeyMapEntry\{\)"{}why\ "{}\(,12\}\\
-  keywords[20]\gets\ KeyMapEntry\{\)"{}name\ "{}\(,13\}\\
-  keywords[21]\gets\ KeyMapEntry\{\)"{}cause\ "{}\(,14\}\\
-  keywords[22]\gets\ KeyMapEntry\{\)"{}sorry\ "{}\(,15\}\\
-  keywords[23]\gets\ KeyMapEntry\{\)"{}dream\ "{}\(,16\}\\
-  keywords[24]\gets\ KeyMapEntry\{\)"{}hello\ "{}\(,17\}\\
-  keywords[25]\gets\ KeyMapEntry\{\)"{}hi\ "{}\(,17\}\\
-  keywords[26]\gets\ KeyMapEntry\{\)"{}maybe\ "{}\(,18\}\\
-  keywords[27]\gets\ KeyMapEntry\{\)"{}\ no"{}\(,19\}\\
-  keywords[28]\gets\ KeyMapEntry\{\)"{}your\ "{}\(,20\}\\
-  keywords[29]\gets\ KeyMapEntry\{\)"{}always\ "{}\(,21\}\\
-  keywords[30]\gets\ KeyMapEntry\{\)"{}think\ "{}\(,22\}\\
-  keywords[31]\gets\ KeyMapEntry\{\)"{}alike\ "{}\(,23\}\\
-  keywords[32]\gets\ KeyMapEntry\{\)"{}yes\ "{}\(,24\}\\
-  keywords[33]\gets\ KeyMapEntry\{\)"{}friend\ "{}\(,25\}\\
-  keywords[34]\gets\ KeyMapEntry\{\)"{}computer"{}\(,26\}\\
-  keywords[35]\gets\ KeyMapEntry\{\)"{}bot\ "{}\(,26\}\\
-  keywords[36]\gets\ KeyMapEntry\{\)"{}smartphone"{}\(,27\}\\
-  keywords[37]\gets\ KeyMapEntry\{\)"{}father\ "{}\(,28\}\\
-  keywords[38]\gets\ KeyMapEntry\{\)"{}mother\ "{}\(,28\}\\
-  \RETURN{keywords}\\
 \ENDPROCEDURE
 \end{pseudocode}
 
@@ -277,6 +178,105 @@
   replies[27]\gets\{\)"{}Do\ you\ sometimes\ feel\ uneasy\ without\ a\ smartphone?"{}\(,\)"{}Have\ you\ had\ these\ phantasies\ before?"{}\(,\)"{}Does\ the\ world\ seem\ more\ real\ for\ you\ via\ apps?"{}\(\}\\
   replies[28]\gets\{\)"{}Tell\ me\ more\ about\ your\ family."{}\(,\)"{}Who\ else\ in\ your\ family*?"{}\(,\)"{}What\ does\ family\ relations\ mean\ for\ you?"{}\(,\)"{}Come\ on,\ How\ old\ are\ you?"{}\(\}\\
   setupReplies\gets\ replies\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{checkRepetition}{history, newInput }
+\label{checkRepetition}
+\COMMENT{ Checks whether newInput has occurred among the recently cached }\\
+\COMMENT{ input strings in the histArray component of history and updates the history. }\\
+\PROCEDURE{checkRepetition}{history, newInput}
+  hasOccurred\gets\FALSE\\
+  \IF length(newInput)>4 \THEN
+  \BEGIN
+    histDepth\gets\ length(history.histArray)\\
+    \FOR i \gets 0 \TO histDepth-1  \DO
+      \IF newInput=history.histArray[i] \THEN
+        hasOccurred\gets\TRUE\\
+    history.histArray[history.histIndex]\gets\ newInput\\
+    history.histIndex\gets(history.histIndex+1)\bmod(histDepth)\\
+  \END\\
+  \RETURN{hasOccurred}\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{findKeyword}{keyMap, sentence }
+\label{findKeyword}
+\COMMENT{ Looks for the occurrence of the first of the strings }\\
+\COMMENT{ contained in keywords within the given sentence (in }\\
+\COMMENT{ array order). }\\
+\COMMENT{ Returns an array of }\\
+\COMMENT{ 0: the index of the first identified keyword (if any, otherwise -1), }\\
+\COMMENT{ 1: the position inside sentence (0 if not found) }\\
+\PROCEDURE{findKeyword}{keyMap, sentence}
+  \COMMENT{ Contains the index of the keyword and its position in sentence }\\
+  result\gets\{-1,0\}\\
+  i\gets\ 0\\
+  \WHILE (result[0]<0)\ \AND(i<length(keyMap)) \DO
+  \BEGIN
+    var\ entry:KeyMapEntry\gets\ keyMap[i]\\
+    position\gets\ pos(entry.keyword,sentence)\\
+    \IF position>0 \THEN
+    \BEGIN
+      result[0]\gets\ i\\
+      result[1]\gets\ position\\
+    \END\\
+    i\gets\ i+1\\
+  \END\\
+\ENDPROCEDURE
+\end{pseudocode}
+
+
+\begin{pseudocode}{setupKeywords}{ }
+\label{setupKeywords}
+\COMMENT{ The lower the index the higher the rank of the keyword (search is sequential). }\\
+\COMMENT{ The index of the first keyword found in a user sentence maps to a respective }\\
+\COMMENT{ reply ring as defined in \textasciigrave{}setupReplies()\textasciiacute{}. }\\
+\PROCEDURE{setupKeywords}{}
+  \COMMENT{ The empty key string (last entry) is the default clause - will always be found }\\
+  keywords[39]\gets\ KeyMapEntry\{\)"{}"{}\(,29\}\\
+  keywords[0]\gets\ KeyMapEntry\{\)"{}can\ you\ "{}\(,0\}\\
+  keywords[1]\gets\ KeyMapEntry\{\)"{}can\ i\ "{}\(,1\}\\
+  keywords[2]\gets\ KeyMapEntry\{\)"{}you\ are\ "{}\(,2\}\\
+  keywords[3]\gets\ KeyMapEntry\{\)"{}you\textbackslash{}'{}re\ "{}\(,2\}\\
+  keywords[4]\gets\ KeyMapEntry\{\)"{}i\ don'{}t\ "{}\(,3\}\\
+  keywords[5]\gets\ KeyMapEntry\{\)"{}i\ feel\ "{}\(,4\}\\
+  keywords[6]\gets\ KeyMapEntry\{\)"{}why\ don\textbackslash{}'{}t\ you\ "{}\(,5\}\\
+  keywords[7]\gets\ KeyMapEntry\{\)"{}why\ can\textbackslash{}'{}t\ i\ "{}\(,6\}\\
+  keywords[8]\gets\ KeyMapEntry\{\)"{}are\ you\ "{}\(,7\}\\
+  keywords[9]\gets\ KeyMapEntry\{\)"{}i\ can\textbackslash{}'{}t\ "{}\(,8\}\\
+  keywords[10]\gets\ KeyMapEntry\{\)"{}i\ am\ "{}\(,9\}\\
+  keywords[11]\gets\ KeyMapEntry\{\)"{}i\textbackslash{}'{}m\ "{}\(,9\}\\
+  keywords[12]\gets\ KeyMapEntry\{\)"{}you\ "{}\(,10\}\\
+  keywords[13]\gets\ KeyMapEntry\{\)"{}i\ want\ "{}\(,11\}\\
+  keywords[14]\gets\ KeyMapEntry\{\)"{}what\ "{}\(,12\}\\
+  keywords[15]\gets\ KeyMapEntry\{\)"{}how\ "{}\(,12\}\\
+  keywords[16]\gets\ KeyMapEntry\{\)"{}who\ "{}\(,12\}\\
+  keywords[17]\gets\ KeyMapEntry\{\)"{}where\ "{}\(,12\}\\
+  keywords[18]\gets\ KeyMapEntry\{\)"{}when\ "{}\(,12\}\\
+  keywords[19]\gets\ KeyMapEntry\{\)"{}why\ "{}\(,12\}\\
+  keywords[20]\gets\ KeyMapEntry\{\)"{}name\ "{}\(,13\}\\
+  keywords[21]\gets\ KeyMapEntry\{\)"{}cause\ "{}\(,14\}\\
+  keywords[22]\gets\ KeyMapEntry\{\)"{}sorry\ "{}\(,15\}\\
+  keywords[23]\gets\ KeyMapEntry\{\)"{}dream\ "{}\(,16\}\\
+  keywords[24]\gets\ KeyMapEntry\{\)"{}hello\ "{}\(,17\}\\
+  keywords[25]\gets\ KeyMapEntry\{\)"{}hi\ "{}\(,17\}\\
+  keywords[26]\gets\ KeyMapEntry\{\)"{}maybe\ "{}\(,18\}\\
+  keywords[27]\gets\ KeyMapEntry\{\)"{}\ no"{}\(,19\}\\
+  keywords[28]\gets\ KeyMapEntry\{\)"{}your\ "{}\(,20\}\\
+  keywords[29]\gets\ KeyMapEntry\{\)"{}always\ "{}\(,21\}\\
+  keywords[30]\gets\ KeyMapEntry\{\)"{}think\ "{}\(,22\}\\
+  keywords[31]\gets\ KeyMapEntry\{\)"{}alike\ "{}\(,23\}\\
+  keywords[32]\gets\ KeyMapEntry\{\)"{}yes\ "{}\(,24\}\\
+  keywords[33]\gets\ KeyMapEntry\{\)"{}friend\ "{}\(,25\}\\
+  keywords[34]\gets\ KeyMapEntry\{\)"{}computer"{}\(,26\}\\
+  keywords[35]\gets\ KeyMapEntry\{\)"{}bot\ "{}\(,26\}\\
+  keywords[36]\gets\ KeyMapEntry\{\)"{}smartphone"{}\(,27\}\\
+  keywords[37]\gets\ KeyMapEntry\{\)"{}father\ "{}\(,28\}\\
+  keywords[38]\gets\ KeyMapEntry\{\)"{}mother\ "{}\(,28\}\\
+  \RETURN{keywords}\\
 \ENDPROCEDURE
 \end{pseudocode}
 

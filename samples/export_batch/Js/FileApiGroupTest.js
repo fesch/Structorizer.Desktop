@@ -10,86 +10,6 @@
 // https://www.gnu.org/licenses/gpl.html 
 // https://www.gnu.de/documents/gpl-3.0.de.html 
 
-// function drawBarChart(values: array of double; nValues) 
-// Draws a bar chart from the array "values" of size nValues. 
-// Turtleizer must be activated and will scale the chart into a square of 
-// 500 x 500 pixels 
-// Note: The function is not robust against empty array or totally equal values. 
-export function drawBarChart(values, nValues) {
-	const xSize = 500;
-	const ySize = 500;
-	var yScale;
-	var yAxis;
-	var valMin;
-	var valMax;
-	var stripeWidth;
-	var stripeHeight;
-	var kMin;
-	var kMax;
-	var k;
-
-	kMin = 0;
-	kMax = 0;
-	for (k = 1; k <= nValues-1; k += (1)) {
-		if (values[k] > values[kMax]) {
-			kMax = k;
-		}
-		else if (values[k] < values[kMin]) {
-			kMin = k;
-		}
-	}
-	valMin = values[kMin];
-	valMax = values[kMax];
-	yScale = valMax * 1.0 / (ySize - 1);
-	yAxis = ySize - 1;
-	if (valMin < 0) {
-		if (valMax > 0) {
-			yAxis = valMax * ySize * 1.0 / (valMax - valMin);
-			yScale = (valMax - valMin) * 1.0 / (ySize - 1);
-		}
-		else {
-			yAxis = 1;
-			yScale = valMin * 1.0 / (ySize - 1);
-		}
-	}
-	// draw coordinate axes 
-	gotoXY(1, ySize - 1);
-	forward(ySize -1); // color = ffffff
-	penUp();
-	backward(yAxis); // color = ffffff
-	right(90);
-	penDown();
-	forward(xSize -1); // color = ffffff
-	penUp();
-	backward(xSize-1); // color = ffffff
-	stripeWidth = xSize / nValues;
-	for (k = 0; k <= nValues-1; k += (1)) {
-		stripeHeight = values[k] * 1.0 / yScale;
-		switch (k % 3) {
-		case 0:
-			setPenColor(255,0,0);
-			break;
-		case 1:
-			setPenColor(0, 255,0);
-			break;
-		case 2:
-			setPenColor(0, 0, 255);
-			break;
-		}
-		fd(1); // color = ffffff
-		left(90);
-		penDown();
-		fd(stripeHeight); // color = ffffff
-		right(90);
-		fd(stripeWidth - 1); // color = ffffff
-		right(90);
-		forward(stripeHeight); // color = ffffff
-		left(90);
-		penUp();
-	}
-}
-// = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
-
 // Tries to read as many integer values as possible upto maxNumbers 
 // from file fileName into the given array numbers. 
 // Returns the number of the actually read numbers. May cause an exception. 
@@ -111,9 +31,9 @@ export function readNumbers(fileName, numbers, maxNumbers) {
 			nNumbers = nNumbers + 1;
 		}
 	}
-	catch (ex67b92f0a) {
-		error = ex67b92f0a.message
-		throw ex67b92f0a;
+	catch (ex4f970963) {
+		error = ex4f970963.message
+		throw ex4f970963;
 	}
 	finally {
 		fileClose(fileNo);
@@ -172,8 +92,8 @@ if (fileNo > 0) {
 	try {
 		nValues = readNumbers(file_name, values, 1000);
 	}
-	catch (ex551aa95a) {
-		failure = ex551aa95a.message
+	catch (ex610694f1) {
+		failure = ex610694f1.message
 		document.write((failure) + "<br/>");
 		exit(-7);
 	}
@@ -206,6 +126,17 @@ import ./FileApiGroupTest.js;
 // 500 x 500 pixels 
 // Note: The function is not robust against empty array or totally equal values. 
 function drawBarChart(values, nValues) {
+	const xSize = 500;
+	const ySize = 500;
+	var yScale;
+	var yAxis;
+	var valMin;
+	var valMax;
+	var stripeWidth;
+	var stripeHeight;
+	var kMin;
+	var kMax;
+	var k;
 
 	kMin = 0;
 	kMax = 0;
@@ -306,8 +237,8 @@ if (fileNo > 0) {
 	try {
 		nObtained = readNumbers(file_name, numberArray, 10000);
 	}
-	catch (ex22a67b4) {
-		failure = ex22a67b4.message
+	catch (ex3a883ce7) {
+		failure = ex3a883ce7.message
 		document.write((failure) + "<br/>");
 	}
 	if (nObtained > 0) {

@@ -4,9 +4,9 @@
 \usepackage{ngerman}
 
 \title{Structorizer StrukTeX Export of ELIZA\_2.3.arrz}
-% Structorizer version 3.32-32
+% Structorizer version 3.32-36
 \author{Kay G"urtzig}
-\date{02.09.2025}
+\date{30.04.2026}
 
 \begin{document}
 
@@ -65,37 +65,6 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(-14,0)[checkRepetition]
-  \assign{%
-    \begin{declaration}[Parameters:]
-      \description{\pVar{history}}{type: \(History\)}
-      \description{\pVar{newInput}}{type: \(string\)}
-    \end{declaration}
-    \begin{declaration}[Result type:]
-      \description{boolean}{}
-    \end{declaration}
-    \begin{declaration}[Requires:]
-      \description{History}{}
-    \end{declaration}
-  }
-  \assign{\(hasOccurred\ \gets\ false\)}
-  \ifthenelse{6}{6}{\(length(newInput)\ >\ 4\)}{T}{F}
-    \assign{\(histDepth\ \gets\ length(history.histArray)\)}
-    \while{\pKey{for}\(i\ \gets\ 0\)\pKey{to}\(histDepth-1\)}
-      \ifthenelse{6}{6}{\(newInput\ =\ history.histArray[i]\)}{T}{F}
-        \assign{\(hasOccurred\ \gets\ true\)}
-      \change
-      \ifend
-    \whileend
-    \assign{\(history.histArray[history.histIndex]\ \gets\ newInput\)}
-    \assign{\(history.histIndex\ \gets\ (history.histIndex\ +\ 1)\ \bmod\ (histDepth)\)}
-  \change
-  \ifend
-  \exit{\(\)\pKey{return}\(\ hasOccurred\)}
-\end{struktogramm}
-
-
-% TODO: Tune the width and height argument if necessary!
 \begin{struktogramm}(-14,0)[conjugateStrings]
   \assign{%
     \begin{declaration}[Parameters:]
@@ -124,35 +93,6 @@
   \while{\(position\ >\ 0\)}
     \assign{\(result\ \gets\ copy(result,\ 1,\ position-1)\ +\ copy(result,\ position+1,\ length(result))\)}
     \assign{\(position\ \gets\ pos(\)"{}\ \ "{}\(,\ result)\)}
-  \whileend
-\end{struktogramm}
-
-
-% TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(-14,0)[findKeyword]
-  \assign{%
-    \begin{declaration}[Parameters:]
-      \description{\pVar{keyMap}}{type: \(array\ of\ KeyMapEntry\)}
-      \description{\pVar{sentence}}{type: \(string\)}
-    \end{declaration}
-    \begin{declaration}[Result type:]
-      \description{array[0..1] of integer}{}
-    \end{declaration}
-    \begin{declaration}[Requires:]
-      \description{KeyMapEntry}{}
-    \end{declaration}
-  }
-  \assign{\(result\ \gets\ \{-1,\ 0\}\)}
-  \assign{\(i\ \gets\ 0\)}
-  \while{\((result[0]\ <\ 0)\ \wedge\ (i\ <\ length(keyMap))\)}
-    \assign{\(var\ entry:\ KeyMapEntry\ \gets\ keyMap[i]\)}
-    \assign{\(position\ \gets\ pos(entry.keyword,\ sentence)\)}
-    \ifthenelse{6}{6}{\(position\ >\ 0\)}{T}{F}
-      \assign{\(result[0]\ \gets\ i\)}
-      \assign{\(result[1]\ \gets\ position\)}
-    \change
-    \ifend
-    \assign{\(i\ \gets\ i+1\)}
   \whileend
 \end{struktogramm}
 
@@ -189,60 +129,6 @@
   \assign{\(phrases[0]\ \gets\ \{\)"{}\ shut"{}\(,\ \)"{}Okay.\ If\ you\ feel\ that\ way\ I\textbackslash{}'{}ll\ shut\ up.\ ...\ Your\ choice."{}\(\}\)}
   \assign{\(phrases[1]\ \gets\ \{\)"{}bye"{}\(,\ \)"{}Well,\ let\textbackslash{}'{}s\ end\ our\ talk\ for\ now.\ See\ you\ later.\ Bye."{}\(\}\)}
   \exit{\(\)\pKey{return}\(\ phrases\)}
-\end{struktogramm}
-
-
-% TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(-14,0)[setupKeywords]
-  \assign{%
-    \begin{declaration}[Result type:]
-      \description{array of KeyMapEntry}{}
-    \end{declaration}
-    \begin{declaration}[Requires:]
-      \description{KeyMapEntry}{}
-    \end{declaration}
-  }
-  \assign{\(keywords[39]\ \gets\ KeyMapEntry\{\)"{}"{}\(,\ 29\}\)}
-  \assign{\(keywords[0]\ \gets\ KeyMapEntry\{\)"{}can\ you\ "{}\(,\ 0\}\)}
-  \assign{\(keywords[1]\ \gets\ KeyMapEntry\{\)"{}can\ i\ "{}\(,\ 1\}\)}
-  \assign{\(keywords[2]\ \gets\ KeyMapEntry\{\)"{}you\ are\ "{}\(,\ 2\}\)}
-  \assign{\(keywords[3]\ \gets\ KeyMapEntry\{\)"{}you\textbackslash{}'{}re\ "{}\(,\ 2\}\)}
-  \assign{\(keywords[4]\ \gets\ KeyMapEntry\{\)"{}i\ don'{}t\ "{}\(,\ 3\}\)}
-  \assign{\(keywords[5]\ \gets\ KeyMapEntry\{\)"{}i\ feel\ "{}\(,\ 4\}\)}
-  \assign{\(keywords[6]\ \gets\ KeyMapEntry\{\)"{}why\ don\textbackslash{}'{}t\ you\ "{}\(,\ 5\}\)}
-  \assign{\(keywords[7]\ \gets\ KeyMapEntry\{\)"{}why\ can\textbackslash{}'{}t\ i\ "{}\(,\ 6\}\)}
-  \assign{\(keywords[8]\ \gets\ KeyMapEntry\{\)"{}are\ you\ "{}\(,\ 7\}\)}
-  \assign{\(keywords[9]\ \gets\ KeyMapEntry\{\)"{}i\ can\textbackslash{}'{}t\ "{}\(,\ 8\}\)}
-  \assign{\(keywords[10]\ \gets\ KeyMapEntry\{\)"{}i\ am\ "{}\(,\ 9\}\)}
-  \assign{\(keywords[11]\ \gets\ KeyMapEntry\{\)"{}i\textbackslash{}'{}m\ "{}\(,\ 9\}\)}
-  \assign{\(keywords[12]\ \gets\ KeyMapEntry\{\)"{}you\ "{}\(,\ 10\}\)}
-  \assign{\(keywords[13]\ \gets\ KeyMapEntry\{\)"{}i\ want\ "{}\(,\ 11\}\)}
-  \assign{\(keywords[14]\ \gets\ KeyMapEntry\{\)"{}what\ "{}\(,\ 12\}\)}
-  \assign{\(keywords[15]\ \gets\ KeyMapEntry\{\)"{}how\ "{}\(,\ 12\}\)}
-  \assign{\(keywords[16]\ \gets\ KeyMapEntry\{\)"{}who\ "{}\(,\ 12\}\)}
-  \assign{\(keywords[17]\ \gets\ KeyMapEntry\{\)"{}where\ "{}\(,\ 12\}\)}
-  \assign{\(keywords[18]\ \gets\ KeyMapEntry\{\)"{}when\ "{}\(,\ 12\}\)}
-  \assign{\(keywords[19]\ \gets\ KeyMapEntry\{\)"{}why\ "{}\(,\ 12\}\)}
-  \assign{\(keywords[20]\ \gets\ KeyMapEntry\{\)"{}name\ "{}\(,\ 13\}\)}
-  \assign{\(keywords[21]\ \gets\ KeyMapEntry\{\)"{}cause\ "{}\(,\ 14\}\)}
-  \assign{\(keywords[22]\ \gets\ KeyMapEntry\{\)"{}sorry\ "{}\(,\ 15\}\)}
-  \assign{\(keywords[23]\ \gets\ KeyMapEntry\{\)"{}dream\ "{}\(,\ 16\}\)}
-  \assign{\(keywords[24]\ \gets\ KeyMapEntry\{\)"{}hello\ "{}\(,\ 17\}\)}
-  \assign{\(keywords[25]\ \gets\ KeyMapEntry\{\)"{}hi\ "{}\(,\ 17\}\)}
-  \assign{\(keywords[26]\ \gets\ KeyMapEntry\{\)"{}maybe\ "{}\(,\ 18\}\)}
-  \assign{\(keywords[27]\ \gets\ KeyMapEntry\{\)"{}\ no"{}\(,\ 19\}\)}
-  \assign{\(keywords[28]\ \gets\ KeyMapEntry\{\)"{}your\ "{}\(,\ 20\}\)}
-  \assign{\(keywords[29]\ \gets\ KeyMapEntry\{\)"{}always\ "{}\(,\ 21\}\)}
-  \assign{\(keywords[30]\ \gets\ KeyMapEntry\{\)"{}think\ "{}\(,\ 22\}\)}
-  \assign{\(keywords[31]\ \gets\ KeyMapEntry\{\)"{}alike\ "{}\(,\ 23\}\)}
-  \assign{\(keywords[32]\ \gets\ KeyMapEntry\{\)"{}yes\ "{}\(,\ 24\}\)}
-  \assign{\(keywords[33]\ \gets\ KeyMapEntry\{\)"{}friend\ "{}\(,\ 25\}\)}
-  \assign{\(keywords[34]\ \gets\ KeyMapEntry\{\)"{}computer"{}\(,\ 26\}\)}
-  \assign{\(keywords[35]\ \gets\ KeyMapEntry\{\)"{}bot\ "{}\(,\ 26\}\)}
-  \assign{\(keywords[36]\ \gets\ KeyMapEntry\{\)"{}smartphone"{}\(,\ 27\}\)}
-  \assign{\(keywords[37]\ \gets\ KeyMapEntry\{\)"{}father\ "{}\(,\ 28\}\)}
-  \assign{\(keywords[38]\ \gets\ KeyMapEntry\{\)"{}mother\ "{}\(,\ 28\}\)}
-  \exit{\(\)\pKey{return}\(\ keywords\)}
 \end{struktogramm}
 
 
@@ -310,6 +196,120 @@
   \assign{\(replies[27]\ \gets\ \{\ \)"{}Do\ you\ sometimes\ feel\ uneasy\ without\ a\ smartphone?"{}\(,\ \)"{}Have\ you\ had\ these\ phantasies\ before?"{}\(,\ \)"{}Does\ the\ world\ seem\ more\ real\ for\ you\ via\ apps?"{}\(\}\)}
   \assign{\(replies[28]\ \gets\ \{\ \)"{}Tell\ me\ more\ about\ your\ family."{}\(,\ \)"{}Who\ else\ in\ your\ family*?"{}\(,\ \)"{}What\ does\ family\ relations\ mean\ for\ you?"{}\(,\ \)"{}Come\ on,\ How\ old\ are\ you?"{}\(\}\)}
   \assign{\(setupReplies\ \gets\ replies\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[checkRepetition]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{history}}{type: \(History\)}
+      \description{\pVar{newInput}}{type: \(string\)}
+    \end{declaration}
+    \begin{declaration}[Result type:]
+      \description{boolean}{}
+    \end{declaration}
+    \begin{declaration}[Requires:]
+      \description{History}{}
+    \end{declaration}
+  }
+  \assign{\(hasOccurred\ \gets\ false\)}
+  \ifthenelse{6}{6}{\(length(newInput)\ >\ 4\)}{T}{F}
+    \assign{\(histDepth\ \gets\ length(history.histArray)\)}
+    \while{\pKey{for}\(i\ \gets\ 0\)\pKey{to}\(histDepth-1\)}
+      \ifthenelse{6}{6}{\(newInput\ =\ history.histArray[i]\)}{T}{F}
+        \assign{\(hasOccurred\ \gets\ true\)}
+      \change
+      \ifend
+    \whileend
+    \assign{\(history.histArray[history.histIndex]\ \gets\ newInput\)}
+    \assign{\(history.histIndex\ \gets\ (history.histIndex\ +\ 1)\ \bmod\ (histDepth)\)}
+  \change
+  \ifend
+  \exit{\(\)\pKey{return}\(\ hasOccurred\)}
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[findKeyword]
+  \assign{%
+    \begin{declaration}[Parameters:]
+      \description{\pVar{keyMap}}{type: \(array\ of\ KeyMapEntry\)}
+      \description{\pVar{sentence}}{type: \(string\)}
+    \end{declaration}
+    \begin{declaration}[Result type:]
+      \description{array[0..1] of integer}{}
+    \end{declaration}
+    \begin{declaration}[Requires:]
+      \description{KeyMapEntry}{}
+    \end{declaration}
+  }
+  \assign{\(result\ \gets\ \{-1,\ 0\}\)}
+  \assign{\(i\ \gets\ 0\)}
+  \while{\((result[0]\ <\ 0)\ \wedge\ (i\ <\ length(keyMap))\)}
+    \assign{\(var\ entry:\ KeyMapEntry\ \gets\ keyMap[i]\)}
+    \assign{\(position\ \gets\ pos(entry.keyword,\ sentence)\)}
+    \ifthenelse{6}{6}{\(position\ >\ 0\)}{T}{F}
+      \assign{\(result[0]\ \gets\ i\)}
+      \assign{\(result[1]\ \gets\ position\)}
+    \change
+    \ifend
+    \assign{\(i\ \gets\ i+1\)}
+  \whileend
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[setupKeywords]
+  \assign{%
+    \begin{declaration}[Result type:]
+      \description{array of KeyMapEntry}{}
+    \end{declaration}
+    \begin{declaration}[Requires:]
+      \description{KeyMapEntry}{}
+    \end{declaration}
+  }
+  \assign{\(keywords[39]\ \gets\ KeyMapEntry\{\)"{}"{}\(,\ 29\}\)}
+  \assign{\(keywords[0]\ \gets\ KeyMapEntry\{\)"{}can\ you\ "{}\(,\ 0\}\)}
+  \assign{\(keywords[1]\ \gets\ KeyMapEntry\{\)"{}can\ i\ "{}\(,\ 1\}\)}
+  \assign{\(keywords[2]\ \gets\ KeyMapEntry\{\)"{}you\ are\ "{}\(,\ 2\}\)}
+  \assign{\(keywords[3]\ \gets\ KeyMapEntry\{\)"{}you\textbackslash{}'{}re\ "{}\(,\ 2\}\)}
+  \assign{\(keywords[4]\ \gets\ KeyMapEntry\{\)"{}i\ don'{}t\ "{}\(,\ 3\}\)}
+  \assign{\(keywords[5]\ \gets\ KeyMapEntry\{\)"{}i\ feel\ "{}\(,\ 4\}\)}
+  \assign{\(keywords[6]\ \gets\ KeyMapEntry\{\)"{}why\ don\textbackslash{}'{}t\ you\ "{}\(,\ 5\}\)}
+  \assign{\(keywords[7]\ \gets\ KeyMapEntry\{\)"{}why\ can\textbackslash{}'{}t\ i\ "{}\(,\ 6\}\)}
+  \assign{\(keywords[8]\ \gets\ KeyMapEntry\{\)"{}are\ you\ "{}\(,\ 7\}\)}
+  \assign{\(keywords[9]\ \gets\ KeyMapEntry\{\)"{}i\ can\textbackslash{}'{}t\ "{}\(,\ 8\}\)}
+  \assign{\(keywords[10]\ \gets\ KeyMapEntry\{\)"{}i\ am\ "{}\(,\ 9\}\)}
+  \assign{\(keywords[11]\ \gets\ KeyMapEntry\{\)"{}i\textbackslash{}'{}m\ "{}\(,\ 9\}\)}
+  \assign{\(keywords[12]\ \gets\ KeyMapEntry\{\)"{}you\ "{}\(,\ 10\}\)}
+  \assign{\(keywords[13]\ \gets\ KeyMapEntry\{\)"{}i\ want\ "{}\(,\ 11\}\)}
+  \assign{\(keywords[14]\ \gets\ KeyMapEntry\{\)"{}what\ "{}\(,\ 12\}\)}
+  \assign{\(keywords[15]\ \gets\ KeyMapEntry\{\)"{}how\ "{}\(,\ 12\}\)}
+  \assign{\(keywords[16]\ \gets\ KeyMapEntry\{\)"{}who\ "{}\(,\ 12\}\)}
+  \assign{\(keywords[17]\ \gets\ KeyMapEntry\{\)"{}where\ "{}\(,\ 12\}\)}
+  \assign{\(keywords[18]\ \gets\ KeyMapEntry\{\)"{}when\ "{}\(,\ 12\}\)}
+  \assign{\(keywords[19]\ \gets\ KeyMapEntry\{\)"{}why\ "{}\(,\ 12\}\)}
+  \assign{\(keywords[20]\ \gets\ KeyMapEntry\{\)"{}name\ "{}\(,\ 13\}\)}
+  \assign{\(keywords[21]\ \gets\ KeyMapEntry\{\)"{}cause\ "{}\(,\ 14\}\)}
+  \assign{\(keywords[22]\ \gets\ KeyMapEntry\{\)"{}sorry\ "{}\(,\ 15\}\)}
+  \assign{\(keywords[23]\ \gets\ KeyMapEntry\{\)"{}dream\ "{}\(,\ 16\}\)}
+  \assign{\(keywords[24]\ \gets\ KeyMapEntry\{\)"{}hello\ "{}\(,\ 17\}\)}
+  \assign{\(keywords[25]\ \gets\ KeyMapEntry\{\)"{}hi\ "{}\(,\ 17\}\)}
+  \assign{\(keywords[26]\ \gets\ KeyMapEntry\{\)"{}maybe\ "{}\(,\ 18\}\)}
+  \assign{\(keywords[27]\ \gets\ KeyMapEntry\{\)"{}\ no"{}\(,\ 19\}\)}
+  \assign{\(keywords[28]\ \gets\ KeyMapEntry\{\)"{}your\ "{}\(,\ 20\}\)}
+  \assign{\(keywords[29]\ \gets\ KeyMapEntry\{\)"{}always\ "{}\(,\ 21\}\)}
+  \assign{\(keywords[30]\ \gets\ KeyMapEntry\{\)"{}think\ "{}\(,\ 22\}\)}
+  \assign{\(keywords[31]\ \gets\ KeyMapEntry\{\)"{}alike\ "{}\(,\ 23\}\)}
+  \assign{\(keywords[32]\ \gets\ KeyMapEntry\{\)"{}yes\ "{}\(,\ 24\}\)}
+  \assign{\(keywords[33]\ \gets\ KeyMapEntry\{\)"{}friend\ "{}\(,\ 25\}\)}
+  \assign{\(keywords[34]\ \gets\ KeyMapEntry\{\)"{}computer"{}\(,\ 26\}\)}
+  \assign{\(keywords[35]\ \gets\ KeyMapEntry\{\)"{}bot\ "{}\(,\ 26\}\)}
+  \assign{\(keywords[36]\ \gets\ KeyMapEntry\{\)"{}smartphone"{}\(,\ 27\}\)}
+  \assign{\(keywords[37]\ \gets\ KeyMapEntry\{\)"{}father\ "{}\(,\ 28\}\)}
+  \assign{\(keywords[38]\ \gets\ KeyMapEntry\{\)"{}mother\ "{}\(,\ 28\}\)}
+  \exit{\(\)\pKey{return}\(\ keywords\)}
 \end{struktogramm}
 
 

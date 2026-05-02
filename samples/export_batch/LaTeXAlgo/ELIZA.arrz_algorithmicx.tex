@@ -36,9 +36,9 @@
   {}
 
 \title{Structorizer LaTeX pseudocode Export of ELIZA.arrz}
-% Structorizer version 3.32-13
+% Structorizer version 3.32-36
 \author{Kay G"urtzig}
-\date{17.10.2023}
+\date{30.04.2026}
 
 \begin{document}
 
@@ -104,39 +104,6 @@
 
 
 \begin{algorithm}
-\caption{checkRepetition(2)}
-\begin{algorithmic}[5]
-\Function{checkRepetition}{history, newInput}
-\State \Comment{ Checks whether newInput has occurred among the recently cached }
-\State \Comment{ input strings in the histArray component of history and updates the history. }
-  \Decl{Parameters:}
-    \State history: History
-    \State newInput: string
-  \EndDecl
-  \Decl{Result type:}
-    \State boolean
-  \EndDecl
-  \Decl{Includes:}
-    \State History
-  \EndDecl
-  \State \(hasOccurred\gets\ false\)
-  \If{\(length(newInput)>4\)}
-    \State \(histDepth\gets\ length(history.histArray)\)
-    \For{\(i \gets 0\) \textbf{to} \(histDepth-1\) \textbf{by} \(1\)}
-      \If{\(newInput=history.histArray[i]\)}
-        \State \(hasOccurred\gets\ true\)
-      \EndIf
-    \EndFor
-    \State \(history.histArray[history.histIndex]\gets\ newInput\)
-    \State \(history.histIndex\gets(history.histIndex+1)\bmod(histDepth)\)
-  \EndIf
-  \State \textbf{return} \(hasOccurred\)
-\EndFunction
-\end{algorithmic}
-\end{algorithm}
-
-
-\begin{algorithm}
 \caption{conjugateStrings(4)}
 \begin{algorithmic}[5]
 \Function{conjugateStrings}{sentence, key, keyPos, flexions}
@@ -183,43 +150,6 @@
 
 
 \begin{algorithm}
-\caption{findKeyword(2)}
-\begin{algorithmic}[5]
-\Function{findKeyword}{keyMap, sentence}
-\State \Comment{ Looks for the occurrence of the first of the strings }
-\State \Comment{ contained in keywords within the given sentence (in }
-\State \Comment{ array order). }
-\State \Comment{ Returns an array of }
-\State \Comment{ 0: the index of the first identified keyword (if any, otherwise -1), }
-\State \Comment{ 1: the position inside sentence (0 if not found) }
-  \Decl{Parameters:}
-    \State keyMap: array\ of\ KeyMapEntry
-    \State sentence: string
-  \EndDecl
-  \Decl{Result type:}
-    \State array[0..1] of integer
-  \EndDecl
-  \Decl{Includes:}
-    \State KeyMapEntry
-  \EndDecl
-  \State \(result\gets\{-1,0\}\)
-  \Comment{Contains the index of the keyword and its position in sentence}
-  \State \(i\gets\ 0\)
-  \While{\((result[0]<0)\wedge(i<length(keyMap))\)}
-    \State \(var\ entry:KeyMapEntry\gets\ keyMap[i]\)
-    \State \(position\gets\ pos(entry.keyword,sentence)\)
-    \If{\(position>0\)}
-      \State \(result[0]\gets\ i\)
-      \State \(result[1]\gets\ position\)
-    \EndIf
-    \State \(i\gets\ i+1\)
-  \EndWhile
-\EndFunction
-\end{algorithmic}
-\end{algorithm}
-
-
-\begin{algorithm}
 \caption{normalizeInput(1)}
 \begin{algorithmic}[5]
 \Function{normalizeInput}{sentence}
@@ -256,66 +186,6 @@
   \State \(phrases[0]\gets\{\)"{}\ shut"{}\(,\)"{}Okay.\ If\ you\ feel\ that\ way\ I\textbackslash{}'{}ll\ shut\ up.\ ...\ Your\ choice."{}\(\}\)
   \State \(phrases[1]\gets\{\)"{}bye"{}\(,\)"{}Well,\ let\textbackslash{}'{}s\ end\ our\ talk\ for\ now.\ See\ you\ later.\ Bye."{}\(\}\)
   \State \textbf{return} \(phrases\)
-\EndFunction
-\end{algorithmic}
-\end{algorithm}
-
-
-\begin{algorithm}
-\caption{setupKeywords(0)}
-\begin{algorithmic}[5]
-\Function{setupKeywords}{}
-\State \Comment{ The lower the index the higher the rank of the keyword (search is sequential). }
-\State \Comment{ The index of the first keyword found in a user sentence maps to a respective }
-\State \Comment{ reply ring as defined in \textasciigrave{}setupReplies()\textasciiacute{}. }
-  \Decl{Result type:}
-    \State array of KeyMapEntry
-  \EndDecl
-  \Decl{Includes:}
-    \State KeyMapEntry
-  \EndDecl
-  \State \(keywords[39]\gets\ KeyMapEntry\{\)"{}"{}\(,29\}\)
-  \Comment{The empty key string (last entry) is the default clause - will always be found}
-  \State \(keywords[0]\gets\ KeyMapEntry\{\)"{}can\ you\ "{}\(,0\}\)
-  \State \(keywords[1]\gets\ KeyMapEntry\{\)"{}can\ i\ "{}\(,1\}\)
-  \State \(keywords[2]\gets\ KeyMapEntry\{\)"{}you\ are\ "{}\(,2\}\)
-  \State \(keywords[3]\gets\ KeyMapEntry\{\)"{}you\textbackslash{}'{}re\ "{}\(,2\}\)
-  \State \(keywords[4]\gets\ KeyMapEntry\{\)"{}i\ don'{}t\ "{}\(,3\}\)
-  \State \(keywords[5]\gets\ KeyMapEntry\{\)"{}i\ feel\ "{}\(,4\}\)
-  \State \(keywords[6]\gets\ KeyMapEntry\{\)"{}why\ don\textbackslash{}'{}t\ you\ "{}\(,5\}\)
-  \State \(keywords[7]\gets\ KeyMapEntry\{\)"{}why\ can\textbackslash{}'{}t\ i\ "{}\(,6\}\)
-  \State \(keywords[8]\gets\ KeyMapEntry\{\)"{}are\ you\ "{}\(,7\}\)
-  \State \(keywords[9]\gets\ KeyMapEntry\{\)"{}i\ can\textbackslash{}'{}t\ "{}\(,8\}\)
-  \State \(keywords[10]\gets\ KeyMapEntry\{\)"{}i\ am\ "{}\(,9\}\)
-  \State \(keywords[11]\gets\ KeyMapEntry\{\)"{}i\textbackslash{}'{}m\ "{}\(,9\}\)
-  \State \(keywords[12]\gets\ KeyMapEntry\{\)"{}you\ "{}\(,10\}\)
-  \State \(keywords[13]\gets\ KeyMapEntry\{\)"{}i\ want\ "{}\(,11\}\)
-  \State \(keywords[14]\gets\ KeyMapEntry\{\)"{}what\ "{}\(,12\}\)
-  \State \(keywords[15]\gets\ KeyMapEntry\{\)"{}how\ "{}\(,12\}\)
-  \State \(keywords[16]\gets\ KeyMapEntry\{\)"{}who\ "{}\(,12\}\)
-  \State \(keywords[17]\gets\ KeyMapEntry\{\)"{}where\ "{}\(,12\}\)
-  \State \(keywords[18]\gets\ KeyMapEntry\{\)"{}when\ "{}\(,12\}\)
-  \State \(keywords[19]\gets\ KeyMapEntry\{\)"{}why\ "{}\(,12\}\)
-  \State \(keywords[20]\gets\ KeyMapEntry\{\)"{}name\ "{}\(,13\}\)
-  \State \(keywords[21]\gets\ KeyMapEntry\{\)"{}cause\ "{}\(,14\}\)
-  \State \(keywords[22]\gets\ KeyMapEntry\{\)"{}sorry\ "{}\(,15\}\)
-  \State \(keywords[23]\gets\ KeyMapEntry\{\)"{}dream\ "{}\(,16\}\)
-  \State \(keywords[24]\gets\ KeyMapEntry\{\)"{}hello\ "{}\(,17\}\)
-  \State \(keywords[25]\gets\ KeyMapEntry\{\)"{}hi\ "{}\(,17\}\)
-  \State \(keywords[26]\gets\ KeyMapEntry\{\)"{}maybe\ "{}\(,18\}\)
-  \State \(keywords[27]\gets\ KeyMapEntry\{\)"{}\ no"{}\(,19\}\)
-  \State \(keywords[28]\gets\ KeyMapEntry\{\)"{}your\ "{}\(,20\}\)
-  \State \(keywords[29]\gets\ KeyMapEntry\{\)"{}always\ "{}\(,21\}\)
-  \State \(keywords[30]\gets\ KeyMapEntry\{\)"{}think\ "{}\(,22\}\)
-  \State \(keywords[31]\gets\ KeyMapEntry\{\)"{}alike\ "{}\(,23\}\)
-  \State \(keywords[32]\gets\ KeyMapEntry\{\)"{}yes\ "{}\(,24\}\)
-  \State \(keywords[33]\gets\ KeyMapEntry\{\)"{}friend\ "{}\(,25\}\)
-  \State \(keywords[34]\gets\ KeyMapEntry\{\)"{}computer"{}\(,26\}\)
-  \State \(keywords[35]\gets\ KeyMapEntry\{\)"{}bot\ "{}\(,26\}\)
-  \State \(keywords[36]\gets\ KeyMapEntry\{\)"{}smartphone"{}\(,27\}\)
-  \State \(keywords[37]\gets\ KeyMapEntry\{\)"{}father\ "{}\(,28\}\)
-  \State \(keywords[38]\gets\ KeyMapEntry\{\)"{}mother\ "{}\(,28\}\)
-  \State \textbf{return} \(keywords\)
 \EndFunction
 \end{algorithmic}
 \end{algorithm}
@@ -392,6 +262,136 @@
   \State \(replies[27]\gets\{\)"{}Do\ you\ sometimes\ feel\ uneasy\ without\ a\ smartphone?"{}\(,\)"{}Have\ you\ had\ these\ phantasies\ before?"{}\(,\)"{}Does\ the\ world\ seem\ more\ real\ for\ you\ via\ apps?"{}\(\}\)
   \State \(replies[28]\gets\{\)"{}Tell\ me\ more\ about\ your\ family."{}\(,\)"{}Who\ else\ in\ your\ family*?"{}\(,\)"{}What\ does\ family\ relations\ mean\ for\ you?"{}\(,\)"{}Come\ on,\ How\ old\ are\ you?"{}\(\}\)
   \State \(setupReplies\gets\ replies\)
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{algorithm}
+\caption{checkRepetition(2)}
+\begin{algorithmic}[5]
+\Function{checkRepetition}{history, newInput}
+\State \Comment{ Checks whether newInput has occurred among the recently cached }
+\State \Comment{ input strings in the histArray component of history and updates the history. }
+  \Decl{Parameters:}
+    \State history: History
+    \State newInput: string
+  \EndDecl
+  \Decl{Result type:}
+    \State boolean
+  \EndDecl
+  \Decl{Includes:}
+    \State History
+  \EndDecl
+  \State \(hasOccurred\gets\ false\)
+  \If{\(length(newInput)>4\)}
+    \State \(histDepth\gets\ length(history.histArray)\)
+    \For{\(i \gets 0\) \textbf{to} \(histDepth-1\) \textbf{by} \(1\)}
+      \If{\(newInput=history.histArray[i]\)}
+        \State \(hasOccurred\gets\ true\)
+      \EndIf
+    \EndFor
+    \State \(history.histArray[history.histIndex]\gets\ newInput\)
+    \State \(history.histIndex\gets(history.histIndex+1)\bmod(histDepth)\)
+  \EndIf
+  \State \textbf{return} \(hasOccurred\)
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{algorithm}
+\caption{findKeyword(2)}
+\begin{algorithmic}[5]
+\Function{findKeyword}{keyMap, sentence}
+\State \Comment{ Looks for the occurrence of the first of the strings }
+\State \Comment{ contained in keywords within the given sentence (in }
+\State \Comment{ array order). }
+\State \Comment{ Returns an array of }
+\State \Comment{ 0: the index of the first identified keyword (if any, otherwise -1), }
+\State \Comment{ 1: the position inside sentence (0 if not found) }
+  \Decl{Parameters:}
+    \State keyMap: array\ of\ KeyMapEntry
+    \State sentence: string
+  \EndDecl
+  \Decl{Result type:}
+    \State array[0..1] of integer
+  \EndDecl
+  \Decl{Includes:}
+    \State KeyMapEntry
+  \EndDecl
+  \State \(result\gets\{-1,0\}\)
+  \Comment{Contains the index of the keyword and its position in sentence}
+  \State \(i\gets\ 0\)
+  \While{\((result[0]<0)\wedge(i<length(keyMap))\)}
+    \State \(var\ entry:KeyMapEntry\gets\ keyMap[i]\)
+    \State \(position\gets\ pos(entry.keyword,sentence)\)
+    \If{\(position>0\)}
+      \State \(result[0]\gets\ i\)
+      \State \(result[1]\gets\ position\)
+    \EndIf
+    \State \(i\gets\ i+1\)
+  \EndWhile
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{algorithm}
+\caption{setupKeywords(0)}
+\begin{algorithmic}[5]
+\Function{setupKeywords}{}
+\State \Comment{ The lower the index the higher the rank of the keyword (search is sequential). }
+\State \Comment{ The index of the first keyword found in a user sentence maps to a respective }
+\State \Comment{ reply ring as defined in \textasciigrave{}setupReplies()\textasciiacute{}. }
+  \Decl{Result type:}
+    \State array of KeyMapEntry
+  \EndDecl
+  \Decl{Includes:}
+    \State KeyMapEntry
+  \EndDecl
+  \State \(keywords[39]\gets\ KeyMapEntry\{\)"{}"{}\(,29\}\)
+  \Comment{The empty key string (last entry) is the default clause - will always be found}
+  \State \(keywords[0]\gets\ KeyMapEntry\{\)"{}can\ you\ "{}\(,0\}\)
+  \State \(keywords[1]\gets\ KeyMapEntry\{\)"{}can\ i\ "{}\(,1\}\)
+  \State \(keywords[2]\gets\ KeyMapEntry\{\)"{}you\ are\ "{}\(,2\}\)
+  \State \(keywords[3]\gets\ KeyMapEntry\{\)"{}you\textbackslash{}'{}re\ "{}\(,2\}\)
+  \State \(keywords[4]\gets\ KeyMapEntry\{\)"{}i\ don'{}t\ "{}\(,3\}\)
+  \State \(keywords[5]\gets\ KeyMapEntry\{\)"{}i\ feel\ "{}\(,4\}\)
+  \State \(keywords[6]\gets\ KeyMapEntry\{\)"{}why\ don\textbackslash{}'{}t\ you\ "{}\(,5\}\)
+  \State \(keywords[7]\gets\ KeyMapEntry\{\)"{}why\ can\textbackslash{}'{}t\ i\ "{}\(,6\}\)
+  \State \(keywords[8]\gets\ KeyMapEntry\{\)"{}are\ you\ "{}\(,7\}\)
+  \State \(keywords[9]\gets\ KeyMapEntry\{\)"{}i\ can\textbackslash{}'{}t\ "{}\(,8\}\)
+  \State \(keywords[10]\gets\ KeyMapEntry\{\)"{}i\ am\ "{}\(,9\}\)
+  \State \(keywords[11]\gets\ KeyMapEntry\{\)"{}i\textbackslash{}'{}m\ "{}\(,9\}\)
+  \State \(keywords[12]\gets\ KeyMapEntry\{\)"{}you\ "{}\(,10\}\)
+  \State \(keywords[13]\gets\ KeyMapEntry\{\)"{}i\ want\ "{}\(,11\}\)
+  \State \(keywords[14]\gets\ KeyMapEntry\{\)"{}what\ "{}\(,12\}\)
+  \State \(keywords[15]\gets\ KeyMapEntry\{\)"{}how\ "{}\(,12\}\)
+  \State \(keywords[16]\gets\ KeyMapEntry\{\)"{}who\ "{}\(,12\}\)
+  \State \(keywords[17]\gets\ KeyMapEntry\{\)"{}where\ "{}\(,12\}\)
+  \State \(keywords[18]\gets\ KeyMapEntry\{\)"{}when\ "{}\(,12\}\)
+  \State \(keywords[19]\gets\ KeyMapEntry\{\)"{}why\ "{}\(,12\}\)
+  \State \(keywords[20]\gets\ KeyMapEntry\{\)"{}name\ "{}\(,13\}\)
+  \State \(keywords[21]\gets\ KeyMapEntry\{\)"{}cause\ "{}\(,14\}\)
+  \State \(keywords[22]\gets\ KeyMapEntry\{\)"{}sorry\ "{}\(,15\}\)
+  \State \(keywords[23]\gets\ KeyMapEntry\{\)"{}dream\ "{}\(,16\}\)
+  \State \(keywords[24]\gets\ KeyMapEntry\{\)"{}hello\ "{}\(,17\}\)
+  \State \(keywords[25]\gets\ KeyMapEntry\{\)"{}hi\ "{}\(,17\}\)
+  \State \(keywords[26]\gets\ KeyMapEntry\{\)"{}maybe\ "{}\(,18\}\)
+  \State \(keywords[27]\gets\ KeyMapEntry\{\)"{}\ no"{}\(,19\}\)
+  \State \(keywords[28]\gets\ KeyMapEntry\{\)"{}your\ "{}\(,20\}\)
+  \State \(keywords[29]\gets\ KeyMapEntry\{\)"{}always\ "{}\(,21\}\)
+  \State \(keywords[30]\gets\ KeyMapEntry\{\)"{}think\ "{}\(,22\}\)
+  \State \(keywords[31]\gets\ KeyMapEntry\{\)"{}alike\ "{}\(,23\}\)
+  \State \(keywords[32]\gets\ KeyMapEntry\{\)"{}yes\ "{}\(,24\}\)
+  \State \(keywords[33]\gets\ KeyMapEntry\{\)"{}friend\ "{}\(,25\}\)
+  \State \(keywords[34]\gets\ KeyMapEntry\{\)"{}computer"{}\(,26\}\)
+  \State \(keywords[35]\gets\ KeyMapEntry\{\)"{}bot\ "{}\(,26\}\)
+  \State \(keywords[36]\gets\ KeyMapEntry\{\)"{}smartphone"{}\(,27\}\)
+  \State \(keywords[37]\gets\ KeyMapEntry\{\)"{}father\ "{}\(,28\}\)
+  \State \(keywords[38]\gets\ KeyMapEntry\{\)"{}mother\ "{}\(,28\}\)
+  \State \textbf{return} \(keywords\)
 \EndFunction
 \end{algorithmic}
 \end{algorithm}

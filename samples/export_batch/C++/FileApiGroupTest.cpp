@@ -41,80 +41,6 @@ int readNumbers(string fileName, int numbers[50], int maxNumbers);
 
 #include "FileApiGroupTest.h"
 
-// function drawBarChart(values: array of double; nValues) 
-// TODO: Revise the return type and declare the parameters. 
-void drawBarChart(double values[50], ??? nValues)
-{
-	// TODO: Check and accomplish variable declarations: 
-	const int xSize = 500;
-	const int ySize = 500;
-	double valMin;
-	double valMax;
-	int kMin;
-	int kMax;
-
-	kMin = 0;
-	kMax = 0;
-	for (int k = 1; k <= nValues-1; k += (1)) {
-		if (values[k] > values[kMax]) {
-			kMax = k;
-		}
-		else if (values[k] < values[kMin]) {
-			kMin = k;
-		}
-	}
-	valMin = values[kMin];
-	valMax = values[kMax];
-	??? yScale = valMax * 1.0 / (ySize - 1);
-	??? yAxis = ySize - 1;
-	if (valMin < 0) {
-		if (valMax > 0) {
-			yAxis = valMax * ySize * 1.0 / (valMax - valMin);
-			yScale = (valMax - valMin) * 1.0 / (ySize - 1);
-		}
-		else {
-			yAxis = 1;
-			yScale = valMin * 1.0 / (ySize - 1);
-		}
-	}
-	// draw coordinate axes 
-	gotoXY(1, ySize - 1);
-	forward(ySize -1); // color = ffffff
-	penUp();
-	backward(yAxis); // color = ffffff
-	right(90);
-	penDown();
-	forward(xSize -1); // color = ffffff
-	penUp();
-	backward(xSize-1); // color = ffffff
-	??? stripeWidth = xSize / nValues;
-	for (int k = 0; k <= nValues-1; k += (1)) {
-		??? stripeHeight = values[k] * 1.0 / yScale;
-		switch (k % 3) {
-		case 0:
-			setPenColor(255,0,0);
-			break;
-		case 1:
-			setPenColor(0, 255,0);
-			break;
-		case 2:
-			setPenColor(0, 0, 255);
-			break;
-		}
-		fd(1); // color = ffffff
-		left(90);
-		penDown();
-		fd(stripeHeight); // color = ffffff
-		right(90);
-		fd(stripeWidth - 1); // color = ffffff
-		right(90);
-		forward(stripeHeight); // color = ffffff
-		left(90);
-		penUp();
-	}
-}
-// = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
-
 // function readNumbers(fileName: string; numbers: array of integer; maxNumbers: integer): integer 
 // TODO: Revise the return type and declare the parameters. 
 int readNumbers(string fileName, int numbers[50], int maxNumbers)
@@ -242,6 +168,12 @@ using std::string;
 void drawBarChart(double values[50], ??? nValues)
 {
 	// TODO: Check and accomplish variable declarations: 
+	const int xSize = 500;
+	const int ySize = 500;
+	double valMin;
+	double valMax;
+	int kMin;
+	int kMax;
 
 	kMin = 0;
 	kMax = 0;
@@ -255,8 +187,8 @@ void drawBarChart(double values[50], ??? nValues)
 	}
 	valMin = values[kMin];
 	valMax = values[kMax];
-	yScale = valMax * 1.0 / (ySize - 1);
-	yAxis = ySize - 1;
+	??? yScale = valMax * 1.0 / (ySize - 1);
+	??? yAxis = ySize - 1;
 	if (valMin < 0) {
 		if (valMax > 0) {
 			yAxis = valMax * ySize * 1.0 / (valMax - valMin);
@@ -277,9 +209,9 @@ void drawBarChart(double values[50], ??? nValues)
 	forward(xSize -1); // color = ffffff
 	penUp();
 	backward(xSize-1); // color = ffffff
-	stripeWidth = xSize / nValues;
+	??? stripeWidth = xSize / nValues;
 	for (int k = 0; k <= nValues-1; k += (1)) {
-		stripeHeight = values[k] * 1.0 / yScale;
+		??? stripeHeight = values[k] * 1.0 / yScale;
 		switch (k % 3) {
 		case 0:
 			setPenColor(255,0,0);

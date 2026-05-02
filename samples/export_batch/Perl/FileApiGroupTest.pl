@@ -18,106 +18,6 @@ use Class::Struct;
 #       See e.g. http://perldoc.perl.org/perlopentut.html 
 
 sub finally (&) { Finally->new(@_) }
-
-# Draws a bar chart from the array "values" of size nValues. 
-# Turtleizer must be activated and will scale the chart into a square of 
-# 500 x 500 pixels 
-# Note: The function is not robust against empty array or totally equal values. 
-sub drawBarChart {
-    my $values = $_[0];
-    my $nValues = $_[1];
-
-    use constant xSize => 500;
-    use constant ySize => 500;
-    my $yScale;
-    my $yAxis;
-    my $valMin;
-    my $valMax;
-    my $stripeWidth;
-    my $stripeHeight;
-    my $kMin;
-    my $kMax;
-    my $k;
-
-    # Used range of the Turtleizer screen 
-    $kMin = 0;
-    $kMax = 0;
-
-    for ($k = 1; $k <= $nValues-1; $k += (1)) {
-
-        if ( $$values[$k] > $$values[$kMax] ) {
-            $kMax = $k;
-        }
-        else if ( $$values[$k] < $$values[$kMin] ) {
-            $kMin = $k;
-        }
-
-    }
-
-    $valMin = $$values[$kMin];
-    $valMax = $$values[$kMax];
-    $yScale = $valMax * 1.0 / (ySize - 1);
-    $yAxis = ySize - 1;
-
-    if ( $valMin < 0 ) {
-
-        if ( $valMax > 0 ) {
-            $yAxis = $valMax * ySize * 1.0 / ($valMax - $valMin);
-            $yScale = ($valMax - $valMin) * 1.0 / (ySize - 1);
-        }
-        else {
-            $yAxis = 1;
-            $yScale = $valMin * 1.0 / (ySize - 1);
-        }
-
-    }
-
-    # draw coordinate axes 
-    gotoXY(1, ySize - 1);
-    forward(ySize -1); # color = ffffff
-    penUp();
-    backward($yAxis); # color = ffffff
-    right(90);
-    penDown();
-    forward(xSize -1); # color = ffffff
-    penUp();
-    backward(xSize-1); # color = ffffff
-    $stripeWidth = xSize / $nValues;
-
-    for ($k = 0; $k <= $nValues-1; $k += (1)) {
-        $stripeHeight = $$values[$k] * 1.0 / $yScale;
-
-        switch ( $k % 3 ) {
-
-            case (0) {
-                setPenColor(255,0,0);
-            }
-
-            case (1) {
-                setPenColor(0, 255,0);
-            }
-
-            case (2) {
-                setPenColor(0, 0, 255);
-            }
-        }
-
-        fd(1); # color = ffffff
-        left(90);
-        penDown();
-        fd($stripeHeight); # color = ffffff
-        right(90);
-        fd($stripeWidth - 1); # color = ffffff
-        right(90);
-        forward($stripeHeight); # color = ffffff
-        left(90);
-        penUp();
-    }
-
-}
-
-# = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
-
 # Tries to read as many integer values as possible upto maxNumbers 
 # from file fileName into the given array numbers. 
 # Returns the number of the actually read numbers. May cause an exception. 
@@ -139,7 +39,7 @@ sub readNumbers {
     }
 
     eval {
-        my $final7d907bac = finally {
+        my $final6325a3ee = finally {
             close($fileNo);
         };
 
@@ -152,7 +52,7 @@ sub readNumbers {
         }
 
     };
-    if (my $ex7d907bac = $@) {
+    if (my $ex6325a3ee = $@) {
         die ;
     };
     return $nNumbers;
@@ -223,7 +123,7 @@ if ( $fileNo > 0 ) {
     eval {
         $nValues = readNumbers($file_name, \@values, 1000);
     };
-    if (my $ex3dd4520b = $@) {
+    if (my $ex887af79 = $@) {
         print failure, "\n";
         exit(-7);
     };
@@ -413,7 +313,7 @@ if ( $fileNo > 0 ) {
     eval {
         $nObtained = readNumbers($file_name, \@numberArray, 10000);
     };
-    if (my $ex35d176f7 = $@) {
+    if (my $ex2758fe70 = $@) {
         print failure, "\n";
     };
 

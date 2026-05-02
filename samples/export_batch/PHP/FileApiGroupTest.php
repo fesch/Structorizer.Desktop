@@ -9,90 +9,6 @@
 
 require_once 'StructorizerFileAPI';
 
-// function drawBarChart 
-// Draws a bar chart from the array "values" of size nValues. 
-// Turtleizer must be activated and will scale the chart into a square of 
-// 500 x 500 pixels 
-// Note: The function is not robust against empty array or totally equal values. 
-function drawBarChart($values, $nValues)
-{
-
-	// TODO Establish sensible web formulars to get the $_GET input working. 
-
-	// Used range of the Turtleizer screen 
-	const xSize = 500;
-	const ySize = 500;
-	$kMin = 0;
-	$kMax = 0;
-	for ($k = 1; $k <= $nValues-1; $k += (1))
-	{
-		if ($values[$k] > $values[$kMax])
-		{
-			$kMax = $k;
-		}
-		else if $values[$k] < $values[$kMin]
-		{
-			$kMin = $k;
-		}
-	}
-	$valMin = $values[$kMin];
-	$valMax = $values[$kMax];
-	$yScale = $valMax * 1.0 / (ySize - 1);
-	$yAxis = ySize - 1;
-	if ($valMin < 0)
-	{
-		if ($valMax > 0)
-		{
-			$yAxis = $valMax * ySize * 1.0 / ($valMax - $valMin);
-			$yScale = ($valMax - $valMin) * 1.0 / (ySize - 1);
-		}
-		else
-		{
-			$yAxis = 1;
-			$yScale = $valMin * 1.0 / (ySize - 1);
-		}
-	}
-	// draw coordinate axes 
-	gotoXY(1, ySize - 1);
-	forward(ySize -1); // color = ffffff
-	penUp();
-	backward($yAxis); // color = ffffff
-	right(90);
-	penDown();
-	forward(xSize -1); // color = ffffff
-	penUp();
-	backward(xSize-1); // color = ffffff
-	$stripeWidth = xSize / $nValues;
-	for ($k = 0; $k <= $nValues-1; $k += (1))
-	{
-		$stripeHeight = $values[$k] * 1.0 / $yScale;
-		switch ($k % 3) 
-		{
-			case 0:
-				setPenColor(255,0,0);
-				break;
-			case 1:
-				setPenColor(0, 255,0);
-				break;
-			case 2:
-				setPenColor(0, 0, 255);
-				break;
-		}
-		fd(1); // color = ffffff
-		left(90);
-		penDown();
-		fd($stripeHeight); // color = ffffff
-		right(90);
-		fd($stripeWidth - 1); // color = ffffff
-		right(90);
-		forward($stripeHeight); // color = ffffff
-		left(90);
-		penUp();
-	}
-}
-// = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
-
-// function readNumbers 
 // Tries to read as many integer values as possible upto maxNumbers 
 // from file fileName into the given array numbers. 
 // Returns the number of the actually read numbers. May cause an exception. 
@@ -114,9 +30,9 @@ function readNumbers($fileName, $numbers, $maxNumbers)
 			$numbers[$nNumbers] = $number;
 			$nNumbers = $nNumbers + 1;
 		}
-	} catch (Exception $ex7d907bac) {
-		$error = $ex7d907bac->getMessage();
-		throw $ex7d907bac;
+	} catch (Exception $ex6325a3ee) {
+		$error = $ex6325a3ee->getMessage();
+		throw $ex6325a3ee;
 	} finally {
 		StructorizerFileAPI::fileClose($fileNo);
 	}
@@ -169,8 +85,8 @@ if ($fileNo > 0)
 	$nValues = 0;
 	try {
 		$nValues = readNumbers($file_name, $values, 1000);
-	} catch (Exception $ex5ae63ade) {
-		$failure = $ex5ae63ade->getMessage();
+	} catch (Exception $ex7fac631b) {
+		$failure = $ex7fac631b->getMessage();
 		echo failure;
 		exit(-7);
 	}
@@ -308,8 +224,8 @@ if ($fileNo > 0)
 	$nObtained = 0;
 	try {
 		$nObtained = readNumbers($file_name, $numberArray, 10000);
-	} catch (Exception $ex35d176f7) {
-		$failure = $ex35d176f7->getMessage();
+	} catch (Exception $ex2758fe70) {
+		$failure = $ex2758fe70->getMessage();
 		echo failure;
 	}
 	if ($nObtained > 0)

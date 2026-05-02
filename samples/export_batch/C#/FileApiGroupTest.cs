@@ -42,8 +42,8 @@ public class readNumbers {
 				nNumbers = nNumbers + 1;
 			}
 		}
-		catch(Exception ex67b92f0a) {
-			string error = ex67b92f0a.ToString()
+		catch(Exception ex4f970963) {
+			string error = ex4f970963.ToString()
 			throw;
 		}
 		finally {
@@ -51,87 +51,6 @@ public class readNumbers {
 		}
 		return nNumbers;
 	}
-
-	/// <summary>
-	/// Draws a bar chart from the array "values" of size nValues.
-	/// Turtleizer must be activated and will scale the chart into a square of
-	/// 500 x 500 pixels
-	/// Note: The function is not robust against empty array or totally equal values.
-	/// </summary>
-	/// <param name="values"> TODO </param>
-	/// <param name="nValues"> TODO </param>
-	private static void drawBarChart(double[] values, ??? nValues) {
-		// TODO: Check and accomplish variable declarations: 
-		const int xSize = 500;
-		const int ySize = 500;
-		double valMin;
-		double valMax;
-		int kMin;
-		int kMax;
-
-		kMin = 0;
-		kMax = 0;
-		for (int k = 1; k <= nValues-1; k += (1)) {
-			if (values[k] > values[kMax]) {
-				kMax = k;
-			}
-			else if (values[k] < values[kMin]) {
-				kMin = k;
-			}
-		}
-		valMin = values[kMin];
-		valMax = values[kMax];
-		??? yScale = valMax * 1.0 / (ySize - 1);
-		??? yAxis = ySize - 1;
-		if (valMin < 0) {
-			if (valMax > 0) {
-				yAxis = valMax * ySize * 1.0 / (valMax - valMin);
-				yScale = (valMax - valMin) * 1.0 / (ySize - 1);
-			}
-			else {
-				yAxis = 1;
-				yScale = valMin * 1.0 / (ySize - 1);
-			}
-		}
-		// draw coordinate axes 
-		gotoXY(1, ySize - 1);
-		forward(ySize -1); // color = ffffff
-		penUp();
-		backward(yAxis); // color = ffffff
-		right(90);
-		penDown();
-		forward(xSize -1); // color = ffffff
-		penUp();
-		backward(xSize-1); // color = ffffff
-		??? stripeWidth = xSize / nValues;
-		for (int k = 0; k <= nValues-1; k += (1)) {
-			??? stripeHeight = values[k] * 1.0 / yScale;
-			switch (k % 3) {
-			case 0:
-				setPenColor(255,0,0);
-				break;
-			case 1:
-				setPenColor(0, 255,0);
-				break;
-			case 2:
-				setPenColor(0, 0, 255);
-				break;
-			}
-			fd(1); // color = ffffff
-			left(90);
-			penDown();
-			fd(stripeHeight); // color = ffffff
-			right(90);
-			fd(stripeWidth - 1); // color = ffffff
-			right(90);
-			forward(stripeHeight); // color = ffffff
-			left(90);
-			penUp();
-		}
-	}
-
-// = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
-
 
 }
 
@@ -193,8 +112,8 @@ public class ComputeSum {
 			try {
 				nValues = FileApiGroupTest.readNumbers(file_name, values, 1000);
 			}
-			catch(Exception ex3cef309d) {
-				string failure = ex3cef309d.ToString()
+			catch(Exception ex2758fe70) {
+				string failure = ex2758fe70.ToString()
 				Console.WriteLine(failure);
 				if (System.Windows.Forms.Application.MessageLoop) {
 					// WinForms app 
@@ -276,8 +195,8 @@ public class DrawRandomHistogram {
 			try {
 				nObtained = FileApiGroupTest.readNumbers(file_name, numberArray, 10000);
 			}
-			catch(Exception ex6737fd8f) {
-				string failure = ex6737fd8f.ToString()
+			catch(Exception ex3b084709) {
+				string failure = ex3b084709.ToString()
 				Console.WriteLine(failure);
 			}
 			if (nObtained > 0) {
@@ -326,6 +245,12 @@ public class DrawRandomHistogram {
 	/// <param name="nValues"> TODO </param>
 	private static void drawBarChart(double[] values, ??? nValues) {
 		// TODO: Check and accomplish variable declarations: 
+		const int xSize = 500;
+		const int ySize = 500;
+		double valMin;
+		double valMax;
+		int kMin;
+		int kMax;
 
 		kMin = 0;
 		kMax = 0;
@@ -339,8 +264,8 @@ public class DrawRandomHistogram {
 		}
 		valMin = values[kMin];
 		valMax = values[kMax];
-		yScale = valMax * 1.0 / (ySize - 1);
-		yAxis = ySize - 1;
+		??? yScale = valMax * 1.0 / (ySize - 1);
+		??? yAxis = ySize - 1;
 		if (valMin < 0) {
 			if (valMax > 0) {
 				yAxis = valMax * ySize * 1.0 / (valMax - valMin);
@@ -361,9 +286,9 @@ public class DrawRandomHistogram {
 		forward(xSize -1); // color = ffffff
 		penUp();
 		backward(xSize-1); // color = ffffff
-		stripeWidth = xSize / nValues;
+		??? stripeWidth = xSize / nValues;
 		for (int k = 0; k <= nValues-1; k += (1)) {
-			stripeHeight = values[k] * 1.0 / yScale;
+			??? stripeHeight = values[k] * 1.0 / yScale;
 			switch (k % 3) {
 			case 0:
 				setPenColor(255,0,0);

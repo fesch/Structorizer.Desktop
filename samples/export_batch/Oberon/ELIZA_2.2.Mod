@@ -29,12 +29,12 @@ TYPE
     END;
 
 VAR
-  index3b084709: INTEGER;
-  array3b084709: ARRAY 5 OF ARRAY 100 OF CHAR;
-  index49fc609f: INTEGER;
-  index35d176f7: INTEGER;
-  index627551fb: INTEGER;
-  array627551fb: ARRAY 2 OF ARRAY 100 OF CHAR;
+  index57855c9a: INTEGER;
+  array57855c9a: ARRAY 5 OF ARRAY 100 OF CHAR;
+  index4973813a: INTEGER;
+  index6e6c3152: INTEGER;
+  index1f36e637: INTEGER;
+  array1f36e637: ARRAY 2 OF ARRAY 100 OF CHAR;
   (* TODO: check and accomplish variable declarations *)
   varPart: ARRAY 128 OF CHAR;
   (*
@@ -78,10 +78,10 @@ BEGIN
     delete(result, 1, position);
     insert(CAP(start), result, 1);
   END;
-  array627551fb[0] := " i ";
-  array627551fb[1] := " i\'";
-  FOR index627551fb := 0 TO 1 DO
-    word := array627551fb[index627551fb];
+  array1f36e637[0] := " i ";
+  array1f36e637[1] := " i\'";
+  FOR index1f36e637 := 0 TO 1 DO
+    word := array1f36e637[index1f36e637];
     position := pos(word, result);
     WHILE position > 0 DO
       delete(result, position+1, 1);
@@ -104,8 +104,8 @@ VAR
   saidBye: BOOLEAN;
   pair: ARRAY 50 OF ARRAY 128 OF CHAR;
 BEGIN
-  FOR index35d176f7 := 0 TO LEN(phrases)-1 DO
-    pair := phrases[index35d176f7];
+  FOR index6e6c3152 := 0 TO LEN(phrases)-1 DO
+    pair := phrases[index6e6c3152];
     IF pos(pair[0], text) > 0 THEN
       saidBye := true;
       (* TODO: Replace "TYPE" by the the actual Out procedure name for this type and add a length argument where needed! *)
@@ -153,8 +153,8 @@ VAR
   left: ARRAY 128 OF CHAR;
 BEGIN
   result := " " + copy(sentence, keyPos + length(key), length(sentence)) + " ";
-  FOR index49fc609f := 0 TO LEN(flexions)-1 DO
-    pair := flexions[index49fc609f];
+  FOR index4973813a := 0 TO LEN(flexions)-1 DO
+    pair := flexions[index4973813a];
     left := "";
     right := result;
     position := pos(pair[0], right);
@@ -176,41 +176,6 @@ END conjugateStrings;
 
 (* TODO: Oberon doesn't permit to return arrays - pass the result in a different way! *)
 (*
-  Looks for the occurrence of the first of the strings
-  contained in keywords within the given sentence (in
-  array order).
-  Returns an array of
-  0: the index of the first identified keyword (if any, otherwise -1),
-  1: the position inside sentence (0 if not found)
- *)
-PROCEDURE findKeyword(keyMap: ARRAY 50 OF KeyMapEntry; VAR sentence: ARRAY 128 OF CHAR): ARRAY 2 OF INTEGER;
-
-VAR
-  (* TODO: check and accomplish variable declarations *)
-  result: ARRAY 2 OF INTEGER;
-  position: INTEGER;
-  i: INTEGER;
-  entry: KeyMapEntry;
-BEGIN
-  (* Contains the index of the keyword and its position in sentence *)
-  (* Hint: Automatically decomposed array initialization *)
-  result[0] := -1;
-  result[1] := 0;
-  i := 0;
-  WHILE (result[0] < 0) & (i < length(keyMap)) DO
-    entry := keyMap[i];
-    position := pos(entry.keyword, sentence);
-    IF position > 0 THEN
-      result[0] := i;
-      result[1] := position;
-    END;
-    i := i+1;
-  END;
-  RETURN result;
-END findKeyword;
-
-(* TODO: Oberon doesn't permit to return arrays - pass the result in a different way! *)
-(*
   Converts the sentence to lowercase, eliminates all
   interpunction (i.e. ',', '.', ';'), and pads the
   sentence among blanks
@@ -223,13 +188,13 @@ VAR
   position: INTEGER;
 BEGIN
   sentence := lowercase(sentence);
-  array3b084709[0] := '.';
-  array3b084709[1] := ',';
-  array3b084709[2] := ';';
-  array3b084709[3] := '!';
-  array3b084709[4] := '?';
-  FOR index3b084709 := 0 TO 4 DO
-    symbol := array3b084709[index3b084709];
+  array57855c9a[0] := '.';
+  array57855c9a[1] := ',';
+  array57855c9a[2] := ';';
+  array57855c9a[3] := '!';
+  array57855c9a[4] := '?';
+  FOR index57855c9a := 0 TO 4 DO
+    symbol := array57855c9a[index57855c9a];
     position := pos(symbol, sentence);
     WHILE position > 0 DO
       sentence := copy(sentence, 1, position-1) + copy(sentence, position+1, length(sentence));
@@ -254,101 +219,6 @@ BEGIN
   phrases[1, 1] := "Well, let\'s end our talk for now. See you later. Bye.";
   RETURN phrases;
 END setupGoodByePhrases;
-
-(* TODO: Oberon doesn't permit to return arrays - pass the result in a different way! *)
-(*
-  The lower the index the higher the rank of the keyword (search is sequential).
-  The index of the first keyword found in a user sentence maps to a respective
-  reply ring as defined in `setupReplies()´.
- *)
-PROCEDURE setupKeywords: ARRAY 50 OF KeyMapEntry;
-VAR
-  (* TODO: check and accomplish variable declarations *)
-  keywords: ARRAY 50 OF KeyMapEntry;
-BEGIN
-  (* The empty key string (last entry) is the default clause - will always be found *)
-  keywords[39].keyword := "";
-  keywords[39].index := 29;
-  keywords[0].keyword := "can you ";
-  keywords[0].index := 0;
-  keywords[1].keyword := "can i ";
-  keywords[1].index := 1;
-  keywords[2].keyword := "you are ";
-  keywords[2].index := 2;
-  keywords[3].keyword := "you\'re ";
-  keywords[3].index := 2;
-  keywords[4].keyword := "i don't ";
-  keywords[4].index := 3;
-  keywords[5].keyword := "i feel ";
-  keywords[5].index := 4;
-  keywords[6].keyword := "why don\'t you ";
-  keywords[6].index := 5;
-  keywords[7].keyword := "why can\'t i ";
-  keywords[7].index := 6;
-  keywords[8].keyword := "are you ";
-  keywords[8].index := 7;
-  keywords[9].keyword := "i can\'t ";
-  keywords[9].index := 8;
-  keywords[10].keyword := "i am ";
-  keywords[10].index := 9;
-  keywords[11].keyword := "i\'m ";
-  keywords[11].index := 9;
-  keywords[12].keyword := "you ";
-  keywords[12].index := 10;
-  keywords[13].keyword := "i want ";
-  keywords[13].index := 11;
-  keywords[14].keyword := "what ";
-  keywords[14].index := 12;
-  keywords[15].keyword := "how ";
-  keywords[15].index := 12;
-  keywords[16].keyword := "who ";
-  keywords[16].index := 12;
-  keywords[17].keyword := "where ";
-  keywords[17].index := 12;
-  keywords[18].keyword := "when ";
-  keywords[18].index := 12;
-  keywords[19].keyword := "why ";
-  keywords[19].index := 12;
-  keywords[20].keyword := "name ";
-  keywords[20].index := 13;
-  keywords[21].keyword := "cause ";
-  keywords[21].index := 14;
-  keywords[22].keyword := "sorry ";
-  keywords[22].index := 15;
-  keywords[23].keyword := "dream ";
-  keywords[23].index := 16;
-  keywords[24].keyword := "hello ";
-  keywords[24].index := 17;
-  keywords[25].keyword := "hi ";
-  keywords[25].index := 17;
-  keywords[26].keyword := "maybe ";
-  keywords[26].index := 18;
-  keywords[27].keyword := " no";
-  keywords[27].index := 19;
-  keywords[28].keyword := "your ";
-  keywords[28].index := 20;
-  keywords[29].keyword := "always ";
-  keywords[29].index := 21;
-  keywords[30].keyword := "think ";
-  keywords[30].index := 22;
-  keywords[31].keyword := "alike ";
-  keywords[31].index := 23;
-  keywords[32].keyword := "yes ";
-  keywords[32].index := 24;
-  keywords[33].keyword := "friend ";
-  keywords[33].index := 25;
-  keywords[34].keyword := "computer";
-  keywords[34].index := 26;
-  keywords[35].keyword := "bot ";
-  keywords[35].index := 26;
-  keywords[36].keyword := "smartphone";
-  keywords[36].index := 27;
-  keywords[37].keyword := "father ";
-  keywords[37].index := 28;
-  keywords[38].keyword := "mother ";
-  keywords[38].index := 28;
-  RETURN keywords;
-END setupKeywords;
 
 (* TODO: Oberon doesn't permit to return arrays - pass the result in a different way! *)
 (* Returns an array of pairs of mutualy substitutable  *)
@@ -558,6 +428,136 @@ BEGIN
   setupReplies := replies;
   RETURN setupReplies;
 END setupReplies;
+
+(* TODO: Oberon doesn't permit to return arrays - pass the result in a different way! *)
+(*
+  Looks for the occurrence of the first of the strings
+  contained in keywords within the given sentence (in
+  array order).
+  Returns an array of
+  0: the index of the first identified keyword (if any, otherwise -1),
+  1: the position inside sentence (0 if not found)
+ *)
+PROCEDURE findKeyword(keyMap: ARRAY 50 OF KeyMapEntry; VAR sentence: ARRAY 128 OF CHAR): ARRAY 2 OF INTEGER;
+
+VAR
+  (* TODO: check and accomplish variable declarations *)
+  result: ARRAY 2 OF INTEGER;
+  position: INTEGER;
+  i: INTEGER;
+  entry: KeyMapEntry;
+BEGIN
+  (* Contains the index of the keyword and its position in sentence *)
+  (* Hint: Automatically decomposed array initialization *)
+  result[0] := -1;
+  result[1] := 0;
+  i := 0;
+  WHILE (result[0] < 0) & (i < length(keyMap)) DO
+    entry := keyMap[i];
+    position := pos(entry.keyword, sentence);
+    IF position > 0 THEN
+      result[0] := i;
+      result[1] := position;
+    END;
+    i := i+1;
+  END;
+  RETURN result;
+END findKeyword;
+
+(* TODO: Oberon doesn't permit to return arrays - pass the result in a different way! *)
+(*
+  The lower the index the higher the rank of the keyword (search is sequential).
+  The index of the first keyword found in a user sentence maps to a respective
+  reply ring as defined in `setupReplies()´.
+ *)
+PROCEDURE setupKeywords: ARRAY 50 OF KeyMapEntry;
+VAR
+  (* TODO: check and accomplish variable declarations *)
+  keywords: ARRAY 50 OF KeyMapEntry;
+BEGIN
+  (* The empty key string (last entry) is the default clause - will always be found *)
+  keywords[39].keyword := "";
+  keywords[39].index := 29;
+  keywords[0].keyword := "can you ";
+  keywords[0].index := 0;
+  keywords[1].keyword := "can i ";
+  keywords[1].index := 1;
+  keywords[2].keyword := "you are ";
+  keywords[2].index := 2;
+  keywords[3].keyword := "you\'re ";
+  keywords[3].index := 2;
+  keywords[4].keyword := "i don't ";
+  keywords[4].index := 3;
+  keywords[5].keyword := "i feel ";
+  keywords[5].index := 4;
+  keywords[6].keyword := "why don\'t you ";
+  keywords[6].index := 5;
+  keywords[7].keyword := "why can\'t i ";
+  keywords[7].index := 6;
+  keywords[8].keyword := "are you ";
+  keywords[8].index := 7;
+  keywords[9].keyword := "i can\'t ";
+  keywords[9].index := 8;
+  keywords[10].keyword := "i am ";
+  keywords[10].index := 9;
+  keywords[11].keyword := "i\'m ";
+  keywords[11].index := 9;
+  keywords[12].keyword := "you ";
+  keywords[12].index := 10;
+  keywords[13].keyword := "i want ";
+  keywords[13].index := 11;
+  keywords[14].keyword := "what ";
+  keywords[14].index := 12;
+  keywords[15].keyword := "how ";
+  keywords[15].index := 12;
+  keywords[16].keyword := "who ";
+  keywords[16].index := 12;
+  keywords[17].keyword := "where ";
+  keywords[17].index := 12;
+  keywords[18].keyword := "when ";
+  keywords[18].index := 12;
+  keywords[19].keyword := "why ";
+  keywords[19].index := 12;
+  keywords[20].keyword := "name ";
+  keywords[20].index := 13;
+  keywords[21].keyword := "cause ";
+  keywords[21].index := 14;
+  keywords[22].keyword := "sorry ";
+  keywords[22].index := 15;
+  keywords[23].keyword := "dream ";
+  keywords[23].index := 16;
+  keywords[24].keyword := "hello ";
+  keywords[24].index := 17;
+  keywords[25].keyword := "hi ";
+  keywords[25].index := 17;
+  keywords[26].keyword := "maybe ";
+  keywords[26].index := 18;
+  keywords[27].keyword := " no";
+  keywords[27].index := 19;
+  keywords[28].keyword := "your ";
+  keywords[28].index := 20;
+  keywords[29].keyword := "always ";
+  keywords[29].index := 21;
+  keywords[30].keyword := "think ";
+  keywords[30].index := 22;
+  keywords[31].keyword := "alike ";
+  keywords[31].index := 23;
+  keywords[32].keyword := "yes ";
+  keywords[32].index := 24;
+  keywords[33].keyword := "friend ";
+  keywords[33].index := 25;
+  keywords[34].keyword := "computer";
+  keywords[34].index := 26;
+  keywords[35].keyword := "bot ";
+  keywords[35].index := 26;
+  keywords[36].keyword := "smartphone";
+  keywords[36].index := 27;
+  keywords[37].keyword := "father ";
+  keywords[37].index := 28;
+  keywords[38].keyword := "mother ";
+  keywords[38].index := 28;
+  RETURN keywords;
+END setupKeywords;
 
 (* = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = *)
 

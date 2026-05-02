@@ -4,9 +4,9 @@
 \usepackage{ngerman}
 
 \title{Structorizer StrukTeX Export of FileApiGroupTest.arrz}
-% Structorizer version 3.32-32
+% Structorizer version 3.32-36
 \author{Kay G"urtzig}
-\date{03.09.2025}
+\date{30.04.2026}
 
 \begin{document}
 
@@ -116,31 +116,6 @@
 
 
 % TODO: Tune the width and height argument if necessary!
-\begin{struktogramm}(-14,0)[ComputeSum]
-  \assign{\(fileNo\ \gets\ 1000\)}
-  \assign{\(\)\pKey{INPUT}\(\ \)"{}Name/path\ of\ the\ number\ file"{}\(\ file\_name\)}
-  \ifthenelse{6}{6}{\(fileNo\ >\ 0\)}{T}{F}
-    \assign{\(values\ \gets\ \{\}\)}
-    \assign{\(nValues\ \gets\ 0\)}
-    % try (FIXME!) 
-      \sub{\(nValues\ \gets\ readNumbers(file\_name,\ values,\ 1000)\)}
-    % catch failure (FIXME!) 
-      \assign{\(\)\pKey{OUTPUT}\(\ failure\)}
-      \exit{\(\)\pKey{exit}\(\ -7\)}
-    % finally (FIXME!) 
-    % end try (FIXME!) 
-    \assign{\(sum\ \gets\ 0.0\)}
-    \while{\pKey{for}\(k\ \gets\ 0\)\pKey{to}\(nValues-1\)}
-      \assign{\(sum\ \gets\ sum\ +\ values[k]\)}
-    \whileend
-    \assign{\(\)\pKey{OUTPUT}\(\ \)"{}sum\ =\ "{}\(,\ sum\)}
-    \assign{\(\)\pKey{OUTPUT}\(\ \)"{}average\ =\ "{}\(,\ sum\ /\ nValues\)}
-  \change
-  \ifend
-\end{struktogramm}
-
-
-% TODO: Tune the width and height argument if necessary!
 \begin{struktogramm}(-14,0)[DrawRandomHistogram]
   \assign{\(fileNo\ \gets\ -10\)}
   \until{\(fileNo\ >\ 0\ \vee\ file\_name\ =\ \)"{}"{}\(\)}
@@ -196,6 +171,31 @@
     \change
       \assign{\(\)\pKey{OUTPUT}\(\ \)"{}No\ numbers\ read."{}\(\)}
     \ifend
+  \change
+  \ifend
+\end{struktogramm}
+
+
+% TODO: Tune the width and height argument if necessary!
+\begin{struktogramm}(-14,0)[ComputeSum]
+  \assign{\(fileNo\ \gets\ 1000\)}
+  \assign{\(\)\pKey{INPUT}\(\ \)"{}Name/path\ of\ the\ number\ file"{}\(\ file\_name\)}
+  \ifthenelse{6}{6}{\(fileNo\ >\ 0\)}{T}{F}
+    \assign{\(values\ \gets\ \{\}\)}
+    \assign{\(nValues\ \gets\ 0\)}
+    % try (FIXME!) 
+      \sub{\(nValues\ \gets\ readNumbers(file\_name,\ values,\ 1000)\)}
+    % catch failure (FIXME!) 
+      \assign{\(\)\pKey{OUTPUT}\(\ failure\)}
+      \exit{\(\)\pKey{exit}\(\ -7\)}
+    % finally (FIXME!) 
+    % end try (FIXME!) 
+    \assign{\(sum\ \gets\ 0.0\)}
+    \while{\pKey{for}\(k\ \gets\ 0\)\pKey{to}\(nValues-1\)}
+      \assign{\(sum\ \gets\ sum\ +\ values[k]\)}
+    \whileend
+    \assign{\(\)\pKey{OUTPUT}\(\ \)"{}sum\ =\ "{}\(,\ sum\)}
+    \assign{\(\)\pKey{OUTPUT}\(\ \)"{}average\ =\ "{}\(,\ sum\ /\ nValues\)}
   \change
   \ifend
 \end{struktogramm}

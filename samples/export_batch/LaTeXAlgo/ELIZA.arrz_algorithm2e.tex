@@ -24,9 +24,9 @@
 \SetKw{preThrow}{throw}
 \DontPrintSemicolon
 \title{Structorizer LaTeX pseudocode Export of ELIZA.arrz}
-% Structorizer version 3.32-13
+% Structorizer version 3.32-36
 \author{Kay G"urtzig}
-\date{17.10.2023}
+\date{30.04.2026}
 
 \begin{document}
 \LinesNumbered
@@ -81,30 +81,6 @@
 
 
 \begin{function}
-\caption{checkRepetition(history, newInput)}
-\tcc{ Checks whether newInput has occurred among the recently cached }
-\tcc{ input strings in the histArray component of history and updates the history. }
-\Func{\FuncSty{checkRepetition(}\ArgSty{history, newInput}\FuncSty{)}:boolean}{
-\KwData{\(history\): History}
-\KwData{\(newInput\): string}
-\KwResult{boolean}
-  \(hasOccurred\leftarrow{}false\)\;
-  \If{\(length(newInput)>4\)}{
-    \(histDepth\leftarrow{}length(history.histArray)\)\;
-    \For{\(i\leftarrow 0\) \KwTo \(histDepth-1\) \textbf{by} \(1\)}{
-      \If{\(newInput=history.histArray[i]\)}{
-        \(hasOccurred\leftarrow{}true\)\;
-      }
-    }
-    \(history.histArray[history.histIndex]\leftarrow{}newInput\)\;
-    \(history.histIndex\leftarrow{}(history.histIndex+1)\bmod(histDepth)\)\;
-  }
-  \Return{\(hasOccurred\)}
-}
-\end{function}
-
-
-\begin{function}
 \caption{conjugateStrings(sentence, key, keyPos, flexions)}
 \Func{\FuncSty{conjugateStrings(}\ArgSty{sentence, key, keyPos, flexions}\FuncSty{)}:string}{
 \KwData{\(sentence\): string}
@@ -146,34 +122,6 @@
 
 
 \begin{function}
-\caption{findKeyword(keyMap, sentence)}
-\tcc{ Looks for the occurrence of the first of the strings }
-\tcc{ contained in keywords within the given sentence (in }
-\tcc{ array order). }
-\tcc{ Returns an array of }
-\tcc{ 0: the index of the first identified keyword (if any, otherwise -1), }
-\tcc{ 1: the position inside sentence (0 if not found) }
-\Func{\FuncSty{findKeyword(}\ArgSty{keyMap, sentence}\FuncSty{)}:array[0..1] of integer}{
-\KwData{\(keyMap\): array of KeyMapEntry}
-\KwData{\(sentence\): string}
-\KwResult{array[0..1] of integer}
-  \tcc{ Contains the index of the keyword and its position in sentence }
-  \(result\leftarrow{}\{-1,0\}\)\;
-  \(i\leftarrow{}0\)\;
-  \While{\((result[0]<0)\wedge(i<length(keyMap))\)}{
-    \(var\ entry:KeyMapEntry\leftarrow{}keyMap[i]\)\;
-    \(position\leftarrow{}pos(entry.keyword,sentence)\)\;
-    \If{\(position>0\)}{
-      \(result[0]\leftarrow{}i\)\;
-      \(result[1]\leftarrow{}position\)\;
-    }
-    \(i\leftarrow{}i+1\)\;
-  }
-}
-\end{function}
-
-
-\begin{function}
 \caption{normalizeInput(sentence)}
 \tcc{ Converts the sentence to lowercase, eliminates all }
 \tcc{ interpunction (i.e. '{},'{}, '{}.'{}, '{};'{}), and pads the }
@@ -201,59 +149,6 @@
   \(phrases[0]\leftarrow{}\{\)"{}\ shut"{}\(,\)"{}Okay.\ If\ you\ feel\ that\ way\ I\textbackslash{}'{}ll\ shut\ up.\ ...\ Your\ choice."{}\(\}\)\;
   \(phrases[1]\leftarrow{}\{\)"{}bye"{}\(,\)"{}Well,\ let\textbackslash{}'{}s\ end\ our\ talk\ for\ now.\ See\ you\ later.\ Bye."{}\(\}\)\;
   \Return{\(phrases\)}
-}
-\end{function}
-
-
-\begin{function}
-\caption{setupKeywords()}
-\tcc{ The lower the index the higher the rank of the keyword (search is sequential). }
-\tcc{ The index of the first keyword found in a user sentence maps to a respective }
-\tcc{ reply ring as defined in \textasciigrave{}setupReplies()\textasciiacute{}. }
-\Func{\FuncSty{setupKeywords(}\ArgSty{}\FuncSty{)}:array of KeyMapEntry}{
-\KwResult{array of KeyMapEntry}
-  \tcc{ The empty key string (last entry) is the default clause - will always be found }
-  \(keywords[39]\leftarrow{}KeyMapEntry\{\)"{}"{}\(,29\}\)\;
-  \(keywords[0]\leftarrow{}KeyMapEntry\{\)"{}can\ you\ "{}\(,0\}\)\;
-  \(keywords[1]\leftarrow{}KeyMapEntry\{\)"{}can\ i\ "{}\(,1\}\)\;
-  \(keywords[2]\leftarrow{}KeyMapEntry\{\)"{}you\ are\ "{}\(,2\}\)\;
-  \(keywords[3]\leftarrow{}KeyMapEntry\{\)"{}you\textbackslash{}'{}re\ "{}\(,2\}\)\;
-  \(keywords[4]\leftarrow{}KeyMapEntry\{\)"{}i\ don'{}t\ "{}\(,3\}\)\;
-  \(keywords[5]\leftarrow{}KeyMapEntry\{\)"{}i\ feel\ "{}\(,4\}\)\;
-  \(keywords[6]\leftarrow{}KeyMapEntry\{\)"{}why\ don\textbackslash{}'{}t\ you\ "{}\(,5\}\)\;
-  \(keywords[7]\leftarrow{}KeyMapEntry\{\)"{}why\ can\textbackslash{}'{}t\ i\ "{}\(,6\}\)\;
-  \(keywords[8]\leftarrow{}KeyMapEntry\{\)"{}are\ you\ "{}\(,7\}\)\;
-  \(keywords[9]\leftarrow{}KeyMapEntry\{\)"{}i\ can\textbackslash{}'{}t\ "{}\(,8\}\)\;
-  \(keywords[10]\leftarrow{}KeyMapEntry\{\)"{}i\ am\ "{}\(,9\}\)\;
-  \(keywords[11]\leftarrow{}KeyMapEntry\{\)"{}i\textbackslash{}'{}m\ "{}\(,9\}\)\;
-  \(keywords[12]\leftarrow{}KeyMapEntry\{\)"{}you\ "{}\(,10\}\)\;
-  \(keywords[13]\leftarrow{}KeyMapEntry\{\)"{}i\ want\ "{}\(,11\}\)\;
-  \(keywords[14]\leftarrow{}KeyMapEntry\{\)"{}what\ "{}\(,12\}\)\;
-  \(keywords[15]\leftarrow{}KeyMapEntry\{\)"{}how\ "{}\(,12\}\)\;
-  \(keywords[16]\leftarrow{}KeyMapEntry\{\)"{}who\ "{}\(,12\}\)\;
-  \(keywords[17]\leftarrow{}KeyMapEntry\{\)"{}where\ "{}\(,12\}\)\;
-  \(keywords[18]\leftarrow{}KeyMapEntry\{\)"{}when\ "{}\(,12\}\)\;
-  \(keywords[19]\leftarrow{}KeyMapEntry\{\)"{}why\ "{}\(,12\}\)\;
-  \(keywords[20]\leftarrow{}KeyMapEntry\{\)"{}name\ "{}\(,13\}\)\;
-  \(keywords[21]\leftarrow{}KeyMapEntry\{\)"{}cause\ "{}\(,14\}\)\;
-  \(keywords[22]\leftarrow{}KeyMapEntry\{\)"{}sorry\ "{}\(,15\}\)\;
-  \(keywords[23]\leftarrow{}KeyMapEntry\{\)"{}dream\ "{}\(,16\}\)\;
-  \(keywords[24]\leftarrow{}KeyMapEntry\{\)"{}hello\ "{}\(,17\}\)\;
-  \(keywords[25]\leftarrow{}KeyMapEntry\{\)"{}hi\ "{}\(,17\}\)\;
-  \(keywords[26]\leftarrow{}KeyMapEntry\{\)"{}maybe\ "{}\(,18\}\)\;
-  \(keywords[27]\leftarrow{}KeyMapEntry\{\)"{}\ no"{}\(,19\}\)\;
-  \(keywords[28]\leftarrow{}KeyMapEntry\{\)"{}your\ "{}\(,20\}\)\;
-  \(keywords[29]\leftarrow{}KeyMapEntry\{\)"{}always\ "{}\(,21\}\)\;
-  \(keywords[30]\leftarrow{}KeyMapEntry\{\)"{}think\ "{}\(,22\}\)\;
-  \(keywords[31]\leftarrow{}KeyMapEntry\{\)"{}alike\ "{}\(,23\}\)\;
-  \(keywords[32]\leftarrow{}KeyMapEntry\{\)"{}yes\ "{}\(,24\}\)\;
-  \(keywords[33]\leftarrow{}KeyMapEntry\{\)"{}friend\ "{}\(,25\}\)\;
-  \(keywords[34]\leftarrow{}KeyMapEntry\{\)"{}computer"{}\(,26\}\)\;
-  \(keywords[35]\leftarrow{}KeyMapEntry\{\)"{}bot\ "{}\(,26\}\)\;
-  \(keywords[36]\leftarrow{}KeyMapEntry\{\)"{}smartphone"{}\(,27\}\)\;
-  \(keywords[37]\leftarrow{}KeyMapEntry\{\)"{}father\ "{}\(,28\}\)\;
-  \(keywords[38]\leftarrow{}KeyMapEntry\{\)"{}mother\ "{}\(,28\}\)\;
-  \Return{\(keywords\)}
 }
 \end{function}
 
@@ -322,6 +217,111 @@
   \(replies[27]\leftarrow{}\{\)"{}Do\ you\ sometimes\ feel\ uneasy\ without\ a\ smartphone?"{}\(,\)"{}Have\ you\ had\ these\ phantasies\ before?"{}\(,\)"{}Does\ the\ world\ seem\ more\ real\ for\ you\ via\ apps?"{}\(\}\)\;
   \(replies[28]\leftarrow{}\{\)"{}Tell\ me\ more\ about\ your\ family."{}\(,\)"{}Who\ else\ in\ your\ family*?"{}\(,\)"{}What\ does\ family\ relations\ mean\ for\ you?"{}\(,\)"{}Come\ on,\ How\ old\ are\ you?"{}\(\}\)\;
   \(setupReplies\leftarrow{}replies\)\;
+}
+\end{function}
+
+
+\begin{function}
+\caption{checkRepetition(history, newInput)}
+\tcc{ Checks whether newInput has occurred among the recently cached }
+\tcc{ input strings in the histArray component of history and updates the history. }
+\Func{\FuncSty{checkRepetition(}\ArgSty{history, newInput}\FuncSty{)}:boolean}{
+\KwData{\(history\): History}
+\KwData{\(newInput\): string}
+\KwResult{boolean}
+  \(hasOccurred\leftarrow{}false\)\;
+  \If{\(length(newInput)>4\)}{
+    \(histDepth\leftarrow{}length(history.histArray)\)\;
+    \For{\(i\leftarrow 0\) \KwTo \(histDepth-1\) \textbf{by} \(1\)}{
+      \If{\(newInput=history.histArray[i]\)}{
+        \(hasOccurred\leftarrow{}true\)\;
+      }
+    }
+    \(history.histArray[history.histIndex]\leftarrow{}newInput\)\;
+    \(history.histIndex\leftarrow{}(history.histIndex+1)\bmod(histDepth)\)\;
+  }
+  \Return{\(hasOccurred\)}
+}
+\end{function}
+
+
+\begin{function}
+\caption{findKeyword(keyMap, sentence)}
+\tcc{ Looks for the occurrence of the first of the strings }
+\tcc{ contained in keywords within the given sentence (in }
+\tcc{ array order). }
+\tcc{ Returns an array of }
+\tcc{ 0: the index of the first identified keyword (if any, otherwise -1), }
+\tcc{ 1: the position inside sentence (0 if not found) }
+\Func{\FuncSty{findKeyword(}\ArgSty{keyMap, sentence}\FuncSty{)}:array[0..1] of integer}{
+\KwData{\(keyMap\): array of KeyMapEntry}
+\KwData{\(sentence\): string}
+\KwResult{array[0..1] of integer}
+  \tcc{ Contains the index of the keyword and its position in sentence }
+  \(result\leftarrow{}\{-1,0\}\)\;
+  \(i\leftarrow{}0\)\;
+  \While{\((result[0]<0)\wedge(i<length(keyMap))\)}{
+    \(var\ entry:KeyMapEntry\leftarrow{}keyMap[i]\)\;
+    \(position\leftarrow{}pos(entry.keyword,sentence)\)\;
+    \If{\(position>0\)}{
+      \(result[0]\leftarrow{}i\)\;
+      \(result[1]\leftarrow{}position\)\;
+    }
+    \(i\leftarrow{}i+1\)\;
+  }
+}
+\end{function}
+
+
+\begin{function}
+\caption{setupKeywords()}
+\tcc{ The lower the index the higher the rank of the keyword (search is sequential). }
+\tcc{ The index of the first keyword found in a user sentence maps to a respective }
+\tcc{ reply ring as defined in \textasciigrave{}setupReplies()\textasciiacute{}. }
+\Func{\FuncSty{setupKeywords(}\ArgSty{}\FuncSty{)}:array of KeyMapEntry}{
+\KwResult{array of KeyMapEntry}
+  \tcc{ The empty key string (last entry) is the default clause - will always be found }
+  \(keywords[39]\leftarrow{}KeyMapEntry\{\)"{}"{}\(,29\}\)\;
+  \(keywords[0]\leftarrow{}KeyMapEntry\{\)"{}can\ you\ "{}\(,0\}\)\;
+  \(keywords[1]\leftarrow{}KeyMapEntry\{\)"{}can\ i\ "{}\(,1\}\)\;
+  \(keywords[2]\leftarrow{}KeyMapEntry\{\)"{}you\ are\ "{}\(,2\}\)\;
+  \(keywords[3]\leftarrow{}KeyMapEntry\{\)"{}you\textbackslash{}'{}re\ "{}\(,2\}\)\;
+  \(keywords[4]\leftarrow{}KeyMapEntry\{\)"{}i\ don'{}t\ "{}\(,3\}\)\;
+  \(keywords[5]\leftarrow{}KeyMapEntry\{\)"{}i\ feel\ "{}\(,4\}\)\;
+  \(keywords[6]\leftarrow{}KeyMapEntry\{\)"{}why\ don\textbackslash{}'{}t\ you\ "{}\(,5\}\)\;
+  \(keywords[7]\leftarrow{}KeyMapEntry\{\)"{}why\ can\textbackslash{}'{}t\ i\ "{}\(,6\}\)\;
+  \(keywords[8]\leftarrow{}KeyMapEntry\{\)"{}are\ you\ "{}\(,7\}\)\;
+  \(keywords[9]\leftarrow{}KeyMapEntry\{\)"{}i\ can\textbackslash{}'{}t\ "{}\(,8\}\)\;
+  \(keywords[10]\leftarrow{}KeyMapEntry\{\)"{}i\ am\ "{}\(,9\}\)\;
+  \(keywords[11]\leftarrow{}KeyMapEntry\{\)"{}i\textbackslash{}'{}m\ "{}\(,9\}\)\;
+  \(keywords[12]\leftarrow{}KeyMapEntry\{\)"{}you\ "{}\(,10\}\)\;
+  \(keywords[13]\leftarrow{}KeyMapEntry\{\)"{}i\ want\ "{}\(,11\}\)\;
+  \(keywords[14]\leftarrow{}KeyMapEntry\{\)"{}what\ "{}\(,12\}\)\;
+  \(keywords[15]\leftarrow{}KeyMapEntry\{\)"{}how\ "{}\(,12\}\)\;
+  \(keywords[16]\leftarrow{}KeyMapEntry\{\)"{}who\ "{}\(,12\}\)\;
+  \(keywords[17]\leftarrow{}KeyMapEntry\{\)"{}where\ "{}\(,12\}\)\;
+  \(keywords[18]\leftarrow{}KeyMapEntry\{\)"{}when\ "{}\(,12\}\)\;
+  \(keywords[19]\leftarrow{}KeyMapEntry\{\)"{}why\ "{}\(,12\}\)\;
+  \(keywords[20]\leftarrow{}KeyMapEntry\{\)"{}name\ "{}\(,13\}\)\;
+  \(keywords[21]\leftarrow{}KeyMapEntry\{\)"{}cause\ "{}\(,14\}\)\;
+  \(keywords[22]\leftarrow{}KeyMapEntry\{\)"{}sorry\ "{}\(,15\}\)\;
+  \(keywords[23]\leftarrow{}KeyMapEntry\{\)"{}dream\ "{}\(,16\}\)\;
+  \(keywords[24]\leftarrow{}KeyMapEntry\{\)"{}hello\ "{}\(,17\}\)\;
+  \(keywords[25]\leftarrow{}KeyMapEntry\{\)"{}hi\ "{}\(,17\}\)\;
+  \(keywords[26]\leftarrow{}KeyMapEntry\{\)"{}maybe\ "{}\(,18\}\)\;
+  \(keywords[27]\leftarrow{}KeyMapEntry\{\)"{}\ no"{}\(,19\}\)\;
+  \(keywords[28]\leftarrow{}KeyMapEntry\{\)"{}your\ "{}\(,20\}\)\;
+  \(keywords[29]\leftarrow{}KeyMapEntry\{\)"{}always\ "{}\(,21\}\)\;
+  \(keywords[30]\leftarrow{}KeyMapEntry\{\)"{}think\ "{}\(,22\}\)\;
+  \(keywords[31]\leftarrow{}KeyMapEntry\{\)"{}alike\ "{}\(,23\}\)\;
+  \(keywords[32]\leftarrow{}KeyMapEntry\{\)"{}yes\ "{}\(,24\}\)\;
+  \(keywords[33]\leftarrow{}KeyMapEntry\{\)"{}friend\ "{}\(,25\}\)\;
+  \(keywords[34]\leftarrow{}KeyMapEntry\{\)"{}computer"{}\(,26\}\)\;
+  \(keywords[35]\leftarrow{}KeyMapEntry\{\)"{}bot\ "{}\(,26\}\)\;
+  \(keywords[36]\leftarrow{}KeyMapEntry\{\)"{}smartphone"{}\(,27\}\)\;
+  \(keywords[37]\leftarrow{}KeyMapEntry\{\)"{}father\ "{}\(,28\}\)\;
+  \(keywords[38]\leftarrow{}KeyMapEntry\{\)"{}mother\ "{}\(,28\}\)\;
+  \Return{\(keywords\)}
 }
 \end{function}
 

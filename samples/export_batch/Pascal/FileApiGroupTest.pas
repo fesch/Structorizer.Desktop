@@ -27,105 +27,6 @@ function readNumbers(fileName: string; numbers: array [0..49] of Longint; maxNum
 
 IMPLEMENTATION
 
-{
-  Draws a bar chart from the array "values" of size nValues.
-  Turtleizer must be activated and will scale the chart into a square of
-  500 x 500 pixels
-  Note: The function is not robust against empty array or totally equal values.
-}
-procedure drawBarChart(values: array [0..49] of Double; nValues: ???);
-
-const
-  xSize = 500;
-  ySize = 500;
-
-var
-  yScale: ???;	{ FIXME! }
-  yAxis: ???;	{ FIXME! }
-  valMin: Double;
-  valMax: Double;
-  stripeWidth: ???;	{ FIXME! }
-  stripeHeight: ???;	{ FIXME! }
-  kMin: Longint;
-  kMax: Longint;
-  k: Longint;
-
-begin
-  kMin := 0;
-  kMax := 0;
-  for k := 1 to nValues-1 do
-  begin
-    if values[k] > values[kMax] then
-    begin
-      kMax := k;
-    end;
-    else if values[k] < values[kMin] then
-    begin
-      kMin := k;
-    end;
-  end;
-  valMin := values[kMin];
-  valMax := values[kMax];
-  yScale := valMax * 1.0 / (ySize - 1);
-  yAxis := ySize - 1;
-  if valMin < 0 then
-  begin
-    if valMax > 0 then
-    begin
-      yAxis := valMax * ySize * 1.0 / (valMax - valMin);
-      yScale := (valMax - valMin) * 1.0 / (ySize - 1);
-    end
-    else
-    begin
-      yAxis := 1;
-      yScale := valMin * 1.0 / (ySize - 1);
-    end;
-  end;
-  { draw coordinate axes }
-  gotoXY(1, ySize - 1);
-  forward(ySize -1); { color = ffffff }
-  penUp();
-  backward(yAxis); { color = ffffff }
-  right(90);
-  penDown();
-  forward(xSize -1); { color = ffffff }
-  penUp();
-  backward(xSize-1); { color = ffffff }
-  stripeWidth := xSize / nValues;
-  for k := 0 to nValues-1 do
-  begin
-    stripeHeight := values[k] * 1.0 / yScale;
-    case k mod 3 of
-      0:
-        begin
-          setPenColor(255,0,0);
-        end;
-      1:
-        begin
-          setPenColor(0, 255,0);
-        end;
-      2:
-        begin
-          setPenColor(0, 0, 255);
-        end;
-    end;
-    fd(1); { color = ffffff }
-    left(90);
-    penDown();
-    fd(stripeHeight); { color = ffffff }
-    right(90);
-    fd(stripeWidth - 1); { color = ffffff }
-    right(90);
-    forward(stripeHeight); { color = ffffff }
-    left(90);
-    penUp();
-  end;
-
-end;
-
-{ = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = }
-
-
 function readNumbers(fileName: string; numbers: array [0..49] of Longint; maxNumbers: Longint): Longint;
 
 begin
@@ -284,6 +185,21 @@ var
   Note: The function is not robust against empty array or totally equal values.
 }
 procedure drawBarChart(values: array [0..49] of Double; nValues: ???);
+
+const
+  xSize = 500;
+  ySize = 500;
+
+var
+  yScale: ???;	{ FIXME! }
+  yAxis: ???;	{ FIXME! }
+  valMin: Double;
+  valMax: Double;
+  stripeWidth: ???;	{ FIXME! }
+  stripeHeight: ???;	{ FIXME! }
+  kMin: Longint;
+  kMax: Longint;
+  k: Longint;
 
 begin
   kMin := 0;
