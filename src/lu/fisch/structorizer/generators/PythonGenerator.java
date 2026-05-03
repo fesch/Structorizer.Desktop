@@ -95,6 +95,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2025-02-06      Bugfix #1188: The transformation of C-style array initialisations was wrong
  *      Kay Gürtzig             2025-02-16      Bugfix #1192: Translation of tail return instruction keywords
  *      Kay Gürtzig             2025-07-03      Several missing Override annotations added.
+ *      Kay Gürtzig             2026-05-03      Bugfix #1237: Test for Turtleizer usage was inadequate
  *
  ******************************************************************************************************
  *
@@ -342,6 +343,14 @@ public class PythonGenerator extends Generator
 		// END KGU 2017-02-23
 		// END KGU#108 2015-12-22
 	}
+	
+	// START KGU#1217 2026-05-03: Bugfix #1237 Turtleizer test was inadequate
+	@Override
+	protected boolean supportsTurtleModule() {
+		return true;
+	}
+	// END KGU#1217 2026-05-03
+
 
 	// START KGU#93 2015-12-21: Bugfix #41/#68/#69
 	/* (non-Javadoc)
@@ -381,7 +390,9 @@ public class PythonGenerator extends Generator
 						String name = entry.getKey().providedRoutine(token, nArgs);
 						if (name != null) {
 							if (entry.getKey() instanceof TurtleBox) {
-								this.usesTurtleizer = true;
+								// START KGU#1217 2026-05-03: Bugfix #1237 Does not make sense here
+								//this.usesTurtleizer = true;
+								// END KGU#1217 2026-05-03
 								if (turtleMap.containsKey(name)) {
 									name = turtleMap.get(name);
 								}
@@ -731,6 +742,9 @@ public class PythonGenerator extends Generator
 					// END KGUU#799 2020-02-13
 					// START KGU#1177 2025-02-16: Bugfix #1192: Transform return keyword
 					else if (Jump.isReturn(line)) {
+						// START KGU#1217 2026-05-03 Bugfix #1237 Care for turtle stuff
+						generatePreExitCode(_inst, _indent, true);
+						// END KGU#1217 2026-05-03
 						codeLine = "return" + codeLine.substring(CodeParser.getKeywordOrDefault("preReturn", "return").length());
 					}
 					// END KGU#1177 2025-02-16
@@ -1035,6 +1049,9 @@ public class PythonGenerator extends Generator
 				}
 				if (Jump.isReturn(line))
 				{
+					// START KGU#1217 2026-05-03: Bugfix #1237 Care for sensible turtle closing
+					generatePreExitCode(_jump, _indent, true);
+					// END KGU#1217 2026-05-03
 					addCode("return " + line.substring(preReturn.length()).trim(),
 							_indent, isDisabled);
 				}
@@ -1075,6 +1092,9 @@ public class PythonGenerator extends Generator
 				// END KGU#686 2019-03-21
 				else if (!isEmpty)
 				{
+					// START KGU#1217 2026-05-03: Bugfix #1237 Care for sensible turtle closing
+					generatePreExitCode(_jump, _indent, true);
+					// END KGU#1217 2026-05-03
 					appendComment("FIXME: unsupported jump/exit instruction!", _indent);
 					appendComment(line, _indent);
 				}
@@ -1085,6 +1105,20 @@ public class PythonGenerator extends Generator
 			// END KGU#78 2015-12-17
 		}
 	}
+
+	// START KGU#1217 2026-05-03: Issue #1237 Care for e.g. Turtleizer module stuff
+	@Override
+	protected void generatePreExitCode(Element _jump, String _indent, boolean _programOnly) {
+		if (this.topLevel && this.usesTurtleizer) {
+			
+			Root root = Element.getRoot(_jump);
+			if (root != null && root.isProgram()) {
+				appendComment("TODO: Re-enable this if you want to close the turtle window here.", _indent);
+				addCode("turtle.bye()", _indent, true);
+			}
+		}
+	}
+	// END KGU#1217 2026-05-03
 
 	// START KGU#47 2015-12-17: Offer at least a sequential execution (which is one legal execution order)
 	@Override
@@ -1669,6 +1703,10 @@ public class PythonGenerator extends Generator
 	@Override
 	protected String generateResult(Root _root, String _indent, boolean alwaysReturns, StringList varNames)
 	{
+		// START KGU#1217 2026-05-03: Bugfix #1237 Care for sensible turtle closing
+		generatePreExitCode(_root, _indent, false);
+		// END KGU#1217 2026-05-03
+		
 		if (_root.isSubroutine() && (returns || _root.getResultType() != null || isFunctionNameSet || isResultSet) && !alwaysReturns)
 		{
 			String result = "0";
@@ -1694,11 +1732,6 @@ public class PythonGenerator extends Generator
 	// END KGU#78 2015-12-17
 
 	// START KGU#598 2018-10-17: Enh. #  turtle import may have to be inserted
-	/**
-	 * Method is to finish up after the text insertions of the diagram, i.e. to close open blocks etc. 
-	 * @param _root 
-	 * @param _indent
-	 */
 	@Override
 	protected void generateFooter(Root _root, String _indent)
 	{
@@ -1712,10 +1745,13 @@ public class PythonGenerator extends Generator
 
 		// START KGU#598 2018-10-17: Enh. #623
 		if (topLevel && this.usesTurtleizer) {
+			// This is done here lest the three lines should get separated
 			insertCode("import turtle", this.includeInsertionLine);
 			insertCode("turtle.colormode(255)", this.includeInsertionLine);
 			insertCode("turtle.mode(\"logo\")", this.includeInsertionLine);
-			addCode("turtle.bye()\t" + this.commentSymbolLeft() + " TODO: re-enable this if you want to close the turtle window.", _indent, true);
+			// START KGU#1217 2026-05-03: Bugfix #1237 Moved to generatePreExitCode()
+			//addCode("turtle.bye()\t" + this.commentSymbolLeft() + " TODO: re-enable this if you want to close the turtle window.", _indent, true);
+			// END KGU#1217 2026-05-03
 		}
 		// END KGU#598 2018-10-17
 	}

@@ -137,6 +137,7 @@ package lu.fisch.structorizer.generators;
  *                                      had not worked.
  *      Kay Gürtzig     2026-04-29/30   Bugfix #1236: Duplicate subroutine export because of undue inclusion in 
  *                                      library module (second instance lost its declarations)
+ *      Kay Gürtzig     2026-05-03      Bugfix #1237: Turtleizer usage detection (for e.g. Java, Python) was flawed
  *
  ******************************************************************************************************
  *
@@ -215,6 +216,7 @@ import java.util.regex.Pattern;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
+import lu.fisch.diagrcontrol.DiagramController;
 import lu.fisch.structorizer.archivar.ArchivePool;
 import lu.fisch.structorizer.archivar.IRoutinePool;
 import lu.fisch.structorizer.elements.Alternative;
@@ -241,6 +243,7 @@ import lu.fisch.structorizer.helpers.IPluginClass;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.io.LicFilter;
 import lu.fisch.structorizer.parsers.CodeParser;
+import lu.fisch.turtle.TurtleBox;
 import lu.fisch.utils.BString;
 import lu.fisch.utils.BTextfile;
 import lu.fisch.utils.StringList;
@@ -310,7 +313,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			+ "be sensible.",
 			"\n");
 	// END  KGU#815/#824 2020-03-20
-
+	
+	// START KGU#1217 2026-05-02: Bugfix #1237 Inadequate turtle usage test for #441, #623
+	/** Provides a diagram controller capable of deciding turtle routines */
+	protected static final DiagramController turtleController = new TurtleBox();
+	// END KGU#1217 2026-05-02
 	
 	/************ Fields ***********************/
 	// START KGU#484 2018-03-22: Issue #463
@@ -450,7 +457,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// START KGU 2016-03-29: For keyword detection improvement
 	private Vector<StringList> splitKeywords = new Vector<StringList>();
 	// END KGU 2016-03-29
-	// START KGU#446 2017-10-27: Enh. #441
+	// START KGU#446 2017-10-27: Enh. #441, #623
 	/** Flag to remember whether Turtleizer routine calls are in the code (to prepare support if possible) */
 	protected boolean usesTurtleizer = false;
 	protected int includeInsertionLine = -1;
@@ -3078,6 +3085,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		 * disabled code lines with external references.
 		 * So will wait to arm the following three lines prepared until some customer complains. 
 		 */
+		// START KGU#1217 2026-05-02: Bugfix #1237, Enh. #314
+		StringList text = null;
+		// END KGU#1217 2026-05-02
 		if (_ele.isDisabled(false)) {
 			return true;
 		}
@@ -3093,7 +3103,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			// START KGU#424 2017-09-25: We must build a comment map for declarations
 			Root owner = Element.getRoot(instr);
 			StringList declNames = owner.getVarNames(instr);
-			StringList text = instr.getUnbrokenText();
+			// START KGU#1217 2026-05-02: Bugfix #1237, Enh. #314
+			//StringList text = instr.getUnbrokenText();
+			if (text == null) {
+				text = instr.getUnbrokenText();
+			}
+			// END KGU#1217 2026-05-02
 			for (int i = 0; i < text.count(); i++) {
 				String line = text.get(i);
 				if (line.startsWith("type ") && line.contains("=")) {
@@ -3121,16 +3136,63 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		if (!usesFileAPI && _ele.getText().getText().contains("file"))
 		{
 			// Now we check more precisely
-			String text = _ele.getText().getText();
-			for (int i = 0; !usesFileAPI && i < Executor.FILE_API_NAMES.length; i++) {
-				if (text.contains(Executor.FILE_API_NAMES[i]))
-					usesFileAPI = true;
+			// START KGU#1217 2026-05-02: Bugfix #1237, Enh. #314
+			//String text = _ele.getText().getText();
+			if (text == null) {
+				text = _ele.getUnbrokenText();
 			}
+			for (int j = 0; j < text.count(); j++) {
+				StringList tokens = Element.splitLexically(text.get(j), true);
+			// END KGU#1217 2026-05-02
+				for (int i = 0; !usesFileAPI && i < Executor.FILE_API_NAMES.length; i++) {
+					// START KGU#1217 2026-05-02: Bugfix #1237, Enh. #314
+					//if (text.contains(Executor.FILE_API_NAMES[i]))
+					//	usesFileAPI = true;
+					if (tokens.contains(Executor.FILE_API_NAMES[i])) {
+						usesFileAPI = true;
+					}
+					// END KGU#1217 2026-05-02
+				}
+			// START KGU#1217 2026-05-02: Bugfix #1237, Enh. #314
+			}
+			// END KGU#1217 2026-05-02
 		}
 		// END KGU#311 2016-12-22
+		// START KGU#1217 2026-05-02: Bugfix #1237 Proper turtle usage check
+		if (supportsTurtleModule() && !usesTurtleizer) {
+			if (text == null) {
+				text = _ele.getUnbrokenText();
+			}
+			text.removeAll(" ");
+			for (int i = 0; i < text.count(); i++) {
+				StringList tokens = Element.splitLexically(text.get(i), true);
+				for (int j = 0; j < tokens.count() - 2; j++) {
+					String token = tokens.get(j);
+					if (Function.testIdentifier(token, true, null) && tokens.get(j+1).equals("(")) {
+						int nArgs = Element.splitExpressionList(tokens.subSequence(j+2, tokens.count()), ",", false).count();
+						if (turtleController != null && turtleController.providedRoutine(token, nArgs) != null) {
+							usesTurtleizer = true;
+						}
+					}
+				}
+			}
+		}
+		// END KGU#1217 2026-05-02
 		return true;
 	}
 	// END KGU#236 2016-08-10
+	
+	// START KGU#1217 2026-05-02: Bugfix #1237 Inadequate turtle usage test
+	/**
+	 * Subclassable method indicating whether the target language of this
+	 * generator supports a module compatible with Turtleizer.
+	 * 
+	 * @return {@code true} iff this generator may support turtle routines
+	 */
+	protected boolean supportsTurtleModule() {
+		return false;
+	}
+	// END KGU#1217 2026-05-02
 
 	// START KGU#395 2020-04-19: Enh. #357 Introduced for COBOLGenerator but of more general use
 	/**
@@ -3481,6 +3543,20 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	{
 		// code.add(_indent+"");
 	}
+	// START KGU#1217 2026-05-03: Issue #1237 Care for e.g. Turtleizer module stuff
+	/**
+	 * Allows subclasses to generate specific code immediately before a return
+	 * or exit statement from program by overriding this (empty) method.
+	 * 
+	 * @param _jump - the element instigating some kind of program exit
+	 * @param _indent - current indentation
+	 * @param _programOnly - if this code insertion is only to be done on
+	 *      program level (usually in case of return, in case of exit it may
+	 *      not be of interest)
+	 */
+	protected void generatePreExitCode(Element _jump, String _indent, boolean _programOnly) {
+	}
+	// END KGU#1217 2026-05-03
 
 	/**
 	 * This method is responsible for generating the code of a {@code Parallel}
@@ -3927,8 +4003,8 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		return _indent;
 	}
 	/**
-	 * Method is to finish up after the text insertions of the diagram, i.e. to
-	 * close an open block. 
+	 * Method is to finish up after the text insertions of the diagram, i.e.,
+	 * to close open blocks etc.
 	 *
 	 * @param _root - the diagram root element 
 	 * @param _indent - the current indentation string
@@ -5785,6 +5861,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		this.rootsWithInput.clear();
 		this.rootsWithOutput.clear();
 		boolean importClause = false;
+		// START KGU#1217 2026-05-03: Bugfix #1237, Enh. #441, #623 turtle mode must be reset here
+		this.usesTurtleizer = false;
+		// END KGU#1217 2025-05-03
 		
 		// First loop - depending on subroutine mode either just gathers common information or generates code
 		for (Root root: _roots)

@@ -87,8 +87,9 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2023-12-25      Issue #1121: Scanner method should be type-specific where possible
  *      Kay Gürtzig             2023-12-27      Issue #1123: Translation of built-in function random() added.
  *      Kay Gürtzig             2025-07-03      Missing Override annotations added
- *      Kay Gürtzig             2025-09-04      Issue #1123 slightly revised on occasion of bugfix #1216 (JsGenerator)
+ *      Kay Gürtzig             2025-09-04      Issue #1123: slightly revised on occasion of bugfix #1216 (JsGenerator)
  *      Kay Gürtzig             2025-09-24      Support for thread-safe version of bugfix #1219 (see CGenerator)
+ *      Kay Gürtzig             2026-05-03      Bugfix #1237: Inadequate Turtleizer usage test and import fixed
  *
  ******************************************************************************************************
  *
@@ -329,6 +330,13 @@ public class JavaGenerator extends CGenerator
 	}
 	// END KGU#1112 2023-12-27
 	
+	// START KGU#1217 2026-05-03: Bugfix #1237 Turtleizer test was inadequate
+	@Override
+	protected boolean supportsTurtleModule() {
+		return true;
+	}
+	// END KGU#1217 2026-05-03
+	
 	// START KGU#480 2018-01-21: Enh. #490 Improved support for Turtleizer export
 	/**
 	 * Maps light-weight instances of DiagramControllers for API retrieval
@@ -447,9 +455,11 @@ public class JavaGenerator extends CGenerator
 						String name = entry.getKey().providedRoutine(token, nArgs);
 						if (name != null) {
 							tokens.set(i, entry.getValue() + "." +name);
-							if (entry.getKey() instanceof TurtleBox) {
-								this.usesTurtleizer = true;
-							}
+							// START KGU#1217 2026-05-03: Bugfix #1237 Inadequate test
+							//if (entry.getKey() instanceof TurtleBox) {
+							//	this.usesTurtleizer = true;
+							//}
+							// END KGU#1217 2026-05-03
 						}
 					}
 				}
@@ -1302,6 +1312,12 @@ public class JavaGenerator extends CGenerator
 			// START KGU#363 2017-05-16: Enh. #372
 			appendCopyright(_root, _indent, true);
 			// END KGU#363 2017-05-16
+			// START KGU#1217 2026-05-03: Bugfix #1237 Misplaced Turtleizer import
+			if (this.usesTurtleizer) {
+				generatorIncludes.addIfNew("lu.fisch.turtle.adapters.Turtleizer");
+				appendComment("TODO: Download the turtle package from " + Element.E_HOME_PAGE + " and put it into this project", _indent);
+			}
+			// END KGU#1217 2026-05-03
 			// START KGU#376 2017-09-28: Enh. #389 - definitions from all included diagrams will follow
 			if (!_root.isProgram()) {
 				appendGlobalDefinitions(_root, indentPlus1, true);
@@ -1379,14 +1395,14 @@ public class JavaGenerator extends CGenerator
 		}
 		// START KGU#815 2020-04-02: Enh. #828
 		else if (topLevel && this.isLibraryModule() && _root.isInclude()) {
-			this.includeInsertionLine = code.count();
+			//this.includeInsertionLine = code.count();	// KGU#1217 2026-05-03: Bugfix #1237 was wrong here
 			appendBlockComment(StringList.explode("Initialisation method for this library class", "\n"), indentPlus1, "/**", " * ", " */");
 			appendBlockHeading(_root, "public static void " + this.getInitRoutineName(_root) + "()",  indentPlus1);
 		}
 		// END KGU#815 2020-04-02
 		else {
 			// START KGU#446 2018-01-21: Enh. #441
-			this.includeInsertionLine = code.count();
+			//this.includeInsertionLine = code.count();	// KGU#1217 2026-05-03: Bugfix #1237 was wrong here
 			// END KGU#446 2018-01-21
 			// START KGU#371 2019-03-07: Enh. #385 - we have to multiply the declaration in case of default values
 			int minArgs = _root.getMinParameterCount();
@@ -1580,11 +1596,6 @@ public class JavaGenerator extends CGenerator
 	}
 
 	// START KGU 2015-12-15: Method block must be closed as well
-	/**
-	 * Method is to finish up after the text insertions of the diagram, i.e. to close open blocks etc. 
-	 * @param _root 
-	 * @param _indent
-	 */
 	@Override
 	protected void generateFooter(Root _root, String _indent)
 	{
@@ -1622,15 +1633,17 @@ public class JavaGenerator extends CGenerator
 			this.insertFileAPI("java");
 		}
 		// END KGU#311 2016-12-22
-		// START KGU#446 2017-10-27: Enh. #441
-		if (topLevel && this.usesTurtleizer) {
-			// START KGU#563 2018-07-26: Issue #566
-			//code.insert(this.commentSymbolLeft() + " TODO: Download the turtle package from http://structorizer.fisch.lu and put it into this project", this.includeInsertionLine++);
-			insertCode(this.commentSymbolLeft() + " TODO: Download the turtle package from " + Element.E_HOME_PAGE + " and put it into this project", this.includeInsertionLine);
-			// END KGU#563 2018-07-26
-			insertCode((_root.isSubroutine() ? this.commentSymbolLeft() : "") + "import lu.fisch.turtle.adapters.Turtleizer;", this.includeInsertionLine);
-		}
-		// END KGU#446 2017-10-27
+		// START KGU#1217 2026-05-03: Bugfix #1237 Inadequate placement -> generateHeader()
+//		// START KGU#446 2017-10-27: Enh. #441
+//		if (topLevel && this.usesTurtleizer) {
+//			// START KGU#563 2018-07-26: Issue #566
+//			//code.insert(this.commentSymbolLeft() + " TODO: Download the turtle package from http://structorizer.fisch.lu and put it into this project", this.includeInsertionLine++);
+//			insertCode(this.commentSymbolLeft() + " TODO: Download the turtle package from " + Element.E_HOME_PAGE + " and put it into this project", this.includeInsertionLine);
+//			// END KGU#563 2018-07-26
+//			insertCode((_root.isSubroutine() ? this.commentSymbolLeft() : "") + "import lu.fisch.turtle.adapters.Turtleizer;", this.includeInsertionLine);
+//		}
+//		// END KGU#446 2017-10-27
+		// END KGU#1217 2026-05-03
 	}
 	// END KGU 2015-12-15
 

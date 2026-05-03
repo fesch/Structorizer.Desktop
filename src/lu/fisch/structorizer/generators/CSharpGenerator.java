@@ -1458,11 +1458,6 @@ public class CSharpGenerator extends CGenerator
 	}
 
 	// START KGU 2015-12-15: Method block must be closed as well
-	/**
-	 * Method is to finish up after the text insertions of the diagram, i.e. to close open blocks etc. 
-	 * @param _root - the diagram root element 
-	 * @param _indent - the current indentation string
-	 */
 	@Override
 	protected void generateFooter(Root _root, String _indent)
 	{

@@ -135,6 +135,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2025-09-24      Bugfix #1219: Thread-safe version
  *      Kay Gürtzig             2026-04-26      Bugfix #1210: Revision to unify the C behaviour on type definitions to that for
  *                                              the derivates C++, C#, Java as well as Pascal and Oberon.
+ *      Kay Gürtzig             2026-05-03      Issue #1237: Support for turtle-specific exit precaution
  *
  ******************************************************************************************************
  *
@@ -1683,6 +1684,9 @@ public class CGenerator extends Generator {
 			if (!this.suppressTransformation) {
 				codeLine = transform(_line);
 			}
+			// START KGU#1217 2026-05-03: Issue #1237 Care for turtle stuff
+			generatePreExitCode(_inst, _indent, true);
+			// END KGU#1217 2026-05-03
 			codeLine = "return" + codeLine.substring(CodeParser.getKeywordOrDefault("preReturn", "return").length());
 		}
 		// END KGU#1177 2025-02-16
@@ -2454,6 +2458,11 @@ public class CGenerator extends Generator {
 				//if (line.matches(preReturnMatch))
 				if (_jump.isReturn())
 				{
+					// START KGU#1217 2026-05-03: Issue #1237 handle Turtleizer problems
+					if (this.topLevel && !isDisabled) {
+						generatePreExitCode(_jump, _indent, true);
+					}
+					// END KGU#1217 2026-05-03
 					// START KGU#989 2021-10-01: Bugfix #989 missing expression translation
 					//addCode("return " + line.substring(preReturn.length()).trim() + ";",
 					addCode("return " + transform(line.substring(preReturn.length()).trim()) + ";",
@@ -2463,6 +2472,11 @@ public class CGenerator extends Generator {
 				//else if (line.matches(preExitMatch))
 				else if (_jump.isExit())
 				{
+					// START KGU#1217 2026-05-03: Issue #1237 handle Turtleizer problems
+					if (!isDisabled) {
+						generatePreExitCode(_jump, _indent, false);
+					}
+					// END KGU#1217 2026-05-03
 					// START KGU#989 2021-10-01: Bugfix #989 missing expression translation
 					//appendExitInstr(line.substring(preExit.length()).trim(), _indent, isDisabled);
 					appendExitInstr(transform(line.substring(preExit.length()).trim()), _indent, isDisabled);
@@ -3483,16 +3497,8 @@ public class CGenerator extends Generator {
 		}
 		return done;
 	}
-	// START KGU#815/KGU#824/KGU#834 2020-03-26
+	// END KGU#815/KGU#824/KGU#834 2020-03-26
 	
-	/**
-	 * Creates the appropriate code for returning a required result and adds it
-	 * (after the algorithm code of the body) to this.code)
-	 * @param _root - the diagram root element
-	 * @param _indent - the current indentation string
-	 * @param alwaysReturns - whether all paths of the body already force a return
-	 * @param varNames - names of all assigned variables
-	 */
 	@Override
 	protected String generateResult(Root _root, String _indent, boolean alwaysReturns, StringList varNames)
 	{
@@ -3525,11 +3531,6 @@ public class CGenerator extends Generator {
 		return _indent;
 	}
 	
-	/**
-	 * Method is to finish up after the text additions of the diagram, i.e. to close open blocks etc. 
-	 * @param _root 
-	 * @param _indent
-	 */
 	@Override
 	protected void generateFooter(Root _root, String _indent)
 	{

@@ -381,11 +381,15 @@ public class Function
 
     // START KGU#61 2016-03-22: Moved hitherto from Root (was a private member method there)
     /**
-     * Checks identifier syntax (i.e. ASCII letters, digits, underscores, and possibly dots)
+     * Checks identifier syntax (i.e. ASCII letters, digits, underscores, and
+     * possibly dots)
+     * 
      * @param _str - the identifier candidate
      * @param _strictAscii - whether non-ascii letters are to be rejected
-     * @param _alsoAllowedChars - a String containing additionally accepted characters (e.g. ".") or null
-     * @return true iff _str complies with the strict identifier syntax convention (plus allowed characters)
+     * @param _alsoAllowedChars - a String containing additionally accepted
+     *     characters (e.g. ".") or {@code null}
+     * @return {@code true} iff {@code _str} complies with the strict identifier
+     *     syntax convention (plus allowed characters)
      */
     public static boolean testIdentifier(String _str, boolean _strictAscii, String _alsoAllowedChars)
     {

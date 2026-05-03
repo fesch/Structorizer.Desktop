@@ -64,6 +64,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2020-03-23      Issue #840: Adaptations w.r.t. disabled elements using File API
  *      Kay Gürtzig     2021-10-03      Bugfix #990: Made-up result types on exported procedures
  *      Kay Gürtzig     2025-09-24      Support for thread-safe version of bugfix #1219 (see CGenerator)
+ *      Kay Gürtzig     2026-05-03      Issue #1237: Support for Turtleizer code (analogous to enh. #441, #623)
  *
  ******************************************************************************************************
  *
@@ -186,6 +187,13 @@ public class CPlusPlusGenerator extends CGenerator {
 		return "std::cout << $1 << std::endl";
 	}
 	
+	// START KGU#1217 2026-05-03: Bugfix #1237 Turtleizer test was inadequate
+	@Override
+	protected boolean supportsTurtleModule() {
+		return true;
+	}
+	// END KGU#1217 2026-05-03
+
 	// START KGU#815/KGU#824 2020-03-21: Enh. #828, bugfix #836
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.CGenerator#insertPrototype(lu.fisch.structorizer.elements.Root, java.lang.String, boolean, int)
@@ -457,6 +465,24 @@ public class CPlusPlusGenerator extends CGenerator {
 	}
 	// END KGU#61 2016-03-22
 	
+	// START KGU#1217 2026-05-03: Issue #1237 Care for e.g. Turtleizer module stuff
+	@Override
+	protected void generatePreExitCode(Element _jump, String _indent, boolean _programOnly) {
+		if (this.usesTurtleizer) {
+			boolean doit = !_programOnly;
+			if (_programOnly) {
+				Root root = Element.getRoot(_jump);
+				doit = root.isProgram();
+			}
+			if (doit) {
+				appendComment("This is needed with library Turtleizer_CPP to allow the user a look at the drawing.", _indent);
+				addCode("Turtleizer::awaitClose();",
+						_indent, false);
+			}
+		}
+	}
+	// END KGU#1217 2026-05-03
+	
 	// START KGU#47/KGU#348 2017-02-21: Enh. #348 - Offer a C++11 solution with class std::thread
 	@Override
 	protected void generateCode(Parallel _para, String _indent)
@@ -686,26 +712,35 @@ public class CPlusPlusGenerator extends CGenerator {
 			appendCopyright(_root, _indent, true);
 			// END KGU#363 2017-05-16
 			// START KGU#236 2016-08-10: Issue #227
-			generatorIncludes.add("<string>");
+			generatorIncludes.addIfNew("<string>");
 			//code.add("#include <iostream>");
 			// START KGU#236 2016-12-22: Issue #227: root-specific analysis needed
 			//if (this.hasInput && this.hasOutput)
 			if (this.hasInput() || this.hasOutput())
 			// END KGU#236 2016-12-22
 			{
-				this.generatorIncludes.add("<iostream>");
+				this.generatorIncludes.addIfNew("<iostream>");
 			}
 			// END KGU#236 2016-08-10
 			// START KGU#348 2017-02-21: Enh. #348 Parallel support
 			if (this.hasParallels) {
-				this.generatorIncludes.add("<thread>");
+				this.generatorIncludes.addIfNew("<thread>");
 			}
+			// START KGU#1217 2026-05-03: Issue #1237
+			if (this.usesTurtleizer) {
+				appendComment("TODO: Download a compatible turtle library, e.g. from https://github.com/codemanyak/Turtleizer_CPP, and integrate it into this project", _indent);
+				this.generatorIncludes.addIfNew("\"Turtleizer.h\"");
+			}
+			// END KGU#1217 2026-05-03
 			this.appendGeneratorIncludes("", false);
 			// END KGU#348 2017-02-21
 			// START KGU#351 2017-02-26: Enh. #346
 			this.appendUserIncludes("");
 			// END KGU#351 2017-02-26
 			code.add(_indent + "using std::string;");
+			// START KGU#1217 2026-05-03: Bugfix #1237 Turtleizer support
+			this.includeInsertionLine = code.count();
+			// END KGU#1217 2026-05-03
 			// START KGU#376 2017-09-27: Enh. #389 - definitions from all included diagrams will follow
 			appendGlobalDefinitions(_root, _indent, true);
 			// END KGU#376 2017-09-27
@@ -787,6 +822,18 @@ public class CPlusPlusGenerator extends CGenerator {
 		// END KGU#348 2017-02-21
 		return super.generatePreamble(_root, _indent, varNames);
 	}
+
+	// START KGU#1217 2026-05-03: Issue #1237
+	@Override
+	protected String generateResult(Root _root, String _indent, boolean alwaysReturns, StringList varNames)
+	{
+		if (this.topLevel && _root.isProgram()) {
+			generatePreExitCode(_root, _indent, false);
+		}
+		
+		return super.generateResult(_root, _indent, alwaysReturns, varNames);
+	}
+	// END KGU#1217 2026-05-03
 	
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.CGenerator#transformRecordTypeRef(java.lang.String, boolean)
