@@ -137,7 +137,8 @@ package lu.fisch.structorizer.generators;
  *                                      had not worked.
  *      Kay Gürtzig     2026-04-29/30   Bugfix #1236: Duplicate subroutine export because of undue inclusion in 
  *                                      library module (second instance lost its declarations)
- *      Kay Gürtzig     2026-05-03      Bugfix #1237: Turtleizer usage detection (for e.g. Java, Python) was flawed
+ *      Kay Gürtzig     2026-05-03      Bugfix #1237: Turtleizer usage detection (for e.g. Java, Python) was flawed,
+ *                                      new subclassable auxiliary method generatePreExitCode() added.
  *
  ******************************************************************************************************
  *
@@ -3269,8 +3270,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Parallel, String)
 	 * @see #generateCode(Try, String)
 	 * @see #generateCode(Root, String, boolean)
+	 * @see #generatePreExitCode(Element, String, boolean)
 	 * @see #getIndent()
 	 * @see #addCode(String, String, boolean)
+	 * @see #appendComment(String, String)
+	 * @see #appendComment(StringList, String)
 	 * @see #appendAsComment(Element, String)
 	 * @see #optionBlockBraceNextLine()
 	 */
@@ -3537,6 +3541,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * @see #generateCode(Parallel, String)
 	 * @see #generateCode(Try, String)
 	 * @see #generateCode(Root, String, boolean)
+	 * @see #generatePreExitCode(Element, String, boolean)
 	 * @see #getIndent()
 	 */
 	protected void generateCode(Jump _jump, String _indent)

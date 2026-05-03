@@ -1110,9 +1110,12 @@ public class PythonGenerator extends Generator
 	@Override
 	protected void generatePreExitCode(Element _jump, String _indent, boolean _programOnly) {
 		if (this.topLevel && this.usesTurtleizer) {
-			
-			Root root = Element.getRoot(_jump);
-			if (root != null && root.isProgram()) {
+			boolean doit = !_programOnly;
+			if (_programOnly) {
+				Root root = Element.getRoot(_jump);
+				doit = root != null && root.isProgram();
+			}
+			if (doit) {
 				appendComment("TODO: Re-enable this if you want to close the turtle window here.", _indent);
 				addCode("turtle.bye()", _indent, true);
 			}
