@@ -60,15 +60,13 @@ public class ELIZA {
 		initialize_KeyMapEntry();
 		
 		// TODO: Check and accomplish variable declarations: 
+		// Variable part of the reply 
 		string varPart;
-		// Converts the input to lowercase, cuts out interpunctation 
-		// and pads the string 
 		string userInput;
 		string[] replyRing;
 		string reply;
 		int posAster;
 		int[] offsets;
-		// Should never happen... 
 		int keyIndex;
 		bool isRepeated;
 		bool isGone;
@@ -235,10 +233,12 @@ public class ELIZA {
 	/// <return> TODO </return>
 	private static string conjugateStrings(string sentence, string key, int keyPos, string[,] flexions) {
 		// TODO: Check and accomplish variable declarations: 
+		// Detect which of the two words of the pair matches first (lest a substitution should be reverted) 
 		int which;
 		string str;
 		string right;
 		string result;
+		// Detect which of the two words of the pair matches first (lest a substitution should be reverted) 
 		int position;
 		int pos1;
 		int pos0;
@@ -431,6 +431,7 @@ public class ELIZA {
 		initialize_KeyMapEntry();
 		
 		// TODO: Check and accomplish variable declarations: 
+		// Contains the index of the keyword and its position in sentence 
 		int[] result;
 		int position;
 		int i;
@@ -461,6 +462,7 @@ public class ELIZA {
 		initialize_KeyMapEntry();
 		
 		// TODO: Check and accomplish variable declarations: 
+		// The empty key string (last entry) is the default clause - will always be found 
 		KeyMapEntry[] keywords;
 
 		// The empty key string (last entry) is the default clause - will always be found 

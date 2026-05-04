@@ -468,7 +468,7 @@ public class CPlusPlusGenerator extends CGenerator {
 	// START KGU#1217 2026-05-03: Issue #1237 Care for e.g. Turtleizer module stuff
 	@Override
 	protected void generatePreExitCode(Element _jump, String _indent, boolean _programOnly) {
-		if (this.usesTurtleizer) {
+		if (this.usesTurtleizer && !this.suppressTransformation) {
 			boolean doit = !_programOnly;
 			if (_programOnly) {
 				Root root = Element.getRoot(_jump);
@@ -827,8 +827,8 @@ public class CPlusPlusGenerator extends CGenerator {
 	@Override
 	protected String generateResult(Root _root, String _indent, boolean alwaysReturns, StringList varNames)
 	{
-		if (this.topLevel && _root.isProgram()) {
-			generatePreExitCode(_root, _indent, false);
+		if (this.topLevel) {
+			generatePreExitCode(_root, _indent, true);
 		}
 		
 		return super.generateResult(_root, _indent, alwaysReturns, varNames);

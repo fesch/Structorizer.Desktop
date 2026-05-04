@@ -1041,6 +1041,7 @@ public class PythonGenerator extends Generator
 			String preReturn = CodeParser.getKeywordOrDefault("preReturn", "return");
 			String preLeave  = CodeParser.getKeywordOrDefault("preLeave", "leave");
 			String preThrow  = CodeParser.getKeywordOrDefault("preThrow", "throw");
+			String preExit = CodeParser.getKeywordOrDefault("preExit", "exit");
 			for (int i = 0; isEmpty && i < lines.count(); i++) {
 				String line = transform(lines.get(i)).trim();
 				if (!line.isEmpty())
@@ -1090,6 +1091,18 @@ public class PythonGenerator extends Generator
 					// END KGU#1102 2023-11-08
 				}
 				// END KGU#686 2019-03-21
+				// START KGU#1217 2026-05-04: Bugfix #1238 there is a valid exit in Python
+				else if (Jump.isExit(line)) {
+					// START KGU#1217 2026-05-04: Bugfix #1237 Care for sensible turtle closing
+					generatePreExitCode(_jump, _indent, false);
+					// END KGU#1217 2026-05-04
+					addCode("sys.exit(" + line.substring(preExit.length()).trim() + ")",
+							_indent, isDisabled);
+					if (!generatorIncludes.contains("sys")) {
+						insertCode("import sys", this.includeInsertionLine);
+					}
+				}
+				// END KGU#1218 2026-05-04
 				else if (!isEmpty)
 				{
 					// START KGU#1217 2026-05-03: Bugfix #1237 Care for sensible turtle closing
@@ -1109,7 +1122,7 @@ public class PythonGenerator extends Generator
 	// START KGU#1217 2026-05-03: Issue #1237 Care for e.g. Turtleizer module stuff
 	@Override
 	protected void generatePreExitCode(Element _jump, String _indent, boolean _programOnly) {
-		if (this.topLevel && this.usesTurtleizer) {
+		if (this.topLevel && this.usesTurtleizer && !this.suppressTransformation) {
 			boolean doit = !_programOnly;
 			if (_programOnly) {
 				Root root = Element.getRoot(_jump);

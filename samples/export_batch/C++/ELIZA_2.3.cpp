@@ -401,6 +401,7 @@ bool checkRepetition(History history, string newInput)
 int[2] findKeyword(const KeyMapEntry keyMap[50], string sentence)
 {
 	// TODO: Check and accomplish variable declarations: 
+	// Contains the index of the keyword and its position in sentence 
 	int result[2];
 	int position;
 	int i;
@@ -434,6 +435,7 @@ int[2] findKeyword(const KeyMapEntry keyMap[50], string sentence)
 KeyMapEntry[50] setupKeywords()
 {
 	// TODO: Check and accomplish variable declarations: 
+	// The empty key string (last entry) is the default clause - will always be found 
 	KeyMapEntry keywords[50];
 
 	initialize_KeyMapEntry();
@@ -539,15 +541,13 @@ KeyMapEntry[50] setupKeywords()
 int main(void)
 {
 	// TODO: Check and accomplish variable declarations: 
+	// Variable part of the reply 
 	string varPart;
-	// Converts the input to lowercase, cuts out interpunctation 
-	// and pads the string 
 	string userInput;
 	string replyRing[50];
 	string reply;
 	int posAster;
 	int offsets[50];
-	// Should never happen... 
 	int keyIndex;
 	bool isRepeated;
 	bool isGone;

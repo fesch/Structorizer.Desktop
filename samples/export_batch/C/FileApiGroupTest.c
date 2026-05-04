@@ -185,6 +185,7 @@ int main(void)
 void drawBarChart(double values[50], ??? nValues)
 {
 	// TODO: Check and accomplish variable declarations: 
+	// Used range of the Turtleizer screen 
 	const int xSize = 500;
 	const int ySize = 500;
 	??? yScale;
@@ -262,7 +263,7 @@ void drawBarChart(double values[50], ??? nValues)
 
 
 
-// Reads a random number file and draws a histogram accotrding to the 
+// Reads a random number file and draws a histogram according to the 
 // user specifications 
 int main(void)
 {
@@ -274,6 +275,7 @@ int main(void)
 	??? nIntervals;
 	??? min;
 	??? max;
+	// Index of the most populated interval 
 	int kMaxCount;
 	int k;
 	int i;

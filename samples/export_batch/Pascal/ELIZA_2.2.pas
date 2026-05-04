@@ -37,21 +37,17 @@ const
   keyMap = setupKeywords();
 
 var
-  index30b8a058: 1..5;
-  array30b8a058: array [1..5] of string;
-  index2758fe70: 1..2;
-  array2758fe70: array [1..2] of string;
+  index74ad1f1f: 1..5;
+  array74ad1f1f: array [1..5] of string;
+  index50d0686: 1..2;
+  array50d0686: array [1..2] of string;
+  { Variable part of the reply }
   varPart: String;
-  {
-    Converts the input to lowercase, cuts out interpunctation
-    and pads the string
-  }
   userInput: string;
   replyRing: array [0..49] of string;
   reply: String;
   posAster: Longint;
   offsets: array [0..49] of Longint;
-  { Should never happen... }
   keyIndex: Longint;
   isRepeated: boolean;
   isGone: boolean;
@@ -85,11 +81,11 @@ begin
     delete(result, 1, position);
     insert(uppercase(start), result, 1);
   end;
-  array2758fe70[1] := ' i ';
-  array2758fe70[2] := ' i\''';
-  for index2758fe70 := 1 to 2 do
+  array50d0686[1] := ' i ';
+  array50d0686[2] := ' i\''';
+  for index50d0686 := 1 to 2 do
   begin
-    word := array2758fe70[index2758fe70];
+    word := array50d0686[index50d0686];
     position := pos(word, result);
     while position > 0 do
     begin
@@ -214,14 +210,14 @@ var
 
 begin
   sentence := lowercase(sentence);
-  array30b8a058[1] := '.';
-  array30b8a058[2] := ',';
-  array30b8a058[3] := ';';
-  array30b8a058[4] := '!';
-  array30b8a058[5] := '?';
-  for index30b8a058 := 1 to 5 do
+  array74ad1f1f[1] := '.';
+  array74ad1f1f[2] := ',';
+  array74ad1f1f[3] := ';';
+  array74ad1f1f[4] := '!';
+  array74ad1f1f[5] := '?';
+  for index74ad1f1f := 1 to 5 do
   begin
-    symbol := array30b8a058[index30b8a058];
+    symbol := array74ad1f1f[index74ad1f1f];
     position := pos(symbol, sentence);
     while position > 0 do
     begin
@@ -299,6 +295,10 @@ end;
 function setupReplies(): array [0..49] of array [0..49] of string;
 
 var
+  {
+    We start with the highest index for performance reasons
+    (is to avoid frequent array resizing)
+  }
   replies: array [0..49] of array [0..49] of String;
 
 begin
@@ -470,6 +470,7 @@ end;
 function findKeyword(const keyMap: array [0..49] of KeyMapEntry; sentence: string): array [0..1] of Longint;
 
 var
+  { Contains the index of the keyword and its position in sentence }
   result: array [0..1] of Longint;
   position: Longint;
   i: Longint;
@@ -506,6 +507,7 @@ end;
 function setupKeywords(): array [0..49] of KeyMapEntry;
 
 var
+  { The empty key string (last entry) is the default clause - will always be found }
   keywords: array [0..49] of KeyMapEntry;
 
 begin

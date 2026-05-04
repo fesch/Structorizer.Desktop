@@ -139,6 +139,7 @@ package lu.fisch.structorizer.generators;
  *                                      library module (second instance lost its declarations)
  *      Kay Gürtzig     2026-05-03      Bugfix #1237: Turtleizer usage detection (for e.g. Java, Python) was flawed,
  *                                      new subclassable auxiliary method generatePreExitCode() added.
+ *      Kay Gürtzig     2026-05-04      Bugfix #1239: Comment map no longer overwrites existing entries.
  *
  ******************************************************************************************************
  *
@@ -3118,7 +3119,13 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			}
 			HashMap<String, Instruction> commentMap = this.declarationCommentMap.get(owner);
 			for (int i = 0; i < declNames.count(); i++) {
-				commentMap.put(declNames.get(i), instr);
+				// START KGU#1219 2026-05-04: Bugfix #1239 We should not overwrite earlier comments
+				//commentMap.put(declNames.get(i), instr);
+				String declName = declNames.get(i);
+				if (!commentMap.containsKey(declName)) {
+					commentMap.put(declName, instr);
+				}
+				// END KGU#1219 2026-05-04
 			}
 			// END KGU#424 2017-09-25
 		}
@@ -5858,6 +5865,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		boolean someRootUsesFileAPI = false;
 		boolean someRootHasParallel = false;
 		boolean someRootHasTryBlcks = false;
+		// START KGU#1217 2026-05-04: Bugfix #1237 Adequate handling of turtleizer stuff
+		boolean someRootUsesTurtleizer = false;	// Simple analogy to the others but incomplete (sensible?)
+		// END KGU#1217 2026-05-04
 		boolean firstExport = true;
 		// These fields must be cleared lest they should contaminate the diagram analysis to be performed here 
 		this.includedRoots.clear();
@@ -5866,9 +5876,6 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		this.rootsWithInput.clear();
 		this.rootsWithOutput.clear();
 		boolean importClause = false;
-		// START KGU#1217 2026-05-03: Bugfix #1237, Enh. #441, #623 turtle mode must be reset here
-		this.usesTurtleizer = false;
-		// END KGU#1217 2025-05-03
 		
 		// First loop - depending on subroutine mode either just gathers common information or generates code
 		for (Root root: _roots)
@@ -5887,11 +5894,17 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			// END KGU#815 2020-03-30
 			// START KGU#311 2016-12-27: Enh. #314 ensure I/O-specific additions per using root
 			this.usesFileAPI = false;
+			// START KGU#1217 2026-05-03: Bugfix #1237, Enh. #441, #623 turtle mode must be reset here
+			this.usesTurtleizer = false;
+			// END KGU#1217 2025-05-03
 			gatherElementInformationRoot(root);
 			// END KGU#311 2016-12-27#
 			if (this.usesFileAPI) { someRootUsesFileAPI = true; }
 			if (this.hasParallels) { someRootHasParallel = true; }
 			if (this.hasTryBlocks) { someRootHasTryBlcks = true; }
+			// START KGU#1217 2026-05-04: Bugfix #1237 Adequate handling of turtleizer stuff
+			if (this.usesTurtleizer) {someRootUsesTurtleizer = true; }
+			// END KGU#1217 2026-05-04
 
 			// START KGU#676 2019-03-13: Enh. #696 - Postpone code generation until we have all subroutine information
 			//generateCode(root, "");
@@ -5933,7 +5946,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 						sub.specialRoutinePool = routinePool;
 					}
 					// END KGU#676 2020-03-15
-					else if (!_roots.contains(sub)) {	// Is this check redundant?
+					// START KGU#1217/KGU#1219 2026-05-04: Bugfix #1237, #1239 This "else" must have been wrong...
+					//else if (!_roots.contains(sub)) {	// Is this check redundant?
+					if (!_roots.contains(sub)) {	// Is this check redundant?
+					// END KGU#1217/KGU#1219 2026-05-04
 						// FIXME to exclude library routines from analysis might break Jump relations
 						gatherElementInformationRoot(sub);
 						// START KGU#1202 2026-04-26: Bugfix #1234 indirect use had not been registered
@@ -5941,6 +5957,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 							someRootUsesFileAPI = true;
 						}
 						// END KGU#1202 2026-04-26
+						// START KGU#1217 2026-05-04: Bugfix #1237 Adequate handling of turtleizer stuff
+						if (this.usesTurtleizer) {
+							someRootUsesTurtleizer = true; 
+						}
+						// END KGU#1217 2026-05-04
 					}
 				}
 				else {
@@ -6002,6 +6023,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 			}
 			
 			this.usesFileAPI = someRootUsesFileAPI;
+			// START KGU#1217 2026-05-04: Bugfix #1237 Adequate handling of turtleizer stuff
+			//this.usesTurtleizer = someRootUsesTurtleizer;	// FIXME: Would this be correct?
+			// END KGU#1217 2026-05-04
 			
 			for (Root root: _roots) {
 				/* If importedLibRoots is null then we are creating the library module

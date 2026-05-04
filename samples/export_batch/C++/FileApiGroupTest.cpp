@@ -149,9 +149,11 @@ int main(void)
 // https://www.gnu.org/licenses/gpl.html 
 // https://www.gnu.de/documents/gpl-3.0.de.html 
 
+// TODO: Download a compatible turtle library, e.g. from https://github.com/codemanyak/Turtleizer_CPP, and integrate it into this project 
 #include "FileApiGroupTest.h"
 #include <string>
 #include <iostream>
+#include "Turtleizer.h"
 using std::string;
 
 //===== STRUCTORIZER FILE API START =====
@@ -168,6 +170,7 @@ using std::string;
 void drawBarChart(double values[50], ??? nValues)
 {
 	// TODO: Check and accomplish variable declarations: 
+	// Used range of the Turtleizer screen 
 	const int xSize = 500;
 	const int ySize = 500;
 	double valMin;
@@ -239,7 +242,7 @@ void drawBarChart(double values[50], ??? nValues)
 
 // program DrawRandomHistogram 
 
-// Reads a random number file and draws a histogram accotrding to the 
+// Reads a random number file and draws a histogram according to the 
 // user specifications 
 int main(void)
 {
@@ -247,6 +250,7 @@ int main(void)
 	??? numberArray[50];
 	int nObtained;
 	??? nIntervals;
+	// Index of the most populated interval 
 	int kMaxCount;
 	??? file_name;
 	int fileNo;
@@ -308,6 +312,8 @@ int main(void)
 			std::cout << "No numbers read." << std::endl;
 		}
 	}
+	// This is needed with library Turtleizer_CPP to allow the user a look at the drawing. 
+	Turtleizer::awaitClose();
 
 	return 0;
 }

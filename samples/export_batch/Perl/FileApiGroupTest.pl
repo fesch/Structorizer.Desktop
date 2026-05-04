@@ -39,7 +39,7 @@ sub readNumbers {
     }
 
     eval {
-        my $final6325a3ee = finally {
+        my $final687080dc = finally {
             close($fileNo);
         };
 
@@ -52,7 +52,7 @@ sub readNumbers {
         }
 
     };
-    if (my $ex6325a3ee = $@) {
+    if (my $ex687080dc = $@) {
         die ;
     };
     return $nNumbers;
@@ -123,7 +123,7 @@ if ( $fileNo > 0 ) {
     eval {
         $nValues = readNumbers($file_name, \@values, 1000);
     };
-    if (my $ex887af79 = $@) {
+    if (my $ex29b5cd00 = $@) {
         print failure, "\n";
         exit(-7);
     };
@@ -270,7 +270,7 @@ sub drawBarChart {
 
 # = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 
-# Reads a random number file and draws a histogram accotrding to the 
+# Reads a random number file and draws a histogram according to the 
 # user specifications 
 
 my $width;
@@ -313,7 +313,7 @@ if ( $fileNo > 0 ) {
     eval {
         $nObtained = readNumbers($file_name, \@numberArray, 10000);
     };
-    if (my $ex2758fe70 = $@) {
+    if (my $ex4923ab24 = $@) {
         print failure, "\n";
     };
 

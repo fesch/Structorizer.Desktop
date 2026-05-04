@@ -11,7 +11,7 @@
 \title{Structorizer LaTeX pseudocode Export of FileApiGroupTest.arrz}
 % Structorizer version 3.32-36
 \author{Kay G"urtzig}
-\date{30.04.2026}
+\date{04.05.2026}
 
 \begin{document}
 
@@ -64,12 +64,12 @@
   \STATE \(stripeWidth\gets\ xSize/nValues\)
   \FOR{\(k \gets 0\) \TO \(nValues-1\) \textbf{by} \(1\)}
     \STATE \(stripeHeight\gets\ values[k]*1.0/yScale\)
-    \STATE \(discr6ddf90b0 <- k mod 3\)
-    \IF{\(discr6ddf90b0=0\)}
+    \STATE \(discr436e852b <- k mod 3\)
+    \IF{\(discr436e852b=0\)}
       \STATE \(setPenColor(255,0,0)\)
-    \ELSIF{\(discr6ddf90b0=1\)}
+    \ELSIF{\(discr436e852b=1\)}
       \STATE \(setPenColor(0,255,0)\)
-    \ELSIF{\(discr6ddf90b0=2\)}
+    \ELSIF{\(discr436e852b=2\)}
       \STATE \(setPenColor(0,0,255)\)
     \ENDIF
     \STATE \(fd(1)\)
@@ -128,7 +128,7 @@
 \caption{DrawRandomHistogram()}
 \begin{algorithmic}[5]
 
-\STATE \COMMENT{ Reads a random number file and draws a histogram accotrding to the }
+\STATE \COMMENT{ Reads a random number file and draws a histogram according to the }
 \STATE \COMMENT{ user specifications }
   \STATE \(fileNo\gets-10\)
   \REPEAT

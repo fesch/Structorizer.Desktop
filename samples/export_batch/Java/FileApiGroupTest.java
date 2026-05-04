@@ -43,9 +43,9 @@ public class readNumbers {
 				nNumbers = nNumbers + 1;
 			}
 		}
-		catch (Exception exe874448) {
-			String error = exe874448.getMessage()
-			throw exe874448;
+		catch (Exception ex1500955a) {
+			String error = ex1500955a.getMessage()
+			throw ex1500955a;
 		}
 		finally {
 			StructorizerFileAPI.fileClose(fileNo);
@@ -113,8 +113,8 @@ public class ComputeSum {
 			try {
 				nValues = FileApiGroupTest.readNumbers(file_name, values, 1000);
 			}
-			catch (Exception ex7b69c6ba) {
-				String failure = ex7b69c6ba.getMessage()
+			catch (Exception ex44c8afef) {
+				String failure = ex44c8afef.getMessage()
 				System.out.println(failure);
 				System.exit(-7)
 			}
@@ -142,12 +142,15 @@ public class ComputeSum {
 // https://www.gnu.org/licenses/gpl.html 
 // https://www.gnu.de/documents/gpl-3.0.de.html 
 
+// TODO: Download the turtle package from https://structorizer.fisch.lu and put it into this project 
+
 import FileApiGroupTest;
 import lu.fisch.structorizer.generators.StructorizerFileAPI;
+import lu.fisch.turtle.adapters.Turtleizer;
 import java.util.Scanner;
 
 /**
- * Reads a random number file and draws a histogram accotrding to the
+ * Reads a random number file and draws a histogram according to the
  * user specifications
  */
 public class DrawRandomHistogram {
@@ -161,6 +164,7 @@ public class DrawRandomHistogram {
 		???[] numberArray;
 		int nObtained;
 		??? nIntervals;
+		// Index of the most populated interval 
 		int kMaxCount;
 		??? file_name;
 		int fileNo;
@@ -189,8 +193,8 @@ public class DrawRandomHistogram {
 			try {
 				nObtained = FileApiGroupTest.readNumbers(file_name, numberArray, 10000);
 			}
-			catch (Exception ex87f383f) {
-				String failure = ex87f383f.getMessage()
+			catch (Exception ex6121c9d6) {
+				String failure = ex6121c9d6.getMessage()
 				System.out.println(failure);
 			}
 			if (nObtained > 0) {
@@ -239,6 +243,7 @@ public class DrawRandomHistogram {
 	 */
 	private static void drawBarChart(double[] values, ??? nValues) {
 		// TODO: Check and accomplish variable declarations: 
+		// Used range of the Turtleizer screen 
 		final int xSize = 500;
 		final int ySize = 500;
 		double valMin;

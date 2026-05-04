@@ -145,7 +145,7 @@ end.
 { ======= 8< =========================================================== }
 
 {
-  Reads a random number file and draws a histogram accotrding to the
+  Reads a random number file and draws a histogram according to the
   user specifications
 }
 program DrawRandomHistogram;
@@ -170,6 +170,7 @@ var
   nIntervals: ???;	{ FIXME! }
   min: ???;	{ FIXME! }
   max: ???;	{ FIXME! }
+  { Index of the most populated interval }
   kMaxCount: Longint;
   k: Longint;
   i: Longint;
@@ -187,6 +188,7 @@ var
 procedure drawBarChart(values: array [0..49] of Double; nValues: ???);
 
 const
+  { Used range of the Turtleizer screen }
   xSize = 500;
   ySize = 500;
 

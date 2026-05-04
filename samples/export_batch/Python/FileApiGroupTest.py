@@ -236,6 +236,7 @@ def readNumbers(fileName, numbers, maxNumbers) :
 from enum import Enum
 import FileApiGroupTest
 import math
+import sys
 
 # = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 
@@ -267,8 +268,7 @@ if (fileNo > 0):
         nValues = readNumbers(file_name, values, 1000)
     except Exception as failure:
         print(failure, sep='')
-        # FIXME: unsupported jump/exit instruction! 
-        # exit -7 
+        sys.exit(-7)
     
     sum = 0.0
     for k in range(0, nValues-1+1, 1):
@@ -293,6 +293,9 @@ if (fileNo > 0):
 from enum import Enum
 import FileApiGroupTest
 import math
+import turtle
+turtle.colormode(255)
+turtle.mode("logo")
 
 #===== STRUCTORIZER FILE API START =====
 
@@ -508,7 +511,7 @@ def drawBarChart(values, nValues) :
 
     # draw coordinate axes 
     turtle.goto(1, ySize - 1)
-    coled9d034 = turtle.pencolor(); turtle.pencolor("#000000")
+    col4d3167f4 = turtle.pencolor(); turtle.pencolor("#000000")
     turtle.forward(ySize -1)
     turtle.penup()
     turtle.backward(yAxis)
@@ -517,7 +520,7 @@ def drawBarChart(values, nValues) :
     turtle.forward(xSize -1)
     turtle.penup()
     turtle.backward(xSize-1)
-    turtle.pencolor(coled9d034)
+    turtle.pencolor(col4d3167f4)
     stripeWidth = xSize / nValues
     for k in range(0, nValues-1+1, 1):
         stripeHeight = values[k] * 1.0 / yScale
@@ -528,7 +531,7 @@ def drawBarChart(values, nValues) :
         elif ((k % 3) == 2) :
             turtle.pencolor(0, 0, 255)
 
-        col6121c9d6 = turtle.pencolor(); turtle.pencolor("#000000")
+        coled9d034 = turtle.pencolor(); turtle.pencolor("#000000")
         turtle.fd(1)
         turtle.left(90)
         turtle.pendown()
@@ -539,11 +542,11 @@ def drawBarChart(values, nValues) :
         turtle.forward(stripeHeight)
         turtle.left(90)
         turtle.penup()
-        turtle.pencolor(col6121c9d6)
+        turtle.pencolor(coled9d034)
 
 # = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 
-# Reads a random number file and draws a histogram accotrding to the 
+# Reads a random number file and draws a histogram according to the 
 # user specifications 
 fileNo = -10
 while True:
@@ -596,4 +599,7 @@ if (fileNo > 0):
 
     else:
         print("No numbers read.", sep='')
+
+# TODO: Re-enable this if you want to close the turtle window here. 
+# turtle.bye() 
 

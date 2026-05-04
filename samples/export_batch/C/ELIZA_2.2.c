@@ -51,10 +51,10 @@ char* adjustSpelling(char* sentence)
 		insert(uppercase(start), result, 1);
 	}
 	{
-		char* array3cef309d[2] = {" i ", " i\'"};
-		int index3cef309d;
-		for (index3cef309d = 0; index3cef309d < 2; index3cef309d++) {
-			char* word = array3cef309d[index3cef309d];
+		char* arrayed9d034[2] = {" i ", " i\'"};
+		int indexed9d034;
+		for (indexed9d034 = 0; indexed9d034 < 2; indexed9d034++) {
+			char* word = arrayed9d034[indexed9d034];
 			position = pos(word, result);
 			while (position > 0) {
 				delete(result, position+1, 1);
@@ -80,12 +80,16 @@ bool checkGoodBye(char* text, char* phrases[50][2])
 	bool saidBye;
 	char* pair[50];
 
+	// TODO: 
+	// For any output using the 'printf' function you need to fill the first argument: 
+	// http://en.wikipedia.org/wiki/Printf#printf_format_placeholders 
+
 	{
 	// TODO: Find out and fill in the number of elements of the array phrases here! 
-		int count57855c9a = ???;
-		int index57855c9a;
-		for (index57855c9a = 0; index57855c9a < count57855c9a; index57855c9a++) {
-			char* pair[] = phrases[index57855c9a];
+		int counte720b71 = ???;
+		int indexe720b71;
+		for (indexe720b71 = 0; indexe720b71 < counte720b71; indexe720b71++) {
+			char* pair[] = phrases[indexe720b71];
 			if (pos(pair[0], text) > 0) {
 				saidBye = true;
 				// TODO: check format specifiers, replace all '?'! 
@@ -138,10 +142,10 @@ char* conjugateStrings(char* sentence, char* key, int keyPos, char* flexions[50]
 	result = " " + copy(sentence, keyPos + length(key), length(sentence)) + " ";
 	{
 	// TODO: Find out and fill in the number of elements of the array flexions here! 
-		int count7494e528 = ???;
-		int index7494e528;
-		for (index7494e528 = 0; index7494e528 < count7494e528; index7494e528++) {
-			char* pair[] = flexions[index7494e528];
+		int count4a87761d = ???;
+		int index4a87761d;
+		for (index4a87761d = 0; index4a87761d < count4a87761d; index4a87761d++) {
+			char* pair[] = flexions[index4a87761d];
 			left = "";
 			right = result;
 			position = pos(pair[0], right);
@@ -178,10 +182,10 @@ char* normalizeInput(char* sentence)
 
 	sentence = lowercase(sentence);
 	{
-		char array5e853265[5] = {'.', ',', ';', '!', '?'};
-		int index5e853265;
-		for (index5e853265 = 0; index5e853265 < 5; index5e853265++) {
-			char symbol = array5e853265[index5e853265];
+		char array2db7a79b[5] = {'.', ',', ';', '!', '?'};
+		int index2db7a79b;
+		for (index2db7a79b = 0; index2db7a79b < 5; index2db7a79b++) {
+			char symbol = array2db7a79b[index2db7a79b];
 			position = pos(symbol, sentence);
 			while (position > 0) {
 				sentence = copy(sentence, 1, position-1) + copy(sentence, position+1, length(sentence));
@@ -254,6 +258,8 @@ char*[50][50] setupReplies(void)
 {
 	// TODO: Check and accomplish variable declarations: 
 	char* setupReplies[50][50];
+	// We start with the highest index for performance reasons 
+	// (is to avoid frequent array resizing) 
 	char* replies[50][50];
 
 	replies[29][0] = "Say, do you have any psychological problems?";
@@ -395,6 +401,7 @@ char*[50][50] setupReplies(void)
 int[2] findKeyword(const struct KeyMapEntry keyMap[50], char* sentence)
 {
 	// TODO: Check and accomplish variable declarations: 
+	// Contains the index of the keyword and its position in sentence 
 	int result[2];
 	int position;
 	int i;
@@ -429,6 +436,7 @@ int[2] findKeyword(const struct KeyMapEntry keyMap[50], char* sentence)
 struct KeyMapEntry[50] setupKeywords(void)
 {
 	// TODO: Check and accomplish variable declarations: 
+	// The empty key string (last entry) is the default clause - will always be found 
 	struct KeyMapEntry keywords[50];
 
 	initialize_KeyMapEntry();
@@ -537,15 +545,13 @@ int main(void)
 	const char* reflexions[50][2] = setupReflexions();
 	const char* byePhrases[50][2] = setupGoodByePhrases();
 	const struct KeyMapEntry keyMap[50] = setupKeywords();
+	// Variable part of the reply 
 	char* varPart;
-	// Converts the input to lowercase, cuts out interpunctation 
-	// and pads the string 
 	char* userInput;
 	char* replyRing[50];
 	char* reply;
 	int posAster;
 	int offsets[50];
-	// Should never happen... 
 	int keyIndex;
 	bool isRepeated;
 	bool isGone;

@@ -30,9 +30,9 @@ function readNumbers($fileName, $numbers, $maxNumbers)
 			$numbers[$nNumbers] = $number;
 			$nNumbers = $nNumbers + 1;
 		}
-	} catch (Exception $ex6325a3ee) {
-		$error = $ex6325a3ee->getMessage();
-		throw $ex6325a3ee;
+	} catch (Exception $ex687080dc) {
+		$error = $ex687080dc->getMessage();
+		throw $ex687080dc;
 	} finally {
 		StructorizerFileAPI::fileClose($fileNo);
 	}
@@ -85,8 +85,8 @@ if ($fileNo > 0)
 	$nValues = 0;
 	try {
 		$nValues = readNumbers($file_name, $values, 1000);
-	} catch (Exception $ex7fac631b) {
-		$failure = $ex7fac631b->getMessage();
+	} catch (Exception $ex60285225) {
+		$failure = $ex60285225->getMessage();
 		echo failure;
 		exit(-7);
 	}
@@ -198,7 +198,7 @@ function drawBarChart($values, $nValues)
 }
 // = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 
-// Reads a random number file and draws a histogram accotrding to the 
+// Reads a random number file and draws a histogram according to the 
 // user specifications 
 
 // TODO Establish sensible web formulars to get the $_GET input working. 
@@ -224,8 +224,8 @@ if ($fileNo > 0)
 	$nObtained = 0;
 	try {
 		$nObtained = readNumbers($file_name, $numberArray, 10000);
-	} catch (Exception $ex2758fe70) {
-		$failure = $ex2758fe70->getMessage();
+	} catch (Exception $ex4923ab24) {
+		$failure = $ex4923ab24->getMessage();
 		echo failure;
 	}
 	if ($nObtained > 0)

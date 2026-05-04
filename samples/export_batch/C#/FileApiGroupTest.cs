@@ -42,8 +42,8 @@ public class readNumbers {
 				nNumbers = nNumbers + 1;
 			}
 		}
-		catch(Exception ex4f970963) {
-			string error = ex4f970963.ToString()
+		catch(Exception ex7ce6a65d) {
+			string error = ex7ce6a65d.ToString()
 			throw;
 		}
 		finally {
@@ -112,8 +112,8 @@ public class ComputeSum {
 			try {
 				nValues = FileApiGroupTest.readNumbers(file_name, values, 1000);
 			}
-			catch(Exception ex2758fe70) {
-				string failure = ex2758fe70.ToString()
+			catch(Exception ex4923ab24) {
+				string failure = ex4923ab24.ToString()
 				Console.WriteLine(failure);
 				if (System.Windows.Forms.Application.MessageLoop) {
 					// WinForms app 
@@ -153,7 +153,7 @@ using FileAPI.CS;
 using System;
 
 /// <summary>
-/// Reads a random number file and draws a histogram accotrding to the
+/// Reads a random number file and draws a histogram according to the
 /// user specifications
 /// </summary>
 public class DrawRandomHistogram {
@@ -166,6 +166,7 @@ public class DrawRandomHistogram {
 		???[] numberArray;
 		int nObtained;
 		??? nIntervals;
+		// Index of the most populated interval 
 		int kMaxCount;
 		??? file_name;
 		int fileNo;
@@ -195,8 +196,8 @@ public class DrawRandomHistogram {
 			try {
 				nObtained = FileApiGroupTest.readNumbers(file_name, numberArray, 10000);
 			}
-			catch(Exception ex3b084709) {
-				string failure = ex3b084709.ToString()
+			catch(Exception exed9d034) {
+				string failure = exed9d034.ToString()
 				Console.WriteLine(failure);
 			}
 			if (nObtained > 0) {
@@ -245,6 +246,7 @@ public class DrawRandomHistogram {
 	/// <param name="nValues"> TODO </param>
 	private static void drawBarChart(double[] values, ??? nValues) {
 		// TODO: Check and accomplish variable declarations: 
+		// Used range of the Turtleizer screen 
 		const int xSize = 500;
 		const int ySize = 500;
 		double valMin;

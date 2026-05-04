@@ -16,7 +16,7 @@
 #      You might try something like "echo value >> filename" for output 
 #      or "while ... do ... read var ... done < filename" for input. 
 
-function finally335eadca()
+function finally1a1d6a08()
 {
     exitCode=$?
     arg1=$1
@@ -50,10 +50,10 @@ function readNumbers {
         return 42
     fi
 
-    trap335eadca=$( trap -p EXIT )
-    if [ -z "$trap335eadca" ] ; then trap335eadca="-"; else trap335eadca=${trap335eadca:8}; trap335eadca=${trap335eadca% *}; fi
-    if [ "${trap335eadca:0:1}" = "'" ] ; then trap335eadca=${trap335eadca:1} ; trap335eadca=${trap335eadca%\'*}; fi
-    trap "finally335eadca trapped" EXIT
+    trap1a1d6a08=$( trap -p EXIT )
+    if [ -z "$trap1a1d6a08" ] ; then trap1a1d6a08="-"; else trap1a1d6a08=${trap1a1d6a08:8}; trap1a1d6a08=${trap1a1d6a08% *}; fi
+    if [ "${trap1a1d6a08:0:1}" = "'" ] ; then trap1a1d6a08=${trap1a1d6a08:1} ; trap1a1d6a08=${trap1a1d6a08%\'*}; fi
+    trap "finally1a1d6a08 trapped" EXIT
     { # try
 
         # TODO File API: Replace the "fileEOF" call by an appropriate shell construct 
@@ -72,11 +72,11 @@ function readNumbers {
         # throw 
         return 42
     }
-    trap "${trap335eadca}" EXIT
+    trap "${trap1a1d6a08}" EXIT
     { # finally
-        finally335eadca okay
+        finally1a1d6a08 okay
     }
-    result72d818d1=${nNumbers}
+    result6ee52dcd=${nNumbers}
 }
 
 # ======= 8< =========================================================== 
@@ -95,7 +95,7 @@ function readNumbers {
 # = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 
 
-function finally335eadca()
+function finally1a1d6a08()
 {
     exitCode=$?
     arg1=$1
@@ -139,7 +139,7 @@ then
     nValues=0
     { # try
         readNumbers "${file_name}" values 1000 &&
-        nValues=${result72d818d1} &&
+        nValues=${result6ee52dcd} &&
         true
     } || { # catch failure
         failure=$?
@@ -281,7 +281,7 @@ function drawBarChart {
 #      You might try something like "echo value >> filename" for output 
 #      or "while ... do ... read var ... done < filename" for input. 
 
-function finally335eadca()
+function finally1a1d6a08()
 {
     exitCode=$?
     arg1=$1
@@ -293,7 +293,7 @@ function finally335eadca()
     fi
 }
 
-# Reads a random number file and draws a histogram accotrding to the 
+# Reads a random number file and draws a histogram according to the 
 # user specifications 
 # TODO: Check and revise the syntax of all expressions! 
 
@@ -326,7 +326,7 @@ then
     nObtained=0
     { # try
         readNumbers "${file_name}" numberArray 10000 &&
-        nObtained=${result72d818d1} &&
+        nObtained=${result6ee52dcd} &&
         true
     } || { # catch failure
         failure=$?

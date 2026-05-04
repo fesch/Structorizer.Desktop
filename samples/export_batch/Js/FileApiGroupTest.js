@@ -31,9 +31,9 @@ export function readNumbers(fileName, numbers, maxNumbers) {
 			nNumbers = nNumbers + 1;
 		}
 	}
-	catch (ex4f970963) {
-		error = ex4f970963.message
-		throw ex4f970963;
+	catch (ex7ce6a65d) {
+		error = ex7ce6a65d.message
+		throw ex7ce6a65d;
 	}
 	finally {
 		fileClose(fileNo);
@@ -92,8 +92,8 @@ if (fileNo > 0) {
 	try {
 		nValues = readNumbers(file_name, values, 1000);
 	}
-	catch (ex610694f1) {
-		failure = ex610694f1.message
+	catch (ex25af5db5) {
+		failure = ex25af5db5.message
 		document.write((failure) + "<br/>");
 		exit(-7);
 	}
@@ -126,6 +126,7 @@ import ./FileApiGroupTest.js;
 // 500 x 500 pixels 
 // Note: The function is not robust against empty array or totally equal values. 
 function drawBarChart(values, nValues) {
+	// Used range of the Turtleizer screen 
 	const xSize = 500;
 	const ySize = 500;
 	var yScale;
@@ -200,7 +201,7 @@ function drawBarChart(values, nValues) {
 }
 // = = = = 8< = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
 
-// Reads a random number file and draws a histogram accotrding to the 
+// Reads a random number file and draws a histogram according to the 
 // user specifications 
 FileApiGroupTest();
 // Interval width 
@@ -211,6 +212,7 @@ var nObtained;
 var nIntervals;
 var min;
 var max;
+// Index of the most populated interval 
 var kMaxCount;
 var k;
 var i;
@@ -237,8 +239,8 @@ if (fileNo > 0) {
 	try {
 		nObtained = readNumbers(file_name, numberArray, 10000);
 	}
-	catch (ex3a883ce7) {
-		failure = ex3a883ce7.message
+	catch (exa38d7a3) {
+		failure = exa38d7a3.message
 		document.write((failure) + "<br/>");
 	}
 	if (nObtained > 0) {

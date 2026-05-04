@@ -60,15 +60,13 @@ public class ELIZA {
 		initialize_KeyMapEntry();
 		
 		// TODO: Check and accomplish variable declarations: 
+		// Variable part of the reply 
 		String varPart;
-		// Converts the input to lowercase, cuts out interpunctation 
-		// and pads the string 
 		String userInput;
 		String[] replyRing;
 		String reply;
 		int posAster;
 		int[] offsets;
-		// Should never happen... 
 		int keyIndex;
 		boolean isRepeated;
 		boolean isGone;
@@ -412,6 +410,7 @@ public class ELIZA {
 		initialize_KeyMapEntry();
 		
 		// TODO: Check and accomplish variable declarations: 
+		// Contains the index of the keyword and its position in sentence 
 		int[] result;
 		int position;
 		int i;
@@ -442,6 +441,7 @@ public class ELIZA {
 		initialize_KeyMapEntry();
 		
 		// TODO: Check and accomplish variable declarations: 
+		// The empty key string (last entry) is the default clause - will always be found 
 		KeyMapEntry[] keywords;
 
 		// The empty key string (last entry) is the default clause - will always be found 

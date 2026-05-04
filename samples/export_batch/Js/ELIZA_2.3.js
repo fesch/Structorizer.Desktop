@@ -166,6 +166,8 @@ function setupReflexions() {
 // in `setupMapping()´ 
 function setupReplies() {
 	var setupReplies;
+	// We start with the highest index for performance reasons 
+	// (is to avoid frequent array resizing) 
 	var replies;
 
 	// We start with the highest index for performance reasons 
@@ -239,6 +241,7 @@ function checkRepetition(history, newInput) {
 function findKeyword(keyMap, sentence) {
 	initialize_KeyMapEntry();
 	
+	// Contains the index of the keyword and its position in sentence 
 	var result;
 	var position;
 	var i;
@@ -267,6 +270,7 @@ function findKeyword(keyMap, sentence) {
 function setupKeywords() {
 	initialize_KeyMapEntry();
 	
+	// The empty key string (last entry) is the default clause - will always be found 
 	var keywords;
 
 	// The empty key string (last entry) is the default clause - will always be found 
@@ -333,15 +337,13 @@ const replies = setupReplies();
 const reflexions = setupReflexions();
 const byePhrases = setupGoodByePhrases();
 const keyMap = setupKeywords();
+// Variable part of the reply 
 var varPart;
-// Converts the input to lowercase, cuts out interpunctation 
-// and pads the string 
 var userInput;
 var replyRing;
 var reply;
 var posAster;
 var offsets;
-// Should never happen... 
 var keyIndex;
 var isRepeated;
 var isGone;

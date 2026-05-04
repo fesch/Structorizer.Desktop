@@ -134,7 +134,7 @@ END ComputeSum.
 (* ======= 8< =========================================================== *)
 
 (*
-  Reads a random number file and draws a histogram accotrding to the
+  Reads a random number file and draws a histogram according to the
   user specifications
  *)
 MODULE DrawRandomHistogram;
@@ -159,6 +159,7 @@ VAR
   nIntervals: ???;	(* FIXME! *)
   min: ???;	(* FIXME! *)
   max: ???;	(* FIXME! *)
+  (* Index of the most populated interval *)
   kMaxCount: INTEGER;
   k: INTEGER;
   i: INTEGER;
@@ -175,6 +176,7 @@ VAR
  *)
 PROCEDURE drawBarChart(values: ARRAY 50 OF LONGREAL; nValues: ???);
 CONST
+  (* Used range of the Turtleizer screen *)
   xSize = 500;
   ySize = 500;
 

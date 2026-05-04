@@ -53,23 +53,19 @@ const
   keyMap = setupKeywords();
 
 var
-  index68bbe345: 1..5;
-  array68bbe345: array [1..5] of string;
-  index1efed156: 1..2;
-  array1efed156: array [1..2] of string;
-  index6ebc05a6: 1..2;
-  array6ebc05a6: array [1..2] of string;
+  index74ad1f1f: 1..5;
+  array74ad1f1f: array [1..5] of string;
+  indexe720b71: 1..2;
+  arraye720b71: array [1..2] of string;
+  index77f99a05: 1..2;
+  array77f99a05: array [1..2] of string;
+  { Variable part of the reply }
   varPart: String;
-  {
-    Converts the input to lowercase, cuts out interpunctation
-    and pads the string
-  }
   userInput: string;
   replyRing: array [0..49] of string;
   reply: String;
   posAster: Longint;
   offsets: array [0..49] of Longint;
-  { Should never happen... }
   keyIndex: Longint;
   isRepeated: boolean;
   isGone: boolean;
@@ -103,11 +99,11 @@ begin
     delete(result, 1, position);
     insert(uppercase(start), result, 1);
   end;
-  array6ebc05a6[1] := ' i ';
-  array6ebc05a6[2] := ' i\''';
-  for index6ebc05a6 := 1 to 2 do
+  array77f99a05[1] := ' i ';
+  array77f99a05[2] := ' i\''';
+  for index77f99a05 := 1 to 2 do
   begin
-    word := array6ebc05a6[index6ebc05a6];
+    word := array77f99a05[index77f99a05];
     position := pos(word, result);
     while position > 0 do
     begin
@@ -151,10 +147,12 @@ end;
 function conjugateStrings(sentence: string; key: string; keyPos: Longint; flexions: array [0..49] of array [0..1] of string): string;
 
 var
+  { Detect which of the two words of the pair matches first (lest a substitution should be reverted) }
   which: Longint;
   str: String;
   right: String;
   result: String;
+  { Detect which of the two words of the pair matches first (lest a substitution should be reverted) }
   position: Longint;
   pos1: Longint;
   pos0: Longint;
@@ -188,11 +186,11 @@ begin
     result := left + right;
   end;
   { Eliminate multiple spaces (replaced by single ones) and vertical bars }
-  array1efed156[1] := ' ';
-  array1efed156[2] := '|';
-  for index1efed156 := 1 to 2 do
+  arraye720b71[1] := ' ';
+  arraye720b71[2] := '|';
+  for indexe720b71 := 1 to 2 do
   begin
-    str := array1efed156[index1efed156];
+    str := arraye720b71[indexe720b71];
     position := pos(str, result);
     while position > 0 do
     begin
@@ -220,14 +218,14 @@ var
 
 begin
   sentence := lowercase(sentence);
-  array68bbe345[1] := '.';
-  array68bbe345[2] := ',';
-  array68bbe345[3] := ';';
-  array68bbe345[4] := '!';
-  array68bbe345[5] := '?';
-  for index68bbe345 := 1 to 5 do
+  array74ad1f1f[1] := '.';
+  array74ad1f1f[2] := ',';
+  array74ad1f1f[3] := ';';
+  array74ad1f1f[4] := '!';
+  array74ad1f1f[5] := '?';
+  for index74ad1f1f := 1 to 5 do
   begin
-    symbol := array68bbe345[index68bbe345];
+    symbol := array74ad1f1f[index74ad1f1f];
     position := pos(symbol, sentence);
     while position > 0 do
     begin
@@ -308,6 +306,10 @@ end;
 function setupReplies(): array [0..49] of array [0..49] of string;
 
 var
+  {
+    We start with the highest index for performance reasons
+    (is to avoid frequent array resizing)
+  }
   replies: array [0..49] of array [0..49] of String;
 
 begin
@@ -509,6 +511,7 @@ end;
 function findKeyword(const keyMap: array [0..49] of KeyMapEntry; sentence: string): array [0..1] of Longint;
 
 var
+  { Contains the index of the keyword and its position in sentence }
   result: array [0..1] of Longint;
   position: Longint;
   i: Longint;
@@ -545,6 +548,7 @@ end;
 function setupKeywords(): array [0..49] of KeyMapEntry;
 
 var
+  { The empty key string (last entry) is the default clause - will always be found }
   keywords: array [0..49] of KeyMapEntry;
 
 begin

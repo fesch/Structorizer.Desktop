@@ -44,24 +44,20 @@ TYPE
     END;
 
 VAR
-  index6321e813: INTEGER;
-  array6321e813: ARRAY 5 OF ARRAY 100 OF CHAR;
-  index49fc609f: INTEGER;
-  index3cef309d: INTEGER;
-  index551aa95a: INTEGER;
-  array551aa95a: ARRAY 2 OF ARRAY 100 OF CHAR;
+  index4eb7f003: INTEGER;
+  array4eb7f003: ARRAY 5 OF ARRAY 100 OF CHAR;
+  indexed9d034: INTEGER;
+  index76a3e297: INTEGER;
+  index1a3869f4: INTEGER;
+  array1a3869f4: ARRAY 2 OF ARRAY 100 OF CHAR;
   (* TODO: check and accomplish variable declarations *)
+  (* Variable part of the reply *)
   varPart: ARRAY 128 OF CHAR;
-  (*
-    Converts the input to lowercase, cuts out interpunctation
-    and pads the string
-   *)
   userInput: ARRAY 128 OF CHAR;
   replyRing: ARRAY 50 OF ARRAY 128 OF CHAR;
   reply: ARRAY 128 OF CHAR;
   posAster: INTEGER;
   offsets: ARRAY 50 OF INTEGER;
-  (* Should never happen... *)
   keyIndex: INTEGER;
   isRepeated: BOOLEAN;
   isGone: BOOLEAN;
@@ -93,10 +89,10 @@ BEGIN
     delete(result, 1, position);
     insert(CAP(start), result, 1);
   END;
-  array551aa95a[0] := " i ";
-  array551aa95a[1] := " i\'";
-  FOR index551aa95a := 0 TO 1 DO
-    word := array551aa95a[index551aa95a];
+  array1a3869f4[0] := " i ";
+  array1a3869f4[1] := " i\'";
+  FOR index1a3869f4 := 0 TO 1 DO
+    word := array1a3869f4[index1a3869f4];
     position := pos(word, result);
     WHILE position > 0 DO
       delete(result, position+1, 1);
@@ -118,8 +114,8 @@ VAR
   (* TODO: check and accomplish variable declarations *)
   pair: ARRAY 50 OF ARRAY 128 OF CHAR;
 BEGIN
-  FOR index3cef309d := 0 TO LEN(phrases)-1 DO
-    pair := phrases[index3cef309d];
+  FOR index76a3e297 := 0 TO LEN(phrases)-1 DO
+    pair := phrases[index76a3e297];
     IF pos(pair[0], text) > 0 THEN
       (* TODO: Replace "TYPE" by the the actual Out procedure name for this type and add a length argument where needed! *)
       Out.TYPE(pair[1]);
@@ -141,8 +137,8 @@ VAR
   left: ARRAY 128 OF CHAR;
 BEGIN
   result := " " + copy(sentence, keyPos + length(key), length(sentence)) + " ";
-  FOR index49fc609f := 0 TO LEN(flexions)-1 DO
-    pair := flexions[index49fc609f];
+  FOR indexed9d034 := 0 TO LEN(flexions)-1 DO
+    pair := flexions[indexed9d034];
     left := "";
     right := result;
     position := pos(pair[0], right);
@@ -176,13 +172,13 @@ VAR
   position: INTEGER;
 BEGIN
   sentence := lowercase(sentence);
-  array6321e813[0] := '.';
-  array6321e813[1] := ',';
-  array6321e813[2] := ';';
-  array6321e813[3] := '!';
-  array6321e813[4] := '?';
-  FOR index6321e813 := 0 TO 4 DO
-    symbol := array6321e813[index6321e813];
+  array4eb7f003[0] := '.';
+  array4eb7f003[1] := ',';
+  array4eb7f003[2] := ';';
+  array4eb7f003[3] := '!';
+  array4eb7f003[4] := '?';
+  FOR index4eb7f003 := 0 TO 4 DO
+    symbol := array4eb7f003[index4eb7f003];
     position := pos(symbol, sentence);
     WHILE position > 0 DO
       sentence := copy(sentence, 1, position-1) + copy(sentence, position+1, length(sentence));
@@ -258,6 +254,10 @@ PROCEDURE setupReplies: ARRAY 50 OF ARRAY 50 OF ARRAY 128 OF CHAR;
 VAR
   (* TODO: check and accomplish variable declarations *)
   setupReplies: ARRAY 50 OF ARRAY 50 OF ARRAY 128 OF CHAR;
+  (*
+    We start with the highest index for performance reasons
+    (is to avoid frequent array resizing)
+   *)
   replies: ARRAY 50 OF ARRAY 50 OF ARRAY 128 OF CHAR;
 BEGIN
   (*
@@ -455,6 +455,7 @@ PROCEDURE findKeyword(keyMap: ARRAY 50 OF KeyMapEntry; VAR sentence: ARRAY 128 O
 
 VAR
   (* TODO: check and accomplish variable declarations *)
+  (* Contains the index of the keyword and its position in sentence *)
   result: ARRAY 2 OF INTEGER;
   position: INTEGER;
   i: INTEGER;
@@ -486,6 +487,7 @@ END findKeyword;
 PROCEDURE setupKeywords: ARRAY 50 OF KeyMapEntry;
 VAR
   (* TODO: check and accomplish variable declarations *)
+  (* The empty key string (last entry) is the default clause - will always be found *)
   keywords: ARRAY 50 OF KeyMapEntry;
 BEGIN
   (* The empty key string (last entry) is the default clause - will always be found *)

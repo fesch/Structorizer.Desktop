@@ -35,6 +35,7 @@ package lu.fisch.turtle.adapters;
  *                                      Turtleizer functionality by Java code e.g. exported from Structorizer)
  *      Kay Gürtzig     2018-01-21      Enh. #441, #443: Retrieval methods for API put deprecated
  *      Kay Gürtzig     2018-07-30      Enh. #576: New procedure clear() added to the API
+ *      Kay Gürtzig     2026-05-04      Enh. #441, #443: Obsolete retrieval methods for API removed
  *
  ******************************************************************************************************
  *
@@ -47,8 +48,6 @@ package lu.fisch.turtle.adapters;
 
 import java.awt.Color;
 
-import java.util.HashMap;
-
 import lu.fisch.turtle.TurtleBox;
 
 /**
@@ -59,51 +58,24 @@ import lu.fisch.turtle.TurtleBox;
  * {@code int x = Turtleizer.getX();}<br/>
  * (The Structorizer Java export should already produce the code in this form.)
  * @author Kay Gürtzig
- * @version 3.27-05
+ * @version 3.32-36
  */
 public class Turtleizer {
 	
 	private static TurtleBox turtleBox = null;
-	/**
-	 * @deprecated
-	 * Maps different Turtleizer function names (in lower-case) to the respective adapter
-	 * method names, which are not of course case-ignorant. This map was needed for the
-	 * obsolete routine check {@link #checkRoutine(String)} only.
-	 */
-	// FIXME: This field became superfluous since TurtleBox got a light-weight constructor.
-	@Deprecated
-	@SuppressWarnings("serial")
-	private static final HashMap<String, String> supportedRoutines = new HashMap<String, String>() {{
-		put("forward", "forward");
-		put("backward", "backward");
-		put("fd", "fd");
-		put("bk", "bk");
-		put("left", "left");
-		put("right", "right");
-		put("rl", "left");
-		put("rr", "right");
-		put("penup", "penUp");
-		put("pendown", "penDown");
-		put("up", "penUp");
-		put("down", "penDown");
-		put("gotoxy", "gotoXY");
-		put("gotox", "gotoX");
-		put("gotoy", "gotoY");
-		put("hideturtle", "hideTurtle");
-		put("showturtle", "showTurtle");
-		// START KGU#566 2018-07-20: Enh. #576
-		put("clear", "clear");
-		// END KGU#566 2018-07-20
-		put("getorientation", "getOrientation");
-		put("getx", "getX");
-		put("gety", "getY");
-	}};
 	
 	/**
-	 * Returns a (heavy-weight) as-if singleton instance of class {@link TurtleBox}
+	 * Returns a (heavy-weight) as-if singleton instance of class
+	 * {@link TurtleBox}
 	 * (creates it if it hadn't been there).<br/>
-	 * Note: For mere API retrieval use a light-weight instance to be obtained via
-	 * {@link TurtleBox#TurtleBox()}.
+	 * <b>Note</b>: For mere API retrieval use a light-weight instance to be
+	 * obtained via {@link TurtleBox#TurtleBox()}. There, the existence of an
+	 * API routine may be checked via
+	 * {@link lu.fisch.diagrcontrol.DiagramController#providedRoutine(String,
+	 * int)}
+	 * or, more precisely, via
+	 * {@link lu.fisch.diagrcontrol.DiagramController#providesRoutine(String,
+	 * Object[], boolean)}
 	 */
 	private static TurtleBox getTurtleBox()
 	{
@@ -113,29 +85,6 @@ public class Turtleizer {
 			turtleBox.setAnimationDelay(0, true);
 		}
 		return turtleBox;
-	}
-	
-	/**
-	 * Checks whether a routine with the {@code candidateName} is supported by
-	 * Turtleizer, and if so returns the qualified method name, otherwise null.
-	 * Note that {@code candidateName} will be looked up case-ignorantly.<br/>
-	 * Became obsolete with Structorizer version 3.27-05
-	 * 
-	 * @param candidateName - a procedure or function identifier 
-	 * @return the qualified method name or {@code null}
-	 * 
-	 * @deprecated Use {@link TurtleBox#providedRoutine(String, int)} instead
-	 *    on a light-weight instance of {@link TurtleBox} (obtainable from the
-	 *    standard constructor, NOT via {@link #getTurtleBox()}).
-	 */
-	@Deprecated
-	public static String checkRoutine(String candidateName)
-	{
-		String methodName = supportedRoutines.get(candidateName.trim().toLowerCase());
-		if (methodName != null) {
-			methodName = "Turtleizer." + methodName;
-		}
-		return methodName;
 	}
 	
 	// Drawing
