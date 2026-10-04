@@ -661,7 +661,7 @@ public class Structorizer
 	// END KGU#579 2018-09-19
 	
 	// START KGU#187 2016-05-02: Enh. #179
-	private static final String[] synopsis = {
+	private static final String[] SYNOPSIS = {
 		"Structorizer [-s SETTINGSFILE] [-open] [NSDFILE|ARRFILE|ARRZFILE]...",
 		"Structorizer (-x|--export) GENERATOR [-a] [-b] [-c] [-f] [-k] [-l] [-t] [-e CHARSET] [-s SETTINGSFILE] [-] [-o OUTFILE] (NSDFILE|ARRSPEC|ARRZSPEC)...",
 		"Structorizer (-p|--parse) [PARSER] [-f] [-z] [-v [LOGPATH]] [-l MAXLINELEN] [-e CHARSET] [-s SETTINGSFILE] [-o OUTFILE] SOURCEFILE...",
@@ -743,7 +743,7 @@ public class Structorizer
 		if (!roots.isEmpty() || !pools.isEmpty())
 		// END KGU#679 2019-02-13
 		{
-			String usage = "Usage: " + synopsis[1] + "\nwith GENERATOR =";
+			String usage = "Usage: " + SYNOPSIS[1] + "\nwith GENERATOR =";
 			// We just (ab)use some class residing in package gui to fetch the plugin configuration 
 			BufferedInputStream buff = new BufferedInputStream(lu.fisch.structorizer.gui.EditData.class.getResourceAsStream("generators.xml"));
 			GENParser genp = new GENParser();
@@ -1114,7 +1114,7 @@ public class Structorizer
 	public static void parse(String _parserName, Vector<String> _filenames, HashMap<String, String> _options, String _switches)
 	{
 		
-		String usage = "Usage: " + synopsis[2] + "\nAccepted file extensions:";
+		String usage = "Usage: " + SYNOPSIS[2] + "\nAccepted file extensions:";
 		// base name of the nsd file(s) to be created
 		String outFile = _options.get("outFileName"); 
 		// the encoding to be assumed or used 
@@ -1661,7 +1661,7 @@ public class Structorizer
 	 *****************************************/
 	public static void draw(int _imageTypeCode, Vector<String> _nsdOrArrNames, HashMap<String, String> _options, String _switches)
 	{
-		String usage = "Usage: " + synopsis[3];
+		String usage = "Usage: " + SYNOPSIS[3];
 		if (_imageTypeCode < 0 || _imageTypeCode >= IMAGE_FILE_TYPES.count()) {
 			System.err.println("*** Illegal file format specified for image export!");
 			System.err.println(usage);
@@ -2018,9 +2018,9 @@ public class Structorizer
 	private static void printHelp()
 	{
 		System.out.print("Usage:\n");
-		for (int i = 0; i < synopsis.length; i++)
+		for (int i = 0; i < SYNOPSIS.length; i++)
 		{
-			System.out.println(synopsis[i]);
+			System.out.println(SYNOPSIS[i]);
 		}
 		System.out.println("with");
 		System.out.print("\tGENERATOR = ");

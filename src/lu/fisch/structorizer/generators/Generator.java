@@ -2781,8 +2781,8 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	
 	// START KGU#178 2016-07-19: Enh. #160
 	/**
-	 * Establishes a mapping among the Root referred to be {@code _called} and
-	 * the {@code _caller} Root in field {@link #subroutines}.
+	 * Establishes a mapping among the Root referred (called) by {@code _call}
+	 * and the {@code _caller} Root in map field {@link #subroutines}.
 	 * 
 	 * @param _call - a CALL element found in Root {@code _caller}
 	 * @param _caller - the Root containing {@code _call}
@@ -2885,6 +2885,15 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		return newSub;
 	}
 
+	/**
+	 * Traverses {@code _root} and tries to identify and register routines
+	 * referred by the contained active CALL elements. Applies recursively to
+	 * all new registered routines.
+	 * 
+	 * @param _root - the diagram to be scrutinized for routine references
+	 * 
+	 * {@link #registerCalled(Call, Root)}
+	 */
 	private void registerCalledSubroutines(Root _root)
 	{
 		// START KGU#238 2016-08-11: Code revision
@@ -2935,6 +2944,16 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	// END KGU#237 2016-08-10
 	
 	// START KGU#376 2017-09-20: Enh. #389
+	/**
+	 * Recursively retrieves and registers diagrams directly or indirectly
+	 * included (referenced) by the given Root {@code _root}. The found
+	 * include relations are put to the map {@code _includedRoots}. Also
+	 * checks {@link #subroutines} for referenced Includeables.
+	 * 
+	 * @param _root - the diagram to be scrutinized for include relations
+	 * @param _includedRoots - the include relation map to gather the found
+	 *     relations.
+	 */
 	// START KGU#754 2019-11-11: Issue #766
 	//private void registerIncludedRoots(Root _root, Hashtable<Root, SubTopoSortEntry> _includedRoots)
 	private void registerIncludedRoots(Root _root, SortedMap<Root, SubTopoSortEntry> _includedRoots)
@@ -2951,7 +2970,13 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				}
 				else if ((newIncl = getAmongExportedRoots(includeName, _includedRoots)) != null)
 				{
-					_includedRoots.get(newIncl).callers.add(_root);
+					// START KGU#1215 2026-05-22: Issue #1236 Caution: might have been found in this.subroutines!
+					//_includedRoots.get(newIncl).callers.add(_root);
+					SubTopoSortEntry entry = _includedRoots.get(newIncl);
+					if (entry != null) {
+						entry.callers.add(_root);
+					}
+					// END KGU#1215 2026-05-22
 					// If we got here, then it's probably the top-level diagram itself
 					// So better be cautious with reference counting here (lest the
 					// including diagram would be suppressed on printing)
@@ -5521,7 +5546,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * <li>
 	 * If {@link #optionExportSubroutines()} is false or {@link #routinePool}
 	 * is {@code null} then just the given {@code _entryPoints} will be exported
-	 * in topological order if they are depending on one another.
+	 * (in topological order if they are depending on one another).
 	 * </li>
 	 * <li>
 	 * Otherwise the complete dependency trees are extracted from
@@ -5561,14 +5586,15 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 		}
 		// START KGU#824 2020-03-15: Bugfix #836
 		//_someRootUsesFileAPI = generateModule(_roots, _batchMode, firstExport);
-		// Collect the dependency trees
-		// this.subroutines will collect all dependencies, depTrees will collect them separately
+		// Collect the dependency trees:
+		// - this.subroutines will collect all dependencies,
+		// - subTrees/inclTrees will collect them separately.
 		TreeMap<Root, SubTopoSortEntry> generalSubs = this.subroutines;
 		Vector<TreeMap<Root, SubTopoSortEntry>> subTrees = new Vector<TreeMap<Root, SubTopoSortEntry>>();
 		Vector<TreeMap<Root, SubTopoSortEntry>> inclTrees = new Vector<TreeMap<Root, SubTopoSortEntry>>();
 		boolean[] libUserFlags = new boolean[_entryPoints.size()];	// Registers which Roots refer to the library
 		HashSet<Root> commonSubs = new HashSet<Root>();
-		Vector<Integer> mainIndices = new Vector<Integer>();	// Collect the mains
+		Vector<Integer> mainIndices = new Vector<Integer>();	// Collect the mains (i.e. their indices)
 		int nRedundant = 0;
 		// START KGU#1215 2026-04-29: Bugfix #1236 Wrong handling of loop
 		//for (Root root: _entryPoints)
@@ -5583,17 +5609,18 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				// END KGU#1215 2026-04-29
 			}
 			// START KGU#824 2020-03-15: Bugfix #836
-			/* For the export of archives we must consider subroutines and includes here too.
+			/* For the export of archives we must consider subroutines and includes here, too.
 			 * If subroutines are to be involved, we will first gather all referenced subroutines
 			 * and includables before we actually produce code */
 			// First add to the general dependency forest
 			boolean wasAdded = false;
 			if (!root.isProgram() && !subroutines.containsKey(root))
 			{
-				// Precaution for recursive top-level routine
+				// Precaution against recursive top-level routine
 				subroutines.put(root, new SubTopoSortEntry(null));
 				wasAdded = true;
 			}
+			// Retrieve
 			registerCalledSubroutines(root);
 			registerIncludedRoots(root, subroutines);
 			if (wasAdded && subroutines.get(root).nReferingTo == 0)
@@ -5615,6 +5642,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 				subroutines.put(root, new SubTopoSortEntry(null));
 				wasAdded = true;
 			}
+			// Dependency retrieval
 			registerCalledSubroutines(root);
 			registerIncludedRoots(root, includes);
 			if (wasAdded && subroutines.get(root).nReferingTo == 0)
@@ -5847,7 +5875,8 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter imple
 	 * bundle (if subroutine involvement is intended).<br/>
 	 * Side effects: Fields {@link #includedRoots}, {@link #includeMap},
 	 * {@link #rootsWithEmptyInput}, {@link #rootsWithInput},
-	 * {@link #rootsWithOutput} will be modified.
+	 * {@link #rootsWithOutput}, {@link #hasParallels}, {@link #hasTryBlocks},
+	 * {@link #usesFileAPI}, {@link #usesTurtleizer} will be modified.
 	 * 
 	 * @param _roots - the top diagrams of the module
 	 * @param _dependencyTree - diagrams required by the given entry point(s);
